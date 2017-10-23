@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -61,7 +60,6 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 import static java.util.Collections.singletonList;
 
 /**
@@ -227,6 +225,12 @@ public abstract class GitHandler {
     }
     return file;
   }
+
+  @NotNull
+  GitCommand getCommand() {
+    return myCommand;
+  }
+
   public void setUrl(@NotNull String url) {
     setUrls(singletonList(url));
   }
@@ -681,12 +685,6 @@ public abstract class GitHandler {
   }
 
   void runInCurrentThread(@Nullable Runnable postStartAction) {
-    //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Git process should never start in the dispatch thread.");
-
-    if (WRITE == myCommand.lockingPolicy()) {
-      // need to lock only write operations: reads can be performed even when a write operation is going on
-      myVcs.getCommandLock().writeLock().lock();
-    }
     try {
       start();
       if (isStarted()) {
@@ -697,10 +695,6 @@ public abstract class GitHandler {
       }
     }
     finally {
-      if (WRITE == myCommand.lockingPolicy()) {
-        myVcs.getCommandLock().writeLock().unlock();
-      }
-
       logTime();
     }
   }

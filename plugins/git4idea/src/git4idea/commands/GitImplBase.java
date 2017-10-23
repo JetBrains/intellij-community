@@ -2,12 +2,14 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitVcs;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+
+import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
 /**
  * Basic functionality for git handler execution.
@@ -77,10 +82,12 @@ abstract class GitImplBase implements Git {
 
       handler.addLineListener(resultListener);
 
-      writeOutputToConsole(handler);
+      try (AccessToken locking = lock(handler)) {
+        writeOutputToConsole(handler);
 
-      handler.runInCurrentThread();
-      authFailed = handler.hasHttpAuthFailed();
+        handler.runInCurrentThread(null);
+        authFailed = handler.hasHttpAuthFailed();
+      }
     }
     while (authFailed && authAttempt++ < 2);
     return new GitCommandResult(
@@ -165,6 +172,22 @@ abstract class GitImplBase implements Git {
                                          + handler.printableCommandLine());
       }
     }
+  }
+
+  @NotNull
+  private static AccessToken lock(@NotNull GitLineHandler handler) {
+    Project project = handler.project();
+    if (project != null && !project.isDefault() && WRITE == handler.getCommand().lockingPolicy()) {
+      ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
+      executionLock.writeLock().lock();
+      return new AccessToken() {
+        @Override
+        public void finish() {
+          executionLock.writeLock().unlock();
+        }
+      };
+    }
+    return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
   private static boolean looksLikeError(@NotNull final String text) {
