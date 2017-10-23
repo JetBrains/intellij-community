@@ -224,6 +224,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static ProgressIndicator getOrCreateIndicator() {
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progress == null) progress = new EmptyProgressIndicator();
+    progress.setIndeterminate(false);
     return progress;
   }
 
