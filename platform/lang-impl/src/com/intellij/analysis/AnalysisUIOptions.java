@@ -117,10 +117,8 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   }
 
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
-    return new InspectionResultsViewToggleAction(view,
-                                                 "Group by directory",
-                                                 "Group by directory",
-                                                 AllIcons.Actions.GroupByPackage) {
+    String message = InspectionsBundle.message("inspection.action.group.by.directory");
+    return new InspectionResultsViewToggleAction(view, message, message, AllIcons.Actions.GroupByPackage) {
 
       @Override
       public boolean isSelected(AnActionEvent e) {

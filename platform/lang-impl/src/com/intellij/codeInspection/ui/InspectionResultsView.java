@@ -339,7 +339,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       @Override
       public String getPreviousOccurenceActionName() {
-        return InspectionsBundle.message("inspection.actiongo.prev");
+        return InspectionsBundle.message("inspection.action.go.prev");
       }
     };
   }
@@ -564,7 +564,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     }
     if (previewEditor != null) {
-      ProblemPreviewEditorPresentation.setupFoldingsForNonProblemRanges(previewEditor, this);
+      ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(previewEditor, this);
     }
     mySplitter.setSecondComponent(editorPanel);
   }
