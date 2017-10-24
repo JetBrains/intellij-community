@@ -2427,6 +2427,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern6 = "try { '_St1*; } catch ('_E1 | '_E2 '_e) { '_St2*; }";
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
+
+    String pattern7 = "try { '_St1*; } catch ('E '_e) { '_St2*; }";
+    final List<MatchResult> matches = findMatches(source, pattern7, StdFileTypes.JAVA);
+    assertEquals(3, matches.size());
+    assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
   }
 
   public void testFindAsserts() {
