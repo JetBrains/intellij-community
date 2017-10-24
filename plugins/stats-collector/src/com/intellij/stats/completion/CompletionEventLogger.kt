@@ -16,18 +16,8 @@
 
 package com.intellij.stats.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.stats.events.completion.LogEvent
 
-fun LookupImpl.prefixLength(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
-}
-
-fun LookupImpl.language(): Language? {
-    val file = psiFile ?: return null
-    val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(file, offset)
+interface CompletionEventLogger {
+    fun log(event: LogEvent)
 }

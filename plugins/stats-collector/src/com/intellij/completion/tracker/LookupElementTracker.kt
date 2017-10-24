@@ -20,34 +20,20 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.stats.completion.idString
+import com.intellij.stats.events.completion.ElementPositionHistory
+import com.intellij.stats.events.completion.StagePosition
 
 
-data class StagePosition(val stage: Int, val position: Int)
-
-
-interface LookupElementTracking {
+interface LookupElementTracker {
     fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition>
 
     companion object {
-        fun getInstance(): LookupElementTracking = service()
+        fun getInstance(): LookupElementTracker = service()
     }
 }
 
 
-class ElementPositionHistory {
-    private val history = mutableListOf<StagePosition>()
-
-    fun add(position: StagePosition) = history.add(position)
-    fun history() = history
-
-    override fun toString(): String {
-        return "ElementPositionHistory(history=$history)"
-    }
-
-}
-
-
-class UserDataLookupElementTracking : LookupElementTracking {
+class UserDataLookupElementTracker : LookupElementTracker {
 
     override fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition> {
         val id = element.idString()

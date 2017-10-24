@@ -37,7 +37,7 @@ import com.google.gson.Gson
 import com.intellij.codeInsight.lookup.Classifier
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.tracker.LookupElementTracking
+import com.intellij.completion.tracker.LookupElementTracker
 import com.intellij.completion.tracker.StagePosition
 import com.intellij.openapi.util.Pair
 import com.intellij.util.ProcessingContext
@@ -55,7 +55,7 @@ class ElementPositionHistoryEmptyClassifier(
     override fun getSortingWeights(iterable: MutableIterable<LookupElement>,
                                    context: ProcessingContext): List<Pair<LookupElement, Any>> {
         return iterable.map {
-            val history = LookupElementTracking.getInstance().positionsHistory(lookup, it)
+            val history = LookupElementTracker.getInstance().positionsHistory(lookup, it)
             Pair.create(it, PositionHistoryPresentation(history) as Any)
         }
     }

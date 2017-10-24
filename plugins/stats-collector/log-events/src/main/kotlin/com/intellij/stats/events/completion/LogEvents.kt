@@ -17,26 +17,6 @@
 package com.intellij.stats.events.completion
 
 
-abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {
-    @Transient var recorderId = "completion-stats"
-    @Transient var timestamp = System.currentTimeMillis()
-    @Transient var sessionUid: String = sessionId
-    @Transient var actionType: Action = type
-    
-    abstract fun accept(visitor: LogEventVisitor)
-}
-
-
-abstract class LookupStateLogData(
-  userId: String,
-  sessionId: String,
-  action: Action,
-  @JvmField var completionListIds: List<Int>,
-  @JvmField var newCompletionListItems: List<LookupEntryInfo>,
-  @JvmField var currentPosition: Int
-) : LogEvent(userId, sessionId, action)
-
-
 class UpPressedEvent(
         userId: String, 
         sessionId: String,
@@ -154,32 +134,4 @@ class CustomMessageEvent(userId: String, sessionId: String, @JvmField var text: 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
-}
-
-class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)
-
-
-abstract class LogEventVisitor {
-    open fun visit(event: CompletionStartedEvent) {}
-    open fun visit(event: TypeEvent) {}
-    open fun visit(event: DownPressedEvent) {}
-    open fun visit(event: UpPressedEvent) {}
-    open fun visit(event: BackspaceEvent) {}
-    open fun visit(event: CompletionCancelledEvent) {}
-    open fun visit(event: ExplicitSelectEvent) {}
-    open fun visit(event: TypedSelectEvent) {}
-    open fun visit(event: CustomMessageEvent) {}
-}
-
-
-enum class Action {
-    COMPLETION_STARTED,
-    TYPE,
-    BACKSPACE,
-    UP,
-    DOWN,
-    COMPLETION_CANCELED,
-    EXPLICIT_SELECT,
-    TYPED_SELECT,
-    CUSTOM
 }

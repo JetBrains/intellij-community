@@ -17,23 +17,11 @@ package com.intellij.stats.completion
 
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.tracker.LookupElementTracker
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.events.completion.*
 
-
-interface CompletionEventLogger {
-    fun log(event: LogEvent)
-}
-
-fun LookupElement.idString(): String {
-    val p = LookupElementPresentation()
-    renderElement(p)
-    return "${p.itemText} ${p.tailText} ${p.typeText}"
-}
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
@@ -82,11 +70,11 @@ class CompletionFileLogger(private val installationUID: String,
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
 
-        val language = getLanguage(lookup)
+        val language = lookup.language()
 
         val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
-        val mlRankingVersion: String = "NONE"
+        val mlRankingVersion = "NONE"
 
         val event = CompletionStartedEvent(
                 ideVersion, pluginVersion, mlRankingVersion,
@@ -98,19 +86,6 @@ class CompletionFileLogger(private val installationUID: String,
         event.isOneLineMode = lookup.editor.isOneLineMode
 
         eventLogger.log(event)
-    }
-
-    private fun calcPluginVersion(): String? {
-        val className = CompletionStartedEvent::class.java.name
-        val id = PluginManager.getPluginByClassName(className)
-        val plugin = PluginManager.getPlugin(id)
-        return plugin?.version
-    }
-    
-    private fun getLanguage(lookup: LookupImpl): Language? {
-        val file = lookup.psiFile ?: return null
-        val offset = lookup.editor.caretModel.offset
-        return  PsiUtilCore.getLanguageAtOffset(file, offset)
     }
 
     override fun customMessage(message: String) {
@@ -188,4 +163,12 @@ class CompletionFileLogger(private val installationUID: String,
         eventLogger.log(event)
     }
 
+}
+
+
+private fun calcPluginVersion(): String? {
+    val className = CompletionStartedEvent::class.java.name
+    val id = PluginManager.getPluginByClassName(className)
+    val plugin = PluginManager.getPlugin(id)
+    return plugin?.version
 }

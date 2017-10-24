@@ -42,7 +42,7 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
       .isEqualTo(listOf("cat", "man", "run", "runnable", "rus"))
 
     myFixture.type("r")
-    val history: MutableMap<String, ElementPositionHistory> = UserDataLookupElementTracking.history(lookup)!!
+    val history: MutableMap<String, ElementPositionHistory> = UserDataLookupElementTracker.history(lookup)!!
     myFixture.type("us\n")
 
     val map = allItems.map {

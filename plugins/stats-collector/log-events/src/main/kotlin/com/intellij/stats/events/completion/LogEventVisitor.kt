@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion
+package com.intellij.stats.events.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
-
-fun LookupImpl.prefixLength(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
-}
-
-fun LookupImpl.language(): Language? {
-    val file = psiFile ?: return null
-    val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(file, offset)
+abstract class LogEventVisitor {
+    open fun visit(event: CompletionStartedEvent) {}
+    open fun visit(event: TypeEvent) {}
+    open fun visit(event: DownPressedEvent) {}
+    open fun visit(event: UpPressedEvent) {}
+    open fun visit(event: BackspaceEvent) {}
+    open fun visit(event: CompletionCancelledEvent) {}
+    open fun visit(event: ExplicitSelectEvent) {}
+    open fun visit(event: TypedSelectEvent) {}
+    open fun visit(event: CustomMessageEvent) {}
 }

@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion
+package com.intellij.stats.events.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
 
-fun LookupImpl.prefixLength(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
+class ElementPositionHistory {
+    private val history = mutableListOf<StagePosition>()
+
+    fun add(position: StagePosition) = history.add(position)
+    fun history() = history
+
+    override fun toString(): String {
+        return "ElementPositionHistory(history=$history)"
+    }
 }
 
-fun LookupImpl.language(): Language? {
-    val file = psiFile ?: return null
-    val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(file, offset)
-}
+
+data class StagePosition(val stage: Int, val position: Int)

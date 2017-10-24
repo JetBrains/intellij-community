@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion
+package com.intellij.stats.events.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
-import com.intellij.psi.util.PsiUtilCore
 
-fun LookupImpl.prefixLength(): Int {
-    val lookupOriginalStart = this.lookupOriginalStart
-    val caretOffset = this.editor.caretModel.offset
-    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
-}
-
-fun LookupImpl.language(): Language? {
-    val file = psiFile ?: return null
-    val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(file, offset)
-}
+class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)
