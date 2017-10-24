@@ -154,10 +154,11 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
 
-    String execPath = String.format("\"%s\"", ourScript.getValue());
+    String execPath = ourScript.getValue();
     if (execPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
+    execPath = StringUtil.wrapWithDoubleQuote(execPath);
 
     String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition();
     String wmClass = AppUIUtil.getFrameClass();
