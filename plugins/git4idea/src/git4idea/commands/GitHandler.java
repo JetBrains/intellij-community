@@ -36,7 +36,6 @@ import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
-import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +58,8 @@ public abstract class GitHandler {
   protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
-  protected final Project myProject;
-  protected final GitCommand myCommand;
+  private final Project myProject;
+  private final GitCommand myCommand;
 
   private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>(); // Error codes that are ignored for the handler
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
@@ -83,8 +82,7 @@ public abstract class GitHandler {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  protected final GitVcs myVcs;
-  private GitVcsApplicationSettings myAppSettings;
+  private boolean myProgressParameterAllowed = false;
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
@@ -95,28 +93,19 @@ public abstract class GitHandler {
    *
    * @param project   a project
    * @param directory a process directory
-   * @param command   a command to execute (if empty string, the parameter is ignored)
+   * @param command   a command to execute
    */
   protected GitHandler(@NotNull Project project,
                        @NotNull File directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    myProject = project;
-    myCommand = command;
-    myAppSettings = GitVcsApplicationSettings.getInstance();
-    myVcs = GitVcs.getInstance(project);
-    myCommandLine = new GeneralCommandLine().withExePath(GitExecutableManager.getInstance().getPathToGit(project));
-    myCommandLine.setWorkDirectory(directory);
-    if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
-      myCommandLine.addParameters("-c", "core.quotepath=false");
-      myCommandLine.addParameters("-c", "log.showSignature=false");
-      for (String configParameter : configParameters) {
-        myCommandLine.addParameters("-c", configParameter);
-      }
-    }
-    myCommandLine.addParameter(command.name());
-    myStdoutSuppressed = true;
-    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+    this(project,
+         directory,
+         GitExecutableManager.getInstance().getPathToGit(project),
+         command,
+         configParameters);
+    myProgressParameterAllowed =
+      GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(project).getVersion());
   }
 
   /**
@@ -131,6 +120,48 @@ public abstract class GitHandler {
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
+  }
+
+  /**
+   * A constructor for handler that can be run without project association
+   *
+   * @param project          optional project
+   * @param directory        working directory
+   * @param pathToExecutable path to git executable
+   * @param command          git command to execute
+   * @param configParameters list of config parameters to use for this git execution
+   */
+  protected GitHandler(@Nullable Project project,
+                       @NotNull File directory,
+                       @NotNull String pathToExecutable,
+                       @NotNull GitCommand command,
+                       @NotNull List<String> configParameters) {
+    myProject = project;
+    myCommand = command;
+
+    myCommandLine = new GeneralCommandLine()
+      .withWorkDirectory(directory)
+      .withExePath(pathToExecutable);
+    for (String parameter : getConfigParameters(project, configParameters)) {
+      myCommandLine.addParameters("-c", parameter);
+    }
+    myCommandLine.addParameter(command.name());
+
+    myStdoutSuppressed = true;
+    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+  }
+
+  @NotNull
+  static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
+    if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(GitVcs.getInstance(project).getVersion())) {
+      return Collections.emptyList();
+    }
+
+    List<String> toPass = new ArrayList<>();
+    toPass.add("core.quotepath=false");
+    toPass.add("log.showSignature=false");
+    toPass.addAll(requestedConfigParameters);
+    return toPass;
   }
 
   /**
@@ -179,6 +210,7 @@ public abstract class GitHandler {
   /**
    * @return a context project
    */
+  @Nullable
   public Project project() {
     return myProject;
   }
@@ -329,7 +361,7 @@ public abstract class GitHandler {
    * @return is "--progress" parameter supported by this version of Git.
    */
   public boolean addProgressParameter() {
-    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myVcs.getVersion())) {
+    if (myProgressParameterAllowed) {
       addParameters("--progress");
       return true;
     }
@@ -388,7 +420,7 @@ public abstract class GitHandler {
     catch (ProcessCanceledException ignored) {
     }
     catch (Throwable t) {
-      if (!ApplicationManager.getApplication().isUnitTestMode() || !myProject.isDisposed()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
       }
       myListeners.getMulticaster().startFailed(t);

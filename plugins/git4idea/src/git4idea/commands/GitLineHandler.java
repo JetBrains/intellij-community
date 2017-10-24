@@ -27,6 +27,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -44,17 +45,25 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, command);
   }
 
-  public GitLineHandler(@NotNull final Project project,
-                        @NotNull final VirtualFile vcsRoot,
-                        @NotNull final GitCommand command) {
+  public GitLineHandler(@NotNull Project project,
+                        @NotNull VirtualFile vcsRoot,
+                        @NotNull GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  public GitLineHandler(@NotNull final Project project,
-                        @NotNull final VirtualFile vcsRoot,
-                        @NotNull final GitCommand command,
+  public GitLineHandler(@NotNull Project project,
+                        @NotNull VirtualFile vcsRoot,
+                        @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
+  }
+
+  public GitLineHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
   protected void processTerminated(final int exitCode) {}
