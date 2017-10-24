@@ -52,17 +52,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
         "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
         "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
     ],
 )
 
@@ -130,17 +130,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
+        "//tools/idea/lib:fluent-hc-4.5.2",
+        "//tools/idea/lib:httpclient-4.5.2",
         "//tools/idea/lib:httpcore-4.4.5",
         "//tools/idea/lib:httpmime-4.5.2",
-        "//tools/idea/lib:httpclient-4.5.2",
-        "//tools/idea/lib:fluent-hc-4.5.2",
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/lib:fluent-hc-4.5.2",
+        "//tools/idea/lib:httpclient-4.5.2",
         "//tools/idea/lib:httpcore-4.4.5",
         "//tools/idea/lib:httpmime-4.5.2",
-        "//tools/idea/lib:httpclient-4.5.2",
-        "//tools/idea/lib:fluent-hc-4.5.2",
     ],
 )
 
@@ -182,47 +182,47 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib/ant/lib:ant-commons-net",
-        "//tools/idea/lib/ant/lib:ant-jmf",
-        "//tools/idea/lib/ant/lib:ant-apache-resolver",
-        "//tools/idea/lib/ant/lib:ant-jai",
-        "//tools/idea/lib/ant/lib:ant-apache-bsf",
-        "//tools/idea/lib/ant/lib:ant-commons-logging",
-        "//tools/idea/lib/ant/lib:ant-junit",
-        "//tools/idea/lib/ant/lib:ant-jsch",
-        "//tools/idea/lib/ant/lib:ant-apache-bcel",
-        "//tools/idea/lib/ant/lib:ant",
-        "//tools/idea/lib/ant/lib:ant-netrexx",
-        "//tools/idea/lib/ant/lib:ant-apache-oro",
         "//tools/idea/lib/ant/lib:ant-antlr",
-        "//tools/idea/lib/ant/lib:ant-jdepend",
-        "//tools/idea/lib/ant/lib:ant-launcher",
-        "//tools/idea/lib/ant/lib:ant-apache-regexp",
+        "//tools/idea/lib/ant/lib:ant-apache-bcel",
+        "//tools/idea/lib/ant/lib:ant-apache-bsf",
         "//tools/idea/lib/ant/lib:ant-apache-log4j",
-        "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant-apache-oro",
+        "//tools/idea/lib/ant/lib:ant-apache-regexp",
+        "//tools/idea/lib/ant/lib:ant-apache-resolver",
+        "//tools/idea/lib/ant/lib:ant-commons-logging",
+        "//tools/idea/lib/ant/lib:ant-commons-net",
+        "//tools/idea/lib/ant/lib:ant-jai",
         "//tools/idea/lib/ant/lib:ant-javamail",
+        "//tools/idea/lib/ant/lib:ant-jdepend",
+        "//tools/idea/lib/ant/lib:ant-jmf",
+        "//tools/idea/lib/ant/lib:ant-jsch",
+        "//tools/idea/lib/ant/lib:ant-junit",
+        "//tools/idea/lib/ant/lib:ant-launcher",
+        "//tools/idea/lib/ant/lib:ant-netrexx",
+        "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib/ant/lib:ant-commons-net",
-        "//tools/idea/lib/ant/lib:ant-jmf",
-        "//tools/idea/lib/ant/lib:ant-apache-resolver",
-        "//tools/idea/lib/ant/lib:ant-jai",
-        "//tools/idea/lib/ant/lib:ant-apache-bsf",
-        "//tools/idea/lib/ant/lib:ant-commons-logging",
-        "//tools/idea/lib/ant/lib:ant-junit",
-        "//tools/idea/lib/ant/lib:ant-jsch",
-        "//tools/idea/lib/ant/lib:ant-apache-bcel",
-        "//tools/idea/lib/ant/lib:ant",
-        "//tools/idea/lib/ant/lib:ant-netrexx",
-        "//tools/idea/lib/ant/lib:ant-apache-oro",
         "//tools/idea/lib/ant/lib:ant-antlr",
-        "//tools/idea/lib/ant/lib:ant-jdepend",
-        "//tools/idea/lib/ant/lib:ant-launcher",
-        "//tools/idea/lib/ant/lib:ant-apache-regexp",
+        "//tools/idea/lib/ant/lib:ant-apache-bcel",
+        "//tools/idea/lib/ant/lib:ant-apache-bsf",
         "//tools/idea/lib/ant/lib:ant-apache-log4j",
-        "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant-apache-oro",
+        "//tools/idea/lib/ant/lib:ant-apache-regexp",
+        "//tools/idea/lib/ant/lib:ant-apache-resolver",
+        "//tools/idea/lib/ant/lib:ant-commons-logging",
+        "//tools/idea/lib/ant/lib:ant-commons-net",
+        "//tools/idea/lib/ant/lib:ant-jai",
         "//tools/idea/lib/ant/lib:ant-javamail",
+        "//tools/idea/lib/ant/lib:ant-jdepend",
+        "//tools/idea/lib/ant/lib:ant-jmf",
+        "//tools/idea/lib/ant/lib:ant-jsch",
+        "//tools/idea/lib/ant/lib:ant-junit",
+        "//tools/idea/lib/ant/lib:ant-launcher",
+        "//tools/idea/lib/ant/lib:ant-netrexx",
+        "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant",
     ],
 )
 
@@ -256,13 +256,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
     ],
 )
 
@@ -296,13 +296,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:hamcrest-library-1.3",
         "//tools/idea/lib:hamcrest-core-1.3",
+        "//tools/idea/lib:hamcrest-library-1.3",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:hamcrest-library-1.3",
         "//tools/idea/lib:hamcrest-core-1.3",
+        "//tools/idea/lib:hamcrest-library-1.3",
     ],
 )
 
@@ -312,13 +312,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/testng/lib:testng",
         "//tools/idea/plugins/testng/lib:jcommander",
+        "//tools/idea/plugins/testng/lib:testng",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/testng/lib:testng",
         "//tools/idea/plugins/testng/lib:jcommander",
+        "//tools/idea/plugins/testng/lib:testng",
     ],
 )
 
@@ -370,13 +370,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:jna",
         "//tools/idea/lib:jna-platform",
+        "//tools/idea/lib:jna",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:jna",
         "//tools/idea/lib:jna-platform",
+        "//tools/idea/lib:jna",
     ],
 )
 
@@ -595,14 +595,14 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/lib:jsr173_1.0_api",
-        "//tools/idea/lib:xbean",
         "//tools/idea/lib:resolver",
+        "//tools/idea/lib:xbean",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/lib:jsr173_1.0_api",
-        "//tools/idea/lib:xbean",
         "//tools/idea/lib:resolver",
+        "//tools/idea/lib:xbean",
     ],
 )
 
@@ -684,13 +684,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:miglayout-swing-5.0",
         "//tools/idea/lib:miglayout-core-5.0",
+        "//tools/idea/lib:miglayout-swing-5.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:miglayout-swing-5.0",
         "//tools/idea/lib:miglayout-core-5.0",
+        "//tools/idea/lib:miglayout-swing-5.0",
     ],
 )
 
@@ -732,17 +732,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:minlog-1.2",
         "//tools/idea/lib:kryo-2.22",
-        "//tools/idea/lib:reflectasm-1.07",
+        "//tools/idea/lib:minlog-1.2",
         "//tools/idea/lib:objenesis-1.2",
+        "//tools/idea/lib:reflectasm-1.07",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:minlog-1.2",
         "//tools/idea/lib:kryo-2.22",
-        "//tools/idea/lib:reflectasm-1.07",
+        "//tools/idea/lib:minlog-1.2",
         "//tools/idea/lib:objenesis-1.2",
+        "//tools/idea/lib:reflectasm-1.07",
     ],
 )
 
@@ -776,13 +776,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
         "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
         "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
     ],
 )
 
@@ -853,8 +853,8 @@ java_library(
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -863,8 +863,8 @@ java_library(
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
         "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
     ],
 )
 
@@ -882,21 +882,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:imageio-tiff-3.2.1",
-        "//tools/idea/lib:imageio-core-3.2.1",
-        "//tools/idea/lib:common-lang-3.2.1",
-        "//tools/idea/lib:common-io-3.2.1",
         "//tools/idea/lib:common-image-3.2.1",
+        "//tools/idea/lib:common-io-3.2.1",
+        "//tools/idea/lib:common-lang-3.2.1",
+        "//tools/idea/lib:imageio-core-3.2.1",
         "//tools/idea/lib:imageio-metadata-3.2.1",
+        "//tools/idea/lib:imageio-tiff-3.2.1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:imageio-tiff-3.2.1",
-        "//tools/idea/lib:imageio-core-3.2.1",
-        "//tools/idea/lib:common-lang-3.2.1",
-        "//tools/idea/lib:common-io-3.2.1",
         "//tools/idea/lib:common-image-3.2.1",
+        "//tools/idea/lib:common-io-3.2.1",
+        "//tools/idea/lib:common-lang-3.2.1",
+        "//tools/idea/lib:imageio-core-3.2.1",
         "//tools/idea/lib:imageio-metadata-3.2.1",
+        "//tools/idea/lib:imageio-tiff-3.2.1",
     ],
 )
 
@@ -914,21 +914,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
-        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
-        "//tools/idea/lib:jsch.agentproxy.sshagent",
-        "//tools/idea/lib:jsch.agentproxy.pageant",
-        "//tools/idea/lib:jsch.agentproxy.core",
         "//tools/idea/lib:jsch.agentproxy.connector-factory",
+        "//tools/idea/lib:jsch.agentproxy.core",
+        "//tools/idea/lib:jsch.agentproxy.pageant",
+        "//tools/idea/lib:jsch.agentproxy.sshagent",
+        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
+        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
-        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
-        "//tools/idea/lib:jsch.agentproxy.sshagent",
-        "//tools/idea/lib:jsch.agentproxy.pageant",
-        "//tools/idea/lib:jsch.agentproxy.core",
         "//tools/idea/lib:jsch.agentproxy.connector-factory",
+        "//tools/idea/lib:jsch.agentproxy.core",
+        "//tools/idea/lib:jsch.agentproxy.pageant",
+        "//tools/idea/lib:jsch.agentproxy.sshagent",
+        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
+        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
     ],
 )
 
@@ -946,15 +946,15 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:gherkin-2.12.2",
-        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
         "//tools/idea/lib:cucumber-core-1.2.4",
+        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
+        "//tools/idea/lib:gherkin-2.12.2",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:gherkin-2.12.2",
-        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
         "//tools/idea/lib:cucumber-core-1.2.4",
+        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
+        "//tools/idea/lib:gherkin-2.12.2",
     ],
 )
 
@@ -996,13 +996,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:commons-logging-1.2",
         "//tools/idea/lib:commons-httpclient-3.1-patched",
+        "//tools/idea/lib:commons-logging-1.2",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:commons-logging-1.2",
         "//tools/idea/lib:commons-httpclient-3.1-patched",
+        "//tools/idea/lib:commons-logging-1.2",
     ],
 )
 
@@ -1020,13 +1020,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/coverage/lib:jacocoant",
         "//tools/idea/plugins/coverage/lib:jacocoagent",
+        "//tools/idea/plugins/coverage/lib:jacocoant",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/coverage/lib:jacocoant",
         "//tools/idea/plugins/coverage/lib:jacocoagent",
+        "//tools/idea/plugins/coverage/lib:jacocoant",
     ],
 )
 
@@ -1079,8 +1079,8 @@ java_library(
         "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -1095,8 +1095,8 @@ java_library(
         "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
     ],
 )
 
@@ -1164,12 +1164,12 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.51:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.51:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
     ],
 )
