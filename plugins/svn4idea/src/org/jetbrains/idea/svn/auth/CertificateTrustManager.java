@@ -27,6 +27,8 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
 
   private static final Logger LOG = Logger.getInstance(CertificateTrustManager.class);
 
+  private static final String CMD_SSL_SERVER = "cmd.ssl.server";
+
   @NotNull private final AuthenticationService myAuthenticationService;
   @NotNull private final Url myRepositoryUrl;
   @NotNull private final String myRealm;
@@ -58,7 +60,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   private boolean checkPassive(@NotNull X509Certificate certificate) {
-    Object cachedData = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck("svn.ssl.server", myRealm);
+    Object cachedData = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(CMD_SSL_SERVER, myRealm);
 
     return certificate.equals(cachedData);
   }
@@ -96,7 +98,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   private void acknowledge(@NotNull X509Certificate certificate) {
-    myAuthenticationService.getVcs().getSvnConfiguration().acknowledge("cmd.ssl.server", myRealm, certificate);
+    myAuthenticationService.getVcs().getSvnConfiguration().acknowledge(CMD_SSL_SERVER, myRealm, certificate);
   }
 
   @Override
