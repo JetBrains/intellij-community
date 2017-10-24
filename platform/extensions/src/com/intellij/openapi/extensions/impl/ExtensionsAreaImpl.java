@@ -155,6 +155,29 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     extensionPoint.registerExtensionAdapter(adapter);
   }
 
+  // Used in Upsource
+  @Override
+  public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
+    if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
+      return;
+    }
+
+    ExtensionComponentAdapter adapter;
+    if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
+      String implClass = extensionElement.getAttributeValue("implementation");
+      if (implClass == null) {
+        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '" + pluginDescriptor.getPluginId()
+          .getIdString() + "' plugin");
+      }
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
+    }
+    else {
+      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
+    }
+    myPicoContainer.registerComponent(adapter);
+    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
+  }
+
   private static boolean shouldDeserializeInstance(Element extensionElement) {
     // has content
     if (!extensionElement.getContent().isEmpty()) return true;
