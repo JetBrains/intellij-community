@@ -19,38 +19,8 @@ package com.intellij.stats.completion.experiment
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
-
-interface ExperimentDecision {
-    fun isPerformExperiment(salt: String): Boolean
-}
-
-class PermanentInstallationIDBasedDecision : ExperimentDecision {
-    override fun isPerformExperiment(salt: String): Boolean {
-        val uid = PermanentInstallationID.get()
-        val hash = (uid + salt).hashCode()
-        return hash % 2 == 0
-    }
-}
-
-
-interface WebServiceStatus {
-    fun isServerOk(): Boolean
-    fun dataServerUrl(): String
-
-    fun isExperimentGoingOnNow(): Boolean
-    fun isExperimentOnCurrentIDE(): Boolean
-    fun experimentVersion(): Int
-
-    fun updateStatus()
-
-    companion object {
-        fun getInstance(): WebServiceStatus = ServiceManager.getService(WebServiceStatus::class.java)
-    }
-}
 
 
 class WebServiceStatusProvider(
