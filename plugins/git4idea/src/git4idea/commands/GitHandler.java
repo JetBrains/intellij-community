@@ -84,7 +84,6 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
-  @Nullable private Collection<String> myUrls;
 
   /**
    * A constructor
@@ -234,23 +233,6 @@ public abstract class GitHandler {
   @NotNull
   GitCommand getCommand() {
     return myCommand;
-  }
-
-  public void setUrl(@NotNull String url) {
-    setUrls(singletonList(url));
-  }
-
-  public void setUrls(@NotNull Collection<String> urls) {
-    myUrls = urls;
-  }
-
-  @Nullable
-  public Collection<String> getUrls() {
-    return myUrls;
-  }
-
-  protected boolean isRemote() {
-    return myUrls != null;
   }
 
   /**

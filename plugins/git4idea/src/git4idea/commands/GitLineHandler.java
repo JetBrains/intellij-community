@@ -30,7 +30,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -40,6 +44,10 @@ public class GitLineHandler extends GitTextHandler {
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
+  /**
+   * Remote url which require authentication
+   */
+  @NotNull private Collection<String> myUrls = Collections.emptyList();
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
@@ -64,6 +72,23 @@ public class GitLineHandler extends GitTextHandler {
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
     super(project, directory, pathToExecutable, command, configParameters);
+  }
+
+  public void setUrl(@NotNull String url) {
+    setUrls(singletonList(url));
+  }
+
+  public void setUrls(@NotNull Collection<String> urls) {
+    myUrls = urls;
+  }
+
+  @NotNull
+  public Collection<String> getUrls() {
+    return myUrls;
+  }
+
+  protected boolean isRemote() {
+    return !myUrls.isEmpty();
   }
 
   protected void processTerminated(final int exitCode) {}

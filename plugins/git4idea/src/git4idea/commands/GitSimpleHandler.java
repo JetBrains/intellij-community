@@ -192,9 +192,6 @@ public class GitSimpleHandler extends GitTextHandler {
    * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
-    if (isRemote()) {
-      throw new IllegalStateException("Commands that require remote access could not be run using this method");
-    }
     Ref<VcsException> exRef = Ref.create();
     Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {

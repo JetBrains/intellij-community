@@ -60,7 +60,7 @@ class GitHandlerAuthenticationManager {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getCommand(), ObjectUtils.assertNotNull(myHandler.getUrls()));
+      service.createAuthenticator(myProject, myHandler.getCommand(), myHandler.getUrls());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -118,7 +118,7 @@ class GitHandlerAuthenticationManager {
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
     boolean useHttpProxy =
-      httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, ObjectUtils.assertNotNull(myHandler.getUrls()));
+      httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myHandler.getUrls());
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
     if (useHttpProxy) {
