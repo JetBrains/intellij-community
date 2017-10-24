@@ -348,24 +348,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      assertResolvesTo(PsiDirectory.class, "p1");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PsiDirectory.class, "p1"));
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      assertResolvesTo(PyFunction.class, "foo");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   // PY-7775

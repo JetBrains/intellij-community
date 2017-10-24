@@ -10,7 +10,6 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -59,13 +58,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest(true, false));
   }
 
   public void testAssignmentTargetWith() {  // PY-7529
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(true, false));
   }
 
   public void testAssignmentTargets3K() {
@@ -381,13 +378,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    try {
-      doTest(checkWarnings, checkInfos);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
   }
 
   private void doTest() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
@@ -34,7 +20,6 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -60,91 +45,90 @@ public class PyStubsTest extends PyTestCase {
     // vfile is problematic, but we need an SDK to check builtins
     final Project project = myFixture.getProject();
 
-    PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26); // we need 2.6+ for @foo.setter
-    try {
-      final PyFile file = getTestFile();
-      final List<PyClass> classes = file.getTopLevelClasses();
-      assertEquals(3, classes.size());
-      PyClass pyClass = classes.get(0);
-      assertEquals("FooClass", pyClass.getName());
-      assertEquals("StubStructure.FooClass", pyClass.getQualifiedName());
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON26, // we need 2.6+ for @foo.setter
+      () -> {
+        final PyFile file = getTestFile();
+        final List<PyClass> classes = file.getTopLevelClasses();
+        assertEquals(3, classes.size());
+        PyClass pyClass = classes.get(0);
+        assertEquals("FooClass", pyClass.getName());
+        assertEquals("StubStructure.FooClass", pyClass.getQualifiedName());
 
-      final List<PyTargetExpression> attrs = pyClass.getClassAttributes();
-      assertEquals(2, attrs.size());
-      assertEquals("staticField", attrs.get(0).getName());
-      assertTrue(attrs.get(0).getAssignedQName().matches("deco"));
+        final List<PyTargetExpression> attrs = pyClass.getClassAttributes();
+        assertEquals(2, attrs.size());
+        assertEquals("staticField", attrs.get(0).getName());
+        assertTrue(attrs.get(0).getAssignedQName().matches("deco"));
 
-      final PyFunction[] methods = pyClass.getMethods();
-      assertEquals(2, methods.length);
-      assertEquals("__init__", methods [0].getName());
-      assertEquals("fooFunction", methods [1].getName());
+        final PyFunction[] methods = pyClass.getMethods();
+        assertEquals(2, methods.length);
+        assertEquals("__init__", methods [0].getName());
+        assertEquals("fooFunction", methods [1].getName());
 
-      final PyParameter[] parameters = methods[1].getParameterList().getParameters();
-      assertFalse(parameters [0].hasDefaultValue());
-      assertTrue(parameters [1].hasDefaultValue());
+        final PyParameter[] parameters = methods[1].getParameterList().getParameters();
+        assertFalse(parameters [0].hasDefaultValue());
+        assertTrue(parameters [1].hasDefaultValue());
 
-      // decorators
-      PyFunction decorated = methods[1];
-      PyDecoratorList decos = decorated.getDecoratorList();
-      assertNotNull(decos);
-      assertNotParsed(file);
-      PyDecorator[] da = decos.getDecorators();
-      assertNotNull(da);
-      assertEquals(1, da.length);
-      assertNotParsed(file);
-      PyDecorator deco = da[0];
-      assertNotNull(deco);
-      assertEquals("deco", deco.getName());
-      assertNotParsed(file);
+        // decorators
+        PyFunction decorated = methods[1];
+        PyDecoratorList decos = decorated.getDecoratorList();
+        assertNotNull(decos);
+        assertNotParsed(file);
+        PyDecorator[] da = decos.getDecorators();
+        assertNotNull(da);
+        assertEquals(1, da.length);
+        assertNotParsed(file);
+        PyDecorator deco = da[0];
+        assertNotNull(deco);
+        assertEquals("deco", deco.getName());
+        assertNotParsed(file);
 
-      final List<PyTargetExpression> instanceAttrs = pyClass.getInstanceAttributes();
-      assertEquals(1, instanceAttrs.size());
-      assertEquals("instanceField", instanceAttrs.get(0).getName());
+        final List<PyTargetExpression> instanceAttrs = pyClass.getInstanceAttributes();
+        assertEquals(1, instanceAttrs.size());
+        assertEquals("instanceField", instanceAttrs.get(0).getName());
 
-      final List<PyFunction> functions = file.getTopLevelFunctions();
-      assertEquals(2, functions.size()); // "deco" and "topLevelFunction"
-      PyFunction func = functions.get(0);
-      assertEquals("deco", func.getName());
+        final List<PyFunction> functions = file.getTopLevelFunctions();
+        assertEquals(2, functions.size()); // "deco" and "topLevelFunction"
+        PyFunction func = functions.get(0);
+        assertEquals("deco", func.getName());
 
-      func = functions.get(1);
-      assertEquals("topLevelFunction", func.getName());
+        func = functions.get(1);
+        assertEquals("topLevelFunction", func.getName());
 
-      final List<PyTargetExpression> exprs = file.getTopLevelAttributes();
-      assertEquals(2, exprs.size());
-      assertEquals("top1", exprs.get(0).getName());
-      assertEquals("top2", exprs.get(1).getName());
+        final List<PyTargetExpression> exprs = file.getTopLevelAttributes();
+        assertEquals(2, exprs.size());
+        assertEquals("top1", exprs.get(0).getName());
+        assertEquals("top2", exprs.get(1).getName());
 
-      // properties by call
-      pyClass = classes.get(1);
-      assertEquals("BarClass", pyClass.getName());
+        // properties by call
+        pyClass = classes.get(1);
+        assertEquals("BarClass", pyClass.getName());
 
-      Property prop = pyClass.findProperty("value", true, null);
-      Maybe<PyCallable> maybe_function = prop.getGetter();
-      assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods()[0], maybe_function.value());
+        Property prop = pyClass.findProperty("value", true, null);
+        Maybe<PyCallable> maybe_function = prop.getGetter();
+        assertTrue(maybe_function.isDefined());
+        assertEquals(pyClass.getMethods()[0], maybe_function.value());
 
-      Property setvalueProp = pyClass.findProperty("setvalue", true, null);
-      Maybe<PyCallable> setter = setvalueProp.getSetter();
-      assertTrue(setter.isDefined());
-      assertEquals("__set", setter.value().getName());
+        Property setvalueProp = pyClass.findProperty("setvalue", true, null);
+        Maybe<PyCallable> setter = setvalueProp.getSetter();
+        assertTrue(setter.isDefined());
+        assertEquals("__set", setter.value().getName());
 
-      // properties by decorator
-      pyClass = classes.get(2);
-      assertEquals("BazClass", pyClass.getName());
-      prop = pyClass.findProperty("x", true, null);
-      maybe_function = prop.getGetter();
-      assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods()[0], maybe_function.value());
-      maybe_function = prop.getSetter();
-      assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods()[1], maybe_function.value());
+        // properties by decorator
+        pyClass = classes.get(2);
+        assertEquals("BazClass", pyClass.getName());
+        prop = pyClass.findProperty("x", true, null);
+        maybe_function = prop.getGetter();
+        assertTrue(maybe_function.isDefined());
+        assertEquals(pyClass.getMethods()[0], maybe_function.value());
+        maybe_function = prop.getSetter();
+        assertTrue(maybe_function.isDefined());
+        assertEquals(pyClass.getMethods()[1], maybe_function.value());
 
-      // ...and the juice:
-      assertNotParsed(file);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.getDefault());
-    }
+        // ...and the juice:
+        assertNotParsed(file);
+      }
+    );
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {
@@ -381,6 +365,7 @@ public class PyStubsTest extends PyTestCase {
     final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
     new WriteCommandAction.Simple(project, fooPyFile) {
+      @Override
       public void run() {
         fooDocument.setText("class Foo: pass");
       }

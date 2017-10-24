@@ -8,7 +8,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -182,28 +181,22 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("str",
-             "def foo(x: str) -> list:\n" +
-             "    expr = x");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("str",
+                   "def foo(x: str) -> list:\n" +
+                   "    expr = x")
+    );
   }
 
   public void testReturnTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("list",
-             "def foo(x) -> list:\n" +
-             "    return x\n" +
-             "expr = foo(None)");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("list",
+                   "def foo(x) -> list:\n" +
+                   "    return x\n" +
+                   "expr = foo(None)")
+    );
   }
 
   public void testEpydocReturnType() {
