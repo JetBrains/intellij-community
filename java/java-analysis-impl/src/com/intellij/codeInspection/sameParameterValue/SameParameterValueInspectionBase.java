@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -244,8 +244,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     final String name = parameter.getName();
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     "<code>" + name + "</code>",
-                                                                     "<code>" + StringUtil.unquoteString(value) + "</code>"),
+                                                                     name,
+                                                                     StringUtil.unquoteString(value)),
                                            usedForWriting ? null : createFix(name, value),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
