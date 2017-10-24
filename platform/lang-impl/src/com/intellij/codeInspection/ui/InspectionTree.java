@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
@@ -359,6 +361,69 @@ public class InspectionTree extends Tree {
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
     myState.restoreExpansionAndSelection(this, treeNodesMightChange);
+  }
+
+  public void removeSelectedProblems() {
+    synchronized (getContext().getView().getTreeStructureUpdateLock()) {
+      TreePath[] selected = getSelectionPaths();
+      if (selected == null) return;
+      Set<InspectionTreeNode> processedNodes = new THashSet<>();
+      List<InspectionTreeNode> toRemove = new ArrayList<>();
+      for (TreePath path : selected) {
+        Object[] nodePath = path.getPath();
+
+        // ignore root
+        for (int i = 1; i < nodePath.length; i++) {
+          InspectionTreeNode node = (InspectionTreeNode) nodePath[i];
+          if (!processedNodes.add(node)) break;
+
+          if (shouldDelete(node)) {
+            toRemove.add(node);
+            break;
+          }
+        }
+      }
+
+      if (toRemove.isEmpty()) return;
+      DefaultTreeModel model = (DefaultTreeModel)getModel();
+      for (InspectionTreeNode node : toRemove) {
+        if (node.getParent() != null) {
+          model.removeNodeFromParent(node);
+        }
+      }
+    }
+    revalidate();
+    repaint();
+  }
+
+  private boolean shouldDelete(InspectionTreeNode node) {
+    if (node instanceof RefElementNode) {
+      RefElementNode refElementNode = (RefElementNode)node;
+      RefEntity refEntity = refElementNode.getElement();
+      if (refEntity == null || !refElementNode.getPresentation().getProblemElements().containsKey(refEntity)) {
+        return true;
+      }
+    }
+    else if (node instanceof ProblemDescriptionNode) {
+      ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+      CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
+      if (descriptor == null || !problemDescriptionNode.getPresentation().getProblemElements().containsValue(descriptor)) {
+        return true;
+      }
+    }
+    else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
+      return IntStream.range(0, node.getChildCount()).mapToObj(i -> (InspectionTreeNode)node.getChildAt(i)).allMatch(this::shouldDelete);
+    }
+    else if (node instanceof InspectionNode) {
+      InspectionToolPresentation presentation = myContext.getPresentation(((InspectionNode)node).getToolWrapper());
+      if (presentation.getProblemElements().isEmpty()) {
+        return true;
+      }
+    }
+    else if (node instanceof InspectionModuleNode || node instanceof InspectionPackageNode) {
+      return IntStream.range(0, node.getChildCount()).mapToObj(i -> (InspectionTreeNode)node.getChildAt(i)).allMatch(this::shouldDelete);
+    }
+    return false;
   }
 
   public InspectionTreeState getTreeState() {
