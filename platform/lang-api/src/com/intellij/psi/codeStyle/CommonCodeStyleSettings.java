@@ -918,6 +918,14 @@ public class CommonCodeStyleSettings {
     public boolean USE_RELATIVE_INDENTS = false;
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
+    // region More continuations (reserved for versions 2018.x)
+    @SuppressWarnings("unused") public int DECLARATION_PARAMETER_INDENT = - 1;
+    @SuppressWarnings("unused") public int GENERIC_TYPE_PARAMETER_INDENT = -1;
+    @SuppressWarnings("unused") public int CALL_PARAMETER_INDENT = -1;
+    @SuppressWarnings("unused") public int CHAINED_CALL_INDENT = -1;
+    @SuppressWarnings("unused") public int ARRAY_ELEMENT_INDENT = -1; // array declarations
+    // endregion
+
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
     private boolean myOverrideLanguageOptions;
