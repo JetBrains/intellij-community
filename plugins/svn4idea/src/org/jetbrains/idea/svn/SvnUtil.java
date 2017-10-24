@@ -9,8 +9,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -42,10 +45,11 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -56,19 +60,29 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.AtomicNotNullLazyValue.createValue;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.SystemProperties.getUserHome;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 
 public class SvnUtil {
-  // TODO: ASP.NET hack behavior should be supported - http://svn.apache.org/repos/asf/subversion/trunk/notes/asp-dot-net-hack.txt
-  // TODO: Remember this when moving out SVNKit classes.
-  @NonNls public static final String SVN_ADMIN_DIR_NAME = SVNFileUtil.getAdminDirectoryName();
+  @NonNls public static final String SVN_ADMIN_DIR_NAME =
+    SystemInfo.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
+
+  public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
+    () -> SystemInfo.isWindows
+          ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
+          : Paths.get(getUserHome(), ".subversion"));
+  public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
+    () -> SystemInfo.isWindows
+          ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
+          : Paths.get("/etc/subversion"));
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
@@ -480,8 +494,7 @@ public class SvnUtil {
   }
 
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
-    final String adminName = SVNFileUtil.getAdminDirectoryName();
-    final VirtualFile child = file.findChild(adminName);
+    final VirtualFile child = file.findChild(SVN_ADMIN_DIR_NAME);
     return child != null && child.isDirectory();
   }
 

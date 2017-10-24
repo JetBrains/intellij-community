@@ -40,7 +40,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -578,7 +577,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         return false;
       }
       catch (VcsException e) {
-        SVNFileUtil.deleteAll(targetFile, true);
+        FileUtil.delete(targetFile);
         return false;
       }
     }

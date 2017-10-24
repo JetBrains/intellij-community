@@ -19,12 +19,14 @@ import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.File;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnAuthenticationManager {
@@ -43,8 +45,8 @@ public class SvnAuthenticationManager {
     @NotNull
     @Override
     protected SVNCompositeConfigFile compute() {
-      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
-      SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, CONFIG_FILE_NAME));
+      SVNConfigFile systemConfig = new SVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME).toFile());
       return new SVNCompositeConfigFile(systemConfig, userConfig);
     }
   };
@@ -52,8 +54,8 @@ public class SvnAuthenticationManager {
     @NotNull
     @Override
     protected SVNCompositeConfigFile compute() {
-      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
-      SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
+      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, SERVERS_FILE_NAME));
+      SVNConfigFile systemConfig = new SVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile());
       return new SVNCompositeConfigFile(systemConfig, userConfig);
     }
   };

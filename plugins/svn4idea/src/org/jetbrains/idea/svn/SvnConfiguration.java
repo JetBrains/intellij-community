@@ -22,7 +22,6 @@ import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -32,6 +31,9 @@ import java.util.TreeSet;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newTreeSet;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
 @State(name = "SvnConfiguration", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
@@ -282,7 +284,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public String getConfigurationDirectory() {
     if (myState.directory.path == null || isUseDefaultConfiguation()) {
-      myState.directory.path = IdeaSubversionConfigurationDirectory.getPath();
+      myState.directory.path = USER_CONFIGURATION_PATH.getValue().toString();
     }
     return myState.directory.path;
   }
@@ -292,7 +294,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public void setConfigurationDirParameters(final boolean newUseDefault, final String newConfigurationDirectory) {
-    final String defaultPath = IdeaSubversionConfigurationDirectory.getPath();
+    final String defaultPath = USER_CONFIGURATION_PATH.getValue().toString();
     final String oldEffectivePath = isUseDefaultConfiguation() ? defaultPath : getConfigurationDirectory();
     final String newEffectivePath = newUseDefault ? defaultPath : newConfigurationDirectory;
 
@@ -314,7 +316,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   private void setConfigurationDirectory(String path) {
     myState.directory.path = path;
-    File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
+    File dir = path == null ? USER_CONFIGURATION_PATH.getValue().toFile() : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
   }
 
@@ -376,7 +378,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       SVNConfigFile.createDefaultConfiguration(dir);
     }
 
-    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME))));
+    systemManager
+      .set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile())));
     userManager.set(new SvnServerFileManagerImpl(getServersFile()));
   }
 
