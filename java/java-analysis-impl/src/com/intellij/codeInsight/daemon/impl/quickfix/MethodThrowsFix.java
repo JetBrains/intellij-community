@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -29,19 +15,19 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
+  private static final Logger LOG = Logger.getInstance(MethodThrowsFix.class);
 
   private final String myThrowsCanonicalText;
-  private final boolean myShouldThrow;
+  private final boolean myAddThrow;
   private final String myMethodName;
 
-  public MethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean shouldThrow, boolean showContainingClass) {
+  public MethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean addThrow, boolean showClassName) {
     super(method);
     myThrowsCanonicalText = exceptionType.getCanonicalText();
-    myShouldThrow = shouldThrow;
+    myAddThrow = addThrow;
     myMethodName = PsiFormatUtil.formatMethod(method,
                                               PsiSubstitutor.EMPTY,
-                                              PsiFormatUtilBase.SHOW_NAME | (showContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS
+                                              PsiFormatUtilBase.SHOW_NAME | (showClassName ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS
                                                                                                    : 0),
                                               0);
   }
@@ -49,7 +35,7 @@ public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message(myShouldThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
+    return QuickFixBundle.message(myAddThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
                                   StringUtil.getShortName(myThrowsCanonicalText),
                                   myMethodName);
   }
@@ -77,13 +63,13 @@ public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
       for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
         if (referenceElement.getCanonicalText().equals(myThrowsCanonicalText)) {
           alreadyThrows = true;
-          if (!myShouldThrow) {
+          if (!myAddThrow) {
             referenceElement.delete();
             break;
           }
         }
       }
-      if (myShouldThrow && !alreadyThrows) {
+      if (myAddThrow && !alreadyThrows) {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
         PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
