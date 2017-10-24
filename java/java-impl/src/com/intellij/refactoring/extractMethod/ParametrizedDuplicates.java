@@ -57,7 +57,8 @@ public class ParametrizedDuplicates {
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableDatum;
 
-  private ParametrizedDuplicates(@NotNull PsiElement[] pattern) {
+  private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
+                                 @NotNull ExtractMethodProcessor originalProcessor) {
     LOG.assertTrue(pattern.length != 0, "pattern length");
     if (pattern[0] instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
@@ -65,7 +66,7 @@ public class ParametrizedDuplicates {
     }
     else if (pattern[0] instanceof PsiExpression) {
       PsiElement[] copy = copyElements(pattern);
-      PsiExpression wrapped = wrapExpressionWithCodeBlock(copy);
+      PsiExpression wrapped = wrapExpressionWithCodeBlock(copy, originalProcessor);
       myElements = wrapped != null ? new PsiElement[]{wrapped} : PsiElement.EMPTY_ARRAY;
     }
     else {
@@ -89,7 +90,7 @@ public class ParametrizedDuplicates {
       return null;
     }
 
-    ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern);
+    ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern, originalProcessor);
     if (!duplicates.initMatches(matches)) {
       return null;
     }
@@ -103,13 +104,14 @@ public class ParametrizedDuplicates {
   @NotNull
   private static List<Match> findOriginalDuplicates(@NotNull ExtractMethodProcessor processor) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
+    Set<PsiVariable> effectivelyLocal = processor.getEffectivelyLocalVariables();
 
     List<PsiVariable> variables = ContainerUtil.map(processor.myInputVariables.getInputVariables(), iv -> iv.variable);
     InputVariables inputVariables = new InputVariables(variables, processor.myProject, new LocalSearchScope(processor.myElements), false);
     DuplicatesFinder finder = new DuplicatesFinder(elements, inputVariables,
                                                    processor.myOutputVariable != null
                                                    ? new VariableReturnValue(processor.myOutputVariable) : null,
-                                                   Collections.emptyList(), true) {
+                                                   Collections.emptyList(), true, effectivelyLocal) {
       @Override
       protected boolean isSelf(@NotNull PsiElement candidate) {
         for (PsiElement element : elements) {
@@ -165,7 +167,7 @@ public class ParametrizedDuplicates {
       matches.removeAll(badMatches);
     }
     myMatches = matches;
-    if (myMatches.isEmpty() || myUsagesList.isEmpty()) {
+    if (myMatches.isEmpty()) {
       return false;
     }
 
@@ -303,7 +305,8 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy) {
+  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy,
+                                                           @NotNull ExtractMethodProcessor originalProcessor) {
     if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
 
     PsiExpression expression = (PsiExpression)copy[0];
@@ -334,6 +337,14 @@ public class ParametrizedDuplicates {
     PsiStatement[] statements = body.getStatements();
     LOG.assertTrue(statements.length == 1, "wrapper class method's body statement count");
     PsiStatement bodyStatement = statements[0];
+
+    Set<PsiVariable> effectivelyLocal = originalProcessor.getEffectivelyLocalVariables();
+    for (PsiVariable variable : effectivelyLocal) {
+      String name = variable.getName();
+      LOG.assertTrue(name != null, "effectively local variable's name is null");
+      PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(name, variable.getType(), null);
+      body.addBefore(declaration, bodyStatement);
+    }
 
     PsiExpression wrapped = null;
     if (PsiType.VOID.equals(type) && bodyStatement instanceof PsiExpressionStatement) {
