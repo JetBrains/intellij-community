@@ -145,6 +145,7 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   @Override
+  @NotNull
   public Set<String> getWords() {
     Set<String> words = new THashSet<>();
     for (int i = 0; i <= alphabet.getLastIndexUsed(); i++) {
