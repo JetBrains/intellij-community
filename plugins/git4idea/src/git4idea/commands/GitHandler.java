@@ -19,14 +19,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
@@ -47,8 +45,6 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static java.util.Collections.singletonList;
-
 /**
  * A handler for git commands
  */
@@ -61,8 +57,6 @@ public abstract class GitHandler {
   private final Project myProject;
   private final GitCommand myCommand;
 
-  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>(); // Error codes that are ignored for the handler
-  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -169,42 +163,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add error code to ignored list
-   *
-   * @param code the code to ignore
-   */
-  public void ignoreErrorCode(int code) {
-    myIgnoredErrorCodes.add(code);
-  }
-
-  /**
-   * Check if error code should be ignored
-   *
-   * @param code a code to check
-   * @return true if error code is ignorable
-   */
-  public boolean isIgnoredErrorCode(int code) {
-    return myIgnoredErrorCodes.contains(code);
-  }
-
-
-  /**
-   * add error to the error list
-   *
-   * @param ex an error to add to the list
-   */
-  public void addError(VcsException ex) {
-    myErrors.add(ex);
-  }
-
-  /**
-   * @return unmodifiable list of errors.
-   */
-  public List<VcsException> errors() {
-    return Collections.unmodifiableList(myErrors);
-  }
-
-  /**
    * @return a context project
    */
   @Nullable
@@ -219,17 +177,6 @@ public abstract class GitHandler {
     return myCommandLine.getWorkDirectory();
   }
 
-  /**
-   * @return the current working directory
-   */
-  public VirtualFile getWorkingDirectoryFile() {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(getWorkingDirectory());
-    if (file == null) {
-      throw new IllegalStateException("The working directly should be available: " + getWorkingDirectory());
-    }
-    return file;
-  }
-
   @NotNull
   GitCommand getCommand() {
     return myCommand;
@@ -242,13 +189,6 @@ public abstract class GitHandler {
    */
   protected void addListener(ProcessEventListener listener) {
     myListeners.addListener(listener);
-  }
-
-  /**
-   * End option parameters and start file paths. The method adds {@code "--"} parameter.
-   */
-  public void endOptions() {
-    myCommandLine.addParameter("--");
   }
 
   /**
@@ -287,14 +227,6 @@ public abstract class GitHandler {
 
   private boolean isCmd() {
     return myCommandLine.getExePath().toLowerCase().endsWith("cmd");
-  }
-
-  @NotNull
-  private String unescapeCommandLine(@NotNull String commandLine) {
-    if (escapeNeeded(commandLine)) {
-      return commandLine.replaceAll("\\^\\^\\^\\^", "^");
-    }
-    return commandLine;
   }
 
   /**
@@ -336,6 +268,13 @@ public abstract class GitHandler {
   }
 
   /**
+   * End option parameters and start file paths. The method adds {@code "--"} parameter.
+   */
+  public void endOptions() {
+    myCommandLine.addParameter("--");
+  }
+
+  /**
    * check that process is not started yet
    *
    * @throws IllegalStateException if process has been already started
@@ -365,74 +304,11 @@ public abstract class GitHandler {
   }
 
   /**
-   * Start process
+   * @return true if the command line is too big
    */
-  synchronized void start() {
-    checkNotStarted();
-
-    try {
-      myStartTime = System.currentTimeMillis();
-      if (!mySilent) {
-        LOG.info("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
-      }
-      else {
-        LOG.debug("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
-      }
-
-      prepareEnvironment();
-      // start process
-      myProcess = startProcess();
-      startHandlingStreams();
-    }
-    catch (ProcessCanceledException ignored) {
-    }
-    catch (Throwable t) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
-      }
-      myListeners.getMulticaster().startFailed(t);
-    }
+  public boolean isLargeCommandLine() {
+    return myCommandLine.getCommandLineString().length() > VcsFileUtil.FILE_PATH_LIMIT;
   }
-
-  private void prepareEnvironment() {
-    Map<String, String> executionEnvironment = myCommandLine.getEnvironment();
-    executionEnvironment.clear();
-    executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
-    executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
-    executionEnvironment.putAll(getGitTraceEnvironmentVariables());
-    executionEnvironment.putAll(myCustomEnv);
-  }
-
-  /**
-   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
-   */
-  @NotNull
-  public static Map<String, String> getGitTraceEnvironmentVariables() {
-    Map<String, String> environment = new HashMap<>(5);
-    environment.put("GIT_TRACE", "0");
-    environment.put("GIT_TRACE_PACK_ACCESS", "");
-    environment.put("GIT_TRACE_PACKET", "");
-    environment.put("GIT_TRACE_PERFORMANCE", "0");
-    environment.put("GIT_TRACE_SETUP", "0");
-    return environment;
-  }
-
-  /**
-   * Add environment variable to this handler
-   *
-   * @param name  the variable name
-   * @param value the variable value
-   */
-  public void addCustomEnvironmentVariable(String name, String value) {
-    myCustomEnv.put(name, value);
-  }
-
-  protected abstract Process startProcess() throws ExecutionException;
-
-  /**
-   * Start handling process output streams for the handler.
-   */
-  protected abstract void startHandlingStreams();
 
   /**
    * @return a command line with full path to executable replace to "git"
@@ -441,28 +317,31 @@ public abstract class GitHandler {
     return unescapeCommandLine(myCommandLine.getCommandLineString("git"));
   }
 
-  /**
-   * Wait for process termination
-   */
-  void waitFor() {
-    checkStarted();
-    try {
-      if (myInputProcessor != null && myProcess != null) {
-        myInputProcessor.consume(myProcess.getOutputStream());
-      }
+  @NotNull
+  private String unescapeCommandLine(@NotNull String commandLine) {
+    if (escapeNeeded(commandLine)) {
+      return commandLine.replaceAll("\\^\\^\\^\\^", "^");
     }
-    catch (IOException e) {
-      addError(new VcsException(e));
-    }
-    finally {
-      waitForProcess();
-    }
+    return commandLine;
   }
 
   /**
-   * Wait for process
+   * @return a character set to use for IO
    */
-  protected abstract void waitForProcess();
+  @NotNull
+  public Charset getCharset() {
+    return myCharset;
+  }
+
+  /**
+   * Set character set for IO
+   *
+   * @param charset a character set
+   */
+  @SuppressWarnings({"SameParameterValue"})
+  public void setCharset(@NotNull Charset charset) {
+    myCharset = charset;
+  }
 
   /**
    * Set silent mode. When handler is silent, it does not logs command in version control console.
@@ -484,24 +363,6 @@ public abstract class GitHandler {
 
   boolean isSilent() {
     return mySilent;
-  }
-
-  /**
-   * @return a character set to use for IO
-   */
-  @NotNull
-  public Charset getCharset() {
-    return myCharset;
-  }
-
-  /**
-   * Set character set for IO
-   *
-   * @param charset a character set
-   */
-  @SuppressWarnings({"SameParameterValue"})
-  public void setCharset(@NotNull Charset charset) {
-    myCharset = charset;
   }
 
   /**
@@ -539,10 +400,22 @@ public abstract class GitHandler {
   }
 
   /**
-   * @return true if the command line is too big
+   * Set processor for standard input. This is a place where input to the git application could be generated.
+   *
+   * @param inputProcessor the processor
    */
-  public boolean isLargeCommandLine() {
-    return myCommandLine.getCommandLineString().length() > VcsFileUtil.FILE_PATH_LIMIT;
+  public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
+    myInputProcessor = inputProcessor;
+  }
+
+  /**
+   * Add environment variable to this handler
+   *
+   * @param name  the variable name
+   * @param value the variable value
+   */
+  public void addCustomEnvironmentVariable(String name, String value) {
+    myCustomEnv.put(name, value);
   }
 
   void runInCurrentThread(@Nullable Runnable postStartAction) {
@@ -575,19 +448,139 @@ public abstract class GitHandler {
     }
   }
 
+  /**
+   * Start process
+   */
+  synchronized void start() {
+    checkNotStarted();
+
+    try {
+      myStartTime = System.currentTimeMillis();
+      String logDirectoryPath = myProject != null
+                                ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkDirectory())
+                                : myCommandLine.getWorkDirectory().getPath();
+      if (!mySilent) {
+        LOG.info("[" + logDirectoryPath + "] " + printableCommandLine());
+      }
+      else {
+        LOG.debug("[" + logDirectoryPath + "] " + printableCommandLine());
+      }
+
+      prepareEnvironment();
+      // start process
+      myProcess = startProcess();
+      startHandlingStreams();
+    }
+    catch (Throwable t) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
+      }
+      myListeners.getMulticaster().startFailed(t);
+    }
+  }
+
+  private void prepareEnvironment() {
+    Map<String, String> executionEnvironment = myCommandLine.getEnvironment();
+    executionEnvironment.clear();
+    executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+    executionEnvironment.putAll(getGitTraceEnvironmentVariables());
+    executionEnvironment.putAll(myCustomEnv);
+  }
+
+  /**
+   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
+   */
+  @NotNull
+  public static Map<String, String> getGitTraceEnvironmentVariables() {
+    Map<String, String> environment = new HashMap<>(5);
+    environment.put("GIT_TRACE", "0");
+    environment.put("GIT_TRACE_PACK_ACCESS", "");
+    environment.put("GIT_TRACE_PACKET", "");
+    environment.put("GIT_TRACE_PERFORMANCE", "0");
+    environment.put("GIT_TRACE_SETUP", "0");
+    return environment;
+  }
+
+  protected abstract Process startProcess() throws ExecutionException;
+
+  /**
+   * Start handling process output streams for the handler.
+   */
+  protected abstract void startHandlingStreams();
+
+  /**
+   * Wait for process termination
+   */
+  void waitFor() {
+    checkStarted();
+    try {
+      if (myInputProcessor != null && myProcess != null) {
+        myInputProcessor.consume(myProcess.getOutputStream());
+      }
+    }
+    catch (IOException e) {
+      addError(new VcsException(e));
+    }
+    finally {
+      waitForProcess();
+    }
+  }
+
+  /**
+   * Wait for process
+   */
+  protected abstract void waitForProcess();
+
   @Override
   public String toString() {
     return myCommandLine.toString();
   }
 
+  //region removal candidates
+  //region TODO: move this functionality to GitCommandResult
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>(); // Error codes that are ignored for the handler
+
   /**
-   * Set processor for standard input. This is a place where input to the git application could be generated.
+   * Add error code to ignored list
    *
-   * @param inputProcessor the processor
+   * @param code the code to ignore
    */
-  public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
-    myInputProcessor = inputProcessor;
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
   }
+
+  /**
+   * Check if error code should be ignored
+   *
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
+  }
+  //endregion
+
+  //region TODO: move this functionality to GitCommandResult
+  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
+
+  /**
+   * add error to the error list
+   *
+   * @param ex an error to add to the list
+   */
+  public void addError(VcsException ex) {
+    myErrors.add(ex);
+  }
+
+  /**
+   * @return unmodifiable list of errors.
+   */
+  public List<VcsException> errors() {
+    return Collections.unmodifiableList(myErrors);
+  }
+  //endregion
+  //endregion
 
   //region deprecated stuff
   @Deprecated
