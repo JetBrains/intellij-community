@@ -448,7 +448,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     // If files are being moved then I need to collect some information to delete these
-    // filese from CVS. I need to know all common parents of the moved files and releative
+    // files from CVS. I need to know all common parents of the moved files and relative
     // paths.
 
     // Move files with correction of references.
