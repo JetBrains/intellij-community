@@ -83,7 +83,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
-  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToReIndex = ContainerUtil.newHashMap();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage storage,
