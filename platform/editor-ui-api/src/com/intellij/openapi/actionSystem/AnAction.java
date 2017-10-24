@@ -71,6 +71,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
   private Presentation myTemplatePresentation;
+  @NotNull
   private ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
   private boolean myEnabledInModalContext;
 
@@ -129,6 +130,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @return shortcut set associated with this action
    */
+  @NotNull
   public final ShortcutSet getShortcutSet(){
     return myShortcutSet;
   }
@@ -264,7 +266,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    */
   public abstract void actionPerformed(AnActionEvent e);
 
-  protected void setShortcutSet(ShortcutSet shortcutSet) {
+  protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myIsGlobal && myShortcutSet != shortcutSet) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +

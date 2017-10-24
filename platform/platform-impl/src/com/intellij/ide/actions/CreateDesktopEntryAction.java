@@ -158,6 +158,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     if (execPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
+    execPath = StringUtil.wrapWithDoubleQuote(execPath);
 
     String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition();
     String wmClass = AppUIUtil.getFrameClass();

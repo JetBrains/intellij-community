@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=$NAME$
-Icon=$ICON$
-Exec=$SCRIPT$ %f
-Comment=The Drive to Develop
-Categories=Development;IDE;
-Terminal=false
-StartupWMClass=$WM_CLASS$

@@ -204,7 +204,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                                                                                    highlightLayer, attributes,
                                                                                    HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
-      if (infoRange != null) {
+      if (infoRange != null && findModel != null && findModel.isReplaceState()) {
         RangeHighlighter boxHighlighter
           = markupModel.addRangeHighlighter(
           infoRange.getStartOffset(),

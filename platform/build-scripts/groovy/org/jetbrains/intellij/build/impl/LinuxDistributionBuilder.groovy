@@ -196,7 +196,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux .snap package") {
       buildContext.messages.progress("Preparing files")
 
-      def desktopTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/entry.desktop"
+      def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {

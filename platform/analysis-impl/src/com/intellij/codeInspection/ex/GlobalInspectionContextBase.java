@@ -266,6 +266,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (myProgressIndicator == null) {
       throw new IllegalStateException("Inspections must be run under progress");
     }
+    myProgressIndicator.setIndeterminate(false);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     //init manager in read action
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();

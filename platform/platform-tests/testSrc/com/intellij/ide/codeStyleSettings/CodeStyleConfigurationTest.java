@@ -119,13 +119,6 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
       "  <option name=\"OTHER_INDENT_OPTIONS\">\n" +
       "    <value>\n" +
       "      <option name=\"INDENT_SIZE\" value=\"2\" />\n" +
-      "      <option name=\"CONTINUATION_INDENT_SIZE\" value=\"8\" />\n" +
-      "      <option name=\"TAB_SIZE\" value=\"4\" />\n" +
-      "      <option name=\"USE_TAB_CHARACTER\" value=\"false\" />\n" +
-      "      <option name=\"SMART_TABS\" value=\"false\" />\n" +
-      "      <option name=\"LABEL_INDENT_SIZE\" value=\"0\" />\n" +
-      "      <option name=\"LABEL_INDENT_ABSOLUTE\" value=\"false\" />\n" +
-      "      <option name=\"USE_RELATIVE_INDENTS\" value=\"false\" />\n" +
       "    </value>\n" +
       "  </option>\n" +
       "</option>",
