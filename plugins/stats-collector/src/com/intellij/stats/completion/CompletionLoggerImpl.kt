@@ -133,7 +133,7 @@ class CompletionFileLogger(private val installationUID: String,
         val lookupItems = lookup.items
         
         val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList()
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
@@ -144,7 +144,7 @@ class CompletionFileLogger(private val installationUID: String,
         val lookupItems = lookup.items
         
         val newInfos = getRecentlyAddedLookupItems(lookupItems).toLookupInfos(lookup)
-        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList<Int>()
+        val ids = if (newInfos.isNotEmpty()) lookupItems.map { getElementId(it)!! } else emptyList()
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)

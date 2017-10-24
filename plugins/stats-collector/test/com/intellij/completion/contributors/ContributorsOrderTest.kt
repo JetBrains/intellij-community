@@ -39,12 +39,12 @@ class ContributorsOrderTest: PlatformTestCase() {
     }
 
     override fun tearDown() {
-        CompletionContributors.removeFirst()
+        CompletionContributorUtils.removeFirst()
         super.tearDown()
     }
 
     fun `test invocation enhancing contributor is first`() {
-        val first = CompletionContributors.first()
+        val first = CompletionContributorUtils.first()
         assertThat(first.implementationClass).isEqualTo(enhancerClassName)
     }
 

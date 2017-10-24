@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
+import com.intellij.completion.enhancer.LookupElementPositionTracker
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -49,6 +50,9 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
         }
         else if (lookup is LookupImpl) {
             if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+
+            val shownTimesTracker = LookupElementPositionTracker(lookup)
+            lookup.setPrefixChangeListener(shownTimesTracker)
 
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)

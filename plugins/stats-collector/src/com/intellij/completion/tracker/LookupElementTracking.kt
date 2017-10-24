@@ -17,8 +17,6 @@ package com.intellij.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
-import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.stats.completion.idString
@@ -41,6 +39,11 @@ class ElementPositionHistory {
 
     fun add(position: StagePosition) = history.add(position)
     fun history() = history
+
+    override fun toString(): String {
+        return "ElementPositionHistory(history=$history)"
+    }
+
 }
 
 
@@ -68,37 +71,4 @@ class UserDataLookupElementTracking : LookupElementTracking {
         }
     }
 
-}
-
-
-class ShownTimesTrackerInitializer : ApplicationComponent {
-
-    private val lookupLifecycleListener = object : LookupLifecycleListener {
-        override fun lookupCreated(lookup: LookupImpl) {
-            val shownTimesTracker = ShownTimesTrackingListener(lookup)
-            lookup.setPrefixChangeListener(shownTimesTracker)
-        }
-    }
-
-    override fun initComponent() {
-        val listener = lookupLifecycleListenerInitializer(lookupLifecycleListener)
-        registerProjectManagerListener(listener)
-    }
-
-}
-
-
-private class ShownTimesTrackingListener(private val lookup: LookupImpl): PrefixChangeListener {
-    private var stage = 0
-
-    override fun beforeAppend(c: Char) = update()
-    override fun beforeTruncate() = update()
-
-    private fun update() {
-        lookup.items.forEachIndexed { index, lookupElement ->
-            val position = StagePosition(stage, index)
-            UserDataLookupElementTracking.addElementPosition(lookup, lookupElement, position)
-        }
-        stage++
-    }
 }

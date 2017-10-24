@@ -26,21 +26,6 @@ import org.picocontainer.ComponentAdapter
 
 object CompletionContributors {
 
-    fun add(contributorEP: CompletionContributorEP) {
-        val extensionPoint = extensionPoint()
-        extensionPoint.registerExtension(contributorEP)
-    }
-
-    fun remove(contributorEP: CompletionContributorEP) {
-        val extensionPoint = extensionPoint()
-        extensionPoint.unregisterExtension(contributorEP)
-    }
-
-    fun first(): CompletionContributorEP {
-        val extensionPoint = extensionPoint()
-        return extensionPoint.extensions.first()
-    }
-
     fun addFirst(contributorEP: CompletionContributorEP) {
         val extensionPoint = extensionPoint()
         val first = extensionPoint.extensions.first() as CompletionContributorEP
@@ -49,14 +34,8 @@ object CompletionContributors {
         extensionPoint.registerExtension(contributorEP, order)
     }
 
-    private fun extensionPoint(): ExtensionPoint<CompletionContributorEP> {
+    fun extensionPoint(): ExtensionPoint<CompletionContributorEP> {
         return Extensions.getRootArea().getExtensionPoint<CompletionContributorEP>("com.intellij.completion.contributor")
-    }
-
-    fun removeFirst() {
-        val point = extensionPoint()
-        val first = point.extensions.first()
-        point.unregisterExtension(first)
     }
 
     private fun contributorOrderId(contributorEP: CompletionContributorEP): String? {

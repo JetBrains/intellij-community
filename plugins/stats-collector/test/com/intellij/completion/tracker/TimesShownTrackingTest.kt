@@ -17,7 +17,7 @@ package com.intellij.completion.tracker
 
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.enhancer.LookupElementPositionTracker
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.stats.completion.idString
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -32,10 +32,11 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
   }
 
   fun `test check times shown`() {
-    val tracker = LookupElementTracking.getInstance()
-
     myFixture.completeBasic()
     val allItems = lookup.items
+
+    val shownTimesTracker = LookupElementPositionTracker(lookup)
+    lookup.setPrefixChangeListener(shownTimesTracker)
 
     assertThat(allItems.take(5).map { it.lookupString })
       .isEqualTo(listOf("cat", "man", "run", "runnable", "rus"))

@@ -51,7 +51,7 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
             implementationClass = TestContributor::class.java.name
             language = "any"
         }
-        CompletionContributors.add(testContributor)
+        CompletionContributorUtils.add(testContributor)
 
         CompletionContributorEP().apply {
             implementationClass = InvocationCountEnhancingContributor::class.java.name
@@ -67,8 +67,8 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
     }
 
     override fun tearDown() {
-        CompletionContributors.remove(testContributor)
-        CompletionContributors.removeFirst()
+        CompletionContributorUtils.remove(testContributor)
+        CompletionContributorUtils.removeFirst()
 
         TestContributor.isEnabled = false
         InvocationCountEnhancingContributor.isEnabledInTests = false
