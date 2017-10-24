@@ -920,6 +920,13 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testGluedStringLiteralInParentheses() {
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }

@@ -686,10 +686,13 @@ public class PyBlock implements ASTBlock {
     if (childType == PyTokenTypes.COMMA) {
       return false;
     }
-    if (myNode.getElementType() == PyElementTypes.PARENTHESIZED_EXPRESSION
-        && childType != PyElementTypes.TUPLE_EXPRESSION
-        && childType != PyElementTypes.GENERATOR_EXPRESSION) {
-      return false;
+    if (myNode.getElementType() == PyElementTypes.PARENTHESIZED_EXPRESSION) {
+      if (childType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+        return true;
+      }
+      if (childType != PyElementTypes.TUPLE_EXPRESSION && childType != PyElementTypes.GENERATOR_EXPRESSION) {
+        return false;
+      }
     }
     return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
   }
