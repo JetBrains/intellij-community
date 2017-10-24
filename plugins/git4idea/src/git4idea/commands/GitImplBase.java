@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,9 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Consumer;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
@@ -72,7 +75,7 @@ abstract class GitImplBase implements Git {
     @NotNull OutputCollector outputCollector;
     @NotNull GitCommandResultListener resultListener;
 
-    boolean authFailed;
+    Ref<Boolean> authFailedRef = Ref.create(false);
     int authAttempt = 0;
     do {
       handler = handlerConstructor.compute();
@@ -82,14 +85,17 @@ abstract class GitImplBase implements Git {
 
       handler.addLineListener(resultListener);
 
-      try (AccessToken locking = lock(handler)) {
+      try (AccessToken locking = lock(handler);
+           AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
         writeOutputToConsole(handler);
 
         handler.runInCurrentThread(null);
-        authFailed = handler.hasHttpAuthFailed();
+      }
+      catch (IOException e) {
+        resultListener.startFailed(e);
       }
     }
-    while (authFailed && authAttempt++ < 2);
+    while (authFailedRef.get() && authAttempt++ < 2);
     return new GitCommandResult(
       !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
       resultListener.myExitCode,
@@ -189,6 +195,23 @@ abstract class GitImplBase implements Git {
     }
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
+
+  @NotNull
+  private static AccessToken remoteAuth(@NotNull GitLineHandler handler, @NotNull Consumer<Boolean> authResultConsumer) throws IOException {
+    Project project = handler.project();
+    if (project != null && handler.isRemote()) {
+      GitHandlerAuthenticationManager authManager = GitHandlerAuthenticationManager.prepare(project, handler);
+      return new AccessToken() {
+        @Override
+        public void finish() {
+          authResultConsumer.accept(authManager.isHttpAuthFailed());
+          authManager.cleanup();
+        }
+      };
+    }
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
+
 
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));

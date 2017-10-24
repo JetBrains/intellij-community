@@ -18,13 +18,10 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,25 +31,16 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.ssh.GitSSHHandler;
-import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,10 +73,6 @@ public abstract class GitHandler {
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
 
-  private UUID mySshHandler;
-  // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-  private boolean myEnvironmentCleanedUp = true;
-  private UUID myHttpHandler;
   @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   private Integer myExitCode; // exit code or null if exit code is not yet available
@@ -105,13 +89,10 @@ public abstract class GitHandler {
   protected final GitVcs myVcs;
   private final Map<String, String> myEnv;
   private GitVcsApplicationSettings myAppSettings;
-  private GitVcsSettings myProjectSettings;
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private Collection<String> myUrls;
-  private boolean myHttpAuthFailed;
-
 
   /**
    * A constructor
@@ -127,7 +108,6 @@ public abstract class GitHandler {
     myProject = project;
     myCommand = command;
     myAppSettings = GitVcsApplicationSettings.getInstance();
-    myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
     myVcs = GitVcs.getInstance(project);
     myCommandLine = new GeneralCommandLine().withExePath(GitExecutableManager.getInstance().getPathToGit(project));
@@ -237,6 +217,11 @@ public abstract class GitHandler {
 
   public void setUrls(@NotNull Collection<String> urls) {
     myUrls = urls;
+  }
+
+  @Nullable
+  public Collection<String> getUrls() {
+    return myUrls;
   }
 
   protected boolean isRemote() {
@@ -400,13 +385,6 @@ public abstract class GitHandler {
         LOG.debug("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
       }
 
-      // setup environment
-      if (isRemote()) {
-        setupHttpAuthenticator();
-        if (myProjectSettings.isIdeaSsh()) {
-          setupSshAuthenticator();
-        }
-      }
       setUpLocale();
       unsetGitTrace();
       myCommandLine.getEnvironment().clear();
@@ -415,14 +393,12 @@ public abstract class GitHandler {
       myProcess = startProcess();
       startHandlingStreams();
     }
-    catch (ProcessCanceledException pce) {
-      cleanupEnv();
+    catch (ProcessCanceledException ignored) {
     }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode() || !myProject.isDisposed()) {
         LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
       }
-      cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
   }
@@ -433,89 +409,6 @@ public abstract class GitHandler {
 
   private void unsetGitTrace() {
     myEnv.putAll(getCommonEnvironment());
-  }
-
-  private void setupHttpAuthenticator() throws IOException {
-    GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-    GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, ObjectUtils.assertNotNull(myUrls));
-    myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
-    myEnvironmentCleanedUp = false;
-    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
-    int port = service.getXmlRcpPort();
-    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
-    LOG.debug(String.format("handler=%s, port=%s", myHttpHandler, port));
-    addAuthListener(httpAuthenticator);
-  }
-
-  private void setupSshAuthenticator() throws IOException {
-    GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-    myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject), myProject);
-    myEnvironmentCleanedUp = false;
-    myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
-    int port = ssh.getXmlRcpPort();
-    myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-    LOG.debug(String.format("handler=%s, port=%s", mySshHandler, port));
-
-    final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-    boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, ObjectUtils.assertNotNull(myUrls));
-    myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
-
-    if (useHttpProxy) {
-      myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
-      myEnv.put(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
-      boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
-      myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
-
-      if (proxyAuthentication) {
-        myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.getProxyLogin()));
-        myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
-      }
-    }
-  }
-
-  protected static boolean isSshUrlExcluded(@NotNull final HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
-    return ContainerUtil.exists(urls, url -> {
-      String host = URLUtil.parseHostFromSshUrl(url);
-      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
-    });
-  }
-
-  private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
-    // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
-    if (this instanceof GitLineHandler) {
-      ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
-        @Override
-        public void onLineAvailable(@NonNls String line, Key outputType) {
-          String lowerCaseLine = line.toLowerCase();
-          if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
-            LOG.debug("auth listener: auth failure detected: " + line);
-            myHttpAuthFailed = true;
-          }
-        }
-
-        @Override
-        public void processTerminated(int exitCode) {
-          LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + authenticator.wasCancelled());
-          if (!authenticator.wasCancelled()) {
-            if (myHttpAuthFailed) {
-              authenticator.forgetPassword();
-            }
-            else {
-              authenticator.saveAuthData();
-            }
-          }
-          else {
-            myHttpAuthFailed = false;
-          }
-        }
-      });
-    }
-  }
-
-  public boolean hasHttpAuthFailed() {
-    return myHttpAuthFailed;
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -552,22 +445,6 @@ public abstract class GitHandler {
     else {
       LOG.info("Not setting exit code " + exitCode + ", because it was already set to " + myExitCode);
     }
-  }
-
-  /**
-   * Cleanup environment
-   */
-  protected synchronized void cleanupEnv() {
-    if (myEnvironmentCleanedUp) {
-      return;
-    }
-    if (mySshHandler != null) {
-      ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
-    }
-    if (myHttpHandler != null) {
-      ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
-    }
-    myEnvironmentCleanedUp = true;
   }
 
   /**
@@ -738,7 +615,6 @@ public abstract class GitHandler {
     commonEnv.put("GIT_TRACE_SETUP", "0");
     return commonEnv;
   }
-
   //region deprecated stuff
   /**
    * @deprecated only used in {@link GitTask}

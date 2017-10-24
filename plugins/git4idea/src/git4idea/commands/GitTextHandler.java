@@ -84,7 +84,6 @@ public abstract class GitTextHandler extends GitHandler {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
         }
         finally {
