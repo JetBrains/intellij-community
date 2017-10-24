@@ -26,7 +26,7 @@ public class A11YUsagesCollector extends UsagesCollector {
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("user.ui.a11y.screenreader.activity");
+    return GroupDescriptor.create("user.ui.a11y.screenreader");
   }
 }
 
