@@ -64,8 +64,6 @@ public abstract class GitHandler {
 
   private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>(); // Error codes that are ignored for the handler
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
-  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
-  private final int LAST_OUTPUT_SIZE = 5;
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -75,8 +73,6 @@ public abstract class GitHandler {
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
 
   @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
-
-  private Integer myExitCode; // exit code or null if exit code is not yet available
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   @NonNls
@@ -447,28 +443,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * @return exit code for process if it is available
-   */
-  public synchronized int getExitCode() {
-    if (myExitCode == null) {
-      throw new IllegalStateException("Exit code is not yet available");
-    }
-    return myExitCode.intValue();
-  }
-
-  /**
-   * @param exitCode a exit code for process
-   */
-  protected synchronized void setExitCode(int exitCode) {
-    if (myExitCode == null) {
-      myExitCode = exitCode;
-    }
-    else {
-      LOG.info("Not setting exit code " + exitCode + ", because it was already set to " + myExitCode);
-    }
-  }
-
-  /**
    * Wait for process termination
    */
   void waitFor() {
@@ -617,6 +591,38 @@ public abstract class GitHandler {
   }
 
   //region deprecated stuff
+  @Deprecated
+  private Integer myExitCode; // exit code or null if exit code is not yet available
+  @Deprecated
+  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
+  @Deprecated
+  private final int LAST_OUTPUT_SIZE = 5;
+
+  /**
+   * @return exit code for process if it is available
+   * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
+   */
+  @Deprecated
+  public synchronized int getExitCode() {
+    if (myExitCode == null) {
+      throw new IllegalStateException("Exit code is not yet available");
+    }
+    return myExitCode.intValue();
+  }
+
+  /**
+   * @param exitCode a exit code for process
+   * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
+   */
+  @Deprecated
+  protected synchronized void setExitCode(int exitCode) {
+    if (myExitCode == null) {
+      myExitCode = exitCode;
+    }
+    else {
+      LOG.info("Not setting exit code " + exitCode + ", because it was already set to " + myExitCode);
+    }
+  }
 
   /**
    * @deprecated only used in {@link GitTask}
