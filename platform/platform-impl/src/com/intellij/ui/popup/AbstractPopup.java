@@ -1162,7 +1162,12 @@ public class AbstractPopup implements JBPopup {
     };
     Disposer.register(this, focusWatcher);
 
-    mySpeedSearchPatternField = new SearchTextField(false);
+    mySpeedSearchPatternField = new SearchTextField(false) {
+      @Override
+      protected void onFieldCleared() {
+        mySpeedSearch.reset();
+      }
+    };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
