@@ -717,6 +717,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return element;
     }
     final PsiTypeElement typeElement = (PsiTypeElement)element;
+    if (typeElement.getType() instanceof PsiDisjunctionType) {
+      // getInnermostComponentReferenceElement() doesn't make sense for disjunction type
+      return typeElement;
+    }
     final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
     return (referenceElement != null) ? referenceElement : getInnermostComponentTypeElement(typeElement);
   }
