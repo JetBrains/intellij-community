@@ -303,8 +303,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             if (qualifierClass == null) return;
           }
 
-          if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass) &&
-              !PsiTreeUtil.isAncestor(containingClass, qualifierClass, false)) {
+          if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
             iterator.remove();
           }
         }
@@ -323,7 +322,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
-        return PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+        PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, false)) {
+          return qualifierClass;
+        }
       }
 
       if (expression != null) {
