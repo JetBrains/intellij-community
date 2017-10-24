@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,10 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance(MethodThrowsFix.class);
@@ -69,12 +73,27 @@ public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
           }
         }
       }
-      if (myAddThrow && !alreadyThrows) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-        final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
-        PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
-        ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
-        myMethod.getThrowsList().add(ref);
+      if (myAddThrow) {
+        if (!alreadyThrows) {
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+          final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
+          PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
+          ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
+          myMethod.getThrowsList().add(ref);
+        }
+      } else {
+        PsiDocComment comment = myMethod.getDocComment();
+        if (comment != null) {
+          Arrays
+            .stream(comment.getTags())
+            .filter(tag -> "throws".equals(tag.getName()))
+            .filter(tag -> {
+              PsiClass tagValueClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+              return tagValueClass != null && myThrowsCanonicalText.equals(tagValueClass.getQualifiedName());
+            })
+            .forEach(tag -> tag.delete());
+        }
+
       }
       UndoUtil.markPsiFileForUndo(file);
     }
