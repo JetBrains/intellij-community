@@ -7,12 +7,17 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class WSLUtilTest extends TestCase {
+public class WSLUtilTest extends UsefulTestCase {
+
+  @Override
+  protected boolean shouldRunTest() {
+    return super.shouldRunTest() && WSLUtil.hasWSL();
+  }
 
   public void testWslToWinPath() throws Exception {
     assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include");
