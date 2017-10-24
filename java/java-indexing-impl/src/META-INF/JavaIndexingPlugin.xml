@@ -27,6 +27,7 @@
     <extensionPoint qualifiedName="com.intellij.annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.implicitToStringSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
   </extensionPoints>
 
@@ -61,13 +62,13 @@
                     serviceImplementation="com.intellij.psi.impl.search.HighlightingCaches"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
+    <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <classesWithAnnotatedMembersSearch implementation="com.intellij.psi.impl.search.ClassesWithAnnotatedMembersSearcher"/>
     <deepestSuperMethodsSearch implementation="com.intellij.psi.impl.search.MethodDeepestSuperSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
-    <methodReferencesSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <overridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaOverridingMethodsSearcher"/>
     <classInheritorsSearch implementation="com.intellij.psi.impl.search.JavaClassInheritorsSearcher"/>

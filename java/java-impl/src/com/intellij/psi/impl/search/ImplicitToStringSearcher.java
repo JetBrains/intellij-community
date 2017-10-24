@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -14,10 +14,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ImplicitToStringSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -29,28 +30,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(ImplicitToStringSearcher.class);
 
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters parameters, @NotNull Processor<PsiReference> consumer) {
-    PsiMethod targetMethod = parameters.getMethod();
-    if (ReadAction.compute(() -> !"toString".equals(targetMethod.getName()) || targetMethod.getParameters().length != 0)) {
-      return;
-    }
-    PsiClass targetClass = ReadAction.compute(() -> targetMethod.getContainingClass());
-    if (targetClass == null) {
-      return;
-    }
-    Project project = parameters.getProject();
+  public void processQuery(@NotNull ImplicitToStringSearch.SearchParameters parameters, @NotNull Processor<PsiExpression> consumer) {
+    PsiMethod targetMethod = parameters.getTargetMethod();
+    Project project = PsiUtilCore.getProjectInReadAction(targetMethod);
+    if (project == null) return;
+    PsiClass aClass = ReadAction.compute(() -> targetMethod.getContainingClass());
+    if (aClass == null) return;
     DumbService dumbService = DumbService.getInstance(project);
     Map<VirtualFile, int[]> fileOffsets = new THashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
       CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-      GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(targetClass);
+      GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(aClass);
       GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
-                                                                           ? parameters.getEffectiveSearchScope()
-                                                                           : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getEffectiveSearchScope()), project);
+                                                                           ? parameters.getSearchScope()
+                                                                           : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getSearchScope()), project);
       FileBasedIndex.getInstance().processValues(JavaBinaryPlusExpressionIndex.INDEX_ID, Boolean.TRUE, null,
                                                  (file, value) -> {
                                                    ProgressManager.checkCanceled();
@@ -71,11 +68,26 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
     }
   }
 
+  public static boolean isToStringMethod(@NotNull PsiElement element) {
+    if (!(element instanceof PsiMethod)) {
+      return false;
+    }
+    PsiMethod method = (PsiMethod)element;
+    if (!"toString".equals(method.getName())) {
+      return false;
+    }
+    if (method.getParameters().length != 0) {
+      return false;
+    }
+    PsiType returnType = method.getReturnType();
+    return returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+  }
+
   private static boolean processFile(VirtualFile file,
                                      int[] offsets,
                                      PsiManager manager,
                                      PsiMethod targetMethod,
-                                     Processor<PsiReference> consumer) {
+                                     Processor<PsiExpression> consumer) {
     return ReadAction.compute(() -> {
       PsiFile psiFile = ObjectUtils.notNull(manager.findFile(file));
       if (!(psiFile instanceof PsiJavaFile)) {
@@ -112,7 +124,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
   }
 
   private static boolean processPolyadicExprOperand(@NotNull PsiExpression expr,
-                                                    @NotNull Processor<PsiReference> consumer,
+                                                    @NotNull Processor<PsiExpression> consumer,
                                                     @NotNull PsiMethod targetMethod) {
     PsiType type = expr.getType();
     if (type instanceof PsiPrimitiveType) {
@@ -122,7 +134,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
     if (aClass != null && !CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
       PsiMethod implicitlyUsedMethod = aClass.findMethodBySignature(targetMethod, true);
       if (implicitlyUsedMethod != null && (targetMethod == implicitlyUsedMethod || MethodSignatureUtil.isSuperMethod(targetMethod, implicitlyUsedMethod))) {
-        return consumer.process(new MyImplicitToStringReference(expr, targetMethod));
+        return consumer.process(expr);
       }
     }
     return true;
