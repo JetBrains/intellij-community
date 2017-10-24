@@ -19,16 +19,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 
-/**
- * @author Sergey Karashevich
- */
 class ShowGuiEditorWindowAction : AnAction() {
 
   override fun actionPerformed(p0: AnActionEvent?) {
     val frame = GuiRecorderManager.frame
-    if (!frame.isShowing()) {
+    if (!frame.isShowing) {
       StartPauseRecAction().setSelected(null, true)
-      frame.show()
+      frame.isVisible = true
     }
     else {
       frame.toFront()
