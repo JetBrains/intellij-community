@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
   private final VirtualFile mySchemaFile;
@@ -26,11 +27,13 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
     return "test";
   }
 
+  @Nullable
   @Override
   public VirtualFile getSchemaFile() {
     return mySchemaFile;
   }
 
+  @NotNull
   @Override
   public SchemaType getSchemaType() {
     return SchemaType.userSchema;
