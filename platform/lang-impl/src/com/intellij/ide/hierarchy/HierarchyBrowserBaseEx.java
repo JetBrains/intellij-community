@@ -563,9 +563,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     private final String myBrowserDataKey;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    BaseOnThisElementAction(@NotNull String text,
-                            @NotNull String browserDataKey,
-                            @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
+    protected BaseOnThisElementAction(@NotNull String text,
+                                      @NotNull String browserDataKey,
+                                      @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
       myBrowserDataKey = browserDataKey;
       myProviderLanguageExtension = providerLanguageExtension;
