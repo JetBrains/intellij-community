@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -46,8 +32,8 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
   public void testPy3ParentHasObject() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    doSimpleTest("Child", "Parent", null, true, false, ".spam");
+    runWithLanguageLevel(LanguageLevel.PYTHON30,
+                         () -> doSimpleTest("Child", "Parent", null, true, false, ".spam"));
   }
 
   // Ensures refactoring works even if memeberInfo has null element (no npe: PY-19136)
@@ -77,9 +63,13 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Extracts method as abstract and ensures that newly created class imports ABC in Py3
   public void testMoveAndMakeAbstractImportExistsPy3() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    configureMultiFile("abc");
-    multiFileTestHelper(".foo_method", true);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> {
+        configureMultiFile("abc");
+        multiFileTestHelper(".foo_method", true);
+      }
+    );
   }
 
   /**
