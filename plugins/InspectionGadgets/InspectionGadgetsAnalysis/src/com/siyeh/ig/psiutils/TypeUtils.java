@@ -262,10 +262,10 @@ public class TypeUtils {
    * @return true if instances of given types may be equal
    */
   public static boolean mayBeEqualByContract(PsiType type1, PsiType type2) {
-    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSupertypesOf(type1, type2, className));
+    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSubtypesOf(type1, type2, className));
   }
 
-  private static boolean areConvertibleSupertypesOf(PsiType type1, PsiType type2, String className) {
+  private static boolean areConvertibleSubtypesOf(PsiType type1, PsiType type2, String className) {
     PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(type1);
     if (class1 == null) return false;
     PsiClass class2 = PsiUtil.resolveClassInClassTypeOnly(type2);
