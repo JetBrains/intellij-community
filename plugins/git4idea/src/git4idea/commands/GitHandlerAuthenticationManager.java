@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 class GitHandlerAuthenticationManager {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
-  
+
   @NotNull private final GitLineHandler myHandler;
   @NotNull private final Project myProject;
 
@@ -58,13 +58,13 @@ class GitHandlerAuthenticationManager {
 
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-    myHandler.setEnvironment(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator =
       service.createAuthenticator(myProject, myHandler.getCommand(), ObjectUtils.assertNotNull(myHandler.getUrls()));
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
-    myHandler.setEnvironment(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
-    myHandler.setEnvironment(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
     myHandler.addLineListener(new GitLineHandlerAdapter() {
@@ -109,27 +109,27 @@ class GitHandlerAuthenticationManager {
 
   private void prepareSshAuth() throws IOException {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-    myHandler.setEnvironment(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
     mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject), myProject);
-    myHandler.setEnvironment(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
-    myHandler.setEnvironment(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", mySshHandler, port));
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
     boolean useHttpProxy =
       httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, ObjectUtils.assertNotNull(myHandler.getUrls()));
-    myHandler.setEnvironment(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
 
     if (useHttpProxy) {
-      myHandler.setEnvironment(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
-      myHandler.setEnvironment(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
+      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
+      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
       boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
-      myHandler.setEnvironment(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
+      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
 
       if (proxyAuthentication) {
-        myHandler.setEnvironment(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.getProxyLogin()));
-        myHandler.setEnvironment(GitSSHHandler.SSH_PROXY_PASSWORD_ENV,
+        myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.getProxyLogin()));
+        myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_PASSWORD_ENV,
                                                StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
       }
     }

@@ -67,6 +67,7 @@ public abstract class GitHandler {
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
   protected final GeneralCommandLine myCommandLine;
+  private final Map<String, String> myCustomEnv = new HashMap<>();
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected Process myProcess;
 
@@ -87,7 +88,6 @@ public abstract class GitHandler {
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
   protected final GitVcs myVcs;
-  private final Map<String, String> myEnv;
   private GitVcsApplicationSettings myAppSettings;
 
   private long myStartTime; // git execution start timestamp
@@ -108,7 +108,6 @@ public abstract class GitHandler {
     myProject = project;
     myCommand = command;
     myAppSettings = GitVcsApplicationSettings.getInstance();
-    myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
     myVcs = GitVcs.getInstance(project);
     myCommandLine = new GeneralCommandLine().withExePath(GitExecutableManager.getInstance().getPathToGit(project));
     myCommandLine.setWorkDirectory(directory);
@@ -385,10 +384,7 @@ public abstract class GitHandler {
         LOG.debug("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
       }
 
-      setUpLocale();
-      unsetGitTrace();
-      myCommandLine.getEnvironment().clear();
-      myCommandLine.getEnvironment().putAll(myEnv);
+      prepareEnvironment();
       // start process
       myProcess = startProcess();
       startHandlingStreams();
@@ -403,12 +399,37 @@ public abstract class GitHandler {
     }
   }
 
-  private void setUpLocale() {
-    myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+  private void prepareEnvironment() {
+    Map<String, String> executionEnvironment = myCommandLine.getEnvironment();
+    executionEnvironment.clear();
+    executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+    executionEnvironment.putAll(getGitTraceEnvironmentVariables());
+    executionEnvironment.putAll(myCustomEnv);
   }
 
-  private void unsetGitTrace() {
-    myEnv.putAll(getCommonEnvironment());
+  /**
+   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
+   */
+  @NotNull
+  public static Map<String, String> getGitTraceEnvironmentVariables() {
+    Map<String, String> environment = new HashMap<>(5);
+    environment.put("GIT_TRACE", "0");
+    environment.put("GIT_TRACE_PACK_ACCESS", "");
+    environment.put("GIT_TRACE_PACKET", "");
+    environment.put("GIT_TRACE_PERFORMANCE", "0");
+    environment.put("GIT_TRACE_SETUP", "0");
+    return environment;
+  }
+
+  /**
+   * Add environment variable to this handler
+   *
+   * @param name  the variable name
+   * @param value the variable value
+   */
+  public void addCustomEnvironmentVariable(String name, String value) {
+    myCustomEnv.put(name, value);
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -545,16 +566,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Set environment variable
-   *
-   * @param name  the variable name
-   * @param value the variable value
-   */
-  public void setEnvironment(String name, String value) {
-    myEnv.put(name, value);
-  }
-
-  /**
    * @return true if the command line is too big
    */
   public boolean isLargeCommandLine() {
@@ -605,17 +616,8 @@ public abstract class GitHandler {
     myInputProcessor = inputProcessor;
   }
 
-  @NotNull
-  public static Map<String, String> getCommonEnvironment() {
-    Map<String, String> commonEnv = new HashMap<>();
-    commonEnv.put("GIT_TRACE", "0");
-    commonEnv.put("GIT_TRACE_PACK_ACCESS", "");
-    commonEnv.put("GIT_TRACE_PACKET", "");
-    commonEnv.put("GIT_TRACE_PERFORMANCE", "0");
-    commonEnv.put("GIT_TRACE_SETUP", "0");
-    return commonEnv;
-  }
   //region deprecated stuff
+
   /**
    * @deprecated only used in {@link GitTask}
    */
