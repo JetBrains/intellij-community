@@ -54,6 +54,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
     }
     myBrowser = TipUIUtil.createTipBrowser();
+    myBrowser.setBorder(JBUI.Borders.empty(8, 12));
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
     scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
