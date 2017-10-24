@@ -1,0 +1,178 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.maven.indices;
+
+import com.google.gson.*;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
+import org.jetbrains.idea.maven.server.MavenServerIndexerException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * @author ibessonov
+ */
+class BintrayIndexer implements NotNexusIndexer {
+
+  private final String myUrlTemplate;
+
+  public BintrayIndexer(@NotNull String subject, @Nullable String repo) {
+    myUrlTemplate = "https://bintray.com/api/v1/search/packages/maven?q=*&subject=" + subject
+                    + (repo != null ? "&repo=" + repo : "");
+  }
+
+  @Override
+  public void processArtifacts(MavenProgressIndicator progress, MavenIndicesProcessor processor)
+      throws IOException, MavenServerIndexerException {
+    AtomicReference<Exception> exception = new AtomicReference<>();
+
+    try {
+      URL url = new URL(myUrlTemplate);
+
+      URLConnection urlConnection = url.openConnection();
+      validateResponseCode(urlConnection);
+
+      int total = urlConnection.getHeaderFieldInt("X-RangeLimit-Total", -1);
+      if (total > 0) {
+        fetchMavenIds(urlConnection, processor);
+
+        int endPos = urlConnection.getHeaderFieldInt("X-RangeLimit-EndPos", Integer.MAX_VALUE);
+        if (endPos < total) {
+          progress.pushState();
+          progress.setIndeterminate(false);
+
+          try {
+            int totalIterations = (total - 1) / endPos;
+            int threadsCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+
+            boolean useThreadPool = threadsCount > 1 && totalIterations >= 10;
+            CountDownLatch cdl = useThreadPool ? new CountDownLatch(threadsCount) : null;
+
+            AtomicInteger iterationsCounter = new AtomicInteger(0);
+            Runnable task = () -> {
+              try {
+                while (true) {
+                  int i = iterationsCounter.incrementAndGet();
+                  if (i > totalIterations || progress.isCanceled()) {
+                    break;
+                  }
+
+                  try {
+                    URLConnection uc = new URL(myUrlTemplate + "&start_pos=" + (i * endPos)).openConnection();
+                    fetchMavenIds(uc, processor);
+
+                    progress.setFraction(1d * iterationsCounter.get() / totalIterations);
+                  }
+                  catch (Exception e) {
+                    exception.set(e);
+                    break;
+                  }
+                }
+              }
+              finally {
+                if (useThreadPool) {
+                  cdl.countDown();
+                }
+              }
+            };
+            if (useThreadPool) {
+              ExecutorService executorService = Executors.newFixedThreadPool(threadsCount);
+              for (int i = 0; i < threadsCount; i++) {
+                executorService.submit(task);
+              }
+              try {
+                cdl.await();
+              }
+              catch (InterruptedException ignored) {
+              }
+            }
+            else {
+              for (int i = 0; i < totalIterations; i++) {
+                task.run();
+              }
+            }
+          }
+          finally {
+            progress.popState();
+          }
+        }
+      }
+    }
+    catch (MalformedURLException e) {
+      exception.set(e);
+    }
+
+    Exception e = exception.get();
+    if (e != null) {
+      if (e instanceof IOException) {
+        throw (IOException)e;
+      }
+      if (e instanceof MavenServerIndexerException) {
+        throw (MavenServerIndexerException)e;
+      }
+      throw new MavenServerIndexerException(e);
+    }
+  }
+
+  private static void validateResponseCode(URLConnection urlConnection) throws IOException {
+    if (urlConnection instanceof HttpURLConnection) {
+      HttpURLConnection httpUrlConnection = (HttpURLConnection)urlConnection;
+      if (httpUrlConnection.getResponseCode() >= 400) {
+        try (InputStream err = httpUrlConnection.getErrorStream()) {
+          throw new IOException(StreamUtil.readText(err, StandardCharsets.UTF_8));
+        }
+      }
+    }
+  }
+
+  protected void fetchMavenIds(URLConnection urlConnection, MavenIndicesProcessor processor) throws IOException {
+    try (InputStream in = urlConnection.getInputStream()) {
+      JsonElement element = new JsonParser().parse(new InputStreamReader(in));
+      JsonArray array = element.getAsJsonArray();
+      if (array == null) {
+        throw new IOException("Unexpected response format, JSON array expected from " + urlConnection.getURL());
+      }
+
+      List<MavenId> mavenIds = new ArrayList<>();
+      for (JsonElement el : array) {
+        JsonObject jo = el.getAsJsonObject();
+        JsonArray systemIds = jo.getAsJsonArray("system_ids");
+        JsonArray versions = jo.getAsJsonArray("versions");
+        if (systemIds != null && versions != null) {
+          for (JsonElement systemId : systemIds) {
+            String groupAndArtifactId = systemId.getAsString();
+            List<String> list = StringUtil.split(groupAndArtifactId, ":");
+            if (list.size() != 2) continue;
+
+            String groupId = list.get(0);
+            String artifactId = list.get(1);
+            for (JsonElement version : versions) {
+              mavenIds.add(new MavenId(groupId, artifactId, version.getAsString()));
+            }
+          }
+        }
+      }
+      synchronized (this) {
+        processor.processArtifacts(mavenIds);
+      }
+    }
+  }
+}
