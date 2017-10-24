@@ -43,7 +43,7 @@ class BintrayIndexer implements NotNexusIndexer {
       throws IOException, MavenServerIndexerException {
     AtomicReference<Exception> exception = new AtomicReference<>();
 
-    HttpRequests.request(myUrlTemplate).connect(request -> {
+    HttpRequests.request(myUrlTemplate).accept("application/json").connect(request -> {
       URLConnection urlConnection = request.getConnection();
 
       int total = urlConnection.getHeaderFieldInt("X-RangeLimit-Total", -1);
@@ -72,7 +72,7 @@ class BintrayIndexer implements NotNexusIndexer {
                   }
 
                   try {
-                    HttpRequests.request(myUrlTemplate + "&start_pos=" + (i * endPos)).connect(r -> {
+                    HttpRequests.request(myUrlTemplate + "&start_pos=" + (i * endPos)).accept("application/json").connect(r -> {
                       fetchMavenIds(r, processor);
                       progress.setFraction(1d * iterationsCounter.get() / totalIterations);
                       return null;
