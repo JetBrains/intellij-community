@@ -82,8 +82,6 @@ public abstract class GitHandler {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  private boolean myProgressParameterAllowed = false;
-
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private Collection<String> myUrls;
@@ -356,19 +354,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
-   *
-   * @return is "--progress" parameter supported by this version of Git.
-   */
-  public boolean addProgressParameter() {
-    if (myProgressParameterAllowed) {
-      addParameters("--progress");
-      return true;
-    }
-    return false;
-  }
-
-  /**
    * check that process is not started yet
    *
    * @throws IllegalStateException if process has been already started
@@ -629,6 +614,23 @@ public abstract class GitHandler {
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   @Deprecated
   private final int LAST_OUTPUT_SIZE = 5;
+  @Deprecated
+  private boolean myProgressParameterAllowed = false;
+
+  /**
+   * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
+   *
+   * @return is "--progress" parameter supported by this version of Git.
+   * @deprecated use {@link #addParameters}
+   */
+  @Deprecated
+  public boolean addProgressParameter() {
+    if (myProgressParameterAllowed) {
+      addParameters("--progress");
+      return true;
+    }
+    return false;
+  }
 
   /**
    * @return exit code for process if it is available
