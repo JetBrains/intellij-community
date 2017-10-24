@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -125,10 +124,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (!session.repeatInferencePhases()) {
-                    List<String> errorMessages = session.getIncompatibleErrorMessages();
-                    if (errorMessages != null) {
-                      setApplicabilityError(StringUtil.join(errorMessages, "\n"));
-                    }
                     return substitutor;
                   }
 
@@ -145,7 +140,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @Override
                 public boolean isApplicable() {
                   if (signature == null) return false;
-                  if (getInferenceErrorMessageAssumeAlreadyComputed() != null) return false;
                   final PsiType[] argTypes = signature.getParameterTypes();
                   boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, qualifierResolveResult, reference);
 
