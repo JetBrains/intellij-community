@@ -104,6 +104,9 @@ public class GitLogParser {
     return ContainerUtil.getFirstItem(records);
   }
 
+  /**
+   * Expects a line without separator.
+   */
   @Nullable
   public GitLogRecord parseLine(@NotNull CharSequence line) {
     if (myPathsParser.expectsPaths()) {
