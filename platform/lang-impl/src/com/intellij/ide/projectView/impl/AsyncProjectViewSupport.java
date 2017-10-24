@@ -134,7 +134,7 @@ class AsyncProjectViewSupport {
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateAll();
+        updateAllPresentations();
       }
 
       @Override
@@ -146,12 +146,12 @@ class AsyncProjectViewSupport {
     WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
-        updateByFileToRoot(file);
+        updatePresentationsFromRootTo(file);
       }
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        updateByFileToRoot(file);
+        updatePresentationsFromRootTo(file);
       }
     }, parent);
   }
@@ -221,7 +221,7 @@ class AsyncProjectViewSupport {
     if (visitor != null) myAsyncTreeModel.accept(visitor, false).done(path -> update(list, structure));
   }
 
-  private void updateByFileToRoot(@NotNull VirtualFile file) {
+  private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
     SmartList<TreePath> list = new SmartList<>();
     acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
       @NotNull
@@ -230,6 +230,18 @@ class AsyncProjectViewSupport {
         Action action = super.visit(path, node, element);
         if (action != Action.SKIP_CHILDREN) list.add(path);
         return action;
+      }
+    }, list, false);
+  }
+
+  private void updateAllPresentations() {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new TreeVisitor() {
+      @NotNull
+      @Override
+      public Action visit(@NotNull TreePath path) {
+        list.add(path);
+        return Action.CONTINUE;
       }
     }, list, false);
   }
