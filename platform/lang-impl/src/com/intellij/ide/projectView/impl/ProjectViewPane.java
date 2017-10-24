@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -50,6 +49,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+
+import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
@@ -265,6 +266,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
-    return Experiments.isFeatureEnabled("project.view.async.tree.model") ? null : super.createBuilder(model);
+    return isFeatureEnabled("project.view.async.tree.model") ? null : super.createBuilder(model);
   }
 }
