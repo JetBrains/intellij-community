@@ -250,9 +250,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         return new ArrayList<>();
       }
       List<String> result = new ArrayList<>();
-      for (String word : words) {
-        result.add(word);
-      }
+      result.addAll(words);
       Collections.sort(result);
       return result;
     }
