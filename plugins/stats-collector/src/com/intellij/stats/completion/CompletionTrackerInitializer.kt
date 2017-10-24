@@ -48,12 +48,16 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
             val shownTimesTracker = LookupElementPositionTracker(lookup)
             lookup.setPrefixChangeListener(shownTimesTracker)
 
-            val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
+            val tracker = actionsTracker(lookup, experimentHelper)
             actionListener.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
         }
+    }
+
+    private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
+        val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
+        return CompletionActionsTracker(lookup, logger, experimentHelper)
     }
 
     private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
