@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -12,12 +12,9 @@ import com.intellij.util.TripleFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class LocalDescriptorsUtil {
+public class BatchModeDescriptorsUtil {
   private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT =
     (tool, element, context) -> {
       final PsiNamedElement problemElement = getContainerElement(element, tool, context);
@@ -92,5 +89,10 @@ public class LocalDescriptorsUtil {
     }
     PsiNamedElement container = context.getRefManager().getContainerElement(element);
     return container != null ? container : containerFromTool;
+  }
+
+  @NotNull
+  public static CommonProblemDescriptor[] flattenDescriptors(@NotNull List<CommonProblemDescriptor[]> descriptors) {
+    return descriptors.stream().flatMap(ds -> Arrays.stream(ds)).toArray(CommonProblemDescriptor.ARRAY_FACTORY::create);
   }
 }
