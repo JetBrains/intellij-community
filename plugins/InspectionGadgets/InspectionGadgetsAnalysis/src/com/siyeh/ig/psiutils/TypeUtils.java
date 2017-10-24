@@ -28,8 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class TypeUtils {
+  private static final String[] EQUAL_CONTRACT_CLASSES = {CommonClassNames.JAVA_UTIL_LIST,
+    CommonClassNames.JAVA_UTIL_SET, CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_MAP_ENTRY};
 
   private static final Map<PsiType, Integer> typePrecisions = new HashMap<>(7);
 
@@ -248,5 +251,36 @@ public class TypeUtils {
   public static String resolvedClassName(PsiType type) {
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass == null ? null : aClass.getQualifiedName();
+  }
+
+  /**
+   * Returns true if instances of two given types may be equal according to equals method contract even if they belong to
+   * inconvertible classes (e.g. {@code ArrayList} and {@code LinkedList}).
+   *
+   * @param type1 first type
+   * @param type2 second type
+   * @return true if instances of given types may be equal
+   */
+  public static boolean mayBeEqualByContract(PsiType type1, PsiType type2) {
+    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSupertypesOf(type1, type2, className));
+  }
+
+  private static boolean areConvertibleSupertypesOf(PsiType type1, PsiType type2, String className) {
+    PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(type1);
+    if (class1 == null) return false;
+    PsiClass class2 = PsiUtil.resolveClassInClassTypeOnly(type2);
+    if (class2 == null) return false;
+    PsiClass superClass = JavaPsiFacade.getInstance(class1.getProject()).findClass(className, class1.getResolveScope());
+    if (superClass == null) return false;
+    if (!InheritanceUtil.isInheritorOrSelf(class1, superClass, true) || !InheritanceUtil.isInheritorOrSelf(class2, superClass, true)) {
+      return false;
+    }
+    PsiTypeParameter[] parameters = superClass.getTypeParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType subst1 = PsiUtil.substituteTypeParameter(type1, className, i, false);
+      PsiType subst2 = PsiUtil.substituteTypeParameter(type2, className, i, false);
+      if (subst1 != null && subst2 != null && !subst1.isConvertibleFrom(subst2)) return false;
+    }
+    return true;
   }
 }

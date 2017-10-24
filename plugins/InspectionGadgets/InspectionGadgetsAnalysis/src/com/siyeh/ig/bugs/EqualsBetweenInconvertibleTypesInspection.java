@@ -93,6 +93,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           }
           if (InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) return;
         }
+        if (TypeUtils.mayBeEqualByContract(leftType, rightType)) return;
         PsiElement name = expression.getReferenceNameElement();
         registerError(name == null ? expression : name, leftType, rightType, convertible);
       }

@@ -116,6 +116,20 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testDifferentSets() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class X {\n" +
+           "  boolean test(HashSet<String> set1, TreeSet<String> set2) {\n" +
+           "    return set1.equals(set2); // can be equal by content\n" +
+           "  }\n" +
+           "\n" +
+           "  boolean test2(HashSet<String> set1, TreeSet<Integer> set2) {\n" +
+           "    return set1./*'equals()' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(set2);\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
