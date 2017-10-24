@@ -16,17 +16,10 @@
 package com.intellij.testGuiFramework.recorder.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction
-import sun.awt.WindowClosingListener
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
-import java.awt.event.WindowListener
 import javax.swing.JFrame
-import javax.swing.SwingUtilities
 
 class GuiScriptEditorFrame : JFrame("GUI Script Editor"), Disposable {
 
@@ -38,14 +31,5 @@ class GuiScriptEditorFrame : JFrame("GUI Script Editor"), Disposable {
     contentPane = guiScriptEditorPanel.panel as Container
     pack()
     Disposer.register(Disposer.get("ui"),this)
-  }
-
-  override fun show() {
-    super.show()
-    StartPauseRecAction().setSelected(null, true)
-  }
-
-  override fun toFront() {
-    SwingUtilities.invokeLater { toFront(); repaint() }
   }
 }

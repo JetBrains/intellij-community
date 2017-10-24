@@ -27,6 +27,7 @@ class ShowGuiEditorWindowAction : AnAction() {
   override fun actionPerformed(p0: AnActionEvent?) {
     val frame = GuiRecorderManager.frame
     if (!frame.isShowing()) {
+      StartPauseRecAction().setSelected(null, true)
       frame.show()
     }
     else {
