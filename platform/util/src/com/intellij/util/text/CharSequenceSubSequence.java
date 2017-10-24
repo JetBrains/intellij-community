@@ -77,7 +77,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o instanceof CharSequenceSubSequence) return hashCode() == o.hashCode();
+    if (o instanceof CharSequenceSubSequence && hashCode() != o.hashCode()) return false;
     if (o == null || !(o instanceof CharSequence)) return false;
     return StringUtil.equals(this, (CharSequence)o);
   }
