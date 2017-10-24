@@ -21,7 +21,7 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger,

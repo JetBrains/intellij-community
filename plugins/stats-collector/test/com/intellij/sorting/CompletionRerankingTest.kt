@@ -22,7 +22,7 @@ import com.intellij.mocks.FakeRanker
 import com.intellij.mocks.TestRequestService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.testFramework.registerServiceInstance
 import org.assertj.core.api.Assertions.assertThat
 

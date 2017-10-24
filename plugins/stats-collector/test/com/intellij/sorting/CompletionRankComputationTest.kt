@@ -24,7 +24,7 @@ import com.intellij.mocks.TestRequestService
 import com.intellij.sorting.Samples.classNameCompletion
 import com.intellij.sorting.Samples.classText
 import com.intellij.sorting.Samples.methodCompletion
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.completion.prefixLength
 import org.assertj.core.api.Assertions.assertThat
 

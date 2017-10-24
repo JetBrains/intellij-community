@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 

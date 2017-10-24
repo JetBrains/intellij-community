@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.network
+package com.intellij.stats.network.urls
 
 abstract class UrlProvider {
     abstract val statsServerPostUrl: String

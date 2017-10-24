@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion.experiment
+package com.intellij.stats.experiment
 
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.assertNotEDT
 
 

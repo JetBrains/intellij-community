@@ -20,7 +20,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.mocks.TestRequestService
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import org.assertj.core.api.Assertions.assertThat
 

@@ -26,7 +26,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.reporting.isSendAllowed
 import com.intellij.reporting.isUnitTestMode
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import java.beans.PropertyChangeListener
 
 

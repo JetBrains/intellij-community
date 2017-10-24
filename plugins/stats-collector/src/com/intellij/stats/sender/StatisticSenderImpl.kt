@@ -16,15 +16,10 @@
 
 package com.intellij.stats.sender
 
-import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.storage.FilePathProvider
-import org.apache.commons.codec.binary.Base64OutputStream
-import org.apache.http.HttpResponse
-import org.apache.http.util.EntityUtils
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.zip.GZIPOutputStream
 
 class StatisticSenderImpl(
         private val requestService: RequestService,

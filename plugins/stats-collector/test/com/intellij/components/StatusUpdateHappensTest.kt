@@ -18,7 +18,7 @@ package com.intellij.components
 
 import com.intellij.mocks.TestRequestService
 import com.intellij.sorting.WebServiceMock
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.testFramework.LightPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 

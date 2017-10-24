@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion.experiment
+package com.intellij.stats.experiment
 
-import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.components.ServiceManager
 
-interface ExperimentDecision {
-    fun isPerformExperiment(salt: String): Boolean
-}
+interface WebServiceStatus {
+    fun isServerOk(): Boolean
+    fun dataServerUrl(): String
 
-class PermanentInstallationIDBasedDecision : ExperimentDecision {
-    override fun isPerformExperiment(salt: String): Boolean {
-        val uid = PermanentInstallationID.get()
-        val hash = (uid + salt).hashCode()
-        return hash % 2 == 0
+    fun isExperimentGoingOnNow(): Boolean
+    fun isExperimentOnCurrentIDE(): Boolean
+    fun experimentVersion(): Int
+
+    fun updateStatus()
+
+    companion object {
+        fun getInstance(): WebServiceStatus = ServiceManager.getService(WebServiceStatus::class.java)
     }
 }

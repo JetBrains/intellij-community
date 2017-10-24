@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.plugin.ManualExperimentControl
 import com.intellij.plugin.ManualMlSorting
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.completion.prefixLength
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo

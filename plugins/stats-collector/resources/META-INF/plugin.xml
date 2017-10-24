@@ -24,8 +24,8 @@
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.network.UrlProvider"
-                        serviceImplementation="com.intellij.stats.network.InternalUrlProvider">
+    <applicationService serviceInterface="com.intellij.stats.network.urls.UrlProvider"
+                        serviceImplementation="com.intellij.stats.network.urls.InternalUrlProvider">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
@@ -39,17 +39,17 @@
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatus"
-                        serviceImplementation="com.intellij.stats.completion.experiment.WebServiceStatusProvider">
+    <applicationService serviceInterface="com.intellij.stats.experiment.WebServiceStatus"
+                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.network.RequestService"
-                        serviceImplementation="com.intellij.stats.network.SimpleRequestService"
+    <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
+                        serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
                         testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.experiment.ExperimentDecision"
-                        serviceImplementation="com.intellij.stats.completion.experiment.PermanentInstallationIDBasedDecision"
+    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
+                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
                         testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
     </applicationService>
 

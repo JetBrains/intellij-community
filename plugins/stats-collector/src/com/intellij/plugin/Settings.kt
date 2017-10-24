@@ -23,7 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.sorting.SortingTimeStatistics
-import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.tracking.IntervalCounter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBCheckBox

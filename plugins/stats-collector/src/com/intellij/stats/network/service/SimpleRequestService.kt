@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.network
+package com.intellij.stats.network.service
 
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.diagnostic.logger

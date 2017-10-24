@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.network
+package com.intellij.stats.experiment
 
-class InternalUrlProvider: UrlProvider() {
-    private val internalHost = "http://unit-617.labs.intellij.net"
+import com.intellij.openapi.application.PermanentInstallationID
 
-    private val host: String
-        get() = internalHost
+interface ExperimentDecision {
+    fun isPerformExperiment(salt: String): Boolean
+}
 
-
-    override val statsServerPostUrl = "http://test.jetstat-resty.aws.intellij.net/uploadstats"
-    override val experimentDataUrl = "$host:8090/experiment/info"
+class PermanentInstallationIDBasedDecision : ExperimentDecision {
+    override fun isPerformExperiment(salt: String): Boolean {
+        val uid = PermanentInstallationID.get()
+        val hash = (uid + salt).hashCode()
+        return hash % 2 == 0
+    }
 }

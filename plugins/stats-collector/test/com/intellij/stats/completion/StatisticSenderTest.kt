@@ -15,8 +15,8 @@
  */
 package com.intellij.stats.completion
 
-import com.intellij.stats.network.RequestService
-import com.intellij.stats.network.ResponseData
+import com.intellij.stats.network.service.RequestService
+import com.intellij.stats.network.service.ResponseData
 import com.intellij.stats.sender.StatisticSenderImpl
 import com.intellij.stats.storage.FilePathProvider
 import com.intellij.stats.storage.UniqueFilesProvider

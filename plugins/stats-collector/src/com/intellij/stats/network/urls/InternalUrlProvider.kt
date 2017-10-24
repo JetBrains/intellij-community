@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.completion.experiment
+package com.intellij.stats.network.urls
 
-import com.intellij.openapi.components.ServiceManager
+class InternalUrlProvider: UrlProvider() {
+    private val internalHost = "http://unit-617.labs.intellij.net"
 
-interface WebServiceStatus {
-    fun isServerOk(): Boolean
-    fun dataServerUrl(): String
+    private val host: String
+        get() = internalHost
 
-    fun isExperimentGoingOnNow(): Boolean
-    fun isExperimentOnCurrentIDE(): Boolean
-    fun experimentVersion(): Int
 
-    fun updateStatus()
-
-    companion object {
-        fun getInstance(): WebServiceStatus = ServiceManager.getService(WebServiceStatus::class.java)
-    }
+    override val statsServerPostUrl = "http://test.jetstat-resty.aws.intellij.net/uploadstats"
+    override val experimentDataUrl = "$host:8090/experiment/info"
 }
