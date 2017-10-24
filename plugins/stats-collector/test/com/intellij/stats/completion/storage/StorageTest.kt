@@ -16,9 +16,9 @@
 package com.intellij.stats.completion.storage
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.stats.completion.LineStorage
-import com.intellij.stats.completion.LogFileManager
-import com.intellij.stats.completion.UniqueFilesProvider
+import com.intellij.stats.logger.LineStorage
+import com.intellij.stats.logger.LogFileManager
+import com.intellij.stats.storage.UniqueFilesProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before

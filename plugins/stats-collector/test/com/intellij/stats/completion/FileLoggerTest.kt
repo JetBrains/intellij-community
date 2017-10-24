@@ -17,6 +17,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

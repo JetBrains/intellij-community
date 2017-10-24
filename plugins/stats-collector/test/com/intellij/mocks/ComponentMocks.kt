@@ -16,10 +16,10 @@
 
 package com.intellij.mocks
 
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.StatisticSender
-import com.intellij.stats.completion.UniqueFilesProvider
 import com.intellij.stats.completion.experiment.ExperimentDecision
+import com.intellij.stats.network.RequestService
+import com.intellij.stats.sender.StatisticSender
+import com.intellij.stats.storage.UniqueFilesProvider
 import com.nhaarman.mockito_kotlin.mock
 import java.io.File
 

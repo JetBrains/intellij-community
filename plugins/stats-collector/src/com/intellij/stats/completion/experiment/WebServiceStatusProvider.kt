@@ -19,8 +19,8 @@ package com.intellij.stats.completion.experiment
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.assertNotEDT
+import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.assertNotEDT
 
 
 class WebServiceStatusProvider(

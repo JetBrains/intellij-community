@@ -13,39 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.completion
 
+package com.intellij.stats.logger
+
+import com.intellij.stats.storage.FilePathProvider
 import java.io.File
 
-
-class LineStorage {
-
-    private val lines = mutableListOf<String>()
-    var size: Int = 0
-        private set
-    
-    fun appendLine(line: String) {
-        size += line.length + System.lineSeparator().length
-        lines.add(line)
-    }
-
-    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
-    
-    fun clear() {
-        size = 0
-        lines.clear()
-    }
-    
-    fun dump(dest: File) {
-        dest.writer().use { out -> 
-            lines.forEach { out.appendln(it) } 
-        }
-    }
-    
-}
-
 class LogFileManager(private val filePathProvider: FilePathProvider) {
-    
+
     private val MAX_SIZE_BYTE = 250 * 1024
     private val storage = LineStorage()
 
@@ -70,5 +45,5 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
         storage.dump(tmp)
         tmp.renameTo(filePathProvider.getUniqueFile())
     }
-    
+
 }

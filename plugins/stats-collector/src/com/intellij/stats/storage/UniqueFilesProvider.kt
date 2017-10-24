@@ -13,44 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.completion
 
-import com.intellij.openapi.application.PathManager
+package com.intellij.stats.storage
+
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Files
 
-abstract class UrlProvider {
-    abstract val statsServerPostUrl: String
-    abstract val experimentDataUrl: String
-}
-
-abstract class FilePathProvider {
-    abstract fun getUniqueFile(): File
-    abstract fun getDataFiles(): List<File>
-    abstract fun getStatsDataDirectory(): File
-    abstract fun cleanupOldFiles()
-}
-
-class InternalUrlProvider: UrlProvider() {
-    private val internalHost = "http://unit-617.labs.intellij.net"
-
-    private val host: String
-        get() = internalHost
-    
-    
-    override val statsServerPostUrl = "http://test.jetstat-resty.aws.intellij.net/uploadstats"
-    override val experimentDataUrl = "$host:8090/experiment/info"
-}
-
-
-class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", PathManager.getSystemPath())
-
-open class UniqueFilesProvider(private val baseName: String, 
+open class UniqueFilesProvider(private val baseName: String,
                                private val rootDirectoryPath: String) : FilePathProvider() {
-    
+
     private val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
-    
+
     override fun cleanupOldFiles() {
         val files = getDataFiles()
         val sizeToSend = files.fold(0L, { totalSize, file -> totalSize + file.length() })
@@ -76,9 +50,9 @@ open class UniqueFilesProvider(private val baseName: String,
                 .filter { it.isIntConvertable() }
                 .map(String::toInt)
                 .max()
-        
+
         val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
-        
+
         val file = File(dir, "${baseName}_$newIndex")
         return file
     }
@@ -98,7 +72,7 @@ open class UniqueFilesProvider(private val baseName: String,
         }
         return dir
     }
-    
+
     private fun File.getChunkNumber() = this.name.substringAfter('_').toInt()
 
     private fun String.isIntConvertable(): Boolean {

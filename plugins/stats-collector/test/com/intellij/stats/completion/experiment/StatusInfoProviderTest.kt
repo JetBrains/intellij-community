@@ -15,8 +15,8 @@
  */
 package com.intellij.stats.completion.experiment
 
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.ResponseData
 import com.intellij.testFramework.LightIdeaTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Matchers

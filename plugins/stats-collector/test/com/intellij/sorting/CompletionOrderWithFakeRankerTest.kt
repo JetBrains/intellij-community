@@ -27,10 +27,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.WeigherExtensionPoint
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.WebServiceStatusProvider
 import com.intellij.stats.completion.experiment.WebServiceStatus
+import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.ResponseData
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock

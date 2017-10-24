@@ -15,6 +15,11 @@
  */
 package com.intellij.stats.completion
 
+import com.intellij.stats.network.RequestService
+import com.intellij.stats.network.ResponseData
+import com.intellij.stats.sender.StatisticSenderImpl
+import com.intellij.stats.storage.FilePathProvider
+import com.intellij.stats.storage.UniqueFilesProvider
 import com.intellij.testFramework.LightPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito.`when`

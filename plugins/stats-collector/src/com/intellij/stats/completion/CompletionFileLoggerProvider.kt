@@ -19,6 +19,8 @@ import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.stats.events.completion.LogEvent
 import com.intellij.stats.events.completion.LogEventSerializer
+import com.intellij.stats.logger.LogFileManager
+import com.intellij.stats.storage.FilePathProvider
 import java.util.*
 
 interface InstallationIdProvider {

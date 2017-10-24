@@ -24,18 +24,18 @@
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider"
-                        serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
+    <applicationService serviceInterface="com.intellij.stats.network.UrlProvider"
+                        serviceImplementation="com.intellij.stats.network.InternalUrlProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider"
-                        serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider"
+    <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.storage.PluginDirectoryFilePathProvider"
                         testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
     </applicationService>
 
 
-    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender"
-                        serviceImplementation="com.intellij.stats.completion.StatisticSenderImpl"
+    <applicationService serviceInterface="com.intellij.stats.sender.StatisticSender"
+                        serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender">
     </applicationService>
 
@@ -43,8 +43,8 @@
                         serviceImplementation="com.intellij.stats.completion.experiment.WebServiceStatusProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.RequestService"
-                        serviceImplementation="com.intellij.stats.completion.SimpleRequestService"
+    <applicationService serviceInterface="com.intellij.stats.network.RequestService"
+                        serviceImplementation="com.intellij.stats.network.SimpleRequestService"
                         testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
@@ -84,7 +84,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
+      <implementation-class>com.intellij.stats.sender.SenderComponent</implementation-class>
     </component>
 
     <component>
