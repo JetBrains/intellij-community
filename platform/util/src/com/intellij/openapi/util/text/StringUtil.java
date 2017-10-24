@@ -1397,7 +1397,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @param text text to get word ranges in.
    * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
-   *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine if a symbol is part of word.
+   *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
    * @return ranges ranges of words in passed text.
    */
   @NotNull

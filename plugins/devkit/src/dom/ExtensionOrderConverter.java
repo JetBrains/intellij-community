@@ -84,8 +84,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
           LOG.error("Unexpected empty word indices list for 'order' part: " + orderPart);
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
         }
-        //noinspection StringEqualsEmptyString - IDEA-181031
-        if ("".equals(secondSubPart)) {
+        if (secondSubPart != null && secondSubPart.isEmpty()) {
           wordIndices.add(new TextRange(orderPart.length(), orderPart.length()));
         }
 
