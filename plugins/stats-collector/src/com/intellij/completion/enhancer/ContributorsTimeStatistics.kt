@@ -21,7 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.stats.tracking.IntervalCounter
+import com.intellij.performance.IntervalCounter
 
 @State(name = "CompletionTimeStatistics", storages=arrayOf(Storage("completion.time.statistics")))
 class ContributorsTimeStatistics : PersistentStateComponent<CompletionTimeStats> {

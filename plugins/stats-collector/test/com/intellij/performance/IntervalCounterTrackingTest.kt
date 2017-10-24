@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.tracking
+package com.intellij.performance
 
 import org.junit.Test
 import org.assertj.core.api.Assertions.assertThat

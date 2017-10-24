@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.tracking
+package com.intellij.performance
 
 data class IntervalData(val intervalStart: Double, val intervalEnd: Double, val count: Int)
 
