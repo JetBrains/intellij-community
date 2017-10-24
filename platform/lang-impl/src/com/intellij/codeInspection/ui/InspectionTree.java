@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -9,6 +7,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
@@ -232,6 +232,7 @@ public class InspectionTree extends Tree {
     final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
     final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
 
+    // key can be node or VirtualFile (if problem descriptor node parent is a file/member RefElementNode).
     MultiMap<Object, ProblemDescriptionNode> parentToChildNode = new MultiMap<>();
     final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();
     for (TreePath path : selectionPaths) {
@@ -241,7 +242,7 @@ public class InspectionTree extends Tree {
       if (node instanceof ProblemDescriptionNode) {
         if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved, allowSuppressed)) {
           if (length >= 2) {
-            parentToChildNode.putValue(pathAsArray[length - 2], (ProblemDescriptionNode)node);
+            parentToChildNode.putValue(getVirtualFileFromNode(pathAsArray[length - 2]), (ProblemDescriptionNode)node);
           } else {
             parentToChildNode.putValue(node, (ProblemDescriptionNode)node);
           }
@@ -512,5 +513,22 @@ public class InspectionTree extends Tree {
       path.add(node.getSubGroup());
     }
     return ArrayUtil.toStringArray(path);
+  }
+
+  @NotNull
+  private static Object getVirtualFileFromNode(@NotNull Object node) {
+    if (node instanceof RefElementNode) {
+      RefEntity entity = ((RefElementNode)node).getElement();
+      if (entity instanceof RefElement) {
+        SmartPsiElementPointer pointer = ((RefElement)entity).getPointer();
+        if (pointer != null) {
+          VirtualFile file = pointer.getVirtualFile();
+          if (file != null) {
+            return file;
+          }
+        }
+      }
+    }
+    return node;
   }
 }
