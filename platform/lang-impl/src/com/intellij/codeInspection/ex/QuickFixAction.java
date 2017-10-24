@@ -234,11 +234,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @NotNull
   private static RefEntity[] getSelectedElements(InspectionResultsView view) {
-    if (view == null) return new RefElement[0];
-    List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));
+    if (view == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    RefEntity[] selection = view.getTree().getSelectedElements();
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
-    selection.sort(InspectionResultsViewComparator::compareEntities);
-    return selection.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY);
+    Arrays.sort(selection, InspectionResultsViewComparator::compareEntities);
+    return selection;
   }
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
