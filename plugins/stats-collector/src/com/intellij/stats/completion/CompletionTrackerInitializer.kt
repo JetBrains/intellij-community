@@ -24,8 +24,8 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.reporting.isSendAllowed
-import com.intellij.reporting.isUnitTestMode
+import com.intellij.stats.sender.isSendAllowed
+import com.intellij.stats.sender.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import java.beans.PropertyChangeListener
 

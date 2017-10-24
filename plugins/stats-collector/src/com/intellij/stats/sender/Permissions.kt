@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.reporting
+package com.intellij.stats.sender
 
 import com.intellij.openapi.application.ApplicationManager
 
