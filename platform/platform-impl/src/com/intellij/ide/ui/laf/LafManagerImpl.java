@@ -449,6 +449,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixSeparatorColor(uiDefaults);
 
+    fixProgressBar(uiDefaults);
+
     for (Frame frame : Frame.getFrames()) {
       // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
       // com.apple.laf.AquaNativeResources$CColorPaintUIResource
@@ -543,6 +545,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
       uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+    }
+  }
+
+  private static void fixProgressBar(UIDefaults uiDefaults) {
+    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+      uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
+      uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
   }
 

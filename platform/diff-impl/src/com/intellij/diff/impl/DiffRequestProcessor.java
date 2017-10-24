@@ -61,7 +61,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -877,7 +876,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private static class MyProgressBar extends JBProgressBar {
+  private static class MyProgressBar extends JProgressBar {
     private int myProgressCount = 0;
 
     public MyProgressBar() {

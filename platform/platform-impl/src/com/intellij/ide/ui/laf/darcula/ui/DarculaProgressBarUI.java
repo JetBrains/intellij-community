@@ -15,233 +15,124 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
-import java.awt.geom.*;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaProgressBarUI extends BasicProgressBarUI {
 
+  private static final Color REMAINDER_COLOR = new JBColor(Gray.xC4, Gray.x69);
+  private static final Color FINISHED_COLOR = new JBColor(Gray.x80, Gray.xA0);
+
+  private static final Color ERROR_COLOR = new JBColor(new Color(0xd80000), new Color(0xff4053));
+  private static final Color SUCCESS_COLOR = new JBColor(new Color(0x34b171), new Color(0x008f50));
+
+  private static final Color START_COLOR = new JBColor(Gray.xC4, Gray.x69);
+  private static final Color END_COLOR = new JBColor(Gray.x80, Gray.x83);
+
+  private static final Color ERROR_START_COLOR = new JBColor(new Color(0xFB8F89), new Color(0xf4a2a0));
+  private static final Color ERROR_END_COLOR = ERROR_COLOR;
+  private static final Color SUCCESS_START_COLOR = new JBColor(new Color(0x7EE8A5), new Color(0x5dc48f));
+  private static final Color SUCCESS_END_COLOR = SUCCESS_COLOR;
+
+  private static final int STEP = 6;
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    c.setBorder(JBUI.Borders.empty().asUIResource());
     return new DarculaProgressBarUI();
   }
-
-  protected volatile int offset = 0;
 
   @Override
   protected void installDefaults() {
     super.installDefaults();
-    UIManager.put("ProgressBar.repaintInterval", new Integer(25));
-    UIManager.put("ProgressBar.cycleTime", new Integer(300));
-  }
-
-  class IndeterminateProgressCache {
-    private Area containingRoundRect = null;
-    private Area insetArea = null;
-    private Area outerInnerBorderRoundRectArea = null;
-    private Area outlineArea = null;
-    private Path2D path = null;
-    private ArrayList<TexturePaint> pathPaintList = new ArrayList<>();
-
-    private int barRectWidth = -1;
-    private int barRectHeight = -1;
-    private int w = -1;
-    private int h = -1;
-    private int cHeight = -1;
-    private float off = 0;
-
-    synchronized void validateAndRender(Graphics2D g,
-                                        JComponent c,
-                                        int barRectWidth,
-                                        int barRectHeight,
-                                        int w,
-                                        int h,
-                                        int frame) {
-      final float newOff = JBUI.scale(1f);
-      if (path == null || barRectWidth != this.barRectWidth ||
-          barRectHeight != this.barRectHeight ||
-          w != this.w || h != this.h || c.getHeight() != this.cHeight ||
-          off != newOff)
-      {
-        this.cHeight = c.getHeight();
-        path = new Path2D.Double();
-        int x = h / 2;
-        while (x < 2*getPeriodLength()) {
-          float ww = getPeriodLength() / 2f;
-          path.moveTo(x, 0);
-          path.lineTo(x + ww, 0);
-          path.lineTo(x + ww - h / 2, h);
-          path.lineTo(x - h / 2, h);
-          path.lineTo(x, 0);
-          path.closePath();
-          x += getPeriodLength();
-        }
-
-        BufferedImage pathTile = UIUtil.createImage(getPeriodLength(), barRectHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D gpt = pathTile.createGraphics();
-        GraphicsUtil.setupAAPainting(gpt);
-        gpt.setColor(new JBColor(Gray._165, Gray._88));
-        gpt.fill(path);
-
-        pathPaintList.clear();
-        for (int i = 0; i < getFrameCount(); i++) {
-          double progressOffset = ((double)i*getPeriodLength())/getFrameCount();
-
-          TexturePaint pathPaint =
-            new TexturePaint(pathTile, new Rectangle2D.Double(
-              Math.rint(getPeriodLength() - progressOffset),0, getPeriodLength(), barRectHeight));
-          pathPaintList.add(pathPaint);
-        }
-
-        this.barRectWidth = barRectWidth;
-        this.barRectHeight = barRectHeight;
-        this.w = w;
-        this.h = h;
-        final float R = JBUI.scale(8f);
-        final float R2 = JBUI.scale(9f);
-
-        off = newOff;
-
-        Area cachedInnerBorderRoundRect = new Area(new RoundRectangle2D.Float(off, off, w - 2f * off, h - 2f * off, R, R));
-        containingRoundRect = new Area(new RoundRectangle2D.Float(2f * off, 2f * off, w - 4f * off, h - 4f * off, R, R));
-        insetArea = new Area(cachedInnerBorderRoundRect);
-        insetArea.subtract(containingRoundRect);
-        outerInnerBorderRoundRectArea = new Area(new Rectangle2D.Float(0, 0, w, h));
-        outerInnerBorderRoundRectArea.subtract(cachedInnerBorderRoundRect);
-        outlineArea = new Area(outerInnerBorderRoundRectArea);
-        outlineArea.subtract(new Area(new RoundRectangle2D.Float(0, 0, w, h, R2, R2)));
-      }
-
-      g.translate(0, (c.getHeight() - h) / 2);
-
-      g.setPaint(pathPaintList.get(frame));
-      g.fill(containingRoundRect);
-
-      g.setColor(Gray._128);
-      if (c.isOpaque()) {
-        g.fill(outerInnerBorderRoundRectArea);
-      }
-
-      g.setColor(c.getParent().getBackground());
-      if (c.isOpaque()) {
-        g.fill(outlineArea);
-      }
-
-      g.fill(insetArea);
-
-      g.translate(0, -(c.getHeight() - h) / 2);
-    }
-  }
-
-  final private IndeterminateProgressCache indeterminateProgressCache = new IndeterminateProgressCache();
-
-  @Override
-  protected void paintIndeterminate(Graphics g2d, JComponent c) {
-    if (!(g2d instanceof Graphics2D)) {
-      return;
-    }
-    Graphics2D g = (Graphics2D)g2d;
-
-    Insets b = progressBar.getInsets(); // area for border
-    int barRectWidth = progressBar.getWidth() - (b.right + b.left);
-    int barRectHeight = progressBar.getHeight() - (b.top + b.bottom);
-
-    if (barRectWidth <= 0 || barRectHeight <= 0) {
-      return;
-    }
-    int w = c.getWidth();
-    int h = c.getPreferredSize().height;
-    if (!isEven(c.getHeight() - h)) h++;
-
-    if (c.isOpaque()) {
-      g.setColor(new JBColor(Gray._240, Gray._128));
-      g.fillRect(0, (c.getHeight() - h)/2, w, h);
-    }
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-
-    indeterminateProgressCache.validateAndRender(g, c, barRectWidth, barRectHeight, w, h, getAnimationIndex());
-
-    // Deal with possible text painting
-    if (progressBar.isStringPainted()) {
-      if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
-        paintString(g, b.left, b.top, barRectWidth, barRectHeight, boxRect.x, boxRect.width);
-      }
-      else {
-        paintString(g, b.left, b.top, barRectWidth, barRectHeight, boxRect.y, boxRect.height);
-      }
-    }
-    config.restore();
+    UIManager.put("ProgressBar.repaintInterval", new Integer(50));
+    UIManager.put("ProgressBar.cycleTime", new Integer(800));
   }
 
   @Override
-  protected void paintDeterminate(Graphics g, JComponent c) {
-    if (!(g instanceof Graphics2D)) {
-      return;
+  protected void paintIndeterminate(Graphics g, JComponent c) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      Rectangle r = new Rectangle(progressBar.getSize());
+      if (c.isOpaque()) {
+        g2.setColor(c.getParent().getBackground());
+        g2.fill(r);
+      }
+
+      Insets i = progressBar.getInsets();
+      JBInsets.removeFrom(r, i);
+      int orientation = progressBar.getOrientation();
+
+      // Detect gradient color
+      Color startColor, endColor;
+      String type = (String)progressBar.getClientProperty("ProgressBar.color");
+      if ("error".equals(type)) {
+        startColor = ERROR_START_COLOR;
+        endColor = ERROR_END_COLOR;
+      } else if ("success".equals(type)) {
+        startColor = SUCCESS_START_COLOR;
+        endColor = SUCCESS_END_COLOR;
+      } else {
+        startColor = getStartColor();
+        endColor = getEndColor();
+      }
+
+      RoundRectangle2D shape;
+      int step = JBUI.scale(STEP);
+      if (orientation == SwingConstants.HORIZONTAL) {
+        int pHeight = progressBar.getPreferredSize().height;
+        float yOffset = r.y + (r.height - pHeight) / 2.0f;
+
+        shape = new RoundRectangle2D.Float(r.x, yOffset, r.width, pHeight, pHeight, pHeight);
+
+        yOffset = r.y + pHeight/2.0f;
+        g2.setPaint(new GradientPaint(r.x + getAnimationIndex()*step*2, yOffset, startColor,
+                                      r.x + getFrameCount()*step + getAnimationIndex()*step*2, yOffset, endColor, true));
+      } else {
+        int pWidth = progressBar.getPreferredSize().width;
+        float xOffset = r.x + (r.width - pWidth) / 2.0f;
+
+        shape = new RoundRectangle2D.Float(xOffset, r.y, pWidth, r.height, pWidth, pWidth);
+        xOffset = r.x + pWidth/2.0f;
+        g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex()*step*2, startColor,
+                                      xOffset, r.y + getFrameCount()*step + getAnimationIndex()*step*2, endColor, true));
+      }
+      g2.fill(shape);
+
+      if (progressBar.isStringPainted()) {
+        if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
+          paintString(g2, i.left, i.top, r.width, r.height, boxRect.x, boxRect.width);
+        } else {
+          paintString(g2, i.left, i.top, r.width, r.height, boxRect.y, boxRect.height);
+        }
+      }
+    } finally {
+      g2.dispose();
     }
-
-    if (progressBar.getOrientation() != SwingConstants.HORIZONTAL || !c.getComponentOrientation().isLeftToRight()) {
-      super.paintDeterminate(g, c);
-      return;
-    }
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    Insets b = progressBar.getInsets(); // area for border
-    int w = progressBar.getWidth();
-    int h = progressBar.getPreferredSize().height;
-    if (!isEven(c.getHeight() - h)) h++;
-
-    int barRectWidth = w - (b.right + b.left);
-    int barRectHeight = h - (b.top + b.bottom);
-
-    if (barRectWidth <= 0 || barRectHeight <= 0) {
-      return;
-    }
-
-    int amountFull = getAmountFull(b, barRectWidth, barRectHeight);
-
-    g.setColor(c.getParent().getBackground());
-    Graphics2D g2 = (Graphics2D)g;
-    if (c.isOpaque()) {
-      g.fillRect(0, 0, w, h);
-    }
-
-    final float R = JBUI.scale(8f);
-    final float R2 = JBUI.scale(9f);
-    final float off = JBUI.scale(1f);
-
-    g2.translate(0, (c.getHeight() - h)/2);
-    g2.setColor(progressBar.getForeground());
-    g2.fill(new RoundRectangle2D.Float(0, 0, w - off, h - off, R2, R2));
-    g2.setColor(c.getParent().getBackground());
-    g2.fill(new RoundRectangle2D.Float(off, off, w - 2f*off - off, h - 2f*off - off, R, R));
-    g2.setColor(progressBar.getForeground());
-    g2.fill(new RoundRectangle2D.Float(2f*off,2f*off, amountFull - JBUI.scale(5f), h - JBUI.scale(5f), JBUI.scale(7f), JBUI.scale(7f)));
-    g2.translate(0, -(c.getHeight() - h)/2);
-
-    // Deal with possible text painting
-    if (progressBar.isStringPainted()) {
-      paintString(g, b.left, b.top,
-                  barRectWidth, barRectHeight,
-                  amountFull, b);
-    }
-    config.restore();
   }
 
+  protected Color getStartColor() {
+    return START_COLOR;
+  }
+
+  protected Color getEndColor() {
+    return END_COLOR;
+  }
   private void paintString(Graphics g, int x, int y, int w, int h, int fillStart, int amountFull) {
     if (!(g instanceof Graphics2D)) {
       return;
@@ -280,15 +171,96 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   @Override
+  protected void paintDeterminate(Graphics g, JComponent c) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      Rectangle r = new Rectangle(progressBar.getSize());
+      if (c.isOpaque()) {
+        g2.setColor(c.getParent().getBackground());
+        g2.fill(r);
+      }
+
+      Insets i = progressBar.getInsets();
+      JBInsets.removeFrom(r, i);
+      int orientation = progressBar.getOrientation();
+      int amountFull = getAmountFull(progressBar.getInsets(), r.width, r.height);
+
+      RoundRectangle2D fullShape;
+      RoundRectangle2D coloredShape;
+      if (orientation == SwingConstants.HORIZONTAL) {
+        int pHeight = progressBar.getPreferredSize().height;
+        double yOffset = r.y + (r.height - pHeight) / 2.0;
+
+        fullShape = new RoundRectangle2D.Double(r.x, yOffset, r.width, pHeight, pHeight, pHeight);
+        coloredShape = new RoundRectangle2D.Double(r.x, yOffset, amountFull, pHeight, pHeight, pHeight);
+      } else {
+        int pWidth = progressBar.getPreferredSize().width;
+        double xOffset = r.x + (r.width - pWidth) / 2.0;
+
+        fullShape = new RoundRectangle2D.Double(xOffset, r.y, pWidth, r.height, pWidth, pWidth);
+        coloredShape = new RoundRectangle2D.Double(xOffset, r.y, pWidth, amountFull, pWidth, pWidth);
+      }
+      g2.setColor(getRemainderColor());
+      g2.fill(fullShape);
+
+
+      String type = (String)progressBar.getClientProperty("ProgressBar.color");
+      if ("error".equals(type)) {
+        g2.setColor(ERROR_COLOR);
+      } else if ("success".equals(type)) {
+        g2.setColor(SUCCESS_COLOR);
+      } else {
+        g2.setColor(getFinishedColor());
+      }
+      g2.fill(coloredShape);
+
+      // Deal with possible text painting
+      if (progressBar.isStringPainted()) {
+        paintString(g, i.left, i.top, r.width, r.height, amountFull, i);
+      }
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  protected Color getRemainderColor() {
+    return REMAINDER_COLOR;
+  }
+
+  protected Color getFinishedColor() {
+    return FINISHED_COLOR;
+  }
+
+  @Override public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    if (!(c instanceof JProgressBar)) {
+      return size;
+    }
+
+    boolean modeless = progressBar.getClientProperty("ProgressBar.modeless") == Boolean.TRUE;
+    int orientation = ((JProgressBar)c).getOrientation();
+    if (orientation == SwingConstants.HORIZONTAL) {
+      size.height = JBUI.scale(modeless ? 2 : 4);
+    } else {
+      size.width = JBUI.scale(modeless ? 2 : 4);
+    }
+    return  size;
+  }
+
+  @Override
   protected int getBoxLength(int availableLength, int otherDimension) {
     return availableLength;
   }
 
-  protected int getPeriodLength() {
-    return JBUI.scale(16);
-  }
+  // TODO: remove methods. Not used anymore.
+  @Deprecated
+  protected volatile int offset = 0;
 
-  private static boolean isEven(int value) {
-    return value % 2 == 0;
+  @Deprecated
+  protected int getPeriodLength() {
+    return 0;
   }
 }
