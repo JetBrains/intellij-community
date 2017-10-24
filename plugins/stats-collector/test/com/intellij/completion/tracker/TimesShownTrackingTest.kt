@@ -17,7 +17,6 @@ package com.intellij.completion.tracker
 
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.completion.enhancer.LookupElementPositionTracker
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.stats.completion.idString
 import com.intellij.stats.events.completion.ElementPositionHistory
@@ -37,7 +36,7 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
     myFixture.completeBasic()
     val allItems = lookup.items
 
-    val shownTimesTracker = LookupElementPositionTracker(lookup)
+    val shownTimesTracker = PositionTrackingListener(lookup)
     lookup.setPrefixChangeListener(shownTimesTracker)
 
     assertThat(allItems.take(5).map { it.lookupString })
