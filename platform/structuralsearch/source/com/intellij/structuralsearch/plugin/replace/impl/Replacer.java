@@ -175,7 +175,7 @@ public class Replacer {
       null,
       "Stop",
       indicator -> {
-
+        indicator.setIndeterminate(false);
         try {
           final int size = infos.size();
           VirtualFile lastFile = null;

@@ -61,6 +61,9 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<>();
     final Runnable findUnusedImports = () -> {
       final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+      if (progressIndicator != null) {
+        progressIndicator.setIndeterminate(false);
+      }
       final int total = files.size();
       int i = 0;
       for (final GroovyFile file : files) {
