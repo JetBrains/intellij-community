@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.net.ssl.CertificateInfoPanel;
+import com.intellij.util.net.ssl.CertificateWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.auth.AcceptResult;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
 public class ServerSSLDialog extends DialogWrapper {
@@ -35,7 +20,6 @@ public class ServerSSLDialog extends DialogWrapper {
   @NotNull private final String myCertificateInfo;
   private Action myTempAction;
   private AcceptResult myResult;
-  @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
   public ServerSSLDialog(final Project project, @NotNull X509Certificate cert, boolean store) {
     this(project, getServerCertificateInfo(cert), store);
@@ -103,19 +87,6 @@ public class ServerSSLDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  private static String getFingerprint(@NotNull X509Certificate cert) {
-    byte[] data = null;
-
-    try {
-      data = cert.getEncoded();
-    }
-    catch (CertificateEncodingException ignore) {
-    }
-
-    return data != null ? SVNSSLUtil.getFingerprint(data, ALGORITHM_SHA1) : "";
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral", "StringBufferReplaceableByString"})
   @NotNull
   private static String getServerCertificateInfo(@NotNull X509Certificate cert) {
@@ -130,7 +101,7 @@ public class ServerSSLDialog extends DialogWrapper {
       .append(cert.getIssuerDN().getName())
       .append('\n')
       .append(" - Fingerprint: ")
-      .append(getFingerprint(cert))
+      .append(CertificateInfoPanel.formatHex(new CertificateWrapper(cert).getSha1Fingerprint(), false))
       .toString();
   }
 }
