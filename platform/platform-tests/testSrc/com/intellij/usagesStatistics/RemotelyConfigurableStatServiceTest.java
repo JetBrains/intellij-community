@@ -49,9 +49,10 @@ public class RemotelyConfigurableStatServiceTest {
     assertTrue(connectionService.isTransmissionPermitted());
     String[] attributeNames = connectionService.getAttributeNames();
 
-    assertEquals(attributeNames.length, 2);
-    assertEquals(attributeNames[0], "url");
-    assertEquals(attributeNames[1], "permitted");
+    assertEquals(3, attributeNames.length);
+    assertEquals("url", attributeNames[0]);
+    assertEquals("permitted", attributeNames[1]);
+    assertEquals("disabled", attributeNames[2]);
   }
 
   @Test
