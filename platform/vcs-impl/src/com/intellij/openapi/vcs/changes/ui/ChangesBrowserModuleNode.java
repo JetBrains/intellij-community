@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.ui.SimpleTextAttributes;
 
 /**
@@ -34,6 +35,9 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
+
+    appendParentPath(renderer, ModuleUtilCore.getModuleDirPath(module));
+
     if (module.isDisposed()) {
       renderer.setIcon(ModuleType.EMPTY.getIcon());
     } else {
