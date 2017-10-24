@@ -184,7 +184,7 @@ public class JavaFindUsagesHelper {
           expression -> addResult(expression, options, processor)));
       }
       if (methodOptions.isImplicitToString) {
-        ImplicitToStringSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(ref -> addResult((PsiReference)ref, options, processor)));
+        ImplicitToStringSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(ref -> addResult(ref, options, processor)));
       }
     }
 
