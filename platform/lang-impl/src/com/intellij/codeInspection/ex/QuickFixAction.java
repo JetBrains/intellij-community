@@ -12,6 +12,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -33,7 +34,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
@@ -237,30 +237,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     if (view == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
-    Collections.sort(selection, (o1, o2) -> {
-      if (o1 instanceof RefElement && o2 instanceof RefElement) {
-        RefElement r1 = (RefElement)o1;
-        RefElement r2 = (RefElement)o2;
-        final PsiElement element1 = r1.getElement();
-        final PsiElement element2 = r2.getElement();
-        final PsiFile containingFile1 = element1.getContainingFile();
-        final PsiFile containingFile2 = element2.getContainingFile();
-        if (containingFile1 == containingFile2) {
-          int i1 = element1.getTextOffset();
-          int i2 = element2.getTextOffset();
-          return Integer.compare(i2, i1);
-        }
-        return containingFile1.getName().compareTo(containingFile2.getName());
-      }
-      if (o1 instanceof RefElement) {
-        return 1;
-      }
-      if (o2 instanceof RefElement) {
-        return -1;
-      }
-      return o1.getName().compareTo(o2.getName());
-    });
-
+    selection.sort(InspectionResultsViewComparator::compareEntities);
     return selection.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY);
   }
 
