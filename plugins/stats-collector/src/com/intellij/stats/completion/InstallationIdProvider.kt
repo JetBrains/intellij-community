@@ -16,17 +16,12 @@
 
 package com.intellij.stats.completion
 
-import com.intellij.stats.events.completion.LogEvent
-import com.intellij.stats.events.completion.LogEventSerializer
-import com.intellij.stats.logger.LogFileManager
+import com.intellij.openapi.application.PermanentInstallationID
 
-interface CompletionEventLogger {
-    fun log(event: LogEvent)
+interface InstallationIdProvider {
+    fun installationId(): String
 }
 
-class CompletionEventFileLogger(private val logFileManager: LogFileManager): CompletionEventLogger {
-    override fun log(event: LogEvent) {
-        val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
-    }
+class PermanentInstallationIdProvider: InstallationIdProvider {
+    override fun installationId() = PermanentInstallationID.get()
 }

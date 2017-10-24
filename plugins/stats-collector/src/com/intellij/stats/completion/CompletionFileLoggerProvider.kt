@@ -15,21 +15,10 @@
  */
 package com.intellij.stats.completion
 
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.components.ApplicationComponent
-import com.intellij.stats.events.completion.LogEvent
-import com.intellij.stats.events.completion.LogEventSerializer
 import com.intellij.stats.logger.LogFileManager
 import com.intellij.stats.storage.FilePathProvider
 import java.util.*
-
-interface InstallationIdProvider {
-  fun installationId(): String
-}
-
-class PermanentInstallationIdProvider: InstallationIdProvider {
-  override fun installationId() = PermanentInstallationID.get()
-}
 
 class CompletionFileLoggerProvider(
         filePathProvider: FilePathProvider,
@@ -42,25 +31,18 @@ class CompletionFileLoggerProvider(
     logFileManager.dispose()
   }
 
-  private fun String.shortedUUID(): String {
-    val start = this.lastIndexOf('-')
-    if (start > 0 && start + 1 < this.length) {
-      return this.substring(start + 1)
-    }
-    return this
-  }
-
   override fun newCompletionLogger(): CompletionLogger {
     val installationUID = installationIdProvider.installationId()
     val completionUID = UUID.randomUUID().toString()
-    val eventLogger = FileEventLogger(logFileManager)
+    val eventLogger = CompletionEventFileLogger(logFileManager)
     return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), eventLogger)
   }
 }
 
-class FileEventLogger(private val logFileManager: LogFileManager): CompletionEventLogger {
-  override fun log(event: LogEvent) {
-    val line = LogEventSerializer.toString(event)
-    logFileManager.println(line)
+private fun String.shortedUUID(): String {
+  val start = this.lastIndexOf('-')
+  if (start > 0 && start + 1 < this.length) {
+    return this.substring(start + 1)
   }
+  return this
 }
