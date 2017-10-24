@@ -70,8 +70,8 @@
 
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
 
-    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementTracker"
-                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracker"/>
+    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
+                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
     <preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>

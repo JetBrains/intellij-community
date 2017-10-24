@@ -24,16 +24,16 @@ import com.intellij.stats.events.completion.ElementPositionHistory
 import com.intellij.stats.events.completion.StagePosition
 
 
-interface LookupElementTracker {
+interface LookupElementPositionTracker {
     fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition>
 
     companion object {
-        fun getInstance(): LookupElementTracker = service()
+        fun getInstance(): LookupElementPositionTracker = service()
     }
 }
 
 
-class UserDataLookupElementTracker : LookupElementTracker {
+class UserDataLookupElementPositionTracker : LookupElementPositionTracker {
 
     override fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition> {
         val id = element.idString()

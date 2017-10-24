@@ -18,8 +18,8 @@ package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
-import com.intellij.completion.tracker.StagePosition
-import com.intellij.completion.tracker.UserDataLookupElementTracker
+import com.intellij.completion.tracker.UserDataLookupElementPositionTracker
+import com.intellij.stats.events.completion.StagePosition
 
 
 class LookupElementPositionTracker(private val lookup: LookupImpl): PrefixChangeListener {
@@ -31,7 +31,7 @@ class LookupElementPositionTracker(private val lookup: LookupImpl): PrefixChange
     private fun update() {
         lookup.items.forEachIndexed { index, lookupElement ->
             val position = StagePosition(stage, index)
-            UserDataLookupElementTracker.addElementPosition(lookup, lookupElement, position)
+            UserDataLookupElementPositionTracker.addElementPosition(lookup, lookupElement, position)
         }
         stage++
     }

@@ -53,8 +53,12 @@ class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(use
 /**
  * selectedId here, because position is 0 here
  */
-class TypedSelectEvent(userId: String, sessionId: String, @JvmField var selectedId: Int) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
-    
+class TypedSelectEvent(
+        userId: String,
+        sessionId: String,
+        @JvmField var selectedId: Int,
+        @JvmField var history: Map<Int, List<StagePosition>> = emptyMap()) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
+
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
@@ -66,8 +70,11 @@ class ExplicitSelectEvent(userId: String,
                           completionListIds: List<Int>,
                           newCompletionListItems: List<LookupEntryInfo>,
                           selectedPosition: Int,
-                          @JvmField var selectedId: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
-    
+                          @JvmField var selectedId: Int,
+                          @JvmField var history: Map<Int, List<StagePosition>> = emptyMap())
+
+    : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }

@@ -20,6 +20,8 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.completion.enhancer.LookupElementPositionTracker
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.stats.completion.idString
+import com.intellij.stats.events.completion.ElementPositionHistory
+import com.intellij.stats.events.completion.StagePosition
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.assertj.core.api.Assertions.assertThat
 
@@ -42,7 +44,7 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
       .isEqualTo(listOf("cat", "man", "run", "runnable", "rus"))
 
     myFixture.type("r")
-    val history: MutableMap<String, ElementPositionHistory> = UserDataLookupElementTracker.history(lookup)!!
+    val history: MutableMap<String, ElementPositionHistory> = UserDataLookupElementPositionTracker.history(lookup)!!
     myFixture.type("us\n")
 
     val map = allItems.map {

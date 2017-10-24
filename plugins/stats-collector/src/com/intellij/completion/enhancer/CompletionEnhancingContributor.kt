@@ -46,7 +46,6 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         val addedElements = HashSet<LookupElement>()
         val newSorter = sorter(parameters, result.prefixMatcher)
                 .weighBefore("templates", CompletionNumberWeigher())
-                .withClassifier(lookupElementPositionHistory(lookup))
 
         val start = System.currentTimeMillis()
         result.runRemainingContributors(parameters, {
@@ -61,14 +60,6 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         val typedChars = lookup.prefixLength()
         if (parameters.invocationCount < MAX_INVOCATION_COUNT && typedChars > RUN_COMPLETION_AFTER_CHARS) {
             startMaxInvocationCountCompletion(parameters, result, newSorter, addedElements)
-        }
-    }
-
-    private fun lookupElementPositionHistory(lookup: LookupImpl): ClassifierFactory<LookupElement> {
-        return object : ClassifierFactory<LookupElement>("positionHistory") {
-            override fun createClassifier(next: Classifier<LookupElement>?): Classifier<LookupElement> {
-                return ElementPositionHistoryEmptyClassifier(lookup, next)
-            }
         }
     }
 

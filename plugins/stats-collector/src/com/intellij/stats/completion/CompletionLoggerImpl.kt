@@ -18,7 +18,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.tracker.LookupElementTracker
+import com.intellij.completion.tracker.LookupElementPositionTracker
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.stats.events.completion.*
 
@@ -134,8 +134,11 @@ class CompletionFileLogger(private val installationUID: String,
     override fun itemSelectedByTyping(lookup: LookupImpl) {
         val current = lookup.currentItem
         val id = if (current != null) getElementId(current)!! else -1
-        
-        val event = TypedSelectEvent(installationUID, completionUID, id)
+
+        val positionTracker = LookupElementPositionTracker.getInstance()
+        val history = lookup.items.map { getElementId(it)!! to positionTracker.positionsHistory(lookup, it) }.toMap()
+        val event = TypedSelectEvent(installationUID, completionUID, id, history)
+
         eventLogger.log(event)
     }
 
@@ -147,8 +150,11 @@ class CompletionFileLogger(private val installationUID: String,
         } else {
             -1 to -1
         }
-        
-        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
+
+        val positionTracker = LookupElementPositionTracker.getInstance()
+        val history = lookup.items.map { getElementId(it)!! to positionTracker.positionsHistory(lookup, it) }.toMap()
+
+        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id, history)
         eventLogger.log(event)
     }
     
