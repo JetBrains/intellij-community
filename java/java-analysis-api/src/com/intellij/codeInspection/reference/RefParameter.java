@@ -42,7 +42,7 @@ public interface RefParameter extends RefJavaElement {
   @Deprecated
   @Nullable
   default String getActualValueIfSame() {
-    return String.valueOf(getActualConstValue());
+    throw new UnsupportedOperationException();
   }
 
 
