@@ -44,9 +44,11 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
     Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
-    int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
-    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
-    icon.paintIcon(c, g, x, y);
+    if (icon != null) {
+      int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
+      int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
+      icon.paintIcon(c, g, x, y);
+    }
   }
 
   @Override
