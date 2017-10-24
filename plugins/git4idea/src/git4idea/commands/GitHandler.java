@@ -286,17 +286,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * check that process is started
-   *
-   * @throws IllegalStateException if process has not been started
-   */
-  private void checkStarted() {
-    if (!isStarted()) {
-      throw new IllegalStateException("The process is not started yet");
-    }
-  }
-
-  /**
    * @return true if process is started
    */
   final synchronized boolean isStarted() {
@@ -418,19 +407,8 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
-  void runInCurrentThread(@Nullable Runnable postStartAction) {
-    try {
-      start();
-      if (isStarted()) {
-        if (postStartAction != null) {
-          postStartAction.run();
-        }
-        waitFor();
-      }
-    }
-    finally {
-      logTime();
-    }
+  void runInCurrentThread() {
+    runInCurrentThread(null);
   }
 
   private void logTime() {
@@ -508,24 +486,6 @@ public abstract class GitHandler {
    * Start handling process output streams for the handler.
    */
   protected abstract void startHandlingStreams();
-
-  /**
-   * Wait for process termination
-   */
-  void waitFor() {
-    checkStarted();
-    try {
-      if (myInputProcessor != null && myProcess != null) {
-        myInputProcessor.consume(myProcess.getOutputStream());
-      }
-    }
-    catch (IOException e) {
-      addError(new VcsException(e));
-    }
-    finally {
-      waitForProcess();
-    }
-  }
 
   /**
    * Wait for process
@@ -653,6 +613,37 @@ public abstract class GitHandler {
   @Deprecated
   public List<String> getLastOutput() {
     return myLastOutput;
+  }
+
+  /**
+   *
+   * @param postStartAction
+   * @deprecated remove together with {@link GitHandlerUtil}
+   */
+  @Deprecated
+  void runInCurrentThread(@Nullable Runnable postStartAction) {
+    try {
+      start();
+      if (isStarted()) {
+        if (postStartAction != null) {
+          postStartAction.run();
+        }
+        try {
+          if (myInputProcessor != null && myProcess != null) {
+            myInputProcessor.consume(myProcess.getOutputStream());
+          }
+        }
+        catch (IOException e) {
+          addError(new VcsException(e));
+        }
+        finally {
+          waitForProcess();
+        }
+      }
+    }
+    finally {
+      logTime();
+    }
   }
 
   /**

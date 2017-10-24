@@ -221,7 +221,7 @@ public class GitSimpleHandler extends GitTextHandler {
           new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
-    runInCurrentThread(null);
+    runInCurrentThread();
     if (!exRef.isNull()) {
       throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
     }

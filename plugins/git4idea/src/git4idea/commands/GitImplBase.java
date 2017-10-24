@@ -89,7 +89,7 @@ abstract class GitImplBase implements Git {
            AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
         writeOutputToConsole(handler);
 
-        handler.runInCurrentThread(null);
+        handler.runInCurrentThread();
       }
       catch (IOException e) {
         resultListener.startFailed(e);
