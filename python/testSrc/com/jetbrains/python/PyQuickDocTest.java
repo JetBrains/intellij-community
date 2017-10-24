@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,8 +11,10 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.io.IOException;
 import java.util.Map;
@@ -176,29 +164,27 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement referenceElement = marks.get("<the_ref>");
-    try {
-      final PyDocStringOwner docStringOwner = (PyDocStringOwner)((PyTargetExpression)(referenceElement.getParent())).getReference().resolve();
-      checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON26,
+      () -> {
+        Map<String, PsiElement> marks = loadTest();
+        PsiElement referenceElement = marks.get("<the_ref>");
+        final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
+        checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
+      }
+    );
   }
 
   public void testPropNewDeleter() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
-    Map<String, PsiElement> marks = loadTest();
-    PsiElement referenceElement = marks.get("<the_ref>");
-    try {
-      final PyDocStringOwner docStringOwner = (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
-      checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON26,
+      () -> {
+        Map<String, PsiElement> marks = loadTest();
+        PsiElement referenceElement = marks.get("<the_ref>");
+        final PyDocStringOwner docStringOwner = (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
+        checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
+      }
+    );
   }
 
   public void testPropOldGetter() {
@@ -209,7 +195,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testPropOldSetter() {
     Map<String, PsiElement> marks = loadTest();
     PsiElement referenceElement = marks.get("<the_ref>");
-    final PyDocStringOwner docStringOwner = (PyDocStringOwner)((PyTargetExpression)(referenceElement.getParent())).getReference().resolve();
+    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
     checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 

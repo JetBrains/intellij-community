@@ -114,13 +114,13 @@ public class PyFindUsagesTest extends PyTestCase {
 
   // PY-7348
   public void testNamespacePackageUsages() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      final Collection<UsageInfo> usages = findMultiFileUsages("a.py");
-      assertEquals(3, usages.size());
-    } finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON33,
+      () -> {
+        final Collection<UsageInfo> usages = findMultiFileUsages("a.py");
+        assertEquals(3, usages.size());
+      }
+    );
   }
 
   public void testNameShadowing() {  // PY-6241
