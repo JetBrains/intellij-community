@@ -33,11 +33,14 @@ internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolic
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(selectedIndex)
 }
 
-internal data class SelectionSnapshot(val pattern: String, private val chosenElements: Set<Any>) : SelectionPolicy {
+internal object PreserveSelection : SelectionPolicy {
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> {
+    val chosenElements = popup.currentChosenInfo?.chosenElements ?: return emptyList()
     val items = model.items
     return items.indices.filter { items[it] in chosenElements }
   }
+}
 
+internal data class SelectionSnapshot(private val pattern: String, internal val chosenElements: Set<Any>) {
   fun hasSamePattern(popup: ChooseByNameBase) = popup.transformPattern(pattern) == popup.transformPattern(popup.trimmedText)
 }
