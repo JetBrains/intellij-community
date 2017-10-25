@@ -105,7 +105,7 @@ def main():
         assert os.path.exists(python_install)
 
     from build import remove_binaries
-    remove_binaries()
+    remove_binaries(['.pyd'])
 
     for f in list_binaries():
         raise AssertionError('Binary not removed: %s' % (f,))
