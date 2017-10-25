@@ -17,15 +17,13 @@
 package com.intellij.stats.completion
 
 
-class ElementPositionHistory {
-    private val history = mutableListOf<StagePosition>()
+class ElementPositionHistory(history: List<StagePosition>) {
+    constructor(): this(emptyList())
+
+    private val history = history.toMutableList()
 
     fun add(position: StagePosition) = history.add(position)
     fun history() = history
-
-    override fun toString(): String {
-        return "ElementPositionHistory(history=$history)"
-    }
 }
 
 

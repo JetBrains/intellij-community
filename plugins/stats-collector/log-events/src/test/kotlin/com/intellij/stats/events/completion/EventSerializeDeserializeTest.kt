@@ -16,10 +16,7 @@
 
 package com.intellij.stats.events.completion
 
-import com.intellij.stats.completion.DeserializationResult
-import com.intellij.stats.completion.JsonSerializer
-import com.intellij.stats.completion.LogEventSerializer
-import com.intellij.stats.completion.LookupEntryInfo
+import com.intellij.stats.completion.*
 import com.intellij.stats.completion.events.*
 import junit.framework.Assert.assertEquals
 import org.assertj.core.api.Assertions.assertThat
@@ -38,6 +35,8 @@ object Fixtures {
             LookupEntryInfo(1, 9, relevance),
             LookupEntryInfo(2, 7, relevance)
     )
+
+    val history = mapOf(10 to ElementPositionHistory(listOf(StagePosition(0, 1))))
     
 }
 
@@ -81,16 +80,16 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `item selected by typing event`() {
-        val event = TypedSelectEvent(Fixtures.userId, "xx", 5)
+        val event = TypedSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 5, Fixtures.lookupList, Fixtures.history)
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2, 2)
+        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 10, 10, Fixtures.lookupList, Fixtures.history)
         serializeDeserializeAndCheck(event)
         
-        event = ExplicitSelectEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, 2)
+        event = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 2, 2, Fixtures.lookupList, Fixtures.history)
         serializeDeserializeAndCheck(event)
     }
     

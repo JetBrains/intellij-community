@@ -45,12 +45,12 @@ object LogEventFixtures {
     val backspace_event_pos_0_left_0_1_2 = BackspaceEvent("1", sessionId, listOf(0, 1, 2), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", sessionId, listOf(1), emptyList(), 0)
 
-    val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0, 0)
-    val explicit_select_position_2 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 2, 2)
-    val explicit_select_position_1 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 1, 1)
+    val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), 0, 0, emptyList(), emptyMap())
+    val explicit_select_position_2 = ExplicitSelectEvent("1", sessionId, emptyList(), 2, 2, emptyList(), emptyMap())
+    val explicit_select_position_1 = ExplicitSelectEvent("1", sessionId, emptyList(), 1, 1, emptyList(), emptyMap())
 
-    val selected_by_typing_0 = TypedSelectEvent("1", sessionId, 0)
-    val selected_by_typing_1 = TypedSelectEvent("1", sessionId, 1)
+    val selected_by_typing_0 = TypedSelectEvent("1", sessionId, emptyList(), 0, emptyList(), emptyMap())
+    val selected_by_typing_1 = TypedSelectEvent("1", sessionId, emptyList(), 1, emptyList(), emptyMap())
 
 }
 

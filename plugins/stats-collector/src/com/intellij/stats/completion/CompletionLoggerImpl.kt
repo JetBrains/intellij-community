@@ -82,7 +82,7 @@ class CompletionFileLogger(private val installationUID: String,
                 language?.displayName,
                 isExperimentPerformed, experimentVersion,
                 lookupEntryInfos, selectedPosition = 0)
-        
+
         event.isOneLineMode = lookup.editor.isOneLineMode
 
         eventLogger.log(event)
@@ -132,30 +132,41 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        val id = if (current != null) getElementId(current)!! else -1
+        val newCompletionElements = getRecentlyAddedLookupItems(lookup.items).toLookupInfos(lookup)
+        val id = currentItemInfo(lookup).id
 
-        val positionTracker = LookupElementPositionTracker.getInstance()
-        val history = lookup.items.map { getElementId(it)!! to positionTracker.positionsHistory(lookup, it) }.toMap()
-        val event = TypedSelectEvent(installationUID, completionUID, id, history)
+        val history = lookup.itemsHistory()
+        val completionList = lookup.items.toLookupInfos(lookup)
 
+        val event = TypedSelectEvent(installationUID, completionUID, newCompletionElements, id, completionList, history)
         eventLogger.log(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        
-        val (index, id) = if (current != null) {
-            lookup.items.indexOf(current) to (getElementId(current) ?: -1)
-        } else {
-            -1 to -1
-        }
+        val newCompletionItems = getRecentlyAddedLookupItems(lookup.items).toLookupInfos(lookup)
+        val (index, id) = currentItemInfo(lookup)
 
-        val positionTracker = LookupElementPositionTracker.getInstance()
-        val history = lookup.items.map { getElementId(it)!! to positionTracker.positionsHistory(lookup, it) }.toMap()
+        val history = lookup.itemsHistory()
+        val completionList = lookup.items.toLookupInfos(lookup)
 
-        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id, history)
+        val event = ExplicitSelectEvent(installationUID, completionUID, newCompletionItems, index, id, completionList, history)
         eventLogger.log(event)
+    }
+
+    private fun currentItemInfo(lookup: LookupImpl): CurrentElementInfo {
+        val current = lookup.currentItem
+        return if (current != null) {
+            val index = lookup.items.indexOf(current)
+            val id = getElementId(current)!!
+            CurrentElementInfo(index, id)
+        } else {
+            CurrentElementInfo(-1, -1)
+        }
+    }
+
+    private fun LookupImpl.itemsHistory(): Map<Int, ElementPositionHistory> {
+        val positionTracker = LookupElementPositionTracker.getInstance()
+        return items.map { getElementId(it)!! to positionTracker.positionsHistory(this, it).let { ElementPositionHistory(it) } }.toMap()
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
@@ -169,6 +180,12 @@ class CompletionFileLogger(private val installationUID: String,
         eventLogger.log(event)
     }
 
+}
+
+
+private class CurrentElementInfo(val index: Int, val id: Int) {
+    operator fun component1() = index
+    operator fun component2() = id
 }
 
 

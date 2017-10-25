@@ -17,9 +17,9 @@
 package com.intellij.stats.completion.events
 
 import com.intellij.stats.completion.Action
+import com.intellij.stats.completion.ElementPositionHistory
 import com.intellij.stats.completion.LogEventVisitor
 import com.intellij.stats.completion.LookupEntryInfo
-import com.intellij.stats.completion.StagePosition
 
 
 class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(userId, sessionId, Action.COMPLETION_CANCELED) {
@@ -29,15 +29,23 @@ class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(use
 }
 
 
-class ExplicitSelectEvent(userId: String,
-                          sessionId: String,
-                          completionListIds: List<Int>,
-                          newCompletionListItems: List<LookupEntryInfo>,
-                          selectedPosition: Int,
-                          @JvmField var selectedId: Int,
-                          @JvmField var history: Map<Int, List<StagePosition>> = emptyMap())
-
-    : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+class ExplicitSelectEvent(
+        userId: String,
+        sessionId: String,
+        newCompletionListItems: List<LookupEntryInfo>,
+        selectedPosition: Int,
+        @JvmField var selectedId: Int,
+        @JvmField var completionList: List<LookupEntryInfo>,
+        @JvmField var history: Map<Int, ElementPositionHistory>
+)
+    : LookupStateLogData(
+        userId,
+        sessionId,
+        Action.EXPLICIT_SELECT,
+        completionList.map { it.id },
+        newCompletionListItems,
+        selectedPosition
+) {
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -52,8 +60,13 @@ class ExplicitSelectEvent(userId: String,
 class TypedSelectEvent(
         userId: String,
         sessionId: String,
+        newCompletionListItems: List<LookupEntryInfo>,
         @JvmField var selectedId: Int,
-        @JvmField var history: Map<Int, List<StagePosition>> = emptyMap()) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
+        @JvmField var completionList: List<LookupEntryInfo>,
+        @JvmField var history: Map<Int, ElementPositionHistory>
+)
+
+    : LookupStateLogData(userId, sessionId, Action.TYPED_SELECT, newCompletionListItems.map { it.id }, newCompletionListItems, 0) {
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
