@@ -20,7 +20,6 @@ import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +29,18 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
-  @NonNls public static final String TESTCASE_CLASS = "junit.framework.TestCase";
-  @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
-  @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
-  @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
-  @NonNls public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
-  @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
-  @NonNls public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
-  @NonNls public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
-  @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
-  @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
-  @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
-  @NonNls public static final String SUITE_METHOD_NAME = "suite";
+  public static final String TEST_CASE_CLASS = "junit.framework.TestCase";
+  private static final String TEST_INTERFACE = "junit.framework.Test";
+  private static final String TEST_SUITE_CLASS = "junit.framework.TestSuite";
+  public static final String TEST_ANNOTATION = "org.junit.Test";
+  public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
+  public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
+  public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
+  public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
+  public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
+  public static final String RUN_WITH = "org.junit.runner.RunWith";
+  public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
+  public static final String SUITE_METHOD_NAME = "suite";
 
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
@@ -54,51 +53,48 @@ public class JUnitUtil {
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
-  public static final Collection<String> TEST5_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_EACH_ANNOTATION_NAME,
-                                                                                                           AFTER_EACH_ANNOTATION_NAME));
+  public static final Collection<String> TEST5_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(
+    BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME));
 
   public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
-  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_ALL_ANNOTATION_NAME,
-                                                                                                                  AFTER_ALL_ANNOTATION_NAME));
+  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(
+    BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
 
-  private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
-                                                                                                        TEST5_ANNOTATION,
-                                                                                                        TEST5_FACTORY_ANNOTATION));
-  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
-                                                                                                        TEST5_FACTORY_ANNOTATION,
-                                                                                                        CUSTOM_TESTABLE_ANNOTATION));
-  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
-                                                                                                        TEST5_FACTORY_ANNOTATION));
+  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(
+    TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION));
+  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(
+    TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
 
+  private static final List<String> STATIC_CONFIGS = Arrays.asList(
+    BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
   private static final List<String> STATIC_5_CONFIGS = Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
-  private static final List<String> STATIC_CONFIGS = Arrays.asList(BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME,
-                                                                   PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
-  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
-    Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
-                  BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
+  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(Arrays.asList(
+    DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
+    BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
 
-  @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
-  @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
+  public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
+  public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
+
   private static final String[] RUNNERS_UNAWARE_OF_INNER_CLASSES = {
-                                                  "org.junit.runners.Parameterized",
-                                                  "org.junit.runners.BlockJUnit4ClassRunner",
-                                                  "org.junit.runners.JUnit4",
-                                                  "org.junit.internal.runners.JUnit38ClassRunner",
-                                                  "org.junit.internal.runners.JUnit4ClassRunner",
-                                                  "org.junit.runners.Suite"
+    "org.junit.runners.Parameterized",
+    "org.junit.runners.BlockJUnit4ClassRunner",
+    "org.junit.runners.JUnit4",
+    "org.junit.internal.runners.JUnit38ClassRunner",
+    "org.junit.internal.runners.JUnit4ClassRunner",
+    "org.junit.runners.Suite"
   };
 
   private static final String[] RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD = {
-                                                  "org.junit.runners.Parameterized",
-                                                  "org.junit.runners.BlockJUnit4ClassRunner",
-                                                  "org.junit.runners.JUnit4",
-                                                  "org.junit.internal.runners.JUnit4ClassRunner"
+    "org.junit.runners.Parameterized",
+    "org.junit.runners.BlockJUnit4ClassRunner",
+    "org.junit.runners.JUnit4",
+    "org.junit.internal.runners.JUnit4ClassRunner"
   };
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
@@ -108,8 +104,8 @@ public class JUnitUtil {
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType == null || returnType instanceof PsiPrimitiveType) return false;
-    return returnType.equalsToText(TEST_INTERFACE)||
-           returnType.equalsToText(TESTSUITE_CLASS) ||
+    return returnType.equalsToText(TEST_INTERFACE) ||
+           returnType.equalsToText(TEST_SUITE_CLASS) ||
            InheritanceUtil.isInheritor(returnType, TEST_INTERFACE);
   }
 
@@ -179,6 +175,7 @@ public class JUnitUtil {
         }
       }
     }
+
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, CHECK_HIERARCHY)) return true;
@@ -344,7 +341,7 @@ public class JUnitUtil {
 
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
-    return JavaPsiFacade.getInstance(project).findClass(TESTCASE_CLASS, scope);
+    return JavaPsiFacade.getInstance(project).findClass(TEST_CASE_CLASS, scope);
   }
 
   public static boolean isTestMethodOrConfig(@NotNull PsiMethod psiMethod) {
@@ -353,7 +350,6 @@ public class JUnitUtil {
       return false;
     }
     if (isTestMethod(PsiLocation.fromPsiElement(psiMethod), false)) {
-      assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
         ClassInheritorsSearch.search(containingClass).forEach(psiClass -> {
