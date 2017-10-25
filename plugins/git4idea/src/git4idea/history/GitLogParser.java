@@ -198,7 +198,7 @@ public class GitLogParser {
     return StringUtil.escapeStringCharacters(lineString);
   }
 
-  // --name-only, --name-status or no flag
+  // --name-status or no flag
   enum NameStatus {
     /**
      * No flag.
