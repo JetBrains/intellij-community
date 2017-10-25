@@ -43,6 +43,7 @@ import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -264,13 +265,13 @@ open class GuiTestCase {
     throw UnableToFindComponent("ComponentWithBrowseButton with labelFor=$boundedLabelText")
   }
 
-  fun <S, C : Component> ComponentFixture<S, C>.inspectionsTree(timeout: Long = defaultTimeout): InspectionsTreeFixture {
+  fun <S, C : Component> ComponentFixture<S, C>.treeTable(timeout: Long = defaultTimeout): TreeTableFixture {
     if (target() is Container) {
-      val inspectionsTable = waitUntilFound(guiTestRule.robot(), target() as Container,
-                                            typeMatcher(InspectionsConfigTreeTable::class.java) { true },
+      val table = waitUntilFound(guiTestRule.robot(), target() as Container,
+                                            typeMatcher(TreeTable::class.java) { true },
                                             timeout.toFestTimeout()
       )
-      return InspectionsTreeFixture(guiTestRule.robot(), inspectionsTable)
+      return TreeTableFixture(guiTestRule.robot(), table)
     }
     else throw UnsupportedOperationException(
       "Sorry, unable to find inspections tree with ${target()} as a Container")

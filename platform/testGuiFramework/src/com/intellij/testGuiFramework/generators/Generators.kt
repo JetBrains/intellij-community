@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
@@ -59,6 +58,7 @@ import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
 import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.BasicRobot
@@ -110,12 +110,12 @@ class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
   }
 }
 
-class InspectionsGenerator : ComponentCodeGenerator<InspectionsConfigTreeTable>{
-  override fun accept(cmp: Component): Boolean = cmp is InspectionsConfigTreeTable
-  override fun generate(cmp: InspectionsConfigTreeTable, me: MouseEvent, cp: Point): String {
+class TreeTableGenerator : ComponentCodeGenerator<TreeTable>{
+  override fun accept(cmp: Component): Boolean = cmp is TreeTable
+  override fun generate(cmp: TreeTable, me: MouseEvent, cp: Point): String {
     val path = cmp.tree.getClosestPathForLocation(cp.x, cp.y).toString()
     val realPath = path.trim('[',']').split(',').drop(1).map { it->it.trim() }.joinToString(separator = "\",\"")
-    return """inspectionsTree().selectPath("$realPath")"""
+    return """treeTable().selectPath("$realPath")"""
   }
   override fun priority(): Int = 10
 }
