@@ -461,7 +461,7 @@ public class GenericsHighlightUtil {
           if (abstracts == null) abstracts = new ArrayList<>(2);
           abstracts.add(method);
         }
-        hasConcrete |= !isDefault && !isAbstract;
+        hasConcrete |= !isDefault && !isAbstract && !method.hasModifierProperty(PsiModifier.STATIC);
       }
 
       if (!hasConcrete && defaults != null) {
@@ -469,7 +469,16 @@ public class GenericsHighlightUtil {
         if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
         final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
         if (defaultMethodContainingClass == null) continue;
-        final PsiMethod unrelatedMethod = abstracts != null ? abstracts.get(0) : defaults.get(1);
+        final PsiMethod unrelatedMethod;
+        if (abstracts != null) {
+          unrelatedMethod = abstracts.get(0);
+        }
+        else if (defaults.size() > 1) {
+          unrelatedMethod = defaults.get(1);
+        }
+        else {
+          continue;
+        }
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
         if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter)
