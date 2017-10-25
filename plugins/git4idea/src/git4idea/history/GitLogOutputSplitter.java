@@ -59,13 +59,19 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
       try {
         processOutputLine(line);
       }
-      catch (Exception e) {
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (VcsException e) {
+        myException = e;
+      }
+      catch (Throwable e) {
         myException = new VcsException(e);
       }
     }
   }
 
-  private void processOutputLine(@NotNull String line) {
+  private void processOutputLine(@NotNull String line) throws VcsException {
     try {
       GitLogRecord record = myParser.parseLine(line);
       if (record != null) {
@@ -73,15 +79,9 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
         myRecordConsumer.consume(record);
       }
     }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
     catch (GitFormatException e) {
       myParser.clear();
-      myException = new VcsException("Error while parsing line " + line, e);
-    }
-    catch (Throwable t) {
-      myException = new VcsException(t);
+      throw new VcsException("Error while parsing line " + line, e);
     }
   }
 
@@ -101,6 +101,9 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
           record.setUsedHandler(myHandler);
           myRecordConsumer.consume(record);
         }
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
       }
       catch (Throwable t) {
         myException = new VcsException(t);
