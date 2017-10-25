@@ -394,19 +394,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
     if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
-      final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
-      if (arrow == null) return null;
-
-      try {
-        final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
-        if (method != null) {
-          return (Icon)method.invoke(arrow);
-        }
-        return null;
-      }
-      catch (InvocationTargetException | IllegalAccessException e1) {
-        return null;
-      }
+      return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
   }

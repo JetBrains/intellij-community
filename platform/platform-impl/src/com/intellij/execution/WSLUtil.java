@@ -60,32 +60,7 @@ public class WSLUtil {
     return StringUtil.isEmpty(localAppDataPath) ? null : localAppDataPath + WSL_ROOT_CHUNK;
   });
 
-  private static final Pattern WIN_10_VERSION_PATTERN = Pattern.compile(".*(?:\\[Version 10\\.\\d+\\.(\\d+)\\])");
-  private static final int READ_VERSION_TIMEOUT = 10000;
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
-
-  /**
-   * WSL version equals Windows build number
-   * (https://github.com/Microsoft/BashOnWindows/issues/1728)
-   */
-  private static final AtomicNullableLazyValue<String> ourWSLVersion = AtomicNullableLazyValue.createValue(() -> {
-    final GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "ver");
-
-    try {
-      final ProcessOutput result = ExecUtil.execAndGetOutput(commandLine, READ_VERSION_TIMEOUT);
-      if (result.isTimeout()) return null;
-
-      final String out = result.getStdout().trim();
-      final Matcher matcher = WIN_10_VERSION_PATTERN.matcher(out);
-      if (matcher.find()) {
-        return matcher.group(1);
-      }
-    }
-    catch (ExecutionException e) {
-      LOG.warn(e);
-    }
-    return null;
-  });
 
   /**
    * @return bash file or null if not exists
@@ -100,14 +75,6 @@ public class WSLUtil {
    */
   public static boolean hasWSL() {
     return getWSLBashFile() != null;
-  }
-
-  /**
-   * @return WSL build number or null if it cannot be determined
-   */
-  @Nullable
-  public static String getWslVersion() {
-    return hasWSL() ? ourWSLVersion.getValue() : null;
   }
 
   /**

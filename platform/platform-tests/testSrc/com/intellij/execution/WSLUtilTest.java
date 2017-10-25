@@ -58,12 +58,6 @@ public class WSLUtilTest {
   }
 
   @Test
-  public void testVersion() {
-    final String version = WSLUtil.getWslVersion();
-    assertTrue(WSLUtil.hasWSL() ? version != null : version == null);
-  }
-
-  @Test
   public void testResolveSymlink() throws Exception {
     assumeTrue(WSLUtil.hasWSL());
 

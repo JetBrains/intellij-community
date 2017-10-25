@@ -138,7 +138,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
       });
     }
     else {
-      Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup().getName()));
+      Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup(), rule.getGroupComparator()));
       result.addAll(ungroupedNodes);
     }
     return result;

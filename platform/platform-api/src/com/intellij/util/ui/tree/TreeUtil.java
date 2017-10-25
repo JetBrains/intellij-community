@@ -22,10 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
@@ -33,6 +35,8 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -42,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -49,8 +54,18 @@ public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
+  private static final Key<Function<TreeVisitor, Promise<TreePath>>> TREE_ACCEPTOR = Key.create("TreeAcceptor");
 
   private TreeUtil() {}
+
+  @Nullable
+  public static Function<TreeVisitor, Promise<TreePath>> getTreeAcceptor(@NotNull JTree tree) {
+    return UIUtil.getClientProperty(tree, TREE_ACCEPTOR);
+  }
+
+  public static void setTreeAcceptor(@NotNull JTree tree, @Nullable Function<TreeVisitor, Promise<TreePath>> acceptor) {
+    UIUtil.putClientProperty(tree, TREE_ACCEPTOR, acceptor);
+  }
 
   @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
@@ -791,6 +806,34 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to expands all nodes in the specified tree.
+   *
+   * @param tree a tree, which nodes should be expanded
+   */
+  public static Promise<JTree> promiseExpandAll(@NotNull JTree tree) {
+    AsyncPromise<JTree> promise = new AsyncPromise<>();
+    expandAll(tree, () -> promise.setResult(tree));
+    return promise;
+  }
+
+  /**
+   * Expands all nodes in the specified tree and runs the specified task on done.
+   *
+   * @param tree   a tree, which nodes should be expanded
+   * @param onDone a task to run after expanding nodes
+   */
+  public static void expandAll(@NotNull JTree tree, Runnable onDone) {
+    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
+    if (acceptor != null) {
+      expand(tree, acceptor, Integer.MAX_VALUE, onDone);
+    }
+    else {
+      expandAll(tree);
+      if (onDone != null) onDone.run();
+    }
+  }
+
+  /**
    * Expands n levels of the tree counting from the root
    * @param tree to expand nodes of
    * @param levels depths of the expantion
@@ -813,6 +856,51 @@ public final class TreeUtil {
         isReady = false;
     }
     return isReady;
+  }
+
+  /**
+   * Promises to expands some nodes in the specified tree.
+   *
+   * @param tree  a tree, which nodes should be expanded
+   * @param depth a depth from visible root
+   */
+  public static Promise<JTree> promiseExpand(@NotNull JTree tree, int depth) {
+    AsyncPromise<JTree> promise = new AsyncPromise<>();
+    expand(tree, depth, () -> promise.setResult(tree));
+    return promise;
+  }
+
+  /**
+   * Expands some nodes in the specified tree and runs the specified task on done.
+   *
+   * @param tree   a tree, which nodes should be expanded
+   * @param depth  a depth from visible root
+   * @param onDone a task to run after expanding nodes
+   */
+  public static void expand(@NotNull JTree tree, int depth, Runnable onDone) {
+    if (depth < Integer.MAX_VALUE && !tree.isRootVisible()) depth++;
+    Function<TreeVisitor, Promise<TreePath>> acceptor = depth <= 0 ? null : getTreeAcceptor(tree);
+    if (acceptor != null) {
+      expand(tree, acceptor, depth, onDone);
+    }
+    else {
+      if (depth > 0) expand(tree, depth);
+      if (onDone != null) onDone.run();
+    }
+  }
+
+  private static void expand(@NotNull JTree tree, @NotNull Function<TreeVisitor, Promise<TreePath>> acceptor, int depth, Runnable onDone) {
+    Promise<TreePath> promise = acceptor.apply(new TreeVisitor() {
+      @NotNull
+      @Override
+      public Action visit(@NotNull TreePath path) {
+        int count = path.getPathCount();
+        if (count > depth) return Action.SKIP_SIBLINGS;
+        tree.expandPath(path);
+        return Action.CONTINUE;
+      }
+    });
+    if (onDone != null) promise.processed(ignored -> onDone.run());
   }
 
   @NotNull

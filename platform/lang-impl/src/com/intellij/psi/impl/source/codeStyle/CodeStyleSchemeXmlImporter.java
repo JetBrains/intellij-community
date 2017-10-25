@@ -51,7 +51,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
                                       @NotNull CodeStyleScheme currentScheme,
                                       @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
     Element rootElement = SchemeImportUtil.loadSchemeDom(selectedFile);
-    Element schemeRoot = getSchemeRoot(rootElement);
+    Element schemeRoot = findSchemeRoot(rootElement);
     final Pair<String, CodeStyleScheme> importPair =
       !ApplicationManager.getApplication().isUnitTestMode() ?
       ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, getSchemeName(schemeRoot)) :
@@ -75,26 +75,13 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     }
     return schemeNameAttr.getValue();
   }
-  
-  private static Element getSchemeRoot(@NotNull Element rootElement) throws SchemeImportException {
-    if ("project".equals(rootElement.getName())) {
-      Element child = rootElement.getChild("component");
-      if (child != null && "ProjectCodeStyleSettingsManager".equals(child.getAttributeValue("name"))) {
-        child = child.getChild("option");
-        if (child != null && "PER_PROJECT_SETTINGS".equals(child.getAttributeValue("name"))) {
-          child = child.getChild("value");
-          if (child != null) return child;
-        }
-      }
-      throw new SchemeImportException("Invalid scheme root: " + rootElement.getName());
-    }
-    return rootElement;
-  }
 
-  private CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme)
+
+  private static CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme)
     throws SchemeImportException {
     CodeStyleSettings newSettings = new CodeStyleSettings();
     loadSettings(rootElement, newSettings);
+    newSettings.resetDeprecatedFields(); // Clean up if imported from legacy settings
     ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(newSettings);
     return scheme;
   }

@@ -305,9 +305,15 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       updateContentToolbar(content);
       if (content != null) {
         if (content != myContentManager.getSelectedContent()) {
-          myContentManager.removeContentManagerListener(myContentManagerListener);
-          myContentManager.setSelectedContent(content);
-          myContentManager.addContentManagerListener(myContentManagerListener);
+          Content toSelect = content;
+          // Invoke content selection change later after currently selected content lost a focus.
+          SwingUtilities.invokeLater(() -> {
+            if (myContentManager.isDisposed() || myContentManager.getIndexOfContent(toSelect) == -1) return;
+
+            myContentManager.removeContentManagerListener(myContentManagerListener);
+            myContentManager.setSelectedContent(toSelect);
+            myContentManager.addContentManagerListener(myContentManagerListener);
+          });
         }
         showContentPanel();
         return;

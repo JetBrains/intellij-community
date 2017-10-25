@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -40,7 +39,11 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
+
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenIndex {
   private static final String CURRENT_VERSION = "4";
@@ -130,7 +133,7 @@ public class MavenIndex {
 
     String myRepositoryIdsStr = props.getProperty(ID_KEY);
     if (myRepositoryIdsStr != null) {
-      myRegisteredRepositoryIds.addAll(StringUtil.split(myRepositoryIdsStr, ","));
+      myRegisteredRepositoryIds.addAll(split(myRepositoryIdsStr, ","));
     }
     myRepositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
 
@@ -150,13 +153,26 @@ public class MavenIndex {
   }
 
   private static NotNexusIndexer initNotNexusIndexer(Kind kind, String repositoryPathOrUrl) {
-    if (kind == Kind.REMOTE && repositoryPathOrUrl.contains("dl.bintray.com/")) {
-      List<String> subjectAndRepo =
-        StringUtil.split(repositoryPathOrUrl.substring(repositoryPathOrUrl.indexOf("dl.bintray.com/") + "dl.bintray.com/".length()), "/");
-      if (!subjectAndRepo.isEmpty()) {
-        String subject = subjectAndRepo.get(0);
-        String repo = subjectAndRepo.size() > 1 ? subjectAndRepo.get(1) : null;
-        return new BintrayIndexer(subject, repo);
+    if (kind == Kind.REMOTE) {
+      try {
+        URL url = new URL(repositoryPathOrUrl);
+
+        String host = url.getHost();
+        if (host != null) {
+          List<String> path = split(trimStart(url.getPath(), "/"), "/");
+          if (host.equals("dl.bintray.com")) {
+            if (path.size() > 1) {
+              return new BintrayIndexer(path.get(0), path.get(1));
+            }
+          }
+          else if (host.endsWith(".bintray.com")) {
+            if (!path.isEmpty()) {
+              return new BintrayIndexer(trimEnd(host, ".bintray.com"), path.get(0));
+            }
+          }
+        }
+      }
+      catch (MalformedURLException ignored) {
       }
     }
     return null;
@@ -763,7 +779,7 @@ public class MavenIndex {
     @Nullable
     @Override
     public Result<String> compute() {
-      return Result.create(StringUtil.join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
+      return Result.create(join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
         @Override
         public long getModificationCount() {
           return myRegisteredRepositoryIds.hashCode();

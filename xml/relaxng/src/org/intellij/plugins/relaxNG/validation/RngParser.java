@@ -86,7 +86,7 @@ public class RngParser {
     }
   };
 
-  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftMap();
+  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static DatatypeLibraryFactory createXsdDatatypeFactory() {
     try {
@@ -121,7 +121,7 @@ public class RngParser {
       pattern = parsePattern(descriptorFile, eh, false);
     }
     if (pattern != null) {
-      DPattern oldPattern = ourCache.putIfAbsent(url, pattern);
+      DPattern oldPattern = ourCache.put(url, pattern);
       if (oldPattern != null) {
         return oldPattern;
       }

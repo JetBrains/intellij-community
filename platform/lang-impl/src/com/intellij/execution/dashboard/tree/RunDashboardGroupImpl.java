@@ -33,6 +33,10 @@ public class RunDashboardGroupImpl<T> implements RunDashboardGroup {
     myIcon = icon;
   }
 
+  public T getValue() {
+    return myValue;
+  }
+
   @Override
   public String getName() {
     return myName;
@@ -50,6 +54,9 @@ public class RunDashboardGroupImpl<T> implements RunDashboardGroup {
 
   @Override
   public final boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
     if (obj instanceof RunDashboardGroupImpl) {
       return myValue.equals(((RunDashboardGroupImpl)obj).myValue);
     }
