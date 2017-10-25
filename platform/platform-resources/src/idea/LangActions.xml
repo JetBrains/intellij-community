@@ -8,10 +8,8 @@
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <!--<action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Toolwindows.ToolWindowRun"/>-->
-    <!--<action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Run with _Debugging..." description="Choose and debug configuration" icon="AllIcons.General.Debug"/>-->
-    <action class="com.intellij.openapi.actionSystem.EmptyAction" id="ChooseRunConfiguration" />
-    <action class="com.intellij.openapi.actionSystem.EmptyAction" id="ChooseDebugConfiguration" />
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Run with _Debugging..." description="Choose and debug configuration" icon="AllIcons.General.Debug"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="_Run without Debugging..." description="Choose and run configuration" icon="AllIcons.Actions.Execute"/>
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
@@ -357,8 +355,8 @@
     <!-- Run -->
     <group id="RunMenu" popup="true">
       <group id="RunnerActions"/>
-      <reference ref="ChooseRunConfiguration"/>
       <reference ref="ChooseDebugConfiguration"/>
+      <reference ref="ChooseRunConfiguration"/>
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
