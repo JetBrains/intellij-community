@@ -74,14 +74,6 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
     CharArrayUtil.getChars(myChars, dest, start + myStart, destPos, end - start);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o instanceof CharSequenceSubSequence) return hashCode() == o.hashCode();
-    if (o == null || !(o instanceof CharSequence)) return false;
-    return StringUtil.equals(this, (CharSequence)o);
-  }
-
   private transient int hash;
   @Override
   public int hashCode() {
