@@ -334,7 +334,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          .descriptionAndTooltip(notFunctionalMessage).create());
         }
         else {
-          checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+          checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType, true);
         }
       }
       else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
@@ -1372,7 +1372,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
       if (!myHolder.hasErrorResults()) {
-        checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+        checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType, true);
       }
       if (!myHolder.hasErrorResults()) {
         String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
@@ -1474,7 +1474,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   // 15.13 | 15.27
   // It is a compile-time error if any class or interface mentioned by either U or the function type of U
   // is not accessible from the class or interface in which the method reference expression appears.
-  private void checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression, PsiType functionalInterfaceType) {
+  private boolean checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression, PsiType functionalInterfaceType,
+                                                         boolean checkFunctionalTypeSignature) {
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
@@ -1486,13 +1487,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (problem.second != null) {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
+        return true;
       }
       else {
         for (PsiType type : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
-          checkFunctionalInterfaceTypeAccessible(expression, type);
+          if (checkFunctionalInterfaceTypeAccessible(expression, type, false)) return true;
+        }
+
+        PsiMethod psiMethod = checkFunctionalTypeSignature ? LambdaUtil.getFunctionalInterfaceMethod(resolveResult) : null;
+        if (psiMethod != null) {
+          PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(psiMethod, resolveResult);
+          for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+            if (checkFunctionalInterfaceTypeAccessible(expression, substitutor.substitute(parameter.getType()), false)) return true;
+          }
+
+          if (checkFunctionalInterfaceTypeAccessible(expression, substitutor.substitute(psiMethod.getReturnType()), false)) return true;
         }
       }
     }
+    return false;
   }
 
   @Override
