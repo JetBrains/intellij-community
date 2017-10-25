@@ -50,6 +50,7 @@ public class DuplicatesFinder {
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
   private final boolean myWithExtractedParameters;
+  private final Set<PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
   private ComplexityHolder myCandidateComplexityHolder;
 
@@ -57,7 +58,8 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
-                          boolean withExtractedParameters) {
+                          boolean withExtractedParameters,
+                          @Nullable Set<PsiVariable> effectivelyLocal) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
@@ -65,6 +67,7 @@ public class DuplicatesFinder {
     myParameters = parameters;
     myOutputParameters = outputParameters;
     myWithExtractedParameters = withExtractedParameters;
+    myEffectivelyLocal = effectivelyLocal != null ? effectivelyLocal : Collections.emptySet();
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -99,7 +102,7 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters) {
-    this(pattern, parameters, returnValue, outputParameters, false);
+    this(pattern, parameters, returnValue, outputParameters, false, null);
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
@@ -383,6 +386,10 @@ public class DuplicatesFinder {
       if (isUnder(resolveResult1, myPatternAsList) && isUnder(resolveResult2, candidates)) {
         traverseParameter(resolveResult1, resolveResult2, match);
         return match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
+      }
+      if (resolveResult1 instanceof PsiVariable && myEffectivelyLocal.contains((PsiVariable)resolveResult1)) {
+        return (resolveResult2 instanceof PsiLocalVariable || resolveResult2 instanceof PsiParameter) &&
+               match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
       }
       final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
       if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {

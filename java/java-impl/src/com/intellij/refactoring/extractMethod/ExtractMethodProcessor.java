@@ -1757,19 +1757,30 @@ public class ExtractMethodProcessor implements MatchProvider {
     return applyChosenClassAndExtract(inputVariables, extractPass);
   }
 
-  private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
+  @NotNull
+  protected Set<PsiVariable> getEffectivelyLocalVariables() {
+    Set<PsiVariable> effectivelyLocal = new LinkedHashSet<>();
     List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody(ControlFlowUtil.findCodeFragment(myElements[0]), myOutputVariables);
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = !isDeclaredInside(variable) && myInputVariables.toDeclareInsideBody(variable);
       if (toDeclare) {
-        String name = variable.getName();
-        PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
-        body.add(statement);
+        effectivelyLocal.add(variable);
       }
     }
 
     if (myArtificialOutputVariable instanceof PsiField && !myIsChainedConstructor) {
-      body.add(myElementFactory.createVariableDeclarationStatement(myArtificialOutputVariable.getName(), myArtificialOutputVariable.getType(), null));
+      effectivelyLocal.add(myArtificialOutputVariable);
+    }
+    return effectivelyLocal;
+  }
+
+  private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
+    Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();
+    for (PsiVariable variable : effectivelyLocal) {
+      String name = variable.getName();
+      LOG.assertTrue(name != null, "variable name is null");
+      PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
+      body.add(statement);
     }
   }
 
