@@ -149,12 +149,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     else {
       var useValue = false
       options.asSequence()
-        .filter { it.startsWith(name) }
         .map {
           when {
-            it.length == name.length -> { useValue = true; "" }
+            it == name -> { useValue = true; "" }
             useValue -> { useValue = false; it }
-            it[name.length] == '=' -> it.substring(name.length + 1)
+            it.startsWith(name) && it[name.length] == '=' -> it.substring(name.length + 1)
             else -> ""
           }
         }
