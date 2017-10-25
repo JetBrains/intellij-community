@@ -393,13 +393,21 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private static void reportAlwaysFailingCalls(ProblemsHolder holder,
                                                DataFlowInstructionVisitor visitor,
                                                HashSet<PsiElement> reportedAnchors) {
-    for (PsiCall call : visitor.getAlwaysFailingCalls()) {
-      if (TestUtils.isExceptionExpected(call)) continue;
+    visitor.getAlwaysFailingCalls().forEach((call, contracts) -> {
+      if (TestUtils.isExceptionExpected(call)) return;
       PsiMethod method = call.resolveMethod();
       if (method != null && reportedAnchors.add(call)) {
-        holder.registerProblem(getElementToHighlight(call), "The call to '#ref' always fails, according to its method contracts");
+        holder.registerProblem(getElementToHighlight(call), getContractMessage(contracts));
       }
+    });
+  }
+
+  @NotNull
+  private static String getContractMessage(List<MethodContract> contracts) {
+    if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(cv -> cv.isBoundCheckingCondition()))) {
+      return InspectionsBundle.message("dataflow.message.contract.fail.index");
     }
+    return InspectionsBundle.message("dataflow.message.contract.fail");
   }
 
   @NotNull private static PsiElement getElementToHighlight(@NotNull PsiCall call) {
@@ -965,8 +973,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       return myOptionalQualifiers;
     }
 
-    Collection<PsiCall> getAlwaysFailingCalls() {
-      return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
+    Map<PsiCall, List<MethodContract>> getAlwaysFailingCalls() {
+      return StreamEx.ofKeys(myFailingCalls, v -> v)
+        .mapToEntry(MethodCallInstruction::getCallExpression, MethodCallInstruction::getContracts).toMap();
     }
 
     boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
