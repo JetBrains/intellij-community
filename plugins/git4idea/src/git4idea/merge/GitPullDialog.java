@@ -130,7 +130,7 @@ public class GitPullDialog extends DialogWrapper {
   private Collection<String> getRemoteBranches(@NotNull final GitRemote remote) {
     final Ref<GitCommandResult> result = Ref.create();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> result.set(myGit.lsRemote(GitPullDialog.this.myProject, gitRoot(), remote, "--heads")), GitBundle.getString("pull.getting.remote.branches"), true, myProject);
+      () -> result.set(myGit.lsRemote(myProject, gitRoot(), remote, "--heads")), GitBundle.getString("pull.getting.remote.branches"), true, myProject);
 
     if (!completed) {
       return null;
