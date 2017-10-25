@@ -419,6 +419,11 @@ class Intf {
     assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
   }
 
+  void "test show no matches from jdk when there are in project"() {
+    def file = addEmptyFile("String.txt")
+    assert gotoFile('Str', false) == [file]
+  }
+
   void "test fix keyboard layout"() {
     assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
     assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
