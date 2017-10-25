@@ -51,13 +51,24 @@ class ValidatorTest {
     }
 
     @Test
-    fun testDataWithDeserializationErrors() {
-        val file = file("data/validation_data")
+    fun testValidData() {
+        val file = file("data/valid_data.txt")
         separator.filter(file.readLines())
+        assertThat(sessionStatuses["c4db55a9d878"]).isTrue()
+    }
 
-        assertThat(sessionStatuses["520198a29326"]).isFalse()
-        assertThat(sessionStatuses["620198a29326"]).isTrue()
-        assertThat(sessionStatuses["720198a29326"]).isFalse()
+    @Test
+    fun testDataWithAbsentFieldInvalid() {
+        val file = file("data/absent_field.txt")
+        separator.filter(file.readLines())
+        assertThat(sessionStatuses["c4db55a9d878"]).isFalse()
+    }
+
+    @Test
+    fun testDataWithExtraFieldInvalid() {
+        val file = file("data/extra_field.txt")
+        separator.filter(file.readLines())
+        assertThat(sessionStatuses["c4db55a9d878"]).isFalse()
     }
 
 }
