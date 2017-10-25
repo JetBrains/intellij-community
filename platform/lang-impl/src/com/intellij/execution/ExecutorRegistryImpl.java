@@ -33,6 +33,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -78,7 +79,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     myId2Executor.put(executor.getId(), executor);
     myContextActionIdSet.add(executor.getContextActionId());
 
-    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+    if (!executor.getId().equals(ToolWindowId.RUN)) {
+      registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+    }
     registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
   }
 
