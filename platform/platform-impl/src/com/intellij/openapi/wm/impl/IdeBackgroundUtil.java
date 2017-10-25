@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -209,6 +210,10 @@ public class IdeBackgroundUtil {
       return new MyGraphics(gg != null ? gg.myDelegate : g, helper, helper.computeOffsets(g, component), gg != null ? gg.preserved : null);
     }
 
+    static Graphics2D unwrap(Graphics g) {
+      return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
+    }
+
     MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Set<Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
@@ -352,6 +357,7 @@ public class IdeBackgroundUtil {
                         c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
         if (editor != null) {
           if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+          if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
           Graphics2D gg = withEditorBackground(g, c);
           if (gg instanceof MyGraphics) {
             EditorColorsScheme scheme = editor.getColorsScheme();
