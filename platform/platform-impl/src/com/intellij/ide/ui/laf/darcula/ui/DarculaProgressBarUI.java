@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -36,16 +37,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   private static final Color REMAINDER_COLOR = new JBColor(Gray.xC4, Gray.x69);
   private static final Color FINISHED_COLOR = new JBColor(Gray.x80, Gray.xA0);
 
-  private static final Color ERROR_COLOR = new JBColor(new Color(0xd80000), new Color(0xff4053));
-  private static final Color SUCCESS_COLOR = new JBColor(new Color(0x34b171), new Color(0x008f50));
-
   private static final Color START_COLOR = new JBColor(Gray.xC4, Gray.x69);
   private static final Color END_COLOR = new JBColor(Gray.x80, Gray.x83);
 
-  private static final Color ERROR_START_COLOR = new JBColor(new Color(0xFB8F89), new Color(0xf4a2a0));
-  private static final Color ERROR_END_COLOR = ERROR_COLOR;
-  private static final Color SUCCESS_START_COLOR = new JBColor(new Color(0x7EE8A5), new Color(0x5dc48f));
-  private static final Color SUCCESS_END_COLOR = SUCCESS_COLOR;
+  private static final Color RED = new JBColor(new Color(0xd80000), new Color(0xff4053));
+  private static final Color RED_LIGHT = new JBColor(new Color(0xFB8F89), new Color(0xf4a2a0));
+
+  private static final Color GREEN = new JBColor(new Color(0x34b171), new Color(0x008f50));
+  private static final Color GREEN_LIGHT = new JBColor(new Color(0x7EE8A5), new Color(0x5dc48f));
 
   private static final int STEP = 6;
 
@@ -78,15 +77,16 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       JBInsets.removeFrom(r, i);
       int orientation = progressBar.getOrientation();
 
-      // Detect gradient color
+      // Use foreground color as a reference, don't use it directly. This is done for compatibility reason.
+      // Colors are hardcoded in UI delegates by design. If more colors are needed contact designers.
       Color startColor, endColor;
-      String type = (String)progressBar.getClientProperty("ProgressBar.color");
-      if ("error".equals(type)) {
-        startColor = ERROR_START_COLOR;
-        endColor = ERROR_END_COLOR;
-      } else if ("success".equals(type)) {
-        startColor = SUCCESS_START_COLOR;
-        endColor = SUCCESS_END_COLOR;
+      Color foreground = progressBar.getForeground();
+      if (foreground == ColorProgressBar.RED) {
+        startColor = RED;
+        endColor = RED_LIGHT;
+      } else if (foreground == ColorProgressBar.GREEN) {
+        startColor = GREEN;
+        endColor = GREEN_LIGHT;
       } else {
         startColor = getStartColor();
         endColor = getEndColor();
@@ -206,12 +206,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g2.setColor(getRemainderColor());
       g2.fill(fullShape);
 
-
-      String type = (String)progressBar.getClientProperty("ProgressBar.color");
-      if ("error".equals(type)) {
-        g2.setColor(ERROR_COLOR);
-      } else if ("success".equals(type)) {
-        g2.setColor(SUCCESS_COLOR);
+      // Use foreground color as a reference, don't use it directly. This is done for compatibility reason.
+      // Colors are hardcoded in UI delegates by design. If more colors are needed contact designers.
+      Color foreground = progressBar.getForeground();
+      if (foreground == ColorProgressBar.RED) {
+        g2.setColor(RED);
+      } else if (foreground == ColorProgressBar.GREEN) {
+        g2.setColor(GREEN);
       } else {
         g2.setColor(getFinishedColor());
       }
