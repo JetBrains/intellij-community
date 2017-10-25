@@ -182,6 +182,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
+  public void testCheckGlbConflictsAfterIntersectionTypeCreated() { doTest(); }
   public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
   public void testVarargsMethodPreferred() { doTest(); }
 
