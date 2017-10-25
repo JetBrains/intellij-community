@@ -16,10 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -76,27 +74,56 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new BaseEqualsVisitor() {
-      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
-        boolean convertible = TypeUtils.areConvertible(leftType, rightType);
-        if (convertible) {
-          if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) return;
-          if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return;
-          PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftType);
-          PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
-          if (leftClass == null || rightClass == null) return;
-          if (!leftClass.isInterface() && !rightClass.isInterface()) return;
-          if (!rightClass.isInterface()) {
-            PsiClass tmp = leftClass;
-            leftClass = rightClass;
-            rightClass = tmp;
-          }
-          if (InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) return;
-        }
-        if (TypeUtils.mayBeEqualByContract(leftType, rightType)) return;
-        PsiElement name = expression.getReferenceNameElement();
-        registerError(name == null ? expression : name, leftType, rightType, convertible);
+    return new EqualsBetweenInconvertibleTypesVisitor();
+  }
+
+  private class EqualsBetweenInconvertibleTypesVisitor extends BaseEqualsVisitor {
+
+    @Override
+    public void visitBinaryExpression(PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) return;
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) {
+        return;
       }
-    };
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiType lhsType = lhs.getType();
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final PsiType rhsType = rhs.getType();
+      if (lhsType == null || rhsType == null || !TypeUtils.areConvertible(lhsType, rhsType)) {
+        // red code
+        return;
+      }
+      if (existsSharedSubclass(lhsType, rhsType)) {
+        return;
+      }
+      registerError(expression.getOperationSign(), lhsType, rhsType, true);
+    }
+
+    void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
+      boolean convertible = TypeUtils.areConvertible(leftType, rightType);
+      if (convertible && (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND || existsSharedSubclass(leftType, rightType))) return;
+      if (TypeUtils.mayBeEqualByContract(leftType, rightType)) return;
+      PsiElement name = expression.getReferenceNameElement();
+      registerError(name == null ? expression : name, leftType, rightType, convertible);
+    }
+
+    private boolean existsSharedSubclass(@NotNull PsiType leftType, @NotNull PsiType rightType) {
+      if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return true;
+      PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftType);
+      PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
+      if (leftClass == null || rightClass == null) return true;
+      if (!leftClass.isInterface() && !rightClass.isInterface()) return true;
+      if (!rightClass.isInterface()) {
+        PsiClass tmp = leftClass;
+        leftClass = rightClass;
+        rightClass = tmp;
+      }
+      return InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly());
+    }
   }
 }

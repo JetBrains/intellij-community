@@ -69,7 +69,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
 
   // FS roots must be in this map too. findFileById() relies on this.
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectMap();
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
@@ -119,20 +119,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public long getCreationTimestamp() {
     return FSRecords.getCreationTimestamp();
-  }
-
-  @NotNull
-  public VirtualFileSystemEntry getOrCacheDir(int id,
-                                              @NotNull VfsData.Segment segment,
-                                              @NotNull VfsData.DirectoryData o,
-                                              @NotNull VirtualDirectoryImpl parent) {
-    VirtualFileSystemEntry dir = myIdToDirCache.get(id);
-    if (dir != null) return dir;
-    dir = new VirtualDirectoryImpl(id, segment, o, parent, parent.getFileSystem());
-    return myIdToDirCache.cacheOrGet(id, dir);
-  }
-  public VirtualFileSystemEntry getCachedDir(int id) {
-    return myIdToDirCache.get(id);
   }
 
   @NotNull
@@ -1053,10 +1039,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public void clearIdCache() {
     // remove all except myRootsById contents
-    int[] ids = myIdToDirCache.keys();
-    for (int id : ids) {
+    for (Iterator<ConcurrentIntObjectMap.IntEntry<VirtualFileSystemEntry>> iterator = myIdToDirCache.entries().iterator(); iterator.hasNext(); ) {
+      ConcurrentIntObjectMap.IntEntry<VirtualFileSystemEntry> entry = iterator.next();
+      int id = entry.getKey();
       if (!myRootsById.containsKey(id)) {
-        myIdToDirCache.remove(id);
+        iterator.remove();
       }
     }
   }

@@ -64,10 +64,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
         return false;
       }
       PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(inType);
-      if(variableType instanceof PsiLambdaExpressionType || variableType instanceof PsiMethodReferenceType
-        || variableType instanceof PsiLambdaParameterType) {
-        return false;
-      }
+      if (LambdaUtil.notInferredType(variableType)) return false;
 
       String typeText = variableType.getCanonicalText();
       PsiExpression replacement = createReplacement(context, "((" + typeText + ")null)");

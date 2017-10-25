@@ -131,20 +131,23 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String ns) {
-    final PluginId pluginId = pluginDescriptor.getPluginId();
+    String epName = extractEPName(extensionElement, ns);
+    registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
+  }
 
+  // Used in Upsource
+  @Override
+  public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
     if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
       return;
     }
 
-    String epName = extractEPName(extensionElement, ns);
-
     ExtensionComponentAdapter adapter;
-    final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
-        throw new RuntimeException("'implementation' attribute not specified for '" + epName + "' extension in '" + pluginId.getIdString() + "' plugin");
+        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '"
+                                   + pluginDescriptor.getPluginId().getIdString() + "' plugin");
       }
       adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
@@ -152,7 +155,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
     }
     myPicoContainer.registerComponent(adapter);
-    extensionPoint.registerExtensionAdapter(adapter);
+    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
   }
 
   private static boolean shouldDeserializeInstance(Element extensionElement) {

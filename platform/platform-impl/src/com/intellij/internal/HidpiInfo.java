@@ -38,8 +38,10 @@ public class HidpiInfo extends AnAction implements DumbAware {
   private final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
   private final String JRE_HIDPI_MODE_DESC =
     "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
+    (SystemInfo.isWindows ?
     "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
-    (ENABLED ? "false" : "true") + "</code> and restart.</span></html>";
+    (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
+    "The mode can not be changed on this platform.");
 
   private final String SYS_SCALE_TEXT = "Monitor scale";
   private final String SYS_SCALE_DESC =

@@ -563,17 +563,22 @@ public class JBUI {
    * @return the original graphics transform when aligned, otherwise null
    */
   public static AffineTransform alignToIntGrid(@NotNull Graphics2D g) {
-    AffineTransform tx = g.getTransform();
-    double scaleX = tx.getScaleX();
-    double scaleY = tx.getScaleY();
-    boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
-    if (fpsTx) {
-      AffineTransform alignedTx = new AffineTransform();
-      alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
-      alignedTx.scale(scaleX, scaleY);
-      assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
-      g.setTransform(alignedTx);
-      return tx;
+    try {
+      AffineTransform tx = g.getTransform();
+      double scaleX = tx.getScaleX();
+      double scaleY = tx.getScaleY();
+      boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
+      if (fpsTx) {
+        AffineTransform alignedTx = new AffineTransform();
+        alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
+        alignedTx.scale(scaleX, scaleY);
+        assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
+        g.setTransform(alignedTx);
+        return tx;
+      }
+    }
+    catch (Exception e) {
+      LOG.trace(e);
     }
     return null;
   }
