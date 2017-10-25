@@ -131,28 +131,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String ns) {
-    final PluginId pluginId = pluginDescriptor.getPluginId();
-
-    if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
-      return;
-    }
-
     String epName = extractEPName(extensionElement, ns);
-
-    ExtensionComponentAdapter adapter;
-    final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
-    if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
-      String implClass = extensionElement.getAttributeValue("implementation");
-      if (implClass == null) {
-        throw new RuntimeException("'implementation' attribute not specified for '" + epName + "' extension in '" + pluginId.getIdString() + "' plugin");
-      }
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
-    }
-    else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
-    }
-    myPicoContainer.registerComponent(adapter);
-    extensionPoint.registerExtensionAdapter(adapter);
+    registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 
   // Used in Upsource
@@ -166,8 +146,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
-        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '" + pluginDescriptor.getPluginId()
-          .getIdString() + "' plugin");
+        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '"
+                                   + pluginDescriptor.getPluginId().getIdString() + "' plugin");
       }
       adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
