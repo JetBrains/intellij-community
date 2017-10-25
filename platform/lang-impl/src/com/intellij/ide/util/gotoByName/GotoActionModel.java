@@ -503,7 +503,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     public boolean isAvailable() {
-      return getPresentation().isEnabledAndVisible();
+      return hasPresentation() && getPresentation().isEnabledAndVisible();
     }
 
     public Presentation getPresentation() {
