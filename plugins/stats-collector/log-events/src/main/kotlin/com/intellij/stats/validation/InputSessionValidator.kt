@@ -48,7 +48,7 @@ class InputSessionValidator(private val sessionValidationResult: SessionValidati
 
     private fun processCompletionSession(session: List<EventLine>) {
         if (session.isEmpty()) return
-        if (session.any { !it.isOk }) {
+        if (session.any { !it.isValid }) {
             dumpSession(session, isValidSession = false)
             return
         }

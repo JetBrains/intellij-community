@@ -24,11 +24,12 @@ data class EventLine(val event: LogEvent?,
                      val absentLogEventFields: Set<String>,
                      val originalLine: String) {
 
-    constructor(event: DeserializedLogEvent, originalLine: String): this(event.event, event.unknownEventFields, event.absentEventFields, originalLine)
+    constructor(event: DeserializedLogEvent, originalLine: String)
+            : this(event.event, event.unknownEventFields, event.absentEventFields, originalLine)
 
     val sessionUid: String?
         get() = event?.sessionUid
 
-    val isOk: Boolean
+    val isValid: Boolean
         get() = event != null && unknownLogEventFields.isEmpty() && absentLogEventFields.isEmpty()
 }
