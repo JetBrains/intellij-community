@@ -194,6 +194,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
 
     popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(pane, area)
+      .setMayBeParent(true) // this creates a popup as a dialog with alwaysOnTop=false
       .setFocusable(true)
       .setRequestFocus(true)
       .setTitle(title)
