@@ -22,10 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
@@ -33,6 +35,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -42,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -49,8 +53,18 @@ public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
+  private static final Key<Function<TreeVisitor, Promise<TreePath>>> TREE_ACCEPTOR = Key.create("TreeAcceptor");
 
   private TreeUtil() {}
+
+  @Nullable
+  public static Function<TreeVisitor, Promise<TreePath>> getTreeAcceptor(@NotNull JTree tree) {
+    return UIUtil.getClientProperty(tree, TREE_ACCEPTOR);
+  }
+
+  public static void setTreeAcceptor(@NotNull JTree tree, @Nullable Function<TreeVisitor, Promise<TreePath>> acceptor) {
+    UIUtil.putClientProperty(tree, TREE_ACCEPTOR, acceptor);
+  }
 
   @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
