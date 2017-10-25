@@ -186,9 +186,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public synchronized void pushState() {
     getTextStack().push(myText);
-    if (!isIndeterminate()) {
-      getFractionStack().add(myFraction);
-    }
+    getFractionStack().add(myFraction);
     getText2Stack().push(myText2);
   }
 
@@ -200,8 +198,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     setText(oldText);
     setText2(oldText2);
 
+    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
     if (!isIndeterminate()) {
-      double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
       setFraction(oldFraction);
     }
   }
