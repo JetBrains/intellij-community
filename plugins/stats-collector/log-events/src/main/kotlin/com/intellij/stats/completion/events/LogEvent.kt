@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion.events
+
+import com.intellij.stats.completion.Action
+import com.intellij.stats.completion.LogEventVisitor
+import com.intellij.stats.completion.LookupEntryInfo
 
 
 abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {

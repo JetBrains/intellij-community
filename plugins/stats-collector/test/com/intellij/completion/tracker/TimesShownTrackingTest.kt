@@ -19,8 +19,8 @@ package com.intellij.completion.tracker
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.stats.completion.idString
-import com.intellij.stats.events.completion.ElementPositionHistory
-import com.intellij.stats.events.completion.StagePosition
+import com.intellij.stats.completion.ElementPositionHistory
+import com.intellij.stats.completion.StagePosition
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.assertj.core.api.Assertions.assertThat
 
@@ -52,29 +52,29 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
     }.toMap()
 
     assertThat(map["man"]).isEqualTo(listOf(
-      StagePosition(0, 1)
+            StagePosition(0, 1)
     ))
 
     assertThat(map["cat"]).isEqualTo(listOf(
-      StagePosition(0, 0)
+            StagePosition(0, 0)
     ))
 
     assertThat(map["run"]).isEqualTo(listOf(
-      StagePosition(0, 2),
-      StagePosition(1, 0),
-      StagePosition(2, 0)
+            StagePosition(0, 2),
+            StagePosition(1, 0),
+            StagePosition(2, 0)
     ))
 
     assertThat(map["runnable"]).isEqualTo(listOf(
-      StagePosition(0, 3),
-      StagePosition(1, 1),
-      StagePosition(2, 1)
+            StagePosition(0, 3),
+            StagePosition(1, 1),
+            StagePosition(2, 1)
     ))
 
     assertThat(map["rus"]).isEqualTo(listOf(
-      StagePosition(0, 4),
-      StagePosition(1, 2),
-      StagePosition(2, 2)
+            StagePosition(0, 4),
+            StagePosition(1, 2),
+            StagePosition(2, 2)
     ))
   }
 

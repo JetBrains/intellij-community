@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion.events
+
+import com.intellij.stats.completion.Action
+import com.intellij.stats.completion.LogEventVisitor
 
 
-class ElementPositionHistory {
-    private val history = mutableListOf<StagePosition>()
+class CustomMessageEvent(userId: String, sessionId: String, @JvmField var text: String)
+    : LogEvent(userId, sessionId, Action.CUSTOM) {
 
-    fun add(position: StagePosition) = history.add(position)
-    fun history() = history
-
-    override fun toString(): String {
-        return "ElementPositionHistory(history=$history)"
+    override fun accept(visitor: LogEventVisitor) {
+        visitor.visit(this)
     }
+
 }
-
-
-data class StagePosition(val stage: Int, val position: Int)

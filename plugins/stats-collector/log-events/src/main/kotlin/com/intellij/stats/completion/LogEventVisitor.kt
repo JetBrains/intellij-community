@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
+import com.intellij.stats.completion.events.*
 
-class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)
+abstract class LogEventVisitor {
+    open fun visit(event: CompletionStartedEvent) {}
+    open fun visit(event: TypeEvent) {}
+    open fun visit(event: DownPressedEvent) {}
+    open fun visit(event: UpPressedEvent) {}
+    open fun visit(event: BackspaceEvent) {}
+    open fun visit(event: CompletionCancelledEvent) {}
+    open fun visit(event: ExplicitSelectEvent) {}
+    open fun visit(event: TypedSelectEvent) {}
+    open fun visit(event: CustomMessageEvent) {}
+}

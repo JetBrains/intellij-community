@@ -16,16 +16,17 @@
 
 package com.intellij.stats.completion
 
-import com.intellij.stats.completion.events.LogEvent
-import com.intellij.stats.logger.LogFileManager
 
-interface CompletionEventLogger {
-    fun log(event: LogEvent)
-}
+class ElementPositionHistory {
+    private val history = mutableListOf<StagePosition>()
 
-class CompletionEventFileLogger(private val logFileManager: LogFileManager): CompletionEventLogger {
-    override fun log(event: LogEvent) {
-        val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
+    fun add(position: StagePosition) = history.add(position)
+    fun history() = history
+
+    override fun toString(): String {
+        return "ElementPositionHistory(history=$history)"
     }
 }
+
+
+data class StagePosition(val stage: Int, val position: Int)

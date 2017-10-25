@@ -18,7 +18,7 @@ package com.intellij.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
-import com.intellij.stats.events.completion.StagePosition
+import com.intellij.stats.completion.StagePosition
 
 
 class PositionTrackingListener(private val lookup: LookupImpl): PrefixChangeListener {

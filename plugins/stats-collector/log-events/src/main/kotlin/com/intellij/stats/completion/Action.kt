@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
-abstract class LogEventVisitor {
-    open fun visit(event: CompletionStartedEvent) {}
-    open fun visit(event: TypeEvent) {}
-    open fun visit(event: DownPressedEvent) {}
-    open fun visit(event: UpPressedEvent) {}
-    open fun visit(event: BackspaceEvent) {}
-    open fun visit(event: CompletionCancelledEvent) {}
-    open fun visit(event: ExplicitSelectEvent) {}
-    open fun visit(event: TypedSelectEvent) {}
-    open fun visit(event: CustomMessageEvent) {}
+enum class Action {
+    COMPLETION_STARTED,
+    TYPE,
+    BACKSPACE,
+    UP,
+    DOWN,
+    COMPLETION_CANCELED,
+    EXPLICIT_SELECT,
+    TYPED_SELECT,
+    CUSTOM
 }

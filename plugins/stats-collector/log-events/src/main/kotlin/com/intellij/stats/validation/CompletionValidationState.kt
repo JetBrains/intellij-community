@@ -16,7 +16,8 @@
 
 package com.intellij.stats.validation
 
-import com.intellij.stats.events.completion.*
+import com.intellij.stats.completion.LogEventVisitor
+import com.intellij.stats.completion.events.*
 
 class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
+import com.intellij.stats.completion.events.*
 import java.lang.reflect.Field
 
 object JsonSerializer {
@@ -120,9 +121,9 @@ object LogEventSerializer {
 
 
 class DeserializedLogEvent(
-  val event: LogEvent?,
-  val unknownEventFields: Set<String>,
-  val absentEventFields: Set<String>
+        val event: LogEvent?,
+        val unknownEventFields: Set<String>,
+        val absentEventFields: Set<String>
 ) {
 
     val isFailed: Boolean

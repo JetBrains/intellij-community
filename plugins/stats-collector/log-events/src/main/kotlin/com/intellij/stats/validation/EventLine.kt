@@ -16,8 +16,8 @@
 
 package com.intellij.stats.validation
 
-import com.intellij.stats.events.completion.DeserializedLogEvent
-import com.intellij.stats.events.completion.LogEvent
+import com.intellij.stats.completion.DeserializedLogEvent
+import com.intellij.stats.completion.events.LogEvent
 
 data class EventLine(val event: LogEvent?,
                      val unknownLogEventFields: Set<String>,

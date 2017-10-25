@@ -20,7 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.LookupElementPositionTracker
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.stats.events.completion.*
+import com.intellij.stats.completion.events.*
 
 
 class CompletionFileLogger(private val installationUID: String,

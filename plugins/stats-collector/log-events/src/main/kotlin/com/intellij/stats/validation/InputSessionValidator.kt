@@ -16,8 +16,8 @@
 
 package com.intellij.stats.validation
 
-import com.intellij.stats.events.completion.CompletionStartedEvent
-import com.intellij.stats.events.completion.LogEventSerializer
+import com.intellij.stats.completion.LogEventSerializer
+import com.intellij.stats.completion.events.CompletionStartedEvent
 
 class InputSessionValidator(private val sessionValidationResult: SessionValidationResult) {
 

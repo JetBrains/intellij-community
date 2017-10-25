@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
-enum class Action {
-    COMPLETION_STARTED,
-    TYPE,
-    BACKSPACE,
-    UP,
-    DOWN,
-    COMPLETION_CANCELED,
-    EXPLICIT_SELECT,
-    TYPED_SELECT,
-    CUSTOM
-}
+
+class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)

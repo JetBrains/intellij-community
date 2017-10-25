@@ -19,9 +19,8 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.events.completion.Action
-import com.intellij.stats.events.completion.CompletionStartedEvent
-import com.intellij.stats.events.completion.LogEvent
+import com.intellij.stats.completion.events.CompletionStartedEvent
+import com.intellij.stats.completion.events.LogEvent
 import org.assertj.core.api.Assertions
 import org.mockito.Mockito
 import org.picocontainer.MutablePicoContainer

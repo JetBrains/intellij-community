@@ -20,8 +20,8 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.stats.completion.idString
-import com.intellij.stats.events.completion.ElementPositionHistory
-import com.intellij.stats.events.completion.StagePosition
+import com.intellij.stats.completion.ElementPositionHistory
+import com.intellij.stats.completion.StagePosition
 
 
 interface LookupElementPositionTracker {

@@ -16,6 +16,11 @@
 
 package com.intellij.stats.events.completion
 
+import com.intellij.stats.completion.DeserializationResult
+import com.intellij.stats.completion.JsonSerializer
+import com.intellij.stats.completion.LogEventSerializer
+import com.intellij.stats.completion.LookupEntryInfo
+import com.intellij.stats.completion.events.*
 import junit.framework.Assert.assertEquals
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -29,9 +34,9 @@ object Fixtures {
     val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
     
     val lookupList = listOf(
-      LookupEntryInfo(0, 5, relevance),
-      LookupEntryInfo(1, 9, relevance),
-      LookupEntryInfo(2, 7, relevance)
+            LookupEntryInfo(0, 5, relevance),
+            LookupEntryInfo(1, 9, relevance),
+            LookupEntryInfo(2, 7, relevance)
     )
     
 }
@@ -98,7 +103,7 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `type event`() {
-        val event = TypeEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 1)
+        val event = TypeEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 1)
         serializeDeserializeAndCheck(event)
     }
 
