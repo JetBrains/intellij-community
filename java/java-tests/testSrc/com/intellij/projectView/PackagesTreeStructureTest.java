@@ -28,12 +28,9 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
   public void testPackageView() {
