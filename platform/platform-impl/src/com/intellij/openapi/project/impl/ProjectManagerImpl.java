@@ -276,6 +276,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
+      indicator.setIndeterminate(false);
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
 
@@ -499,7 +500,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          indicator.setIndeterminate(false);
           if (!loadProjectWithProgress(project)) {
             return null;
           }
