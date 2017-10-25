@@ -27,7 +27,7 @@ public class Main {
   }
 
   public void main(String[] args) {
-    if<caret>(getCondition()) {
+    if<caret>(conditionWithPossibleSideEffects()) {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x = 12;

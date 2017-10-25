@@ -4,29 +4,25 @@ Inspection that can extract common parts from branches of if statement.
 <!-- tooltip end -->
 <p>Before:</p>
 <pre><code>
-  if (jsVariable instanceof JSParameter) {
-    if (copy == null) return;
-    ((JSNamedElement)copy).setName(newVarName);
-    JSVarStatement statementCopy = (JSVarStatement)jsVariable.getParent().copy();
-    char quote = JSCodeStyleSettings.getQuoteChar(jsVariable);
-    handleVariables(quote, statementCopy);
+  if (x > 12) {
+    doSomethingBefore();
+    doSomethingDifferent1();
+    doSomethingAfter();
   } else {
-    if (copy == null) return;
-    ((JSNamedElement)copy).setName(newVarName);
-    copy = jsVariable.copy();
+    doSomething();
+    doSomethingDifferent2();
+    doSomethingAfter();
   }
 </code></pre>
 <p>After:</p>
 <pre><code>
-  if (copy == null) return;
-  ((JSNamedElement)copy).setName(newVarName);
-  if (jsVariable instanceof JSParameter) {
-    JSVarStatement statementCopy = (JSVarStatement)jsVariable.getParent().copy();
-    char quote = JSCodeStyleSettings.getQuoteChar(jsVariable);
-    handleVariables(quote, statementCopy);
+  doSomethingBefore();
+  if (x > 12) {
+    doSomethingDifferent1();
   } else {
-    copy = jsVariable.copy();
+    doSomethingDifferent2();
   }
+  doSomethingAfter();
 </code></pre>
 <p><small>New in 2018.1</small></p>
 </body>

@@ -58,7 +58,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
   @Nullable
   private static ExtractionUnit extractHeadCommonStatement(@NotNull PsiStatement thenStmt,
                                                            @NotNull PsiStatement elseStmt,
-                                                           boolean isOnTheFly,
+                                                           @NotNull List<PsiLocalVariable> conditionVariables,
                                                            LocalEquivalenceChecker equivalence) {
     boolean equal = thenStmt instanceof PsiDeclarationStatement
                 ? equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)
@@ -66,20 +66,31 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     if (!equal) return null;
     final boolean statementMayChangeSemantics;
     final boolean equivalent;
+    final boolean mayInfluenceCondition;
     if (!(thenStmt instanceof PsiDeclarationStatement)) {
-      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenStmt, expression -> false);
+      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenStmt, e -> false);
       equivalent = true;
+      mayInfluenceCondition = mayInfluenceCondition(thenStmt, conditionVariables);
     } else {
       PsiLocalVariable thenVariable = extractVariable(thenStmt);
       PsiLocalVariable elseVariable = extractVariable(elseStmt);
       if(thenVariable == null || elseVariable == null) return null;
       PsiExpression thenInitializer = thenVariable.getInitializer();
       if(thenInitializer == null) return null;
-      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, expression -> false);
+      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, e -> false);
+      mayInfluenceCondition = mayInfluenceCondition(thenInitializer, conditionVariables);
       equivalent = equivalence.expressionsAreEquivalent(thenInitializer, elseVariable.getInitializer());
     }
-    if (!isOnTheFly && statementMayChangeSemantics) return null;
-    return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, equivalent);
+    return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, mayInfluenceCondition, equivalent);
+  }
+
+  private static boolean mayInfluenceCondition(@NotNull PsiElement element, @NotNull List<PsiLocalVariable> conditionVariables) {
+      return StreamEx.ofTree(element, e -> StreamEx.of(e.getChildren()))
+        .select(PsiReferenceExpression.class)
+        .map(expression -> expression.resolve())
+        .nonNull()
+        .select(PsiLocalVariable.class)
+        .anyMatch(el -> conditionVariables.contains(el));
   }
 
 
@@ -277,6 +288,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
   private static class ExtractionUnit {
     private final boolean myMayChangeSemantics;
+    private final boolean myMayInfluenceCondition;
     private final @NotNull PsiStatement myThenStatement;
     private final @NotNull PsiStatement myElseStatement;
     private final boolean myIsEquivalent;
@@ -285,14 +297,15 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     private ExtractionUnit(@NotNull PsiStatement thenStatement,
                            @NotNull PsiStatement elseStatement,
                            boolean mayChangeSemantics,
-                           boolean isEquivalent) {
+                           boolean mayInfluenceCondition, boolean isEquivalent) {
       myMayChangeSemantics = mayChangeSemantics;
       myThenStatement = thenStatement;
       myElseStatement = elseStatement;
+      myMayInfluenceCondition = mayInfluenceCondition;
       myIsEquivalent = isEquivalent;
     }
 
-    public boolean mayChangeSemantics() {
+    public boolean haveSideEffects() {
       return myMayChangeSemantics;
     }
 
@@ -308,6 +321,10 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
     public boolean hasEquivalentStatements() {
       return myIsEquivalent;
+    }
+
+    public boolean mayInfluenceCondition() {
+      return myMayInfluenceCondition;
     }
   }
 
@@ -457,6 +474,21 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return null;
 
+      boolean conditionHasSideEffects = SideEffectChecker.mayHaveSideEffects(condition);
+      if(!isOnTheFly && conditionHasSideEffects) return null;
+      List<PsiLocalVariable> conditionVariables = new ArrayList<>();
+      boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
+        .allMatch(element -> {
+          if(element instanceof PsiReferenceExpression) {
+            PsiLocalVariable localVariable = tryCast(((PsiReferenceExpression)element).resolve(), PsiLocalVariable.class);
+            if(localVariable == null) return false;
+            conditionVariables.add(localVariable);
+          } else if (element instanceof PsiMethodCallExpression) {
+            return false;
+          }
+          return true;
+        });
+
       List<ExtractionUnit> headCommonParts = new ArrayList<>();
       Set<PsiVariable> extractedVariables = new HashSet<>();
       Set<PsiVariable> notEquivalentVariableDeclarations = new HashSet<>();
@@ -464,24 +496,23 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       for (int i = 0; i < minStmtCount; i++) {
         PsiStatement thenStmt = thenBranch[i];
         PsiStatement elseStmt = elseBranch[i];
-        ExtractionUnit unit = extractHeadCommonStatement(thenStmt, elseStmt, isOnTheFly, equivalence);
+        ExtractionUnit unit = extractHeadCommonStatement(thenStmt, elseStmt, conditionVariables,
+                                                         equivalence);
         if (unit == null) break;
+        if(!isOnTheFly && unit.haveSideEffects()) break;
+        boolean dependsOnVariableWithNonEquivalentInitializer = StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
+            .select(PsiReferenceExpression.class)
+            .map(ref -> ref.resolve())
+            .select(PsiLocalVariable.class)
+            .anyMatch(var -> notEquivalentVariableDeclarations.contains(var));
+        if (dependsOnVariableWithNonEquivalentInitializer) {
+          break;
+        }
         PsiVariable variable = extractVariable(unit.getThenStatement());
         if (variable != null) {
           extractedVariables.add(variable);
           if (!unit.hasEquivalentStatements()) {
             notEquivalentVariableDeclarations.add(variable);
-          }
-        }
-        else {
-          boolean dependsOnVariableWithNonEquivalentInitializer =
-            StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
-              .select(PsiReferenceExpression.class)
-              .map(ref -> ref.resolve())
-              .select(PsiLocalVariable.class)
-              .anyMatch(var -> notEquivalentVariableDeclarations.contains(var));
-          if (dependsOnVariableWithNonEquivalentInitializer) {
-            break;
           }
         }
         headCommonParts.add(unit);
@@ -490,9 +521,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       int extractedFromStart = headCommonParts.size();
       int canBeExtractedFromThenTail = thenLen - extractedFromStart;
       int canBeExtractedFromElseTail = elseLen - extractedFromStart;
-      int canBeExtractedFromEnd = Math.min(canBeExtractedFromThenTail, canBeExtractedFromElseTail);
+      int canBeExtractedFromTail = Math.min(canBeExtractedFromThenTail, canBeExtractedFromElseTail);
       List<PsiStatement> tailCommonParts = new ArrayList<>();
-      for (int i = 0; i < canBeExtractedFromEnd; i++) {
+      for (int i = 0; i < canBeExtractedFromTail; i++) {
         PsiStatement thenStmt = thenBranch[thenLen - i - 1];
         PsiStatement elseStmt = elseBranch[elseLen - i - 1];
         if (equivalence.statementsAreEquivalent(thenStmt, elseStmt)) {
@@ -509,21 +540,33 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
           break;
         }
       }
-      if (canBeExtractedFromEnd == tailCommonParts.size() && canBeExtractedFromElseTail == canBeExtractedFromThenTail) {
-        // trying to append to tail statements that may change semantics from head, because in tail they can't change semantics
+      if (canBeExtractedFromTail == tailCommonParts.size() && canBeExtractedFromElseTail == canBeExtractedFromThenTail) {
+        // trying to append to tail statements, that may change semantics from head, because in tail they can't change semantics
         for (int i = headCommonParts.size() - 1; i >= 0; i--) {
           ExtractionUnit unit = headCommonParts.get(i);
           PsiStatement thenStatement = unit.getThenStatement();
-          if (!unit.mayChangeSemantics() || !unit.hasEquivalentStatements()) break;
+          if (!unit.haveSideEffects() || !unit.hasEquivalentStatements()) break;
           headCommonParts.remove(i);
           tailCommonParts.add(thenStatement);
         }
       }
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, thenLen, elseLen, notEquivalentVariableDeclarations.isEmpty());
-      boolean mayChangeSemantics = SideEffectChecker.mayHaveSideEffects(condition) || !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
-        .anyMatch(unit -> unit.mayChangeSemantics() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+
+      boolean mayChangeSemantics = mayChangeSemantics(conditionHasSideEffects, conditionVariablesCantBeChangedTransitively, headCommonParts);
       return new ExtractionContext(headCommonParts, tailCommonParts, type, null, equivalence.getSubstitutionTable(), mayChangeSemantics);
+    }
+
+    private static boolean mayChangeSemantics(boolean conditionHasSideEffects,
+                                              boolean conditionVariablesCantBeChangedTransitively,
+                                              List<ExtractionUnit> headCommonParts) {
+      if(conditionHasSideEffects) return true;
+      if(conditionVariablesCantBeChangedTransitively) {
+        return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+          .anyMatch(unit -> unit.mayInfluenceCondition() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+      }
+      return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+        .anyMatch(unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
     }
 
     @NotNull

@@ -30,7 +30,7 @@ public class Main {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x;
-      if(getCondition()) {
+      if(conditionWithPossibleSideEffects()) {
           x = 12;
       } else {
           x = 1;
