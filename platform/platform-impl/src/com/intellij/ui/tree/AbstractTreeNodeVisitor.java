@@ -55,9 +55,15 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
       if (object instanceof AbstractTreeNode) {
         return visit(path, (AbstractTreeNode)object, element);
       }
+      else if (object instanceof String) {
+        LOG.debug("ignore children: ", object);
+      }
       else {
         LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
       }
+    }
+    else if (component instanceof String) {
+      LOG.debug("ignore children: ", component);
     }
     else {
       LOG.warn(component == null ? "no component" : "unexpected component " + component.getClass());
