@@ -179,13 +179,16 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
+    LOG.assertTrue(!isIndeterminate(), "This progress indicator is indeterminate. Please call setIndeterminate(false) first.");
     myFraction = fraction;
   }
 
   @Override
   public synchronized void pushState() {
     getTextStack().push(myText);
-    getFractionStack().add(myFraction);
+    if (!isIndeterminate()) {
+      getFractionStack().add(myFraction);
+    }
     getText2Stack().push(myText2);
   }
 
@@ -193,11 +196,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
     String oldText = myTextStack.pop();
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
     String oldText2 = myText2Stack.pop();
     setText(oldText);
-    setFraction(oldFraction);
     setText2(oldText2);
+
+    if (!isIndeterminate()) {
+      double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+      setFraction(oldFraction);
+    }
   }
 
   @Override
