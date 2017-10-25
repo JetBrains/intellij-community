@@ -13,110 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.events.completion
 
+package com.intellij.stats.validation
 
-data class EventLine(val event: LogEvent?,
-                     val unknownLogEventFields: Set<String>,
-                     val absentLogEventFields: Set<String>,
-                     val originalLine: String) {
-
-    constructor(event: DeserializedLogEvent, originalLine: String): this(event.event, event.unknownEventFields, event.absentEventFields, originalLine)
-
-    val sessionUid: String?
-        get() = event?.sessionUid
-
-    val isOk: Boolean
-        get() = event != null && unknownLogEventFields.isEmpty() && absentLogEventFields.isEmpty()
-}
-
-
-interface SessionValidationResult {
-    fun addErrorSession(errorSession: List<EventLine>)
-    fun addValidSession(validSession: List<EventLine>)
-}
-
-
-open class SimpleSessionValidationResult: SessionValidationResult {
-    private val error = mutableListOf<String>()
-    private val valid = mutableListOf<String>()
-
-    val errorLines: List<String>
-        get() = error
-
-    val validLines: List<String>
-        get() = valid
-
-    override fun addErrorSession(errorSession: List<EventLine>) {
-        error.addAll(errorSession.map { it.originalLine })
-    }
-
-    override fun addValidSession(validSession: List<EventLine>) {
-        valid.addAll(validSession.map { it.originalLine })
-    }
-}
-
-
-class InputSessionValidator(private val sessionValidationResult: SessionValidationResult) {
-
-    fun filter(input: Iterable<String>) {
-        var currentSessionUid: String? = null
-        val session = mutableListOf<EventLine>()
-
-        for (line in input) {
-            if (line.trim().isEmpty()) continue
-
-            val event = LogEventSerializer.fromString(line)
-            val eventLine = EventLine(event, line)
-
-            if (eventLine.sessionUid == currentSessionUid) {
-                session.add(eventLine)
-            }
-            else {
-                processCompletionSession(session)
-                session.clear()
-                currentSessionUid = eventLine.sessionUid
-                session.add(eventLine)
-            }
-        }
-
-        processCompletionSession(session)
-    }
-
-
-    private fun processCompletionSession(session: List<EventLine>) {
-        if (session.isEmpty()) return
-        if (session.any { !it.isOk }) {
-            dumpSession(session, isValidSession = false)
-            return
-        }
-
-        var isValidSession = false
-        val initial = session.first()
-        if (initial.event is CompletionStartedEvent) {
-            val state = CompletionValidationState(initial.event)
-            session.drop(1).forEach { state.accept(it.event!!) }
-            isValidSession = state.isFinished && state.isValid
-        }
-
-        dumpSession(session, isValidSession)
-    }
-
-    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
-        if (isValidSession) {
-            sessionValidationResult.addValidSession(session)
-        }
-        else {
-            sessionValidationResult.addErrorSession(session)
-        }
-    }
-
-}
-
+import com.intellij.stats.events.completion.*
 
 class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
-    
+
     var currentPosition    = event.currentPosition
     var completionList     = event.completionListIds
     var currentId          = getSafeCurrentId(completionList, currentPosition)
@@ -148,13 +52,13 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
 
     fun accept(nextEvent: LogEvent) {
         if (isFinished) {
-            isValid = false            
+            isValid = false
         }
         else if (isValid) {
             nextEvent.accept(this)
         }
     }
-    
+
     override fun visit(event: DownPressedEvent) {
         val beforeDownPressedPosition = currentPosition
         updateState(event)
@@ -168,16 +72,16 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
     override fun visit(event: UpPressedEvent) {
         val beforeUpPressedPosition = currentPosition
         updateState(event)
-        
+
         updateValid((completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition)
     }
 
     override fun visit(event: TypeEvent) {
         val newIds = event.newCompletionIds()
         val allIds = (completionList + newIds).toSet()
-        
+
         updateValid(allIds.containsAll(event.completionListIds))
-        
+
         updateState(event)
         updateValid(allCompletionItemIds.containsAll(completionList))
     }
@@ -204,5 +108,5 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
         updateValid(completionList[currentPosition] == id)
         isFinished = true
     }
-    
+
 }

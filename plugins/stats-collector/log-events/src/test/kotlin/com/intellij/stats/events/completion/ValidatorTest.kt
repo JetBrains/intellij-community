@@ -16,6 +16,9 @@
 
 package com.intellij.stats.events.completion
 
+import com.intellij.stats.validation.EventLine
+import com.intellij.stats.validation.InputSessionValidator
+import com.intellij.stats.validation.SessionValidationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
