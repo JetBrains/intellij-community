@@ -317,8 +317,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       List<List<String>> groups = new ArrayList<>();
 
       Comparator<MatchResult> comparator = (mr1, mr2) -> {
-        boolean exactPrefix1 = StringUtil.startsWithIgnoreCase(mr1.elementName, patternSuffix);
-        boolean exactPrefix2 = StringUtil.startsWithIgnoreCase(mr2.elementName, patternSuffix);
+        boolean exactPrefix1 = StringUtil.startsWith(mr1.elementName, patternSuffix);
+        boolean exactPrefix2 = StringUtil.startsWith(mr2.elementName, patternSuffix);
         if (exactPrefix1 && exactPrefix2) return 0;
         if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
         return mr1.compareDegrees(mr2, preferStartMatches);
