@@ -99,6 +99,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (element instanceof Group) {
       annotateGroup((Group)element, holder);
     }
+    else if (element instanceof Component.Project) {
+      annotateProjectComponent((Component.Project)element, holder);
+    }
 
     if (element instanceof GenericDomValue) {
       final GenericDomValue domValue = (GenericDomValue)element;
@@ -121,7 +124,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   }
 
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
-    highlightNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
+    //noinspection deprecation
+    highlightAttributeNotUsedAnymore(ideaPlugin.getIdeaPluginVersion(), holder);
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder) {
@@ -162,11 +166,10 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
+    //noinspection deprecation
     final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
     if (DomUtil.hasXml(xmlnsAttribute)) {
-      holder.createProblem(xmlnsAttribute,
-                           ProblemHighlightType.LIKE_DEPRECATED,
-                           "Use defaultExtensionNs instead", null).highlightWholeElement();
+      highlightDeprecated(xmlnsAttribute, "Use defaultExtensionNs instead", holder, false, true);
       return;
     }
 
@@ -185,8 +188,10 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   }
 
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
-    highlightNotUsedAnymore(ideaVersion.getMin(), holder);
-    highlightNotUsedAnymore(ideaVersion.getMax(), holder);
+    //noinspection deprecation
+    highlightAttributeNotUsedAnymore(ideaVersion.getMin(), holder);
+    //noinspection deprecation
+    highlightAttributeNotUsedAnymore(ideaVersion.getMax(), holder);
     highlightUntilBuild(ideaVersion, holder);
   }
 
@@ -237,8 +242,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(interfaceAttribute)) {
       final PsiClass value = interfaceAttribute.getValue();
       if (value != null && value.isDeprecated()) {
-        holder.createProblem(extension, ProblemHighlightType.LIKE_DEPRECATED,
-                             "Deprecated EP '" + extensionPoint.getEffectiveQualifiedName() + "'", null);
+        highlightDeprecated(extension, "Deprecated EP '" + extensionPoint.getEffectiveQualifiedName() + "'", holder, false, false);
         return;
       }
     }
@@ -274,28 +278,21 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (declaration instanceof PsiField) {
         PsiField psiField = (PsiField)declaration;
         if (psiField.isDeprecated()) {
-          holder.createProblem(attributeValue, ProblemHighlightType.LIKE_DEPRECATED,
-                               "Deprecated attribute '" + attributeDescription.getName() + "'",
-                               null)
-            .highlightWholeElement();
+          highlightDeprecated(attributeValue, "Deprecated attribute '" + attributeDescription.getName() + "'", holder, false, true);
         }
       }
     }
   }
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
-    highlightNotUsedAnymore(vendor.getLogo(), holder);
+    //noinspection deprecation
+    highlightAttributeNotUsedAnymore(vendor.getLogo(), holder);
   }
 
-  private static void highlightNotUsedAnymore(GenericAttributeValue attributeValue,
-                                              DomElementAnnotationHolder holder) {
+  private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,
+                                                       DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(attributeValue)) return;
-
-    holder.createProblem(attributeValue,
-                         ProblemHighlightType.LIKE_DEPRECATED,
-                         "Attribute '" + attributeValue.getXmlElementName() + "' not used anymore",
-                         null, new RemoveDomElementQuickFix(attributeValue))
-      .highlightWholeElement();
+    highlightDeprecated(attributeValue, "Attribute '" + attributeValue.getXmlElementName() + "' not used anymore", holder, true, true);
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {
@@ -328,6 +325,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static void annotateProjectComponent(Component.Project projectComponent, DomElementAnnotationHolder holder) {
+    //noinspection deprecation
+    GenericDomValue<Boolean> skipForDefault = projectComponent.getSkipForDefaultProject();
+    if (skipForDefault.exists()) {
+      highlightDeprecated(skipForDefault,
+                          "'skipForDefaultProject' is deprecated; project components are not loaded in the default project by default",
+                          holder, true, true);
+    }
+  }
+
   private static void annotateResolveProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
     final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
     if (value != null) {
@@ -336,6 +343,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           holder.createResolveProblem(attributeValue, reference);
         }
       }
+    }
+  }
+
+  private static void highlightDeprecated(DomElement element, String message, DomElementAnnotationHolder holder,
+                                          boolean useRemoveQuickfix, boolean highlightWholeElement) {
+    DomElementProblemDescriptor problem;
+    if (!useRemoveQuickfix) {
+      problem = holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED, message, null);
+    }
+    else {
+      problem = holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED, message, null, new RemoveDomElementQuickFix(element));
+    }
+    if (highlightWholeElement) {
+      problem.highlightWholeElement();
     }
   }
 
