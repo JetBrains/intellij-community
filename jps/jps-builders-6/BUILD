@@ -4,8 +4,8 @@ iml_module(
     name = "jps-builders-6",
     srcs = ["src"],
     exclude = [
-        "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
         "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
+        "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
     ],
     iml_files = ["jps-builders-6.iml"],
     tags = ["managed"],
