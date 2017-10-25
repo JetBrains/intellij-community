@@ -28,9 +28,12 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
   public void testPackageView() {
@@ -218,7 +221,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     ((AbstractProjectTreeStructure) packageViewPane.getTreeStructure()).setProviders(new ResourceBundleGrouper(myProject));
     packageViewPane.updateFromRoot(true);
     JTree tree = packageViewPane.getTree();
-    TreeUtil.expand(tree, levels);
+    PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, levels - 1)); // -1 because root node is not visible
     PlatformTestUtil.assertTreeEqual(tree, expected);
     BaseProjectViewTestCase.checkContainsMethod(packageViewPane.getTreeStructure().getRootElement(), packageViewPane.getTreeStructure());
     Disposer.dispose(packageViewPane);
