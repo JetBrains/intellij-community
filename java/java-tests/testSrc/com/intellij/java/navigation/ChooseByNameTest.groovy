@@ -55,6 +55,12 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     assert elements == [startMatch, wordSkipMatch, camelMatch, middleMatch]
   }
 
+  void "test goto file order by matching degree"() {
+    def camel = addEmptyFile("ServiceAccessor.java")
+    def startLower = addEmptyFile("sache.txt")
+    assert gotoFile('SA') == [camel, startLower]
+  }
+
   void "test disprefer start matches when prefix starts with asterisk"() {
     def startMatch = myFixture.addClass('class ITable {}')
     def endMatch = myFixture.addClass('class HappyHippoIT {}')
