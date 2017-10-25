@@ -28,9 +28,9 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +38,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 public class RemoteRepositoriesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
@@ -50,7 +52,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
   private JButton myRemoveServiceButton;
   private JButton myTestServiceButton;
 
-  private JBList<String> myJarRepositoryList;
+  private JBList<RemoteRepositoryDescription> myJarRepositoryList;
   private JButton myAddRepoButton;
   private JButton myEditRepoButton;
   private JButton myRemoveRepoButton;
@@ -59,7 +61,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
 
   private final Project myProject;
   private final CollectionListModel<String> myServicesModel = new CollectionListModel<>();
-  private final CollectionListModel<String> myReposModel = new CollectionListModel<>();
+  private final CollectionListModel<RemoteRepositoryDescription> myReposModel = new CollectionListModel<>();
 
   public RemoteRepositoriesConfigurable(Project project) {
     myProject = project;
@@ -76,21 +78,18 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
   }
 
   private boolean isRepoListModified() {
-    final List<String> urls = new SmartList<>();
-    for (RemoteRepositoryDescription repository : RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories()) {
-      urls.add(repository.getUrl());
-    }
-    return !myReposModel.getItems().equals(urls);
+    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories();
+    return !myReposModel.getItems().equals(repos);
   }
 
   private void configControls() {
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
-      "Artifactory or Nexus Service URL", "Service URL", "No services"
+      "Artifactory or Nexus Service URL", "Service URL", "No services", DataAdapter.STRING_ADAPTER
     );
     setupListControls(
       myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton, myRemoveRepoButton,
-      "Maven Repository URL", "maven Repository URL", "No remote repositories"
+      "Maven Repository URL", "maven Repository URL", "No remote repositories", DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
     );
 
     ListUtil.disableWhenNoSelection(myTestServiceButton, myServiceList);
@@ -133,25 +132,71 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
     });
   }
 
-  private static void setupListControls(final JBList<String> list,
-                                        final CollectionListModel<String> model,
-                                        final JButton addButton,
-                                        final JButton editButton,
-                                        final JButton removeButton,
-                                        final String modificationDialogTitle,
-                                        final String modificationDialogHint,
-                                        final String emptyListHint) {
+  private interface DataAdapter<Data, Presentation> {
+    DataAdapter<String, String> STRING_ADAPTER = new DataAdapter<String, String>() {
+      @Override
+      public String toPresentation(String s) {
+        return s;
+      }
+
+      @Override
+      public String create(String s) {
+        return s;
+      }
+
+      @Override
+      public String change(String current, String changes) {
+        return changes;
+      }
+    };
+
+    DataAdapter<RemoteRepositoryDescription, String> REPOSITORY_DESCRIPTION_ADAPTER = new DataAdapter<RemoteRepositoryDescription, String>() {
+      @Override
+      public String toPresentation(RemoteRepositoryDescription description) {
+        return description.getUrl();
+      }
+
+      @Override
+      public RemoteRepositoryDescription create(String url) {
+        final UUID uuid = UUID.randomUUID();
+        return new RemoteRepositoryDescription(uuid.toString(), uuid.toString(), url);
+      }
+
+      @Override
+      public RemoteRepositoryDescription change(RemoteRepositoryDescription current, String url) {
+        return new RemoteRepositoryDescription(current.getId(), current.getName(), url);
+      }
+    };
+    Presentation toPresentation(Data data);
+    Data create(Presentation presentation);
+    Data change(Data current, Presentation changes);
+  }
+
+  private static <T> void setupListControls(final JBList<T> list,
+                                            final CollectionListModel<T> model,
+                                            final JButton addButton,
+                                            final JButton editButton,
+                                            final JButton removeButton,
+                                            final String modificationDialogTitle,
+                                            final String modificationDialogHint,
+                                            final String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.setCellRenderer(new ListCellRendererWrapper<T>() {
+      @Override
+      public void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
+        setText(adapter.toPresentation(value));
+      }
+    });
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final String value = list.getSelectedValue();
+        final T value = list.getSelectedValue();
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Add" + " " + modificationDialogHint, Messages.getQuestionIcon(), value == null ? "https://" : value, new URLInputVaslidator()
+          modificationDialogTitle, "Add" + " " + modificationDialogHint, Messages.getQuestionIcon(), value == null ? "https://" : adapter.toPresentation(value), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
-          model.add(text);
+          model.add(adapter.create(text));
           list.setSelectedValue(text, true);
         }
       }
@@ -160,11 +205,12 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
       @Override
       public void actionPerformed(ActionEvent e) {
         final int index = list.getSelectedIndex();
+        final T element = model.getElementAt(index);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Edit" + " " + modificationDialogHint, Messages.getQuestionIcon(), model.getElementAt(index), new URLInputVaslidator()
+          modificationDialogTitle, "Edit" + " " + modificationDialogHint, Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
-          model.setElementAt(text, index);
+          model.setElementAt(adapter.change(element, text), index);
         }
       }
     });
@@ -194,23 +240,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
 
   public void apply() throws ConfigurationException {
     MavenRepositoryServicesManager.getInstance(myProject).setUrls(myServicesModel.getItems());
-
-    final Map<String, RemoteRepositoryDescription> defaultRepos = new HashMap<>();
-    for (RemoteRepositoryDescription repository : RemoteRepositoryDescription.DEFAULT_REPOSITORIES) {
-      defaultRepos.put(repository.getUrl(), repository);
-    }
-    final List<RemoteRepositoryDescription> descriptions = new SmartList<>();
-    for (String url : myReposModel.getItems()) {
-      final RemoteRepositoryDescription def = defaultRepos.get(url);
-      if (def != null) {
-        descriptions.add(def);
-      }
-      else {
-        final UUID uuid = UUID.randomUUID();
-        descriptions.add(new RemoteRepositoryDescription(uuid.toString(), uuid.toString(), url));
-      }
-    }
-    RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(descriptions);
+    RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
   }
 
   public void reset() {
@@ -224,12 +254,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
   }
 
   private void resetReposModel(final List<RemoteRepositoryDescription> repositories) {
-    myReposModel.removeAll();
-    final List<String> repos = new SmartList<>();
-    for (RemoteRepositoryDescription description : repositories) {
-      repos.add(description.getUrl());
-    }
-    myReposModel.add(repos);
+    myReposModel.replaceAll(repositories);
   }
 
   public void disposeUIResources() {
