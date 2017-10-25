@@ -98,7 +98,7 @@ class DirectoryPathMatcher {
     if (myFiles == null) return fileSearchScope;
 
     VirtualFile[] array = ContainerUtil.map2Array(myFiles, VirtualFile.class, p -> p.first);
-    return fileSearchScope.intersectWith(GlobalSearchScopesCore.directoriesScope(myModel.getProject(), true, array));
+    return GlobalSearchScopesCore.directoriesScope(myModel.getProject(), true, array).intersectWith(fileSearchScope);
 
   }
 
