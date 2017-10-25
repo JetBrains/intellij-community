@@ -29,4 +29,7 @@ public interface RunDashboardRunConfigurationNode extends RunDashboardNode, User
 
   @Nullable
   RunDashboardContributor getContributor();
+
+  @NotNull
+  RunDashboardRunConfigurationStatus getStatus();
 }

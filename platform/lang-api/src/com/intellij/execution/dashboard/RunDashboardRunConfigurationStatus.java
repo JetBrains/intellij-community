@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -57,6 +58,7 @@ public class RunDashboardRunConfigurationStatus {
     return myPriority;
   }
 
+  @NotNull
   public static RunDashboardRunConfigurationStatus getStatus(RunDashboardRunConfigurationNode node) {
     RunContentDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) {

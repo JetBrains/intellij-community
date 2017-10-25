@@ -89,8 +89,7 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     }
     presentation.addText(configurationSettings.getName(), nameAttributes);
     Icon icon = null;
-    RunDashboardRunConfigurationStatus status = myContributor != null ? myContributor.getStatus(this) :
-                                                RunDashboardRunConfigurationStatus.getStatus(this);
+    RunDashboardRunConfigurationStatus status = getStatus();
     if (RunDashboardRunConfigurationStatus.STARTED.equals(status)) {
       icon = getExecutorIcon();
     }
@@ -128,6 +127,12 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Override
   public RunDashboardContributor getContributor() {
     return myContributor;
+  }
+
+  @NotNull
+  @Override
+  public RunDashboardRunConfigurationStatus getStatus() {
+    return myContributor != null ? myContributor.getStatus(this) : RunDashboardRunConfigurationStatus.getStatus(this);
   }
 
   @Nullable

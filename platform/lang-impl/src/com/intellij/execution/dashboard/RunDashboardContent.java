@@ -23,6 +23,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -42,6 +43,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
 /**
@@ -86,6 +89,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<RunDashboardGrouper> myGroupers;
+  private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -344,7 +348,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void setupBuilder() {
-    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers);
+    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -393,6 +397,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     AnAction treeActions = ActionManager.getInstance().getAction(RUN_DASHBOARD_TREE_TOOLBAR);
     treeActions.registerCustomShortcutSet(this, null);
     treeGroup.add(treeActions);
+
+    treeGroup.addSeparator();
+    treeGroup.add(new StatusActionGroup());
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, true);
     toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
@@ -479,6 +486,35 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
+    }
+  }
+
+  private class StatusActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+    StatusActionGroup() {
+      setPopup(true);
+
+      getTemplatePresentation().setText(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"));
+      getTemplatePresentation().setIcon(AllIcons.General.Filter);
+
+      for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
+        add(new ToggleAction(status.getName()) {
+          @Override
+          public boolean isSelected(AnActionEvent e) {
+            return myStatusFilter.isVisible(status);
+          }
+
+          @Override
+          public void setSelected(AnActionEvent e, boolean state) {
+            if (state) {
+              myStatusFilter.show(status);
+            }
+            else {
+              myStatusFilter.hide(status);
+            }
+            updateContent(true);
+          }
+        });
+      }
     }
   }
 }
