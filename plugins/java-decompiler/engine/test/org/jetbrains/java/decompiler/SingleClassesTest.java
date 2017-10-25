@@ -101,6 +101,8 @@ public class SingleClassesTest {
   @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
   @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
   @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
+  @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
+  @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
