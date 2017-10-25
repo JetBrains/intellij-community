@@ -100,6 +100,7 @@ public class JoinLinesHandler extends EditorActionHandler {
 
     ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
       "Join Lines", project, null, IdeBundle.message("action.stop"), indicator -> {
+        indicator.setIndeterminate(false);
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
         try {
