@@ -15,8 +15,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,30 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("missing.override.annotation.display.name");
+  }
+
+  /**
+   * @deprecated
+   * Use {@link AnnotateMethodFix}. To be removed in 2019.1.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new InspectionGadgetsFix() {
+      private final AnnotateMethodFix myFix = new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE);
+
+      @Override
+      protected void doFix(Project project, ProblemDescriptor descriptor) {
+        myFix.applyFix(project, descriptor);
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return myFix.getFamilyName();
+      }
+    };
   }
 
   @Override
