@@ -16,6 +16,8 @@
 package com.intellij.stats.completion
 
 
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
+import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.LookupElementPositionTracker
@@ -83,7 +85,10 @@ class CompletionFileLogger(private val installationUID: String,
                 isExperimentPerformed, experimentVersion,
                 lookupEntryInfos, selectedPosition = 0)
 
+        val completion = CompletionService.getCompletionService().currentCompletion as? CompletionProgressIndicator
+
         event.isOneLineMode = lookup.editor.isOneLineMode
+        event.completionType = completion?.parameters?.completionType?.toString() ?: ""
 
         eventLogger.log(event)
     }
