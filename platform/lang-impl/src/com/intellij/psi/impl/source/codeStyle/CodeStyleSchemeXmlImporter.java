@@ -81,6 +81,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     throws SchemeImportException {
     CodeStyleSettings newSettings = new CodeStyleSettings();
     loadSettings(rootElement, newSettings);
+    newSettings.resetDeprecatedFields(); // Clean up if imported from legacy settings
     ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(newSettings);
     return scheme;
   }
