@@ -248,7 +248,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
       def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for Mac OS")
-      buildContext.ant.zip(zipfile: tmpTargetPath) {
+      buildContext.ant.zip(zipfile: tmpTargetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
             exclude(name: "bin/*.sh")
