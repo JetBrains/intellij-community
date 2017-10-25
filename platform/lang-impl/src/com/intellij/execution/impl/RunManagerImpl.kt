@@ -15,7 +15,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
@@ -706,7 +705,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = (if (provider is RunConfigurationBeforeRunProvider) provider.createTask(settings.configuration, this) else provider.createTask(settings.configuration)) ?: continue
+      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
       if (beforeRunTask is PersistentStateComponent<*>) {
         // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
         beforeRunTask.isEnabled = true
@@ -875,51 +874,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       return if (isDisableTemplateTasks) emptyList() else templateTasks.filterSmart { !ownIsOnlyEnabled || it.isEnabled }
     }
     return getEffectiveBeforeRunTaskList(ownTasks, templateTasks, ownIsOnlyEnabled, isDisableTemplateTasks = isDisableTemplateTasks)
-  }
-
-  private fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>,
-                                            templateTasks: List<BeforeRunTask<*>>,
-                                            ownIsOnlyEnabled: Boolean,
-                                            isDisableTemplateTasks: Boolean): MutableList<BeforeRunTask<*>> {
-    val idToSet = ownTasks.mapSmartSet { it.providerId }
-    val result = ownTasks.filterSmartMutable { !ownIsOnlyEnabled || it.isEnabled }
-    var i = 0
-    for (templateTask in templateTasks) {
-      if (templateTask.isEnabled && !idToSet.contains(templateTask.providerId)) {
-        val effectiveTemplateTask = if (isDisableTemplateTasks) {
-          val clone = templateTask.clone()
-          clone.isEnabled = false
-          clone
-        }
-        else {
-          templateTask
-        }
-        result.add(i, effectiveTemplateTask)
-        i++
-      }
-    }
-    return result
-  }
-
-  private fun getTemplateBeforeRunTasks(templateConfiguration: RunConfiguration): List<BeforeRunTask<*>> {
-    return templateConfiguration.beforeRunTasks.nullize() ?: getHardcodedBeforeRunTasks(templateConfiguration)
-  }
-
-  private fun getHardcodedBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
-    var result: MutableList<BeforeRunTask<*>>? = null
-    for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project)) {
-      val task = provider.createTask(configuration) ?: continue
-      if (task.isEnabled) {
-        configuration.factory.configureBeforeRunTaskDefaults(provider.id, task)
-        if (task.isEnabled) {
-          if (result == null) {
-            result = SmartList<BeforeRunTask<*>>()
-          }
-          result.add(task)
-        }
-      }
-    }
-    return result.orEmpty()
   }
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
