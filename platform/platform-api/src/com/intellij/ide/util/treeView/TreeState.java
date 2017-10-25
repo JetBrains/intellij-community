@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.util.ui.tree.TreeUtil.getTreeAcceptor;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
 
@@ -66,7 +67,6 @@ public class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
-  public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
   private static final Key<Promise<Void>> EXPANDING = Key.create("TreeExpanding");
 
   private static final String EXPAND_TAG = "expand";
@@ -481,7 +481,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private boolean visit(@NotNull JTree tree) {
-    Function<TreeVisitor, Promise<TreePath>> acceptor = UIUtil.getClientProperty(tree, VISIT);
+    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
     if (acceptor == null) return false;
 
     expand(tree, promise -> expand(acceptor, tree).processed(expanded -> {
