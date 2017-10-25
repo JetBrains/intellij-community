@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -39,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -93,7 +81,7 @@ public class JUnitUtil {
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
     Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
                   BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
-  
+
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
@@ -145,7 +133,7 @@ public class JUnitUtil {
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
+    if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, 0)) return false;
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
@@ -193,7 +181,7 @@ public class JUnitUtil {
     }
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
-    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, CHECK_HIERARCHY)) return true;
 
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
 
@@ -231,7 +219,7 @@ public class JUnitUtil {
     if (modifierList == null) return false;
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
     if (topLevelClass != null) {
-      if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) {
+      if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, CHECK_HIERARCHY)) {
         PsiAnnotation annotation = getRunWithAnnotation(topLevelClass);
         if (topLevelClass == psiClass) {
           return true;
@@ -258,7 +246,7 @@ public class JUnitUtil {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
 
-    if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, false)) {
+    if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, 0)) {
       return true;
     }
 
@@ -308,9 +296,9 @@ public class JUnitUtil {
 
     return ReadAction.compute(() -> foundCondition.value(TEST5_PACKAGE_FQN));
   }
-  
+
   public static boolean isTestAnnotated(final PsiMethod method) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       return true;
     }
 
@@ -390,23 +378,21 @@ public class JUnitUtil {
       }
 
       if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_CONFIGS)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_CONFIGS, 0)) {
           return isPublic;
         }
-        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0)) {
           return true;
         }
       }
       else {
-        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_CONFIGS)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_CONFIGS, 0)) {
           return isPublic;
         }
-
-        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS, 0)) {
           return true;
         }
-        
-        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS)) {
+        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0)) {
           return true;
         }
       }
