@@ -45,7 +45,6 @@ class CompletionStartedEvent(
     //seems it's not needed, remove when possible
     @JvmField var completionListLength: Int = completionList.size
     @JvmField var isOneLineMode: Boolean = false
-    @JvmField var completionType: String = ""
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)

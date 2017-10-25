@@ -38,4 +38,10 @@ abstract class LookupStateLogData(
         @JvmField var completionListIds: List<Int>,
         @JvmField var newCompletionListItems: List<LookupEntryInfo>,
         @JvmField var currentPosition: Int
-) : LogEvent(userId, sessionId, action)
+) : LogEvent(userId, sessionId, action) {
+
+
+    @JvmField var originalCompletionType: String = ""
+    @JvmField var originalInvokationCount: Int = -1
+
+}

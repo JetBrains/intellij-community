@@ -85,10 +85,8 @@ class CompletionFileLogger(private val installationUID: String,
                 isExperimentPerformed, experimentVersion,
                 lookupEntryInfos, selectedPosition = 0)
 
-        val completion = CompletionService.getCompletionService().currentCompletion as? CompletionProgressIndicator
-
         event.isOneLineMode = lookup.editor.isOneLineMode
-        event.completionType = completion?.parameters?.completionType?.toString() ?: ""
+        event.fillCompletionParameters()
 
         eventLogger.log(event)
     }
@@ -106,6 +104,8 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = TypeEvent(installationUID, completionUID, ids, newItems, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -117,6 +117,8 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -128,6 +130,8 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -144,6 +148,8 @@ class CompletionFileLogger(private val installationUID: String,
         val completionList = lookup.items.toLookupInfos(lookup)
 
         val event = TypedSelectEvent(installationUID, completionUID, newCompletionElements, id, completionList, history)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -155,6 +161,8 @@ class CompletionFileLogger(private val installationUID: String,
         val completionList = lookup.items.toLookupInfos(lookup)
 
         val event = ExplicitSelectEvent(installationUID, completionUID, newCompletionItems, index, id, completionList, history)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -182,6 +190,8 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = BackspaceEvent(installationUID, completionUID, ids, newInfos, currentPosition)
+        event.fillCompletionParameters()
+
         eventLogger.log(event)
     }
 
@@ -199,4 +209,13 @@ private fun calcPluginVersion(): String? {
     val id = PluginManager.getPluginByClassName(className)
     val plugin = PluginManager.getPlugin(id)
     return plugin?.version
+}
+
+
+private fun LookupStateLogData.fillCompletionParameters() {
+    val completion = CompletionService.getCompletionService().currentCompletion as? CompletionProgressIndicator
+    val params = completion?.parameters
+
+    originalCompletionType = params?.completionType?.toString() ?: ""
+    originalInvokationCount = params?.invocationCount ?: -1
 }
