@@ -28,8 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * This class collects output of git log command. It separates the output into parts that correspond to commit records,
- * and feeds them to the consumer. It does not store output in order to save memory.
+ * This class processes output of git log command by feeding it line-by-line to the {@link GitLogParser}.
+ * It does not store output in order to save memory.
+ * Parsed records are passed to the specified {@link Consumer}.
  */
 class GitLogOutputSplitter implements GitLineHandlerListener {
   @NotNull private final GitLineHandler myHandler;
