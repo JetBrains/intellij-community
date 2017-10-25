@@ -18,6 +18,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TempFiles;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,5 +107,17 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
 
     assertFalse(GlobalSearchScope.fileScope(myProject, file1).intersectWith(trueIntersection).contains(file2));
     assertEquals(1, targetCalled.get());
+  }
+
+  public void testDirScopeSearchInLibraries() throws IOException {
+    VirtualFile libRoot = getVirtualFile(createTempDir("libRoot"));
+    VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
+
+    PsiTestUtil.removeAllRoots(getModule(), null);
+    PsiTestUtil.addContentRoot(getModule(), contentRoot);
+    PsiTestUtil.addLibrary(getModule(), libRoot.getPath());
+
+    assertTrue(GlobalSearchScopes.directoryScope(myProject, libRoot, true).isSearchInLibraries());
+    assertTrue(GlobalSearchScopes.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
   }
 }
