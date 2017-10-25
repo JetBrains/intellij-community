@@ -826,8 +826,10 @@
     </extensionPoint>
 
     <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
-
     <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
