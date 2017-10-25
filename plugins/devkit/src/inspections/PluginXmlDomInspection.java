@@ -40,6 +40,7 @@ import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
@@ -118,7 +119,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       PsiClass psiClass = (PsiClass)value;
       if (psiClass.getContainingClass() != null &&
           !StringUtil.containsChar(StringUtil.notNullize(domValue.getRawText()), '$')) {
-        holder.createProblem(domValue, "Inner class must be separated with '$'");
+        holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.inner.class.must.be.separated.with.dollar"));
       }
     }
   }
@@ -148,20 +149,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     final Vendor vendor = ideaPlugin.getVendor();
     if (!DomUtil.hasXml(vendor)) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
-                           "Plugin developed as a part of IntelliJ IDEA project should specify 'JetBrains' as its vendor",
+                           DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"),
                            new SpecifyJetBrainsAsVendorQuickFix());
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
-      holder.createProblem(vendor, "Plugin developed as a part of IntelliJ IDEA project should include 'JetBrains' as one of its vendors");
+      holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
     }
   }
 
   private static void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
-      holder.createProblem(extensionPoint,
-                           "<extensionPoint> does not have <with> tags to specify the types of class fields",
-                           new AddWithTagFix());
+      holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
     }
   }
 
@@ -169,21 +168,23 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     //noinspection deprecation
     final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
     if (DomUtil.hasXml(xmlnsAttribute)) {
-      highlightDeprecated(xmlnsAttribute, "Use defaultExtensionNs instead", holder, false, true);
+      highlightDeprecated(xmlnsAttribute, DevKitBundle.message("inspections.plugin.xml.use.defaultExtensionNs"), holder, false, true);
       return;
     }
 
     if (!DomUtil.hasXml(extensions.getDefaultExtensionNs())) {
-      holder.createProblem(extensions, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           "Specify defaultExtensionNs=\"" + Extensions.DEFAULT_PREFIX + "\" explicitly", null,
-                           new AddDomElementQuickFix<GenericAttributeValue>(extensions.getDefaultExtensionNs()) {
-                             @Override
-                             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                               super.applyFix(project, descriptor);
-
-                               myElement.setStringValue(Extensions.DEFAULT_PREFIX);
-                             }
-                           });
+      holder.createProblem(
+        extensions,
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        DevKitBundle.message("inspections.plugin.xml.specify.defaultExtensionNs.explicitly", Extensions.DEFAULT_PREFIX),
+        null,
+        new AddDomElementQuickFix<GenericAttributeValue>(extensions.getDefaultExtensionNs()) {
+          @Override
+          public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+            super.applyFix(project, descriptor);
+            myElement.setStringValue(Extensions.DEFAULT_PREFIX);
+          }
+        });
     }
   }
 
@@ -200,24 +201,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (untilBuild != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
       Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
-        holder.createProblem(ideaVersion.getUntilBuild(), "Don't use '" + matcher.group(2) + "' in 'until-build', use '*' instead",
-                             new CorrectUntilBuildAttributeFix(
-                               IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+        holder.createProblem(
+          ideaVersion.getUntilBuild(),
+          DevKitBundle.message("inspections.plugin.xml.until.build.use.asterisk.instead.of.big.number", matcher.group(2)),
+          new CorrectUntilBuildAttributeFix(
+            IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
       }
       if (untilBuild.matches("\\d+")) {
         int branch = Integer.parseInt(untilBuild);
         String corrected = (branch - 1) + ".*";
-        String message = "Plain numbers in 'until-build' attribute may be misleading. '" +
-                         untilBuild +
-                         "' means the same as '" +
-                         untilBuild
-                         +
-                         ".0', so the plugin won't be compatible with " +
-                         untilBuild +
-                         ".* builds. It's better to specify '" +
-                         corrected +
-                         "' instead.";
-        holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
+        holder.createProblem(ideaVersion.getUntilBuild(),
+                             DevKitBundle.message("inspections.plugin.xml.until.build.misleading.plain.number", untilBuild, corrected),
+                             new CorrectUntilBuildAttributeFix(corrected));
       }
     }
   }
@@ -242,7 +237,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(interfaceAttribute)) {
       final PsiClass value = interfaceAttribute.getValue();
       if (value != null && value.isDeprecated()) {
-        highlightDeprecated(extension, "Deprecated EP '" + extensionPoint.getEffectiveQualifiedName() + "'", holder, false, false);
+        highlightDeprecated(
+          extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
+          holder, false, false);
         return;
       }
     }
@@ -256,8 +253,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
             LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
             holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 "Exceptions from plugins developed by JetBrains are reported via ITNReporter automatically," +
-                                 " there is no need to specify it explicitly",
+                                 DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                  null, fix).highlightWholeElement();
           }
         }
@@ -278,7 +274,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (declaration instanceof PsiField) {
         PsiField psiField = (PsiField)declaration;
         if (psiField.isDeprecated()) {
-          highlightDeprecated(attributeValue, "Deprecated attribute '" + attributeDescription.getName() + "'", holder, false, true);
+          highlightDeprecated(
+            attributeValue, DevKitBundle.message("inspections.plugin.xml.deprecated.attribute", attributeDescription.getName()),
+            holder, false, true);
         }
       }
     }
@@ -292,14 +290,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,
                                                        DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(attributeValue)) return;
-    highlightDeprecated(attributeValue, "Attribute '" + attributeValue.getXmlElementName() + "' not used anymore", holder, true, true);
+    highlightDeprecated(
+      attributeValue, DevKitBundle.message("inspections.plugin.xml.attribute.not.used.anymore", attributeValue.getXmlElementName()),
+      holder, true, true);
   }
 
   private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(addToGroup.getRelativeToAction())) return;
 
     if (!DomUtil.hasXml(addToGroup.getAnchor())) {
-      holder.createProblem(addToGroup, "'anchor' must be specified with 'relative-to-action'",
+      holder.createProblem(addToGroup, DevKitBundle.message("inspections.plugin.xml.anchor.must.have.relative-to-action"),
                            new AddDomElementQuickFix<GenericAttributeValue>(addToGroup.getAnchor()));
       return;
     }
@@ -308,7 +308,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (value == Anchor.after || value == Anchor.before) {
       return;
     }
-    holder.createProblem(addToGroup.getAnchor(), "Must use '" + Anchor.after + "'|'" + Anchor.before + "' with 'relative-to-action'");
+    holder.createProblem(
+      addToGroup.getAnchor(),
+      DevKitBundle.message("inspections.plugin.xml.must.use.after.before.with.relative-to-action", Anchor.after, Anchor.before));
   }
 
   private static void annotateGroup(Group group, DomElementAnnotationHolder holder) {
@@ -329,8 +331,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     //noinspection deprecation
     GenericDomValue<Boolean> skipForDefault = projectComponent.getSkipForDefaultProject();
     if (skipForDefault.exists()) {
-      highlightDeprecated(skipForDefault,
-                          "'skipForDefaultProject' is deprecated; project components are not loaded in the default project by default",
+      highlightDeprecated(skipForDefault, DevKitBundle.message("inspections.plugin.xml.skipForDefaultProject.deprecated"),
                           holder, true, true);
     }
   }
