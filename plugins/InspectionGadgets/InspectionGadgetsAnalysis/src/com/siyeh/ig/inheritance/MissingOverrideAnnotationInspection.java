@@ -15,6 +15,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -71,6 +72,23 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         return myFix.getFamilyName();
       }
     };
+  }
+
+  /**
+   * @deprecated. To be removed in 2019.1.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected String buildErrorString(Object... infos) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @deprecated. To be removed in 2019.1.
+   */
+  @Deprecated
+  protected BaseInspectionVisitor buildVisitor() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
