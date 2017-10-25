@@ -877,7 +877,7 @@ public class ExprProcessor implements CodeConstants {
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
     // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-    if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST) {
+    if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST && !((ConstExprent) exprent).isNull()) {
       if (leftType.equals(VarType.VARTYPE_BYTE_OBJ)) {
         leftType = VarType.VARTYPE_BYTE;
       }
