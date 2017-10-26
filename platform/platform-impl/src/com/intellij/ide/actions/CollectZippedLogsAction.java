@@ -49,25 +49,28 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
-    try {
-      final File zippedLogsFile = createZip(project);
-      if (!doNotShowDialog) {
-        Messages.showIdeaMessageDialog(
-          project, "Included log and settings may contain sensitive data.", "Sensitive Data",
-          new String[]{Messages.OK_BUTTON}, 1, Messages.getInformationIcon(),
-          new DialogWrapper.DoNotAskOption.Adapter() {
-            @Override
-            public void rememberChoice(final boolean selected, final int exitCode) {
-              PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
-            }
+    int response = Messages.OK;
+    if (!doNotShowDialog) {
+      response = Messages.showOkCancelDialog(
+        project, "Included log and settings may contain sensitive data.", "Sensitive Data",
+        Messages.OK_BUTTON, Messages.CANCEL_BUTTON, Messages.getWarningIcon(),
+        new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(final boolean selected, final int exitCode) {
+            PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
           }
-        );
-      }
-      if (ShowFilePathAction.isSupported()) {
-        ShowFilePathAction.openFile(zippedLogsFile);
-      }
-      else {
-        Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
+        }
+      );
+    }
+    try {
+      if (response == Messages.OK) {
+        final File zippedLogsFile = createZip(project);
+        if (ShowFilePathAction.isSupported()) {
+          ShowFilePathAction.openFile(zippedLogsFile);
+        }
+        else {
+          Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
+        }
       }
     }
     catch (final IOException exception) {
@@ -121,6 +124,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Collect and Show Logs in " + ShowFilePathAction.getFileManagerName();
+    return "Compress Logs and Show in " + ShowFilePathAction.getFileManagerName();
   }
 }
