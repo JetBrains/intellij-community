@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,20 +59,55 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
-      return new MyAccessibleComponent(rendererComponent, (Accessible)rendererComponent);
+      return new MyComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
-  private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
+  private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
     private Accessible myAccessible;
-    MyAccessibleComponent(@NotNull Component comp, @NotNull Accessible accessible) {
+    private AccessibleContext myDefaultAccessibleContext;
+
+    MyComponent(@NotNull Component comp, @NotNull Accessible accessible) {
       super(comp);
       myAccessible = accessible;
     }
+
     @Override
     public AccessibleContext getAccessibleContext() {
-      return accessibleContext = myAccessible.getAccessibleContext();
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleMyComponent();
+      }
+      return accessibleContext;
+    }
+
+    public AccessibleContext getDefaultAccessibleContext() {
+      if (myDefaultAccessibleContext == null) {
+        myDefaultAccessibleContext = new AccessibleJComponent() {};
+      }
+      return myDefaultAccessibleContext;
+    }
+
+    /**
+     * Wraps the accessible context of {@link #myAccessible}, except for parent, which
+     * needs to come from the default implementation to avoid infinite parent/child cycle.
+     */
+    protected class AccessibleMyComponent extends AbstractAccessibleContextDelegate {
+      @NotNull
+      @Override
+      protected AccessibleContext getDelegate() {
+        return myAccessible.getAccessibleContext();
+      }
+
+      @Override
+      public Accessible getAccessibleParent() {
+        return getDefaultAccessibleContext().getAccessibleParent();
+      }
+
+      @Override
+      public int getAccessibleIndexInParent() {
+        return getDefaultAccessibleContext().getAccessibleIndexInParent();
+      }
     }
   }
 
