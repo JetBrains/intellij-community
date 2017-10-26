@@ -8,9 +8,14 @@ class BlockingWriter:
     def add_command(self, msg):
         self.sock.sendall(bytearray(msg.outgoing, 'utf-8'))
 
+    def commit(self, msg):
+        self.sock.sendall(bytearray(msg, 'utf-8'))
+
     def close(self):
-        self.sock.shutdown(SHUT_RDWR)
-        self.sock.close()
+        try:
+            self.sock.shutdown(SHUT_RDWR)
+        finally:
+            self.sock.close()
 
 class BlockingDebugger:
     def __init__(self, port):
