@@ -117,7 +117,6 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
       PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftType);
       PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
       if (leftClass == null || rightClass == null) return true;
-      if (!leftClass.isInterface() && !rightClass.isInterface()) return true;
       if (!rightClass.isInterface()) {
         PsiClass tmp = leftClass;
         leftClass = rightClass;
