@@ -28,6 +28,14 @@ public class AnnotationTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddAnnotationTargetTypeUse() {
+    doTest();
+  }
+  
+  public void testAddTypeUseAnnotationTarget() {
+    doTest();
+  }
+
   public void testAddAnnotationTypeMemberWithDefaultValue() {
     doTest();
   }
@@ -94,6 +102,10 @@ public class AnnotationTest extends IncrementalTestCase {
  } */
 
   public void testRemoveAnnotationTarget() {
+    doTest();
+  }
+
+  public void testRemoveTypeUseAnnotationTarget() {
     doTest();
   }
 
