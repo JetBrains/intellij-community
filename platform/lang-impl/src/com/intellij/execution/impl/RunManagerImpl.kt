@@ -730,7 +730,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     var type = idToType.get(typeId)
     if (type == null) {
       if (checkUnknown && typeId != null) {
-        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId)
+        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, _factoryId)
       }
       type = idToType.get(UnknownConfigurationType.NAME) ?: return null
     }
