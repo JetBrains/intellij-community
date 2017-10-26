@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
@@ -39,9 +40,7 @@ public abstract class LanguageLevelCombo extends ComboBox {
 
   public LanguageLevelCombo(String defaultItem) {
     myDefaultItem = defaultItem;
-    for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
-    }
+    fillLevels();
     setRenderer(new ColoredListCellRendererWrapper() {
       @Override
       protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -61,9 +60,7 @@ public abstract class LanguageLevelCombo extends ComboBox {
 
   public void reset(@NotNull Project project) {
     removeAllItems();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
-    }
+    fillLevels();
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
     sdkUpdated(sdk, project.isDefault());
 
@@ -73,6 +70,15 @@ public abstract class LanguageLevelCombo extends ComboBox {
     }
     else {
       setSelectedItem(extension.getLanguageLevel());
+    }
+  }
+
+  private void fillLevels() {
+    for (LanguageLevel level : LanguageLevel.values()) {
+      if (level == LanguageLevel.JDK_X && !Registry.is(LanguageLevel.EXPERIMENTAL_KEY, false)) {
+        continue;
+      }
+      addItem(level);
     }
   }
 

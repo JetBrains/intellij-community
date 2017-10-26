@@ -45,6 +45,7 @@ public enum LanguageLevel {
 
   public static final LanguageLevel HIGHEST = JDK_1_9;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
+  public static final String EXPERIMENTAL_KEY = "java.experimental.support";
 
   private final String myName;
   private final String myPresentableText;
