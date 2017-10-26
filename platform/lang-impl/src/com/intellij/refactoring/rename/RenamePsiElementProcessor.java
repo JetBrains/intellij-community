@@ -208,6 +208,22 @@ public abstract class RenamePsiElementProcessor {
     return false;
   }
 
+  /**
+   * Returns whether preview must be shown for the element to be renamed judging by its usages.
+   * <p>
+   * It's called for the original symbol and every additional element added in {@link #prepareRenaming(PsiElement, String, Map)}
+   * (if this processor can handle it according to {@link #canProcessElement(PsiElement)}), right after its usages have been collected
+   * using {@link #findReferences(PsiElement, boolean)}.
+   * <p>
+   * Note that it has no effect if {@link #forcesShowPreview()}, which is invoked earlier, has already returned {@code true}.
+   *
+   * @param element an element to rename
+   * @param usages  usages of this particular element
+   */
+  public boolean forcesShowPreview(@NotNull PsiElement element, @NotNull UsageInfo[] usages) {
+    return false;
+  }
+
   @Nullable
   public PsiElement getElementToSearchInStringsAndComments(PsiElement element) {
     return element;

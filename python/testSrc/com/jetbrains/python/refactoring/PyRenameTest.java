@@ -16,16 +16,20 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -354,6 +358,41 @@ public class PyRenameTest extends PyTestCase {
       return;
     }
     fail("Expected conflict not reported");
+  }
+
+  // PY-24265
+  public void testPreviewNotShownForFunctionWithNoUsages() {
+    assertFalse(doTestPreviewShown());
+  }
+
+  // PY-24265
+  public void testPreviewNowShownForFunctionWithOnlyRecursiveUsages() {
+    assertFalse(doTestPreviewShown());
+  }
+
+  // PY-24265
+  public void testPreviewShownForOverriddenMethod() {
+    assertTrue(doTestPreviewShown());
+  }
+
+  // PY-24265
+  public void testPreviewShownForNonCodeUsages() {
+    assertTrue(doTestPreviewShown());
+  }
+
+  private boolean doTestPreviewShown() {
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
+    final Ref<Boolean> previewShown = Ref.create(false);
+    final RenameProcessor processor = new RenameProcessor(myFixture.getProject(), myFixture.getElementAtCaret(), "bar", true, true) {
+      @Override
+      public boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
+        final boolean value = super.isPreviewUsages(usages);
+        previewShown.set(value);
+        return value;
+      }
+    };
+    processor.run();
+    return previewShown.get();
   }
 
   private void doTest(final String newName) {

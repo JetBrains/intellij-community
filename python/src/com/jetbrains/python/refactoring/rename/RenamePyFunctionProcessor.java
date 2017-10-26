@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
@@ -36,6 +39,8 @@ import java.util.Map;
  * @author yole
  */
 public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
+  private boolean myHasExtraRenames = false;
+
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFunction;
@@ -43,7 +48,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
 
   @Override
   public boolean forcesShowPreview() {
-    return true;
+    return myHasExtraRenames;
   }
 
   @Override
@@ -121,6 +126,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
     final PyFunction function = (PyFunction)element;
+    final int originalRenamesCount = allRenames.size();
 
     PyOverridingMethodsSearch
       .search(function, true)
@@ -144,6 +150,16 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         addRename(allRenames, newName, property.getDeleter());
       }
     }
+
+    myHasExtraRenames = allRenames.size() - originalRenamesCount > 0;
+  }
+
+  @Override
+  public boolean forcesShowPreview(@NotNull PsiElement element, @NotNull UsageInfo[] usages) {
+    return ContainerUtil.exists(usages, usage -> {
+      final PsiElement usageElement = usage.getElement();
+      return usage.isNonCodeUsage() || (usageElement != null && !PsiTreeUtil.isAncestor(element, usageElement, false));
+    });
   }
 
   @NotNull

@@ -314,6 +314,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
           myRenamers.add(factory.createRenamer(element, newName, usagesList));
         }
       }
+      myForceShowPreview |= RenamePsiElementProcessor.forElement(element).forcesShowPreview(element, usages);
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
