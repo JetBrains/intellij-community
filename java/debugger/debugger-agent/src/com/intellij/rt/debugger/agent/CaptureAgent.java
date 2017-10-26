@@ -64,6 +64,9 @@ public class CaptureAgent {
       //    }
       //  }
       //}
+
+      setupJboss();
+
       if (DEBUG) {
         System.out.println("Capture agent: ready");
       }
@@ -72,6 +75,16 @@ public class CaptureAgent {
       System.out.println("Capture agent: unknown exception");
       e.printStackTrace();
     }
+  }
+
+  private static void setupJboss() {
+    String modulesKey = "jboss.modules.system.pkgs";
+    String property = System.getProperty(modulesKey, "");
+    if (!property.isEmpty()) {
+      property += ",";
+    }
+    property += "com.intellij.rt";
+    System.setProperty(modulesKey, property);
   }
 
   private static String readSettings(String path) {
