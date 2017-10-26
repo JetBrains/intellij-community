@@ -17,6 +17,8 @@
 package com.intellij.util.containers;
 
 
+import com.intellij.openapi.util.Getter;
+import com.intellij.reference.SoftReference;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +36,8 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @NotNull
   protected abstract IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
 
-  interface IntReference<V> {
+  interface IntReference<V> extends Getter<V> {
     int getKey();
-    V get();
   }
 
   private void processQueue() {
@@ -86,20 +87,20 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   public V put(int key, @NotNull V value) {
     processQueue();
     IntReference<V> ref = myMap.put(key, createReference(key, value, myQueue));
-    return ref == null ? null : ref.get();
+    return SoftReference.deref(ref);
   }
 
   @Override
   public V get(int key) {
     IntReference<V> ref = myMap.get(key);
-    return ref == null ? null : ref.get();
+    return SoftReference.deref(ref);
   }
 
   @Override
   public V remove(int key) {
     processQueue();
     IntReference<V> ref = myMap.remove(key);
-    return ref == null ? null : ref.get();
+    return SoftReference.deref(ref);
   }
 
   @Override
@@ -124,6 +125,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   public Iterable<IntEntry<V>> entries() {
     final Iterator<IntEntry<IntReference<V>>> entryIterator = myMap.entries().iterator();
     return new Iterable<ConcurrentIntObjectMap.IntEntry<V>>() {
+      @NotNull
       @Override
       public Iterator<ConcurrentIntObjectMap.IntEntry<V>> iterator() {
         return new Iterator<IntEntry<V>>() {

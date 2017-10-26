@@ -116,12 +116,12 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   //PY-3373
-  public void testPyDocstringParametersInspection() {     
+  public void testPyDocstringParametersInspection() {
     runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
-  
+
   // PY-9795
-  public void testGoogleDocstringParametersInspection() {     
+  public void testGoogleDocstringParametersInspection() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
 
