@@ -191,7 +191,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           currentFrameThreadId = ((PyStackFrame)currentFrame).getThreadId();
         }
         final XExecutionStack activeStack = session.getSuspendContext().getActiveExecutionStack();
-        if ((activeStack == null) || (currentFrameThreadId == null)) {
+        if ((activeStack == null) || (currentFrameThreadId == null) || !(activeStack instanceof PyExecutionStack)) {
           return;
         }
         final XStackFrame frameFromSuspendContext = activeStack.getTopFrame();
@@ -800,7 +800,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @NotNull
-  private PyStackFrame currentFrame() throws PyDebuggerException {
+  protected PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
     }
