@@ -54,7 +54,6 @@ import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -344,7 +343,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private void processReference(PyElement node, @Nullable PsiReference reference) {
+    private void processReference(@NotNull PyElement node, @Nullable PsiReference reference) {
       if (!isEnabled(node) || reference == null || reference.isSoft()) {
         return;
       }
@@ -414,15 +413,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return PyImportStatementNavigator.getImportStatementByElement(node) == null && target.getName().equals(PyNames.INIT_DOT_PY);
     }
 
-    private void processReferenceInImportGuard(PyElement node, PyExceptPart guard) {
+    private void processReferenceInImportGuard(@NotNull PyElement node, @NotNull PyExceptPart guard) {
       final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
       if (importElement != null) {
         final String visibleName = importElement.getVisibleName();
         final ScopeOwner owner = ScopeUtil.getScopeOwner(importElement);
         if (visibleName != null && owner != null) {
           final Collection<PsiElement> allWrites = ScopeUtil.getReadWriteElements(visibleName, owner, false, true);
-          final boolean hasWriteInsideGuard =
-            allWrites.stream().anyMatch((PsiElement write) -> PsiTreeUtil.isAncestor(guard, write, false));
+          final boolean hasWriteInsideGuard = allWrites.stream().anyMatch(e -> PsiTreeUtil.isAncestor(guard, e, false));
           if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
             myImportsInsideGuard.add(importElement);
           }
@@ -430,49 +428,33 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private static boolean shouldSkipMissingWriteInsideGuard(PyExceptPart guard, String visibleName) {
+    private static boolean shouldSkipMissingWriteInsideGuard(@NotNull PyExceptPart guard, @NotNull String name) {
+      return isDefinedInParentScope(name, guard) ||
+             PyBuiltinCache.getInstance(guard).getByName(name) != null ||
+             controlFlowAlwaysTerminatesInsideGuard(guard);
+    }
 
+    private static boolean isDefinedInParentScope(@NotNull String name, @NotNull PsiElement anchor) {
+      return ScopeUtil.getDeclarationScopeOwner(ScopeUtil.getScopeOwner(anchor), name) != null;
+    }
+
+    private static boolean controlFlowAlwaysTerminatesInsideGuard(@NotNull PyExceptPart guard) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(guard);
-      if (owner == null) { //will really never happen
-        return true;
-      }
-      Optional<ScopeOwner> parentScope =
-        StreamEx.iterate(owner, scope -> ScopeUtil.getScopeOwner(scope)).skip(1).takeWhile(scope -> scope != null)
-          .findFirst(scope -> !(scope instanceof PyClass));
-
-      boolean isDefinedInParentScope = parentScope.map(scope -> !PyResolveUtil.resolveLocally(scope, visibleName).isEmpty()).orElse(false);
-      if (isDefinedInParentScope) {
-        return true;
-      }
-
-      boolean isBuiltIn = PyBuiltinCache.getInstance(owner).getByName(visibleName) != null;
-      if (isBuiltIn) {
-        return true;
-      }
-
+      if (owner == null) return false;
       final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
       final Instruction[] instructions = flow.getInstructions();
       final int start = ControlFlowUtil.findInstructionNumberByElement(instructions, guard.getExceptClass());
-      if (start <= 0) { //should not happen! Log?
-        return true;
-      }
-      Ref<Boolean> canEscapeGuard = Ref.create(false);
+      if (start <= 0) return false;
+      final Ref<Boolean> canEscapeGuard = Ref.create(false);
       ControlFlowUtil.process(instructions, start, instruction -> {
-        boolean nextIsTerminal =
-          instruction.allSucc().stream().anyMatch(success -> success.getElement() == null && success.allSucc().isEmpty());
-        PsiElement element = instruction.getElement();
-        if (nextIsTerminal && element != null && !PsiTreeUtil.isAncestor(guard, element, true)) {
+        final PsiElement e = instruction.getElement();
+        if (e != null && !PsiTreeUtil.isAncestor(guard, e, true)) {
           canEscapeGuard.set(true);
           return false;
         }
         return true;
       });
-
-      if (!canEscapeGuard.get()) {
-        return true;
-      }
-
-      return false;
+      return !canEscapeGuard.get();
     }
 
     private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull final PsiReference reference,
