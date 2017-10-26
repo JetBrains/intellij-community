@@ -37,10 +37,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -831,5 +834,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions) {
     myAdditionalGearActions = additionalGearActions;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleInternalDecorator();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleInternalDecorator extends AccessibleJPanel {
+    @Override
+    public String getAccessibleName() {
+      String name = super.getAccessibleName();
+      if (name == null) {
+        String title = StringUtil.defaultIfEmpty(myToolWindow.getTitle(), myToolWindow.getStripeTitle());
+        title = StringUtil.defaultIfEmpty(title, myToolWindow.getId());
+        name = StringUtil.notNullize(title) + " Tool Window";
+      }
+      return name;
+    }
   }
 }

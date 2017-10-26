@@ -737,6 +737,41 @@ public class UIUtil {
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
 
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g) {
+    drawLabelDottedRectangle(label, g, null);
+  }
+
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g, @Nullable Rectangle bounds) {
+    if (bounds == null) {
+      bounds = getLabelTextBounds(label);
+    }
+    // JLabel draws the text relative to the baseline. So, we must ensure
+    // we draw the dotted rectangle relative to that same baseline.
+    FontMetrics fm = label.getFontMetrics(label.getFont());
+    int baseLine = label.getUI().getBaseline(label, label.getWidth(), label.getHeight());
+    int textY = baseLine - fm.getLeading() - fm.getAscent();
+    int textHeight = fm.getHeight();
+    drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
+  }
+
+  public static Rectangle getLabelTextBounds(@NotNull final JLabel label) {
+    final Dimension size = label.getPreferredSize();
+    Icon icon = label.getIcon();
+    final Point point = new Point(0, 0);
+    final Insets insets = label.getInsets();
+    if (icon != null) {
+      point.x += label.getIconTextGap();
+      point.x += icon.getIconWidth();
+    }
+    point.x += insets.left;
+    point.y += insets.top;
+    size.width -= point.x;
+    size.width -= insets.right;
+    size.height -= insets.bottom;
+
+    return new Rectangle(point, size);
+  }
+
   /**
    * @param string {@code String} to examine
    * @param font {@code Font} that is used to render the string
