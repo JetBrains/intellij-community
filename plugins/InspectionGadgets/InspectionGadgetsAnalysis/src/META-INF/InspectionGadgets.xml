@@ -2784,11 +2784,11 @@
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
   </extensions>
 
