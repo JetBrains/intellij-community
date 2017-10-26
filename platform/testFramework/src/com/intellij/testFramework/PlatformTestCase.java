@@ -155,6 +155,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",
+    "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
