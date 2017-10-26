@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -252,6 +253,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         name = super.getAccessibleName();
       }
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override

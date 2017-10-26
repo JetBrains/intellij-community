@@ -31,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -444,6 +445,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
 
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override
