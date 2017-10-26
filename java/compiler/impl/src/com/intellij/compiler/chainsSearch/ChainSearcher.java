@@ -185,13 +185,4 @@ public class ChainSearcher {
       result.add(newChain);
     }
   }
-
-  private static <T> SortedSet<T> unionSortedSet(SortedSet<T> s1, SortedSet<T> s2) {
-    if (s1.isEmpty()) return s2;
-    if (s2.isEmpty()) return s1;
-    TreeSet<T> result = new TreeSet<>();
-    result.addAll(s1);
-    result.addAll(s2);
-    return result;
-  }
 }
