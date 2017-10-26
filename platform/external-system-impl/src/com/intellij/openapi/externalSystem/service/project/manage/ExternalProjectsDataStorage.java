@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -40,7 +41,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -210,7 +210,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     final MultiMap<String, String> exclusionMap = MultiMap.create();
     ExternalSystemApiUtil.visit(projectDataNode, dataNode -> {
       try {
-        dataNode.getDataBytes();
+        dataNode.checkIsSerializable();
         DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
         if (projectNode != null) {
           final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
@@ -341,7 +341,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
       ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), dataNode -> {
         try {
-          dataNode.getDataBytes();
+          dataNode.checkIsSerializable();
         }
         catch (IOException e) {
           dataNode.clear(true);
