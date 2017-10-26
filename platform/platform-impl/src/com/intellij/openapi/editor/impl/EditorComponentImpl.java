@@ -91,6 +91,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // in the interest of backward compatibility, we only do so when a
     // screen reader is active.
     setFocusCycleRoot(!ScreenReader.isActive());
+    if (ScreenReader.isActive()) {
+      setFocusable(true);
+    }
     setOpaque(true);
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
