@@ -42,7 +42,9 @@ public class JdkBundle {
   @NotNull
   private static final Map<Pattern, Function<Matcher, Pair<Version, Integer>>> LINE_TO_VERSION_PATTERNS = ContainerUtil.newLinkedHashMap(
     Pair.create(Pattern.compile("^java version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
+    Pair.create(Pattern.compile("^java version \"9\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
     Pair.create(Pattern.compile("^java version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
+    Pair.create(Pattern.compile("^openjdk version \"9-internal.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
     Pair.create(Pattern.compile("^openjdk version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
     Pair.create(Pattern.compile("^openjdk version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
     Pair.create(Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+)\\.([\\d]+)\\.?([\\d]*).*", Pattern.MULTILINE), matcher -> Pair.create(new Version(StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0), StringUtil.parseInt(matcher.group(3),0)), 0))
