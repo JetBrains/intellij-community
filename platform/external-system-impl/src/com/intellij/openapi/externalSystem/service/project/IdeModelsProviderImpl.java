@@ -17,7 +17,10 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
@@ -46,6 +50,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   @NotNull
   protected final Project myProject;
+
+  @NotNull
+  private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;
@@ -76,11 +83,17 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Nullable
   @Override
   public Module findIdeModule(@NotNull ModuleData module) {
-    for (String candidate : suggestModuleNameCandidates(module)) {
-      Module ideModule = findIdeModule(candidate);
-      if (ideModule != null && isApplicableIdeModule(module, ideModule)) {
-        return ideModule;
+    Module cachedIdeModule = myIdeModulesCache.get(module);
+    if (cachedIdeModule == null) {
+      for (String candidate : suggestModuleNameCandidates(module)) {
+        Module ideModule = findIdeModule(candidate);
+        if (ideModule != null && isApplicableIdeModule(module, ideModule)) {
+          myIdeModulesCache.put(module, ideModule);
+          return ideModule;
+        }
       }
+    } else {
+      return cachedIdeModule;
     }
     return null;
   }
