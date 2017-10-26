@@ -68,7 +68,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
       @Override
       public void stateChanged() {
         final boolean splitVertically = splitVertically();
-        myStatusLine.setPreferredSize(splitVertically);
         mySplitter.setOrientation(splitVertically);
         revalidate();
         repaint();
@@ -85,8 +84,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     myToolbarPanel = createToolbarPanel();
     Disposer.register(this, myToolbarPanel);
     boolean splitVertically = splitVertically();
-    myStatusLine.setPreferredSize(splitVertically);
-    
+
     mySplitter = createSplitter(mySplitterProportionProperty,
                                 mySplitterDefaultProportion,
                                 splitVertically);
@@ -106,10 +104,32 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     mySplitter.setFirstComponent(leftPanel);
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
-    myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-    final JPanel rightPanel = new JPanel(new BorderLayout());
-    rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    rightPanel.add(createOutputTab(myConsole, myConsoleActions), BorderLayout.CENTER);
+    final JPanel rightPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gb = new GridBagConstraints();
+    gb.gridx = 0;
+    gb.gridy = 0;
+    gb.weightx = 1;
+    gb.weighty = 0;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), gb);
+
+    myConsole.setFocusable(true);
+    final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
+                                           new SideBorder(editorBackground, SideBorder.LEFT)));
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TestRunnerResults", new DefaultActionGroup(
+      myConsoleActions), false);
+    gb.gridy = 1;
+    gb.weighty = 1;
+    gb.fill = GridBagConstraints.BOTH;
+    rightPanel.add(myConsole, gb);
+
+    gb.gridx = 1;
+    gb.gridy = 1;
+    gb.weightx = 0;
+    gb.fill = GridBagConstraints.VERTICAL;
+    rightPanel.add(toolbar.getComponent(), gb);
+
     mySplitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
@@ -149,19 +169,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
       return view.getData(dataId);
     }
     return null;
-  }
-
-  private static JComponent createOutputTab(JComponent console,
-                                            AnAction[] consoleActions) {
-    JPanel outputTab = new JPanel(new BorderLayout());
-    console.setFocusable(true);
-    final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-    console.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
-                                         new SideBorder(editorBackground, SideBorder.LEFT)));
-    outputTab.add(console, BorderLayout.CENTER);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TestRunnerResults", new DefaultActionGroup(consoleActions), false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
-    return outputTab;
   }
 
   @Override

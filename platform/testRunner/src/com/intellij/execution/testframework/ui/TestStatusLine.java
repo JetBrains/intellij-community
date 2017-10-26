@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,11 +38,11 @@ public class TestStatusLine extends JPanel {
 
   public TestStatusLine() {
     super(new BorderLayout());
-    myProgressPanel = new JPanel(new GridBagLayout());
-    add(myProgressPanel, BorderLayout.WEST);
+    myProgressPanel = new JPanel(new BorderLayout());
+    add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
-    myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                              JBUI.insets(2, 8, 0, 8), 0, 0));
+    myProgressBar.putClientProperty("ProgressBar.modeless", true);
+    myProgressPanel.add(myProgressBar, BorderLayout.NORTH);
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -122,6 +121,10 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setValue(fraction);
   }
 
+  /**
+   * Usages should be deleted as progress is now incorporated into console
+   */
+  @Deprecated
   public void setPreferredSize(boolean orientation) {
     final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
     myProgressPanel.setMaximumSize(size);
