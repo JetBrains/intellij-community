@@ -22,6 +22,8 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.pluralize
@@ -220,14 +222,16 @@ class GitApplyChangesProcess(private val project: Project,
       waiter.countDown()
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName.capitalize(), ModalityState.NON_MODAL)
 
-    try {
-      val success = waiter.await(100, TimeUnit.SECONDS)
-      if (!success) {
-        LOG.error("Couldn't await for changelist manager refresh")
+    var success = false
+    while (!success) {
+      ProgressManager.checkCanceled()
+      try {
+        success = waiter.await(50, TimeUnit.MILLISECONDS)
       }
-    }
-    catch (e: InterruptedException) {
-      LOG.error(e)
+      catch (e: InterruptedException) {
+        LOG.warn(e)
+        throw ProcessCanceledException(e)
+      }
     }
   }
 
