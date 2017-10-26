@@ -81,7 +81,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     assertNoNotification()
   }
 
-  fun `test cherry-pick 2 commit`() {
+  fun `test cherry-pick 2 commits`() {
     branch("feature")
     val commit1 = file("one.txt").create().addCommit("fix #1").hash()
     val commit2 = file("two.txt").create().addCommit("fix #2").hash()
