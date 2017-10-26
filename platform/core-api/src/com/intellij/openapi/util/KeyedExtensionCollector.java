@@ -60,7 +60,8 @@ public class KeyedExtensionCollector<T, KeyT> {
           LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
           return;
         }
-        myCache.remove(bean.getKey());
+        String skey = bean.getKey();
+        myCache.remove(skey);
         for (ExtensionPointListener<T> listener : myListeners) {
           listener.extensionAdded(bean.getInstance(), null);
         }
@@ -70,7 +71,8 @@ public class KeyedExtensionCollector<T, KeyT> {
     @Override
     public void extensionRemoved(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
       synchronized (lock) {
-        myCache.remove(bean.getKey());
+        String skey = bean.getKey();
+        myCache.remove(skey);
         for (ExtensionPointListener<T> listener : myListeners) {
           listener.extensionRemoved(bean.getInstance(), null);
         }
@@ -121,8 +123,11 @@ public class KeyedExtensionCollector<T, KeyT> {
       List<T> list = myExplicitExtensions.get(skey);
       if (list != null) {
         list.remove(t);
-        myCache.remove(skey);
+        if (list.isEmpty()) {
+          myExplicitExtensions.remove(skey);
+        }
       }
+      myCache.remove(skey);
       for (ExtensionPointListener<T> listener : myListeners) {
         listener.extensionRemoved(t, null);
       }
