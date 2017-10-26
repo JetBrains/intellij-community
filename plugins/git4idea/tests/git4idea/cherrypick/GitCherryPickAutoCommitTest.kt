@@ -69,7 +69,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   fun `test resolve conflicts but cancel commit`() {
     val commit = prepareConflict()
     `mark as resolved on merge`()
-    vcsHelper.onCommit { msg -> false }
+    vcsHelper.onCommit { false }
 
     cherryPick(commit)
 

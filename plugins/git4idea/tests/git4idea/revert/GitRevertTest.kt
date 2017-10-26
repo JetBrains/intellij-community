@@ -199,7 +199,7 @@ class GitRevertTest : GitSingleRepoTest() {
     file.create("initial\n").addCommit("Created r.txt")
     val commit = file.append("second\n").addCommit("Append something").details()
 
-    var actualMessage : String = ""
+    var actualMessage = ""
     vcsHelper.onCommit { msg ->
       actualMessage = msg
       true
