@@ -15,11 +15,14 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -27,6 +30,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -34,19 +38,32 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class DarculaProgressBarUI extends BasicProgressBarUI {
 
-  private static final Color REMAINDER_COLOR = new JBColor(Gray.xC4, Gray.x69);
-  private static final Color FINISHED_COLOR = new JBColor(Gray.x80, Gray.xA0);
+  private static final Color REMAINDER_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
+                                                                 Gray.xCC :
+                                                                 new JBColor(Gray.xC4, Gray.x69));
 
-  private static final Color START_COLOR = new JBColor(Gray.xC4, Gray.x69);
-  private static final Color END_COLOR = new JBColor(Gray.x80, Gray.x83);
+  @SuppressWarnings("UseJBColor")
+  private static final Color FINISHED_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
+                                                                new Color(0x0075da) :
+                                                                new JBColor(Gray.x80, Gray.xA0));
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color START_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
+                                                             new Color(0x76b8f8) :
+                                                             new JBColor(Gray.x80, Gray.x83));
+  private static final Color END_COLOR = FINISHED_COLOR;
 
   private static final Color RED = new JBColor(new Color(0xd80000), new Color(0xff4053));
-  private static final Color RED_LIGHT = new JBColor(new Color(0xFB8F89), new Color(0xf4a2a0));
+  private static final Color RED_LIGHT = new JBColor(new Color(0xfb8f89), new Color(0xf4a2a0));
 
   private static final Color GREEN = new JBColor(new Color(0x34b171), new Color(0x008f50));
-  private static final Color GREEN_LIGHT = new JBColor(new Color(0x7EE8A5), new Color(0x5dc48f));
+  private static final Color GREEN_LIGHT = new JBColor(new Color(0x7ee8a5), new Color(0x5dc48f));
 
-  private static final int STEP = 6;
+  private static final Integer CYCLE_TIME_DEFAULT = 800;
+  private static final Integer REPAINT_INTERVAL_DEFAULT = 50;
+
+  private static final Integer CYCLE_TIME_SIMPLIFIED = 1000;
+  private static final Integer REPAINT_INTERVAL_SIMPLIFIED = 500;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -56,12 +73,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   @Override
   protected void installDefaults() {
     super.installDefaults();
-    UIManager.put("ProgressBar.repaintInterval", new Integer(50));
-    UIManager.put("ProgressBar.cycleTime", new Integer(800));
+    UIManager.put("ProgressBar.repaintInterval", isSimplified() ? REPAINT_INTERVAL_SIMPLIFIED : REPAINT_INTERVAL_DEFAULT);
+    UIManager.put("ProgressBar.cycleTime", isSimplified() ? CYCLE_TIME_SIMPLIFIED : CYCLE_TIME_DEFAULT);
   }
 
   @Override
   protected void paintIndeterminate(Graphics g, JComponent c) {
+
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -92,38 +110,65 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         endColor = getEndColor();
       }
 
-      RoundRectangle2D shape;
-      int step = JBUI.scale(STEP);
-      if (orientation == SwingConstants.HORIZONTAL) {
-        int pHeight = progressBar.getPreferredSize().height;
-        float yOffset = r.y + (r.height - pHeight) / 2.0f;
+      int pHeight = progressBar.getPreferredSize().height;
+      int pWidth = progressBar.getPreferredSize().width;
 
-        shape = new RoundRectangle2D.Float(r.x, yOffset, r.width, pHeight, pHeight, pHeight);
+      float yOffset = r.y + (r.height - pHeight) / 2.0f;
+      float xOffset = r.x + (r.width - pWidth) / 2.0f;
 
-        yOffset = r.y + pHeight/2.0f;
-        g2.setPaint(new GradientPaint(r.x + getAnimationIndex()*step*2, yOffset, startColor,
-                                      r.x + getFrameCount()*step + getAnimationIndex()*step*2, yOffset, endColor, true));
+      if (isSimplified()) {
+        Color[] ca = {startColor, endColor};
+        int idx = 0;
+        int delta = JBUI.scale(10);
+        if (orientation == SwingConstants.HORIZONTAL) {
+          //Area clip = new Area(g2.getClip());
+          //clip.intersect(new Area(getShapedRect(r.x, yOffset, r.width, pHeight, pHeight)));
+          //g2.setClip(clip);
+
+          for (float offset = r.x; offset - r.x < r.width; offset+= delta) {
+            g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
+            g2.fill(new Rectangle2D.Float(offset, yOffset, delta, pHeight));
+          }
+        } else {
+          //Area clip = new Area(g2.getClip());
+          //clip.intersect(new Area(getShapedRect(r.x, yOffset, r.width, pHeight, pHeight)));
+          //g2.setClip(clip);
+
+          for (float offset = r.y; offset - r.y < r.height; offset+= delta) {
+            g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
+            g2.fill(new Rectangle2D.Float(xOffset, offset, delta, pWidth));
+          }
+        }
       } else {
-        int pWidth = progressBar.getPreferredSize().width;
-        float xOffset = r.x + (r.width - pWidth) / 2.0f;
-
-        shape = new RoundRectangle2D.Float(xOffset, r.y, pWidth, r.height, pWidth, pWidth);
-        xOffset = r.x + pWidth/2.0f;
-        g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex()*step*2, startColor,
-                                      xOffset, r.y + getFrameCount()*step + getAnimationIndex()*step*2, endColor, true));
+        Shape shape;
+        int step = JBUI.scale(6);
+        if (orientation == SwingConstants.HORIZONTAL) {
+          shape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
+          yOffset = r.y + pHeight/2.0f;
+          g2.setPaint(new GradientPaint(r.x + getAnimationIndex()*step*2, yOffset, startColor,
+                                        r.x + getFrameCount()*step + getAnimationIndex()*step*2, yOffset, endColor, true));
+        } else {
+          shape = getShapedRect(xOffset, r.y, pWidth, r.height, pWidth);
+          xOffset = r.x + pWidth/2.0f;
+          g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex()*step*2, startColor,
+                                        xOffset, r.y + getFrameCount()*step + getAnimationIndex()*step*2, endColor, true));
+        }
+        g2.fill(shape);
       }
-      g2.fill(shape);
 
+      // Paint text
       if (progressBar.isStringPainted()) {
         if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
-          paintString(g2, i.left, i.top, r.width, r.height, boxRect.x, boxRect.width);
+          paintString((Graphics2D)g, i.left, i.top, r.width, r.height, boxRect.x, boxRect.width);
         } else {
-          paintString(g2, i.left, i.top, r.width, r.height, boxRect.y, boxRect.height);
+          paintString((Graphics2D)g, i.left, i.top, r.width, r.height, boxRect.y, boxRect.height);
         }
       }
+
     } finally {
       g2.dispose();
     }
+
   }
 
   protected Color getStartColor() {
@@ -133,41 +178,32 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   protected Color getEndColor() {
     return END_COLOR;
   }
-  private void paintString(Graphics g, int x, int y, int w, int h, int fillStart, int amountFull) {
-    if (!(g instanceof Graphics2D)) {
-      return;
-    }
 
-    Graphics2D g2 = (Graphics2D)g;
+  private void paintString(Graphics2D g, int x, int y, int w, int h, int fillStart, int amountFull) {
     String progressString = progressBar.getString();
-    g2.setFont(progressBar.getFont());
-    Point renderLocation = getStringPlacement(g2, progressString,
-                                              x, y, w, h);
-    Rectangle oldClip = g2.getClipBounds();
+    g.setFont(progressBar.getFont());
+    Point renderLocation = getStringPlacement(g, progressString, x, y, w, h);
+    Rectangle oldClip = g.getClipBounds();
 
     if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
-      g2.setColor(getSelectionBackground());
-      SwingUtilities2.drawString(progressBar, g2, progressString,
-                                 renderLocation.x, renderLocation.y);
-      g2.setColor(getSelectionForeground());
-      g2.clipRect(fillStart, y, amountFull, h);
-      SwingUtilities2.drawString(progressBar, g2, progressString,
-                                 renderLocation.x, renderLocation.y);
+      g.setColor(getSelectionBackground());
+      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+
+      g.setColor(getSelectionForeground());
+      g.clipRect(fillStart, y, amountFull, h);
+      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
     } else { // VERTICAL
-      g2.setColor(getSelectionBackground());
-      AffineTransform rotate =
-        AffineTransform.getRotateInstance(Math.PI/2);
-      g2.setFont(progressBar.getFont().deriveFont(rotate));
-      renderLocation = getStringPlacement(g2, progressString,
-                                          x, y, w, h);
-      SwingUtilities2.drawString(progressBar, g2, progressString,
-                                 renderLocation.x, renderLocation.y);
-      g2.setColor(getSelectionForeground());
-      g2.clipRect(x, fillStart, w, amountFull);
-      SwingUtilities2.drawString(progressBar, g2, progressString,
-                                 renderLocation.x, renderLocation.y);
+      g.setColor(getSelectionBackground());
+      AffineTransform rotate = AffineTransform.getRotateInstance(Math.PI/2);
+      g.setFont(progressBar.getFont().deriveFont(rotate));
+      renderLocation = getStringPlacement(g, progressString, x, y, w, h);
+      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+
+      g.setColor(getSelectionForeground());
+      g.clipRect(x, fillStart, w, amountFull);
+      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
     }
-    g2.setClip(oldClip);
+    g.setClip(oldClip);
   }
 
   @Override
@@ -185,23 +221,22 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
       Insets i = progressBar.getInsets();
       JBInsets.removeFrom(r, i);
-      int orientation = progressBar.getOrientation();
-      int amountFull = getAmountFull(progressBar.getInsets(), r.width, r.height);
+      int amountFull = getAmountFull(i, r.width, r.height);
 
-      RoundRectangle2D fullShape;
-      RoundRectangle2D coloredShape;
+      Shape fullShape, coloredShape;
+      int orientation = progressBar.getOrientation();
       if (orientation == SwingConstants.HORIZONTAL) {
         int pHeight = progressBar.getPreferredSize().height;
-        double yOffset = r.y + (r.height - pHeight) / 2.0;
+        float yOffset = r.y + (r.height - pHeight) / 2.0f;
 
-        fullShape = new RoundRectangle2D.Double(r.x, yOffset, r.width, pHeight, pHeight, pHeight);
-        coloredShape = new RoundRectangle2D.Double(r.x, yOffset, amountFull, pHeight, pHeight, pHeight);
+        fullShape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
+        coloredShape = getShapedRect(r.x, yOffset, amountFull, pHeight, pHeight);
       } else {
         int pWidth = progressBar.getPreferredSize().width;
-        double xOffset = r.x + (r.width - pWidth) / 2.0;
+        float xOffset = r.x + (r.width - pWidth) / 2.0f;
 
-        fullShape = new RoundRectangle2D.Double(xOffset, r.y, pWidth, r.height, pWidth, pWidth);
-        coloredShape = new RoundRectangle2D.Double(xOffset, r.y, pWidth, amountFull, pWidth, pWidth);
+        fullShape = getShapedRect(xOffset, r.y, pWidth, r.height, pWidth);
+        coloredShape = getShapedRect(xOffset, r.y, pWidth, amountFull, pWidth);
       }
       g2.setColor(getRemainderColor());
       g2.fill(fullShape);
@@ -218,7 +253,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       }
       g2.fill(coloredShape);
 
-      // Deal with possible text painting
+      // Paint text
       if (progressBar.isStringPainted()) {
         paintString(g, i.left, i.top, r.width, r.height, amountFull, i);
       }
@@ -256,6 +291,15 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     return availableLength;
   }
 
+  private static Shape getShapedRect(float x, float y, float w, float h, float ar) {
+    return UIUtil.isUnderWin10LookAndFeel() ? new Rectangle2D.Float(x, y, w, h) : new RoundRectangle2D.Float(x, y, w, h, ar, ar);
+  }
+
+  private static boolean isSimplified() {
+    return PowerSaveMode.isEnabled() || RemoteDesktopService.isRemoteSession();
+  }
+
+  // --------------------------------------------------------------------------------------
   // TODO: remove methods. Not used anymore.
   @Deprecated
   protected volatile int offset = 0;
