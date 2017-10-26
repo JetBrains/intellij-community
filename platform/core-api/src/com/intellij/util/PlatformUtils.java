@@ -36,7 +36,7 @@ public class PlatformUtils {
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
-  public static final String GOIDE_PREFIX = "Gogland";
+  public static final String GOIDE_PREFIX = "GoLand";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
