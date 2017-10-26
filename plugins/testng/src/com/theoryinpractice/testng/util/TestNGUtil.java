@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
@@ -61,11 +47,9 @@ import java.util.regex.Pattern;
  * @since Jul 20, 2005
  */
 public class TestNGUtil {
-  private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
-  public static boolean hasDocTagsSupport = hasDocTagsSupport();
+  @SuppressWarnings("StaticNonFinalField") public static boolean hasDocTagsSupport = hasDocTagsSupport();
 
   private static boolean hasDocTagsSupport() {
     String testngJarPath = PathUtil.getJarPathForClass(Test.class);
@@ -146,7 +130,7 @@ public class TestNGUtil {
 
   private static boolean isConfigMethod(PsiMethod method, String[] configAnnotationsFqn) {
     for (String fqn : configAnnotationsFqn) {
-      if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
+      if (AnnotationUtil.isAnnotated(method, fqn, 0)) return true;
     }
 
     if (hasDocTagsSupport) {
@@ -163,7 +147,7 @@ public class TestNGUtil {
   public static String getConfigAnnotation(PsiMethod method) {
     if (method != null) {
       for (String fqn : CONFIG_ANNOTATIONS_FQN) {
-        if (AnnotationUtil.isAnnotated(method, fqn, false)) return fqn;
+        if (AnnotationUtil.isAnnotated(method, fqn, 0)) return fqn;
       }
     }
     return null;
@@ -204,13 +188,13 @@ public class TestNGUtil {
     else {
       aClass = null;
     }
-
     if (aClass == null || !PsiClassUtil.isRunnableClass(aClass, true, false)) {
       return false;
     }
+
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, checkHierarchy, true);
+    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, checkHierarchy ? AnnotationUtil.CHECK_HIERARCHY : 0);
     if (hasAnnotation) {
       if (checkDisabled) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
@@ -220,7 +204,7 @@ public class TestNGUtil {
       }
       return true;
     }
-    if (element instanceof PsiDocCommentOwner && checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
+    if (checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
     if (element instanceof PsiClass) {
@@ -233,14 +217,14 @@ public class TestNGUtil {
           }
           return true;
         }
-        if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
+        if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, 0)) return true;
         if (checkJavadoc && getTextJavaDoc(method) != null) return true;
       }
       return false;
     }
-    else if (element instanceof PsiMethod) {
+    else {
       //even if it has a global test, we ignore non-public and static methods
-      if (!element.hasModifierProperty(PsiModifier.PUBLIC) || 
+      if (!element.hasModifierProperty(PsiModifier.PUBLIC) ||
           element.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
@@ -248,7 +232,7 @@ public class TestNGUtil {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        final PsiAnnotation annotation = checkHierarchy ? AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_ANNOTATION_FQN)) 
+        final PsiAnnotation annotation = checkHierarchy ? AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_ANNOTATION_FQN))
                                                         : AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
           if (checkDisabled && isDisabled(annotation)) return false;
@@ -271,75 +255,6 @@ public class TestNGUtil {
       return docComment.findTagByName("testng.test");
     }
     return null;
-  }
-
-  /**
-   * Ignore these, they cause an NPE inside of AnnotationUtil
-   */
-  private static boolean isBrokenPsiClass(PsiClass psiClass) {
-    return (psiClass == null
-        || psiClass instanceof PsiAnonymousClass
-        || psiClass instanceof PsiSyntheticClass);
-  }
-
-  /**
-   * Filter the specified collection of classes to return only ones that contain any of the specified values in the
-   * specified annotation parameter. For example, this method can be used to return all classes that contain all tesng
-   * annotations that are in the groups 'foo' or 'bar'.
-   */
-  public static Map<PsiClass, Collection<PsiMethod>> filterAnnotations(String parameter, Set<String> values, Collection<PsiClass> classes) {
-    Map<PsiClass, Collection<PsiMethod>> results = new HashMap<>();
-    Set<String> test = new HashSet<>(1);
-    test.add(TEST_ANNOTATION_FQN);
-    ContainerUtil.addAll(test, CONFIG_ANNOTATIONS_FQN);
-    for (PsiClass psiClass : classes) {
-      if (isBrokenPsiClass(psiClass)) continue;
-
-      PsiAnnotation annotation;
-      try {
-        annotation = AnnotationUtil.findAnnotation(psiClass, test);
-      }
-      catch (Exception e) {
-        LOGGER.error("Exception trying to findAnnotation on " + psiClass.getClass().getName() + ".\n\n" + e.getMessage());
-        annotation = null;
-      }
-      if (annotation != null) {
-        if (isAnnotatedWithParameter(annotation, parameter, values)) {
-          results.put(psiClass, new LinkedHashSet<>());
-        }
-      }
-      else {
-        Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
-        for (String s : matches) {
-          if (values.contains(s)) {
-            results.put(psiClass, new LinkedHashSet<>());
-            break;
-          }
-        }
-      }
-
-      //we already have the class, no need to look through its methods
-      PsiMethod[] methods = psiClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (method != null) {
-          annotation = AnnotationUtil.findAnnotation(method, test);
-          if (annotation != null) {
-            if (isAnnotatedWithParameter(annotation, parameter, values)) {
-              results.computeIfAbsent(psiClass, c -> new LinkedHashSet<>()).add(method);
-            }
-          }
-          else {
-            Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
-            for (String s : matches) {
-              if (values.contains(s)) {
-                results.get(psiClass).add(method);
-              }
-            }
-          }
-        }
-      }
-    }
-    return results;
   }
 
   public static boolean isAnnotatedWithParameter(PsiAnnotation annotation, String parameter, Set<String> values) {
@@ -413,7 +328,7 @@ public class TestNGUtil {
   private static Collection<String> extractAnnotationValuesFromJavaDoc(PsiDocTag tag, String parameter) {
     if (tag == null) return Collections.emptyList();
     Collection<String> results = new ArrayList<>();
-    Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*?)\".*").matcher(tag.getText());
+    Matcher matcher = Pattern.compile("@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*?)\".*").matcher(tag.getText());
     if (matcher.matches()) {
       String[] groups = matcher.group(1).split("[,\\s]");
       for (String group : groups) {
@@ -472,21 +387,17 @@ public class TestNGUtil {
   }
 
   public static PsiAnnotation[] getTestNGAnnotations(PsiElement element) {
-    PsiElement[] annotations = PsiTreeUtil.collectElements(element, new PsiElementFilter()
-    {
-      public boolean isAccepted(PsiElement element) {
-        if (!(element instanceof PsiAnnotation)) return false;
-        String name = ((PsiAnnotation) element).getQualifiedName();
-        if (null == name) return false;
-        if (name.startsWith("org.testng.annotations")) {
+    PsiElementProcessor.CollectFilteredElements<PsiAnnotation> processor = new PsiElementProcessor.CollectFilteredElements<>(e -> {
+      if (e instanceof PsiAnnotation) {
+        String name = ((PsiAnnotation)e).getQualifiedName();
+        if (name != null && name.startsWith("org.testng.annotations")) {
           return true;
         }
-        return false;
       }
+      return false;
     });
-    PsiAnnotation[] array = new PsiAnnotation[annotations.length];
-    System.arraycopy(annotations, 0, array, 0, annotations.length);
-    return array;
+    PsiTreeUtil.processElements(element, processor);
+    return processor.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
@@ -498,8 +409,10 @@ public class TestNGUtil {
     final PsiManager manager = PsiManager.getInstance(project);
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        if (Messages.showOkCancelDialog(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.", Messages.getWarningIcon()) !=
-            Messages.OK) {
+        if (Messages.showOkCancelDialog(psiElement.getProject(),
+                                        "TestNG will be added to module classpath",
+                                        "Unable to Convert.",
+                                        Messages.getWarningIcon()) != Messages.OK) {
           return false;
         }
       }
@@ -511,10 +424,10 @@ public class TestNGUtil {
     return true;
   }
 
-  public static boolean containsJunitAnnotions(PsiClass psiClass) {
+  public static boolean containsJunitAnnotations(PsiClass psiClass) {
     if (psiClass != null) {
       for (PsiMethod method : psiClass.getMethods()) {
-        if (containsJunitAnnotions(method)) {
+        if (containsJunitAnnotations(method)) {
           return true;
         }
       }
@@ -522,8 +435,8 @@ public class TestNGUtil {
     return false;
   }
 
-  public static boolean containsJunitAnnotions(PsiMethod method) {
-    return method != null && AnnotationUtil.isAnnotated(method, JUNIT_ANNOTATIONS);
+  public static boolean containsJunitAnnotations(PsiMethod method) {
+    return method != null && AnnotationUtil.isAnnotated(method, JUNIT_ANNOTATIONS, 0);
   }
 
   public static boolean inheritsJUnitTestCase(PsiClass psiClass) {
