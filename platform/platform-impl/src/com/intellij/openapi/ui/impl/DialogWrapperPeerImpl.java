@@ -439,6 +439,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
+    myDialog.getWindow().setAutoRequestFocus(true);
+
     try {
       myDialog.show();
     }
@@ -869,7 +871,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           if (toFocus != null) {
             if (isShowing() && isActive()) {
-             // getFocusManager().requestFocus(toFocus, true);
+             toFocus.requestFocus();
               notifyFocused(wrapper);
             }
           } else {
