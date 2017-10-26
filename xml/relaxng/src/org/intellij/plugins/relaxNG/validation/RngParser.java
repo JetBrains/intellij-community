@@ -121,10 +121,7 @@ public class RngParser {
       pattern = parsePattern(descriptorFile, eh, false);
     }
     if (pattern != null) {
-      DPattern oldPattern = ourCache.put(url, pattern);
-      if (oldPattern != null) {
-        return oldPattern;
-      }
+      ourCache.put(url, pattern);
     }
     return pattern;
   }
