@@ -21,7 +21,7 @@ import com.intellij.stats.completion.events.CompletionStartedEvent
 
 class InputSessionValidator(private val sessionValidationResult: SessionValidationResult) {
 
-    fun filter(input: Iterable<String>) {
+    fun validate(input: Iterable<String>) {
         var currentSessionUid: String? = null
         val session = mutableListOf<EventLine>()
 

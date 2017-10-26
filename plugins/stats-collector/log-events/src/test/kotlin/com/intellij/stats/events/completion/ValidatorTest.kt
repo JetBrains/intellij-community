@@ -53,21 +53,21 @@ class ValidatorTest {
     @Test
     fun testValidData() {
         val file = file("data/valid_data.txt")
-        separator.filter(file.readLines())
+        separator.validate(file.readLines())
         assertThat(sessionStatuses["b007c3bf4550"]).isTrue()
     }
 
     @Test
     fun testDataWithAbsentFieldInvalid() {
         val file = file("data/absent_field.txt")
-        separator.filter(file.readLines())
+        separator.validate(file.readLines())
         assertThat(sessionStatuses["b007c3bf4550"]).isFalse()
     }
 
     @Test
     fun testDataWithExtraFieldInvalid() {
         val file = file("data/extra_field.txt")
-        separator.filter(file.readLines())
+        separator.validate(file.readLines())
         assertThat(sessionStatuses["b007c3bf4550"]).isFalse()
     }
 

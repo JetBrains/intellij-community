@@ -16,8 +16,8 @@
 
 package com.intellij.stats.events.completion
 
-import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.completion.LogEventSerializer
+import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.validation.InputSessionValidator
 import com.intellij.stats.validation.SimpleSessionValidationResult
 import org.assertj.core.api.Assertions.assertThat
@@ -94,7 +94,7 @@ class EventStreamValidatorTest {
         val input: List<String> = list.map { LogEventSerializer.toString(it) }
         val result = SimpleSessionValidationResult()
         val separator = InputSessionValidator(result)
-        separator.filter(input)
+        separator.validate(input)
 
         assertThat(result.errorLines).isEqualTo(expectedErr)
         assertThat(result.validLines).isEqualTo(expectedOut)
