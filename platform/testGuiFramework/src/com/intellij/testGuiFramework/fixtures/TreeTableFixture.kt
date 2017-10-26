@@ -4,7 +4,6 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.ui.treeStructure.treetable.TreeTable
-import com.intellij.util.ui.tree.TreeUtil
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
@@ -17,16 +16,20 @@ class TreeTableFixture(val robot: Robot, val target: TreeTable) :
   ComponentFixture<TreeTableFixture, TreeTable>(TreeTableFixture::class.java, robot, target) {
 
   @Suppress("unused")
-  fun selectPath(vararg pathStrings: String) {
+  fun clickColumn(column: Int, vararg pathStrings: String) {
     ComponentPreconditions.checkEnabledAndShowing(target)
 
     val tree = target.tree
     val pathWithoutRoot = ExtendedJTreePathFinder().findMatchingPath(tree, pathStrings.asList())
     val path = ExtendedJTreeDriver.addRootIfInvisible(tree, pathWithoutRoot)
-    val point = JTreeLocation().pathBoundsAndCoordinates(tree, path).second
+
+    var x = target.location.x + (0 until column).sumBy { target.columnModel.getColumn(it).width }
+    x += target.columnModel.getColumn(column).width / 3
+    val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
 
     val visibleHeight = target.visibleRect.height
-    target.scrollRectToVisible(Rectangle(Point(0, point.y + visibleHeight / 2), Dimension(0, 0)))
-    robot.click(target, point, MouseButton.LEFT_BUTTON, 1)
+    target.scrollRectToVisible(Rectangle(Point(0, y + visibleHeight / 2), Dimension(0, 0)))
+
+    robot.click(target, Point(x, y), MouseButton.LEFT_BUTTON, 1)
   }
 }

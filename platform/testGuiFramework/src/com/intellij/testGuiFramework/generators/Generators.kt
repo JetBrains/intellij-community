@@ -115,7 +115,8 @@ class TreeTableGenerator : ComponentCodeGenerator<TreeTable>{
   override fun generate(cmp: TreeTable, me: MouseEvent, cp: Point): String {
     val path = cmp.tree.getClosestPathForLocation(cp.x, cp.y).toString()
     val realPath = path.trim('[',']').split(',').drop(1).map { it->it.trim() }.joinToString(separator = "\",\"")
-    return """treeTable().selectPath("$realPath")"""
+    val column = cmp.columnAtPoint(cp)
+    return """treeTable().clickColumn($column, "$realPath")"""
   }
   override fun priority(): Int = 10
 }
