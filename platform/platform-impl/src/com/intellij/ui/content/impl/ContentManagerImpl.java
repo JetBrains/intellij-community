@@ -195,7 +195,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       if (trackFocus) {
         Content current = getSelectedContent();
         if (current != null) {
-          setSelectedContent(current, true, true, !forcedFocus);
+          setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
           result.setDone();
@@ -259,25 +259,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       int newSize = myContents.size();
       if (newSize > 0 && trackSelection) {
-        ActionCallback result = new ActionCallback();
         if (indexToSelect > -1) {
           final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
+              ActionCallback result = new ActionCallback();
               setSelectedContentCB(toSelect).notify(result);
+              return result;
             }
             else {
               addSelectedContent(toSelect);
-              result.setDone();
             }
           }
         }
-        return result;
       }
       else {
         mySelection.clear();
-        return ActionCallback.DONE;
       }
+      return ActionCallback.DONE;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
