@@ -155,7 +155,7 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  public void checkSearchPattern(Project project, MatchOptions options) {
+  public void checkSearchPattern(CompiledPattern pattern) {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {

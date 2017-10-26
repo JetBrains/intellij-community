@@ -91,9 +91,7 @@ public class Replacer {
     matchOptions.clearVariableConstraints();
     matchOptions.fillSearchCriteria(what);
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
-    assert profile != null;
-    profile.checkSearchPattern(project, matchOptions);
+    Matcher.validate(project, matchOptions);
     checkSupportedReplacementPattern(project, options);
 
     Matcher matcher = new Matcher(project);

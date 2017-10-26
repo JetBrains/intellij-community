@@ -120,16 +120,16 @@ public class Matcher {
   private static final Object lastMatchDataLock = new Object();
 
   public static void validate(Project project, MatchOptions options) {
+    final CompiledPattern pattern = PatternCompiler.compilePattern(project, options);
     synchronized (lastMatchDataLock) {
       final LastMatchData data = new LastMatchData();
-      data.lastPattern =  PatternCompiler.compilePattern(project, options);
+      data.lastPattern = pattern;
       data.lastOptions = options;
       lastMatchData = new SoftReference<>(data);
     }
-
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
-    profile.checkSearchPattern(project, options);
+    profile.checkSearchPattern(pattern);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
