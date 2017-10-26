@@ -21,19 +21,23 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull PsiElement element) {
-    PsiElement targetElement = PsiTreeUtil.skipParentsOfType(element, PsiIdentifier.class, PsiJavaCodeReferenceElement.class, PsiJavaModuleReferenceElement.class);
-    if (targetElement instanceof PsiJavaDocumentedElement &&
-        !(targetElement instanceof PsiTypeParameter) &&
-        !(targetElement instanceof PsiAnonymousClass)) {
-      return ((PsiJavaDocumentedElement)targetElement).getDocComment() == null;
-    }
+    if (element instanceof PsiIdentifier ||
+        element instanceof PsiJavaCodeReferenceElement ||
+        element instanceof PsiJavaModuleReferenceElement) {
+      PsiElement targetElement = PsiTreeUtil.skipParentsOfType(element, PsiIdentifier.class, PsiJavaCodeReferenceElement.class, PsiJavaModuleReferenceElement.class);
+      if (targetElement instanceof PsiJavaDocumentedElement &&
+          !(targetElement instanceof PsiTypeParameter) &&
+          !(targetElement instanceof PsiAnonymousClass)) {
+        return ((PsiJavaDocumentedElement)targetElement).getDocComment() == null;
+      }
 
-    if (targetElement instanceof PsiPackageStatement) {
-      PsiFile file = targetElement.getContainingFile();
-      return PackageUtil.isPackageInfoFile(file) && JavaDocumentationProvider.getPackageInfoComment(file) == null;
-    }
-    else if (PackageUtil.isPackageInfoFile(targetElement)) {
-      return JavaDocumentationProvider.getPackageInfoComment(targetElement) == null;
+      if (targetElement instanceof PsiPackageStatement) {
+        PsiFile file = targetElement.getContainingFile();
+        return PackageUtil.isPackageInfoFile(file) && JavaDocumentationProvider.getPackageInfoComment(file) == null;
+      }
+      else if (PackageUtil.isPackageInfoFile(targetElement)) {
+        return JavaDocumentationProvider.getPackageInfoComment(targetElement) == null;
+      }
     }
     return false;
   }
