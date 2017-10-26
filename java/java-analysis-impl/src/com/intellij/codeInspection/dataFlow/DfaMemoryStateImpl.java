@@ -687,7 +687,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean castTopOfStack(DfaPsiType type) {
+  public boolean castTopOfStack(@NotNull DfaPsiType type) {
     DfaValue value = unwrap(peek());
 
     DfaFactMap facts = null;
@@ -1088,7 +1088,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void forceNotNull(DfaVariableValue var) {
+  public void forceNotNull(@NotNull DfaVariableValue var) {
     if (isUnknownState(var)) return;
     DfaVariableState state = getVariableState(var);
     flushVariable(var);

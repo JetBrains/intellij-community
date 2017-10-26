@@ -60,7 +60,7 @@ public interface DfaMemoryState {
    * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
    * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
    */
-  boolean castTopOfStack(DfaPsiType type);
+  boolean castTopOfStack(@NotNull DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
 
@@ -78,11 +78,11 @@ public interface DfaMemoryState {
   @Nullable
   <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
 
-  void forceNotNull(DfaVariableValue var);
+  void forceNotNull(@NotNull DfaVariableValue var);
 
   void flushFields();
 
-  void flushVariable(DfaVariableValue variable);
+  void flushVariable(@NotNull DfaVariableValue variable);
 
   boolean isNull(DfaValue dfaVar);
 
