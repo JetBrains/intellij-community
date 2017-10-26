@@ -42,6 +42,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +69,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private IdeStatusBarImpl myStatusBar;
   private boolean myStatusBarDisposed;
 
-  private final Box myNorthPanel = Box.createVerticalBox();
+  private final JBBox myNorthPanel = JBBox.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
 
   /**
