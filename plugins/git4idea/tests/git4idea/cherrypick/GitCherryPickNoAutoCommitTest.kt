@@ -16,10 +16,7 @@
 package git4idea.cherrypick
 
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import git4idea.test.branch
-import git4idea.test.checkout
-import git4idea.test.file
-import git4idea.test.git
+import git4idea.test.*
 
 class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
@@ -52,7 +49,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test cherry pick and cancel commit`() {
@@ -63,7 +60,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = assertChangelistCreated("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
+    val list = changeListManager.assertChangeListExists("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
@@ -89,7 +86,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       fix #1
 
       (cherry picked from commit ${shortHash(commits[0])})""")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test cherry pick 2 commits, but cancel second`() {
@@ -113,7 +110,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       ${shortHash(commit2)} fix #2
       However cherry-pick succeeded for the following commit:
       ${shortHash(commit1)} fix #1""".trimIndent())
-    val list = assertChangelistCreated("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
+    val list = changeListManager.assertChangeListExists("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
     assertChanges(list, "2.txt")
   }
 

@@ -18,9 +18,12 @@ package git4idea.test
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.changes.GitChangeUtils
@@ -88,6 +91,33 @@ fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
   }
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
+
+fun assertLastMessage(message: String) {
+  PlatformTestCase.assertEquals("Last commit is incorrect", message, lastMessage())
+}
+
+fun assertLogMessages(vararg messages: String) {
+  val separator = "\u0001"
+  val actualMessages = git("log -${messages.size} --pretty=%B${separator}").split(separator)
+  for ((index, message) in messages.withIndex()) {
+    PlatformTestCase.assertEquals("Incorrect message", message.trimIndent(), actualMessages[index].trim())
+  }
+}
+
+fun ChangeListManager.assertOnlyDefaultChangelist() {
+  val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
+  PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, this.changeListsNumber)
+  PlatformTestCase.assertEquals("Default changelist is not active", DEFAULT, this.defaultChangeList.name)
+}
+
+fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
+  val changeLists = this.changeListsCopy
+  val list = changeLists.find { it.comment == comment }
+  PlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
+  return list!!
+}
+
+private fun ChangeListManager.dumpChangeLists() = this.changeLists.joinToString { "'${it.name}' - '${it.comment}'" }
 
 class ChangesBuilder {
   data class AChange(val type: FileStatus, val nameBefore: String?, val nameAfter: String, val matcher: (Change) -> Boolean) {

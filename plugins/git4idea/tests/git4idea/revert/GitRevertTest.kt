@@ -15,7 +15,6 @@
  */
 package git4idea.revert
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
@@ -221,11 +220,9 @@ class GitRevertTest : GitSingleRepoTest() {
 
     GitRevertOperation(myProject, listOf(commit), false).execute()
 
-    val changeListName = commitMessageForRevert(commit)
-    val changeLists = changeListManager.changeListsCopy
-    val list = changeLists.find { StringUtil.equalsIgnoreWhitespaces(it.name, changeListName) }
-    assertNotNull("Didn't find changelist with name '$changeListName' among :$changeLists", list)
-    val data = list!!.data
+    val comment = commitMessageForRevert(commit)
+    val list = changeListManager.assertChangeListExists(comment)
+    val data = list.data
     assertNull("There should be no author information in the changelist: $data", data)
   }
 
