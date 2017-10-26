@@ -37,7 +37,7 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   @Override
   protected String getCurrentExecutable() {
-    return GitVcsApplicationSettings.getInstance().getPathToGit();
+    return GitExecutableManager.getInstance().getPathToGit(myProject);
   }
 
   @NotNull

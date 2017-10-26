@@ -44,6 +44,7 @@ import com.intellij.util.net.IdeaWideProxySelector;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
@@ -138,10 +139,7 @@ public abstract class GitHandler {
     myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
     myVcs = GitVcs.getInstance(project);
     myWorkingDirectory = directory;
-    myCommandLine = new GeneralCommandLine();
-    if (myAppSettings != null) {
-      myCommandLine.setExePath(myAppSettings.getPathToGit());
-    }
+    myCommandLine = new GeneralCommandLine().withExePath(GitExecutableManager.getInstance().getPathToGit(project));
     myCommandLine.setWorkDirectory(myWorkingDirectory);
     if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
       myCommandLine.addParameters("-c", "core.quotepath=false");
@@ -314,7 +312,7 @@ public abstract class GitHandler {
   }
 
   private boolean isCmd() {
-    return myAppSettings.getPathToGit().toLowerCase().endsWith("cmd");
+    return myCommandLine.getExePath().toLowerCase().endsWith("cmd");
   }
 
   @NotNull

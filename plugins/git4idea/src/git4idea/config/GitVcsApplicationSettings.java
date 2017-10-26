@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 )
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
-  @Nullable private String myDetectedPathToGit;
 
   /**
    * Kinds of SSH executable to be used with the git
@@ -60,15 +59,19 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     myState = state;
   }
 
+  /**
+   * @deprecated use {@link #getSavedPathToGit()} to get the path from settings if there's any
+   * or use {@link GitExecutableManager#getPathToGit()}/{@link GitExecutableManager#getPathToGit(Project)} to get git executable with
+   * auto-detection
+   */
   @NotNull
+  @Deprecated
   public String getPathToGit() {
-    if (myState.myPathToGit == null) {
-      if (myDetectedPathToGit == null) {
-        // detecting right away, this can be called from the default project without a call to GitVcs#activate()
-        myDetectedPathToGit = new GitExecutableDetector().detect();
-      }
-      return myDetectedPathToGit;
-    }
+    return GitExecutableManager.getInstance().getPathToGit();
+  }
+
+  @Nullable
+  public String getSavedPathToGit() {
     return myState.myPathToGit;
   }
 

@@ -116,6 +116,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
+  private final GitExecutableManager myGitExecutableManager;
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
@@ -136,7 +137,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
                 @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings,
-                @NotNull GitSharedSettings sharedSettings) {
+                @NotNull GitSharedSettings sharedSettings,
+                @NotNull GitExecutableManager gitExecutableManager) {
     super(project, NAME);
     myGit = git;
     myVcsManager = gitVcsManager;
@@ -147,6 +149,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myDiffProvider = gitDiffProvider;
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
+    myGitExecutableManager = gitExecutableManager;
     myRevSelector = new GitRevisionSelector();
     myConfigurable = new GitVcsConfigurable(myProject, gitProjectSettings, sharedSettings);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
@@ -163,6 +166,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * Run task in background using the common queue (per project)
+   *
    * @param task the task to run
    */
   public static void runInBackground(Task.Backgroundable task) {
@@ -260,7 +264,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
     return new GitRevisionNumber(revision);
-
   }
 
   @Override
@@ -303,7 +306,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private void checkExecutableAndVersion() {
     boolean executableIsAlreadyCheckedAndFine = false;
-    String pathToGit = myAppSettings.getPathToGit();
+    String pathToGit = myGitExecutableManager.getPathToGit(myProject);
     if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
       // subject to redetect the path if executable validator fails
       if (!myExecutableValidator.isExecutableValid()) {
@@ -389,7 +392,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
    */
   public void checkVersion() {
-    final String executable = myAppSettings.getPathToGit();
+    final String executable = myGitExecutableManager.getPathToGit(myProject);
     try {
       myVersion = GitVersion.identifyVersion(executable);
       LOG.info("Git version: " + myVersion);
