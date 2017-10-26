@@ -121,6 +121,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Collect and Show Logs in " + ShowFilePathAction.getFileManagerName();
+    return "Compress Logs and Show in " + ShowFilePathAction.getFileManagerName();
   }
 }
