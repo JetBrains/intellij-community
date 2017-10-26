@@ -453,6 +453,7 @@
     <option name="use" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="write" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="sec" hit="sec." />
+    <option name="accessibility" hit="Accessibility" />
   </configurable>
   <configurable id="reference.settings.ide.settings.file-colors" configurable_name="File Colors">
     <option name="colors" hit="Enable File Colors" />
