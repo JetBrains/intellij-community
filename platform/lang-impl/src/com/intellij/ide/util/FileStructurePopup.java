@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -635,6 +636,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
           return myFileEditor;
         }
+        if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+          if (myFileEditor instanceof TextEditor) {
+            return ((TextEditor)myFileEditor).getEditor();
+          }
+        }
         if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
           return getSelectedElements().filter(PsiElement.class).first();
         }
@@ -744,8 +750,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     commandProcessor.executeCommand(myProject, () -> {
       if (selectedNode != null) {
         if (selectedNode.canNavigateToSource()) {
-          myPopup.cancel();
           selectedNode.navigate(true);
+          myPopup.cancel();
           succeeded.set(true);
         }
         else {
