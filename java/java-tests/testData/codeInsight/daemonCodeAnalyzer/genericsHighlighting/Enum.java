@@ -41,6 +41,12 @@ enum Operation {
 <error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from final 'Operation'">Operation</error></error> {
 }
 
+enum withConstant {
+  A() {};
+}
+
+class extwithConstant extends <error descr="Cannot inherit from enum 'withConstant'">withConstant</error> {}
+
 class use {
   void f(Operation op) {
    switch(op) {
