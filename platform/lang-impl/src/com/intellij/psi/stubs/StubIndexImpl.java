@@ -224,8 +224,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
     }
   }
 
-  private static class StubIdExternalizer implements DataExternalizer<StubIdList> {
-    private static final StubIdExternalizer INSTANCE = new StubIdExternalizer();
+  public static class StubIdExternalizer implements DataExternalizer<StubIdList> {
+    public static final StubIdExternalizer INSTANCE = new StubIdExternalizer();
 
     @Override
     public void save(@NotNull final DataOutput out, @NotNull final StubIdList value) throws IOException {
