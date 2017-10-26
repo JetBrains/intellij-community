@@ -82,10 +82,7 @@ public final class TypeConstraint {
   @Nullable
   public TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
     PsiType psiType = type.getPsiType();
-    if (psiType instanceof PsiPrimitiveType || psiType instanceof PsiLambdaExpressionType ||
-        psiType instanceof PsiMethodReferenceType) {
-      return this;
-    }
+    if (psiType instanceof PsiPrimitiveType || LambdaUtil.notInferredType(psiType)) return this;
 
     if (!checkInstanceofValue(type)) {
       return null;
