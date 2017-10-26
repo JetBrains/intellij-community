@@ -315,7 +315,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       @NotNull
       @Override
       public String getDisplayName() {
-        return "Scratches and Consoles";
+        return ScratchesAndConsolesNamedScope.NAME;
       }
 
       @Override
