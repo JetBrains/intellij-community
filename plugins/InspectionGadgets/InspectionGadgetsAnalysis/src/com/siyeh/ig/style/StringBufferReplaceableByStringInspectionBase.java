@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,10 +241,7 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
       final PsiElement grandParent = parent.getParent();
       if (grandParent instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-        if (!isCallToStringBuilderMethod(methodCallExpression)) {
-          return isArgumentOfStringBuilderMethod(methodCallExpression);
-        }
-        return true;
+        return isCallToStringBuilderMethod(methodCallExpression) || isArgumentOfStringBuilderMethod(methodCallExpression);
       }
       if (grandParent instanceof PsiNewExpression) {
         final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(grandParent, PsiLocalVariable.class, true, PsiExpressionList.class);
