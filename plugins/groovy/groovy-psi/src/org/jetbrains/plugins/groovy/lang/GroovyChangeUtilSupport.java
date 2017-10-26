@@ -87,7 +87,6 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
   private static final Key<PsiMember> INSIDE_IMPORT = Key.create("INSIDE_IMPORT");
 
   private static boolean isInsideImport(Map<Object, Object> encodingState) {
-    Object o = encodingState.get(INSIDE_IMPORT);
-    return o != null && o instanceof Boolean && (Boolean)o;
+    return Boolean.TRUE.equals(encodingState.get(INSIDE_IMPORT));
   }
 }
