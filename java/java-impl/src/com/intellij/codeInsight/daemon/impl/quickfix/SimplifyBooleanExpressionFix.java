@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -30,11 +16,11 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +46,23 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @NotNull
   public String getText() {
     PsiExpression subExpression = getSubExpression();
-    return subExpression == null ? getFamilyName() : getIntentionText(subExpression, mySubExpressionValue);
+    if (subExpression == null) {
+      return getFamilyName();
+    }
+    return getIntentionText(subExpression, mySubExpressionValue) + (shouldExtractSideEffect() ? " extracting side effects" : "");
+  }
+
+  private boolean shouldExtractSideEffect() {
+    PsiExpression subExpression = getSubExpression();
+    if (subExpression != null &&
+        SideEffectChecker.mayHaveSideEffects(subExpression)) {
+      if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+      if (!mySubExpressionValue) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
+        if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -113,26 +115,30 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (!isAvailable()) return;
-    simplifyExpression(project, getSubExpression(), mySubExpressionValue);
-  }
-
-  public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {
-    PsiExpression expression;
-    if (subExpressionValue == null) {
-      expression = subExpression;
+    PsiExpression subExpression = getSubExpression();
+    if (subExpression == null) return;
+    if (shouldExtractSideEffect()) {
+      subExpression = RefactoringUtil.ensureCodeBlock(subExpression);
+      LOG.assertTrue(subExpression != null);
+      PsiStatement anchor = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
+      LOG.assertTrue(anchor != null);
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
+      PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
+      if (statements.length > 0) {
+        BlockUtils.addBefore(anchor, statements);
+      }
+      LOG.assertTrue(subExpression.isValid());
     }
-    else {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(subExpressionValue.booleanValue()), subExpression);
-      expression = (PsiExpression)subExpression.replace(constExpression);
-    }
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(mySubExpressionValue), subExpression);
+    PsiExpression expression = (PsiExpression)subExpression.replace(constExpression);
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
     }
     simplifyExpression(expression);
   }
 
-  public static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
+  private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
     if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
 

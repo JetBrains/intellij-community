@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
@@ -841,8 +840,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
-    SimplifyBooleanExpressionFix fix = createIntention(element, value);
+  private LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+    LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(element, value);
     if (fix == null) return null;
     final String text = fix.getText();
     return new LocalQuickFix() {
@@ -856,7 +855,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
         if (psiElement == null) return;
-        final SimplifyBooleanExpressionFix fix = createIntention(psiElement, value);
+        final LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(psiElement, value);
         if (fix == null) return;
         try {
           LOG.assertTrue(psiElement.isValid());
@@ -880,23 +879,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     return new SimplifyToAssignmentFix();
   }
 
-  private static SimplifyBooleanExpressionFix createIntention(PsiElement element, boolean value) {
-    if (!(element instanceof PsiExpression)) return null;
-    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
-
-    final PsiExpression expression = (PsiExpression)element;
-    while (element.getParent() instanceof PsiExpression) {
-      element = element.getParent();
-    }
-    final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
-    // simplify intention already active
-    if (!fix.isAvailable() ||
-        SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element)) {
-      return null;
-    }
-    return fix;
+  protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
+    return null;
   }
-
 
   @Override
   @NotNull
