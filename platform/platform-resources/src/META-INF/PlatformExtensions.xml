@@ -386,6 +386,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsNameUsageCollector"/>
