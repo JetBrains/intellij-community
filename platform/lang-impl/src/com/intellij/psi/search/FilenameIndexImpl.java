@@ -16,6 +16,7 @@
 
 package com.intellij.psi.search;
 
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.indexing.*;
@@ -59,7 +60,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
     return new FileBasedIndex.InputFilter() {
       @Override
       public boolean acceptInput(@NotNull final VirtualFile file) {
-        return file instanceof VirtualFileSystemEntry;
+        return file.getFileSystem() instanceof LocalFileSystem;
       }
     };
   }
