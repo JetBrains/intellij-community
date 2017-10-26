@@ -212,15 +212,18 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
 
         @Override
         public String getAccessibleName() {
-          // The name comes from the left component
-          if (myPanel.getComponentCount() >= 1) {
-            Component c = myPanel.getComponent(0);
+          // Concatenate the name of all accessible child components
+          String name = StringUtil.join(getComponents(), c -> {
             if (c instanceof Accessible) {
               return c.getAccessibleContext().getAccessibleName();
             }
+            return null;
+          }, " ");
+          if (StringUtil.isEmpty(name)) {
+            // Fallback to JPanel if we have no children
+            name = getDefaultAccessibleContext().getAccessibleName();
           }
-          // Fallback to JPanel if our left component is not accessible
-          return getDefaultAccessibleContext().getAccessibleName();
+          return name;
         }
       }
     }

@@ -24,11 +24,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTMLDocument;
@@ -153,7 +158,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     private final JEditorPane myEditorPane;
 
     private MyCustomizeColoredTreeCellRendererReplacement() {
-      myEditorPane = installJep(new JEditorPane());
+      myEditorPane = installJep(new MyEditorPane());
     }
 
     @Override
@@ -166,6 +171,42 @@ public class NotificationMessageElement extends NavigatableMessageElement {
                                                   boolean hasFocus) {
       updateStyle(myEditorPane, tree, value, selected, hasFocus);
       return myEditorPane;
+    }
+
+    /**
+     * Specialization of {@link JEditorPane} that exposes a simple label
+     * as its accessibility model. This is required because exposing
+     * a full text editor accessibility model for an error message
+     * that eventually ends up in a tree view node makes the user
+     * experience confusing for visually impaired users.
+     */
+    private class MyEditorPane extends JEditorPane {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          return new AccessibleMyEditorPane();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleMyEditorPane extends AccessibleJComponent {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.LABEL;
+        }
+
+        @Override
+        public String getAccessibleName() {
+          try {
+            Document document = MyEditorPane.this.getDocument();
+            String result = document.getText(0, document.getLength());
+            return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+          }
+          catch (BadLocationException e) {
+            return super.getAccessibleName();
+          }
+        }
+      }
     }
   }
 }
