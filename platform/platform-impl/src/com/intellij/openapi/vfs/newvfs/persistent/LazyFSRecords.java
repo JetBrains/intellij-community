@@ -149,9 +149,14 @@ public class LazyFSRecords implements IFSRecords {
         return true;
       }
     });
+    TIntObjectHashMap<FSRecordsSource.RecordInfo> infosById = new TIntObjectHashMap<>();
     List<FSRecordsSource.RecordInfo> infos = mySource.loadRecords(recordsToLoad);
-    for (int i = infos.size() - 1; i >= 0; i--) {
-      FSRecordsSource.RecordInfo record = infos.get(i);
+    for (FSRecordsSource.RecordInfo info : infos) {
+      infosById.put(info.id, info);
+    }
+    for (int i = recordsToLoad.size() - 1; i >= 0; i--) {
+      FSRecordsSource.RecordId rec = recordsToLoad.get(i);
+      FSRecordsSource.RecordInfo record = infosById.get(rec.fileId);
       int parentId = tree.get(record.id);
       if (parentId == 0 && !isRoot(record.id)) {
         ensureLoaded(record.id);
