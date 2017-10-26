@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +60,12 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
         variableDatum.add(newData);
       }
     }
+    Set<PsiVariable> parameterVariables = ContainerUtil.map2Set(variableDatum, data -> data.variable);
     List<VariableData> inputVariables = getInputVariables().getInputVariables();
-    for (int i = variableDatum.size(); i < inputVariables.size(); i++) {
-      variableDatum.add(inputVariables.get(i));
+    for (VariableData data : inputVariables) {
+      if (!parameterVariables.contains(data.variable)) {
+        variableDatum.add(data);
+      }
     }
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
   }

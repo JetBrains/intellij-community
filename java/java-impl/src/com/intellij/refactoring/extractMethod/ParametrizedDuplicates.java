@@ -145,6 +145,8 @@ public class ParametrizedDuplicates {
     if (myElements.length == 0) {
       return false;
     }
+    matches = filterNestedSubexpressions(matches);
+
     myUsagesList = new ArrayList<>();
     Map<PsiExpression, ClusterOfUsages> usagesMap = new THashMap<>();
     Set<Match> badMatches = new THashSet<>();
@@ -185,6 +187,38 @@ public class ParametrizedDuplicates {
     return true;
   }
 
+  private static List<Match> filterNestedSubexpressions(List<Match> matches) {
+    Map<PsiExpression, Set<Match>> patternUsages = new THashMap<>();
+    for (Match match : matches) {
+      for (ExtractedParameter parameter : match.getExtractedParameters()) {
+        for (PsiExpression patternUsage : parameter.myPatternUsages) {
+          patternUsages.computeIfAbsent(patternUsage, k -> new THashSet<>()).add(match);
+        }
+      }
+    }
+
+    Set<Match> badMatches = new THashSet<>();
+    for (Map.Entry<PsiExpression, Set<Match>> entry : patternUsages.entrySet()) {
+      PsiExpression patternUsage = entry.getKey();
+      Set<Match> patternMatches = entry.getValue();
+      for (PsiExpression maybeNestedUsage : patternUsages.keySet()) {
+        if (patternUsage == maybeNestedUsage) {
+          continue;
+        }
+        if (PsiTreeUtil.isAncestor(patternUsage, maybeNestedUsage, true)) {
+          badMatches.addAll(patternMatches);
+          break;
+        }
+      }
+    }
+
+    if (!badMatches.isEmpty()) {
+      matches = new ArrayList<>(matches);
+      matches.removeAll(badMatches);
+    }
+    return matches;
+  }
+
   @Nullable
   private static List<ClusterOfUsages> getUsagesInMatch(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull Match match) {
     List<ClusterOfUsages> result = new ArrayList<>();
@@ -217,7 +251,6 @@ public class ParametrizedDuplicates {
     }
     parametrizedProcessor.applyFrom(originalProcessor, variablesMapping);
     parametrizedProcessor.doExtract();
-    parametrizedProcessor.setDataFromInputVariables();
     myParametrizedMethod = parametrizedProcessor.getExtractedMethod();
     myParametrizedCall = parametrizedProcessor.getMethodCall();
     myVariableDatum = unmapVariableData(parametrizedProcessor.myVariableDatum, variablesMapping);
