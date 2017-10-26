@@ -30,6 +30,8 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
@@ -904,5 +906,78 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     return null;
+  }
+
+  /**
+   * Note: This is the same implementation as the base class, except we
+   * fire the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event *only when*
+   * the tree has the focus.
+   *
+   * This is required because some screen readers (e.g. nvda) hook up
+   * the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event and treat it
+   * as a "focus gained" event. This is incorrect in many cases.
+   * For example, the "Project Structure" tool window contains a tree
+   * that is updated asynchronously as the caret moves in side the
+   * the editor window. When that happens, screen readers (incorrectly)
+   * assume the "Project Structure" tree received the focus, and stop
+   * listening to caret events from the editor, because they think the
+   * editor has lost the focus.
+   *
+   * The workaround implemented here is justified by the fact it is
+   * unlikely that screen readers are interested in events from trees
+   * when trees don't have the focus.
+   */
+  @Override
+  public void setLeadSelectionPath(TreePath newPath) {
+    TreePath oldValue = getLeadSelectionPath();
+    AccessibleContext temp = accessibleContext;
+    try {
+      // Set to null so that the base class method does not invoke
+      // "fireActiveDescendantPropertyChange".
+      accessibleContext = null;
+      super.setLeadSelectionPath(newPath);
+    } finally {
+      accessibleContext = temp;
+    }
+
+    // Invoke our specialized version of "fireActiveDescendantPropertyChange"
+    if (accessibleContext instanceof AccessibleTree){
+      ((AccessibleTree)accessibleContext).fireActiveDescendantPropertyChange(oldValue, newPath);
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleTree();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleTree extends AccessibleJTree {
+    /**
+     * See {@link #setLeadSelectionPath} comment: this method implements
+     * exactly the same behavior as the base class method, except for the
+     * {@link UIUtil#isFocusAncestor} check.
+     */
+    void fireActiveDescendantPropertyChange(TreePath oldPath, TreePath newPath) {
+      if (UIUtil.isFocusAncestor(Tree.this)) {
+        if (oldPath != newPath) {
+          Accessible oldLSA = (oldPath != null)
+                              ? new AccessibleJTreeNode(Tree.this,
+                                                        oldPath,
+                                                        null)
+                              : null;
+
+          Accessible newLSA = (newPath != null)
+                              ? new AccessibleJTreeNode(Tree.this,
+                                                        newPath,
+                                                        null)
+                              : null;
+          firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY,
+                             oldLSA, newLSA);
+        }
+      }
+    }
   }
 }
