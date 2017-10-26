@@ -78,7 +78,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
     checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
-    checkHiDPIMode();
     startDiskSpaceMonitoring();
   }
 
@@ -179,15 +178,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
       catch (Throwable t) {
         LOG.warn(t);
       }
-    }
-  }
-
-  private void checkHiDPIMode() {
-    // if switched from JRE-HiDPI to IDE-HiDPI
-    boolean switchedHiDPIMode = SystemInfo.isJetBrainsJvm && "true".equalsIgnoreCase(System.getProperty("sun.java2d.uiScale.enabled")) && !UIUtil.isJreHiDPIEnabled();
-    if (SystemInfo.isWindows && ((switchedHiDPIMode && JBUI.isHiDPI(JBUI.sysScale())) || RemoteDesktopService.isRemoteSession())) {
-      showNotification("ide.set.hidpi.mode", new BrowseNotificationAction(IdeBundle.message("ide.set.hidpi.mode.action"),
-                                                                          "https://intellij-support.jetbrains.com/hc/en-us/articles/115001260010"));
     }
   }
 
