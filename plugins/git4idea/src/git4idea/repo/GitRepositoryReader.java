@@ -197,7 +197,7 @@ class GitRepositoryReader {
     }
     try {
       String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
-      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRepositoryReader::parsePackedRefsLine);
+      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRepositoryReader::parseRefsLine);
     }
     catch (RepoStateException e) {
       return Collections.emptyMap();
@@ -328,13 +328,13 @@ class GitRepositoryReader {
   }
 
   /**
-   * Parses a line from the .git/packed-refs file returning a pair of hash and ref name.
+   * Parses a line with a pair of hash and ref name e.g. see the .git/packed-refs file.
    * Comments and tags are ignored, and null is returned.
    * Incorrectly formatted lines are ignored, a warning is printed to the log, null is returned.
    * A line indicating a hash which an annotated tag (specified in the previous line) points to, is ignored: null is returned.
    */
   @Nullable
-  private static Pair<String, String> parsePackedRefsLine(@NotNull String line) {
+  private static Pair<String, String> parseRefsLine(@NotNull String line) {
     line = line.trim();
     if (line.isEmpty()) {
       return null;
