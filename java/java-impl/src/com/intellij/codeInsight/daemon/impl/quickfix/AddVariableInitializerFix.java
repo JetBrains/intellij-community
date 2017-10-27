@@ -79,19 +79,19 @@ public class AddVariableInitializerFix implements IntentionAction {
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
     for (PsiExpression e : initializers) {
       builder.replaceElement(e, new Expression() {
-        @Nullable
+        @NotNull
         @Override
         public Result calculateResult(ExpressionContext context1) {
           return calculateQuickResult(context1);
         }
 
-        @Nullable
+        @NotNull
         @Override
         public Result calculateQuickResult(ExpressionContext context1) {
           return new PsiElementResult(suggestedInitializers[0].getPsiElement());
         }
 
-        @Nullable
+        @NotNull
         @Override
         public LookupElement[] calculateLookupItems(ExpressionContext context1) {
           return suggestedInitializers;
