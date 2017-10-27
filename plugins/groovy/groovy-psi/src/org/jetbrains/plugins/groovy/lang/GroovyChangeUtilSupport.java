@@ -58,12 +58,9 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   @Override
   public void encodeInformation(final TreeElement element, final ASTNode original, final Map<Object, Object> encodingState) {
-    if (original instanceof CompositeElement && !isInsideImport(encodingState)) {
+    if (original instanceof CompositeElement && !isInsideImport(original)) {
       IElementType elementType = original.getElementType();
-      if (elementType == GroovyElementTypes.IMPORT_STATEMENT) {
-        encodingState.put(INSIDE_IMPORT, true);
-      }
-      else if (elementType == GroovyElementTypes.REFERENCE_ELEMENT || elementType == GroovyElementTypes.REFERENCE_EXPRESSION) {
+      if (elementType == GroovyElementTypes.REFERENCE_ELEMENT || elementType == GroovyElementTypes.REFERENCE_EXPRESSION) {
         PsiElement psi = original.getPsi();
         Project project = psi.getProject();
         if (!PsiUtil.isThisOrSuperRef(psi) && project.isInitialized() && !DumbService.isDumb(project)) {
@@ -84,9 +81,11 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
   }
 
   private static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
-  private static final Key<PsiMember> INSIDE_IMPORT = Key.create("INSIDE_IMPORT");
 
-  private static boolean isInsideImport(Map<Object, Object> encodingState) {
-    return Boolean.TRUE.equals(encodingState.get(INSIDE_IMPORT));
+  private static boolean isInsideImport(ASTNode node) {
+    while (node != null && node.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT) {
+      node = node.getTreeParent();
+    }
+    return node != null && node.getElementType() == GroovyElementTypes.IMPORT_STATEMENT;
   }
 }
