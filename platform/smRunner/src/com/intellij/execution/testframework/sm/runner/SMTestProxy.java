@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -613,17 +614,17 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addStdOutput(final String output, final Key outputType) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
-      }
-    });
+    addOutput(output, outputType);
   }
 
   public void addStdErr(final String output) {
+    addOutput(output, ProcessOutputTypes.STDERR);
+  }
+
+  public void addOutput(@NotNull String output, @NotNull Key outputType) {
     addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
+      public void printOn(@NotNull Printer printer) {
+        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
       }
     });
   }
@@ -655,11 +656,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addSystemOutput(final String output) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
-      }
-    });
+    addOutput(output, ProcessOutputTypes.SYSTEM);
   }
 
   @NotNull

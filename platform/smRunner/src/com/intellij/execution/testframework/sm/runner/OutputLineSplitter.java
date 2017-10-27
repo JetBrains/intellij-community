@@ -18,13 +18,13 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
-import gnu.trove.THashMap;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 public abstract class OutputLineSplitter {
@@ -33,13 +33,11 @@ public abstract class OutputLineSplitter {
 
   private final boolean myStdinSupportEnabled;
 
-  private final Map<Key, StringBuilder> myBuffers = new THashMap<>();
   private final List<OutputChunk> myStdOutChunks = new ArrayList<>();
+  private final List<OutputChunk> myStdErrChunks = new ArrayList<>();
+  private final List<OutputChunk> mySystemChunks = new ArrayList<>();
 
   public OutputLineSplitter(boolean stdinEnabled) {
-    myBuffers.put(ProcessOutputTypes.SYSTEM, new StringBuilder());
-    myBuffers.put(ProcessOutputTypes.STDERR, new StringBuilder());
-
     myStdinSupportEnabled = stdinEnabled;
   }
 
@@ -64,31 +62,38 @@ public abstract class OutputLineSplitter {
     }
   }
 
-  private void processLine(String text, Key outputType) {
+  private void processLine(@NotNull String text, @NotNull Key outputType) {
+    if (text.isEmpty()) {
+      return;
+    }
     if (ProcessOutputType.isStdout(outputType)) {
       processStdOutConsistently(text, outputType);
     }
     else {
-      StringBuilder buffer = myBuffers.get(((ProcessOutputType)outputType).getBaseOutputType());
-      if (!text.endsWith("\n")) {
-        buffer.append(text);
-        return;
+      List<OutputChunk> chunksToFlush = null;
+      List<OutputChunk> chunks = outputType == ProcessOutputTypes.SYSTEM ? mySystemChunks : myStdErrChunks;
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (chunks) {
+        OutputChunk lastChunk = ContainerUtil.getLastItem(chunks);
+        if (lastChunk != null && outputType.equals(lastChunk.getKey())) {
+          lastChunk.append(text);
+        }
+        else {
+          chunks.add(new OutputChunk(outputType, text));
+        }
+        if (StringUtil.endsWithChar(text, NEW_LINE)) {
+          chunksToFlush = new ArrayList<>(chunks);
+          chunks.clear();
+        }
       }
-      if (buffer.length() > 0) {
-        buffer.append(text);
-        text = buffer.toString();
-        buffer.setLength(0);
+      if (chunksToFlush != null) {
+        onChunksAvailable(chunksToFlush, false);
       }
-
-      onLineAvailable(text, outputType, false);
     }
   }
 
   private void processStdOutConsistently(final String text, final Key outputType) {
     final int textLength = text.length();
-    if (textLength == 0) {
-      return;
-    }
 
     synchronized (myStdOutChunks) {
       myStdOutChunks.add(new OutputChunk(outputType, text));
@@ -142,22 +147,30 @@ public abstract class OutputLineSplitter {
 
       myStdOutChunks.clear();
     }
-    final boolean isTCLikeFakeOutput = chunks.size() == 1;
-    for (OutputChunk chunk : chunks) {
-      onLineAvailable(chunk.getText(), chunk.getKey(), isTCLikeFakeOutput);
-    }
+    onChunksAvailable(chunks, chunks.size() == 1);
   }
-
 
   public void flush() {
     flushStdOutBuffer();
 
-    for (Map.Entry<Key, StringBuilder> each : myBuffers.entrySet()) {
-      StringBuilder buffer = each.getValue();
-      if (buffer.length() > 0) {
-        onLineAvailable(buffer.toString(), each.getKey(), false);
-        buffer.setLength(0);
-      }
+    List<OutputChunk> stderrChunksToFlush;
+    synchronized (myStdErrChunks) {
+      stderrChunksToFlush = new ArrayList<>(myStdErrChunks);
+      myStdErrChunks.clear();
+    }
+    onChunksAvailable(stderrChunksToFlush, false);
+
+    List<OutputChunk> systemChunksToFlush;
+    synchronized (mySystemChunks) {
+      systemChunksToFlush = new ArrayList<>(mySystemChunks);
+      mySystemChunks.clear();
+    }
+    onChunksAvailable(systemChunksToFlush, false);
+  }
+
+  private void onChunksAvailable(@NotNull List<OutputChunk> chunks, boolean tcLikeFakeOutput) {
+    for (OutputChunk chunk : chunks) {
+      onLineAvailable(chunk.getText(), chunk.getKey(), tcLikeFakeOutput);
     }
   }
 

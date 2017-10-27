@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -237,13 +236,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(() -> {
       Node activeNode = findActiveNode();
       SMTestProxy activeProxy = activeNode.getProxy();
-      if (ProcessOutputType.isStderr(outputType)) {
-        activeProxy.addStdErr(text);
-      } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
-        activeProxy.addSystemOutput(text);
-      } else {
-        activeProxy.addStdOutput(text, outputType);
-      }
+      activeProxy.addOutput(text, outputType);
     });
   }
 

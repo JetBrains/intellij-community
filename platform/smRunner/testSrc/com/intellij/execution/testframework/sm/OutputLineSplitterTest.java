@@ -155,7 +155,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
           String prefix = each.toString() + ":";
           mySplitter.process(prefix, each);
           mySplitter.process(s, outputType);
-          if (ProcessOutputType.isStdout(outputType)) {
+          if (!outputType.equals(each)) {
             written.get(each).add(prefix);
             written.get(each).add(s);
           }
