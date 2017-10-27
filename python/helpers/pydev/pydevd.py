@@ -1656,6 +1656,7 @@ def main():
             traceback.print_exc()
             sys.exit(1)
 
+        global connected
         connected = True  # Mark that we're connected when started from inside ide.
 
         globals = debugger.run(setup['file'], None, None, is_module)
