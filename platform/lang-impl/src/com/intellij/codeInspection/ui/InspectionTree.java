@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -30,6 +32,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
@@ -37,6 +40,9 @@ public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
   @NotNull private final GlobalInspectionContextImpl myContext;
+  @NotNull private final ConcurrentMap<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = ContainerUtil.newConcurrentMap();
+  @NotNull private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
+
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
@@ -74,6 +80,8 @@ public class InspectionTree extends Tree {
   }
 
   public void removeAllNodes() {
+    mySeverityGroupNodes.clear();
+    myGroups.clear();
     getRoot().removeAllChildren();
     ApplicationManager.getApplication().invokeLater(() -> nodeStructureChanged(getRoot()));
   }
@@ -264,6 +272,62 @@ public class InspectionTree extends Tree {
     }
 
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+  }
+
+  @NotNull
+  InspectionTreeNode getToolParentNode(@NotNull String groupName,
+                                               @NotNull String[] groupPath,
+                                               HighlightDisplayLevel errorLevel,
+                                               boolean groupedBySeverity,
+                                               boolean isSingleInspectionRun) {
+    if (!groupedBySeverity && isSingleInspectionRun) {
+      return getRoot();
+    }
+    if (groupName.isEmpty()) {
+      return getRelativeRootNode(groupedBySeverity, errorLevel);
+    }
+    ConcurrentMap<String, InspectionGroupNode> map = myGroups.get(errorLevel);
+    if (map == null) {
+      map = ConcurrencyUtil.cacheOrGet(myGroups, errorLevel, ContainerUtil.newConcurrentMap());
+    }
+    InspectionGroupNode group;
+    if (groupedBySeverity) {
+      group = map.get(groupName);
+    }
+    else {
+      group = null;
+      for (Map<String, InspectionGroupNode> groupMap : myGroups.values()) {
+        if ((group = groupMap.get(groupName)) != null) break;
+      }
+    }
+    if (group == null) {
+      if (isSingleInspectionRun) {
+        return getRelativeRootNode(true, errorLevel);
+      }
+      group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
+      InspectionResultsView view = myContext.getView();
+      if (view != null && !view.isDisposed()) {
+        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group, false);
+      }
+    }
+    return group;
+  }
+
+  @NotNull
+  private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level) {
+    if (isGroupedBySeverity) {
+      InspectionSeverityGroupNode severityGroupNode = mySeverityGroupNodes.get(level);
+      if (severityGroupNode == null) {
+        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myContext.getProject(), level);
+        severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
+        if (severityGroupNode == newNode) {
+          InspectionTreeNode root = getRoot();
+          root.insertByOrder(severityGroupNode, false);
+        }
+      }
+      return severityGroupNode;
+    }
+    return getRoot();
   }
 
   public boolean areDescriptorNodesSelected() {

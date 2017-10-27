@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -97,7 +83,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused");
 
   private final InspectionTree myTree;
-  private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfileImpl myInspectionProfile;
   private final boolean mySettingsEnabled;
@@ -105,7 +90,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final AnalysisScope myScope;
   @NonNls
   private static final String HELP_ID = "reference.toolWindows.inspections";
-  private final ConcurrentMap<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = ContainerUtil.newConcurrentMap();
 
   private final Splitter mySplitter;
   @NotNull
@@ -636,7 +620,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                        boolean isSingleInspectionRun) {
     String groupName =
       toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
-    InspectionTreeNode parentNode = getToolParentNode(groupName, toolWrapper.getGroupPath(), errorLevel, groupedBySeverity, isSingleInspectionRun);
+    InspectionTreeNode parentNode = myTree.getToolParentNode(groupName, toolWrapper.getGroupPath(), errorLevel, groupedBySeverity, isSingleInspectionRun);
     InspectionNode toolNode = new InspectionNode(toolWrapper, myInspectionProfile);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
     toolNode = myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure, groupedBySeverity);
@@ -707,8 +691,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       try {
         setUpdating(true);
         synchronized (myTreeStructureUpdateLock) {
-          mySeverityGroupNodes.clear();
-          myGroups.clear();
           myTree.removeAllNodes();
           addToolsSynchronously(myGlobalInspectionContext.getTools().values());
         }
@@ -787,62 +769,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
       syncRightPanel();
     });
-  }
-
-
-  @NotNull
-  private InspectionTreeNode getToolParentNode(@NotNull String groupName,
-                                               @NotNull String[] groupPath,
-                                               HighlightDisplayLevel errorLevel,
-                                               boolean groupedBySeverity,
-                                               boolean isSingleInspectionRun) {
-    if (!groupedBySeverity && isSingleInspectionRun) {
-      return getTree().getRoot();
-    }
-    if (groupName.isEmpty()) {
-      return getRelativeRootNode(groupedBySeverity, errorLevel);
-    }
-    ConcurrentMap<String, InspectionGroupNode> map = myGroups.get(errorLevel);
-    if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myGroups, errorLevel, ContainerUtil.newConcurrentMap());
-    }
-    InspectionGroupNode group;
-    if (groupedBySeverity) {
-      group = map.get(groupName);
-    }
-    else {
-      group = null;
-      for (Map<String, InspectionGroupNode> groupMap : myGroups.values()) {
-        if ((group = groupMap.get(groupName)) != null) break;
-      }
-    }
-    if (group == null) {
-      if (isSingleInspectionRun) {
-        return getRelativeRootNode(true, errorLevel);
-      }
-      group = ConcurrencyUtil.cacheOrGet(map, groupName, new InspectionGroupNode(groupName, groupPath));
-      if (!myDisposed) {
-        getRelativeRootNode(groupedBySeverity, errorLevel).insertByOrder(group, false);
-      }
-    }
-    return group;
-  }
-
-  @NotNull
-  private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level) {
-    if (isGroupedBySeverity) {
-      InspectionSeverityGroupNode severityGroupNode = mySeverityGroupNodes.get(level);
-      if (severityGroupNode == null) {
-        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(getProject(), level);
-        severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
-        if (severityGroupNode == newNode) {
-          InspectionTreeNode root = myTree.getRoot();
-          root.insertByOrder(severityGroupNode, false);
-        }
-      }
-      return severityGroupNode;
-    }
-    return myTree.getRoot();
   }
 
   private OccurenceNavigator getOccurenceNavigator() {
