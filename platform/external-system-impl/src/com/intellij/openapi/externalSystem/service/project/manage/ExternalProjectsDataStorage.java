@@ -209,21 +209,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     final MultiMap<String, String> inclusionMap = MultiMap.create();
     final MultiMap<String, String> exclusionMap = MultiMap.create();
     ExternalSystemApiUtil.visit(projectDataNode, dataNode -> {
-      try {
-        dataNode.checkIsSerializable();
-        DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
-        if (projectNode != null) {
-          final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
-          if (projectNode.isIgnored() || dataNode.isIgnored()) {
-            exclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
-          }
-          else {
-            inclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
-          }
+      DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
+      if (projectNode != null) {
+        final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
+        if (projectNode.isIgnored() || dataNode.isIgnored()) {
+          exclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
         }
-      }
-      catch (IOException e) {
-        dataNode.clear(true);
+        else {
+          inclusionMap.putValue(projectPath, dataNode.getKey().getDataType());
+        }
       }
     });
     final MultiMap<String, String> map;
