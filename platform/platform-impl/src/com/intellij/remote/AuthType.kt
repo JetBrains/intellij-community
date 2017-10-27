@@ -28,6 +28,6 @@ enum class AuthType {
     get() = when (this) {
       PASSWORD -> "Password"
       KEY_PAIR -> "Key pair (OpenSSH or PuTTY)"
-      OPEN_SSH -> "OpenSSH authentication"
+      OPEN_SSH -> "OpenSSH config and authentication agent"
     }
 }
