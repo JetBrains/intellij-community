@@ -1952,7 +1952,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private synchronized void checkModelsUpToDate() {
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
-        myFileModel = new GotoFileModel(project);
+        myFileModel = new GotoFileModel(project) {
+          @Override
+          public boolean isSlashlessMatchingEnabled() {
+            return false;
+          }
+        };
         mySymbolsModel = new GotoSymbolModel2(project);
         myFileChooseByName = ChooseByNamePopup.createPopup(project, myFileModel, (PsiElement)null);
         myClassChooseByName = ChooseByNamePopup.createPopup(project, myClassModel, (PsiElement)null);
