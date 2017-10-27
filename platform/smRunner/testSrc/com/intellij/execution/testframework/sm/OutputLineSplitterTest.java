@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +74,17 @@ public class OutputLineSplitterTest extends PlatformTestCase {
    * When tc message is in the middle of line it should reported as separate line like if it has \n before it
    */
   public void testMessageInTheMiddleOfLine() {
+    mySplitter.process("\nStarting...\n##teamcity[name1]\nDone 1\n\n##teamcity[name2]\nDone 2", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name3]Test print##teamcity[name4]", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name5]\n", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
+    List<String> stdout = myOutput.get(ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList(
+      "\n", "Starting...\n", "##teamcity[name1]\n", "Done 1\n", "\n", "##teamcity[name2]\n", "Done 2",
+      "##teamcity[name3]Test print", "##teamcity[name4]",
+      "##teamcity[name5]\n",
+      "##teamcity[name6]\n", "Info", "##teamcity[name7]\n"
+    ), stdout);
     for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
       final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
       final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
