@@ -82,4 +82,13 @@ public interface ViewSettings extends NodeOptions {
    * @return true if the modules are shown, false otherwise.
    */
   boolean isShowModules();
+
+  /**
+   * Checks if the project view displays URL for projects, modules and libraries.
+   *
+   * @return {@code true} if URL is displayed, {@code false} otherwise.
+   */
+  default boolean isShowURL() {
+    return true;
+  }
 }

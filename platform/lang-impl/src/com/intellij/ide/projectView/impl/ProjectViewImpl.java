@@ -1630,6 +1630,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isShowURL(String paneId) {
+    return Registry.is("project.tree.structure.show.url");
+  }
+
+  @Override
   public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
     if (isGlobalOptions()) {
       getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
