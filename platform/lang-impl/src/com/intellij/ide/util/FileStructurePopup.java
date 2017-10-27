@@ -317,7 +317,20 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     //final long time = System.currentTimeMillis();
     JComponent panel = createCenterPanel();
     MnemonicHelper.init(panel);
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        if (myPopup.isVisible()) {
+          PopupUpdateProcessor updateProcessor = myPopup.getUserData(PopupUpdateProcessor.class);
+          if (updateProcessor != null) {
+            AbstractTreeNode node = getSelectedNode();
+            updateProcessor.updatePopup(node);
+          }
+        }
+      }
+    });
+
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTree)
       .setTitle(myTitle)
       .setResizable(true)
       .setModalContext(false)
@@ -331,18 +344,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelCallback(() -> myCanClose)
       .createPopup();
 
-    myTree.addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        if (myPopup.isVisible()) {
-          PopupUpdateProcessor updateProcessor = myPopup.getUserData(PopupUpdateProcessor.class);
-          if (updateProcessor != null) {
-            AbstractTreeNode node = getSelectedNode();
-            updateProcessor.updatePopup(node);
-          }
-        }
-      }
-    });
     Disposer.register(myPopup, this);
     Disposer.register(myPopup, new Disposable() {
       @Override
