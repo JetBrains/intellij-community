@@ -18,6 +18,7 @@ package git4idea.history;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import git4idea.GitFormatException;
@@ -81,7 +82,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
     }
     catch (GitFormatException e) {
       myParser.clear();
-      throw new VcsException("Error while parsing line " + line, e);
+      throw new VcsException("Error while parsing line \"" + StringUtil.escapeStringCharacters(line) + "\"", e);
     }
   }
 
