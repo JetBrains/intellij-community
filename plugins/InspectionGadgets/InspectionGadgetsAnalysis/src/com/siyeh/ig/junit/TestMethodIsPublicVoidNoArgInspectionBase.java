@@ -25,13 +25,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
 public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
 
   enum Problem {
     STATIC, NOT_PUBLIC_VOID, PARAMETER
   }
 
-  public final List<String> ignorableAnnotations = new ArrayList<>(Arrays.asList("mockit.Mocked"));
+  public final List<String> ignorableAnnotations = new ArrayList<>(Collections.singletonList("mockit.Mocked"));
 
   @Override
   @NotNull
@@ -78,7 +80,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, true)) {
+      if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -90,7 +92,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
         final PsiParameter[] parameters = parameterList.getParameters();
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {
-          if (!AnnotationUtil.isAnnotated(parameter, ignorableAnnotations)) {
+          if (!AnnotationUtil.isAnnotated(parameter, ignorableAnnotations, 0)) {
             annotated = false;
             break;
           }

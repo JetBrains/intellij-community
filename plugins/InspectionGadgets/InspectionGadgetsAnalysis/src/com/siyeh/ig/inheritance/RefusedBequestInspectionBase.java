@@ -131,7 +131,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
         }
       }
       if (onlyReportWhenAnnotated && !CloneUtils.isClone(method) && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
-        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
+        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations, 0)) {
           return;
         }
       }

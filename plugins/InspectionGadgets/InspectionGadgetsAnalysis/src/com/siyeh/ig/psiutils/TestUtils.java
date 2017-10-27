@@ -33,13 +33,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
 public class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
+
   private static final CallMatcher ASSERT_THROWS =
     CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertThrows");
 
-  private TestUtils() {
-  }
+  private TestUtils() { }
 
   public static boolean isInTestSourceContent(@Nullable PsiElement element) {
     if (element == null) {
@@ -55,16 +57,9 @@ public class TestUtils {
     return method != null && isJUnitTestMethod(method);
   }
 
-  public static boolean isJUnit4BeforeOrAfterMethod(
-    @NotNull PsiMethod method) {
-    return AnnotationUtil.isAnnotated(method, "org.junit.Before", true) ||
-           AnnotationUtil.isAnnotated(method, "org.junit.After", true);
-  }
-
-  public static boolean isJUnit4BeforeClassOrAfterClassMethod(
-    @NotNull PsiMethod method) {
-    return AnnotationUtil.isAnnotated(method, "org.junit.BeforeClass", true) ||
-           AnnotationUtil.isAnnotated(method, "org.junit.AfterClass", true);
+  public static boolean isJUnit4BeforeOrAfterMethod(@NotNull PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, "org.junit.Before", CHECK_HIERARCHY) ||
+           AnnotationUtil.isAnnotated(method, "org.junit.After", CHECK_HIERARCHY);
   }
 
   public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
@@ -98,7 +93,7 @@ public class TestUtils {
     }
     final String methodName = method.getName();
     @NonNls final String test = "test";
-    if (!methodName.startsWith(test) || 
+    if (!methodName.startsWith(test) ||
         !method.hasModifierProperty(PsiModifier.PUBLIC) && method.getParameterList().getParametersCount() > 0) {
       return false;
     }
@@ -107,7 +102,7 @@ public class TestUtils {
   }
 
   public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
-    return method != null && AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, true);
+    return method != null && AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, CHECK_HIERARCHY);
   }
 
   public static boolean isAnnotatedTestMethod(@Nullable PsiMethod method) {
@@ -131,7 +126,7 @@ public class TestUtils {
 
   public static boolean isJUnit4TestClass(@Nullable PsiClass aClass, boolean runWithIsTestClass) {
     if (aClass == null) return false;
-    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return runWithIsTestClass;
+    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, CHECK_HIERARCHY)) return runWithIsTestClass;
     for (final PsiMethod method : aClass.getAllMethods()) {
       if (isJUnit4TestMethod(method)) return true;
     }
@@ -153,7 +148,7 @@ public class TestUtils {
    * @return true if class is annotated with {@code @TestInstance(TestInstance.Lifecycle.PER_CLASS)}
    */
   public static boolean testInstancePerClass(@NotNull PsiClass containingClass) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE); 
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE);
     if (annotation != null) {
       PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value != null && value.getText().contains("PER_CLASS")) {

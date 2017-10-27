@@ -368,7 +368,7 @@ public class AnnotationUtil {
     List<String> fqns = null;
     for (String fqn : annotations) {
       boolean isPattern = fqn.endsWith("*");
-      if (!isPattern && isAnnotated(owner, fqn, false)) {
+      if (!isPattern && isAnnotated(owner, fqn, 0)) {
         return true;
       }
       else if (isPattern) {

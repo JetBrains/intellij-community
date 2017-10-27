@@ -66,7 +66,7 @@ public class FinalPrivateMethodInspection extends BaseInspection {
           || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false) && method.isVarArgs()) {
+      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", 0) && method.isVarArgs()) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

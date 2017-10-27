@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -839,7 +838,7 @@ public class ExpressionUtils {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiMethod method = methodCallExpression.resolveMethod();
         if (method != null &&
-            AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+            AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           return false;
         }
       }

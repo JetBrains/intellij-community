@@ -132,7 +132,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
-      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
+      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", 0)) return;
       if (!method.isVarArgs()) return;
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();

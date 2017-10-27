@@ -14,6 +14,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+
 public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
@@ -131,7 +133,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMember m) {
     if (m == null) return false;
-    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false)
+    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, CHECK_EXTERNAL)
            || findVisibleForTestingAnnotation(m) != null
            || isAnnotatedAsTestOnly(m.getContainingClass());
   }

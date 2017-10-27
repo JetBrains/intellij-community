@@ -32,6 +32,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+
 public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
 
@@ -87,7 +89,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);
-            if (!AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
+            if (!AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, CHECK_EXTERNAL)) {
               type = ProblemHighlightType.INFORMATION;
             }
           }
@@ -204,7 +206,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
       final PsiClass baseClass = resolveResult.getElement();
       if (baseClass == null ||
-          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
+          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, CHECK_EXTERNAL)) {
         return false;
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
