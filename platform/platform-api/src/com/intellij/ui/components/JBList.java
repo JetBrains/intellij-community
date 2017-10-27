@@ -17,7 +17,6 @@ package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -26,7 +25,6 @@ import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.AccessBridgeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -301,34 +299,6 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       return;
     }
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
-  }
-
-  @Override
-  public ListCellRenderer getCellRenderer() {
-    if (AccessBridgeUtil.isWorkerThread()) {
-      // See https://bugs.openjdk.java.net/browse/JDK-8145228
-      //
-      // Java Access Bridge sometimes calls this function from the access
-      // bridge worker tread instead of the dispatch thread.
-      //
-      // To workaround the issue, we wrap our renderer with a renderer that dispatches calls
-      // to the dispatch thread.
-      //
-      // A bug fix will eventually be backported to java 8, but we use this workaround
-      // in the meantime.
-      ListCellRenderer renderer = super.getCellRenderer();
-      if (renderer == null) {
-        return null;
-      }
-
-      return (list, value, index, isSelected, cellHasFocus) -> {
-        return AccessBridgeUtil.invokeAndWait(() -> {
-          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        });
-      };
-    }
-
-    return super.getCellRenderer();
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {

@@ -24,7 +24,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.AccessBridgeUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -239,34 +238,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public boolean isEmpty() {
     return getRowCount() == 0;
-  }
-
-  @Override
-  public TableCellRenderer getCellRenderer(int row, int column) {
-    if (AccessBridgeUtil.isWorkerThread()) {
-      // See https://bugs.openjdk.java.net/browse/JDK-8145228
-      //
-      // Java Access Bridge sometimes calls this function from the access
-      // bridge worker tread instead of the dispatch thread.
-      //
-      // To workaround the issue, we wrap our renderer with a renderer that dispatches calls
-      // to the dispatch thread.
-      //
-      // A bug fix will eventually be backported to java 8, but we use this workaround
-      // in the meantime.
-      TableCellRenderer renderer = super.getCellRenderer(row, column);
-      if (renderer == null) {
-        return null;
-      }
-
-      return (table, value, isSelected, hasFocus, row2, column2) -> {
-        return AccessBridgeUtil.invokeAndWait(() -> {
-          return renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row2, column2);
-        });
-      };
-    }
-
-    return super.getCellRenderer(row, column);
   }
 
   @Override

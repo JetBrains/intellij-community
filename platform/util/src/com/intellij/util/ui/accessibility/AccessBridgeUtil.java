@@ -16,12 +16,7 @@
 package com.intellij.util.ui.accessibility;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,30 +30,6 @@ public class AccessBridgeUtil {
   private static final Logger LOG = Logger.getInstance("#" + AccessBridgeUtil.class.getName());
   private static final String ACCESS_BRIDGE_CLASS_NAME = "com.sun.java.accessibility.AccessBridge";
   private static InstanceMethodEntry ourFocusGainedMethod;
-
-
-  /**
-   * Returns {@code true} if the current thread is the access bridge worker thread.
-   *
-   * <p>Note: This is an implementation detail that should only be relied on to
-   * work around known threading issues in the access bridge implementation.</p>
-   */
-  public static boolean isWorkerThread() {
-    return myStatus.get().myIsWorkerThread;
-  }
-
-  /**
-   * Post a {@link Computable} on the Event Dispatch Thread, wait for its execution, and return
-   * its result.
-   *
-   * <p>Note: This function is similar to {@link UIUtil#invokeAndWaitIfNeeded(Computable)}}
-   * except it must be called from the access bridge worker thread only.</p>
-   */
-  public static <T> T invokeAndWait(@NotNull final Computable<T> computable) {
-    assert isWorkerThread();
-
-    return UIUtil.invokeAndWaitIfNeeded(computable);
-  }
 
   /*
    * Dispatch a "focus gained" event to screen readers via the access bridge (if it is
@@ -154,37 +125,4 @@ public class AccessBridgeUtil {
     }
     return null;
   }
-
-  private static class Status {
-    public boolean myIsWorkerThread;
-  }
-
-  private static final ThreadLocal<Status> myStatus = new ThreadLocal<Status>() {
-    @Override
-    protected Status initialValue() {
-      Status result = new Status();
-      result.myIsWorkerThread = _isWorkerThread();
-      return result;
-    }
-
-    private boolean _isWorkerThread() {
-      // Detection only works on windows for now
-      if (!SystemInfo.isWindows) {
-        return false;
-      }
-
-      if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
-        return false;
-      }
-
-      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-      for (StackTraceElement e : stack) {
-        if (StringUtil.equals(e.getClassName(), ACCESS_BRIDGE_CLASS_NAME) &&
-            StringUtil.equals(e.getMethodName(), "runDLL")) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
 }

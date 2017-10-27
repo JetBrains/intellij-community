@@ -16,18 +16,15 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.AccessBridgeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,34 +95,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.setUI(actualUI);
-  }
-
-  @Override
-  public TreeCellRenderer getCellRenderer() {
-    if (AccessBridgeUtil.isWorkerThread()) {
-      // See https://bugs.openjdk.java.net/browse/JDK-8145228
-      //
-      // Java Access Bridge sometimes calls this function from the access
-      // bridge worker tread instead of the dispatch thread.
-      //
-      // To workaround the issue, we wrap our renderer with a renderer that dispatches calls
-      // to the dispatch thread.
-      //
-      // A bug fix will eventually be backported to java 8, but we use this workaround
-      // in the meantime.
-      TreeCellRenderer renderer = super.getCellRenderer();
-      if (renderer == null) {
-        return null;
-      }
-
-      return (tree, value, selected, expanded, leaf, row, hasFocus) -> {
-        return AccessBridgeUtil.invokeAndWait(() -> {
-          return renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        });
-      };
-    }
-
-    return super.getCellRenderer();
   }
 
   @Override
