@@ -99,7 +99,7 @@ public class JavaGenericsUtil {
       return false;
     }
 
-    if (AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", CHECK_EXTERNAL)) {
+    if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_SAFE_VARARGS, CHECK_EXTERNAL)) {
       return false;
     }
 

@@ -84,6 +84,9 @@ public interface CommonClassNames {
   String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
 
+  String JAVA_LANG_SAFE_VARARGS = "java.lang.SafeVarargs";
+  String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
+
   String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
@@ -103,7 +106,6 @@ public interface CommonClassNames {
   String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   String CLASS_FILE_EXTENSION = ".class";
-  String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #JAVA_UTIL_FUNCTION_BI_FUNCTION} (to be removed in IDEA 2019) */
