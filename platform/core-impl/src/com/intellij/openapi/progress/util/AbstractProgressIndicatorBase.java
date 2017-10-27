@@ -179,7 +179,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
-    LOG.assertTrue(!isIndeterminate(), "This progress indicator is indeterminate. Please call setIndeterminate(false) first.");
+    if (isIndeterminate()) {
+      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
+      setIndeterminate(false);
+    }
     myFraction = fraction;
   }
 
