@@ -45,7 +45,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
 
-    appendParentPath(renderer, myModuleRoot.getPresentableUrl());
+    appendParentPath(renderer, myModuleRoot);
 
     if (module.isDisposed()) {
       renderer.setIcon(ModuleType.EMPTY.getIcon());

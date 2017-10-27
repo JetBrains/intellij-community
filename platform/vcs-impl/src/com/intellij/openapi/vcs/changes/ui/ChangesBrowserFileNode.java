@@ -57,7 +57,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
 
     if (renderer.isShowFlatten()) {
       if (file.isValid()) {
-        appendParentPath(renderer, file.getParent().getPresentableUrl());
+        appendParentPath(renderer, file.getParent());
       }
     }
 

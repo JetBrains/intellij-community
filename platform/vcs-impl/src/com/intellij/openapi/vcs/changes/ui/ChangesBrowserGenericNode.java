@@ -48,7 +48,7 @@ public class ChangesBrowserGenericNode extends ChangesBrowserNode<Object> implem
     if (renderer.isShowFlatten()) {
       FilePath parentPath = myFilePath.getParentPath();
       if (parentPath != null) {
-        appendParentPath(renderer, parentPath.getPath());
+        appendParentPath(renderer, parentPath);
       }
     }
 
