@@ -65,7 +65,7 @@ public class GitRefUtil {
 
     String branch = null;
     int start = i;
-    if (start < line.length() && line.charAt(start++) == ' ') {
+    if (start < line.length() && Character.isWhitespace(line.charAt(start++))) {
       for (i = start; i < line.length(); i++) {
         char c = line.charAt(i);
         if (Character.isWhitespace(c)) {
