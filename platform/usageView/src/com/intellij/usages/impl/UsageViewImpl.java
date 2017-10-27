@@ -1053,7 +1053,8 @@ public class UsageViewImpl implements UsageView {
     myChangesDetected = false;
     if (myRerunActivity != null) {
       myRerunActivity.run();
-    } else {
+    }
+    else {
       com.intellij.usages.UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
@@ -1110,7 +1111,7 @@ public class UsageViewImpl implements UsageView {
   public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
     int selectionRow = myTree.getMinSelectionRow();
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    usages.forEach(u -> myUsageNodes.remove(u));
+    usages.forEach(myUsageNodes::remove);
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -1329,7 +1330,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   @Override
-  public void setReRunActivity(@Nullable Runnable runnable) {
+  public void setReRunActivity(@NotNull Runnable runnable) {
     myRerunActivity = runnable;
   }
 
