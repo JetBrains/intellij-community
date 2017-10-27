@@ -19,14 +19,23 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
+  private final FilePath myModuleRoot;
+
   protected ChangesBrowserModuleNode(Module userObject) {
     super(userObject);
+
+    myModuleRoot = getModuleRootFilePath(userObject);
   }
 
   @Override
@@ -36,13 +45,18 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
 
-    appendParentPath(renderer, ModuleUtilCore.getModuleDirPath(module));
+    appendParentPath(renderer, myModuleRoot.getPresentableUrl());
 
     if (module.isDisposed()) {
       renderer.setIcon(ModuleType.EMPTY.getIcon());
     } else {
       renderer.setIcon(ModuleType.get(module).getIcon());
     }
+  }
+
+  @NotNull
+  public FilePath getModuleRoot() {
+    return myModuleRoot;
   }
 
   @Override
@@ -62,5 +76,14 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     }
 
     return 0;
+  }
+
+  @NotNull
+  private static FilePath getModuleRootFilePath(Module module) {
+    VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (roots.length == 1) {
+      return VcsUtil.getFilePath(roots[0]);
+    }
+    return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
   }
 }
