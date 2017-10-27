@@ -51,7 +51,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -230,11 +229,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations() {
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
-    Predicate<? super RunnerAndConfigurationSettings> filter;
-    filter = settings -> myTypes.contains(settings.getType().getId());
-
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(filter)
+      .filter(settings -> myTypes.contains(settings.getType().getId()))
       .collect(Collectors.toList());
 
     //noinspection ConstantConditions ???
@@ -250,12 +246,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       }
     });
 
-    // It is possible that run configuration was deleted, but there is running content descriptor for such run configuration.
+    // It is possible that run configuration was deleted or moved out from dashboard,
+    // but there is a content descriptor for such run configuration.
     // It should be shown in the dashboard tree.
     List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
       .collect(Collectors.toList());
-    List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getRunningDescriptors(settings ->
-      filter.test(settings) && !storedConfigurations.contains(settings.getConfiguration())));
+    List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getDescriptors(settings ->
+      !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
