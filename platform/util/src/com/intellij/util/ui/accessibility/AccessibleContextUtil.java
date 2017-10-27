@@ -29,7 +29,7 @@ public class AccessibleContextUtil {
   //@VisibleForTesting
   static final String PUNCTUATION_SEPARATOR = "  ";
 
-  public static void setName(@NotNull Component component, @NotNull String name) {
+  public static void setName(@NotNull Component component, String name) {
     setAccessibleName(component, name);
   }
 
@@ -79,7 +79,7 @@ public class AccessibleContextUtil {
     setAccessibleDescription(component, getAccessibleDescription(source));
   }
 
-  public static void setDescription(@NotNull Component component, @Nullable String description) {
+  public static void setDescription(@NotNull Component component, String description) {
     setAccessibleDescription(component, description);
   }
 
@@ -191,7 +191,7 @@ public class AccessibleContextUtil {
     return null;
   }
 
-  private static void setAccessibleName(@NotNull Component component, @Nullable String name) {
+  private static void setAccessibleName(@NotNull Component component, String name) {
     if (component instanceof Accessible) {
       component.getAccessibleContext().setAccessibleName(name);
     }
@@ -204,7 +204,7 @@ public class AccessibleContextUtil {
     return null;
   }
 
-  private static void setAccessibleDescription(@NotNull Component component, @Nullable String description) {
+  private static void setAccessibleDescription(@NotNull Component component, String description) {
     if (component instanceof Accessible) {
       component.getAccessibleContext().setAccessibleDescription(description);
     }
