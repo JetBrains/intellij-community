@@ -1410,7 +1410,7 @@ public abstract class DialogWrapper {
           JRootPane rootPane = getRootPane();
           myValidationAlarm.addRequest(validateRequest, myValidationDelay,
                                        rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
-        }, ModalityState.any(), __ -> !myDisposed);
+        }, ModalityState.any(), __ -> myDisposed);
       }
     }
     else {
