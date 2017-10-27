@@ -285,12 +285,12 @@ public class InspectionTree extends Tree {
     return count;
   }
 
-  private void processChildDescriptorsDeep(InspectionTreeNode node,
-                                           List<CommonProblemDescriptor> descriptors,
-                                           boolean sortedByPosition,
-                                           boolean allowResolved,
-                                           boolean allowSuppressed,
-                                           @Nullable Set<VirtualFile> readOnlyFilesSink) {
+  private static void processChildDescriptorsDeep(InspectionTreeNode node,
+                                                  List<CommonProblemDescriptor> descriptors,
+                                                  boolean sortedByPosition,
+                                                  boolean allowResolved,
+                                                  boolean allowSuppressed,
+                                                  @Nullable Set<VirtualFile> readOnlyFilesSink) {
     List<CommonProblemDescriptor> descriptorChildren = null;
     for (int i = 0; i < node.getChildCount(); i++) {
       final TreeNode child = node.getChildAt(i);
@@ -323,7 +323,7 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
+  private static boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded() &&
                                (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
