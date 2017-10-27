@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 
 import static org.junit.Assert.*;
 
@@ -42,7 +43,11 @@ public class XTestEvaluationCallback extends XEvaluationCallbackBase {
   }
 
   public Pair<XValue, String> waitFor(long timeoutInMilliseconds) {
-    assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
+    return waitFor(timeoutInMilliseconds, XDebuggerTestUtil::waitFor);
+  }
+
+  public Pair<XValue, String> waitFor(long timeoutInMilliseconds, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    assertTrue("timed out", waitFunction.apply(myFinished, timeoutInMilliseconds));
     return Pair.create(myResult, myErrorMessage);
   }
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
   public Icon myIcon;
@@ -44,7 +45,10 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   }
 
   public void waitFor(long timeoutInMillis) {
-    if (!XDebuggerTestUtil.waitFor(myFinished, timeoutInMillis)) {
+    waitFor(timeoutInMillis, XDebuggerTestUtil::waitFor);
+  }
+  public void waitFor(long timeoutInMillis, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    if (!waitFunction.apply(myFinished, timeoutInMillis)) {
       throw new AssertionError("Waiting timed out");
     }
   }
