@@ -144,7 +144,7 @@ class LiveVcsFileWatcher(private val project: Project,
             log.info { "start read action" }
             if (owner.project.isDisposed || lifetime.isTerminated) return null
 
-            val result = doWork(indicator) ?: return null
+            val result = doWork(indicator)
 
             return Continuation({
                 log.info { "start read action continuation" }
@@ -322,9 +322,7 @@ class LiveVcsFileWatcher(private val project: Project,
     }
 }
 
-class ModifiedFileWire {
-
-}
+class ModifiedFileWire
 
 fun VirtualFile.getRelativePath(vcsManager: ProjectLevelVcsManager): String {
     val root = vcsManager.getVcsRootFor(this)!!

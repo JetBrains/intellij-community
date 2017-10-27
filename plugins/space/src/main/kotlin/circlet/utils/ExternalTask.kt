@@ -13,10 +13,10 @@ interface IExternalTask {
 
     val cancel: () -> Unit
 
-    val title: String get
-    val header: String get
-    val description: String get
-    val isIndeterminate: Boolean get
+    val title: String
+    val header: String
+    val description: String
+    val isIndeterminate: Boolean
     val progress: Double
 }
 

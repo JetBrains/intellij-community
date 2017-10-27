@@ -62,7 +62,7 @@ interface ILifetimedComponent {
 
 class LifetimedComponent(project: Project) : ILifetimedComponent {
     private val lifetime: Lifetime = project.attachLifetime()
-    final override val componentLifetime: Lifetime
+    override val componentLifetime: Lifetime
         get() = lifetime
 }
 
@@ -70,18 +70,18 @@ interface ILifetimedApplicationComponent : Disposable {
     val componentLifetime: Lifetime
 }
 
-class LifetimedApplicationComponent() : ILifetimedApplicationComponent {
+class LifetimedApplicationComponent : ILifetimedApplicationComponent {
     private val lifetimeDefinition = Lifetime()
 
     init {
         Disposer.register(application, this)
     }
 
-    final override fun dispose() {
+    override fun dispose() {
         lifetimeDefinition.terminate()
     }
 
-    final override val componentLifetime: Lifetime
+    override val componentLifetime: Lifetime
         get() = lifetimeDefinition
 }
 
