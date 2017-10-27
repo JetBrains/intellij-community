@@ -568,33 +568,116 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
 // region HTML formatting options (legacy)
 
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_WHITESPACES;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_LINE_BREAKS = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_LINE_BREAKS_IN_TEXT = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_KEEP_BLANK_LINES = 2;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ALIGN_ATTRIBUTES = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ALIGN_TEXT;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_AFTER_TAG_NAME;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_INSIDE_EMPTY_TAG;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ENFORCE_QUOTES = false;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
 
 // endregion
