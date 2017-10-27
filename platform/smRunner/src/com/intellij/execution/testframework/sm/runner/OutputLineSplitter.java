@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
@@ -76,11 +77,11 @@ public abstract class OutputLineSplitter {
   }
 
   private void processLine(String text, Key outputType) {
-    if (!myBuffers.keySet().contains(outputType)) {
+    if (ProcessOutputType.isStdout(outputType)) {
       processStdOutConsistently(text, outputType);
     }
     else {
-      StringBuilder buffer = myBuffers.get(outputType);
+      StringBuilder buffer = myBuffers.get(((ProcessOutputType)outputType).getBaseOutputType());
       if (!text.endsWith("\n")) {
         buffer.append(text);
         return;

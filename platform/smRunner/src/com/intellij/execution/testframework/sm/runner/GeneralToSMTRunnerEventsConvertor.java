@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -279,7 +280,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     addToInvokeLater(() -> {
       final SMTestProxy currentProxy = findCurrentTestOrSuite();
 
-      if (ProcessOutputTypes.STDERR.equals(outputType)) {
+      if (ProcessOutputType.isStderr(outputType)) {
         currentProxy.addStdErr(text);
       } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
         currentProxy.addSystemOutput(text);
