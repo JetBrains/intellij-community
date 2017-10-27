@@ -133,7 +133,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
 
   private void assertArtifactSearchResults(String pattern, String... expected) {
     List<String> actual = new ArrayList<>();
-    for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher(true).search(myProject, pattern, 100)) {
+    for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
       StringBuilder s = new StringBuilder();
       for (MavenArtifactInfo eachVersion : eachResult.versions) {
         if (s.length() > 0) s.append(" ");

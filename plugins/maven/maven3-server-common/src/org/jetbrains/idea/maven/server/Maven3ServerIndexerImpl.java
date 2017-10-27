@@ -238,7 +238,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         if (r.isDeleted(i)) continue;
 
         Document doc = r.document(i);
-        String uinfo = doc.get(SEARCH_TERM_COORDINATES);
+        String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
         List<String> parts = StringUtil.split(uinfo, "|");
         String groupId = parts.get(0);
