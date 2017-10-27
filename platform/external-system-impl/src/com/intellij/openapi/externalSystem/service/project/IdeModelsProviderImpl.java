@@ -35,9 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
@@ -53,6 +55,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   @NotNull
   private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
+
+  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = ContainerUtil.createWeakMap();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;
@@ -166,14 +170,24 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Nullable
   @Override
   public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
-    for (OrderEntry entry : getOrderEntries(module)) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
-        if (dependency.getInternalName().equals(candidate.getModuleName()) && dependency.getScope().equals(candidate.getScope())) {
-          return candidate;
-        }
+    Map<String, List<ModuleOrderEntry>> namesToEntries = myIdeModuleToModuleDepsCache.computeIfAbsent(module, (m) -> Arrays.stream(getOrderEntries(m))
+      .filter(ModuleOrderEntry.class::isInstance)
+      .map(ModuleOrderEntry.class::cast)
+      .collect(Collectors.groupingBy(ModuleOrderEntry::getModuleName))
+    );
+
+    List<ModuleOrderEntry> candidates = namesToEntries.get(dependency.getInternalName());
+
+    if (candidates == null) {
+      return null;
+    }
+
+    for (ModuleOrderEntry candidate : candidates) {
+      if (candidate.getScope().equals(dependency.getScope())) {
+        return candidate;
       }
     }
+
     return null;
   }
 
