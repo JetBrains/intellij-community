@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Descriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
+  private static final Logger LOG = Logger.getInstance(Descriptor.class);
 
   private final String myText;
   private final String[] myGroup;
