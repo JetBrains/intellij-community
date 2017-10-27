@@ -479,9 +479,8 @@ public class HighlightClassUtil {
   @Nullable
   static HighlightInfo checkCannotInheritFromFinal(PsiClass superClass, PsiElement elementToHighlight) {
     HighlightInfo errorResult = null;
-    boolean isFinal = superClass.hasModifierProperty(PsiModifier.FINAL);
-    if (isFinal || superClass.isEnum()) {
-      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName(), isFinal ? PsiKeyword.FINAL : PsiKeyword.ENUM);
+    if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
+      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName(), superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
       errorResult =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult,
