@@ -320,7 +320,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
 
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        RootType rootType = file.getFileType() == ScratchFileType.INSTANCE ? service.getRootType(file) : null;
+        RootType rootType = service.getRootType(file);
         return  rootType != null && !rootType.isHidden();
       }
 
