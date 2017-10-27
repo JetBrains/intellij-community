@@ -20,8 +20,17 @@ import java.io.File
 import java.io.FileFilter
 import java.nio.file.Files
 
-open class UniqueFilesProvider(private val baseName: String,
-                               private val rootDirectoryPath: String) : FilePathProvider() {
+/**
+ * If you want to implement some other type of logging this is a goto class to temporarily store data locally, until it
+ * will be sent to log service.
+ *
+ * @baseFileName, files will be named ${baseFileName}_{intIndex}
+ * @rootDirectoryPath, root directory where folder named @logsDirectory will be created and all files will be stored
+ * @logsDirectoryName, name of directory in root directory which will be used to store files
+ */
+open class UniqueFilesProvider(private val baseFileName: String,
+                               private val rootDirectoryPath: String,
+                               private val logsDirectoryName: String) : FilePathProvider() {
 
     private val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
 
@@ -45,7 +54,7 @@ open class UniqueFilesProvider(private val baseName: String,
 
         val currentMaxIndex = dir
                 .listFiles(FileFilter { it.isFile })
-                .filter { it.name.startsWith(baseName) }
+                .filter { it.name.startsWith(baseFileName) }
                 .map { it.name.substringAfter('_') }
                 .filter { it.isIntConvertable() }
                 .map(String::toInt)
@@ -53,20 +62,20 @@ open class UniqueFilesProvider(private val baseName: String,
 
         val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
 
-        val file = File(dir, "${baseName}_$newIndex")
+        val file = File(dir, "${baseFileName}_$newIndex")
         return file
     }
 
     override fun getDataFiles(): List<File> {
         val dir = getStatsDataDirectory()
         return dir.listFiles(FileFilter { it.isFile })
-                .filter { it.name.startsWith(baseName) }
+                .filter { it.name.startsWith(baseFileName) }
                 .filter { it.name.substringAfter('_').isIntConvertable() }
                 .sortedBy { it.getChunkNumber() }
     }
 
     override fun getStatsDataDirectory(): File {
-        val dir = File(rootDirectoryPath, "completion-stats-data")
+        val dir = File(rootDirectoryPath, logsDirectoryName)
         if (!dir.exists()) {
             dir.mkdir()
         }
@@ -76,11 +85,11 @@ open class UniqueFilesProvider(private val baseName: String,
     private fun File.getChunkNumber() = this.name.substringAfter('_').toInt()
 
     private fun String.isIntConvertable(): Boolean {
-        try {
+        return try {
             this.toInt()
-            return true
+            true
         } catch (e: NumberFormatException) {
-            return false
+            false
         }
     }
 }

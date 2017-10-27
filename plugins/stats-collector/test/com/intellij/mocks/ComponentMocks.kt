@@ -56,7 +56,7 @@ internal class TestStatisticSender : StatisticSender {
 }
 
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", ".") {
+class TestFilePathProvider: UniqueFilesProvider("chunk", ".", "logs-data") {
     override fun cleanupOldFiles() {
         super.cleanupOldFiles()
     }

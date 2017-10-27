@@ -19,31 +19,12 @@ import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.service.ResponseData
 import com.intellij.stats.sender.StatisticSenderImpl
 import com.intellij.stats.storage.FilePathProvider
-import com.intellij.stats.storage.UniqueFilesProvider
 import com.intellij.testFramework.LightPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", ".") {
-
-    override fun cleanupOldFiles() {
-        super.cleanupOldFiles()
-    }
-
-    override fun getUniqueFile(): File {
-        return super.getUniqueFile()
-    }
-
-    override fun getDataFiles(): List<File> {
-        return super.getDataFiles()
-    }
-
-    override fun getStatsDataDirectory(): File {
-        return super.getStatsDataDirectory()
-    }
-}
 
 class StatisticsSenderTest: LightPlatformTestCase() {
     lateinit var firstFile: File

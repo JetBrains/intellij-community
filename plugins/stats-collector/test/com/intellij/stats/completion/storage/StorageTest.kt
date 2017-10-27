@@ -32,7 +32,7 @@ class FilesProviderTest {
 
     @Before
     fun setUp() {
-        provider = UniqueFilesProvider("chunk", ".")
+        provider = UniqueFilesProvider("chunk", ".", "logs-data")
         provider.getStatsDataDirectory().deleteRecursively()
     }
 
@@ -103,7 +103,7 @@ class FileLoggerTest {
 
     @Before
     fun setUp() {
-        filesProvider = UniqueFilesProvider("chunk", ".")
+        filesProvider = UniqueFilesProvider("chunk", ".", "logs-data")
         val dir = filesProvider.getStatsDataDirectory()
         dir.deleteRecursively()
         fileLogger = LogFileManager(filesProvider)

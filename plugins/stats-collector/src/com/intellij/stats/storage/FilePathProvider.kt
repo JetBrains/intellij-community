@@ -19,8 +19,28 @@ package com.intellij.stats.storage
 import java.io.File
 
 abstract class FilePathProvider {
+
+    /**
+     * Provides unique file where data should be temporarily stored, until it is send to log service
+     */
     abstract fun getUniqueFile(): File
+
+    /**
+     * Returns all files with data to send
+     */
     abstract fun getDataFiles(): List<File>
+
+    /**
+     * Returns root directory where files with logs are stored
+     */
     abstract fun getStatsDataDirectory(): File
+
+
+    /**
+     * If user was offline for a long time we don't want to sent all 1000 files,
+     * instead we will send only last 2Mb of data
+     */
     abstract fun cleanupOldFiles()
+
+
 }

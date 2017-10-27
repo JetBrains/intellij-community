@@ -18,4 +18,4 @@ package com.intellij.stats.storage
 
 import com.intellij.openapi.application.PathManager
 
-class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", PathManager.getSystemPath())
+class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", PathManager.getSystemPath(), "completion-stats-data")
