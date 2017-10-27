@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,17 +111,28 @@ public class WSLDistribution {
   /**
    * Creates a patched command line, executes it on wsl distribution and returns output
    *
-   * @param timeout timeout in ms
-   * @param args    linux args, eg {@code gem env}
+   * @param timeout                timeout in ms
+   * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
+   * @param args                   linux args, eg {@code gem env}
    */
-  public ProcessOutput executeOnWsl(int timeout, @NotNull String... args) throws ExecutionException {
+  public ProcessOutput executeOnWsl(int timeout,
+                                    @Nullable Consumer<ProcessHandler> processHandlerConsumer,
+                                    @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
+    if (processHandlerConsumer != null) {
+      processHandlerConsumer.consume(processHandler);
+    }
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
-  public ProcessOutput executeOnWsl(@NotNull String... args) throws ExecutionException {
-    return executeOnWsl(-1, args);
+  public ProcessOutput executeOnWsl(int timeout, @NotNull String... args) throws ExecutionException {
+    return executeOnWsl(timeout, null, args);
+  }
+
+  public ProcessOutput executeOnWsl(@Nullable Consumer<ProcessHandler> processHandlerConsumer, @NotNull String... args)
+    throws ExecutionException {
+    return executeOnWsl(-1, processHandlerConsumer, args);
   }
 
   /**
@@ -129,10 +141,15 @@ public class WSLDistribution {
    * @param wslPath           source path inside wsl, e.g. /usr/bin
    * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
    * @param additionalOptions may be used for --delete (not recommended), --inclulde and so on
+   * @param handlerConsumer   consumes process handler jsut before execution. Can be used for fast cancellation
    * @return process output
    */
 
-  public ProcessOutput copyFromWsl(@NotNull String wslPath, @NotNull String windowsPath, @Nullable List<String> additionalOptions)
+  public ProcessOutput copyFromWsl(@NotNull String wslPath,
+                                   @NotNull String windowsPath,
+                                   @Nullable List<String> additionalOptions,
+                                   @Nullable Consumer<ProcessHandler> handlerConsumer
+  )
     throws ExecutionException {
     new File(windowsPath).mkdirs();
     List<String> command = new ArrayList<>(Arrays.asList("rsync", "-cr"));
@@ -147,7 +164,7 @@ public class WSLDistribution {
       throw new ExecutionException("Unable to copy files to " + windowsPath);
     }
     command.add(targetWslPath + "/");
-    return executeOnWsl(ArrayUtil.toStringArray(command));
+    return executeOnWsl(handlerConsumer, ArrayUtil.toStringArray(command));
   }
 
 
