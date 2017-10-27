@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -28,6 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_INFERRED;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+
 /**
  * @author anna
  * @since 25.01.2011
@@ -38,15 +29,18 @@ public abstract class NullableNotNullManager {
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;
-  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
-  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
+  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
+  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
 
   private static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   protected static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
 
-  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, 
-    JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull",
-    "edu.umd.cs.findbugs.annotations.Nullable", "android.support.annotation.Nullable"
+  static final String[] DEFAULT_NULLABLES = {
+    AnnotationUtil.NULLABLE,
+    JAVAX_ANNOTATION_NULLABLE,
+    "javax.annotation.CheckForNull",
+    "edu.umd.cs.findbugs.annotations.Nullable",
+    "android.support.annotation.Nullable"
   };
 
   public NullableNotNullManager(Project project) {
@@ -102,11 +96,11 @@ public abstract class NullableNotNullManager {
     return annotation == null ? null : annotation.getQualifiedName();
   }
 
-  private String checkContainer(PsiAnnotation annotation, boolean acceptContainer) {
+  private String checkContainer(PsiAnnotation annotation) {
     if (annotation == null) {
       return null;
     }
-    if (!acceptContainer && isContainerAnnotation(annotation)) {
+    if (isContainerAnnotation(annotation)) {
       return null;
     }
     return annotation.getQualifiedName();
@@ -121,7 +115,7 @@ public abstract class NullableNotNullManager {
     PsiAnnotation.TargetType[] acceptAnyTarget = PsiAnnotation.TargetType.values();
     return isNullabilityDefault(anno, true, acceptAnyTarget) || isNullabilityDefault(anno, false, acceptAnyTarget);
   }
-      
+
   public void setDefaultNullable(@NotNull String defaultNullable) {
     LOG.assertTrue(getNullables().contains(defaultNullable));
     myDefaultNullable = defaultNullable;
@@ -131,7 +125,7 @@ public abstract class NullableNotNullManager {
   public String getDefaultNotNull() {
     return myDefaultNotNull;
   }
-  
+
   @Nullable
   public PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullabilityAnnotationWithDefault(owner, checkBases, false);
@@ -158,7 +152,7 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation copyAnnotation(PsiAnnotation annotation, PsiModifierListOwner target) {
     // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
     if (annotation != null && !AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-      String qualifiedName = checkContainer(annotation, false);
+      String qualifiedName = checkContainer(annotation);
       if (qualifiedName != null) {
         PsiModifierList modifierList = target.getModifierList();
         if (modifierList != null && modifierList.findAnnotation(qualifiedName) == null) {
@@ -181,7 +175,7 @@ public abstract class NullableNotNullManager {
   }
 
   private PsiAnnotation copyAnnotation(PsiModifierListOwner owner, PsiAnnotation annotation) {
-    String notNull = checkContainer(annotation, false);
+    String notNull = checkContainer(annotation);
     return notNull != null ? JavaPsiFacade.getElementFactory(owner.getProject()).createAnnotationFromText("@" + notNull, owner) : null;
   }
 
@@ -196,7 +190,7 @@ public abstract class NullableNotNullManager {
     myDefaultNotNull = defaultNotNull;
   }
 
-  @Nullable 
+  @Nullable
   private PsiAnnotation findNullabilityAnnotationWithDefault(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
     PsiAnnotation annotation = findPlainNullabilityAnnotation(owner, checkBases);
     if (annotation != null) {
@@ -213,7 +207,9 @@ public abstract class NullableNotNullManager {
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     // even if javax.annotation.Nullable is not configured, it should still take precedence over ByDefault annotations
-    if (AnnotationUtil.isAnnotated(owner, nullable ? getPredefinedNotNulls() : Arrays.asList(DEFAULT_NULLABLES), checkBases, false)) {
+    List<String> annotations = nullable ? getPredefinedNotNulls() : Arrays.asList(DEFAULT_NULLABLES);
+    int flags = (checkBases ? CHECK_HIERARCHY : 0) | CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE;
+    if (AnnotationUtil.isAnnotated(owner, annotations, flags)) {
       return null;
     }
 
@@ -250,7 +246,7 @@ public abstract class NullableNotNullManager {
     PsiType type = getOwnerType(owner);
     if (memberAnno != null) {
       return preferTypeAnnotation(memberAnno, type);
-    } 
+    }
     if (type != null) {
       return ContainerUtil.find(type.getAnnotations(), a -> qNames.contains(a.getQualifiedName()));
     }
@@ -302,7 +298,7 @@ public abstract class NullableNotNullManager {
     return findNullabilityAnnotationWithDefault(owner, checkBases, false) != null;
   }
 
-  @Nullable 
+  @Nullable
   static PsiAnnotation findNullabilityDefaultInHierarchy(PsiModifierListOwner owner, boolean nullable) {
     PsiAnnotation.TargetType[] placeTargetTypes = AnnotationTargetUtil.getTargetsForLocation(owner.getModifierList());
 
@@ -343,7 +339,7 @@ public abstract class NullableNotNullManager {
     if (!(declaration instanceof PsiClass)) return false;
 
     String fqn = nullable ? JAVAX_ANNOTATION_NULLABLE : JAVAX_ANNOTATION_NONNULL;
-    if (!AnnotationUtil.isAnnotated((PsiClass)declaration, fqn, false, true)) return false;
+    if (!AnnotationUtil.isAnnotated((PsiClass)declaration, fqn, CHECK_TYPE)) return false;
 
     PsiAnnotation tqDefault = AnnotationUtil.findAnnotation((PsiClass)declaration, true, "javax.annotation.meta.TypeQualifierDefault");
     if (tqDefault == null) return false;

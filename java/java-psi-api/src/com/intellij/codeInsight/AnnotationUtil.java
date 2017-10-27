@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
@@ -224,56 +226,17 @@ public class AnnotationUtil {
     }
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
-    return isAnnotated(listOwner, annotations, false);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotations, checkHierarchy, true);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, checkHierarchy, skipExternal));
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, true);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipExternal);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal,
-                                    boolean skipInferred) {
-    int flags = CHECK_TYPE;
-    if (checkHierarchy) flags |= CHECK_HIERARCHY;
-    if (!skipExternal) flags |= CHECK_EXTERNAL;
-    if (!skipInferred) flags |= CHECK_INFERRED;
-    return isAnnotated(listOwner, annotationFQN, flags, null);
-  }
-
   public static final int CHECK_HIERARCHY = 0x01;
   public static final int CHECK_EXTERNAL = 0x02;
   public static final int CHECK_INFERRED = 0x04;
   public static final int CHECK_TYPE = 0x08;
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
+  @Target(ElementType.TYPE_USE)
   public @interface Flags { }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags));
+    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags, null));
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFqn, @Flags int flags) {
@@ -658,6 +621,56 @@ public class AnnotationUtil {
   /** @deprecated wrong; do not use (to be removed in IDEA 2018) */
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
+    return isAnnotated(listOwner, annotations, CHECK_TYPE);
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull Collection<String> annotations,
+                                    boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotations, flags(checkHierarchy, true, true));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull Collection<String> annotations,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal) {
+    return isAnnotated(listOwner, annotations, flags(checkHierarchy, skipExternal, skipExternal));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipExternal));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal,
+                                    boolean skipInferred) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipInferred));
+  }
+
+  private static @Flags int flags(boolean checkHierarchy, boolean skipExternal, boolean skipInferred) {
+    int flags = CHECK_TYPE;
+    if (checkHierarchy) flags |= CHECK_HIERARCHY;
+    if (!skipExternal) flags |= CHECK_EXTERNAL;
+    if (!skipInferred) flags |= CHECK_INFERRED;
+    return flags;
   }
   //</editor-fold>
 }
