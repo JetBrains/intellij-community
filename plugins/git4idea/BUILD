@@ -49,6 +49,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests[module, test]",
         "//tools/idea/platform/util[module]",
         "//tools/idea/.idea/libraries:cucumber-testing[test]",
-        "//tools/idea:testGuiFramework[module, test]",
+        "//tools/idea/platform/testGuiFramework[module, test]",
     ],
 )

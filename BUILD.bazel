@@ -47,6 +47,7 @@ iml_project(
         "//tools/base/devicelib:studio.devicelib",
         "//tools/base/instant-run/instant-run-annotations:studio.instant-run-annotations",
         "//tools/idea/build/cucumber-test-runner",
+        "//tools/idea/community-main-tests",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/java/compiler/javac2",
         "//tools/idea/java/remote-servers/impl:remote-servers-java-impl",
@@ -63,7 +64,6 @@ iml_project(
         "//tools/idea/plugins/xslt-debugger/engine/impl:xslt-debugger-engine-impl",
         "//tools/idea/uast/uast-tests",
         "//tools/idea/update-server-mock",
-        "//tools/idea:community-main-tests",
         "//tools/idea:configuration-store-tests",
         "//tools/idea:python-community-plugin-build-patches",
         "//tools/vendor/intellij/cidr:clion-build",
@@ -632,30 +632,6 @@ iml_module(
     visibility = ["//visibility:public"],
 )
 
-iml_module(
-    name = "testGuiFramework",
-    srcs = ["platform/testGuiFramework/src"],
-    iml_files = ["platform/testGuiFramework/testGuiFramework.iml"],
-    tags = ["managed"],
-    test_srcs = ["platform/testGuiFramework/testSrc"],
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/.idea/libraries:fest"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:fest",
-        "//tools/idea/.idea/libraries:JUnit4",
-        "//tools/idea/java/openapi[module]",
-        "//tools/idea:java-impl[module]",
-        "//tools/idea/platform/bootstrap[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/platform/testRunner[module]",
-        "//tools/idea/platform/external-system-rt[module]",
-        "//tools/idea/platform/platform-main[module]",
-        "//tools/idea/.idea/libraries:jsr305",
-    ],
-)
-
 filegroup(
     name = "platform-build-info",
     srcs = ["build.txt"],
@@ -780,18 +756,5 @@ iml_module(
         "//tools/adt/idea/designer[module]",
         "//tools/adt/idea/smali[module]",
         "//tools/idea/platform/build-scripts:platform-build-scripts[module, test]",
-    ],
-)
-
-iml_module(
-    name = "community-main-tests",
-    iml_files = ["community-main-tests/community-main-tests.iml"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea:community-main[module, test]",
-        "//tools/adt/idea/android:android-tests[module, test]",
-        "//tools/adt/idea/designer:designer-tests[module, test]",
     ],
 )
