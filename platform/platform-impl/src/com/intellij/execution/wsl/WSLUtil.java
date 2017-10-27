@@ -44,9 +44,9 @@ public class WSLUtil {
   };
 
   private static final List<WSLDistribution> DISTRIBUTIONS = Arrays.asList(
-    new WSLDistribution("UBUNTU", "ubuntu.exe", "Ubuntu"),
-    new WSLDistribution("OPENSUSE42", "opensuse-42.exe", "openSUSE Leap 42"),
-    new WSLDistribution("SLES12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
+    new WSLDistribution("Ubuntu", "ubuntu.exe", "Ubuntu"),
+    new WSLDistribution("openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
+    new WSLDistribution("SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
     LEGACY_WSL
   );
 
