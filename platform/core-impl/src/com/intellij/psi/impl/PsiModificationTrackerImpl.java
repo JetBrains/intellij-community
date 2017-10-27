@@ -111,7 +111,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     boolean outOfCodeBlock =
-      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI :
+      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.getPropertyName() == PsiTreeChangeEvent.PROP_ROOTS :
       code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
       event.getParent() instanceof PsiDirectory;
 

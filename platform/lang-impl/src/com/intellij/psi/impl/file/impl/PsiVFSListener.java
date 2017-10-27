@@ -659,8 +659,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
 
   private void handleVfsChangeWithoutPsi(@NotNull VirtualFile vFile) {
     if (!myReportedUnloadedPsiChange && isInRootModel(vFile)) {
-      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      myFileManager.firePropertyChangedForUnloadedPsi(event, vFile);
+      myFileManager.firePropertyChangedForUnloadedPsi();
       myReportedUnloadedPsiChange = true;
     }
   }

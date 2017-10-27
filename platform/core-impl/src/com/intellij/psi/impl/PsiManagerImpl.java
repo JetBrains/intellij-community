@@ -113,7 +113,13 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public void dropPsiCaches() {
     dropResolveCaches();
-    WriteAction.run(() -> ((PsiModificationTrackerImpl)myModificationTracker).incCounter());
+    WriteAction.run(() -> {
+      if (myFileManager instanceof FileManagerImpl) {
+        ((FileManagerImpl)myFileManager).firePropertyChangedForUnloadedPsi();
+      } else {
+        ((PsiModificationTrackerImpl)myModificationTracker).incCounter();
+      }
+    });
   }
 
   @Override
