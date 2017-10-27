@@ -185,7 +185,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/log-events/log-events.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/log-events/log-events.iml" group="plugins/stats-collector" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/android/main_AndroidStudio.iml" filepath="$PROJECT_DIR$/android/android/main_AndroidStudio.iml" group="android" />
@@ -269,6 +268,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/stats-collector.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/stats-collector.iml" group="plugins/stats-collector" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" group="plugins/structuralsearch" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" group="java" />
