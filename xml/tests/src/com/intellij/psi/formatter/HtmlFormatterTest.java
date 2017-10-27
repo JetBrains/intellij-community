@@ -21,9 +21,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class HtmlFormatterTest extends XmlFormatterTestBase {
   @Override
@@ -37,9 +39,9 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
   
   public void test1() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_BLANK_LINES = 0;
-    settings.setDefaultRightMargin(140);
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_ATTRIBUTES = false;
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_ALIGN_TEXT = false;
@@ -63,14 +65,14 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test5() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTest();
   }
 
   public void test6() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.setDefaultRightMargin(140);
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_ATTRIBUTES = false;
     settings.HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -79,8 +81,8 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test7() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.setDefaultRightMargin(140);
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_TEXT = false;
     settings.HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     settings.HTML_KEEP_LINE_BREAKS = false;
@@ -89,8 +91,8 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test8() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.setDefaultRightMargin(140);
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_TEXT = false;
     settings.HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -100,8 +102,8 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test9() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.setDefaultRightMargin(140);
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_TEXT = false;
     settings.HTML_ALIGN_ATTRIBUTES = false;
     settings.HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -112,9 +114,9 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test10() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
-    settings.setDefaultRightMargin(140);
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_ATTRIBUTES = false;
     settings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_ALIGN_TEXT = false;
@@ -124,9 +126,9 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test11() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
-    settings.setDefaultRightMargin(140);
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_TEXT = false;
     settings.HTML_KEEP_LINE_BREAKS = false;
     settings.HTML_KEEP_WHITESPACES = false;
@@ -134,9 +136,9 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test12() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_KEEP_LINE_BREAKS = false;
-    settings.setDefaultRightMargin(140);
+    getSettings().setDefaultRightMargin(140);
     settings.HTML_ALIGN_TEXT = false;
     settings.HTML_KEEP_LINE_BREAKS = false;
     settings.HTML_KEEP_WHITESPACES = false;
@@ -144,7 +146,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void test13() {
-    getSettings().HTML_KEEP_LINE_BREAKS = false;
+    getHtmlSettings().HTML_KEEP_LINE_BREAKS = false;
     doTextTest("<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>",
                "<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>");
   }
@@ -178,7 +180,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   public void testSCR3654() {
     getSettings().setDefaultRightMargin(5);
-    getSettings().HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getHtmlSettings().HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doTextTest("<html>\n" + "text textV&aelig;lg JE\n" + "</html>", "<html>\n" + "text\n" + "textV&aelig;lg\n" + "JE\n" + "</html>");
 
@@ -287,7 +289,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testWeb2405() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     int noIndentMinLines = settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 3;
     try {
@@ -435,7 +437,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testSingleQuotes() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     CodeStyleSettings.QuoteStyle quoteStyle = settings.HTML_QUOTE_STYLE;
     boolean enforce = settings.HTML_ENFORCE_QUOTES;
     try {
@@ -468,7 +470,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testSpaceInEmptyTag() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest("<div class=\"emptyWithAttributes\"/>\n" +
                "<div/>\n" +
@@ -479,7 +481,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testMultilineTags_NewlinesBeforeAndAfterAttributes() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     String source = "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
@@ -511,5 +513,10 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       "<div\n" +
       "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
       "/>\n");
+  }
+
+  @NotNull
+  private static HtmlCodeStyleSettings getHtmlSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

@@ -37,11 +37,13 @@ import java.util.Map;
 public class HtmlPolicy extends XmlFormattingPolicy {
   private static final TokenSet TAG_END_TOKEN_SET = TokenSet.create(XmlTokenType.XML_TAG_END, XmlTokenType.XML_EMPTY_ELEMENT_END);
 
-  protected final CodeStyleSettings mySettings;
+  protected final HtmlCodeStyleSettings myHtmlCodeStyleSettings;
+  protected final CodeStyleSettings myRootSettings;
 
   public HtmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
     super(documentModel);
-    mySettings = settings;
+    myRootSettings = settings;
+    myHtmlCodeStyleSettings = settings.getCustomSettings(HtmlCodeStyleSettings.class);
   }
 
   @Override
@@ -59,12 +61,12 @@ public class HtmlPolicy extends XmlFormattingPolicy {
       return false;
     }
 
-    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 &&
-        getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
+    if (myHtmlCodeStyleSettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 &&
+        getLines(parentTag) > myHtmlCodeStyleSettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
       return false;
     }
     else {
-      return !checkName(parentTag, mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
+      return !checkName(parentTag, myHtmlCodeStyleSettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
     }
   }
 
@@ -91,7 +93,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     }
     if (prevNode == null) return false;
     if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode) instanceof XmlTag)) return false;
-    return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
+    return checkName(xmlTag, myHtmlCodeStyleSettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
   }
 
   @Override
@@ -113,7 +115,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   @Override
   public boolean removeLineBreakBeforeTag(final XmlTag xmlTag) {
-    return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
+    return checkName(xmlTag, myHtmlCodeStyleSettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
   }
 
   protected boolean checkName(XmlTag tag, String option) {
@@ -139,7 +141,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   public boolean keepWhiteSpacesInsideTag(final XmlTag tag) {
     XmlTag current = tag;
     while (current != null) {
-      if (checkName(current, mySettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(current.getName())) {
+      if (checkName(current, myHtmlCodeStyleSettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(current.getName())) {
         return true;
       }
       current = current.getParentTag();
@@ -160,7 +162,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
     if (!isInlineTag(tag)) {
 
-      if (checkName(tag, mySettings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT)) {
+      if (checkName(tag, myHtmlCodeStyleSettings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT)) {
         if (hasInlineContentOnly(tag)) return WrapType.NORMAL;
       }
 
@@ -181,7 +183,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   protected boolean isInlineTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS);
+    return checkName(tag, myHtmlCodeStyleSettings.HTML_INLINE_ELEMENTS);
   }
 
   protected boolean shouldBeWrapped(final XmlTag tag) {
@@ -195,52 +197,52 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   @Override
   public int getTextWrap(final XmlTag tag) {
-    return mySettings.HTML_TEXT_WRAP;
+    return myHtmlCodeStyleSettings.HTML_TEXT_WRAP;
   }
 
   @Override
   public int getAttributesWrap() {
-    return mySettings.HTML_ATTRIBUTE_WRAP;
+    return myHtmlCodeStyleSettings.HTML_ATTRIBUTE_WRAP;
   }
 
   @Override
   public boolean getShouldAlignAttributes() {
-    return mySettings.HTML_ALIGN_ATTRIBUTES;
+    return myHtmlCodeStyleSettings.HTML_ALIGN_ATTRIBUTES;
   }
 
   @Override
   public boolean getShouldAlignText() {
-    return mySettings.HTML_ALIGN_TEXT;
+    return myHtmlCodeStyleSettings.HTML_ALIGN_TEXT;
   }
 
   @Override
   public boolean getShouldKeepWhiteSpaces() {
-    return mySettings.HTML_KEEP_WHITESPACES;
+    return myHtmlCodeStyleSettings.HTML_KEEP_WHITESPACES;
   }
 
   @Override
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
-    return mySettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+    return myHtmlCodeStyleSettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   }
 
   @Override
   public boolean getShouldAddSpaceAroundTagName() {
-    return mySettings.HTML_SPACE_AFTER_TAG_NAME;
+    return myHtmlCodeStyleSettings.HTML_SPACE_AFTER_TAG_NAME;
   }
 
   @Override
   public int getKeepBlankLines() {
-    return mySettings.HTML_KEEP_BLANK_LINES;
+    return myHtmlCodeStyleSettings.HTML_KEEP_BLANK_LINES;
   }
 
   @Override
   public boolean getShouldKeepLineBreaks() {
-    return mySettings.HTML_KEEP_LINE_BREAKS;
+    return myHtmlCodeStyleSettings.HTML_KEEP_LINE_BREAKS;
   }
 
   @Override
   public boolean getShouldKeepLineBreaksInText() {
-    return mySettings.HTML_KEEP_LINE_BREAKS_IN_TEXT;
+    return myHtmlCodeStyleSettings.HTML_KEEP_LINE_BREAKS_IN_TEXT;
   }
 
   @Override
@@ -255,12 +257,12 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   @Override
   public CodeStyleSettings getSettings() {
-    return mySettings;
+    return myRootSettings;
   }
 
   @Override
   public boolean addSpaceIntoEmptyTag() {
-    return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
+    return myHtmlCodeStyleSettings.HTML_SPACE_INSIDE_EMPTY_TAG;
   }
 
   @Override
@@ -271,7 +273,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Nullable
   @Override
   public Spacing getSpacingBeforeFirstAttribute(XmlAttribute attribute) {
-    boolean isEnabled = mySettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    boolean isEnabled = myHtmlCodeStyleSettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     return getStartTagDependantSpacingOrNull(attribute.getParent(), isEnabled, 1);
   }
 
@@ -280,7 +282,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   public Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
     XmlTag parent = attribute.getParent();
     final int spaces = parent.isEmpty() && addSpaceIntoEmptyTag() ? 1 : 0;
-    boolean isEnabled = mySettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    boolean isEnabled = myHtmlCodeStyleSettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     return getStartTagDependantSpacingOrNull(parent, isEnabled, spaces);
   }
 
