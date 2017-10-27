@@ -27,6 +27,8 @@ import java.awt.*
 
 private val log = KLoggers.logger("app-idea/LiveVcsFileWatcher.kt")
 
+data class Conflict(val local: TextChange, val remote: TextChange)
+
 class LiveVcsFileWatcher(private val project: Project,
                          private val changeListManager: ChangeListManager,
                          private val fileDocumentManager: FileDocumentManager,
