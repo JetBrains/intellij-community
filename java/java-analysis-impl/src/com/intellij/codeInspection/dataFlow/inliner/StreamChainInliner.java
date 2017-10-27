@@ -369,7 +369,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblem.passingNullableToNotNullParameter).pop();
+        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
       }
       super.before(builder);
     }
@@ -549,7 +549,7 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
           .chain(firstStep::before)
-          .checkNotNull(qualifierExpression, NullabilityProblem.passingNullableToNotNullParameter)
+          .checkNotNull(qualifierExpression, NullabilityProblemKind.passingNullableToNotNullParameter)
           .pop()
           .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
           .push(builder.getFactory().getInt(0))
@@ -565,7 +565,7 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
           .chain(firstStep::before)
-          .checkNotNull(sourceCall, NullabilityProblem.callNPE)
+          .checkNotNull(sourceCall, NullabilityProblemKind.callNPE)
           .pop()
           .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
           .push(builder.getFactory().getInt(0))
@@ -577,7 +577,7 @@ public class StreamChainInliner implements CallInliner {
     }
     builder
       .pushExpression(originalQualifier)
-      .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
+      .checkNotNull(firstStep.myCall, NullabilityProblemKind.callNPE)
       .pop()
       .chain(firstStep::before)
       .pushUnknown()

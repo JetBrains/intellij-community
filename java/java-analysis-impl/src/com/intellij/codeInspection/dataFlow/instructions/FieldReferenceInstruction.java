@@ -19,23 +19,17 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class FieldReferenceInstruction extends Instruction {
-  private final PsiExpression myExpression;
-  @Nullable private final String mySyntheticFieldName;
+  private final @NotNull PsiExpression myExpression;
 
-  public FieldReferenceInstruction(@NotNull PsiExpression expression, @Nullable @NonNls String syntheticFieldName) {
+  public FieldReferenceInstruction(@NotNull PsiExpression expression) {
     myExpression = expression;
-    mySyntheticFieldName = syntheticFieldName;
   }
 
   @Override
@@ -50,13 +44,5 @@ public class FieldReferenceInstruction extends Instruction {
   @NotNull
   public PsiExpression getExpression() {
     return myExpression;
-  }
-
-  @Nullable 
-  public PsiExpression getElementToAssert() {
-    if (mySyntheticFieldName != null) return myExpression;
-    return myExpression instanceof PsiArrayAccessExpression
-           ? ((PsiArrayAccessExpression)myExpression).getArrayExpression()
-           : ((PsiReferenceExpression)myExpression).getQualifierExpression();
   }
 }

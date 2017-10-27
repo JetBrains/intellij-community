@@ -49,7 +49,6 @@ import static com.intellij.psi.CommonClassNames.*;
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
-  static final String METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD = "Method reference qualifier";
   private final PsiElement myCodeFragment;
   private final boolean myIgnoreAssertions;
   private final boolean myInlining;
@@ -111,7 +110,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (parent instanceof PsiLambdaExpression && myCodeFragment instanceof PsiExpression) {
       generateBoxingUnboxingInstructionFor((PsiExpression)myCodeFragment,
                                            LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
-      addInstruction(new CheckReturnValueInstruction(myCodeFragment));
+      addInstruction(new CheckReturnValueInstruction((PsiExpression)myCodeFragment));
     }
 
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
@@ -477,7 +476,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (iteratedValue != null) {
       iteratedValue.accept(this);
-      addInstruction(new FieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
+      addInstruction(new FieldReferenceInstruction(iteratedValue));
       DfaValue qualifier = myFactory.createValue(iteratedValue);
 
       if (qualifier instanceof DfaVariableValue) {
@@ -692,7 +691,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         returnValue.accept(this);
         generateBoxingUnboxingInstructionFor(returnValue, var.getVariableType());
         if (myInlinedBlockContext.myForceNonNullBlockResult) {
-          addInstruction(new CheckNotNullInstruction(returnValue, NullabilityProblem.nullableFunctionReturn));
+          addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.nullableFunctionReturn.problem(returnValue)));
         }
         addInstruction(new AssignInstruction(returnValue, null));
         addInstruction(new PopInstruction());
@@ -738,7 +737,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
       final PsiClass psiClass = PsiUtil.resolveClassInType(caseExpression.getType());
       if (psiClass != null) {
-        addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
+        addInstruction(new FieldReferenceInstruction(caseExpression));
         if (psiClass.isEnum()) {
           enumValues = new HashSet<>();
           for (PsiField f : psiClass.getFields()) {
@@ -818,7 +817,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null) {
       qualifier.accept(this);
-      addInstruction(new FieldReferenceInstruction(qualifier, METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD));
+      addInstruction(new FieldReferenceInstruction(qualifier));
     }
 
     addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullness.NOT_NULL), expression));
@@ -832,7 +831,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lock = statement.getLockExpression();
     if (lock != null) {
       lock.accept(this);
-      addInstruction(new FieldReferenceInstruction(lock, "Synchronized value"));
+      addInstruction(new FieldReferenceInstruction(lock));
     }
 
     addInstruction(new FlushVariableInstruction(null));
@@ -854,7 +853,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       exception.accept(this);
 
       addConditionalRuntimeThrow();
-      addInstruction(new FieldReferenceInstruction(exception, "thrown exception"));
+      addInstruction(new FieldReferenceInstruction(exception));
       throwException(exception.getType(), statement);
     }
 
@@ -1096,7 +1095,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (componentType != null) {
         generateBoxingUnboxingInstructionFor(initializer, componentType);
         if (componentNullability == Nullness.NOT_NULL) {
-          addInstruction(new CheckNotNullInstruction(initializer, NullabilityProblem.storingToNotNullArray));
+          addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.storingToNotNullArray.problem(initializer)));
         }
       }
       addInstruction(new PopInstruction());
@@ -1598,7 +1597,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
-      addInstruction(new CheckNotNullInstruction(expression, NullabilityProblem.callNPE));
+      addInstruction(new CheckNotNullInstruction(NullabilityProblemKind.innerClassNPE.problem(expression)));
       addInstruction(new PopInstruction());
     }
 
@@ -1763,7 +1762,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
-      addInstruction(expression.resolve() instanceof PsiField ? new FieldReferenceInstruction(expression, null) : new PopInstruction());
+      addInstruction(expression.resolve() instanceof PsiField ? new FieldReferenceInstruction(qualifierExpression) : new PopInstruction());
     }
 
     // complex assignments (e.g. "|=") are both reading and writing

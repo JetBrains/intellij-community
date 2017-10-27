@@ -437,8 +437,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                          DataFlowRunner runner,
                                                          DfaMemoryState memState) {
-        PsiElement aReturn = instruction.getReturn();
-        if (aReturn instanceof PsiExpression && returnedExpressions.contains(aReturn)) {
+        if (returnedExpressions.contains(instruction.getReturn())) {
           myResult &= nullsExpected ? memState.isNull(memState.peek()) : memState.isNotNull(memState.peek());
         }
         return super.visitCheckReturnValue(instruction, runner, memState);
