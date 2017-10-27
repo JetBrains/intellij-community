@@ -480,7 +480,25 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the first element in this iterable if it is the only one, otherwise null.
+   * Returns the first element if it is an instance of the specified class, otherwise null.
+   */
+  @Nullable
+  public final <T> T first(@NotNull Class<T> type) {
+    E first = first();
+    return type.isInstance(first) ? (T)first : null;
+  }
+
+  /**
+   * Returns the first element if it satisfies the condition, otherwise null.
+   */
+  @Nullable
+  public final E first(@NotNull Condition<? super E> condition) {
+    E first = first();
+    return condition.value(first) ? first : null;
+  }
+
+  /**
+   * Returns the first element if it is the only one, otherwise null.
    */
   @Nullable
   public final E single() {
