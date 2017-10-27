@@ -102,7 +102,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     add(westPanel, BorderLayout.CENTER);
 
     westPanel.add(toolWindow.getContentUI().getTabComponent());
-    toolWindow.getContentUI().initMouseListeners(westPanel, toolWindow.getContentUI());
+    ToolWindowContentUi.initMouseListeners(westPanel, toolWindow.getContentUI(), true);
 
     JPanel eastPanel = new JPanel();
     eastPanel.setOpaque(false);

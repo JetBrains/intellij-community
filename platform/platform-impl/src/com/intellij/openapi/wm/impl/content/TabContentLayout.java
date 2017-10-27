@@ -389,11 +389,11 @@ class TabContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
     for (ContentTabLabel each : myTabs) {
       myUi.add(each);
-      ToolWindowContentUi.initMouseListeners(each, myUi);
+      ToolWindowContentUi.initMouseListeners(each, myUi, false);
     }
     
     myCached.clear();
