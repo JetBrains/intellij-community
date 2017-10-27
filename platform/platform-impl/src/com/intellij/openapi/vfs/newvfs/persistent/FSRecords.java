@@ -20,9 +20,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -1120,22 +1125,24 @@ public class FSRecords {
     return -1;
   }
 
-  // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
+  // returns (list of id and its parent ids up to and including id of already cached parent, that already cached parent)
   @NotNull
-  static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
-    TIntArrayList result = new TIntArrayList(10);
+  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+    TIntArrayList ids = new TIntArrayList(10);
     r.lock();
+    VirtualFileSystemEntry cached = null;
     try {
       int parentId;
       do {
-        result.add(id);
-        if (idCache.containsKey(id)) {
+        ids.add(id);
+        cached = idCache.get(id);
+        if (cached != null) {
           break;
         }
         parentId = getRecordInt(id, PARENT_OFFSET);
-        if (parentId == id || result.size() % 128 == 0 && result.contains(parentId)) {
+        if (parentId == id || ids.size() % 128 == 0 && ids.contains(parentId)) {
           LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-          return result;
+          break;
         }
         id = parentId;
       } while (parentId != 0);
@@ -1146,7 +1153,7 @@ public class FSRecords {
     finally {
       r.unlock();
     }
-    return result;
+    return Pair.create(ids, cached);
   }
 
   static void setParent(int id, int parentId) {
