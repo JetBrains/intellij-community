@@ -117,12 +117,6 @@
 
     <!-- JUnit -->
     <intentionAction>
-      <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertLiteralIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.junit</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.junit.ReplaceAssertLiteralWithAssertEqualsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.junit</categoryKey>

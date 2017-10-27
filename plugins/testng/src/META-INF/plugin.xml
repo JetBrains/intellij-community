@@ -70,7 +70,7 @@
       <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
                        groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
                        key="simplifiable.testng.assertion.display.name" groupName="TestNG"
-                       enabledByDefault="false" level="WARNING"/>
+                       enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
                        groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ConstantTestNGAssertArgumentInspection"/>
     </extensions>
