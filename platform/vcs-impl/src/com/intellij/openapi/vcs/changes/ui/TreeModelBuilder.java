@@ -417,8 +417,11 @@ public class TreeModelBuilder {
       if (!parentPath.equals(childPath)) return null;
 
       parent.remove(0);
-      for (int i = 0; i < child.getChildCount(); i++) {
-        parent.add((ChangesBrowserNode)child.getChildAt(i));
+
+      //noinspection unchecked
+      Enumeration<ChangesBrowserNode> children = child.children();
+      for (ChangesBrowserNode childNode : ContainerUtil.toList(children)) {
+        parent.add(childNode);
       }
 
       return parent;
