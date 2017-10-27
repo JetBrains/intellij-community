@@ -15,8 +15,10 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
 
@@ -27,5 +29,14 @@ public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    
+    if (!e.isFromContextMenu()) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

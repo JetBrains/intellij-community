@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -109,8 +110,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @Override
   protected List<AnAction> createToolbarActions() {
     List<AnAction> result = new ArrayList<>(super.createToolbarActions());
-    result.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
-    result.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_CHANGE_VIEW_SETTINGS_ACTION));
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_ACTION_GROUP);
+    Collections.addAll(result, group.getChildren(null));
     return result;
   }
 

@@ -54,8 +54,6 @@
             icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogTextFilterSettingsActions" id="Vcs.Log.QuickTextFilterSettings"
             icon="VcsLogIcons.GearWithDropDown" text="Text Filter Settings" description="Text Filter Settings"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsLogChangesViewSettingsActions" id="Vcs.Log.QuickChangesViewSettings"
-            icon="VcsLogIcons.GearWithDropDown" text="Changes View Settings" description="Changes View Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -113,10 +111,6 @@
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
-    <group id="Vcs.Log.ChangesViewSettings">
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowChangesFromParents"/>
-    </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
@@ -129,6 +123,11 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+    </group>
+    <group id="Vcs.Log.ChangesBrowser">
+      <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
@@ -175,7 +174,6 @@
       <reference ref="Vcs.Log.ShowTagNames"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
       <separator/>
-      <reference ref="Vcs.Log.QuickChangesViewSettings"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <separator/>
