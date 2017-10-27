@@ -1072,6 +1072,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
       boolean ok = super.checkNotNullable(state, value, problem, anchor);
       if (!ok && anchor != null) {
+        if (problem == NullabilityProblem.callNPE &&
+            !(anchor instanceof PsiNewExpression || anchor instanceof PsiMethodReferenceExpression ||
+              anchor instanceof PsiMethodCallExpression)) {
+          throw new IllegalArgumentException("Invalid anchor for callNPE problem: "+anchor);
+        }
         myProblems.putValue(problem, anchor);
       }
       Pair<NullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
