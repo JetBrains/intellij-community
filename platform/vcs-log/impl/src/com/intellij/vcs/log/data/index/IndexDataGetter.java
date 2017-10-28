@@ -83,6 +83,9 @@ public class IndexDataGetter {
       executeAndCatch(() -> {
         myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
           List<Integer> parents = myIndexStorage.parents.get(commit);
+          if (parents == null) {
+            throw new CorruptedDataException("No parents for commit " + commit);
+          }
           result.add(commit, changes.first, changes.second, parents);
           return null;
         }));
@@ -98,7 +101,7 @@ public class IndexDataGetter {
     try {
       return computable.compute();
     }
-    catch (IOException | StorageException e) {
+    catch (IOException | StorageException | CorruptedDataException e) {
       myIndexStorage.markCorrupted();
       myFatalErrorsConsumer.consume(this, e);
     }
@@ -266,6 +269,12 @@ public class IndexDataGetter {
       // they need to be displayed
       // but we skip them instead
       return data != null && data.size() > 1 && data.containsValue(null);
+    }
+  }
+
+  private static class CorruptedDataException extends RuntimeException {
+    public CorruptedDataException(@NotNull String message) {
+      super(message);
     }
   }
 }
