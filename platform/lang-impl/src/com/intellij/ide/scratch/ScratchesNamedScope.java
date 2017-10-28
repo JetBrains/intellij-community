@@ -9,10 +9,10 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScratchesAndConsolesNamedScope extends NamedScope {
+public class ScratchesNamedScope extends NamedScope {
   public static final String NAME = "Scratches and Consoles";
 
-  public ScratchesAndConsolesNamedScope() {
+  public ScratchesNamedScope() {
     super(NAME, new AbstractPackageSet(NAME) {
       @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
