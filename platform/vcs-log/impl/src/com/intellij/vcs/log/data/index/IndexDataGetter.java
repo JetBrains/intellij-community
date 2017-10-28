@@ -76,7 +76,7 @@ public class IndexDataGetter {
 
   @NotNull
   public FileNamesData buildFileNamesData(@NotNull FilePath path) {
-    FileNamesData result = new FileNamesData();
+    FileNamesData result = new MyFileNamesData();
 
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
@@ -136,10 +136,18 @@ public class IndexDataGetter {
     return Collections.emptyList();
   }
 
-  public class FileNamesData {
+  private class MyFileNamesData extends FileNamesData {
+    protected FilePath getPathById(int pathId) {
+      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
+    }
+  }
+
+  public static abstract class FileNamesData {
     @NotNull private final TIntObjectHashMap<Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>>> myCommitToPathAndChanges =
       new TIntObjectHashMap<>();
     private boolean myHasRenames = false;
+
+    protected abstract FilePath getPathById(int pathId);
 
     public boolean hasRenames() {
       return myHasRenames;
@@ -203,7 +211,7 @@ public class IndexDataGetter {
       }
       if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) return null;
       if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) {
-        return VcsUtil.getFilePath(myIndexStorage.paths.getPath(change.otherPath));
+        return getPathById(change.otherPath);
       }
       return childPath;
     }
@@ -219,7 +227,7 @@ public class IndexDataGetter {
       if (change == null) return parentPath;
       if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) return null;
       if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) {
-        return VcsUtil.getFilePath(myIndexStorage.paths.getPath(change.otherPath));
+        return getPathById(change.otherPath);
       }
       return parentPath;
     }
