@@ -19,19 +19,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Parser for git log output.
+ * <p>Parses the 'git log' output basing on the given number of options.
+ * Doesn't execute of prepare the command itself, performs only parsing.</p>
  * <p>
- * Commit records have the following format:
+ * Usage:<ol>
+ * <li> Pass options you want to have in the output to the constructor using the {@link GitLogOption} enum constants.
+ * <li> Get the custom format pattern for 'git log' by calling {@link #getPretty()}
+ * <li> Call the command and retrieve the output.
+ * <li> Parse the output via {@link #parseLine(CharSequence)}(prefered), {@link #parse(CharSequence)} or {@link #parseOneRecord(CharSequence)}.
+ * Note that {@link #parseLine(CharSequence)} expects lines without line separators</ol></p>
+ * <p>Note that you may pass one set of options to the GitLogParser constructor and then execute git log with other set of options.
+ * In that case {@link #parse(CharSequence)} will likely fail with {@link GitFormatException}.
+ * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' -- otherwise the parser won't be able
+ * to parse output of 'git log' (because special separator characters are used for that).</p>
+ * <p>Commit records have the following format:
  * <pre>
  * RECORD_START (commit information, separated by ITEMS_SEPARATOR) RECORD_END \n (changed paths with statuses)?</pre>
  * Example:
  * <pre>
  * 2c815939f45fbcfda9583f84b14fe9d393ada790&lt;ITEMS_SEPARATOR&gt;sample commit&lt;RECORD_END&gt;
- * D       a.txt</pre>
+ * D       a.txt</pre></p>
+ *
+ * @see GitLogRecord
  */
 public class GitLogParser {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
-  
+
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
   public static final String RECORD_START = "\u0001\u0001";
