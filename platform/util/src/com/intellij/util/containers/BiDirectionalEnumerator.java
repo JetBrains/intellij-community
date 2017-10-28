@@ -32,7 +32,7 @@ public class BiDirectionalEnumerator<T> extends Enumerator<T> {
   @Override
   public int enumerateImpl(T object) {
     int index = super.enumerateImpl(object);
-    myIntToObjectMap.put(index, object);
+    myIntToObjectMap.put(Math.max(index, -index), object);
     return index;
   }
 
@@ -44,11 +44,11 @@ public class BiDirectionalEnumerator<T> extends Enumerator<T> {
 
   @NotNull
   public T getValue(int index) {
-    T hash = myIntToObjectMap.get(index);
-    if (hash == null) {
+    T value = myIntToObjectMap.get(index);
+    if (value == null) {
       throw new RuntimeException("Can not find value by index " + index);
     }
-    return hash;
+    return value;
   }
 
   public void forEachValue(@NotNull TObjectProcedure<T> procedure) {
