@@ -122,26 +122,22 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (constraint.isPartOfSearchResults()) {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
-      if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
+      if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
         append(buf, SSRBundle.message("text.tooltip.message",
                                       constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "", constraint.getRegExp()));
       }
       if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
         append(buf, SSRBundle.message("within.hierarchy.tooltip.message"));
       }
-      if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
-        append(buf, "reference target matches: " + text);
-      }
 
-      if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
+      if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                      constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
                                      constraint.getNameOfExprType(),
                                      constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
       }
 
-      if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
+      if (constraint.getNameOfFormalArgType() != null && constraint.getNameOfFormalArgType().length() > 0) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? SSRBundle.message("not.tooltip.message") : "",
                                       constraint.getNameOfFormalArgType(),
