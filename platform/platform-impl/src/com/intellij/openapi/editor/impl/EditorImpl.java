@@ -1655,8 +1655,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-    Graphics2D graphics = JBSwingUtilities.runGlobalCGTransform(myEditorComponent, image.createGraphics());
-    graphics.translate(-rect.x, -rect.y);
+    Graphics imageGraphics = image.createGraphics();
+    imageGraphics.translate(-rect.x, -rect.y);
+    Graphics2D graphics = JBSwingUtilities.runGlobalCGTransform(myEditorComponent, imageGraphics);
     graphics.setClip(rect.x, rect.y, rect.width, rect.height);
     myEditorComponent.paintComponent(graphics);
     graphics.dispose();
@@ -4087,7 +4088,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public FontPreferences getConsoleFontPreferences() {
-      return myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty() ? 
+      return myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty() ?
              getDelegate().getConsoleFontPreferences() : myConsoleFontPreferences;
     }
 
