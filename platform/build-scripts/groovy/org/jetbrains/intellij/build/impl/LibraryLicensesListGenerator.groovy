@@ -111,7 +111,7 @@ class LibraryLicensesListGenerator {
   void checkLibLicenses() {
     def libraries = new HashSet<JpsLibrary>()
     def lib2Module = new HashMap<JpsLibrary, JpsModule>();
-    Set<String> nonPublicModules = ["buildScripts", "build", "buildSrc"] as Set
+    Set<String> nonPublicModules = ["buildScripts", "build", "buildSrc", "testGuiFramework"] as Set
     project.modules.findAll { !nonPublicModules.contains(it.name) && !it.name.contains("guitests") }.each { JpsModule module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
         lib2Module[it] = module
