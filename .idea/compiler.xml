@@ -32,12 +32,12 @@
         <processor name="com.android.tools.chunkio.ChunkProcessor" />
         <module name="pixelprobe" />
       </profile>
-      <profile name="blaze" enabled="true">
+      <profile name="AutoValue" enabled="true">
         <processorPath useClasspath="false">
           <entry name="$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1/auto-value-1.4.1.jar" />
         </processorPath>
-        <module name="blaze-base" />
-        <module name="blaze-cpp" />
+        <module name="bazel-base" />
+        <module name="bazel-cpp" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
