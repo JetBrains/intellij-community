@@ -101,12 +101,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     final Runnable scrollRunnable = () -> scrollToBeginning();
     final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
     CompositePrintable.invokeInAlarm(clearRunnable);
-    if (isRoot(currentProxyOrRoot) && myProperties.shouldPrintOnlyOwnContentForRoot()) {
-      currentProxyOrRoot.printOwnPrintablesOn(this, false);
-    }
-    else {
-      currentProxyOrRoot.printOn(this);
-    }
+    currentProxyOrRoot.printOn(this);
     currentProxyOrRoot.printFromFrameworkOutputFile(this);
     CompositePrintable.invokeInAlarm(scrollRunnable);
   }
@@ -152,9 +147,5 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.scrollTo(myMarkOffset);
       }
     });
-  }
-
-  public boolean shouldPrintChildrenContent(@NotNull AbstractTestProxy parent) {
-    return !isRoot(parent) || !myProperties.shouldPrintOnlyOwnContentForRoot();
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
-import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -220,19 +219,13 @@ public class SMTestProxy extends AbstractTestProxy {
     //TODO reset children cache
     child.setParent(this);
 
-    if (shouldPrintChildrenContent(myPrinter)) {
+    boolean printOwnContentOnly = this instanceof SMRootTestProxy && ((SMRootTestProxy)this).shouldPrintOwnContentOnly();
+    if (!printOwnContentOnly) {
       child.setPrinter(myPrinter);
     }
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
     }
-  }
-
-  private boolean shouldPrintChildrenContent(@Nullable Printer printer) {
-    if (printer instanceof TestsOutputConsolePrinter) {
-      return ((TestsOutputConsolePrinter)printer).shouldPrintChildrenContent(this);
-    }
-    return true;
   }
 
   @Nullable
@@ -893,6 +886,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myComment;
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
+    private boolean myShouldPrintOwnContentOnly = false;
 
     public SMRootTestProxy() {
       this(false);
@@ -966,6 +960,23 @@ public class SMTestProxy extends AbstractTestProxy {
         getChildren().clear();
       }
       clear();
+    }
+
+    boolean shouldPrintOwnContentOnly() {
+      return myShouldPrintOwnContentOnly;
+    }
+
+    public void setShouldPrintOwnContentOnly(boolean shouldPrintOwnContentOnly) {
+      myShouldPrintOwnContentOnly = shouldPrintOwnContentOnly;
+    }
+
+    public void printOn(@NotNull Printer printer) {
+      if (myShouldPrintOwnContentOnly) {
+        printOwnPrintablesOn(printer);
+      }
+      else {
+        super.printOn(printer);
+      }
     }
   }
 }

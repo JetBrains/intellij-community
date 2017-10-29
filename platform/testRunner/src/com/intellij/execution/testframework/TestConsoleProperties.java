@@ -71,7 +71,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private boolean myUsePredefinedMessageFilter = true;
   private GlobalSearchScope myScope;
   private boolean myPreservePresentableName = false;
-  private boolean myShouldPrintOnlyOwnContentForRoot = false;
 
   protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
 
@@ -237,13 +236,5 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   public String getWindowId() {
     return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
-  }
-
-  public boolean shouldPrintOnlyOwnContentForRoot() {
-    return myShouldPrintOnlyOwnContentForRoot;
-  }
-
-  public void setShouldPrintOnlyOwnContentForRoot(boolean shouldPrintOnlyOwnContentForRoot) {
-    myShouldPrintOnlyOwnContentForRoot = shouldPrintOnlyOwnContentForRoot;
   }
 }

@@ -38,7 +38,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private MyConsoleView myConsole;
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private MockPrinter myMockResettablePrinter;
-  private SMTestProxy myRootSuite;
+  private SMTestProxy.SMRootTestProxy myRootSuite;
   private SMTestRunnerResultsForm myResultsViewer;
 
   private class MyConsoleView extends SMTRunnerConsoleView {
@@ -539,7 +539,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPrintingOnlyOwnContentForRoot() {
-    myConsole.getProperties().setShouldPrintOnlyOwnContentForRoot(true);
+    myRootSuite.setShouldPrintOwnContentOnly(true);
 
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
 
@@ -568,7 +568,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
                                               "root output 2\n", "", "");
 
-    myConsole.getProperties().setShouldPrintOnlyOwnContentForRoot(false);
+    myRootSuite.setShouldPrintOwnContentOnly(false);
 
     myMockResettablePrinter.resetIfNecessary();
     myConsole.getPrinter().updateOnTestSelected(suite);
