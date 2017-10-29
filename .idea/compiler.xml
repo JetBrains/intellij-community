@@ -39,12 +39,6 @@
         <module name="blaze-base" />
         <module name="blaze-cpp" />
       </profile>
-      <profile name="sdk-common" enabled="true">
-        <processorPath useClasspath="false">
-          <entry name="$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1/auto-value-1.4.1.jar" />
-        </processorPath>
-        <module name="sdk-common" />
-      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="java-runtime" target="1.2" />
