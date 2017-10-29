@@ -972,7 +972,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public void printOn(@NotNull Printer printer) {
       if (myShouldPrintOwnContentOnly) {
-        printOwnPrintablesOn(printer);
+        printOwnPrintablesOn(printer, false);
       }
       else {
         super.printOn(printer);

@@ -583,6 +583,34 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                                               "root output 2\n", "", "");
   }
 
+  public void testPrintingManyOutputForRootWithoutChildren() {
+    myRootSuite.setShouldPrintOwnContentOnly(true);
+
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+
+    myEventsProcessor.onStartTesting();
+    StringBuilder expectedOutput = new StringBuilder();
+    for (int i = 0; i < 10000; i++) {
+      String text = "root output " + i + "\n";
+      myEventsProcessor.onUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+      expectedOutput.append(text);
+    }
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
+    SMTestProxy suite = myEventsProcessor.getCurrentSuite();
+    myEventsProcessor.onUncapturedOutput("suite output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onFinishTesting();
+
+    assertAllOutputs(myMockResettablePrinter, expectedOutput.toString(), "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, expectedOutput.toString(), "", "");
+  }
+
   public void testEnsureOrderedClearFlush() {
     StringBuffer buf = new StringBuffer();
     String expected = "";
