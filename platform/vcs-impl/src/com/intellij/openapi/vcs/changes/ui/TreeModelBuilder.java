@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -402,30 +400,11 @@ public class TreeModelBuilder {
 
   @Nullable
   private static ChangesBrowserNode collapseParentWithOnlyChild(@NotNull ChangesBrowserNode parent, @NotNull ChangesBrowserNode child) {
-    if (child.isLeaf()) return null;
-
-    Object parentUserObject = parent.getUserObject();
-    Object childUserObject = child.getUserObject();
-
-    if (parentUserObject instanceof FilePath &&
-        childUserObject instanceof FilePath) {
+    if (parent.getUserObject() instanceof FilePath &&
+        child.getUserObject() instanceof FilePath &&
+        !child.isLeaf()) {
       return child;
     }
-
-    if (parentUserObject instanceof Module &&
-        childUserObject instanceof FilePath) {
-      FilePath parentPath = VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath((Module)parentUserObject));
-      FilePath childPath = (FilePath)childUserObject;
-      if (!parentPath.equals(childPath)) return null;
-
-      parent.remove(0);
-      for (int i = 0; i < child.getChildCount(); i++) {
-        parent.add((ChangesBrowserNode)child.getChildAt(i));
-      }
-
-      return parent;
-    }
-
     return null;
   }
 
