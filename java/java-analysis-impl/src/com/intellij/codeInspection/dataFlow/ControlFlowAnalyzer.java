@@ -852,7 +852,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exception != null) {
       exception.accept(this);
 
-      addConditionalRuntimeThrow();
       addInstruction(new DereferenceInstruction(exception));
       throwException(exception.getType(), statement);
     }
