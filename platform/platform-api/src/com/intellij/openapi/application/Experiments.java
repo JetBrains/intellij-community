@@ -26,6 +26,10 @@ public class Experiments {
   private static final Logger LOG = Logger.getInstance(Experiments.class);
 
   public static boolean isFeatureEnabled(String featureId) {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+
     for (ExperimentalFeature feature : EP_NAME.getExtensions()) {
       if (feature.id.equals(featureId)) {
         String key = toPropertyKey(feature);
