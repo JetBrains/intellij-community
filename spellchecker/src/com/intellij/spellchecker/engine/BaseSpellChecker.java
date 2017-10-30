@@ -122,7 +122,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     dictionaries.add(dictionary);
   }
 
-  private void addCompressedFixedDictionary(@NotNull Dictionary dictionary) {
+  @Override
+  public void addCompressedFixedDictionary(@NotNull Dictionary dictionary) {
     bundledDictionaries.add(dictionary);
   }
 
