@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +18,16 @@ import java.util.List;
  * @author peter
  */
 public class MockVirtualFile extends VirtualFile {
+  public static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
+    MockVirtualFile dir = new MockVirtualFile(true, name);
+    for (MockVirtualFile child : children) dir.addChild(child);
+    return dir;
+  }
+
+  public static MockVirtualFile file(@NotNull String name) {
+    return new MockVirtualFile(name);
+  }
+
   private static final MockVirtualFileSystem ourFileSystem = new MockVirtualFileSystem();
 
   private VirtualFile myParent;
@@ -42,12 +37,14 @@ public class MockVirtualFile extends VirtualFile {
   private String myText;
   private boolean myIsWritable = true;
   private long myModStamp = LocalTimeCounter.currentTime();
+  private final long myTimeStamp = System.currentTimeMillis();
+  private VirtualFileListener myListener;
 
-  public MockVirtualFile(final String name) {
+  public MockVirtualFile(String name) {
     this(false, name);
   }
 
-  public MockVirtualFile(final boolean directory, final String name) {
+  public MockVirtualFile(boolean directory, String name) {
     myDirectory = directory;
     myName = name;
   }
@@ -58,36 +55,35 @@ public class MockVirtualFile extends VirtualFile {
     myDirectory = false;
   }
 
-  public void setText(final String text) {
+  public void setText(String text) {
     myText = text;
   }
 
-  @Override
   @NotNull
-  @NonNls
+  @Override
   public String getName() {
     return myName;
   }
 
-  public void setParent(final VirtualFile parent) {
+  public void setParent(VirtualFile parent) {
     myParent = parent;
   }
 
   @NotNull
   @Override
-  public VirtualFile createChildData(final Object requestor, @NotNull @NonNls final String name) {
-    final MockVirtualFile file = new MockVirtualFile(name);
+  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+    MockVirtualFile file = new MockVirtualFile(name);
     addChild(file);
     return file;
   }
 
-  public void addChild(@NotNull final MockVirtualFile child) {
+  public void addChild(@NotNull MockVirtualFile child) {
     child.setParent(this);
     myChildren.add(child);
   }
 
-  @Override
   @NotNull
+  @Override
   public VirtualFileSystem getFileSystem() {
     return ourFileSystem;
   }
@@ -119,8 +115,8 @@ public class MockVirtualFile extends VirtualFile {
     return true;
   }
 
-  @Override
   @Nullable
+  @Override
   public VirtualFile getParent() {
     return myParent;
   }
@@ -130,9 +126,9 @@ public class MockVirtualFile extends VirtualFile {
     return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
-  @Override
   @NotNull
-  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+  @Override
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     return new ByteArrayOutputStream() {
       @Override
       public void close() {
@@ -151,14 +147,12 @@ public class MockVirtualFile extends VirtualFile {
     myModStamp = modStamp;
   }
 
-  @Override
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  @Override
+  public byte[] contentsToByteArray() {
     return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
-
-  private final long myTimeStamp = System.currentTimeMillis();
   @Override
   public long getTimeStamp() {
     return myTimeStamp;
@@ -170,15 +164,13 @@ public class MockVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-  }
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public InputStream getInputStream() {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 
-  private VirtualFileListener myListener;
   public void setListener(VirtualFileListener listener) {
     myListener = listener;
   }
