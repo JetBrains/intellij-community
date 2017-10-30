@@ -639,12 +639,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Gets the common ancestor for passed files, or null if the files do not have common ancestors.
-   *
-   * @param file1 fist file
-   * @param file2 second file
-   * @return common ancestor for the passed files. Returns {@code null} if
-   *         the files do not have common ancestor
+   * Returns a common ancestor for the given files, or {@code null} if the files do not have one.
    */
   @Nullable
   public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -652,19 +647,37 @@ public class VfsUtilCore {
       return null;
     }
 
-    VirtualFile[] path1 = getPathComponents(file1);
-    VirtualFile[] path2 = getPathComponents(file2);
-
-    int lastEqualIdx = -1;
-    for (int i = 0; i < path1.length && i < path2.length; i++) {
-      if (path1[i].equals(path2[i])) {
-        lastEqualIdx = i;
-      }
-      else {
-        break;
-      }
+    if (file1.equals(file2)) {
+      return file1;
     }
-    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
+
+    int depth1 = depth(file1);
+    int depth2 = depth(file2);
+
+    VirtualFile parent1 = file1;
+    VirtualFile parent2 = file2;
+    while (depth1 > depth2 && parent1 != null) {
+      parent1 = parent1.getParent();
+      depth1--;
+    }
+    while (depth2 > depth1 && parent2 != null) {
+      parent2 = parent2.getParent();
+      depth2--;
+    }
+    while (parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+      parent1 = parent1.getParent();
+      parent2 = parent2.getParent();
+    }
+    return parent1;
+  }
+
+  private static int depth(VirtualFile file) {
+    int depth = 0;
+    while (file != null) {
+      depth++;
+      file = file.getParent();
+    }
+    return depth;
   }
 
   /**
