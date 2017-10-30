@@ -639,6 +639,9 @@ public class PySkeletonRefresher {
     Collections.sort(names);
     final List<UpdateResult> results = new ArrayList<>();
     final int count = names.size();
+    if (myIndicator != null) {
+      myIndicator.setIndeterminate(false);
+    }
     for (int i = 0; i < count; i++) {
       checkCanceled();
       if (myIndicator != null) {
