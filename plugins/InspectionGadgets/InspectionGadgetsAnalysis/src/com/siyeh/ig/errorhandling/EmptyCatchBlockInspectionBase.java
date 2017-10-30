@@ -90,18 +90,12 @@ public class EmptyCatchBlockInspectionBase extends BaseInspection {
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection)) {
-        return;
-      }
+      if (!(parent instanceof PsiCatchSection)) return;
       final PsiCatchSection catchSection = (PsiCatchSection)parent;
       final PsiParameter parameter = catchSection.getParameter();
-      if (parameter == null) {
-        return;
-      }
+      if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();
-      if (identifier == null) {
-        return;
-      }
+      if (identifier == null) return;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiIdentifier newIdentifier = factory.createIdentifier("ignored");
       identifier.replace(newIdentifier);
@@ -131,25 +125,16 @@ public class EmptyCatchBlockInspectionBase extends BaseInspection {
 
     private void checkCatchSection(PsiCatchSection section) {
       final PsiCodeBlock block = section.getCatchBlock();
-      if (block == null || !isEmpty(block)) {
-        return;
-      }
+      if (block == null || !isEmpty(block)) return;
       final PsiParameter parameter = section.getParameter();
-      if (parameter == null) {
-        return;
-      }
+      if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();
-      if (identifier == null) {
-        return;
-      }
+      if (identifier == null) return;
       @NonNls final String parameterName = parameter.getName();
-      if (m_ignoreIgnoreParameter && PsiUtil.isIgnoredName(parameterName)) {
-        return;
-      }
+      if (m_ignoreIgnoreParameter && PsiUtil.isIgnoredName(parameterName)) return;
       final PsiElement catchToken = section.getFirstChild();
-      if (catchToken == null) {
-        return;
-      }
+      if (catchToken == null) return;
+
       registerError(catchToken, catchToken);
     }
 
