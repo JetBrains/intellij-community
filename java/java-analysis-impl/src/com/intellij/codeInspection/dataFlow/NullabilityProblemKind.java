@@ -64,21 +64,44 @@ public class NullabilityProblemKind<T extends PsiElement> {
   public static final NullabilityProblemKind<PsiElement> passingNullableArgumentToNonAnnotatedParameter =
     new NullabilityProblemKind<>("passingNullableArgumentToNonAnnotatedParameter");
 
+  /**
+   * Creates a new {@link NullabilityProblem} of this kind using given anchor
+   * @param anchor anchor to bind the problem to
+   * @return newly created problem or null if anchor is null
+   */
   @Contract("null -> null; !null -> !null")
   public final NullabilityProblem<T> problem(@Nullable T anchor) {
     return anchor == null ? null : new NullabilityProblem<>(this, anchor);
   }
 
+  /**
+   * Returns the supplied problem with adjusted type parameter or null if supplied problem kind is not this kind
+   *
+   * @param problem problem to check
+   * @return the supplied problem or null
+   */
   @SuppressWarnings("unchecked")
   @Nullable
   public final NullabilityProblem<T> asMyProblem(NullabilityProblem<?> problem) {
     return problem != null && problem.myKind == this ? (NullabilityProblem<T>)problem : null;
   }
 
+  /**
+   * Returns true if the kind of supplied problem is the same as this kind
+   *
+   * @param problem problem to check
+   * @return true if the kind of supplied problem is the same as this kind
+   */
   public final boolean isMyProblem(@Nullable NullabilityProblem<?> problem) {
     return problem != null && problem.myKind == this;
   }
 
+  /**
+   * Executes given consumer if the supplied problem has the same kind as this kind
+   *
+   * @param problem a problem to check
+   * @param consumer a consumer to execute. A problem anchor is supplied as the consumer argument.
+   */
   public void ifMyProblem(NullabilityProblem<?> problem, Consumer<T> consumer) {
     NullabilityProblem<T> myProblem = asMyProblem(problem);
     if (myProblem != null) {
@@ -109,14 +132,6 @@ public class NullabilityProblemKind<T extends PsiElement> {
       return myAnchor;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof NullabilityProblem)) return false;
-      NullabilityProblem<?> problem = (NullabilityProblem<?>)o;
-      return myKind.equals(problem.myKind) && myAnchor.equals(problem.myAnchor);
-    }
-
     @NotNull
     public String getMessage() {
       if (myKind.myNullLiteralMessage == null || myKind.myNormalMessage == null) {
@@ -125,6 +140,14 @@ public class NullabilityProblemKind<T extends PsiElement> {
       return myAnchor instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)myAnchor)
              ? myKind.myNullLiteralMessage
              : myKind.myNormalMessage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof NullabilityProblem)) return false;
+      NullabilityProblem<?> problem = (NullabilityProblem<?>)o;
+      return myKind.equals(problem.myKind) && myAnchor.equals(problem.myAnchor);
     }
 
     @Override
