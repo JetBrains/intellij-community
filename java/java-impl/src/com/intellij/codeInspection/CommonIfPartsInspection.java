@@ -22,6 +22,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -45,15 +46,22 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         final boolean mayChangeSemantics;
         final CommonPartType type;
-        if (ImplicitElse.from(thenStatements, elseStatements, ifStatement) != null || ElseIf.from(ifStatement, thenStatements) != null) {
+        if (ImplicitElse.from(thenStatements, elseStatements, ifStatement) != null) {
           mayChangeSemantics = false;
           type = CommonPartType.COMPLETE_DUPLICATE;
         }
         else {
           ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, isOnTheFly);
-          if (thenElse == null) return;
-          type = thenElse.myCommonPartType;
-          mayChangeSemantics = thenElse.myMayChangeSemantics;
+          if (thenElse != null) {
+            type = thenElse.myCommonPartType;
+            mayChangeSemantics = thenElse.myMayChangeSemantics;
+          } else {
+            ElseIf elseIf = ElseIf.from(ifStatement, thenStatements);
+            if (elseIf == null) return;
+            String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+            holder.registerProblem(ifStatement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new MergeElseIfsFix());
+            return;
+          }
         }
         boolean warning = type != CommonPartType.WITH_VARIABLES_EXTRACT && type != CommonPartType.VARIABLES_ONLY && !mayChangeSemantics;
         ProblemHighlightType highlightType = warning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
@@ -64,6 +72,35 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     };
   }
 
+
+  private static class MergeElseIfsFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement(), PsiIfStatement.class);
+      if(ifStatement == null) return;
+      ElseIf elseIf = ElseIf.from(ifStatement, unwrap(ifStatement.getThenBranch()));
+      if (elseIf == null) return;
+      PsiExpression condition = ifStatement.getCondition();
+      if(condition == null) return;
+      elseIf.myElseBranch.replace(elseIf.myElseIfElseStatement);
+      String newCondition = condition.getText() + "||" + elseIf.myElseIfCondition.getText();
+      PsiReplacementUtil.replaceExpression(condition, newCondition);
+    }
+  }
 
   @Nullable
   private static ExtractionUnit extractHeadCommonStatement(@NotNull PsiStatement thenStmt,
@@ -703,33 +740,38 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
   private static class ElseIf {
     final @NotNull PsiStatement myElseBranch;
-    final @NotNull PsiStatement myElseIfThenStatement;
+    final @NotNull PsiStatement myElseIfElseStatement;
+    final @NotNull PsiExpression myElseIfCondition;
     final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
 
     private ElseIf(@NotNull PsiStatement elseBranch,
-                   @NotNull PsiStatement elseIfThenStatement,
+                   @NotNull PsiStatement elseIfElseStatement,
+                   @NotNull PsiExpression elseIfCondition,
                    @NotNull Map<PsiLocalVariable, String> table) {
       myElseBranch = elseBranch;
-      myElseIfThenStatement = elseIfThenStatement;
+      myElseIfElseStatement = elseIfElseStatement;
+      myElseIfCondition = elseIfCondition;
       mySubstitutionTable = table;
     }
 
     @Nullable
     static ElseIf from(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement[] thenStatements) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
+      if(ifStatement.getCondition() == null) return null;
       PsiIfStatement elseIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
       if (elseIf == null) return null;
-      if (elseIf.getCondition() == null) return null;
-      PsiStatement elseIfThenBranch = elseIf.getThenBranch();
-      if (elseIfThenBranch == null) return null;
-      PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIfThenBranch);
+      PsiExpression elseIfCondition = elseIf.getCondition();
+      if (elseIfCondition == null) return null;
+      PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIf.getThenBranch());
+      PsiStatement elseIfElseBranch = elseIf.getElseBranch();
+      if(elseIfElseBranch == null) return null;
       if (elseIfThen.length != thenStatements.length) return null;
       Set<PsiLocalVariable> variables = new HashSet<>();
       addLocalVariables(variables, Arrays.asList(thenStatements));
       addLocalVariables(variables, Arrays.asList(elseIfThen));
       LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
       if (!branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) return null;
-      return new ElseIf(elseBranch, elseIfThenBranch, equivalence.mySubstitutionTable);
+      return new ElseIf(elseBranch, elseIfElseBranch, elseIfCondition, equivalence.mySubstitutionTable);
     }
   }
 
