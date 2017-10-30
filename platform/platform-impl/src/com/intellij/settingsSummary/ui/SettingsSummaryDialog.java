@@ -16,7 +16,6 @@
 package com.intellij.settingsSummary.ui;
 
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -36,12 +35,11 @@ public class SettingsSummaryDialog extends DialogWrapper {
   private JPanel centerPanel;
   private ComboBox<ProblemType> problemTypeBox;
 
-  public static final ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
-
-  public SettingsSummaryDialog(Project project) {
+  public SettingsSummaryDialog(@NotNull Project project) {
     super(project);
     setTitle("Settings Summary");
-    for(ProblemType problemType: EP_SETTINGS.getExtensions()){
+    ProblemType[] extensions = ProblemType.EP_SETTINGS.getExtensions();
+    for(ProblemType problemType: extensions){
       problemTypeBox.addItem(problemType);
     }
     problemTypeBox.addItemListener(new ItemListener() {
@@ -51,7 +49,7 @@ public class SettingsSummaryDialog extends DialogWrapper {
         summary.setText(item.collectInfo(project));
       }
     });
-    summary.setText(EP_SETTINGS.getExtensions()[0].collectInfo(project));
+    summary.setText(extensions[0].collectInfo(project));
 
     init();
     pack();

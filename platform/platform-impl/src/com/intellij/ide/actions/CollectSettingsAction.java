@@ -17,25 +17,19 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.settingsSummary.ProblemType;
 import com.intellij.settingsSummary.ui.SettingsSummaryDialog;
 
-
-public class CollectSettingsAction extends AnAction{
-
-  public static final ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
-
+public class CollectSettingsAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    new SettingsSummaryDialog(e.getProject()).show();
+    new SettingsSummaryDialog(e.getRequiredData(CommonDataKeys.PROJECT)).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    if (EP_SETTINGS.getExtensions().length == 0) {
-      e.getPresentation().setEnabled(false);
-    }
+    e.getPresentation().setEnabled(e.getProject() != null && ProblemType.EP_SETTINGS.getExtensions().length > 0);
   }
 }
