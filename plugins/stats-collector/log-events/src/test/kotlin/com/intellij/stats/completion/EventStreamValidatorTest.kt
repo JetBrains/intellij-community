@@ -66,14 +66,14 @@ class EventStreamValidatorTest {
     }
 
     @Test
-    fun selected_by_typing() {
+    fun selected_by_typing_relaxed_conditions() {
         val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
                 LogEventFixtures.type_event_current_pos_0_left_id_0,
                 LogEventFixtures.selected_by_typing_0
         )
-        validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
+        validate(list, expectedOut = list.serialize(), expectedErr = emptyList())
     }
 
     @Test

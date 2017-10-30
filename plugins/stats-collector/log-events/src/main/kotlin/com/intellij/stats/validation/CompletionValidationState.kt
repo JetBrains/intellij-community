@@ -18,6 +18,7 @@ package com.intellij.stats.validation
 
 import com.intellij.stats.completion.LogEventVisitor
 import com.intellij.stats.completion.events.*
+import org.jetbrains.annotations.TestOnly
 
 class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
@@ -137,6 +138,11 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
 
     fun isSessionValid(): Boolean {
         return isValid && isFinished
+    }
+
+    @TestOnly
+    fun isCurrentlyValid(): Boolean {
+        return isValid
     }
 
     fun errorMessage(): String {
