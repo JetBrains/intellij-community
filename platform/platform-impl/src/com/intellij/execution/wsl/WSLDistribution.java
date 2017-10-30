@@ -76,6 +76,10 @@ public class WSLDistribution {
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
+  public WSLDistribution(@NotNull WSLDistribution dist) {
+    this(dist.myId, dist.myExeName, dist.myPresentableName);
+  }
+
   WSLDistribution(@NotNull String id, @NotNull String exeName, @NotNull String presentableName) {
     myId = id;
     myExeName = exeName;
