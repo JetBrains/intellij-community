@@ -2335,8 +2335,13 @@ public class Mappings {
       if (modulesDiff.unchanged()) {
         return;
       }
+
+      for (ModuleRepr moduleRepr : modulesDiff.added()) {
+        myDelta.addChangedClass(moduleRepr.name); // need this for integrate
+      }
+      
       for (ModuleRepr removedModule : modulesDiff.removed()) {
-        myDelta.addDeletedClass(removedModule, fileName);
+        myDelta.addDeletedClass(removedModule, fileName); // need this for integrate
         myPresent.affectDependentModules(state, removedModule.name, null, true);
       }
 
@@ -2347,7 +2352,7 @@ public class Mappings {
         boolean affectDeps = false;
         UsageConstraint constraint = null;
 
-        myDelta.addChangedClass(moduleRepr.name);
+        myDelta.addChangedClass(moduleRepr.name); // need this for integrate
 
         if (d.versionChanged()) {
           final int version = moduleRepr.getVersion();

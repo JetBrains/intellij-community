@@ -3,6 +3,7 @@ package org.jetbrains.ether;
 
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.jps.builders.BuildResult;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -84,6 +85,17 @@ public class Java9Test extends IncrementalTestCase {
     buildResult.assertSuccessful();
   }
 
+  public void testIntegrateAfterErrors() {
+    setupInitialProject();
+    setupModules();
+    
+    doBuild(CompileScopeTestBuilder.rebuild().allModules()).assertFailed();
+    modify(0);
+    doBuild(CompileScopeTestBuilder.make().allModules()).assertSuccessful();
+    modify(1);
+    doBuild(CompileScopeTestBuilder.make().allModules()).assertFailed();
+  }
+  
   protected BuildResult doTestBuild(int makesCount) {
     setupModules();
     return super.doTestBuild(makesCount);
