@@ -112,7 +112,9 @@ public abstract class ProjectView {
 
   public abstract boolean isManualOrder(String paneId);
   public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);
-  
+
+  public abstract String getManualOrderOptionText();
+
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
