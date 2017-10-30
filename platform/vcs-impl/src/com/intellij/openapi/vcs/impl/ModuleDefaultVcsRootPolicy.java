@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -111,10 +110,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @Override
   @Nullable
   public Object getMatchContext(final VirtualFile file) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) throw new ProcessCanceledException();
-      return ModuleUtilCore.findModuleForFile(file, myProject);
-    });
+    return ReadAction.compute(() -> myProject.isDisposed() ? null : ModuleUtilCore.findModuleForFile(file, myProject));
   }
 
   @Override
