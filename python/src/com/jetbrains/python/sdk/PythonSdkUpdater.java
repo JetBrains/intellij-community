@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -113,6 +112,17 @@ public class PythonSdkUpdater implements StartupActivity {
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
+
+    final Application application = ApplicationManager.getApplication();
+
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+      application.executeOnPooledThread(() -> {
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
+                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+      });
+    }
+
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
@@ -120,8 +130,6 @@ public class PythonSdkUpdater implements StartupActivity {
     if (project == null) {
       return true;
     }
-
-    final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode()) {
       // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
@@ -179,13 +187,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               catch (InvalidSdkException e) {
-                if (PythonSdkType.isVagrant(sdkInsideTask)
-                    || new CredentialsTypeExChecker() {
-                  @Override
-                  protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-                    return languageContribution.shouldNotifySdkSkeletonFail();
-                  }
-                }.check(sdkInsideTask)) {
+                if (PythonSdkType.isRemote(sdkInsideTask)) {
                   PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
                     final Sdk sdkInsideNotify = PythonSdkType.findSdkByKey(key);
                     if (sdkInsideNotify != null) {

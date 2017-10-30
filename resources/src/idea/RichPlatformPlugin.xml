@@ -386,11 +386,17 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
-    <experimentalFeature id="project.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="true">
+    <experimentalFeature id="package.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="true">
+      <description>New implementation of Package View based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
+    <experimentalFeature id="project.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="true">
+      <description>New implementation of Project View based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
+    <experimentalFeature id="structure.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="false">
       <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
     </experimentalFeature>
-    <experimentalFeature id="structure.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="false">
-      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
+    <experimentalFeature id="inline.browse.button" internalFeature="true" percentOfUsers="0">
+      <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>
 
     <editorActionHandler action="EditorChooseLookupItemReplace" 

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -27,11 +14,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 
 public class OperationChain {
+  private static final Logger LOG = Logger.getInstance(OperationChain.class);
+
   @NotNull
   private final ChainOperation[] myReverseOperations;
   private final RefChainOperation myHeadOperation;
@@ -140,6 +130,18 @@ public class OperationChain {
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = head.getPath()[0];
     return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), myHeadMethodCall, getChainWeight());
+  }
+
+  @NotNull
+  OperationChain removeHeadCast(@NotNull ChainCompletionContext context) {
+    LOG.assertTrue(getHead() instanceof TypeCast);
+    ChainOperation[] newReverseOperations = new ChainOperation[length() - 1];
+    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, length() - 1);
+    return new OperationChain(Objects.requireNonNull(context.resolvePsiClass(myHeadMethodCall.getQualifierDef())),
+                              newReverseOperations,
+                              myHeadMethodCall,
+                              myHeadMethodCall,
+                              getChainWeight());
   }
 
   @Override

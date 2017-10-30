@@ -72,7 +72,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
+  protected static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
@@ -146,6 +146,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         if (!myEnsuredStubElementTypesLoaded) {
           SerializationManager.getInstance().initSerializers();
+          StubIndexImpl.initExtensions();
           myEnsuredStubElementTypesLoaded = true;
         }
         int fileId = DataInputOutputUtil.readINT(in);

@@ -15,8 +15,6 @@
  */
 package git4idea.cherrypick
 
-import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.test.*
 
@@ -81,9 +79,12 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
       on_master
 
       (cherry picked from commit ${shortHash(commit)})""".trimIndent())
+    myRepo.assertCommitted {
+      modified("c.txt")
+    }
     assertSuccessfulNotification("Cherry-pick successful",
                                  "${shortHash(commit)} on_master")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   protected fun cherryPick(hashes: List<String>) {
@@ -107,30 +108,5 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     checkout("feature")
     file.append("feature\n").addCommit("on_feature")
     return commit
-  }
-
-  protected fun assertLastMessage(message: String) {
-    assertEquals("Last commit is incorrect", message, lastMessage())
-  }
-
-  protected fun assertLogMessages(vararg messages: String) {
-    val separator = "\u0001"
-    val actualMessages = git("log -${messages.size} --pretty=%B${separator}").split(separator)
-    for ((index, message) in messages.withIndex()) {
-      assertEquals("Incorrect message", message.trimIndent(), actualMessages[index].trim())
-    }
-  }
-
-  protected fun assertOnlyDefaultChangelist() {
-    val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
-    assertEquals("Only default changelist is expected", 1, changeListManager.changeListsNumber)
-    assertEquals("Default changelist is not active", DEFAULT, changeListManager.defaultChangeList!!.name)
-  }
-
-  protected fun assertChangelistCreated(name: String): LocalChangeList {
-    val changeLists = changeListManager.changeListsCopy
-    val list = changeLists.find { it.name == name }
-    assertNotNull("Didn't find changelist with name '$name' among :$changeLists", list)
-    return list!!
   }
 }

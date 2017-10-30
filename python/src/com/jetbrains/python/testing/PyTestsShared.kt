@@ -52,6 +52,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.getQName
+import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
@@ -182,7 +183,7 @@ object PyTestsLocator : SMTestLocator {
     //TODO: Doc we will not bae able to resolve if different SDK
     val qualifiedName = QualifiedName.fromDottedString(path)
     // Assume qname id good and resolve it directly
-    val element = qualifiedName.resolveToElement(QNameResolveContext(scope.module,
+    val element = qualifiedName.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(scope.module),
                                                                      evalContext = TypeEvalContext.codeAnalysis(
                                                                        project,
                                                                        null),
@@ -279,7 +280,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
       val context = TypeEvalContext.userInitiated(configuration.project, null)
       val workDir = configuration.getWorkingDirectoryAsVirtual()
       val name = QualifiedName.fromDottedString(target)
-      return name.resolveToElement(QNameResolveContext(module, configuration.sdk, context, workDir, true))
+      return name.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.sdk, context, workDir, true))
     }
     return null
   }
@@ -313,7 +314,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
 
     val context = TypeEvalContext.userInitiated(configuration.project, null)
     val qNameResolveContext = QNameResolveContext(
-      module = configuration.module!!,
+      contextAnchor = ModuleBasedContextAnchor(configuration.module!!),
       evalContext = context,
       folderToStart = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe),
       allowInaccurateResult = true
@@ -704,7 +705,9 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     if (sourceElement == null || configuration == null) {
       return false
     }
-    if (sourceElement.get()?.containingFile !is PyFile) {
+    val element = sourceElement.get() ?: return false
+
+    if (element.containingFile !is PyFile && element !is PsiDirectory) {
       return false
     }
 
@@ -716,7 +719,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     }
     else {
       val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                            sourceElement.get()) ?: return false
+                                                                            element) ?: return false
       targetForConfig.first.copyTo(configuration.target)
       // Directory may be set in Default configuration. In that case no need to rewrite it.
       if (configuration.workingDirectory.isNullOrEmpty()) {
@@ -762,7 +765,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
 
             val elementFile = element.containingFile as? PyFile ?: return null
             val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
-            val context = QNameResolveContext(module,
+            val context = QNameResolveContext(ModuleBasedContextAnchor(module),
                                               evalContext = TypeEvalContext.userInitiated(configuration.project,
                                                                                           null),
                                               folderToStart = workingDirectory.virtualFile)

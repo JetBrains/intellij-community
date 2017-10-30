@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -89,7 +74,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiMethod method = (PsiMethod)element;
         if (!method.isVarArgs() ||
-            AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+            AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           return;
         }
         PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -113,7 +98,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
         final PsiType lastArgType = lastArg.getType();
-        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) && 
+        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) &&
                                    !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
           return;
         }

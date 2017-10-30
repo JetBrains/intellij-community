@@ -30,22 +30,27 @@ import static com.intellij.openapi.util.Conditions.not;
 
 public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBase<T, Self>> implements Iterable<T> {
 
-  protected final Meta<T> meta;
-  protected final Function<T, ? extends Iterable<? extends T>> tree;
+  private final Meta<T> myMeta;
+  private final Function<T, ? extends Iterable<? extends T>> myTree;
 
   protected FilteredTraverserBase(@Nullable Meta<T> meta, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
-    this.tree = tree;
-    this.meta = meta == null ? Meta.<T>empty() : meta;
+    this.myTree = tree;
+    this.myMeta = meta == null ? Meta.<T>empty() : meta;
+  }
+
+  @NotNull
+  public Function<T, ? extends Iterable<? extends T>> getTree() {
+    return myTree;
   }
 
   @NotNull
   public final T getRoot() {
-    return meta.roots.iterator().next();
+    return myMeta.roots.iterator().next();
   }
 
   @NotNull
   public final Iterable<? extends T> getRoots() {
-    return meta.roots;
+    return myMeta.roots;
   }
 
   @Override
@@ -64,12 +69,12 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         return children(t);
       }
     };
-    return meta.interceptor.fun(traversal).traversal(getRoots(), adjusted).filter(meta.filter.AND);
+    return myMeta.interceptor.fun(traversal).traversal(getRoots(), adjusted).filter(myMeta.filter.AND);
   }
 
   @NotNull
   public final JBIterable<T> traverse() {
-    return traverse(meta.traversal);
+    return traverse(myMeta.traversal);
   }
 
   @NotNull
@@ -99,22 +104,22 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self reset() {
-    return newInstance(meta.reset());
+    return newInstance(myMeta.reset());
   }
 
   @NotNull
   public final Self withRoot(@Nullable T root) {
-    return newInstance(meta.withRoots(ContainerUtil.createMaybeSingletonList(root)));
+    return newInstance(myMeta.withRoots(ContainerUtil.createMaybeSingletonList(root)));
   }
 
   @NotNull
   public final Self withRoots(@NotNull Iterable<? extends T> roots) {
-    return newInstance(meta.withRoots(roots));
+    return newInstance(myMeta.withRoots(roots));
   }
 
   @NotNull
   public final Self withTraversal(TreeTraversal type) {
-    return newInstance(meta.withTraversal(type));
+    return newInstance(myMeta.withTraversal(type));
   }
 
   /**
@@ -123,7 +128,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self expand(@NotNull Condition<? super T> c) {
-    return newInstance(meta.expand(c));
+    return newInstance(myMeta.expand(c));
   }
 
   /**
@@ -132,22 +137,22 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self regard(@NotNull Condition<? super T> c) {
-    return newInstance(meta.regard(c));
+    return newInstance(myMeta.regard(c));
   }
 
   @NotNull
   public final Self expandAndFilter(Condition<? super T> c) {
-    return newInstance(meta.expand(c).filter(c));
+    return newInstance(myMeta.expand(c).filter(c));
   }
 
   @NotNull
   public final Self expandAndSkip(Condition<? super T> c) {
-    return newInstance(meta.expand(c).filter(not(c)));
+    return newInstance(myMeta.expand(c).filter(not(c)));
   }
 
   @NotNull
   public final Self filter(@NotNull Condition<? super T> c) {
-    return newInstance(meta.filter(c));
+    return newInstance(myMeta.filter(c));
   }
 
   @NotNull
@@ -209,7 +214,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self forceIgnore(@NotNull Condition<? super T> c) {
-    return newInstance(meta.forceIgnore(c));
+    return newInstance(myMeta.forceIgnore(c));
   }
 
   /**
@@ -221,7 +226,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self forceDisregard(@NotNull Condition<? super T> c) {
-    return newInstance(meta.forceDisregard(c));
+    return newInstance(myMeta.forceDisregard(c));
   }
 
   /**
@@ -233,7 +238,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self interceptTraversal(@NotNull Function<TreeTraversal, TreeTraversal> transform) {
-    return newInstance(meta.interceptTraversal(transform));
+    return newInstance(myMeta.interceptTraversal(transform));
   }
 
   /**
@@ -245,17 +250,17 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     if (node == null || isAlwaysLeaf(node)) {
       return JBIterable.empty();
     }
-    else if (meta.regard.next == null && meta.forceDisregard.next == null) {
-      return JBIterable.from(tree.fun(node)).filter(not(meta.forceIgnore.OR));
+    else if (myMeta.regard.next == null && myMeta.forceDisregard.next == null) {
+      return JBIterable.from(myTree.fun(node)).filter(not(myMeta.forceIgnore.OR));
     }
     else {
       // traverse subtree to select accepted children
-      return TreeTraversal.GUIDED_TRAVERSAL(meta.createChildrenGuide(node)).traversal(node, tree);
+      return TreeTraversal.GUIDED_TRAVERSAL(myMeta.createChildrenGuide(node)).traversal(node, myTree);
     }
   }
 
   protected boolean isAlwaysLeaf(@NotNull T node) {
-    return !meta.expand.valueAnd(node);
+    return !myMeta.expand.valueAnd(node);
   }
 
   @NotNull
@@ -271,7 +276,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-           "traversal=" + meta.traversal +
+           "traversal=" + myMeta.traversal +
            '}';
   }
 

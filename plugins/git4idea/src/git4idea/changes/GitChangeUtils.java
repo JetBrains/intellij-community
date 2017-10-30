@@ -360,7 +360,7 @@ public class GitChangeUtils {
     }
     String changeListName = String.format("%s(%s)", commentSubject, revisionNumber);
     return new GitCommittedChangeList(changeListName, fullComment, committerName, thisRevision, commitDate, changes,
-                                      assertNotNull(GitVcs.getInstance(project)), revertable);
+                                      GitVcs.getInstance(project), revertable);
   }
 
   public static long longForSHAHash(String revisionNumber) {

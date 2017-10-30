@@ -40,6 +40,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
+import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
@@ -63,7 +64,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.*;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
@@ -153,7 +154,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     for (VirtualFile root : commitsToIndex.keySet()) {
       TIntHashSet commits = commitsToIndex.get(root);
       if (!commits.isEmpty()) {
-        mySingleTaskController.request(new IndexingRequest(root, commits, isFull));
+        mySingleTaskController.request(new IndexingRequest(root, commits, isFull, false));
       }
     }
     if (isFull) myIndexStorage.unmarkFresh();
@@ -170,6 +171,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myIndexStorage.paths.update(index, detail);
       myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
       // we know the whole graph without timestamps now
+      if (!(detail instanceof VcsIndexableDetails) || ((VcsIndexableDetails)detail).hasRenames()) {
+        myIndexStorage.renames.put(index);
+      }
 
       myIndexStorage.commits.put(index);
     }
@@ -186,6 +190,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.users.flush();
         myIndexStorage.paths.flush();
         myIndexStorage.parents.force();
+        myIndexStorage.renames.flush();
         myIndexStorage.commits.flush();
       }
     }
@@ -209,6 +214,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     return false;
   }
 
+  private boolean hasRenames(int commit) {
+    try {
+      return myIndexStorage == null || myIndexStorage.renames.contains(commit);
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    return false;
+  }
+
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return myRoots.contains(root) && (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
@@ -217,12 +232,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Override
   public synchronized void markForIndexing(int index, @NotNull VirtualFile root) {
     if (isIndexed(index) || !myRoots.contains(root)) return;
-    TIntHashSet set = myCommitsToIndex.get(root);
-    if (set == null) {
-      set = new TIntHashSet();
-      myCommitsToIndex.put(root, set);
-    }
-    set.add(index);
+    TroveUtil.add(myCommitsToIndex, root, index);
+  }
+
+  @Override
+  public synchronized void reindexWithRenames(int commit, @NotNull VirtualFile root) {
+    LOG.assertTrue(myRoots.contains(root));
+    if (hasRenames(commit)) return;
+    mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
   }
 
   @NotNull
@@ -411,10 +428,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
+    private static final String RENAMES = "renames";
     private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
     @NotNull public final PersistentMap<Integer, List<Integer>> parents;
+    @NotNull public final PersistentSet<Integer> renames;
     @NotNull public final VcsLogMessagesTrigramIndex trigrams;
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
@@ -451,6 +470,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
                                           new IntListDataExternalizer(), Page.PAGE_SIZE, version);
         Disposer.register(disposable, () -> catchAndWarn(parents::close));
+
+        File renamesStorage = getStorageFile(INDEX, RENAMES, logId, version);
+        renames = new PersistentSetImpl<>(renamesStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
+        Disposer.register(disposable, () -> catchAndWarn(renames::close));
       }
       catch (Throwable t) {
         Disposer.dispose(disposable);
@@ -487,6 +510,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
+    private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     public MySingleTaskController(@NotNull Project project) {
@@ -504,8 +528,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
+            int previousPriority = setMinimumPriority();
             try {
-
               IndexingRequest request;
               while ((request = popRequest()) != null) {
                 try {
@@ -522,12 +546,27 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             }
             finally {
               taskCompleted(null);
+              resetPriority(previousPriority);
             }
           }
         };
         myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
       });
       return indicator;
+    }
+
+    public void resetPriority(int previousPriority) {
+      if (Thread.currentThread().getPriority() == LOW_PRIORITY) Thread.currentThread().setPriority(previousPriority);
+    }
+
+    public int setMinimumPriority() {
+      int previousPriority = Thread.currentThread().getPriority();
+      try {
+        Thread.currentThread().setPriority(LOW_PRIORITY);
+      } catch (SecurityException ignored) {
+        LOG.debug("Could not set indexing thread priority", ignored);
+      }
+      return previousPriority;
     }
   }
 
@@ -537,14 +576,17 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final VirtualFile myRoot;
     @NotNull private final TIntHashSet myCommits;
     private final boolean myFull;
+    private final boolean myReindex;
 
     @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
 
-    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full) {
+    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
       myRoot = root;
       myCommits = commits;
       myFull = full;
+      myReindex = reindex;
+      LOG.assertTrue(!myFull || !myReindex);
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
@@ -562,7 +604,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           }
           else {
             IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
-              if (isIndexed(c)) {
+              if (myReindex ? hasRenames(c) : isIndexed(c)) {
                 myOldCommits.incrementAndGet();
                 return false;
               }
@@ -582,7 +624,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
       }
       finally {
-        myNumberOfTasks.get(myRoot).decrementAndGet();
+        if (!myReindex) myNumberOfTasks.get(myRoot).decrementAndGet();
 
         if (isIndexed(myRoot)) {
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
@@ -614,12 +656,23 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void scheduleReindex() {
-      LOG.debug("Schedule reindexing of " + (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) + " commits in " + myRoot.getName());
-      myCommits.forEach(value -> {
-        markForIndexing(value, myRoot);
-        return true;
-      });
-      scheduleIndex(false);
+      LOG.debug("Schedule reindexing of " +
+                (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) +
+                " commits in " +
+                myRoot.getName());
+      if (myReindex) {
+        myCommits.forEach(value -> {
+          reindexWithRenames(value, myRoot);
+          return true;
+        });
+      }
+      else {
+        myCommits.forEach(value -> {
+          markForIndexing(value, myRoot);
+          return true;
+        });
+        scheduleIndex(false);
+      }
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator) throws VcsException {
@@ -633,7 +686,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
           VcsLogPersistentIndex.this.storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();
-        }, true);
+        }, !myReindex);
 
         displayProgress(indicator);
       });

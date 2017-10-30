@@ -51,10 +51,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -426,16 +423,19 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     Processor<PsiFile> processor = file -> {
       ProgressManager.checkCanceled();
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+      Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         if (!file.isValid()) {
-          return;
+          return true;
         }
         VirtualFile virtualFile = file.getVirtualFile();
         if (!scope.contains(virtualFile)) {
-          LOG.error(file.getName()+"; scope: "+scope+"; "+virtualFile);
+          LOG.info(file.getName() + "; scope: " + scope + "; " + virtualFile);
+          return true;
         }
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, localTools, globalSimpleTools, map);
-      })) {
+        return true;
+      }, "Inspect code is not available until indices are ready");
+      if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }
 
@@ -530,11 +530,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void inspectFile(@NotNull final PsiFile file,
-                              @NotNull final TextRange range,
-                              @NotNull final InspectionManager inspectionManager,
-                              @NotNull List<Tools> localTools,
-                              @NotNull List<Tools> globalSimpleTools,
-                              @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
+                           @NotNull final TextRange range,
+                           @NotNull final InspectionManager inspectionManager,
+                           @NotNull List<Tools> localTools,
+                           @NotNull List<Tools> globalSimpleTools,
+                           @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
 
@@ -936,6 +936,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    progressIndicator.setIndeterminate(false);
 
     final SearchScope searchScope = ReadAction.compute(scope::toSearchScope);
     final TextRange range;
@@ -1030,7 +1031,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }, ModalityState.defaultModalityState());
       return;
     }
-    
+
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
       CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null, false);

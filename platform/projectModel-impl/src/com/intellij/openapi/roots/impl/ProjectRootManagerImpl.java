@@ -37,7 +37,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -401,8 +400,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     clearScopesCaches();
 
     incModificationCount();
-
-    PsiManager.getInstance(myProject).dropPsiCaches();
 
     fireRootsChangedEvent(fileTypes);
 

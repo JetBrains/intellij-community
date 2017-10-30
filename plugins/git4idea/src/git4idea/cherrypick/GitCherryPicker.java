@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -60,9 +59,9 @@ public class GitCherryPicker extends VcsCherryPicker {
       myGit.cherryPick(repository, commit.asString(), autoCommit, ArrayUtil.toObjectArray(listeners, GitLineHandlerListener.class)),
       result -> isNothingToCommitMessage(result),
       commit -> createCommitMessage(commit),
-      originalChanges -> GitUtil.findCorrespondentLocalChanges(ChangeListManager.getInstance(myProject), originalChanges),
       true,
-      repository -> cancelCherryPick(repository));
+      repository -> cancelCherryPick(repository)
+    );
     applyProcess.execute();
   }
 

@@ -39,7 +39,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>(3);
     final PsiMethod method = (PsiMethod)infos[1];
-    if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
+    if (AnnotationUtil.isAnnotated(method, IGNORE, 0)) {
       fixes.add(new RemoveIgnoreAndRename(method));
     }
     if (TestUtils.isJUnit4TestMethod(method)) {

@@ -19,13 +19,15 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextSupport;
 import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.JBUI.ScaleContextSupport;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 /**
@@ -93,7 +95,7 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
     updateIcon(myTopLeft, ctx, null);
   }
 
-  private void updateIcon(Icon icon, ScaleContext ctx, Runnable r) {
+  private static void updateIcon(Icon icon, ScaleContext ctx, Runnable r) {
     if (icon instanceof ScaleContextAware) ((ScaleContextAware)icon).updateScaleContext(ctx);
     if (r != null) r.run();
   }
@@ -108,10 +110,37 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
     final int bottomSize = myCroppedBottom.getIconHeight();
     final int topSize = myCroppedTop.getIconHeight();
 
-    myTopLeft.paintIcon(c, g, x, y);
-    myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
-    myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
-    myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
+    int delta = myTopLeft.getIconHeight() + myBottomLeft.getIconHeight() - height;
+    if (delta > 0) { // Corner icons are overlapping. Need to handle this
+      Shape clip = g.getClip();
+
+      int topHeight = myTopLeft.getIconHeight() - delta / 2;
+      Area top = new Area(new Rectangle2D.Float(x, y, width, topHeight));
+      if (clip != null) {
+        top.intersect(new Area(clip));
+      }
+      g.setClip(top);
+
+      myTopLeft.paintIcon(c, g, x, y);
+      myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
+
+      int bottomHeight = myBottomLeft.getIconHeight() - delta + delta / 2;
+      Area bottom = new Area(new Rectangle2D.Float(x, y + topHeight, width, bottomHeight));
+      if (clip != null) {
+        bottom.intersect(new Area(clip));
+      }
+      g.setClip(bottom);
+
+      myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
+      myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
+
+      g.setClip(clip);
+    } else {
+      myTopLeft.paintIcon(c, g, x, y);
+      myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
+      myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
+      myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
+    }
 
     fill(g, myCroppedTop, x, y, myTopLeft.getIconWidth(), width - myTopRight.getIconWidth(), true);
     fill(g, myCroppedBottom, x, y + height - bottomSize, myBottomLeft.getIconWidth(), width - myBottomRight.getIconWidth(), true);

@@ -127,7 +127,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                      @Nullable final VcsRevisionNumber revision,
                                      @NotNull final VirtualFile file) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
-    assert vcs != null;
 
     VcsRevisionNumber actualRevision = revision != null ? revision : vcs.getDiffProvider().getCurrentRevision(file);
 
@@ -212,7 +211,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   @Nullable
   private List<VcsFileRevision> loadFileHistory(@NotNull FilePath filePath) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
-    if (vcs == null) return null;
     GitHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
 
     VcsAbstractHistorySession cachedSession = myCache.getFull(filePath, vcs.getKeyInstanceMethod(), historyProvider);

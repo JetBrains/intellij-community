@@ -23,14 +23,14 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -48,6 +48,14 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
+
+  private static final CallMapper<String> KNOWN_EXCEPTIONAL_SIDE_EFFECTS = new CallMapper<String>()
+    .register(CallMatcher.staticCall("java.util.regex.Pattern", "compile"), "java.util.regex.PatternSyntaxException")
+    .register(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException");
 
   /**
    * @noinspection PublicField
@@ -160,16 +168,10 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
                                        PsiMethod method,
                                        @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType)) {
-        return;
-      }
+      if (PsiType.VOID.equals(returnType)) return;
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) {
-        return;
-      }
+      if (aClass == null) return;
+      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return;
       if (PropertyUtil.isSimpleGetter(method)) {
         registerMethodCallOrRefError(call, aClass);
         return;
@@ -178,6 +180,8 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
+
+      if (isKnownExceptionalSideEffectCaught(call)) return;
 
       if (isPureMethod(method)) {
         registerMethodCallOrRefError(call, aClass);
@@ -190,15 +194,27 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (!myMethodMatcher.matches(method) && annotation == null) {
-        return;
-      }
-
-      if (isHardcodedException(call)) {
-        return;
-      }
+      if (!myMethodMatcher.matches(method) && annotation == null) return;
+      if (isHardcodedException(call)) return;
 
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
+      String exception = null;
+      if (call instanceof PsiMethodCallExpression) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodCallExpression)call);
+      }
+      else if (call instanceof PsiMethodReferenceExpression) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodReferenceExpression)call);
+      }
+      if (exception == null) return false;
+      PsiClass exceptionClass = JavaPsiFacade.getInstance(call.getProject()).findClass(exception, call.getResolveScope());
+      if (exceptionClass == null) return false;
+      PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(call, PsiTryStatement.class);
+      if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), call, true)) return false;
+      return ExceptionUtils.getExceptionTypesHandled(parentTry).stream()
+        .anyMatch(type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
     private boolean isHardcodedException(PsiExpression expression) {

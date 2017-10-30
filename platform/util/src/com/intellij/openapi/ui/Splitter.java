@@ -52,7 +52,7 @@ public class Splitter extends JPanel implements Splittable {
    * /-------/
    */
   private boolean myVerticalSplit;
-  private boolean myHonorMinimumSize = false;
+  private boolean myHonorMinimumSize;
   private final float myMinProp;
   private final float myMaxProp;
 

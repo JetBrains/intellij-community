@@ -44,7 +44,7 @@ public class SubsequentFieldAligner extends ChildAlignmentStrategyProvider {
     TokenSet.create(JavaTokenType.IDENTIFIER),
     JavaJspElementType.WHITE_SPACE_BIT_SET,
     ElementType.JAVA_COMMENT_BIT_SET,
-    TokenSet.create(JavaTokenType.EQ),
+    TokenSet.EMPTY,
     TokenSet.create(JavaElementType.FIELD)
   );
 
@@ -58,7 +58,7 @@ public class SubsequentFieldAligner extends ChildAlignmentStrategyProvider {
     mySettings = settings;
   }
 
-  private AlignmentStrategy newAlignmentStrategy() {
+  private static AlignmentStrategy newAlignmentStrategy() {
     return AlignmentStrategy.createAlignmentPerTypeStrategy(TYPES_TO_ALIGN, JavaElementType.FIELD, true);
   }
 

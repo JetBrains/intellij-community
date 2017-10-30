@@ -29,8 +29,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public interface MavenServerIndexer extends Remote {
-  String SEARCH_TERM_COORDINATES = "u"; // see org.sonatype.nexus.index.ArtifactInfo
-  String SEARCH_TERM_CLASS_NAMES = "c";
+  String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
 
   int createIndex(@NotNull String indexId,
                   @NotNull String repositoryId,

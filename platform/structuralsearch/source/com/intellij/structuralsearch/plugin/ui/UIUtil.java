@@ -107,12 +107,12 @@ public class UIUtil {
     return createOptionLine(new JComponent[]{option});
   }
 
-  public static void setContent(final Editor editor, String val, final int from, final int end, final Project project) {
-    final String value = val != null ? val : "";
+  public static void setContent(final Editor editor, String text) {
+    final String value = text != null ? text : "";
 
     CommandProcessor.getInstance().executeCommand(
-      project, () -> ApplicationManager.getApplication().runWriteAction(
-        () -> editor.getDocument().replaceString(from, (end == -1) ? editor.getDocument().getTextLength() : end, value)),
+      editor.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+        () -> editor.getDocument().replaceString(0, editor.getDocument().getTextLength(), value)),
       MODIFY_EDITOR_CONTENT, SS_GROUP);
   }
 

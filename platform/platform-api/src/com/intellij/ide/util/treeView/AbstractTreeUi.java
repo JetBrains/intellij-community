@@ -1075,6 +1075,7 @@ public class AbstractTreeUi {
   }
 
   private void updateRow(final int row, @NotNull final TreeUpdatePass pass) {
+    LOG.debug("updateRow: ", row, " - ", pass);
     invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.updateRow") {
       @Override
       public void perform() {
@@ -3635,7 +3636,14 @@ public class AbstractTreeUi {
 
     if (descriptor.getChildrenSortingStamp() >= getComparatorStamp() && !forceSort) return;
     if (!children.isEmpty()) {
-      getBuilder().sortChildren(myNodeComparator, node, (ArrayList<TreeNode>)children);
+      try {
+        getBuilder().sortChildren(myNodeComparator, node, (ArrayList<TreeNode>)children);
+      }
+      catch (IllegalArgumentException exception) {
+        StringBuilder sb = new StringBuilder("cannot sort children");
+        children.forEach(child -> sb.append('\n').append(child));
+        throw new IllegalArgumentException(sb.toString(), exception);
+      }
     }
 
     if (updateStamp) {

@@ -88,6 +88,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myThreeComponentsSplitter = new ThreeComponentsSplitter();
     Disposer.register(this, myThreeComponentsSplitter);
     myBuildsList = new JBList<>();
+    myBuildsList.setModel(new DefaultListModel<>());
     myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
     myBuildsList.installCellRenderer(obj -> {
       AbstractViewManager.BuildInfo buildInfo = (AbstractViewManager.BuildInfo)obj;
@@ -343,8 +344,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       if (isInitializeStarted.compareAndSet(false, true)) {
         UIUtil.invokeLaterIfNeeded(() -> {
           myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-          DefaultListModel<AbstractViewManager.BuildInfo> listModel = new DefaultListModel<>();
-          myBuildsList.setModel(listModel);
           myBuildsList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {

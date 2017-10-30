@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -197,22 +198,22 @@ public class PlatformTestUtil {
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
-    DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
+    DefaultMutableTreeNode dmt = (DefaultMutableTreeNode)root;
 
-    final Object userObject = defaultMutableTreeNode.getUserObject();
+    Object userObject = dmt.getUserObject();
     String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
-    final StringBuilder buff = new StringBuilder();
+    StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
 
-    final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-    if (!defaultMutableTreeNode.isLeaf()) {
+    boolean expanded = tree.isExpanded(new TreePath(dmt.getPath()));
+    if (!dmt.isLeaf() && (tree.isRootVisible() || dmt != tree.getModel().getRoot() || dmt.getChildCount() > 0)) {
       buff.append(expanded ? "-" : "+");
     }
 
-    final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+    boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(dmt.getPath()));
     if (withSelection && selected) {
       buff.append("[");
     }
@@ -907,7 +908,9 @@ public class PlatformTestUtil {
                        : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
 
       if (textA != null && textB != null) {
-        Assert.assertEquals(fileAfter.getPath(), textA, textB);
+        if (!StringUtil.equals(textA, textB)) {
+          throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
+        }
       }
       else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());

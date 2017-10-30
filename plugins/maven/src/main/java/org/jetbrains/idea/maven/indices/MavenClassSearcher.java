@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -32,6 +33,16 @@ import java.util.regex.PatternSyntaxException;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
+
+  @Override
+  protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
+    Pair<String, Query> patternAndQuery = preparePatternAndQuery(pattern);
+
+    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
+    Set<MavenArtifactInfo> infos = m.search(patternAndQuery.second, maxResult);
+
+    return new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
+  }
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();

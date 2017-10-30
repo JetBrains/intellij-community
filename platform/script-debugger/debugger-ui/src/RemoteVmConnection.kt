@@ -55,9 +55,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     val result = AsyncPromise<Vm>()
     result
       .done {
-        vm = it
-        setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
-        startProcessing()
+        connectionSucceeded(it, address)
       }
       .rejected {
         if (it !is ConnectException) {
@@ -87,6 +85,12 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
       }
     }
     return result
+  }
+
+  protected fun connectionSucceeded(it: Vm, address: InetSocketAddress) {
+    vm = it
+    setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
+    startProcessing()
   }
 
   protected open fun doOpen(result: AsyncPromise<Vm>, address: InetSocketAddress, stopCondition: Condition<Void>?) {

@@ -37,10 +37,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +158,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       getModel().setEnabled(myPresentation.isEnabled());
       setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
-      setFocusable(false);
+      setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
@@ -282,10 +280,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return createActionPopup(getDataContext(), this, onDispose);
     }
 
-    private ComboBoxAction getMyAction() {
-      return ComboBoxAction.this;
-    }
-
     protected DataContext getDataContext() {
       return DataManager.getInstance().getDataContext(this);
     }
@@ -319,15 +313,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void updateTooltipText(String description) {
       String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
       setToolTipText(!tooltip.isEmpty() ? tooltip : null);
-    }
-
-    @Override
-    public void updateUI() {
-      super.updateUI();
-      //if (!UIUtil.isUnderGTKLookAndFeel()) {
-      //  setBorder(UIUtil.getButtonBorder());
-      //}
-      //((JComponent)getParent().getParent()).revalidate();
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
@@ -364,33 +349,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public Insets getInsets() {
-      final Insets insets = super.getInsets();
-      insets.right += getArrowIcon(isEnabled()).getIconWidth();
-      return insets;
-    }
-
-    @Override
-    public Insets getInsets(Insets insets) {
-      final Insets result = super.getInsets(insets);
-      result.right += getArrowIcon(isEnabled()).getIconWidth();
-      return result;
-    }
-
-    @Override
     public boolean isOpaque() {
       return !isSmallVariant();
     }
 
     @Override
     public Dimension getPreferredSize() {
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? JBUI.scale(10) + getArrowIcon(isEnabled()).getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant() && !UIUtil.isUnderDefaultMacTheme()) {
-        width += JBUI.scale(4);
-        if (UIUtil.isUnderWin10LookAndFeel()) {
-          width += JBUI.scale(8);
-        }
+      boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      int width = isEmpty ? JBUI.scale(10) : super.getPreferredSize().width;
+      width += getArrowIcon(isEnabled()).getIconWidth();
+      if (isSmallVariant()) {
+        int extraWidth = UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(4);
+        width += extraWidth;
       }
 
       int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(24) : JBUI.scale(19);
@@ -408,12 +378,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
+
+    @Override
     public void paint(Graphics g) {
       Dimension size = getSize();
 
       if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
         super.paint(g);
-      } else {
+      }
+      else {
         UISettings.setupAntialiasing(g);
         GraphicsUtil.setupRoundedBorderAntialiasing(g);
 
@@ -479,7 +455,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
 
-      Insets insets = super.getInsets();
+      Insets insets = getInsets();
       Icon icon = getArrowIcon(isEnabled());
 
       int x = size.width - icon.getIconWidth();
@@ -504,6 +480,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();
+    }
+
+    @Override public void updateUI() {
+      super.updateUI();
+      updateButtonSize();
     }
 
     protected void updateButtonSize() {

@@ -146,6 +146,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private int myLoadingHash;
   private JPanel myTitlePanel;
   private String[] myMessageState = new String[2];
+  private UsageViewPresentation myUsageViewPresentation;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -520,20 +521,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceComponent.setRows(1);
     mySearchTextArea = new SearchTextArea(mySearchComponent, true, true);
     myReplaceTextArea = new SearchTextArea(myReplaceComponent, false, false);
-    DocumentAdapter documentAdapter = new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
-        myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
-
-        if (myBalloon == null) return;
-        if (e.getDocument() == mySearchComponent.getDocument()) {
-          scheduleResultsUpdate();
-        }
-      }
-    };
-    mySearchComponent.getDocument().addDocumentListener(documentAdapter);
-    myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
     mySearchTextArea.setMultilineEnabled(false);
     myReplaceTextArea.setMultilineEnabled(false);
 
@@ -588,14 +575,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
     registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), Registry.is("ide.find.as.popup.editable.code")) {
+    myUsageViewPresentation = new UsageViewPresentation();
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, Registry.is("ide.find.as.popup.editable.code")) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(myResultsPreviewTable.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
       }
     };
     Disposer.register(myDisposable, myUsagePreviewPanel);
-    Runnable updatePreviewRunnable = () -> {
+    final Runnable updatePreviewRunnable = () -> {
       if (Disposer.isDisposed(myDisposable)) return;
       int[] selectedRows = myResultsPreviewTable.getSelectedRows();
       final List<UsageInfo> selection = new SmartList<>();
@@ -609,6 +597,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       String title = getTitle(file);
       myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selection.size()));
+      FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, FindSettings.getInstance().isShowResultsInSeparateView(), myHelper.getModel().clone());
       myUsagePreviewPanel.updateLayout(selection);
       if (myUsagePreviewPanel.getCannotPreviewMessage(selection) == null && title != null) {
         myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(title, false, new JBInsets(8, 0, 0, 0)).setShowLine(false));
@@ -621,6 +610,25 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (e.getValueIsAdjusting()) return;
       ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
     });
+    DocumentAdapter documentAdapter = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
+        myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
+
+        if (myBalloon == null) return;
+        if (e.getDocument() == mySearchComponent.getDocument()) {
+          scheduleResultsUpdate();
+        }
+        if (e.getDocument() == myReplaceComponent.getDocument()) {
+          applyTo(myHelper.getModel(), false);
+          ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
+        }
+      }
+    };
+    mySearchComponent.getDocument().addDocumentListener(documentAdapter);
+    myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
+
     mySearchRescheduleOnCancellationsAlarm = new Alarm();
 
     JBSplitter splitter = new JBSplitter(true, .33f);
@@ -960,16 +968,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
+    FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findSettings.isShowResultsInSeparateView(), findInProjectModel);
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
-        final UsageViewPresentation presentation =
-          FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myHelper.getModel().clone());
         final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
 
         final FindUsagesProcessPresentation processPresentation =
-          FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+          FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, myUsageViewPresentation);
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 

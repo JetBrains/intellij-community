@@ -33,6 +33,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       NonOpaquePanel contentComponent = new NonOpaquePanel();
       contentComponent.setContent(myUI.getComponent());
-      contentComponent.setFocusCycleRoot(true);
+      // If screen reader is active, allow TAB/Shift-TAB navigate outside the contents panel.
+      contentComponent.setFocusCycleRoot(!ScreenReader.isActive());
 
       myComponent.add(contentComponent, BorderLayout.CENTER);
     }
@@ -195,7 +197,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       if (trackFocus) {
         Content current = getSelectedContent();
         if (current != null) {
-          setSelectedContent(current, true, true, !forcedFocus);
+          setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
           result.setDone();
@@ -259,25 +261,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       int newSize = myContents.size();
       if (newSize > 0 && trackSelection) {
-        ActionCallback result = new ActionCallback();
         if (indexToSelect > -1) {
           final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
+              ActionCallback result = new ActionCallback();
               setSelectedContentCB(toSelect).notify(result);
+              return result;
             }
             else {
               addSelectedContent(toSelect);
-              result.setDone();
             }
           }
         }
-        return result;
       }
       else {
         mySelection.clear();
-        return ActionCallback.DONE;
       }
+      return ActionCallback.DONE;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {

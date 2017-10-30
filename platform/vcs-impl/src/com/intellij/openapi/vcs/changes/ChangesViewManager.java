@@ -23,7 +23,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -105,7 +104,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
+    return project.getComponent(ChangesViewI.class);
   }
 
   public ChangesViewManager(@NotNull Project project, @NotNull ChangesViewContentManager contentManager) {

@@ -7,7 +7,6 @@ from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 
 TRACE_MESSAGE = "Trace called"
 
-
 def tracing():
     print(TRACE_MESSAGE)
 
@@ -19,7 +18,10 @@ def call_tracing():
 def bar(a, b):
     return a + b
 
+IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
 
+
+@unittest.skipIf(not IS_PY36, reason='Test requires Python 3.6')
 class TestInsertCode(unittest.TestCase):
     lines_separator = "---Line tested---"
 

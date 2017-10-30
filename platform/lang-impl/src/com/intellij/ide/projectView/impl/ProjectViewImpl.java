@@ -364,7 +364,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     myId2Pane.remove(idToRemove);
     mySelectInTargets.remove(idToRemove);
-    viewSelectionChanged();
+    viewSelectionChanged(false);
   }
 
   private synchronized void doAddUninitializedPanes() {
@@ -530,7 +530,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
     });
-    viewSelectionChanged();
+    viewSelectionChanged(false);
   }
 
   private void ensurePanesLoaded() {
@@ -554,18 +554,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private boolean viewSelectionChanged() {
-    return viewSelectionChanged(false);
-  }
-
-  private boolean viewSelectionChanged(boolean fromContentManager) {
+  private void viewSelectionChanged(boolean fromContentManager) {
     Content content = getContentManager().getSelectedContent();
-    if (content == null) return false;
-    final String id = content.getUserData(ID_KEY);
+    if (content == null) return;
+    String id = content.getUserData(ID_KEY);
     String subId = content.getUserData(SUB_ID_KEY);
-    if (content.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return false;
+    if (Objects.equals(id, myCurrentViewId) && Objects.equals(subId, myCurrentViewSubId)) return;
     final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
-    if (newPane == null) return false;
+    if (newPane == null) return;
     newPane.setSubId(subId);
     showPane(newPane);
     if (fromContentManager) {
@@ -576,7 +572,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
-    return true;
   }
 
   private void createToolbarActions() {
@@ -1635,6 +1630,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isShowURL(String paneId) {
+    return Registry.is("project.tree.structure.show.url");
+  }
+
+  @Override
   public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
     if (isGlobalOptions()) {
       getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
@@ -1725,13 +1725,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       AsyncProjectViewSupport support = viewPane.getAsyncSupport();
       if (support != null) {
         List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
-        if (!visitors.isEmpty()) {
-          // TODO: start visiting after updating
-          support.accept(visitors, array -> {
-            for (TreePath path : array) viewPane.myTree.makeVisible(path);
-            viewPane.myTree.setSelectionPaths(array);
-          });
-        }
+        if (!visitors.isEmpty()) support.accept(visitors, paths -> TreeUtil.selectPaths(viewPane.myTree, paths));
         return;
       }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();

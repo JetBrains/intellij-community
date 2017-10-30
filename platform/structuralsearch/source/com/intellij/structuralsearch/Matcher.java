@@ -86,7 +86,6 @@ public class Matcher {
     if (StringUtil.isQuotedString(constraint)) {
       // keep old configurations working, also useful for testing
       final MatchOptions myMatchOptions = new MatchOptions();
-      myMatchOptions.setLooseMatching(true);
       myMatchOptions.setFileType(fileType);
       myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(constraint));
       return new Matcher(project, myMatchOptions);
@@ -121,16 +120,16 @@ public class Matcher {
   private static final Object lastMatchDataLock = new Object();
 
   public static void validate(Project project, MatchOptions options) {
+    final CompiledPattern pattern = PatternCompiler.compilePattern(project, options);
     synchronized (lastMatchDataLock) {
       final LastMatchData data = new LastMatchData();
-      data.lastPattern =  PatternCompiler.compilePattern(project, options);
+      data.lastPattern = pattern;
       data.lastOptions = options;
       lastMatchData = new SoftReference<>(data);
     }
-
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
-    profile.checkSearchPattern(project, options);
+    profile.checkSearchPattern(pattern);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
@@ -173,7 +172,7 @@ public class Matcher {
     }
   }
 
-  public boolean matchNode(PsiElement element) {
+  public boolean matchNode(@NotNull PsiElement element) {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     final MatchOptions options = matchContext.getOptions();
     final CompiledPattern compiledPattern = prepareMatching(sink, options);

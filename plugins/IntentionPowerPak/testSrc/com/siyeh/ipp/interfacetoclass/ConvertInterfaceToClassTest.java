@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE.txt file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.interfacetoclass;
 
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -15,13 +13,27 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testInnerInterface() { doTest(); }
   public void testStaticMethods() { doTest(); }
   public void testInterfaceExtendsClass() { doTest(); }
+
   public void testFunctionalExpressions() {
     try {
       doTest();
       fail("Conflict not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("() -> {...} in Test will not compile after converting class <b><code>FunctionalExpressions</code></b> to a class", e.getMessage());
+      assertEquals("() -> {...} in Test will not compile after converting interface <b><code>FunctionalExpressions</code></b> to a class",
+                   e.getMessage());
+    }
+  }
+
+  public void testExtendsConflict() {
+    try {
+      doTest();
+      fail("Conflict not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("class <b><code>AaaImpl</code></b> implementing interface <b><code>Aaa</code></b> already extends class " +
+                   "<b><code>Bbb</code></b> and will not compile after converting interface <b><code>Aaa</code></b> to a class",
+                   e.getMessage());
     }
   }
 

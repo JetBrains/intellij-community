@@ -357,7 +357,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory View",
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
                            AllIcons.Debugger.MemoryView.Active, null);
 
         memoryViewContent.setCloseable(false);

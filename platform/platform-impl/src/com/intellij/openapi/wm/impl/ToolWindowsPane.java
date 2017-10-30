@@ -32,7 +32,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -788,7 +788,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public void run() {
       try {
         final ToolWindowAnchor anchor = myInfo.getAnchor();
-        class MySplitter extends Splitter implements UISettingsListener {
+        class MySplitter extends OnePixelSplitter implements UISettingsListener {
           @Override
           public void uiSettingsChanged(UISettings uiSettings) {
             if (anchor == ToolWindowAnchor.LEFT) {

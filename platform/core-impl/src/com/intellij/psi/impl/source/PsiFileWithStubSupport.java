@@ -42,5 +42,11 @@ public interface PsiFileWithStubSupport extends PsiFile {
    * @return StubbedSpine for accessing stubbed PSI, which can be backed up by stubs or AST
    */
   @NotNull
-  StubbedSpine getStubbedSpine();
+  default StubbedSpine getStubbedSpine() {
+    StubTree tree = getStubTree();
+    if (tree == null) {
+      throw new UnsupportedOperationException("Please implement getStubbedSpine method");
+    }
+    return tree.getSpine();
+  }
 }

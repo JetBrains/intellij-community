@@ -373,10 +373,13 @@ public class TreeModelBuilder {
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode node) {
     ChangesBrowserNode collapsedNode = node;
-    while (collapsedNode.getUserObject() instanceof FilePath && collapsedNode.getChildCount() == 1) {
+    while (collapsedNode.getChildCount() == 1) {
       ChangesBrowserNode child = (ChangesBrowserNode)collapsedNode.getChildAt(0);
-      if (!(child.getUserObject() instanceof FilePath) || child.isLeaf()) break;
-      collapsedNode = child;
+
+      ChangesBrowserNode collapsed = collapseParentWithOnlyChild(collapsedNode, child);
+      if (collapsed == null) break;
+
+      collapsedNode = collapsed;
     }
 
     if (collapsedNode != node) {
@@ -393,6 +396,38 @@ public class TreeModelBuilder {
       ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
       collapseDirectories(model, child);
     }
+  }
+
+  @Nullable
+  private static ChangesBrowserNode collapseParentWithOnlyChild(@NotNull ChangesBrowserNode parent, @NotNull ChangesBrowserNode child) {
+    if (child.isLeaf()) return null;
+
+    Object parentUserObject = parent.getUserObject();
+    Object childUserObject = child.getUserObject();
+
+    if (parentUserObject instanceof FilePath &&
+        childUserObject instanceof FilePath) {
+      return child;
+    }
+
+    if (parent instanceof ChangesBrowserModuleNode &&
+        childUserObject instanceof FilePath) {
+      FilePath parentPath = ((ChangesBrowserModuleNode)parent).getModuleRoot();
+      FilePath childPath = (FilePath)childUserObject;
+      if (!parentPath.equals(childPath)) return null;
+
+      parent.remove(0);
+
+      //noinspection unchecked
+      Enumeration<ChangesBrowserNode> children = child.children();
+      for (ChangesBrowserNode childNode : ContainerUtil.toList(children)) {
+        parent.add(childNode);
+      }
+
+      return parent;
+    }
+
+    return null;
   }
 
   @NotNull

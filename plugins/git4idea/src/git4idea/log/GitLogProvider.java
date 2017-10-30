@@ -88,7 +88,7 @@ public class GitLogProvider implements VcsLogProvider {
     myUserRegistry = userRegistry;
     myRefSorter = new GitRefManager(myRepositoryManager);
     myVcsObjectsFactory = factory;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
   }
 
   @NotNull
@@ -336,13 +336,26 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+    throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return;
+    }
+
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+  }
+
+  @Override
+  public void readFullDetails(@NotNull VirtualFile root,
+                              @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
                               boolean fast) throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, fast);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes,
+                                        fast ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
   }
 
   @NotNull

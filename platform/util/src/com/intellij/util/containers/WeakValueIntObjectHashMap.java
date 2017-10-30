@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class WeakValueIntObjectHashMap<V> {
+class WeakValueIntObjectHashMap<V> {
   private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<MyReference<V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 

@@ -1278,10 +1278,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s105 = "class B {} class A extends B { } class C {} class D extends C {}";
     assertEquals("extends match", 1, findMatchesCount(s105, "class '_ extends '_:[ref( \"class B {}\" )] {}"));
 
-    final String s107 = "interface IA {} interface IB extends IA { } interface IC extends IB {} interface ID extends IC {}" +
-                        "class A implements IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
+    final String s107 = "interface IA {}" +
+                        "interface IB extends IA {}" +
+                        "interface IC extends IB {} " +
+                        "interface ID extends IC {}" +
+                        "class A implements IA {}" +
+                        "class B extends A {}" +
+                        "class C extends B implements IC {}" +
+                        "class D extends C {}";
     assertEquals("extends navigation match", 2, findMatchesCount(s107, "class '_ extends 'Type:+A {}"));
-    assertEquals("implements navigation match", 3, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("implements navigation match", 5, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
 
     final String s109 = "interface I {}" +
                         "interface I2 extends I {}" +
@@ -2421,6 +2427,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern6 = "try { '_St1*; } catch ('_E1 | '_E2 '_e) { '_St2*; }";
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
+
+    String pattern7 = "try { '_St1*; } catch ('E '_e) { '_St2*; }";
+    final List<MatchResult> matches = findMatches(source, pattern7, StdFileTypes.JAVA);
+    assertEquals(3, matches.size());
+    assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
   }
 
   public void testFindAsserts() {

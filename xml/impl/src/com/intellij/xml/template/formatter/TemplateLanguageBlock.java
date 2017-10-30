@@ -20,6 +20,7 @@ import com.intellij.formatting.templateLanguages.BlockWithParent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -66,7 +67,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     boolean mergeFromMarkup = false;
     for (PsiElement markupElement : markupElements) {
       if (TemplateFormatUtil.isErrorElement(markupElement)) {
-        throw new FragmentedTemplateException();
+        throw new FragmentedTemplateException((PsiErrorElement)markupElement);
       }
       if (!(FormatterUtil.containsWhiteSpacesOnly(markupElement.getNode()))) {
         Block rootBlock = myBuilder

@@ -107,10 +107,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
      *         used from 0 or more than 1 other classes.
      */
     @Nullable
-    public PsiClass getUsageClass(final PsiMethod method) {
-      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
-        return null;
-      }
+    public PsiClass findUsageClass(final PsiMethod method) {
       ProgressManager.getInstance().runProcess(() -> {
         final Query<PsiReference> query = MethodReferencesSearch.search(method);
         if (!query.forEach(this)) {
@@ -135,8 +132,11 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       if (method.getNameIdentifier() == null) {
         return;
       }
+      if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
+        return;
+      }
       final UsageProcessor usageProcessor = new UsageProcessor();
-      final PsiClass usageClass = usageProcessor.getUsageClass(method);
+      final PsiClass usageClass = usageProcessor.findUsageClass(method);
       if (usageClass == null) {
         return;
       }

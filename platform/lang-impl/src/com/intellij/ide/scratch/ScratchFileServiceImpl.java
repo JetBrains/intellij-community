@@ -315,12 +315,12 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       @NotNull
       @Override
       public String getDisplayName() {
-        return "Scratches and Consoles";
+        return ScratchesNamedScope.NAME;
       }
 
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        RootType rootType = file.getFileType() == ScratchFileType.INSTANCE ? service.getRootType(file) : null;
+        RootType rootType = service.getRootType(file);
         return  rootType != null && !rootType.isHidden();
       }
 

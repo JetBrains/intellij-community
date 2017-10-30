@@ -88,6 +88,8 @@ public abstract class ProjectView {
 
   public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
+  public abstract boolean isShowURL(String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);

@@ -48,6 +48,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
@@ -167,6 +168,7 @@ public class UsageViewImpl implements UsageView {
   private boolean expandingAll;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
+  @Nullable private Runnable myRerunActivity;
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -548,7 +550,9 @@ public class UsageViewImpl implements UsageView {
         }
       });
       tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-      myPreviewSplitter.setSecondComponent(tabbedPane);
+      JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
+      panel.add(tabbedPane, BorderLayout.CENTER);
+      myPreviewSplitter.setSecondComponent(panel);
     }
     else {
       myPreviewSplitter.setProportion(1);
@@ -1047,8 +1051,13 @@ public class UsageViewImpl implements UsageView {
   @SuppressWarnings("WeakerAccess") // used in rider
   protected void doReRun() {
     myChangesDetected = false;
-    com.intellij.usages.UsageViewManager.getInstance(getProject()).
-      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
+    if (myRerunActivity != null) {
+      myRerunActivity.run();
+    }
+    else {
+      com.intellij.usages.UsageViewManager.getInstance(getProject()).
+        searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
+    }
   }
 
   private void reset() {
@@ -1102,7 +1111,7 @@ public class UsageViewImpl implements UsageView {
   public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
     int selectionRow = myTree.getMinSelectionRow();
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    usages.forEach(u -> myUsageNodes.remove(u));
+    usages.forEach(myUsageNodes::remove);
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -1318,6 +1327,11 @@ public class UsageViewImpl implements UsageView {
       myTree.expandPath(usagePath.getParentPath());
       TreeUtil.selectPath(myTree, usagePath);
     }
+  }
+
+  @Override
+  public void setReRunActivity(@NotNull Runnable runnable) {
+    myRerunActivity = runnable;
   }
 
   @Override

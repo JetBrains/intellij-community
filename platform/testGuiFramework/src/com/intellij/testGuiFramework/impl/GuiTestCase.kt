@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
@@ -40,7 +41,9 @@ import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -129,7 +132,11 @@ open class GuiTestCase {
    * @needToKeepDialog is true if no need to wait when dialog is closed
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: JDialogFixture.() -> Unit) {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean = false,
+             timeout: Long = defaultTimeout,
+             needToKeepDialog: Boolean = false,
+             func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
     if (!needToKeepDialog) dialog.waitTillGone()
@@ -248,7 +255,7 @@ open class GuiTestCase {
                                                                           timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture {
     if (target() is Container) {
       val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) {
-        it.text == boundedLabelText
+        it.text == boundedLabelText && it.isShowing
       }
       val component = boundedLabel.labelFor
       if (component is ComponentWithBrowseButton<*>) {
@@ -256,6 +263,18 @@ open class GuiTestCase {
       }
     }
     throw UnableToFindComponent("ComponentWithBrowseButton with labelFor=$boundedLabelText")
+  }
+
+  fun <S, C : Component> ComponentFixture<S, C>.treeTable(timeout: Long = defaultTimeout): TreeTableFixture {
+    if (target() is Container) {
+      val table = waitUntilFound(guiTestRule.robot(), target() as Container,
+                                            typeMatcher(TreeTable::class.java) { true },
+                                            timeout.toFestTimeout()
+      )
+      return TreeTableFixture(guiTestRule.robot(), table)
+    }
+    else throw UnsupportedOperationException(
+      "Sorry, unable to find inspections tree with ${target()} as a Container")
   }
 
   fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, timeout: Long = defaultTimeout): JSpinnerFixture {
@@ -503,6 +522,22 @@ open class GuiTestCase {
     if (target() is Container) func(MessagesFixture.findByTitle(guiTestRule.robot(), target() as Container, title, timeout.toFestTimeout()))
     else throw UnableToFindComponent("Message")
   }
+
+  /**
+   * Finds a JBLabel component in hierarchy of context component by a label name and returns fixture for it.
+   *
+   * @timeout in seconds to find JBLabel component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.label(labelName: String, timeout: Long = defaultTimeout): JLabelFixture =
+    if (target() is Container) {
+      val jbLabel = waitUntilFound(
+        guiTestRule.robot(), target() as Container,
+        typeMatcher(JBLabel::class.java) { it.isShowing && (it.text == labelName || labelName in it.text) },
+        timeout.toFestTimeout())
+      JLabelFixture(guiTestRule.robot(), jbLabel)
+    }
+    else throw UnableToFindComponent("JBLabel")
 
   @Suppress("FunctionName")
   private fun <S, C : Component> ComponentFixture<S, C>.UnableToFindComponent(component: String): ComponentLookupException {

@@ -26,7 +26,7 @@
           <text value=""/>
         </properties>
       </component>
-      <component id="94f42" class="com.intellij.ui.JBProgressBar" binding="myProgressBar" default-binding="true">
+      <component id="94f42" class="javax.swing.JProgressBar" binding="myProgressBar" default-binding="true">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <minimum-size width="225" height="-1"/>

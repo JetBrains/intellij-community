@@ -34,7 +34,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.enumeration;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * @author Sergey.Malenkov
@@ -115,12 +117,12 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        node.update();
+        boolean updated = node.update();
         if (structure) {
           node.invalidate();
           treeStructureChanged(path, null, null);
         }
-        else {
+        else if (updated) {
           treeNodesChanged(path, null, null);
         }
       });
@@ -131,11 +133,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final Object getRoot() {
     if (disposed || !isValidThread()) return null;
     if (!root.isValid()) {
-      Node validRoot = getValidRoot();
-      LOG.debug("old root: " + root.get());
-      LOG.debug("new root: " + validRoot);
-      LOG.debug(new IllegalStateException());
-      root.set(validRoot);
+      Node newRoot = getValidRoot();
+      root.set(newRoot);
+      LOG.debug("root updated: ", newRoot);
     }
     return root.get();
   }
@@ -143,11 +143,13 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private Node getNode(Object object) {
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
-    if (!node.children.isValid() && node.isNodeAncestor(root.get())) {
+    if (!node.isNodeAncestor(root.get())) return null; // node was removed before
+    if (!node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
       if (oldChildren != null) oldChildren.forEach(child -> child.setParent(null));
       if (newChildren != null) newChildren.forEach(child -> child.setParent(node));
+      LOG.debug("children updated: ", node);
     }
     return node;
   }
@@ -155,9 +157,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   @Override
   public final List<TreeNode> getChildren(Object object) {
     Node node = getNode(object);
-    if (node == null || !node.children.isValid()) return null;
-    List<Node> list = node.children.get();
-    return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
+    List<Node> list = node == null ? null : node.children.get();
+    if (list == null || list.isEmpty()) return emptyList();
+    list.forEach(Node::update);
+    return unmodifiableList(list);
   }
 
   @Override
@@ -268,14 +271,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       if (list != null) list.forEach(Node::dispose);
     }
 
-    private void update() {
+    private boolean update() {
       NodeDescriptor descriptor = getDescriptor();
-      if (descriptor != null) descriptor.update();
+      return descriptor != null && descriptor.update();
     }
 
     private void invalidate() {
       if (getAllowsChildren()) {
         children.invalidate();
+        LOG.debug("node invalidated: ", this);
         getChildren().forEach(Node::invalidate);
       }
     }
@@ -339,7 +343,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     @Override
     public boolean isLeaf() {
-      return children.isValid() && super.isLeaf();
+      // root node should not be a leaf node when it is not visible in a tree
+      // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
+      return getParent() != null && children.isValid() && super.isLeaf();
     }
 
     @Override

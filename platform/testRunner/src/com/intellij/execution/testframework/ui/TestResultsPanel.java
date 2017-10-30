@@ -51,6 +51,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   protected final TestConsoleProperties myProperties;
   protected TestStatusLine myStatusLine;
   private JBSplitter mySplitter;
+  private JComponent myToolbarComponent;
 
   protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions, TestConsoleProperties properties,
                              @NotNull String splitterProportionProperty, float splitterDefaultProportion) {
@@ -68,7 +69,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
       @Override
       public void stateChanged() {
         final boolean splitVertically = splitVertically();
-        myStatusLine.setPreferredSize(splitVertically);
         mySplitter.setOrientation(splitVertically);
         revalidate();
         repaint();
@@ -85,8 +85,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     myToolbarPanel = createToolbarPanel();
     Disposer.register(this, myToolbarPanel);
     boolean splitVertically = splitVertically();
-    myStatusLine.setPreferredSize(splitVertically);
-    
     mySplitter = createSplitter(mySplitterProportionProperty,
                                 mySplitterDefaultProportion,
                                 splitVertically);
@@ -106,13 +104,26 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     mySplitter.setFirstComponent(leftPanel);
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
-    myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    rightPanel.add(createOutputTab(myConsole, myConsoleActions), BorderLayout.CENTER);
+    JPanel outputTab = new JPanel(new BorderLayout());
+    myConsole.setFocusable(true);
+    final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT), new SideBorder(editorBackground, SideBorder.LEFT)));
+    outputTab.add(myConsole, BorderLayout.CENTER);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TestRunnerResults", new DefaultActionGroup(myConsoleActions), false);
+    myToolbarComponent = toolbar.getComponent();
+    outputTab.add(myToolbarComponent, BorderLayout.EAST);
+    rightPanel.add(outputTab, BorderLayout.CENTER);
     mySplitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, myToolbarComponent.getPreferredSize().width));
   }
 
   private boolean splitVertically() {
@@ -149,19 +160,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
       return view.getData(dataId);
     }
     return null;
-  }
-
-  private static JComponent createOutputTab(JComponent console,
-                                            AnAction[] consoleActions) {
-    JPanel outputTab = new JPanel(new BorderLayout());
-    console.setFocusable(true);
-    final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-    console.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
-                                         new SideBorder(editorBackground, SideBorder.LEFT)));
-    outputTab.add(console, BorderLayout.CENTER);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TestRunnerResults", new DefaultActionGroup(consoleActions), false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
-    return outputTab;
   }
 
   @Override

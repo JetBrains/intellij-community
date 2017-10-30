@@ -11,5 +11,7 @@ public class SimplifiableJUnit40Assertion {
         <warning descr="'assertEquals()' can be simplified to 'assertFalse()'">assertEquals</warning>(false, new Object() != null);
         <warning descr="'assertTrue()' can be simplified to 'fail()'">assertTrue</warning>(false);
         <warning descr="'assertFalse()' can be simplified to 'fail()'">assertFalse</warning>("foo", true);
+        Boolean b = true;
+        <warning descr="'assertTrue()' can be simplified to 'assertEquals()'">assertTrue</warning>(b == true);
     }
 }

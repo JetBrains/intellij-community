@@ -37,10 +37,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -348,26 +351,36 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       ToolWindowManager toolWindowManager =  ToolWindowManager.getInstance(myProject);
       if (!(toolWindowManager instanceof ToolWindowManagerImpl)
           || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
-          || myWindow.getType() == ToolWindowType.FLOATING) {
+          || myWindow.getType() == ToolWindowType.FLOATING
+          || myWindow.getType() == ToolWindowType.WINDOWED) {
         return new Insets(0, 0, 0, 0);
       }
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();
+      boolean isSplitter = false;
+      boolean isFirstInSplitter = false;
+      boolean isVerticalSplitter = false;
       while(parent != null) {
         if (parent instanceof Splitter) {
           Splitter splitter = (Splitter)parent;
-          boolean isFirst = splitter.getFirstComponent() == component;
-          boolean isVertical = splitter.isVertical();
-          return new Insets(0,
-                            anchor == ToolWindowAnchor.RIGHT || (!isVertical && !isFirst) ? 1 : 0,
-                            (isVertical && isFirst) ? 1 : 0,
-                            anchor == ToolWindowAnchor.LEFT || (!isVertical && isFirst) ? 1 : 0);
+          isSplitter = true;
+          isFirstInSplitter = splitter.getFirstComponent() == component;
+          isVerticalSplitter = splitter.isVertical();
+          break;
         }
         component = parent;
         parent = component.getParent();
       }
-      return new Insets(0, anchor == ToolWindowAnchor.RIGHT ? 1 : 0, anchor == ToolWindowAnchor.TOP ? 1 : 0, anchor == ToolWindowAnchor.LEFT ? 1 : 0);
+
+      int top =
+        isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && myInfo.isSplit() && isVerticalSplitter
+        ? -1
+        : 0;
+      int left = anchor == ToolWindowAnchor.RIGHT && (!isSplitter || isVerticalSplitter || isFirstInSplitter) ? 1 : 0;
+      int bottom = 0;
+      int right = anchor == ToolWindowAnchor.LEFT && (!isSplitter || isVerticalSplitter || !isFirstInSplitter) ? 1 : 0;
+      return new Insets(top, left, bottom, right);
     }
 
     @Override
@@ -821,5 +834,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions) {
     myAdditionalGearActions = additionalGearActions;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleInternalDecorator();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleInternalDecorator extends AccessibleJPanel {
+    @Override
+    public String getAccessibleName() {
+      String name = super.getAccessibleName();
+      if (name == null) {
+        String title = StringUtil.defaultIfEmpty(myToolWindow.getTitle(), myToolWindow.getStripeTitle());
+        title = StringUtil.defaultIfEmpty(title, myToolWindow.getId());
+        name = StringUtil.notNullize(title) + " Tool Window";
+      }
+      return name;
+    }
   }
 }

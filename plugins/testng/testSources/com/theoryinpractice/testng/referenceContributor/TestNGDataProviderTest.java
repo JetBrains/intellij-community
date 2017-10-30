@@ -65,7 +65,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public void testNothing(){}
 
   @Test(dataProvider = "data")
-  public void test(final String path, final String... results) {
+  public void checkDataProviders(final String path, final String... results) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");

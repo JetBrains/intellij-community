@@ -122,7 +122,7 @@ public class ExternalDiffTool {
     }
 
     if (!errorRequests.isEmpty()) {
-      new Notification("diff", "Can't load some changes", StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
+      new Notification("Diff", "Can't Load Some Changes", StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
     }
 
     return requests;

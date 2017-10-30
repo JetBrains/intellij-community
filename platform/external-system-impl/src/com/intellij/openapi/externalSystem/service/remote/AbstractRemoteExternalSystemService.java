@@ -64,7 +64,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
 
   @Override
-  public void setSettings(@NotNull S settings) throws RemoteException {
+  public void setSettings(@NotNull S settings) {
     mySettings.set(settings);
   }
 
@@ -74,7 +74,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
   
   @Override
-  public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) throws RemoteException {
+  public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener listener) {
     myListener.set(listener);
   }
 
@@ -84,14 +84,14 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   }
 
   @Override
-  public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+  public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
     Set<ExternalSystemTaskId> tasks = myTasksInProgress.get(id.getType());
     return tasks != null && tasks.contains(id);
   }
 
   @NotNull
   @Override
-  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
     return myTasksInProgress;
   }
 }

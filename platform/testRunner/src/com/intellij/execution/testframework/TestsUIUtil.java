@@ -238,28 +238,32 @@ public class TestsUIUtil {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
                                                       : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
+          myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +
+                          (ignoredCount > 0 ? ", ignored: " + ignoredCount : notStartedCount > 0 ? ", not started: " + notStartedCount : "");
           myText = passedCount + " passed, " + failedCount + " failed" + notStartedMessage;
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
           myTitle = "Tests Ignored";
+          myBalloonText = "Tests ignored: " + ignoredCount + ", passed: " + passedCount;
           myText = passedCount + " passed, " + ignoredCount + " ignored";
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
+          myBalloonText = "Failed to start: " + notStartedCount + ", passed: " + passedCount;
           myText = passedCount + " passed, " + notStartedCount + " not started";
           myType = MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+          myBalloonText = "Tests passed: " + passedCount;
           myText = passedCount + " passed";
           myType = MessageType.INFO;
         }
         if (myComment != null) {
           myText += " " + myComment;
         }
-        myBalloonText = myTitle + ": " + myText;
       }
       return this;
     }

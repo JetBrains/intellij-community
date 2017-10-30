@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -211,7 +211,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private boolean underProject(final File file) {
     return ReadAction.compute(() -> {
       final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-      return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
+      return (vf == null) || ServiceManager.getService(myProject, FileIndexFacade.class).isInContent(vf);
     });
   }
 

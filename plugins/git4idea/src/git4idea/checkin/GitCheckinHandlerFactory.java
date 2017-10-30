@@ -172,7 +172,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private ReturnResult checkUserName() {
       final Project project = myPanel.getProject();
       GitVcs vcs = GitVcs.getInstance(project);
-      assert vcs != null;
 
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
       Map<VirtualFile, Couple<String>> defined = getDefinedUserNames(project, affectedRoots, false);

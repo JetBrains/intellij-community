@@ -16,6 +16,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,9 @@ public class ScopeChooserUtils {
       namedScope = new ProjectFilesScope();
     }
     GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
-    if (namedScope instanceof ProjectFilesScope || namedScope instanceof ProjectProductionScope) {
+    if (namedScope instanceof ProjectFilesScope ||
+        namedScope instanceof ProjectProductionScope ||
+        namedScope instanceof ScratchesNamedScope) {
       return scope;
     }
     return intersectWithContentScope(project, scope);

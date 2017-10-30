@@ -428,7 +428,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public VirtualFileSystemEntry findChildById(int id, boolean cachedOnly) {
-    if (ArrayUtil.indexOf(myData.myChildrenIds, id) >= 0) {
+    int i;
+    synchronized (myData) {
+      i = ArrayUtil.indexOf(myData.myChildrenIds, id);
+    }
+    if (i >= 0) {
       return VfsData.getFileById(id, this);
     }
     if (cachedOnly) return null;

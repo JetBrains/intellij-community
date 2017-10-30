@@ -34,6 +34,11 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.ui.Gray.xD0;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
+
 public class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
@@ -45,9 +50,13 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
   public TipPanel() {
     setLayout(new BorderLayout());
+    if (isWin10OrNewer && !isUnderDarcula()) {
+      setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
+    }
     myBrowser = TipUIUtil.createTipBrowser();
+    myBrowser.setBorder(JBUI.Borders.empty(8, 12));
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
-    scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 1, 0, 1, 0));
+    scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
 
     myPoweredByLabel = new JBLabel();
@@ -88,6 +97,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   private void setTip(TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
     TipUIUtil.openTipInBrowser(tip, browser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
+    myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
     settings.setLastTip(lastTip);
   }
 

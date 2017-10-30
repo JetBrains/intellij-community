@@ -5,6 +5,7 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.TargetAwareRunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -19,6 +20,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -204,24 +206,27 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ExecutionTargetProvider[] providers = Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME);
     LinkedHashSet<ExecutionTarget> result = new LinkedHashSet<>();
 
+    Set<ExecutionTarget> specifiedTargets = new THashSet<>();
     doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
-      if (each.second != null) {
-        result.add(each.second);
-      }
-      else {
-        for (ExecutionTargetProvider eachTargetProvider : providers) {
-          result.addAll(eachTargetProvider.getTargets(myProject, each.first));
+      for (ExecutionTargetProvider eachTargetProvider : providers) {
+        List<ExecutionTarget> supportedTargets = eachTargetProvider.getTargets(myProject, each.first);
+
+        if (each.second != null) {
+          if (supportedTargets.contains(each.second)) {
+            result.add(each.second);
+            specifiedTargets.add(each.second);
+            break;
+          }
+        }
+        else {
+          result.addAll(supportedTargets);
         }
       }
       return true;
     });
+
     if (!result.isEmpty()) {
-      doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
-        if (each.second != null) {
-          result.retainAll(Collections.singleton(each.second));
-        }
-        return true;
-      });
+      specifiedTargets.forEach(it -> result.retainAll(Collections.singleton(it)));
       if (result.isEmpty()) {
         result.add(MULTIPLE_TARGETS);
       }
@@ -247,7 +252,10 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       if (eachConfiguration instanceof CompoundRunConfiguration) {
         for (Map.Entry<RunConfiguration, ExecutionTarget> subConfigWithTarget
           : ((CompoundRunConfiguration)eachConfiguration).getConfigurationsWithTargets().entrySet()) {
-          toProcess.add(Pair.create(runManager.getSettings(subConfigWithTarget.getKey()), subConfigWithTarget.getValue()));
+          RunnerAndConfigurationSettingsImpl subSettings = runManager.getSettings(subConfigWithTarget.getKey());
+          if (subSettings != null /* it might have been already deleted */) {
+            toProcess.add(Pair.create(subSettings, subConfigWithTarget.getValue()));
+          }
         }
       }
       else {
@@ -267,5 +275,11 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     updateActiveTarget();
+  }
+  
+  @TestOnly
+  public void reset() {
+    mySavedActiveTargetId = null;
+    myActiveTarget = null;
   }
 }

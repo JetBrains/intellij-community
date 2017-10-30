@@ -15,9 +15,6 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,66 +38,6 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UseOfJDBCDriverClassVisitor();
-  }
-
-  private static class UseOfJDBCDriverClassVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitVariable(@NotNull PsiVariable variable) {
-      super.visitVariable(variable);
-      final PsiType type = variable.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClass resolveClass = PsiUtil.resolveClassInClassTypeOnly(type.getDeepComponentType());
-      if (resolveClass == null) {
-        return;
-      }
-      if (resolveClass.isEnum() || resolveClass.isInterface() ||
-          resolveClass.isAnnotationType()) {
-        return;
-      }
-      if (resolveClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(resolveClass, "java.sql.Driver")) {
-        return;
-      }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      registerError(typeElement);
-    }
-
-    @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression newExpression) {
-      super.visitNewExpression(newExpression);
-      final PsiType type = newExpression.getType();
-      if (type == null) {
-        return;
-      }
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClass resolveClass = ((PsiClassType)type).resolve();
-      if (resolveClass == null) {
-        return;
-      }
-      if (resolveClass.isEnum() || resolveClass.isInterface() ||
-          resolveClass.isAnnotationType()) {
-        return;
-      }
-      if (resolveClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(resolveClass, "java.sql.Driver")) {
-        return;
-      }
-      registerNewExpressionError(newExpression);
-    }
+    return new UseOfConcreteInheritorVisitor("java.sql.Driver");
   }
 }

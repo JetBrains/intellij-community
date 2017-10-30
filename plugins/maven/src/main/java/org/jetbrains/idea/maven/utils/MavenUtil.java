@@ -327,10 +327,18 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath)) {
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath) || !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
           String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
           if (relativePath != null) {
             relativePath = StringUtil.trimEnd(relativePath, "/");
+            if (!FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
+              if (relativePath.isEmpty()) {
+                relativePath = parentFile.getName();
+              }
+              else {
+                relativePath += "/" + parentFile.getName();
+              }
+            }
 
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);

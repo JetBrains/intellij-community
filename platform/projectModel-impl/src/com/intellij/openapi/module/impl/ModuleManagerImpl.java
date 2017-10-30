@@ -90,7 +90,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected final MessageBus myMessageBus;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
-  private LinkedHashSet<ModulePath> myModulePathsToLoad;
+  private Set<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
   private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
 
@@ -170,11 +170,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   @TestOnly
-  public void loadStateFromModulePaths(LinkedHashSet<ModulePath> modulePaths) {
+  public void loadStateFromModulePaths(@NotNull Set<ModulePath> modulePaths) {
     loadState(modulePaths);
   }
 
-  private void loadState(LinkedHashSet<ModulePath> modulePaths) {
+  private void loadState(@NotNull Set<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = modulePaths;
     Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
@@ -232,13 +232,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myModulePathsToLoad.clear();
   }
 
-  protected void unloadNewlyAddedModulesIfPossible(Set<ModulePath> modulesToLoad, List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+  protected void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 
   @NotNull
   // returns mutable linked hash set
-  public static LinkedHashSet<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
-    final LinkedHashSet<ModulePath> paths = new LinkedHashSet<>();
+  public static Set<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
+    Set<ModulePath> paths = new LinkedHashSet<>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
       for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
@@ -362,7 +362,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
-  private void reportError(List<ModuleLoadingErrorDescription> errors, ModulePath modulePath, Exception e) {
+  private void reportError(@NotNull List<ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
     errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
@@ -485,7 +485,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   @Override
   @NotNull
-  public Module newModule(@NotNull String filePath, final String moduleTypeId) {
+  public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleTypeId);
@@ -546,10 +546,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public Comparator<Module> moduleDependencyComparator() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     deliverPendingEvents();
-    if (myCachedModuleComparator == null) {
-      myCachedModuleComparator = myModuleModel.moduleDependencyComparator();
+    Comparator<Module> cachedModuleComparator = myCachedModuleComparator;
+    if (cachedModuleComparator == null) {
+      myCachedModuleComparator = cachedModuleComparator = myModuleModel.moduleDependencyComparator();
     }
-    return myCachedModuleComparator;
+    return cachedModuleComparator;
   }
 
   protected void deliverPendingEvents() {
@@ -605,7 +606,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     });
   }
 
-  public static void commitModelWithRunnable(@NotNull ModifiableModuleModel model, Runnable runnable) {
+  public static void commitModelWithRunnable(@NotNull ModifiableModuleModel model, @NotNull Runnable runnable) {
     ((ModuleModelImpl)model).commitWithRunnable(runnable);
   }
 
@@ -703,7 +704,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     @NotNull
-    public Module newModule(@NotNull String filePath, final String moduleTypeId) {
+    public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
       return newModule(filePath, moduleTypeId, null);
     }
 
@@ -782,7 +783,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       });
     }
 
-    private void initModule(@NotNull ModuleEx module, @Nullable Runnable beforeComponentCreation) {
+    private void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
       module.init(beforeComponentCreation);
       myModulesCache = null;
       myModules.put(module.getName(), module);
@@ -809,11 +810,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       return null;
     }
 
+    @NotNull
     private Comparator<Module> moduleDependencyComparator() {
       DFSTBuilder<Module> builder = new DFSTBuilder<>(moduleGraph(true));
       return builder.comparator();
     }
 
+    @NotNull
     private Graph<Module> moduleGraph(final boolean includeTests) {
       return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
         @Override
@@ -834,7 +837,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       ModifiableModelCommitter.multiCommit(Collections.emptyList(), this);
     }
 
-    private void commitWithRunnable(Runnable runnable) {
+    private void commitWithRunnable(@NotNull Runnable runnable) {
       myManager.commitModel(this, runnable);
       clearRenamingStuff();
     }
@@ -881,7 +884,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     @Override
-    public String[] getModuleGroupPath(Module module) {
+    public String[] getModuleGroupPath(@NotNull Module module) {
       return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
     }
 
@@ -904,7 +907,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {
+  private void commitModel(@NotNull ModuleModelImpl moduleModel, @NotNull Runnable runnable) {
     myModuleModel.myModulesCache = null;
     incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -940,9 +943,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         }
       }
 
-      if (runnable != null) {
-        runnable.run();
-      }
+      runnable.run();
 
       final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
       final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
@@ -1004,6 +1005,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return myModuleModel.hasModuleGroups();
   }
 
+  @NotNull
   @Override
   public Collection<ModuleDescription> getAllModuleDescriptions() {
     Module[] modules = getModules();
@@ -1015,6 +1017,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return descriptions;
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return Collections.unmodifiableCollection(myUnloadedModules.values());
@@ -1069,7 +1072,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
 
-  public void setModuleGroupPath(Module module, String[] groupPath) {
+  public void setModuleGroupPath(@NotNull Module module, @Nullable String[] groupPath) {
     myModuleModel.setModuleGroupPath(module, groupPath);
   }
 }

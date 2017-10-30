@@ -46,8 +46,7 @@ public class ExperimentalFeature {
     if (percentOfUsers >= 100) return true;
     if (app.isUnitTestMode()) return false;
 
-    int hash = PermanentInstallationID.get().hashCode();
-    int salt = id.hashCode();
-    return Math.floorMod(hash + salt, 100) <= percentOfUsers;
+    int hash = (PermanentInstallationID.get() + id).hashCode();
+    return Math.floorMod(hash, 100) <= percentOfUsers;
   }
 }

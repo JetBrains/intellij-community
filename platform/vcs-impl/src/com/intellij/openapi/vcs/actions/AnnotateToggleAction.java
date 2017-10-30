@@ -120,6 +120,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
                                  final boolean warnAboutSuspiciousAnnotations) {
+    if (project.isDisposed() || editor.isDisposed()) return;
+
     if (warnAboutSuspiciousAnnotations) {
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);

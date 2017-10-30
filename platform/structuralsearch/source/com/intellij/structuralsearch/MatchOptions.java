@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
@@ -25,26 +11,26 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class MatchOptions implements JDOMExternalizable {
-  @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
 
+  private final Map<String, MatchVariableConstraint> variableConstraints;
   private boolean looseMatching;
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
-  private boolean resultIsContextMatch = false;
-  private FileType myFileType = null;
-  private Language myDialect = null;
+  private boolean resultIsContextMatch;
+  private FileType myFileType;
+  private Language myDialect;
 
   private SearchScope scope;
-  private String pattern = "";
-  @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
+  private String pattern;
 
   private String myPatternContext;
 
+  @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
   @NonNls private static final String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
   @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
@@ -54,23 +40,47 @@ public class MatchOptions implements JDOMExternalizable {
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
 
-  public void addVariableConstraint(MatchVariableConstraint constraint) {
-    if (variableConstraints==null) {
-      variableConstraints = new LinkedHashMap<>();
-    }
-    variableConstraints.put( constraint.getName(), constraint );
+  public MatchOptions() {
+    variableConstraints = new LinkedHashMap<>();
+    looseMatching = true;
+    resultIsContextMatch = false;
+    myFileType = null;
+    myDialect = null;
+    pattern = "";
+  }
+
+  MatchOptions(MatchOptions options) {
+    variableConstraints = new LinkedHashMap<>(options.variableConstraints.size());
+    options.variableConstraints.forEach((key, value) -> variableConstraints.put(key, value.copy())); // deep copy
+    looseMatching = options.looseMatching;
+    recursiveSearch = options.recursiveSearch;
+    caseSensitiveMatch = options.caseSensitiveMatch;
+    resultIsContextMatch = options.resultIsContextMatch;
+    myFileType = options.myFileType;
+    myDialect = options.myDialect;
+    scope = options.scope;
+    pattern = options.pattern;
+    myPatternContext = options.myPatternContext;
+  }
+
+  public MatchOptions copy() {
+    return new MatchOptions(this);
+  }
+
+  public void addVariableConstraint(@NotNull MatchVariableConstraint constraint) {
+    variableConstraints.put(constraint.getName(), constraint);
   }
 
   public boolean hasVariableConstraints() {
-    return variableConstraints!=null;
+    return !variableConstraints.isEmpty();
   }
 
   public void clearVariableConstraints() {
-    variableConstraints=null;
+    variableConstraints.clear();
   }
 
   public void retainVariableConstraints(Collection<String> names) {
-    if (variableConstraints == null || variableConstraints.isEmpty()) {
+    if (variableConstraints.isEmpty()) {
       return;
     }
     final THashSet<String> nameSet = new THashSet<>(names);
@@ -83,14 +93,10 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public MatchVariableConstraint getVariableConstraint(String name) {
-    if (variableConstraints!=null) {
-      return variableConstraints.get(name);
-    }
-    return null;
+    return variableConstraints.get(name);
   }
 
   public Set<String> getVariableConstraintNames() {
-    if (variableConstraints==null) return Collections.emptySet();
     return Collections.unmodifiableSet(variableConstraints.keySet());
   }
 
@@ -128,7 +134,7 @@ public class MatchOptions implements JDOMExternalizable {
     this.looseMatching = looseMatching;
   }
 
-  public void setSearchPattern(String text) {
+  public void setSearchPattern(@NotNull String text) {
     pattern = text;
   }
 
@@ -175,13 +181,11 @@ public class MatchOptions implements JDOMExternalizable {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
     }
 
-    if (variableConstraints!=null) {
-      for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
-        if (matchVariableConstraint.isArtificial()) continue;
-        final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
-        element.addContent(infoElement);
-        matchVariableConstraint.writeExternal(infoElement);
-      }
+    for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
+      if (matchVariableConstraint.isArtificial()) continue;
+      final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
+      element.addContent(infoElement);
+      matchVariableConstraint.writeExternal(infoElement);
     }
   }
 
@@ -255,22 +259,11 @@ public class MatchOptions implements JDOMExternalizable {
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
     // @TODO support scope
 
-    if (pattern != null ? !pattern.equals(matchOptions.pattern) : matchOptions.pattern != null) return false;
-    if (variableConstraints != null ? !variableConstraints.equals(matchOptions.variableConstraints) : matchOptions.variableConstraints !=
-                                                                                                      null) {
-      return false;
-    }
-    if (myFileType != matchOptions.myFileType) {
-      return false;
-    }
-
-    if (myDialect != null ? !myDialect.equals(matchOptions.myDialect) : matchOptions.myDialect != null) {
-      return false;
-    }
-
-    if (myPatternContext != null ? !myPatternContext.equals(matchOptions.myPatternContext) : matchOptions.myPatternContext != null) {
-      return false;
-    }
+    if (!pattern.equals(matchOptions.pattern)) return false;
+    if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
+    if (myFileType != matchOptions.myFileType) return false;
+    if (myDialect != null ? !myDialect.equals(matchOptions.myDialect) : matchOptions.myDialect != null) return false;
+    if (myPatternContext != null ? !myPatternContext.equals(matchOptions.myPatternContext) : matchOptions.myPatternContext != null) return false;
 
     return true;
   }
@@ -280,8 +273,8 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     // @TODO support scope
-    result = 29 * result + (pattern != null ? pattern.hashCode() : 0);
-    result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
+    result = 29 * result + pattern.hashCode();
+    result = 29 * result + variableConstraints.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
     return result;

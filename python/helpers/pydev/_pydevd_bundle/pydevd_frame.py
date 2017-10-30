@@ -10,7 +10,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
@@ -279,7 +279,7 @@ class PyDBFrame:
                     # print ('user input', from_user_input)
                     # print ('merged', merged, 'curr', exc_lineno)
 
-                    if not dict_contains(merged, exc_lineno):  #Note: check on merged but update lines_ignored.
+                    if exc_lineno not in merged:  #Note: check on merged but update lines_ignored.
                         try:
                             line = linecache.getline(filename, exc_lineno, check_trace_obj.tb_frame.f_globals)
                         except:
@@ -556,7 +556,7 @@ class PyDBFrame:
                 exist_result = False
                 stop = False
                 bp_type = None
-                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and dict_contains(breakpoints_for_file, line):
+                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file:
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True

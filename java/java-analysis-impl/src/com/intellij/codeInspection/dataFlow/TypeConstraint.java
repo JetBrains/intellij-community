@@ -16,11 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
@@ -33,6 +29,8 @@ import java.util.*;
 /**
  * Immutable class representing a number of non-primitive type constraints applied to some value.
  * There are two types of constrains: value is instance of some type and value is not an instance of some type.
+ * Unlike usual Java semantics, the {@code null} value is considered to be instanceof any type (non-null instanceof can be expressed
+ * via additional restriction {@link DfaFactType#CAN_BE_NULL} {@code = false}).
  */
 public final class TypeConstraint {
   /**
@@ -82,13 +80,9 @@ public final class TypeConstraint {
   }
 
   @Nullable
-  TypeConstraint withInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    return withInstanceofValue(dfaType.getDfaType());
-  }
-
-  @Nullable
-  TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
-    if (type.getPsiType() instanceof PsiPrimitiveType) return this;
+  public TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
+    PsiType psiType = type.getPsiType();
+    if (psiType instanceof PsiPrimitiveType || LambdaUtil.notInferredType(psiType)) return this;
 
     if (!checkInstanceofValue(type)) {
       return null;
@@ -110,12 +104,7 @@ public final class TypeConstraint {
   }
 
   @Nullable
-  TypeConstraint withNotInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    return withNotInstanceofValue(dfaType.getDfaType());
-  }
-
-  @Nullable
-  TypeConstraint withNotInstanceofValue(DfaPsiType type) {
+  public TypeConstraint withNotInstanceofValue(DfaPsiType type) {
     if (myNotInstanceofValues.contains(type)) return this;
 
     for (DfaPsiType dfaTypeValue : myInstanceofValues) {
@@ -172,7 +161,14 @@ public final class TypeConstraint {
   }
 
   boolean isSuperStateOf(@NotNull TypeConstraint that) {
-    return that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues);
+    if (that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues)) {
+      return true;
+    }
+    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty() && this.myInstanceofValues.size() == 1) {
+      DfaPsiType type = this.myInstanceofValues.iterator().next();
+      return that.myInstanceofValues.stream().allMatch(type::isAssignableFrom);
+    }
+    return false;
   }
 
   @NotNull
@@ -210,5 +206,13 @@ public final class TypeConstraint {
       .removeValues(Set::isEmpty)
       .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(",", prefix, ""))
       .joining(" ");
+  }
+
+  @Nullable
+  public static DfaFactMap withInstanceOf(@NotNull DfaFactMap map, @NotNull DfaPsiType type) {
+    TypeConstraint constraint = map.get(DfaFactType.TYPE_CONSTRAINT);
+    if (constraint == null) constraint = EMPTY;
+    constraint = constraint.withInstanceofValue(type);
+    return constraint == null ? null : map.with(DfaFactType.TYPE_CONSTRAINT, constraint);
   }
 }

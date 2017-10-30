@@ -394,6 +394,11 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting(true, true, true)
   }
 
+  void testSkipForDefaultProject() throws Exception {
+    configureByFile()
+    myFixture.testHighlighting(true, true, true)
+  }
+
   void testCreateRequiredAttribute() {
     myFixture.configureByFile(getTestName(true) + ".xml")
     myFixture.launchAction(myFixture.findSingleIntention("Define class attribute"))

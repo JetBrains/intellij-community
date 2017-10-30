@@ -135,7 +135,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
 
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
-    GitVcs vcs = notNull(GitVcs.getInstance(myProject));
+    GitVcs vcs = GitVcs.getInstance(myProject);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty());
     handler.addParameters(GitLogUtil.getNoWalkParameter(vcs));
@@ -171,8 +171,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
       String parentTreeHash = hashToTreeMap.get(parent);
       LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
       if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
-        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
-                                                  firstRecord.isSupportsRawBody()));
+        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), firstRecord.isSupportsRawBody()));
       }
     }
   }

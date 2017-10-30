@@ -467,7 +467,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   @Override
   public void initComponent() {
     long started = System.nanoTime();
-    StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+    StubIndexExtension<?, ?>[] extensions = initExtensions();
     LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000);
     started = System.nanoTime();
 
@@ -481,6 +481,14 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         LOG.error(t);
       }
     }
+  }
+
+  @NotNull
+  public static StubIndexExtension<?, ?>[] initExtensions() {
+    StubIndexExtension[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+    // initialize stub index keys
+    for(StubIndexExtension extension:extensions) extension.getKey();
+    return extensions;
   }
 
   //@Override

@@ -1454,7 +1454,7 @@
                      implementationClass="com.siyeh.ig.junit.TestCaseWithConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableJUnitAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.SimplifiableJUnitAssertionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SuiteNotDeclaredStatic" shortName="StaticSuite" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.suite.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
@@ -1651,7 +1651,8 @@
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
     <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.junit.TestSuiteNamingConvention" id="TestSuiteNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.TypeParameterNamingConvention" id="TypeParameterNamingConvention" order="after JUnitTestClassNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.AnnotationNamingConvention" id="AnnotationNamingConvention" order="after TypeParameterNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.EnumeratedClassNamingConvention" id="EnumeratedClassNamingConvention" order="after AnnotationNamingConvention"/>
@@ -2783,11 +2784,11 @@
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
   </extensions>
 

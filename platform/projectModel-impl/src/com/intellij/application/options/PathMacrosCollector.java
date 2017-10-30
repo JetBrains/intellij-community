@@ -55,7 +55,7 @@ public class PathMacrosCollector extends PathMacroMap {
   }
 
   @NotNull
-  public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
+  public static Set<String> getMacroNames(@NotNull Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter);
     Set<String> preResult = collector.myMacroMap.keySet();

@@ -27,6 +27,8 @@ import java.io.File
 class PatchReaderTest : PlatformTestCase() {
 
   private val author = VcsUserImpl("D D", "aaaa@gmail.com")
+  private val doubleSurname = VcsUserImpl("D D-D", "aaaa@gmail.com")
+  private val longName = VcsUserImpl("very long author-surname", "aaaa@gmail.com")
   private val baseRevision = "d48bebc211cc216aaa78bdf25d7f0b0143d6333b"
   private val subjectLine = "Subject line"
 
@@ -83,6 +85,16 @@ class PatchReaderTest : PlatformTestCase() {
   @Throws(Exception::class)
   fun testPatchHeaderWithNoStateInfo() {
     TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, author, baseRevision), read().patchFileInfo)
+  }
+
+  @Throws(Exception::class)
+  fun testPatchHeaderWithDoubleSurname() {
+    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, doubleSurname, baseRevision), read().patchFileInfo)
+  }
+
+  @Throws(Exception::class)
+  fun testPatchHeaderWithLongName() {
+    TestCase.assertEquals(PatchFileHeaderInfo(subjectLine, longName, baseRevision), read().patchFileInfo)
   }
 
   private fun read(): PatchReader {

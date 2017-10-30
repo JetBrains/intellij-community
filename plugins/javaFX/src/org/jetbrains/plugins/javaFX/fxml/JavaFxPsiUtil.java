@@ -364,7 +364,7 @@ public class JavaFxPsiUtil {
 
   public static boolean isVisibleInFxml(@NotNull PsiMember psiMember) {
     return psiMember.hasModifierProperty(PsiModifier.PUBLIC) ||
-           AnnotationUtil.isAnnotated(psiMember, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
+           AnnotationUtil.isAnnotated(psiMember, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 
   @Nullable
@@ -501,7 +501,7 @@ public class JavaFxPsiUtil {
         }
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {
-          if (!AnnotationUtil.isAnnotated(parameter, JavaFxCommonNames.JAVAFX_BEANS_NAMED_ARG, false)) {
+          if (!AnnotationUtil.isAnnotated(parameter, JavaFxCommonNames.JAVAFX_BEANS_NAMED_ARG, 0)) {
             annotated = false;
             break;
           }

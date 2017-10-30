@@ -19,7 +19,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 
@@ -28,7 +30,7 @@ import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
-public class SeparatorWithText extends JComponent {
+public class SeparatorWithText extends JComponent implements Accessible {
 
   private String myCaption;
   private int myPrefWidth;
@@ -134,5 +136,25 @@ public class SeparatorWithText extends JComponent {
 
   public void setCaption(String captionAboveOf) {
     myCaption = captionAboveOf;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleSeparatorWithText();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleSeparatorWithText extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      return myCaption;
+    }
   }
 }

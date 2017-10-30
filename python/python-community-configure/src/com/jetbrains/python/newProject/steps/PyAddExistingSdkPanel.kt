@@ -29,8 +29,7 @@ import java.awt.Component
 class PyAddExistingSdkPanel(project: Project?,
                             existingSdks: List<Sdk>,
                             newProjectPath: String?,
-                            preferredSdk: Sdk?,
-                            formBuilder: FormBuilder) : PyAddSdkPanel() {
+                            preferredSdk: Sdk?) : PyAddSdkPanel() {
 
   override val panelName = "Existing interpreter"
 
@@ -40,7 +39,7 @@ class PyAddExistingSdkPanel(project: Project?,
   val remotePath: String?
     get() = if (remotePathField.mainPanel.isVisible) remotePathField.textField.text else null
 
-  var newProjectPath: String? = newProjectPath
+  override var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
       sdkChooserCombo.setNewProjectPath(value)
@@ -66,7 +65,7 @@ class PyAddExistingSdkPanel(project: Project?,
         update()
       }
     }
-    val formPanel = formBuilder
+    val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Interpreter:", sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
@@ -79,7 +78,7 @@ class PyAddExistingSdkPanel(project: Project?,
            validateRemotePathField())
       .filterNotNull()
 
-  fun addChangeListener(listener: Runnable) {
+  override fun addChangeListener(listener: Runnable) {
     sdkChooserCombo.addChangedListener { listener.run() }
     remotePathField.addTextChangeListener { listener.run() }
   }

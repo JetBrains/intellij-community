@@ -299,9 +299,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           if (qualifierClass == null) {
-            qualifierClass = getQualifiedClass();
+            qualifierClass = getQualifiedClass(method);
             if (qualifierClass == null) return;
           }
+
           if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
             iterator.remove();
           }
@@ -310,7 +311,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private PsiClass getQualifiedClass() {
+  private PsiClass getQualifiedClass(PsiMethod method) {
     final PsiElement parent = myArgumentsList.getParent();
     if (parent instanceof PsiMethodCallExpression) {
       final PsiExpression expression = ((PsiMethodCallExpression)parent).getMethodExpression().getQualifierExpression();
@@ -318,6 +319,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
         if (resolve instanceof PsiClass) {
           return (PsiClass)resolve;
+        }
+      }
+      else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
+        PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, false)) {
+          return qualifierClass;
         }
       }
 

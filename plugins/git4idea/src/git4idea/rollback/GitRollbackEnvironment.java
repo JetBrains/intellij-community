@@ -30,7 +30,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -245,6 +244,6 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RESET);
     handler.addParameters("--hard");
     handler.endOptions();
-    GitHandlerUtil.runInCurrentThread(handler, null);
+    handler.runInCurrentThread(null);
   }
 }

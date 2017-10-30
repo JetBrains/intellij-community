@@ -46,7 +46,7 @@ public class UnindentSelectionAction extends EditorAction {
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
+      return !editor.isViewer() && !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper();
     }
   }
 

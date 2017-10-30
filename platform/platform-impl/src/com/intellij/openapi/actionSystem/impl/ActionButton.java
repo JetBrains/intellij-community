@@ -31,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,6 +228,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myLook != null) {
       myLook.updateUI();
     }
+    updateToolTipText();
   }
 
   @Override public Dimension getPreferredSize() {
@@ -281,6 +283,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
         HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
@@ -310,7 +313,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    look.paintBackground(g, this);
+    if (isEnabled() || !UIUtil.isUnderDarcula()) {
+      look.paintBackground(g, this);
+    }
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
   }
@@ -442,6 +447,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
 
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override

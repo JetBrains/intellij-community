@@ -155,6 +155,17 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       if (onlyWarnOnAbstractMethods || !reportParameters) {
         return;
       }
+      final PsiResourceList resourceList = statement.getResourceList();
+      if (resourceList != null) {
+        for (PsiResourceListElement element : resourceList) {
+          if (element instanceof PsiResourceVariable) {
+            final PsiResourceVariable variable = (PsiResourceVariable)element;
+            if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+              registerModifierError(PsiModifier.FINAL, variable, variable);
+            }
+          }
+        }
+      }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
         final PsiParameter parameter = catchSection.getParameter();
@@ -165,7 +176,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
           continue;
         }
-        check(parameter);
+        if (parameter.getType() instanceof PsiDisjunctionType || !isNecessaryFinal(parameter, parameter.getDeclarationScope())) {
+          registerModifierError(PsiModifier.FINAL, parameter, parameter);
+        }
       }
     }
 

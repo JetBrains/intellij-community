@@ -16,10 +16,14 @@
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -27,7 +31,9 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +47,7 @@ import java.util.function.Function;
 /**
  * @author egor
  */
-public class OverheadView extends BorderLayoutPanel implements Disposable {
+public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
   @NotNull private final DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
@@ -108,6 +114,24 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
         myTable.repaint();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myTable);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      Navigatable[] navigatables = StreamEx.of(myTable.getSelection())
+        .select(Breakpoint.class)
+        .map(Breakpoint::getXBreakpoint)
+        .nonNull()
+        .map(XBreakpoint::getNavigatable)
+        .nonNull()
+        .toArray(Navigatable.class);
+      if (navigatables.length > 0) {
+        return navigatables;
+      }
+    }
+    return null;
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {

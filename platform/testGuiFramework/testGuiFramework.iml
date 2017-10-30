@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="library" exported="" name="fest" level="project" />
+    <orderEntry type="library" exported="" name="fest-swing" level="project" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />

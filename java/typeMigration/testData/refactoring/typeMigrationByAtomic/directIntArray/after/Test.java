@@ -9,7 +9,7 @@ class Test {
       System.out.println(a.incrementAndGet(0));
       a.getAndDecrement(0);
       if (a.decrementAndGet(0) == 0) {
-          a.getAndAdd(0, ((2)));
+          a.getAndAdd(0, (2));
           a.set(0, a.get(0) * 2);
           if (a.get(0) == 0) {
               System.out.println(a.get(0) + 7);

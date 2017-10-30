@@ -1670,14 +1670,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   public void startDumb() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!Registry.is("editor.dumb.mode.available")) return;
+    putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+    // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-    Graphics2D graphics = image.createGraphics();
-    graphics.translate(-rect.x, -rect.y);
+    Graphics imageGraphics = image.createGraphics();
+    imageGraphics.translate(-rect.x, -rect.y);
+    Graphics2D graphics = JBSwingUtilities.runGlobalCGTransform(myEditorComponent, imageGraphics);
     graphics.setClip(rect.x, rect.y, rect.width, rect.height);
     myEditorComponent.paintComponent(graphics);
     graphics.dispose();
     putUserData(BUFFER, image);
+  }
+
+  public boolean isDumb() {
+    return getUserData(BUFFER) != null;
   }
 
   void paint(@NotNull Graphics2D g) {
@@ -1687,13 +1695,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (Registry.is("editor.dumb.mode.available")) {
-      final BufferedImage buffer = getUserData(BUFFER);
-      if (buffer != null) {
-        final Rectangle rect = getContentComponent().getVisibleRect();
-        UIUtil.drawImage(g, buffer, null, rect.x, rect.y);
-        return;
-      }
+    BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
+    if (buffer != null) {
+      Rectangle rect = getContentComponent().getVisibleRect();
+      UIUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      return;
     }
 
     if (isReleased) {
@@ -4102,7 +4108,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public FontPreferences getConsoleFontPreferences() {
-      return myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty() ? 
+      return myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty() ?
              getDelegate().getConsoleFontPreferences() : myConsoleFontPreferences;
     }
 

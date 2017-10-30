@@ -41,7 +41,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
-import static java.lang.Math.ceil;
+import static java.lang.Math.round;
 
 
 /**
@@ -86,8 +86,8 @@ public class IconUtil {
     int imageWidth = ImageUtil.getRealWidth(image);
     int imageHeight = ImageUtil.getRealHeight(image);
 
-    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxWidth * scale);
-    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxHeight * scale);
+    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxWidth * scale);
+    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxHeight * scale);
     final int w = Math.min(imageWidth, maxWidth);
     final int h = Math.min(imageHeight, maxHeight);
 

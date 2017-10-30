@@ -9,4 +9,13 @@ class Foo {
     }
   }
 
+  void test3(final @Nullable Object @NotNull[]@NotNull[] values) {
+    for (Object[] line : values) {
+      line = new Object[]{"a"};
+      for (Object item : line) {
+        System.out.println(item.hashCode());
+      }
+    }
+  }
+
 }

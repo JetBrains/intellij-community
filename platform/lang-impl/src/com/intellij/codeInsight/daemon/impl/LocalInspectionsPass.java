@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -62,6 +48,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -555,6 +542,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+
+  private static final WeakInterner<String> tooltips = new WeakInterner<>();
   @Nullable
   private HighlightInfo createHighlightInfo(@NotNull ProblemDescriptor descriptor,
                                             @NotNull LocalInspectionToolWrapper tool,
@@ -580,7 +569,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
-      tooltip = XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link);
+      tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
     }
     List<IntentionAction> quickFixes = getQuickFixes(tool, descriptor, emptyActionRegistered);
     HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, quickFixes);

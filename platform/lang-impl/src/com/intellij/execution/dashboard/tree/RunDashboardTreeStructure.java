@@ -35,12 +35,16 @@ import java.util.stream.Collectors;
 public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
   private final List<RunDashboardGrouper> myGroupers;
+  private final List<RunDashboardFilter> myFilters;
   private final RunConfigurationsTreeRootNode myRootElement;
 
-  public RunDashboardTreeStructure(@NotNull Project project, @NotNull List<RunDashboardGrouper> groupers) {
+  public RunDashboardTreeStructure(@NotNull Project project,
+                                   @NotNull List<RunDashboardGrouper> groupers,
+                                   @NotNull List<RunDashboardFilter> filters) {
     super(project);
     myProject = project;
     myGroupers = groupers;
+    myFilters = filters;
     myRootElement = new RunConfigurationsTreeRootNode();
   }
 
@@ -75,12 +79,15 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
       RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
       List<RunConfigurationNode> nodes = runDashboardManager.getRunConfigurations().stream()
         .map(value -> new RunConfigurationNode(myProject, value, runDashboardManager.getContributor(value.first.getType())))
+        .filter(node -> myFilters.stream().allMatch(filter -> filter.isVisible(node)))
         .collect(Collectors.toList());
 
-      return group(myProject,
-                   this,
-                   myGroupers.stream().filter(RunDashboardGrouper::isEnabled).map(RunDashboardGrouper::getRule).collect(Collectors.toList()),
-                   nodes);
+      List<RunDashboardGroupingRule> enabledRules = myGroupers.stream()
+        .filter(RunDashboardGrouper::isEnabled)
+        .map(RunDashboardGrouper::getRule)
+        .collect(Collectors.toList());
+
+      return group(myProject, this, enabledRules, nodes);
     }
 
     @Override
@@ -138,7 +145,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
       });
     }
     else {
-      Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup().getName()));
+      Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup(), rule.getGroupComparator()));
       result.addAll(ungroupedNodes);
     }
     return result;

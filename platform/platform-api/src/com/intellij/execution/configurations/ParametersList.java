@@ -220,6 +220,11 @@ public class ParametersList implements Cloneable {
     return myParameters.get(ind);
   }
 
+  @Nullable
+  public String getLast() {
+    return myParameters.size() > 0 ? myParameters.get(myParameters.size() - 1) : null;
+  }
+
   public void add(@NonNls final String name, @NonNls final String value) {
     add(name);
     add(value);

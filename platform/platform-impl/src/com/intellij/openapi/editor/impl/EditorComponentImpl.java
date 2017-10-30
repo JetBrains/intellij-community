@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -72,6 +73,7 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +91,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // in the interest of backward compatibility, we only do so when a
     // screen reader is active.
     setFocusCycleRoot(!ScreenReader.isActive());
+    if (ScreenReader.isActive()) {
+      setFocusable(true);
+    }
     setOpaque(true);
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -238,7 +243,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       else {
         UISettings.setupAntialiasing(gg);
       }
+      AffineTransform origTx = JBUI.alignToIntGrid(gg);
       myEditor.paint(gg);
+      if (origTx != null) gg.setTransform(origTx);
     }
     finally {
       myApplication.editorPaintFinish();
@@ -999,11 +1006,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public AccessibleText getAccessibleText() {
+      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
       return this;
     }
 
     @Override
     public AccessibleEditableText getAccessibleEditableText() {
+      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
       return this;
     }
 

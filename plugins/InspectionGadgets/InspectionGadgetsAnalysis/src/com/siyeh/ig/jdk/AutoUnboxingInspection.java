@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -364,8 +363,7 @@ public class AutoUnboxingInspection extends BaseInspection {
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiMethod method = expression.resolveMethod();
-      if (method != null &&
-          AnnotationUtil.isAnnotated(method, Collections.singletonList( "java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+      if (method != null && AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
         return;
       }
       checkExpression(expression);

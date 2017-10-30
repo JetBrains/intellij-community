@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -35,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -151,7 +155,7 @@ public class ActionUtil {
         presentation.setEnabled(false);
       }
     }
-    
+
     return false;
   }
 
@@ -310,5 +314,36 @@ public class ActionUtil {
       a1.copyShortcutFrom(a2);
     }
     return a1;
+  }
+
+  public static void invokeAction(@NotNull AnAction action, @Nullable InputEvent inputEvent, @NotNull Component component, @NotNull String place, @Nullable Runnable onDone) {
+    Presentation presentation = action.getTemplatePresentation().clone();
+    AnActionEvent event = new AnActionEvent(inputEvent, DataManager.getInstance().getDataContext(component),
+                                            place,
+                                            presentation,
+                                            ActionManager.getInstance(),
+                                            0);
+    performDumbAwareUpdate(false, action, event, true);
+    if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
+      action.actionPerformed(event);
+      if (onDone != null) {
+        onDone.run();
+      }
+    }
+  }
+
+  @NotNull
+  public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
+    return new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action == null) {
+          LOG.warn("Can not find action by id " + actionId);
+          return;
+        }
+        invokeAction(action, null, component, place, null);
+      }
+    };
   }
 }

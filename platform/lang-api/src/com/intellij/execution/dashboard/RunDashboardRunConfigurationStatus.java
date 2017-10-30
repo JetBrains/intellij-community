@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -27,18 +28,22 @@ import javax.swing.*;
  */
 public class RunDashboardRunConfigurationStatus {
   public static final RunDashboardRunConfigurationStatus STARTED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Toolwindows.ToolWindowRun);
-  public static final RunDashboardRunConfigurationStatus STOPPED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
+    ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Actions.Execute, 10);
   public static final RunDashboardRunConfigurationStatus FAILED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.failed.group.name"), AllIcons.General.Error);
+    ExecutionBundle.message("run.dashboard.failed.group.name"), AllIcons.General.Error, 20);
+  public static final RunDashboardRunConfigurationStatus STOPPED = new RunDashboardRunConfigurationStatus(
+    ExecutionBundle.message("run.dashboard.stopped.group.name"), AllIcons.Actions.Restart, 30);
+  public static final RunDashboardRunConfigurationStatus CONFIGURED = new RunDashboardRunConfigurationStatus(
+    ExecutionBundle.message("run.dashboard.configured.group.name"), AllIcons.General.Settings, 40);
 
   private final String myName;
   private final Icon myIcon;
+  private final int myPriority;
 
-  public RunDashboardRunConfigurationStatus(String name, Icon icon) {
+  public RunDashboardRunConfigurationStatus(String name, Icon icon, int priority) {
     myName = name;
     myIcon = icon;
+    myPriority = priority;
   }
 
   public String getName() {
@@ -49,10 +54,15 @@ public class RunDashboardRunConfigurationStatus {
     return myIcon;
   }
 
+  public int getPriority() {
+    return myPriority;
+  }
+
+  @NotNull
   public static RunDashboardRunConfigurationStatus getStatus(RunDashboardRunConfigurationNode node) {
     RunContentDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) {
-      return STOPPED;
+      return CONFIGURED;
     }
     ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler == null) {

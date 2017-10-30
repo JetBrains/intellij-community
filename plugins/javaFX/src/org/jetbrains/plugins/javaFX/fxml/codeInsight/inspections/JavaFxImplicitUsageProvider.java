@@ -131,6 +131,6 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isImplicitFxmlAccess(PsiModifierListOwner member) {
     return !member.hasModifierProperty(PsiModifier.PUBLIC) &&
-           AnnotationUtil.isAnnotated(member, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
+           AnnotationUtil.isAnnotated(member, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 }

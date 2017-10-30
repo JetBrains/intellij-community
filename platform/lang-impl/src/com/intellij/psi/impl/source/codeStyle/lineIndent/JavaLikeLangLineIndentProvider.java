@@ -212,12 +212,15 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (position.isAt(RightParenthesis)) {
         position.beforeParentheses(LeftParenthesis, RightParenthesis);
+        continue;
       }
       else if (position.isAt(BlockClosingBrace)) {
         position.beforeParentheses(BlockOpeningBrace, BlockClosingBrace);
+        continue;
       }
       else if (position.isAt(ArrayClosingBracket)) {
         position.beforeParentheses(ArrayOpeningBracket, ArrayClosingBracket);
+        continue;
       }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 

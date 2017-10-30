@@ -485,6 +485,21 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testSideEffectReturn() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+  }
+
+  public void testSideEffectNoBrace() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+  }
+
+  public void testSideEffectWhile() {
+    doTest();
+    checkIntentionResult("Remove 'while' statement extracting side effects");
+  }
+
   public void testUsingInterfaceConstant() { doTest();}
 
   //https://youtrack.jetbrains.com/issue/IDEA-162184

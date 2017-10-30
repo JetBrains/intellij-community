@@ -76,7 +76,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -343,26 +342,27 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-    if (Registry.is("python.activate.virtualenv.on.run") &&
-        (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk)))) {
-      PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-      if (reader.getActivate() != null) {
-        try {
-          env.putAll(reader.readShellEnv().entrySet().stream()
-                       .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                       ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    if (Registry.is("python.activate.virtualenv.on.run") && sdk != null &&
+        (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
 
-          for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
-            if ("PATH".equals(e.getKey())) {
-              env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
-            }
-            else {
-              env.put(e.getKey(), e.getValue());
-            }
+      Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
+
+      if (environment == null) {
+        environment = PythonSdkType.activateVirtualEnv(sdkHome);
+
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
+      }
+
+      env.putAll(environment);
+
+      for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
+        if (environment.containsKey(e.getKey())) {
+          if ("PATH".equals(e.getKey())) {
+            env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
           }
-        }
-        catch (Exception e) {
-          LOG.error("Couldn't read virtualenv variables", e);
+          else {
+            env.put(e.getKey(), e.getValue());
+          }
         }
       }
     }

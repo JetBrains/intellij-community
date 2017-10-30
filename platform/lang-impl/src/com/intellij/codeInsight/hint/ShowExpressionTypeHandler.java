@@ -41,6 +41,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
+  private boolean myRequestFocus;
+
+  public ShowExpressionTypeHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
 
   @Override
   public boolean startInWriteAction() {
@@ -78,7 +83,10 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         final String informationHint = provider.getInformationHint(expression);
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        ApplicationManager.getApplication().invokeLater(() -> HintManager.getInstance().showInformationHint(editor, informationHint));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
+          HintManager.getInstance().showInformationHint(editor, informationHint);
+        });
       }
     };
     if (map.isEmpty()) {

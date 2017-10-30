@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -161,5 +162,21 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
     stream.forEach(result::add);
     return result;
+  }
+
+  @NotNull
+  public static TIntHashSet singleton(@NotNull Integer elements) {
+    TIntHashSet commits = new TIntHashSet();
+    commits.add(elements);
+    return commits;
+  }
+
+  public static <T> void add(@NotNull Map<T, TIntHashSet> targetMap, @NotNull T key, int value) {
+    TIntHashSet set = targetMap.get(key);
+    if (set == null) {
+      set = new TIntHashSet();
+      targetMap.put(key, set);
+    }
+    set.add(value);
   }
 }

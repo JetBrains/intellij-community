@@ -31,6 +31,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -293,17 +294,26 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     protected void processKeyEvent(KeyEvent e) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         int keyCode = e.getKeyCode();
-        if (
-          keyCode == KeyEvent.VK_SHIFT ||
-          keyCode == KeyEvent.VK_ALT ||
-          keyCode == KeyEvent.VK_CONTROL ||
-          keyCode == KeyEvent.VK_ALT_GRAPH ||
-          keyCode == KeyEvent.VK_META
-        ){
-          return;
-        }
 
-        setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
+        if (keyCode != KeyEvent.VK_SHIFT &&
+            keyCode != KeyEvent.VK_ALT &&
+            keyCode != KeyEvent.VK_CONTROL &&
+            keyCode != KeyEvent.VK_ALT_GRAPH &&
+            keyCode != KeyEvent.VK_META)
+        {
+          setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
+        }
+      }
+      // Ensure TAB/Shift-TAB work as focus traversal keys, otherwise
+      // there is no proper way to move the focus outside the text field.
+      if (ScreenReader.isActive()) {
+        setFocusTraversalKeysEnabled(true);
+        try {
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().processKeyEvent(this, e);
+        }
+        finally {
+          setFocusTraversalKeysEnabled(false);
+        }
       }
     }
 

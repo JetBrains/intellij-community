@@ -96,6 +96,7 @@ cmake
 cmdline
 cname
 codebase
+codecs
 codeinsight
 codesign
 commandline
@@ -181,8 +182,8 @@ externalizer
 facebook
 facelet
 facelets
-fastcall
 fallthrough
+fastcall
 favicon
 filename
 fileset
@@ -315,6 +316,7 @@ keymap
 keymaps
 keystore
 kotlin
+kubernetes
 kryo
 labeler
 labelers
@@ -769,6 +771,7 @@ utf
 util
 utils
 uuid
+valgrind
 validator
 validators
 vararg

@@ -17,7 +17,7 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  public void addNewScheme(@NotNull final Object scheme, final boolean replaceExisting) {
+  public void addScheme(@NotNull final Object scheme, final boolean replaceExisting) {
   }
 
   @Override

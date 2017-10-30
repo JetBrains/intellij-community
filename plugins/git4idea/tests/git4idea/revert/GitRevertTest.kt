@@ -15,11 +15,9 @@
  */
 package git4idea.revert
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
@@ -35,10 +33,6 @@ import java.nio.charset.Charset
  * except the case of reverting with conflicts when the commit dialog is shown anyway.
  */
 class GitRevertTest : GitSingleRepoTest() {
-
-  override fun setUp() {
-    super.setUp()
-  }
 
   fun `test simple revert`() {
     val file = file("r.txt")
@@ -205,7 +199,7 @@ class GitRevertTest : GitSingleRepoTest() {
     file.create("initial\n").addCommit("Created r.txt")
     val commit = file.append("second\n").addCommit("Append something").details()
 
-    var actualMessage : String = ""
+    var actualMessage = ""
     vcsHelper.onCommit { msg ->
       actualMessage = msg
       true
@@ -226,12 +220,31 @@ class GitRevertTest : GitSingleRepoTest() {
 
     GitRevertOperation(myProject, listOf(commit), false).execute()
 
-    val changeListName = commitMessageForRevert(commit)
-    val changeLists = changeListManager.changeListsCopy
-    val list = changeLists.find { StringUtil.equalsIgnoreWhitespaces(it.name, changeListName) }
-    assertNotNull("Didn't find changelist with name '$changeListName' among :$changeLists", list)
-    val data = list!!.data
+    val comment = commitMessageForRevert(commit)
+    val list = changeListManager.assertChangeListExists(comment)
+    val data = list.data
     assertNull("There should be no author information in the changelist: $data", data)
+  }
+
+  fun `test revert commit which was renamed later`() {
+    val initialName = "a.txt"
+    file(initialName).create("initial\n").addCommit("create $initialName")
+    val commit = file(initialName).append("more\n").addCommit("add content").details()
+    val renamed = "renamed.txt"
+    git("mv $initialName $renamed")
+    commit("Rename $initialName to $renamed")
+
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    GitRevertOperation(myProject, listOf(commit), false).execute()
+
+    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
+    myRepo.assertCommitted {
+      modified(renamed)
+    }
   }
 
   private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {

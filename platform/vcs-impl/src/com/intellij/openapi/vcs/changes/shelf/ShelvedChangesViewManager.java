@@ -29,7 +29,6 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -122,7 +121,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private PreviewDiffSplitterComponent mySplitterComponent;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelvedChangesViewManager.class);
+    return project.getComponent(ShelvedChangesViewManager.class);
   }
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,

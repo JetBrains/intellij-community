@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -65,6 +66,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -73,6 +75,7 @@ import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -109,6 +112,8 @@ public final class PythonSdkType extends SdkType {
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkType::isRemote;
+
+  public static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -224,7 +229,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isInvalid(@NotNull Sdk sdk) {
-    if (isRemote(sdk) || sdk instanceof PyLazySdk) {
+    if (isRemote(sdk)) {
       return false;
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();
@@ -758,6 +763,10 @@ public final class PythonSdkType extends SdkType {
           Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
         return true;
       }
+      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+      if (userSkeletonsDir != null && userSkeletonsDir.equals(vFile.getParent())) {
+        return true;
+      }
       if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {
         return true;
       }
@@ -931,6 +940,26 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean isLocalSdk(@NotNull Sdk sdk) {
     return !isRemote(sdk);
+  }
+
+
+  @NotNull
+  public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
+    Map<String, String> env = Maps.newHashMap();
+
+    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
+    if (reader.getActivate() != null) {
+      try {
+        env.putAll(reader.readShellEnv().entrySet().stream()
+                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+      }
+      catch (Exception e) {
+        LOG.error("Couldn't read virtualenv variables", e);
+      }
+    }
+
+    return ImmutableMap.copyOf(env);
   }
 }
 

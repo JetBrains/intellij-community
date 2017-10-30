@@ -22,10 +22,10 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
+class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
-  val myIde = GuiTestLocalRunner.getIdeFromAnnotation(suiteClass)
+  val myIde = getIdeFromAnnotation(suiteClass)
   var myFirstStart = true
   val UNDEFINED_FIRST_CLASS = "undefined"
   val myFirstStartClassName: String by lazy {
@@ -40,7 +40,7 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
       //let's start IDE to complete installation, import configs and etc before running tests
       if (myFirstStart) firstStart()
       val testClass = runner.description.testClass
-      val guiTestLocalRunner = GuiTestLocalRunner(testClass, myIde)
+      val guiTestLocalRunner = GuiTestLocalRunner(testClass, suiteClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
     }
     catch (e: Exception) {
@@ -55,6 +55,5 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
     myFirstStart = false
   }
-
 
 }

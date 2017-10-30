@@ -17,12 +17,16 @@ package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
@@ -46,19 +50,24 @@ public class GitStash extends GitRepositoryAction {
     if (!d.showAndGet()) {
       return;
     }
-    VirtualFile root = d.getGitRoot();
-    final GitLineHandler h = d.handler();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
-    }
-    finally {
-      token.finish();
-    }
-    VfsUtil.markDirtyAndRefresh(false, true, false, root);
-    if(!h.errors().isEmpty()) {
-      showErrors(project, getActionName(), h.errors());
-    }
+
+    new Task.Backgroundable(project, GitBundle.getString("stashing.title"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project)) {
+          GitCommandResult result = Git.getInstance().runCommand(d.handler());
+          if (!result.success()) {
+            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("stashing.title"),
+                                                         result.getErrorOutputAsHtmlString());
+          }
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
+      }
+    }.queue();
   }
 
   /**

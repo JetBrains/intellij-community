@@ -677,9 +677,14 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           updateProgress();
         }
       });
-      Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
-      runOnPowerSaveChange(updatePowerSaveStatus, this);
-      updatePowerSaveStatus.run();
+      runOnPowerSaveChange(this::queueProgressUpdate, this);
+    }
+
+    @Override
+    public String getText() {
+      String text = StringUtil.notNullize(super.getText());
+      ProgressSuspender suspender = getSuspender();
+      return suspender != null && suspender.isSuspended() ? suspender.getSuspendedText() : text;
     }
 
     @Override
@@ -776,6 +781,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     @Override
     public void updateProgressNow() {
+      myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
       super.updateProgressNow();
       if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
     }

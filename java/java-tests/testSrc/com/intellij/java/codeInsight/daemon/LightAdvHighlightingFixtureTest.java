@@ -48,6 +48,15 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     assertNull(ReferencesSearch.search(aClass).findFirst());
   }
 
+  public void testInaccessibleFunctionalTypeParameter() {
+    myFixture.addClass("package test; class A {}");
+    myFixture.addClass("package test; public interface I { void m(A a);}");
+    myFixture.addClass("package test; public interface J { A m();}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testBoundsPromotionWithCapturedWildcards() {
     myFixture.addClass("package a; public interface Provider<A> {}");
     myFixture.addClass("package b; public interface Provider<B> {}");

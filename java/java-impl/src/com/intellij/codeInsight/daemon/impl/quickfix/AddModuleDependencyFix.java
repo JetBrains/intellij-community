@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
@@ -16,7 +14,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -51,18 +48,13 @@ class AddModuleDependencyFix extends OrderEntryFix {
     myClasses = ContainerUtil.map(classes, PointersKt::createSmartPointer);
 
     PsiElement psiElement = reference.getElement();
-    Project project = psiElement.getProject();
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
     for (PsiClass aClass : classes) {
-      if (!isAccessible(aClass, psiElement)) continue;
-      PsiFile psiFile = aClass.getContainingFile();
-      if (psiFile == null) continue;
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile == null) continue;
-      Module classModule = fileIndex.getModuleForFile(virtualFile);
-      if (classModule != null && classModule != currentModule && !rootManager.isDependsOn(classModule)) {
-        myModules.add(classModule);
+      if (isAccessible(aClass, psiElement)) {
+        Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
+        if (classModule != null && classModule != currentModule && !rootManager.isDependsOn(classModule)) {
+          myModules.add(classModule);
+        }
       }
     }
   }

@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
@@ -63,13 +63,15 @@ public class FileUtilRt {
     }
   };
 
+  public static final int THREAD_LOCAL_BUFFER_LENGTH = 1024 * 20;
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
+    @Override
     protected byte[] initialValue() {
-      return new byte[1024 * 20];
+      return new byte[THREAD_LOCAL_BUFFER_LENGTH];
     }
   };
 
-  private static String ourCanonicalTempPathCache = null;
+  private static String ourCanonicalTempPathCache;
 
   protected static final class NIOReflect {
     // NIO-reflection initialization placed in a separate class for lazy loading
@@ -731,7 +733,7 @@ public class FileUtilRt {
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
-      if (cause == null || !NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
+      if (!NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
         logger().info(e);
         return false;
       }

@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -32,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -39,8 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseProperties;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethodsSimple;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterAccessorMethods;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -294,16 +294,16 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ:
         case CLASS_FQ:
-        case PACKAGE_FQ:
+        case PACKAGE_FQ: {
           String qName = PsiUtil.getQualifiedReferenceText(ref);
           LOG.assertTrue(qName != null, ref.getText());
-          PsiElement element = resolveClassOrPackagePreferInner(ref, kind, qName, JavaPsiFacade.getInstance(manager.getProject()));
-          if (element != null) {
-            boolean accessible = !(element instanceof PsiClass) || PsiUtil.isAccessible(ref, (PsiClass)element);
-            return new GroovyResolveResult[]{new GroovyResolveResultImpl(element, accessible)};
+          final PsiElement element = resolveClassOrPackagePreferInner(ref, kind, qName, JavaPsiFacade.getInstance(manager.getProject()));
+          if (element instanceof PsiClass || element instanceof PsiPackage) {
+            final GroovyResolveResult result = new ElementGroovyResult<>(element);
+            return new GroovyResolveResult[]{result};
           }
-
-          break;
+          return GroovyResolveResult.EMPTY_ARRAY;
+        }
 
         case CLASS: {
           ResolverProcessor processor = new ClassResolverProcessor(refName, ref);
@@ -352,17 +352,13 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           if (!(resolved instanceof PsiClass)) break;
 
           final PsiClass clazz = (PsiClass)resolved;
-          final PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
 
-          List<GroovyResolveResult> result = new ArrayList<>();
-          processFields(ref, refName, clazz, helper, result);
-          processMethods(ref, refName, clazz, helper, result);
-          processInnerClasses(ref, refName, clazz, helper, result);
-          processAccessors(ref, refName, clazz, helper, result);
-          result = collapseReflectedMethods(result);
-
-          final List<GroovyResolveResult> valid = ContainerUtil.filter(result, ResolveResult::isValidResult);
-          return (valid.isEmpty() ? result : valid).toArray(GroovyResolveResult.EMPTY_ARRAY);
+          final List<GroovyResolveResult> result = new ArrayList<>();
+          processFields(refName, clazz, result);
+          processMethods(refName, clazz, result);
+          processInnerClasses(refName, clazz, result);
+          processAccessors(refName, clazz, result);
+          return collapseReflectedMethodsSimple(result).toArray(GroovyResolveResult.EMPTY_ARRAY);
         }
       }
 
@@ -380,9 +376,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         if (qualified || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
           //prefer inner classes, because groovyc does that as well
           PsiElement container = qualified ? resolveClassOrPackagePreferInner(ref, kind, StringUtil.getPackageName(qName), facade) : null;
-          PsiClass aClass = container instanceof PsiClass && PsiUtil.isAccessible(ref, (PsiClass)container)
-                            ? ((PsiClass)container).findInnerClassByName(StringUtil.getShortName(qName), true)
-                            : null;
+          PsiClass aClass = container instanceof PsiClass ? ((PsiClass)container).findInnerClassByName(StringUtil.getShortName(qName), true) : null;
           if (aClass == null) {
             aClass = facade.findClass(qName, ref.getResolveScope());
           }
@@ -413,53 +407,45 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
     }
 
-    private static void processAccessors(GrCodeReferenceElementImpl ref,
-                                         String refName,
+    private static void processAccessors(String refName,
                                          PsiClass clazz,
-                                         PsiResolveHelper helper,
                                          List<GroovyResolveResult> result) {
       final List<GroovyResolveResult> propertyResults = new ArrayList<>();
       final String booleanGetter = GroovyPropertyUtils.getGetterNameBoolean(refName);
       final String nonBooleanGetter = GroovyPropertyUtils.getGetterNameNonBoolean(refName);
       final String setter = GroovyPropertyUtils.getSetterName(refName);
 
-      processMethods(ref, booleanGetter, clazz, helper, propertyResults);
-      processMethods(ref, nonBooleanGetter, clazz, helper, propertyResults);
-      processMethods(ref, setter, clazz, helper, propertyResults);
-      result.addAll(collapseProperties(propertyResults));
+      processMethods(booleanGetter, clazz, propertyResults);
+      processMethods(nonBooleanGetter, clazz, propertyResults);
+      processMethods(setter, clazz, propertyResults);
+      result.addAll(filterAccessorMethods(propertyResults));
     }
 
-    private static void processInnerClasses(GrCodeReferenceElementImpl ref,
-                                            String refName,
+    private static void processInnerClasses(String refName,
                                             PsiClass clazz,
-                                            PsiResolveHelper helper,
                                             List<GroovyResolveResult> result) {
       final PsiClass innerClass = clazz.findInnerClassByName(refName, true);
       if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC)) {
-        result.add(new GroovyResolveResultImpl(innerClass, helper.isAccessible(innerClass, ref, null)));
+        result.add(new ElementGroovyResult<>(innerClass));
       }
     }
 
-    private static void processFields(GrCodeReferenceElementImpl ref,
-                                      String refName,
+    private static void processFields(String refName,
                                       PsiClass clazz,
-                                      PsiResolveHelper helper,
                                       List<GroovyResolveResult> result) {
       final PsiField field = clazz.findFieldByName(refName, true);
       if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-        result.add(new GroovyResolveResultImpl(field, helper.isAccessible(field, ref, null)));
+        result.add(new ElementGroovyResult<>(field));
       }
     }
 
-    private static void processMethods(GrCodeReferenceElementImpl ref,
-                                       String refName,
+    private static void processMethods(String refName,
                                        PsiClass clazz,
-                                       PsiResolveHelper helper,
                                        List<GroovyResolveResult> result) {
       final PsiMethod[] methods = clazz.findMethodsByName(refName, true);
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          result.add(new GroovyResolveResultImpl(method, helper.isAccessible(method, ref, null)));
+          result.add(new ElementGroovyResult<>(method));
         }
       }
     }

@@ -238,8 +238,7 @@ public class GitFetcher {
       description += result.getAdditionalInfo();
       GitUIUtil.notifyMessage(project, title, description, true, null);
     } else {
-      GitVcs instance = GitVcs.getInstance(project);
-      if (instance != null && instance.getExecutableValidator().isExecutableValid()) {
+      if (GitVcs.getInstance(project).getExecutableValidator().isExecutableValid()) {
         GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
       }
     }

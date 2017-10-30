@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -34,7 +20,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     super.setUp();
     final MatchOptions matchOptions = this.options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
-    matchOptions.setLooseMatching(true);
   }
 
   public void testReplaceInLiterals() {
@@ -2189,6 +2174,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  void a(final long /*!*/ b) {}\n" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+
+    final String in2 = "class X {" +
+                       "  void m() {" +
+                       "    for (int x : new int[]{1, 2, 3}) {}" +
+                       "  }" +
+                       "}";
+    final String what2 = "'_T '_v = '_i{0,1};";
+    final String by2 = "final $T$ /*!*/ $v$ = $i$;";
+    assertEquals("foreach parameter replaced incorrectly",
+                 "class X {" +
+                 "  void m() {" +
+                 "    for (final int /*!*/ x : new int[]{1, 2, 3}) {}" +
+                 "  }" +
+                 "}",
+                 replacer.testReplace(in2, what2, by2, options));
   }
 
   public void testReplaceInnerClass() {

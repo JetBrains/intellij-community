@@ -31,6 +31,7 @@ import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.BorderLayout;
@@ -92,6 +93,10 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
         if (path != null) {
           SimpleColoredComponent component = new SimpleColoredComponent();
           fill(component, id, path);
+          if (ScreenReader.isActive()) {
+            // Supports TAB/Shift-TAB navigation
+            component.setFocusable(true);
+          }
           myConflictsContainer.add(VerticalLayout.TOP, component);
         }
       }
@@ -154,6 +159,10 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
 
     JLabel label = new JLabel(KeyMapBundle.message("dialog.conflicts.text"));
     label.setBorder(JBUI.Borders.emptyLeft(2));
+    if (ScreenReader.isActive()) {
+      // Supports TAB/Shift-TAB navigation
+      label.setFocusable(true);
+    }
 
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

@@ -52,11 +52,9 @@ public class DfaValueFactory {
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
-    myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
-    myOptionalFactory = new DfaOptionalValue.Factory(this);
-    myRangeFactory = new DfaRangeValue.Factory(this);
+    myFactFactory = new DfaFactMapValue.Factory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -78,14 +76,22 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
-    if (type instanceof PsiClassType) {
-      type = ((PsiClassType)type).rawType();
-    }
     if (type == null) return DfaUnknownValue.getInstance();
-    return getTypeFactory().createTypeValue(internType(type), nullability);
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
+      .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
+    return getFactFactory().createValue(facts);
   }
 
-  private DfaPsiType internType(@NotNull PsiType psiType) {
+  @NotNull
+  public DfaPsiType createDfaType(@NotNull PsiType psiType) {
+    int dimensions = psiType.getArrayDimensions();
+    psiType = psiType.getDeepComponentType();
+    if (psiType instanceof PsiClassType) {
+      psiType = ((PsiClassType)psiType).rawType();
+    }
+    while (dimensions-- > 0) {
+      psiType = psiType.createArrayType();
+    }
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
       myDfaTypes.put(psiType, dfaType = new DfaPsiType(psiType, myAssignableCache, myConvertibleCache));
@@ -137,10 +143,12 @@ public class DfaValueFactory {
 
   @Nullable
   private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-    if(dfaRight instanceof DfaTypeValue && dfaLeft == getConstFactory().getNull()) {
+    if (dfaRight instanceof DfaFactMapValue && dfaLeft == getConstFactory().getNull()) {
       return tryEvaluate(dfaRight, relationType, dfaLeft);
     }
-    if (dfaLeft instanceof DfaTypeValue && dfaRight == getConstFactory().getNull() && ((DfaTypeValue)dfaLeft).isNotNull()) {
+    if (dfaLeft instanceof DfaFactMapValue &&
+        dfaRight == getConstFactory().getNull() &&
+        Boolean.FALSE.equals(((DfaFactMapValue)dfaLeft).get(DfaFactType.CAN_BE_NULL))) {
       if (relationType == RelationType.EQ) {
         return getConstFactory().getFalse();
       }
@@ -149,11 +157,16 @@ public class DfaValueFactory {
       }
     }
 
-    if(dfaLeft instanceof DfaOptionalValue && dfaRight instanceof DfaOptionalValue) {
-      if(relationType == RelationType.IS) {
-        return getBoolean(dfaLeft == dfaRight);
-      } else if(relationType == RelationType.IS_NOT) {
-        return getBoolean(dfaLeft != dfaRight);
+    if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
+      if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
+        boolean isSuperState = ((DfaFactMapValue)dfaRight).getFacts().isSuperStateOf(((DfaFactMapValue)dfaLeft).getFacts());
+        if (isSuperState) {
+          return getBoolean(relationType == RelationType.IS);
+        }
+        boolean isDistinct = ((DfaFactMapValue)dfaRight).getFacts().isDistinct(((DfaFactMapValue)dfaLeft).getFacts());
+        if (isDistinct) {
+          return getBoolean(relationType == RelationType.IS_NOT);
+        }
       }
     }
 
@@ -184,6 +197,10 @@ public class DfaValueFactory {
     return value ? getConstFactory().getTrue() : getConstFactory().getFalse();
   }
 
+  public <T> DfaValue getFactValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
+    return getFactFactory().createValue(factType, value);
+  }
+
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
     PsiExpression qualifier = refExpression.getQualifierExpression();
     if (qualifier == null) {
@@ -193,9 +210,7 @@ public class DfaValueFactory {
       final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
       if (thisQualifier == null) return true;
       final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      if (innerMostClass == thisQualifier.resolve()) {
-        return true;
-      }
+      return innerMostClass == thisQualifier.resolve();
     }
     return false;
   }
@@ -211,11 +226,9 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
-  private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
-  private final DfaOptionalValue.Factory myOptionalFactory;
-  private final DfaRangeValue.Factory myRangeFactory;
+  private final DfaFactMapValue.Factory myFactFactory;
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {
@@ -232,22 +245,12 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaTypeValue.Factory getTypeFactory() {
-    return myTypeFactory;
-  }
-
-  @NotNull
   public DfaRelationValue.Factory getRelationFactory() {
     return myRelationFactory;
   }
 
   @NotNull
-  public DfaOptionalValue.Factory getOptionalFactory() {
-    return myOptionalFactory;
-  }
-
-  @NotNull
-  public DfaRangeValue.Factory getRangeFactory() {
-    return myRangeFactory;
+  public DfaFactMapValue.Factory getFactFactory() {
+    return myFactFactory;
   }
 }

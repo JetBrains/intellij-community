@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -42,7 +42,7 @@ public class LoadedRevisionsCache implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoadedRevisionsCache getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, LoadedRevisionsCache.class);
+    return ServiceManager.getService(project, LoadedRevisionsCache.class);
   }
 
   private LoadedRevisionsCache(final Project project) {

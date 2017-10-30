@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
@@ -70,7 +69,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private long myLoadCounter = 0;
 
   public static LineStatusTrackerManagerI getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, LineStatusTrackerManagerI.class);
+    return project.getComponent(LineStatusTrackerManagerI.class);
   }
 
   public LineStatusTrackerManager(@NotNull final Project project,

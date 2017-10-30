@@ -92,7 +92,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final boolean floating = navbar.isInFloatingMode();
     boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();
     final boolean selected = item.isSelected() && item.isFocused();
-    boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
+    boolean nextSelected = item.isNextSelected() && navbar.isFocused();
 
 
     ImageType type;
@@ -186,7 +186,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
 
-    if (item.isNextSelected() && navbar.hasFocus()) {
+    if (item.isNextSelected() && navbar.isFocused()) {
       g2.setColor(selection);
       g2.fill(endShape);
 
@@ -215,12 +215,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
     if (!floating || !item.isLastElement()) {
       if (toolbarVisible || floating) {
-        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
+        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
           Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : UIUtil.isUnderAlloyLookAndFeel() ? Gray.xFF.withAlpha(200) : Gray._205;
           drawArrow(g2, Gray.x00.withAlpha(70), hl, off, h, !selected && !floating, false);
         }
       } else {
-        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
+        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
           Color hl = UIUtil.isUnderDarcula() ? Gray._128.withAlpha(100) : Gray._255.withAlpha(200);
           drawArrow(g2, Gray.x00.withAlpha(150), hl, off, h, !selected && !floating, true);
         }

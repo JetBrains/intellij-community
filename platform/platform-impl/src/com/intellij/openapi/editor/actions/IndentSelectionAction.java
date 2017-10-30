@@ -69,7 +69,7 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   protected static boolean originalIsEnabled(Editor editor, boolean wantSelection) {
-    return (!wantSelection || hasSuitableSelection(editor)) && !editor.isOneLineMode();
+    return (!wantSelection || hasSuitableSelection(editor)) && !editor.isOneLineMode() && !editor.isViewer();
   }
 
   /**

@@ -63,7 +63,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotions(psiClass)) {
+    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
@@ -101,7 +101,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
               addMethodJavadoc(factory, method);
             }
             else {
-              if (TestNGUtil.containsJunitAnnotions(method)) {
+              if (TestNGUtil.containsJunitAnnotations(method)) {
                 convertedElements.addAll(convertJunitAnnotations(factory, method));
               } else {
                 convertedElements.add(addMethodAnnotations(factory, method));

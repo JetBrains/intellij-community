@@ -39,20 +39,20 @@ class ScreenshotOnFailure: TestWatcher() {
     private val LOG = Logger.getInstance(ScreenshotOnFailure::class.java)
     private val myScreenshotTaker = ScreenshotTaker()
 
-    fun takeScreenshotOnFailure(e: Throwable, screenshotName: String) {
+    fun takeScreenshotOnFailure(t: Throwable, screenshotName: String) {
 
       try {
         var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
         if (file.exists())
           file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
         file.delete()
-        if (e is ComponentLookupException)
-          LOG.error("${getHierarchy()} \n caused by:", e)
+        if (t is ComponentLookupException)
+          LOG.error("${getHierarchy()} \n caused by:", t)
         myScreenshotTaker.saveDesktopAsPng(file.path)
         LOG.info("Screenshot: $file")
       }
-      catch (t: Throwable) {
-        LOG.error("Screenshot failed. ${t.message}")
+      catch (e: Exception) {
+        LOG.error("Screenshot failed. ${e.message}")
       }
     }
 

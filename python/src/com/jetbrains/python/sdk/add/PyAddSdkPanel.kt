@@ -34,10 +34,14 @@ abstract class PyAddSdkPanel : JPanel() {
   abstract val panelName: String
   open val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
+  open val nameExtensionComponent: JComponent? = null
+  open var newProjectPath: String? = null
 
   open fun getOrCreateSdk(): Sdk? = sdk
 
   open fun validateAll(): List<ValidationInfo> = emptyList()
+
+  open fun addChangeListener(listener: Runnable) {}
 
   companion object {
     @JvmStatic

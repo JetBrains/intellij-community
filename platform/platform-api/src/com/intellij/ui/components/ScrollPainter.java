@@ -73,7 +73,7 @@ class ScrollPainter extends RegionPainter.Alpha {
   static final class EditorThumb {
     private static final RegionPainter<Float> DARCULA_OLD = new ScrollPainter(0, .33f, .12f, Gray.xA6, Gray.x1A);
     private static final RegionPainter<Float> DARCULA_NEW = new EditorThumbPainter(
-      1,
+      0,
       value("win.editor.thumb.darcula.alpha.base", 89),
       value("win.editor.thumb.darcula.alpha.delta", 166),
       new ColorFunction(
@@ -84,7 +84,7 @@ class ScrollPainter extends RegionPainter.Alpha {
     private static final RegionPainter<Float> DEFAULT_OLD = new Protected(new SubtractColor(0, .25f, .15f, Gray.x80, Gray.xA6),
                                                                           new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
     private static final RegionPainter<Float> DEFAULT_NEW = new EditorThumbPainter(
-      2,
+      0,
       value("win.editor.thumb.default.alpha.base", 140),
       value("win.editor.thumb.default.alpha.delta", 115),
       new ColorFunction(

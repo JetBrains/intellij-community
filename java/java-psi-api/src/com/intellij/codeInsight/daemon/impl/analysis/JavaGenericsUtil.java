@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class JavaGenericsUtil {
   public static boolean isReifiableType(PsiType type) {
@@ -66,7 +54,7 @@ public class JavaGenericsUtil {
       }
 
       if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        //local class (inner inside inside anonymous) should skip anonymous as it can't be static itself 
+        //local class (inner inside inside anonymous) should skip anonymous as it can't be static itself
         final PsiClass stopClassLevel = PsiUtil.isLocalClass(aClass) ? null : aClass.getContainingClass();
         PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(aClass, stopClassLevel);
         PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
@@ -111,7 +99,7 @@ public class JavaGenericsUtil {
       return false;
     }
 
-    if (AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false, false)) {
+    if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_SAFE_VARARGS, CHECK_EXTERNAL)) {
       return false;
     }
 

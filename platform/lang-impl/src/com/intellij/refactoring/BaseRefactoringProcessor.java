@@ -439,7 +439,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
 
-    LocalHistoryAction action = LocalHistory.getInstance().startAction(getCommandName());
+    String commandName = getCommandName();
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
     final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
@@ -483,7 +484,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       };
       ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+        app.runWriteActionWithProgressInDispatchThread(commandName, myProject, null, null, indicator -> performRefactoringRunnable.run());
       }
       else {
         app.runWriteAction(performRefactoringRunnable);
@@ -496,7 +497,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithProgressInDispatchThread(commandName, myProject, null, null, indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      }
     }
     finally {
       action.finish();

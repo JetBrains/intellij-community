@@ -68,7 +68,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @NotNull
   protected String getRelativePath(FilePath path) {
-    return getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path);
+    return getRelativePath(safeCastToFilePath((ChangesBrowserNode)getParent()), path);
   }
 
   @Override
@@ -82,7 +82,12 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   @Nullable
-  public static FilePath safeCastToFilePath(Object o) {
+  public static FilePath safeCastToFilePath(ChangesBrowserNode node) {
+    if (node instanceof ChangesBrowserModuleNode) {
+      return ((ChangesBrowserModuleNode)node).getModuleRoot();
+    }
+
+    Object o = node.getUserObject();
     if (o instanceof FilePath) return (FilePath)o;
     if (o instanceof Change) {
       return ChangesUtil.getAfterPath((Change)o);

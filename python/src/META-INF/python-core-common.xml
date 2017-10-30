@@ -107,6 +107,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                     serviceImplementation="com.jetbrains.python.PyDocumentationManager" overrides="true"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkSettings"
+                        serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
@@ -675,6 +677,9 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
+    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
+                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -707,6 +712,7 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.python.pyi.PyiReferenceResolveProvider"/>
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
@@ -746,6 +752,7 @@
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
+    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
 
   <actions>

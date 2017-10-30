@@ -68,7 +68,8 @@ public final class PySdkTools {
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
+      // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
       ref.set(sdk);
     });

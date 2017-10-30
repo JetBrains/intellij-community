@@ -220,7 +220,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 if (qualifiedName != null && qualifiedName.startsWith("java.time.")) return
               }
             }
-            if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, false)) return
+            if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, 0)) return
             holder.registerProblem(attributeValue,
                                    "No implicit conversion found to convert object of type " + componentType.presentableText + " to " + paramType.presentableText)
           }
@@ -257,8 +257,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO) &&
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER)
              }
-             .count() > 1 && !AnnotationUtil.isAnnotated(method, Collections.singleton(
-      JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
+             .count() > 1 && !AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH, 0)
   }
 }
 

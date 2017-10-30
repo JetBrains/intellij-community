@@ -1199,7 +1199,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = selectedConfiguration?.configuration !is UnknownRunConfiguration
+      val configuration = selectedConfiguration
+      e.presentation.isEnabled = configuration != null && configuration.configuration !is UnknownRunConfiguration
     }
   }
 

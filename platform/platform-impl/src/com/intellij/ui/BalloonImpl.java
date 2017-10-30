@@ -518,6 +518,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.addComponentListener(myComponentListener);
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutShift);
+    if (myDisposed) return; //tracker may dispose the balloon
 
     int positionChangeFix = 0;
     if (myShowPointer) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -25,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -45,8 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -294,11 +280,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   public Module getModule() {
     if (!isValid()) return null;
     VirtualFile virtualFile = getFile();
-    if (virtualFile == null) return null;
-
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-    return fileIndex.getModuleForFile(virtualFile);
+    return virtualFile != null ? ProjectFileIndex.getInstance(getProject()).getModuleForFile(virtualFile) : null;
   }
 
   @Override
@@ -308,9 +290,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
     if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
       List<OrderEntry> orders = fileIndex.getOrderEntriesForFile(virtualFile);
       for (OrderEntry order : orders) {
@@ -321,6 +301,35 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
 
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<SyntheticLibrary> getSyntheticLibraries() {
+    if (!isValid()) return Collections.emptyList();
+    VirtualFile virtualFile = getFile();
+    if (virtualFile == null) return Collections.emptyList();
+
+    Project project = getProject();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (!fileIndex.isInLibrarySource(virtualFile)) return Collections.emptyList();
+
+    VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
+    if (sourcesRoot != null) {
+      List<SyntheticLibrary> list = new ArrayList<>();
+      for (AdditionalLibraryRootsProvider e : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+        for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
+          if (library.getSourceRoots().contains(sourcesRoot)) {
+            Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
+            if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
+              list.add(library);
+            }
+          }
+        }
+      }
+      return list;
+    }
+    return Collections.emptyList();
   }
 
   @Override

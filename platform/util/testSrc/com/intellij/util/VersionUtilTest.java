@@ -22,7 +22,9 @@ public class VersionUtilTest extends TestCase {
   @NotNull
   private static final Map<Pattern, Function<Matcher, Pair<Version, Integer>>> LINE_TO_VERSION_PATTERNS = ContainerUtil.newLinkedHashMap(
     Pair.create(Pattern.compile("^java version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
+    Pair.create(Pattern.compile("^java version \"9\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
     Pair.create(Pattern.compile("^java version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
+    Pair.create(Pattern.compile("^openjdk version \"9-internal.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
     Pair.create(Pattern.compile("^openjdk version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
     Pair.create(Pattern.compile("^openjdk version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
     Pair.create(Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+)\\.([\\d]+)\\.?([\\d]*).*", Pattern.MULTILINE), matcher -> Pair.create(new Version(StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0), StringUtil.parseInt(matcher.group(3),0)), 0))
@@ -52,7 +54,9 @@ public class VersionUtilTest extends TestCase {
     {"openjdk version \"1.8.1_60-release\"",                                            new Version(1, 8, 1), 60},
     {"openjdk version \"1.8.0_121-2-ojdkbuild\"",                                       new Version(1, 8, 0), 121},
     {"openjdk version \"9-ea\"",                                                        new Version(9, 0, 0), 0},
+    {"openjdk version \"9-internal\"",                                                  new Version(9, 0, 0), 0},
     {"java version \"9-ea\"",                                                           new Version(9, 0, 0), 0},
+    {"java version \"9.0.1\"",                                                          new Version(9, 0, 1), 0}
   };
 
   public void testParseVersion() {

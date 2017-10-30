@@ -22,11 +22,4 @@
             description="Show GUI script editor" text="Show GUI script editor"/>
   </actions>
 
-  <application-components>
-    <component>
-      <interface-class>com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent</interface-class>
-      <implementation-class>com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent</implementation-class>
-    </component>
-  </application-components>
-
 </idea-plugin>

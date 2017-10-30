@@ -413,6 +413,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       this.otherPath = otherPath;
     }
 
+    public boolean isRename() {
+      return kind.equals(ChangeKind.RENAMED_FROM) || kind.equals(ChangeKind.RENAMED_TO);
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;

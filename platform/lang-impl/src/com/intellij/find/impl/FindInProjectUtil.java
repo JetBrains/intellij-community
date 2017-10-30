@@ -345,7 +345,11 @@ public class FindInProjectUtil {
   @NotNull
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
+    setupViewPresentation(presentation, toOpenInNewTab, findModel);
+    return presentation;
+  }
 
+  public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final String scope = getTitleForScope(findModel);
     final String stringToFind = findModel.getStringToFind();
     presentation.setScopeText(scope);
@@ -370,8 +374,13 @@ public class FindInProjectUtil {
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
     presentation.setUsageTypeFilteringAvailable(true);
-
-    return presentation;
+    if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
+      presentation.setSearchPattern(findModel.compileRegExp());
+      presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
+    } else {
+      presentation.setSearchPattern(null);
+      presentation.setReplacePattern(null);
+    }
   }
 
   @NotNull

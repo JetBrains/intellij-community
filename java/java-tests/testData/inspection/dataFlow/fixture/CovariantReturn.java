@@ -52,4 +52,19 @@ class CovariantReturn {
   boolean testTypeGeneric(BaseGeneric<?> base) {
     return base instanceof DerivedGenericImpl && <warning descr="Condition 'base.get(null) instanceof Integer' is redundant and can be replaced with '!= null'">base.get(null) instanceof Integer</warning>;
   }
+
+  interface Super {
+    Object get();
+  }
+
+  interface Sub extends Super {
+    String get();
+  }
+
+  void testCast(Super s) {
+    if(s instanceof Sub) {
+      Integer i = (<warning descr="Casting 's.get()' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)s.get();
+      System.out.println(i);
+    }
+  }
 }

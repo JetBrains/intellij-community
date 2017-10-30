@@ -959,10 +959,19 @@ public class RefactoringUtil {
 
     String newLambdaText = "{";
     if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
-    newLambdaText += body.getText() + ";}";
+    newLambdaText += "a;}";
 
     final Project project = lambdaExpression.getProject();
     final PsiCodeBlock codeBlock = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(newLambdaText, lambdaExpression);
+    PsiStatement statement = codeBlock.getStatements()[0];
+    if (statement instanceof PsiReturnStatement) {
+      PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
+      LOG.assertTrue(value != null);
+      value.replace(body);
+    }
+    else if (statement instanceof PsiExpressionStatement){
+      ((PsiExpressionStatement)statement).getExpression().replace(body);
+    }
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 

@@ -1016,8 +1016,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void ensureDataIsActual(@NotNull Runnable runnable) {
-    ChangeListManager.getInstance(myProject).invokeAfterUpdate(runnable, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-                                                               "Refreshing changelists...", ModalityState.current());
+    ChangeListManager.getInstance(myProject).invokeAfterUpdate(
+      () -> {
+        myBrowser.updateDisplayedChangeLists();
+        runnable.run();
+      },
+      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing changelists...", ModalityState.current());
   }
 
   private class CommitExecutorAction extends AbstractAction {

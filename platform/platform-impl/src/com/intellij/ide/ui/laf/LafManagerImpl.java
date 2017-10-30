@@ -394,19 +394,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
     if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
-      final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
-      if (arrow == null) return null;
-
-      try {
-        final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
-        if (method != null) {
-          return (Icon)method.invoke(arrow);
-        }
-        return null;
-      }
-      catch (InvocationTargetException | IllegalAccessException e1) {
-        return null;
-      }
+      return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
   }
@@ -448,6 +436,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     patchGtkDefaults(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
+
+    fixProgressBar(uiDefaults);
 
     for (Frame frame : Frame.getFrames()) {
       // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
@@ -543,6 +533,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
       uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+    }
+  }
+
+  private static void fixProgressBar(UIDefaults uiDefaults) {
+    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+      uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
+      uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
   }
 

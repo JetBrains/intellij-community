@@ -56,6 +56,7 @@ public class RegExpFileType extends LanguageFileType {
         return "Regular Expression";
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getDefaultExtension() {

@@ -19,6 +19,9 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 
 public class TestClassNamingConvention extends NamingConvention<PsiClass> {
@@ -34,7 +37,9 @@ public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
   @Override
   public boolean isApplicable(PsiClass member) {
-    return TestFrameworks.detectFramework(member) != null;
+    if (member instanceof PsiTypeParameter) return false;
+    TestFramework framework = TestFrameworks.detectFramework(member);
+    return framework instanceof JavaTestFramework && framework.isTestClass(member) && !((JavaTestFramework)framework).isSuiteClass(member);
   }
 
   @Override

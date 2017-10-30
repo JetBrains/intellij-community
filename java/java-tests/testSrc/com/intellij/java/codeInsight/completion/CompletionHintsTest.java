@@ -15,6 +15,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
 
@@ -713,6 +715,60 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete();
     waitForAllAsyncStuff();
     checkHintContents("<html><b>Class&lt;?&gt;</b></html>");
+  }
+
+  public void testCompletionBetweenVarargHints() {
+    configureJava("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    type("myVa");
+    complete();
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><hint text=\", b:\"/>); } }");
+  }
+
+  public void testEnteringSpaceBetweenVarargHints() throws Exception {
+    configureJava("class C { void vararg(Object a, int... b) {} void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    type("new ");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><hint text=\", b:\"/>); } }");
+  }
+
+  public void testNoTooltipForInvalidParameter() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    next();
+    type("\"b\",");
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
+
+  public void testIncorrectTooltipIsNotShownForInnerContext() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("new String(\"");
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
+
+  public void testOverloadsWithOneAndNoParameters() throws Exception {
+    configureJava("class C { void method() {} void method(int a) {} void m() { m<caret> } }");
+    complete("method(int a)");
+    checkResultWithInlays("class C { void method() {} void method(int a) {} void m() { method(<HINT text=\"a:\"/><caret>); } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void method() {} void method(int a) {} void m() { method(); } }");
+  }
+
+  public void testCodeFragment() {
+    PsiExpressionCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("System.getProperty(<caret>)"); // At the moment, we assure that neither hints, nor comma appear.
+                                                          // Later we might make it work correctly for code fragments.
   }
 
   private void checkResult(String text) {

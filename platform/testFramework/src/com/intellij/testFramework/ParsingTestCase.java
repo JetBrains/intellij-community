@@ -19,7 +19,6 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -153,33 +152,18 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
     instance.addExplicitExtension(language, object);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        instance.removeExplicitExtension(language, object);
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
   }
 
   @Override
   protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, Class<T> aClass) {
     super.registerExtensionPoint(extensionPointName, aClass);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName());
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
   }
 
   protected <T> void registerApplicationService(final Class<T> aClass, T object) {
     getApplication().registerService(aClass, object);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        getApplication().getPicoContainer().unregisterComponent(aClass.getName());
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
   }
 
   @NotNull

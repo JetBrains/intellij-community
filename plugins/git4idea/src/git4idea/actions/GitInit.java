@@ -72,8 +72,7 @@ public class GitInit extends DumbAwareAction {
 
       GitCommandResult result = Git.getInstance().init(project, root);
       if (!result.success()) {
-        GitVcs vcs = GitVcs.getInstance(project);
-        if (vcs != null && vcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        if (GitVcs.getInstance(project).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
           VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
         }
         return;

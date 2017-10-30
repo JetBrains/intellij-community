@@ -53,8 +53,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       final File zippedLogsFile = createZip(project);
       if (!doNotShowDialog) {
         Messages.showIdeaMessageDialog(
-          project, "Included log and settings may contain sensitive data.", "Sensitive Data",
-          new String[]{Messages.OK_BUTTON}, 1, Messages.getInformationIcon(),
+          project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
+          new String[]{"Show in " + ShowFilePathAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
           new DialogWrapper.DoNotAskOption.Adapter() {
             @Override
             public void rememberChoice(final boolean selected, final int exitCode) {
@@ -121,6 +121,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Collect and Show Logs in " + ShowFilePathAction.getFileManagerName();
+    return "Compress Logs and Show in " + ShowFilePathAction.getFileManagerName();
   }
 }

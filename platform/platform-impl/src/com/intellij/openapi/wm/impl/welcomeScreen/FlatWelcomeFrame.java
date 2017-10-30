@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
@@ -476,7 +475,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
+        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, () -> goBack(), this);
         final Runnable onDone = () -> {
           setTitle("New Project");
           final JBList<AnAction> list = panel.second;
@@ -787,7 +786,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
-                                                                      final JComponent parent,
                                                                       final Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
@@ -872,11 +870,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     final JPanel main = new JPanel(new BorderLayout());
     main.add(actionsListPanel, BorderLayout.WEST);
 
-    final JComponent back = createBackLabel(backAction, singleProjectGenerator);
-    
-    if (back != null && !singleProjectGenerator) {
-      actionsListPanel.add(back, BorderLayout.SOUTH);
-    }
+    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
+    main.add(bottomPanel, BorderLayout.SOUTH);
 
     final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
     ListSelectionListener selectionListener = e -> {
@@ -897,19 +893,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         selected.set(panel);
         main.add(selected.get());
 
-        if (singleProjectGenerator && back != null) {
-          JPanel first = UIUtil.uiTraverser(panel).traverse().filter(JPanel.class).filter((it) -> BOTTOM_PANEL.equals(it.getName())).first();
-          if (first != null) {
-            first.add(back, BorderLayout.WEST);
-          }
-        }
-
-        for (JButton button : UIUtil.findComponentsOfType(main, JButton.class)) {
-          if (button.getClientProperty(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
-            parent.getRootPane().setDefaultButton(button);
-            break;
-          }
-        }
+        updateBottomPanel(panel, (AbstractActionWithPanel)value, bottomPanel, backAction);
 
         main.revalidate();
         main.repaint();
@@ -929,29 +913,50 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (singleProjectGenerator) {
       actionsListPanel.setPreferredSize(new Dimension(0, 0));
     }
-    
+
     return Pair.create(main, list);
   }
 
-  @Nullable
-  private static JComponent createBackLabel(@Nullable Runnable backAction, boolean singleProjectGenerator) {
-    if (backAction == null) return null;
-    if (singleProjectGenerator) {
-      JButton button = new JButton("Back");
-      button.addActionListener(e -> backAction.run());
-      return button;
+  private static void updateBottomPanel(@NotNull JPanel currentPanel,
+                                        @NotNull AbstractActionWithPanel actionWithPanel,
+                                        @NotNull JPanel bottomPanel,
+                                        @Nullable Runnable backAction) {
+    bottomPanel.removeAll();
+    bottomPanel.setPreferredSize(JBUI.size(-1, UIUtil.isUnderDarcula() ? 44 : 40));
+
+    if (SystemInfoRt.isUnix) {
+      addCancelButton(bottomPanel, backAction);
+      addActionButton(bottomPanel, actionWithPanel, currentPanel);
     }
-    JLabel back = new JLabel(AllIcons.Actions.Back);
-    back.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
-    back.setHorizontalAlignment(SwingConstants.LEFT);
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        backAction.run();
-        return true;
-      }
-    }.installOn(back);
-    return back;
+    else {
+      addActionButton(bottomPanel, actionWithPanel, currentPanel);
+      addCancelButton(bottomPanel, backAction);
+    }
+  }
+
+  private static void addCancelButton(@NotNull JPanel bottomPanel, @Nullable Runnable backAction) {
+    JComponent cancelButton = createCancelButton(backAction);
+    if (cancelButton != null) {
+      bottomPanel.add(cancelButton);
+    }
+  }
+
+  private static void addActionButton(@NotNull JPanel bottomPanel,
+                                      @NotNull AbstractActionWithPanel actionWithPanel,
+                                      @NotNull JPanel currentPanel) {
+    JButton actionButton = actionWithPanel.getActionButton();
+    bottomPanel.add(actionButton);
+    currentPanel.getRootPane().setDefaultButton(actionButton);
+  }
+
+  @Nullable
+  private static JComponent createCancelButton(@Nullable Runnable backAction) {
+    if (backAction == null) return null;
+
+    JButton cancelButton = new JButton("Cancel");
+    cancelButton.addActionListener(e -> backAction.run());
+
+    return cancelButton;
   }
 
   public static void installQuickSearch(JBList<AnAction> list) {

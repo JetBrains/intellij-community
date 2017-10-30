@@ -18,7 +18,6 @@ package com.jetbrains.python.testing;
 import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -34,6 +33,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ThreeState;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
+import com.jetbrains.extenstions.ContextAnchor;
+import com.jetbrains.extenstions.ModuleBasedContextAnchor;
+import com.jetbrains.extenstions.ProjectSdkContextAnchor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
@@ -117,7 +119,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     final ThreeState testClassRequired = configuration.isTestClassRequired();
 
 
-    myPythonTarget = new PySymbolFieldWithBrowseButton(module != null ? module : ModuleManager.getInstance(project).getModules()[0],
+    ContextAnchor contentAnchor = (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
+    myPythonTarget = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                        element -> {
                                                          if (element instanceof PsiDirectory) {
                                                            // Folder is always accepted because we can't be sure

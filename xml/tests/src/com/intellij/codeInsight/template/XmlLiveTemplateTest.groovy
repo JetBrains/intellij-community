@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -75,7 +76,7 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testQuotedTemplateParametersWithEnforceQuotesOnReformat() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings()
+    HtmlCodeStyleSettings settings = getHtmlSettings()
     CodeStyleSettings.QuoteStyle originalQuoteStyle = settings.HTML_QUOTE_STYLE
     boolean emmetEnabled = EmmetOptions.instance.emmetEnabled
     boolean originalEnforceQuotes = settings.HTML_ENFORCE_QUOTES
@@ -93,6 +94,11 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
       settings.HTML_QUOTE_STYLE = originalQuoteStyle
       settings.HTML_ENFORCE_QUOTES = originalEnforceQuotes
     }
+  }
+  private HtmlCodeStyleSettings getHtmlSettings(){
+    return CodeStyleSettingsManager.getInstance(getProject())
+      .getCurrentSettings()
+      .getCustomSettings(HtmlCodeStyleSettings.class)
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {

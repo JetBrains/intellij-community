@@ -49,6 +49,7 @@ public interface JsonLikePsiWalker {
   @Nullable
   JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
 
+  @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
 

@@ -20,6 +20,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -117,9 +118,22 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.clear.confirmation.title"), Messages.getWarningIcon())) {
           GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
           h.addParameters("clear");
-          GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.clearing.stashes"), h.printableCommandLine());
-          refreshStashList();
-          updateDialogState();
+          new Task.Modal(project, GitBundle.getString("unstash.clearing.stashes"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              GitCommandResult result = Git.getInstance().runCommand(h);
+              if (!result.success()) ApplicationManager.getApplication()
+                .invokeLater(() -> GitUIUtil.showOperationError(project,
+                                                                  GitBundle.getString("unstash.clearing.stashes"),
+                                                                  result.getErrorOutputAsJoinedString()));
+            }
+
+            @Override
+            public void onFinished() {
+              refreshStashList();
+              updateDialogState();
+            }
+          }.queue();
         }
       }
     });

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorTextField
 import kotlin.with
@@ -39,6 +40,7 @@ class GuiScriptEditor : Disposable {
     val editorFactory = EditorFactory.getInstance()
     val editorDocument = editorFactory.createDocument("")
     myEditor = editorFactory.createEditor(editorDocument, ProjectManager.getInstance().defaultProject) as EditorEx
+    Disposer.register(ProjectManager.getInstance().defaultProject,this)
     EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, true)
     myEditor.colorsScheme = EditorColorsManager.getInstance().globalScheme
     with(myEditor.settings) {

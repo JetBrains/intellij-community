@@ -123,14 +123,6 @@ public abstract class StatusText {
   protected abstract boolean isStatusVisible();
 
   @Nullable
-  private ActionListener findActionListenerAt(int xCoord, int yCoord) {
-    if (myComponent.getPreferredSize().height >= yCoord) {
-      return findListener(myComponent, myClickListeners, xCoord);
-    }
-    return findListener(mySecondaryComponent, mySecondaryListeners, xCoord);
-  }
-
-  @Nullable
   private static ActionListener findListener(@NotNull SimpleColoredComponent component,
                                              @NotNull List<ActionListener> listeners,
                                              int xCoord) {
@@ -147,9 +139,15 @@ public abstract class StatusText {
 
     point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
-    Rectangle b = getTextComponentBound();
-    if (b.contains(point)) {
-      return findActionListenerAt(point.x - b.x, point.y - b.y);
+    Rectangle commonBounds = getTextComponentBound();
+    if (commonBounds.contains(point)) {
+      Rectangle bounds;
+      if (myComponent.getPreferredSize().height >= point.y - commonBounds.y) {
+        bounds = adjustComponentBounds(myComponent, commonBounds);
+        return findListener(myComponent, myClickListeners, point.x - bounds.x);
+      }
+      bounds = adjustComponentBounds(mySecondaryComponent, commonBounds);
+      return findListener(mySecondaryComponent, mySecondaryListeners, point.x - bounds.x);
     }
     return null;
   }
@@ -224,7 +222,8 @@ public abstract class StatusText {
     return this;
   }
 
-  public StatusText appendSecondaryText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  @NotNull
+  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {

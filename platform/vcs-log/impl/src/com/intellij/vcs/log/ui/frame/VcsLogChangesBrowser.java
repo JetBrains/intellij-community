@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.UI;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -46,6 +45,7 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +106,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @Override
   protected List<AnAction> createToolbarActions() {
     List<AnAction> result = new ArrayList<>(super.createToolbarActions());
-    result.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
-    result.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_CHANGE_VIEW_SETTINGS_ACTION));
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_ACTION_GROUP);
+    Collections.addAll(result, group.getChildren(null));
     return result;
   }
 
@@ -138,7 +138,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
       if (myChanges.isEmpty() && detail.getParents().size() > 1) {
         myViewer.getEmptyText().setText("No merged conflicts.").
-          appendSecondaryText("Show changes to parents", getLinkAttributes(),
+          appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
                               e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
       }
       else {
@@ -157,12 +157,6 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     }
 
     myViewer.rebuildTree();
-  }
-
-  @NotNull
-  private static SimpleTextAttributes getLinkAttributes() {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                    UI.getColor("link.foreground"));
   }
 
   @NotNull

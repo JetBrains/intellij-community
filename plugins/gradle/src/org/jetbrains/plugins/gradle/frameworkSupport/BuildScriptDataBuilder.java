@@ -30,15 +30,16 @@ import java.util.Set;
  */
 public class BuildScriptDataBuilder {
   @NotNull private final VirtualFile myBuildScriptFile;
-  private final Set<String> plugins = ContainerUtil.newTreeSet();
-  private final Set<String> pluginsInGroup = ContainerUtil.newTreeSet();
-  private final Set<String> repositories = ContainerUtil.newTreeSet();
-  private final Set<String> dependencies = ContainerUtil.newTreeSet();
-  private final Set<String> properties = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptProperties = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptRepositories = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptDependencies = ContainerUtil.newTreeSet();
-  private final Set<String> other = ContainerUtil.newTreeSet();
+  protected final Set<String> imports = ContainerUtil.newTreeSet();
+  protected final Set<String> plugins = ContainerUtil.newTreeSet();
+  protected final Set<String> pluginsInGroup = ContainerUtil.newTreeSet();
+  protected final Set<String> repositories = ContainerUtil.newTreeSet();
+  protected final Set<String> dependencies = ContainerUtil.newTreeSet();
+  protected final Set<String> properties = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptProperties = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptRepositories = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptDependencies = ContainerUtil.newTreeSet();
+  protected final Set<String> other = ContainerUtil.newTreeSet();
 
   public BuildScriptDataBuilder(@NotNull VirtualFile buildScriptFile) {
     myBuildScriptFile = buildScriptFile;
@@ -56,6 +57,14 @@ public class BuildScriptDataBuilder {
     return buildMainPart();
   }
 
+  public String buildImports() {
+    if (!imports.isEmpty()) {
+      return StringUtil.join(imports, "\n") + "\n";
+    }
+
+    return "";
+  }
+
   public String buildConfigurationPart() {
     List<String> lines = ContainerUtil.newArrayList();
     addBuildscriptLines(lines, BuildScriptDataBuilder::padding);
@@ -70,10 +79,7 @@ public class BuildScriptDataBuilder {
 
   public String buildMainPart() {
     List<String> lines = ContainerUtil.newArrayList();
-    if (!plugins.isEmpty()) {
-      lines.addAll(plugins);
-      lines.add("");
-    }
+    addPluginsLines(lines, BuildScriptDataBuilder::padding);
     if (!properties.isEmpty()) {
       lines.addAll(properties);
       lines.add("");
@@ -94,6 +100,13 @@ public class BuildScriptDataBuilder {
       lines.addAll(other);
     }
     return StringUtil.join(lines, "\n");
+  }
+
+  protected void addPluginsLines(@NotNull List<String> lines, @NotNull Function<String, String> padding) {
+    if (!plugins.isEmpty()) {
+      lines.addAll(plugins);
+      lines.add("");
+    }
   }
 
   private void addBuildscriptLines(@NotNull List<String> lines, @NotNull Function<String, String> padding) {
@@ -118,6 +131,11 @@ public class BuildScriptDataBuilder {
       lines.add("}");
       lines.add("");
     }
+  }
+
+  public BuildScriptDataBuilder addImport(@NotNull String importString) {
+    imports.add(importString);
+    return this;
   }
 
   public BuildScriptDataBuilder addBuildscriptPropertyDefinition(@NotNull String definition) {

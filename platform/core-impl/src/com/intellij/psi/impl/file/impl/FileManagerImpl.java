@@ -106,7 +106,7 @@ public class FileManagerImpl implements FileManager {
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
     if (parentDir == null) {
-      setUpPropertyChangedForUnloadedPsi(event, vFile);
+      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
 
       myManager.beforePropertyChange(event);
       setViewProvider(vFile, null);
@@ -120,17 +120,12 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  void firePropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
-    setUpPropertyChangedForUnloadedPsi(event, vFile);
+  public void firePropertyChangedForUnloadedPsi() {
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
 
     myManager.beforePropertyChange(event);
     myManager.propertyChanged(event);
-  }
-
-  private static void setUpPropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
-    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-    event.setOldValue(vFile);
-    event.setNewValue(vFile);
   }
 
   @Override
@@ -268,7 +263,7 @@ public class FileManagerImpl implements FileManager {
   void processFileTypesChanged() {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
-    DebugUtil.startPsiModification("file type change");
+    DebugUtil.startPsiModification(null);
     try {
       ApplicationManager.getApplication().runWriteAction(() -> {
         PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);

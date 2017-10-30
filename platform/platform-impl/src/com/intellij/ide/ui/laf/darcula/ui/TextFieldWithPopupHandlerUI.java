@@ -152,15 +152,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         bounds.width -= holder.bounds.width + gap;
         holder.bounds.x = bounds.x + bounds.width + gap;
       }
-      JTextComponent component = getComponent();
-      boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));
-      holder.bounds.y = bounds.y;
-      if (!multiline) {
-        holder.bounds.y += (bounds.height - holder.bounds.height) / 2;
+      int top = (bounds.height - holder.bounds.height) / 2;
+      if (top > gap) {
+        JTextComponent component = getComponent();
+        boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));
+        if (multiline) top = gap; // do not center icon for multiline text fields
       }
-      else {
-        holder.bounds.y += gap;
-      }
+      holder.bounds.y = bounds.y + top;
     }
   }
 

@@ -250,7 +250,6 @@ public class PluginGroups {
 
   public static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
     tree.put("Version Controls", Pair.create(PlatformImplIcons.VersionControls, Arrays.asList(
-      "ClearcasePlugin",
       "CVS",
       "Git4Idea",
       "org.jetbrains.plugins.github",

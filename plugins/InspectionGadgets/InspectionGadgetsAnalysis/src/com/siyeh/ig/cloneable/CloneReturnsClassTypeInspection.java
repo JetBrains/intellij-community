@@ -60,7 +60,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
   private static class CloneReturnsClassTypeFix extends InspectionGadgetsFix {
 
-    private final String myClassName;
+    final String myClassName;
 
     public CloneReturnsClassTypeFix(String className) {
       myClassName = className;
@@ -100,12 +100,8 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
           if (owner != parent) {
             return;
           }
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue == null) {
-            return;
-          }
-          final PsiType type = returnValue.getType();
-          if (newType.equals(type)) {
+          final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
+          if (returnValue == null || newType.equals(returnValue.getType())) {
             return;
           }
           PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + returnValue.getText() + ';');

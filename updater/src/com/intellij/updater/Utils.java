@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -38,16 +24,6 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  private static File findUniqueName(String path) {
-    int index = 0;
-    File myTempFile;
-    do {
-      myTempFile = new File(path + ".tmp." + index++);
-    }
-    while (myTempFile.exists());
-    return myTempFile;
-  }
-
   public static String findDirectory(long requiredFreeSpace) {
     String dir = System.getProperty("idea.updater.log");
     if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
@@ -66,11 +42,17 @@ public class Utils {
 
   public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = findUniqueName(findDirectory(REQUIRED_FREE_SPACE) + "/idea.updater.files");
-      if (!myTempDir.mkdirs()) throw new IOException("Cannot create working directory: " + myTempDir);
+      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
       Runner.logger().info("created working directory: " + myTempDir);
     }
-    return findUniqueName(myTempDir.getPath() + '/' + name);
+
+    File myTempFile;
+    int index = 0;
+    do {
+      myTempFile = new File(myTempDir, name + ".tmp." + index++);
+    }
+    while (myTempFile.exists());
+    return myTempFile;
   }
 
   public static void cleanup() throws IOException {

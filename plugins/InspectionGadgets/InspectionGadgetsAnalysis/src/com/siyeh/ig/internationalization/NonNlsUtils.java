@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+
 public class NonNlsUtils {
 
   private static final Key<Boolean> KEY = new Key<>("IG_NON_NLS_ANNOTATED_USE");
@@ -266,7 +268,6 @@ public class NonNlsUtils {
       return false;
     }
     final PsiModifierListOwner variable = (PsiModifierListOwner)element;
-    return AnnotationUtil.isAnnotated(variable,
-                                      AnnotationUtil.NON_NLS, false, false);
+    return AnnotationUtil.isAnnotated(variable, AnnotationUtil.NON_NLS, CHECK_EXTERNAL);
   }
 }

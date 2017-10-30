@@ -411,7 +411,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator);
+    ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();

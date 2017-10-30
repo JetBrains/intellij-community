@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -44,7 +46,10 @@ import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -167,7 +172,7 @@ public class GithubShareAction extends DumbAwareAction {
         if (!gitDetected) {
           LOG.info("No git detected, creating empty git repo");
           indicator.setText("Creating empty git repo...");
-          if (!createEmptyGitRepository(project, root, indicator)) {
+          if (!createEmptyGitRepository(project, root)) {
             return;
           }
         }
@@ -290,14 +295,11 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   private static boolean createEmptyGitRepository(@NotNull Project project,
-                                                  @NotNull VirtualFile root,
-                                                  @NotNull ProgressIndicator indicator) {
-    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-    h.setStdoutSuppressed(false);
-    GitHandlerUtil.runInCurrentThread(h, indicator, true, GitBundle.getString("initializing.title"));
-    if (!h.errors().isEmpty()) {
-      GitUIUtil.showOperationErrors(project, h.errors(), "git init");
-      LOG.info("Failed to create empty git repo: " + h.errors());
+                                                  @NotNull VirtualFile root) {
+    GitCommandResult result = Git.getInstance().init(project, root);
+    if (!result.success()) {
+      VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.getErrorOutputAsHtmlString());
+      LOG.info("Failed to create empty git repo: " + result.getErrorOutputAsJoinedString());
       return false;
     }
     GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());

@@ -26,7 +26,7 @@ public abstract class ChildAlignmentStrategyProvider {
 
   public abstract AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child);
 
-  public static ChildAlignmentStrategyProvider NULL_STRATEGY_PROVIDER = new ChildAlignmentStrategyProvider() {
+  public static final ChildAlignmentStrategyProvider NULL_STRATEGY_PROVIDER = new ChildAlignmentStrategyProvider() {
     @Override
     public AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child) {
       return AlignmentStrategy.getNullStrategy();

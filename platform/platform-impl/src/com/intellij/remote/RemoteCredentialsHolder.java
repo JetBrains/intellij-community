@@ -255,7 +255,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     copyRemoteCredentials(this, to);
   }
 
-  public void copyFrom(RemoteCredentials from) {
+  public void copyFrom(@NotNull RemoteCredentials from) {
     copyRemoteCredentials(from, this);
   }
 

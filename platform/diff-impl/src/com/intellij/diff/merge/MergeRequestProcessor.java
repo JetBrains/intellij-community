@@ -25,6 +25,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -224,7 +226,8 @@ public abstract class MergeRequestProcessor implements Disposable {
       myRequest.applyResult(result);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
+      new Notification("Merge", "Can't Finish Merge Resolve", e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 

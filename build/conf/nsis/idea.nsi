@@ -333,7 +333,7 @@ Function ConfirmDesktopShortcut
     StrCpy $R1 "64-bit launcher"
   ${Else}
     ;there is only one launcher and it is 64-bit.
-    StrCpy $R0 "64-bit launcher"
+    StrCpy $R0 "${MUI_PRODUCT} launcher"
     StrCpy $R1 ""
   ${EndIf}
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0

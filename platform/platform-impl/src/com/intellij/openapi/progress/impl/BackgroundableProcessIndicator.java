@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
@@ -50,10 +48,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         @Override
         public void enteredDumbMode() {
           cancel();
-        }
-
-        @Override
-        public void exitDumbMode() {
         }
       });
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -25,13 +11,14 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +180,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public String toString() {
     if (myEventSet != null) {
       return myEventSet.toString();
-    } 
+    }
     return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
   }
 
@@ -242,35 +229,53 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Override
   public void computeExecutionStacks(final XExecutionStackContainer container) {
     myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
+      final Set<ThreadReferenceProxyImpl> myAddedThreads = new HashSet<>();
+
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        // add the current thread
+        if (!addThreads(Collections.singletonList(myThread), null, false)) {
+          return;
+        }
+
+        // add paused threads
+        List<ThreadReferenceProxyImpl> pausedThreads =
+          StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
+            .map(SuspendContextImpl::getThread)
+            .nonNull()
+            .toList();
+        if (!addThreads(pausedThreads, THREAD_NAME_COMPARATOR, false)) {
+          return;
+        }
+        // add all the rest
+        addThreads(getDebugProcess().getVirtualMachineProxy().allThreads(), THREADS_SUSPEND_AND_NAME_COMPARATOR, true);
+      }
+
+      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<JavaExecutionStack> comparator, boolean last) {
         List<JavaExecutionStack> res = new ArrayList<>();
-        Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
-        JavaExecutionStack currentStack = null;
         for (ThreadReferenceProxyImpl thread : threads) {
-          boolean current = thread == myThread;
-          JavaExecutionStack stack = new JavaExecutionStack(thread, myDebugProcess, current);
-          if (!current) {
-            res.add(stack);
+          if (container.isObsolete()) {
+            return false;
           }
-          else {
-            currentStack = stack;
+          if (thread != null && myAddedThreads.add(thread)) {
+            res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
           }
         }
-        res.sort(THREADS_COMPARATOR);
-        if (currentStack != null) {
-          res.add(0, currentStack);
+        if (res.size() > 1 && comparator != null) {
+          res.sort(comparator);
         }
-        container.addExecutionStack(res, true);
+        container.addExecutionStack(res, last);
+        return true;
       }
     });
   }
 
-  private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = (th1, th2) -> {
-    int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
-    if (res == 0) {
-      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
-    }
-    return res;
-  };
+  private static final Comparator<JavaExecutionStack> THREAD_NAME_COMPARATOR =
+    Comparator.comparing(XExecutionStack::getDisplayName, String.CASE_INSENSITIVE_ORDER);
+
+  private static final Comparator<ThreadReferenceProxyImpl> SUSPEND_FIRST_COMPARATOR =
+    Comparator.comparing(ThreadReferenceProxyImpl::isSuspended).reversed();
+
+  private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
+    Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
 }

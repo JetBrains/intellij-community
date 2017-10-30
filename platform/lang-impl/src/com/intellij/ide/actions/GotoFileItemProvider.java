@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.*;
@@ -89,7 +75,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     String sanitized = getSanitizedPattern(pattern, myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
     NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
-    myModel.processNames(name -> grouper.processName(name), true);
+    myModel.processNames(grouper::processName, true);
 
     Ref<Boolean> hasSuggestions = Ref.create(false);
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
@@ -101,6 +87,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         return false;
       }
       dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
+      if (!myModel.isSlashlessMatchingEnabled()) {
+        return true;
+      }
     }
     return true;
   }
@@ -317,8 +306,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       List<List<String>> groups = new ArrayList<>();
 
       Comparator<MatchResult> comparator = (mr1, mr2) -> {
-        boolean exactPrefix1 = StringUtil.startsWithIgnoreCase(mr1.elementName, patternSuffix);
-        boolean exactPrefix2 = StringUtil.startsWithIgnoreCase(mr2.elementName, patternSuffix);
+        boolean exactPrefix1 = StringUtil.startsWith(mr1.elementName, patternSuffix);
+        boolean exactPrefix2 = StringUtil.startsWith(mr2.elementName, patternSuffix);
         if (exactPrefix1 && exactPrefix2) return 0;
         if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
         return mr1.compareDegrees(mr2, preferStartMatches);

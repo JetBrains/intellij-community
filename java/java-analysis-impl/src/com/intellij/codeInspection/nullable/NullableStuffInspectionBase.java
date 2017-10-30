@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
@@ -648,7 +650,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static boolean hasInheritableNotNull(PsiModifierListOwner owner) {
-    return AnnotationUtil.isAnnotated(owner, "javax.annotation.constraints.NotNull", true);
+    return AnnotationUtil.isAnnotated(owner, "javax.annotation.constraints.NotNull", CHECK_HIERARCHY | CHECK_TYPE);
   }
 
   private void checkParameters(PsiMethod method,

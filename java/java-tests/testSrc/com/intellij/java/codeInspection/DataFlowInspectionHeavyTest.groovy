@@ -80,8 +80,16 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
   void "test no always failing calls in tests"() {
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("test"), true)
 
+    myFixture.addFileToProject("test/org/junit/Test.java", """
+package org.junit;
+
+public @interface Test {
+  Class<? extends Throwable> expected();
+}
+""")
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("test/Foo.java", """
 class Foo {
+  @org.junit.Test(expected=RuntimeException.class)
   void foo() {
     assertTrue(false);
   }

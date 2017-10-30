@@ -69,6 +69,19 @@ public class UrlClassLoader extends ClassLoader {
     ourParallelCapableLoaders.add(loaderClass);
   }
 
+  /**
+   * Called by the VM to support dynamic additions to the class path
+   *
+   * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
+   */
+  @SuppressWarnings("unused")
+  void appendToClassPathForInstrumentation(String jar) {
+    try {
+      //noinspection deprecation
+      addURL(new File(jar).toURI().toURL());
+    } catch(MalformedURLException ignore) {}
+  }
+
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   @NotNull

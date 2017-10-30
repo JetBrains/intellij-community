@@ -16,13 +16,13 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,17 +34,16 @@ public class TestStatusLine extends JPanel {
   private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
   private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
 
-  protected final JProgressBar myProgressBar = new JBProgressBar();
+  protected final JProgressBar myProgressBar = new JProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
 
   public TestStatusLine() {
     super(new BorderLayout());
-    myProgressPanel = new JPanel(new GridBagLayout());
-    add(myProgressPanel, BorderLayout.WEST);
+    myProgressPanel = new JPanel(new BorderLayout());
+    add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
-    myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                              JBUI.insets(2, 8, 0, 8), 0, 0));
+    myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -61,53 +60,66 @@ public class TestStatusLine extends JPanel {
       testsTotal = finishedTestsCount + failuresCount + ignoredTestsCount;
       if (testsTotal == 0) return;
     }
+    int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
     if (duration == null || endTime == 0) {
-      myState.append(finishedTestsCount + (testsTotal > 0 ? " of " + getTestsTotalMessage(testsTotal) : "") + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
-      appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
+      //running tests
+      formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
       return;
     }
-    String result = "";
-    if (finishedTestsCount == testsTotal || testsTotal < 0) {
-      if (testsTotal > 1 && (failuresCount == 0 && ignoredTestsCount == 0 || failuresCount == testsTotal || ignoredTestsCount == testsTotal)) {
-        result = "All ";
-      }
-    }
-    else {
-      result = "Stopped. " + finishedTestsCount + " of ";
+
+    //finished tests
+    boolean stopped = finishedTestsCount != testsTotal;
+    if (stopped) {
+      myState.append("Stopped. ");
     }
 
-    result += getTestsTotalMessage(testsTotal > 0 ? testsTotal : finishedTestsCount);
+    formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
-    if (failuresCount == 0 && ignoredTestsCount == 0) {
-      myState.append(result + " passed");
-    }
-    else if (failuresCount == finishedTestsCount) {
-      myState.append(result + " failed", ERROR_ATTRIBUTES);
-    }
-    else if (ignoredTestsCount == finishedTestsCount) {
-      myState.append(result + " ignored", IGNORE_ATTRIBUTES);
-    }
-    else {
-      myState.append(result + " done: ");
-      appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
-    }
     myState.append(" - " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+  }
+
+  private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
+    boolean something = false;
+    if (failuresCount > 0) {
+      myState.append("Tests failed: " + failuresCount, ERROR_ATTRIBUTES);
+      something = true;
+    }
+    else {
+      myState.append("Tests ");
+    }
+
+    if (passedCount > 0 || ignoredTestsCount + failuresCount == 0) {
+      if (something) {
+        myState.append(", ");
+      }
+      something = true;
+      myState.append("passed: " + passedCount);
+    }
+
+    if (ignoredTestsCount > 0) {
+      if (something) {
+        myState.append(", ");
+      }
+      myState.append("ignored: " + ignoredTestsCount, IGNORE_ATTRIBUTES);
+    }
+
+    if (testsTotal > 0) {
+      myState.append(" of " + getTestsTotalMessage(testsTotal));
+    }
+  }
+
+  public void setIndeterminate(boolean flag) {
+    myProgressPanel.add(myProgressBar, BorderLayout.NORTH);
+    myProgressBar.setIndeterminate(flag);
+  }
+
+  public void onTestsDone(TestStateInfo.Magnitude info) {
+    myProgressPanel.remove(myProgressBar);
+    myState.setIcon(TestIconMapper.getIcon(info));
   }
 
   private static String getTestsTotalMessage(int testsTotal) {
     return testsTotal + " test" + (testsTotal > 1 ? "s" : "");
-  }
-
-  private void appendFailuresAndIgnores(int failuresCount, int ignoredTestsCount) {
-    if (failuresCount > 0) {
-      myState.append(failuresCount + " failed", ERROR_ATTRIBUTES);
-    }
-    if (ignoredTestsCount > 0) {
-      if (failuresCount > 0) {
-        myState.append(", ", ERROR_ATTRIBUTES);
-      }
-      myState.append(ignoredTestsCount + " ignored", IGNORE_ATTRIBUTES);
-    }
   }
 
   public void setStatusColor(Color color) {
@@ -123,6 +135,10 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setValue(fraction);
   }
 
+  /**
+   * Usages should be deleted as progress is now incorporated into console
+   */
+  @Deprecated
   public void setPreferredSize(boolean orientation) {
     final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
     myProgressPanel.setMaximumSize(size);

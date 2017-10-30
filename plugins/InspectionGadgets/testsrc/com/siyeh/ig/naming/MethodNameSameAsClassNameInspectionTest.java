@@ -20,6 +20,8 @@ public class MethodNameSameAsClassNameInspectionTest extends IGQuickFixesTestCas
   public void testModifiers() { doTest(); }
   public void testAbstract() { assertQuickfixNotAvailable(); }
   public void testInterface() { assertQuickfixNotAvailable(); }
+  public void testConflictingCtor() { assertQuickfixNotAvailable(); }
+  public void testConflictingCtorErasure() { assertQuickfixNotAvailable(); }
 
   @Override
   protected String getRelativePath() {

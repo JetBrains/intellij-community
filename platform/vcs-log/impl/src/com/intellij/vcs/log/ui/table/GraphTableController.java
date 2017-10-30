@@ -252,6 +252,7 @@ public class GraphTableController {
   private class MyMouseAdapter extends MouseAdapter {
     private static final int BORDER_THICKNESS = 3;
     @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
+    @Nullable private Cursor myLastCursor = null;
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -312,7 +313,7 @@ public class GraphTableController {
       myTable.getExpandableItemsHandler().setEnabled(true);
 
       if (myLinkListener.getTagAt(e) != null) {
-        myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        swapCursor(Cursor.HAND_CURSOR);
         return;
       }
 
@@ -320,7 +321,7 @@ public class GraphTableController {
       if (row >= 0 && row < myTable.getRowCount()) {
         int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
         if (column == ROOT_COLUMN) {
-          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          swapCursor(Cursor.HAND_CURSOR);
           return;
         }
         else if (column == COMMIT_COLUMN) {
@@ -334,7 +335,22 @@ public class GraphTableController {
         }
       }
 
-      myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      restoreCursor(Cursor.HAND_CURSOR);
+    }
+
+    private void swapCursor(int newCursorType) {
+      if (myTable.getCursor().getType() != newCursorType && myLastCursor == null) {
+        Cursor newCursor = Cursor.getPredefinedCursor(newCursorType);
+        myLastCursor = myTable.getCursor();
+        myTable.setCursor(newCursor);
+      }
+    }
+
+    private void restoreCursor(int newCursorType) {
+      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(myLastCursor);
+        myLastCursor = null;
+      }
     }
 
     @Override

@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -92,6 +94,9 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     setToolTipText(source.getTooltip());
     setOpaque(false);
     setHoveringEnabled(true);
+    if (ScreenReader.isActive()) {
+      setFocusable(true);
+    }
   }
 
   protected void doRepaintComponent(Component c) {
@@ -192,7 +197,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     g.translate(myXTransform, myYTransform);
 
 
-    if (myBehavior.isHovered() && myHoveringEnabled) {
+    if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
       if (myBehavior.isPressedByMouse()) {
         myHovered.paintIcon(this, g, 1, 1);
       }
@@ -252,6 +257,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         name = super.getAccessibleName();
       }
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override

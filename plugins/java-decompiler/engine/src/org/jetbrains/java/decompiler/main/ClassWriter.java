@@ -827,11 +827,16 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-            TextBuffer code = root.toJava(indent + 1, tracer);
+            // to restore in case of an exception
+            BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
+            TextBuffer code = root.toJava(indent + 1, codeTracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
 
             buffer.append(code);
+
+            tracer.setCurrentSourceLine(codeTracer.getCurrentSourceLine());
+            tracer.addTracer(codeTracer);
           }
           catch (Throwable ex) {
             DecompilerContext.getLogger()
@@ -848,8 +853,7 @@ public class ClassWriter {
           buffer.appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
-
-        if (root != null) {
+        else if (root != null) {
           tracer.addMapping(root.getDummyExit().bytecode);
         }
         buffer.appendIndent(indent).append('}').appendLineSeparator();

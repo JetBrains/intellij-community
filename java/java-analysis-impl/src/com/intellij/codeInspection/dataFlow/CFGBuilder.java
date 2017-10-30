@@ -384,11 +384,11 @@ public class CFGBuilder {
    * this is not satisfied. Stack is unchanged.
    *
    * @param expression an anchor expression to bind a warning to
-   * @param problem a type of nullability problem to report if value is nullable
+   * @param kind a type of nullability problem to report if value is nullable
    * @return this builder
    */
-  public CFGBuilder checkNotNull(PsiExpression expression, NullabilityProblem problem) {
-    myAnalyzer.addInstruction(new CheckNotNullInstruction(expression, problem));
+  public <T extends PsiElement> CFGBuilder checkNotNull(T expression, NullabilityProblemKind<T> kind) {
+    myAnalyzer.addInstruction(new CheckNotNullInstruction(kind.problem(expression)));
     return this;
   }
 
@@ -448,7 +448,7 @@ public class CFGBuilder {
         PsiVariable qualifierBinding = createTempVariable(qualifier.getType());
         pushVariable(qualifierBinding)
           .pushExpression(qualifier)
-          .checkNotNull(qualifier, NullabilityProblem.fieldAccessNPE)
+          .checkNotNull(qualifier, NullabilityProblemKind.fieldAccessNPE)
           .assign()
           .pop();
         myMethodRefQualifiers.put(methodRef, qualifierBinding);
@@ -456,7 +456,7 @@ public class CFGBuilder {
       return this;
     }
     return pushExpression(functionalExpression)
-      .checkNotNull(functionalExpression, NullabilityProblem.passingNullableToNotNullParameter)
+      .checkNotNull(functionalExpression, NullabilityProblemKind.passingNullableToNotNullParameter)
       .pop();
   }
 
@@ -518,7 +518,7 @@ public class CFGBuilder {
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
           if (resultNullness == Nullness.NOT_NULL) {
-            checkNotNull(methodRef, NullabilityProblem.nullableFunctionReturn);
+            checkNotNull(methodRef, NullabilityProblemKind.nullableFunctionReturn);
           }
           return this;
         }
@@ -585,7 +585,7 @@ public class CFGBuilder {
       pushExpression(expression);
       boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
       if(resultNullness == Nullness.NOT_NULL) {
-        checkNotNull(expression, NullabilityProblem.nullableFunctionReturn);
+        checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
       }
     } else if(body instanceof PsiCodeBlock) {
       PsiVariable variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));

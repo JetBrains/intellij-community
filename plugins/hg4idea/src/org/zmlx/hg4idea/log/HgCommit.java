@@ -44,7 +44,7 @@ public class HgCommit extends VcsChangesLazilyParsedDetails {
                   List<List<HgFileStatusInfo>> reportedChanges) {
     super(hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author, vcsRevisionNumber.getCommitMessage(), author, time);
     myRevisionNumber = vcsRevisionNumber;
-    myChanges.set(new UnparsedChanges(project, reportedChanges));
+    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<HgFileStatusInfo> {

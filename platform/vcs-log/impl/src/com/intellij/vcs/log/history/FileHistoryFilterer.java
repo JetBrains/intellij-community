@@ -179,7 +179,21 @@ class FileHistoryFilterer extends VcsLogFilterer {
       pathsMap = data.buildPathsMap();
     }
 
+    if (!myFilePath.isDirectory()) reindexFirstCommitsIfNeeded(visibleGraph);
     return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
+  }
+
+  private void reindexFirstCommitsIfNeeded(@NotNull VisibleGraph<Integer> graph) {
+    // we may not have renames big commits, may need to reindex them
+    if (graph instanceof VisibleGraphImpl) {
+      LiteLinearGraph liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(((VisibleGraphImpl)graph).getLinearGraph());
+      for (int row = 0; row < liteLinearGraph.nodesCount(); row++) {
+        // checking if commit is a root commit (which means file was added or renamed there)
+        if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) {
+          myIndex.reindexWithRenames(graph.getRowInfo(row).getCommit(), myRoot);
+        }
+      }
+    }
   }
 
   private void checkDetailsFilter(@NotNull VcsLogFilterCollection filters) {

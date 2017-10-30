@@ -78,9 +78,8 @@ public class ScratchFileActions {
       getTemplatePresentation().setText(myActionText);
 
       String place = e.getPlace();
-      boolean enabled = e.getProject() != null
-                        && Registry.is("ide.scratch.enabled")
-                        && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
+      boolean enabled = e.getProject() != null &&
+                        (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
 
@@ -145,7 +144,7 @@ public class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = e.getProject() != null && Registry.is("ide.scratch.enabled") && Registry.intValue("ide.scratch.buffers") > 0;
+      boolean enabled = e.getProject() != null && Registry.intValue("ide.scratch.buffers") > 0;
       e.getPresentation().setEnabledAndVisible(enabled);
     }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public class TabAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  public static class Handler extends EditorWriteActionHandler {
     public Handler() {
       super(true);
     }

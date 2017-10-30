@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -618,8 +604,17 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
           break;
         case opc_pop:
-        case opc_pop2:
           stack.pop();
+          break;
+        case opc_pop2:
+          if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+            // Since value at the top of the stack is a value of category 1 (JVMS9 2.11.1)
+            // we should remove one more item from the stack.
+            // See JVMS9 pop2 chapter.
+            stack.pop();
+          }
+          stack.pop();
+          break;
       }
     }
   }
@@ -882,7 +877,7 @@ public class ExprProcessor implements CodeConstants {
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
     // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-    if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST) {
+    if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST && !((ConstExprent) exprent).isNull()) {
       if (leftType.equals(VarType.VARTYPE_BYTE_OBJ)) {
         leftType = VarType.VARTYPE_BYTE;
       }

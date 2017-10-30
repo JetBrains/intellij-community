@@ -1,4 +1,4 @@
-'''
+r'''
 Full setup, used to distribute the debugger backend to PyPi.
 
 Note that this is mostly so that users can do:
@@ -21,28 +21,47 @@ rm dist/pydevd*
 C:\tools\Miniconda32\Scripts\activate py27_32
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
 
 C:\tools\Miniconda32\Scripts\activate py34_32
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
 
 C:\tools\Miniconda32\Scripts\activate py35_32
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
+
+C:\tools\Miniconda32\Scripts\activate py36_32
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
 
 C:\tools\Miniconda\Scripts\activate py27_64
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
 
 C:\tools\Miniconda\Scripts\activate py34_64
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
 
 C:\tools\Miniconda\Scripts\activate py35_64
 python setup.py sdist bdist_wheel
 deactivate
+dir dist
+
+C:\tools\Miniconda\Scripts\activate py36_64
+python setup.py sdist bdist_wheel
+deactivate
+dir dist
 
 twine upload dist/pydevd*
+
+git tag pydev_debugger_1_1_1 -a -m "PyDev.Debugger 1.1.1"
+git push --tags
 '''
 
 
@@ -85,6 +104,7 @@ args = dict(
         '_pydev_imps',
         '_pydev_runfiles',
         '_pydevd_bundle',
+        '_pydevd_frame_eval',
         'pydev_ipython',
 
         # 'pydev_sitecustomize', -- Not actually a package (not added)
@@ -93,6 +113,7 @@ args = dict(
 
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
+        'pydevd_plugins.extensions',
     ],
     py_modules=[
         # 'interpreterInfo', -- Not needed for debugger
@@ -124,6 +145,11 @@ args = dict(
         'Programming Language :: Python',
         'Topic :: Software Development :: Debuggers',
     ],
+    entry_points={
+        'console_scripts':[
+            'pydevd = pydevd:main',
+        ],
+    },
     data_files=data_files,
     keywords=['pydev', 'pydevd', 'pydev.debugger'],
     include_package_data=True,

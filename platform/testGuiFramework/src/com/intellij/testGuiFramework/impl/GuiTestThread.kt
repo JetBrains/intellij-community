@@ -82,7 +82,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
         val content = (message.content as JUnitTestContainer)
         if (content.additionalInfo.isEmpty()) throw Exception("Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
         System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo)
-        System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.methodName}")
+        System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.testName}")
         LOG.info("Added test to testQueue: $content")
         testQueue.add(content)
       }
@@ -110,7 +110,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private fun port(): Int = System.getProperty(GuiTestStarter.GUI_TEST_PORT).toInt()
 
   private fun runTest(testContainer: JUnitTestContainer) {
-    val request = Request.method(testContainer.testClass, testContainer.methodName)
+    val request = Request.method(testContainer.testClass, testContainer.testName)
     core.run(request)
   }
 

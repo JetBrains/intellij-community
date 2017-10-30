@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
+  protected static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
   public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -87,6 +88,11 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
   }
 
+  @Override
+  public boolean hasRenames() {
+    return true;
+  }
+
   public interface Changes {
     @NotNull
     Collection<Change> getMergedChanges() throws VcsException;
@@ -101,9 +107,35 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     Collection<Couple<String>> getRenamedPaths(int parent);
   }
 
+  protected static class EmptyChanges implements Changes {
+    @NotNull
+    @Override
+    public Collection<Change> getMergedChanges() {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Change> getChanges(int parent) {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<String> getModifiedPaths(int parent) {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Couple<String>> getRenamedPaths(int parent) {
+      return ContainerUtil.emptyList();
+    }
+  }
+
   protected abstract class UnparsedChanges<S> implements Changes {
     @NotNull protected final Project myProject;
-    @NotNull private final List<List<S>> myChangesOutput;
+    @NotNull protected final List<List<S>> myChangesOutput;
     @NotNull private final VcsStatusDescriptor<S> myDescriptor;
 
     public UnparsedChanges(@NotNull Project project,

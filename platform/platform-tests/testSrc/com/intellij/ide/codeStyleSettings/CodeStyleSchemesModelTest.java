@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
@@ -96,6 +97,16 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
     CodeStyleSettings settings = myModel.getCloneSettings(scheme);
     assertFalse(myModel.differsFromDefault(scheme));
     settings.setDefaultRightMargin(66);
+    assertTrue(myModel.differsFromDefault(scheme));
+    myModel.reset();
+    assertFalse(myModel.differsFromDefault(scheme));
+  }
+
+  public void testVisualGuidesDifferFromDefault() {
+    CodeStyleScheme scheme = myModel.getSelectedScheme();
+    CodeStyleSettings settings = myModel.getCloneSettings(scheme);
+    assertFalse(myModel.differsFromDefault(scheme));
+    settings.setDefaultSoftMargins(Arrays.asList(100,150));
     assertTrue(myModel.differsFromDefault(scheme));
     myModel.reset();
     assertFalse(myModel.differsFromDefault(scheme));

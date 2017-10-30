@@ -248,12 +248,12 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       final PsiType lhsType = lhs.getType();
       final PsiType rhsType = rhs.getType();
       if (lhsType != null && rhsType != null && PsiUtil.isLanguageLevel5OrHigher(lhs)) {
-        if (isPrimitiveAndBoxedInteger(lhsType, rhsType)) {
+        if (isPrimitiveAndBoxedWithOverloads(lhsType, rhsType)) {
           final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
           assert unboxedType != null;
           buf.append(lhs.getText()).append(",(").append(unboxedType.getCanonicalText()).append(')').append(rhs.getText());
         }
-        else if (isPrimitiveAndBoxedInteger(rhsType, lhsType)) {
+        else if (isPrimitiveAndBoxedWithOverloads(rhsType, lhsType)) {
           final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
           assert unboxedType != null;
           buf.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
@@ -273,8 +273,11 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
-    private boolean isPrimitiveAndBoxedInteger(PsiType lhsType, PsiType rhsType) {
-      return lhsType instanceof PsiPrimitiveType && rhsType instanceof PsiClassType && PsiType.LONG.isAssignableFrom(rhsType);
+    private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
+      if (lhsType instanceof PsiPrimitiveType && !PsiType.FLOAT.equals(lhsType) && !PsiType.DOUBLE.equals(lhsType)) {
+        return rhsType instanceof PsiClassType;
+      }
+      return false;
     }
 
     private boolean isPrimitiveAndBoxedFloat(PsiType lhsType, PsiType rhsType) {

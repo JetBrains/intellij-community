@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +29,38 @@ public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createClosureState();
 
-  DfaValue pop();
-  DfaValue peek();
+  /**
+   * Pops single value from the top of the stack and returns it
+   * @return popped value
+   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   */
+  @NotNull DfaValue pop();
+
+  /**
+   * Reads a value from the top of the stack without popping it
+   * @return top of stack value
+   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   */
+  @NotNull DfaValue peek();
+
+  /**
+   * Pushes given value to the stack
+   * @param value to push
+   */
   void push(@NotNull DfaValue value);
 
   void emptyStack();
 
   void setVarValue(DfaVariableValue var, DfaValue value);
 
-  boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
+  /**
+   * Ensures that top-of-stack value is either null or belongs to the supplied type
+   *
+   * @param type the type to cast to
+   * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
+   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   */
+  boolean castTopOfStack(@NotNull DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
 
@@ -55,9 +78,11 @@ public interface DfaMemoryState {
   @Nullable
   <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
 
+  void forceNotNull(@NotNull DfaVariableValue var);
+
   void flushFields();
 
-  void flushVariable(DfaVariableValue variable);
+  void flushVariable(@NotNull DfaVariableValue variable);
 
   boolean isNull(DfaValue dfaVar);
 
