@@ -88,7 +88,10 @@ public class ShowProgressTestDialogAction extends AnAction implements DumbAware 
       progress.setIndeterminate(indeterminate);
       progress.setValue(0);
       progress.setForeground(foreground);
-      progress.putClientProperty("ProgressBar.modeless", Boolean.valueOf(modeless));
+
+      if (modeless) {
+        progress.putClientProperty("ProgressBar.stripeWidth", 2);
+      }
 
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));

@@ -59,11 +59,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   private static final Color GREEN = new JBColor(new Color(0x34b171), new Color(0x008f50));
   private static final Color GREEN_LIGHT = new JBColor(new Color(0x7ee8a5), new Color(0x5dc48f));
 
-  private static final Integer CYCLE_TIME_DEFAULT = 800;
-  private static final Integer REPAINT_INTERVAL_DEFAULT = 50;
+  private static final int CYCLE_TIME_DEFAULT = 800;
+  private static final int REPAINT_INTERVAL_DEFAULT = 50;
 
-  private static final Integer CYCLE_TIME_SIMPLIFIED = 1000;
-  private static final Integer REPAINT_INTERVAL_SIMPLIFIED = 500;
+  private static final int CYCLE_TIME_SIMPLIFIED = 1000;
+  private static final int REPAINT_INTERVAL_SIMPLIFIED = 500;
+
+  private static final int DEFAULT_WIDTH = 4;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -121,19 +123,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         int idx = 0;
         int delta = JBUI.scale(10);
         if (orientation == SwingConstants.HORIZONTAL) {
-          //Area clip = new Area(g2.getClip());
-          //clip.intersect(new Area(getShapedRect(r.x, yOffset, r.width, pHeight, pHeight)));
-          //g2.setClip(clip);
-
           for (float offset = r.x; offset - r.x < r.width; offset+= delta) {
             g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
             g2.fill(new Rectangle2D.Float(offset, yOffset, delta, pHeight));
           }
         } else {
-          //Area clip = new Area(g2.getClip());
-          //clip.intersect(new Area(getShapedRect(r.x, yOffset, r.width, pHeight, pHeight)));
-          //g2.setClip(clip);
-
           for (float offset = r.y; offset - r.y < r.height; offset+= delta) {
             g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
             g2.fill(new Rectangle2D.Float(xOffset, offset, delta, pWidth));
@@ -276,14 +270,25 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       return size;
     }
 
-    boolean modeless = progressBar.getClientProperty("ProgressBar.modeless") == Boolean.TRUE;
-    int orientation = ((JProgressBar)c).getOrientation();
-    if (orientation == SwingConstants.HORIZONTAL) {
-      size.height = JBUI.scale(modeless ? 2 : 4);
+    if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
+      size.height = getStripeWidth();
     } else {
-      size.width = JBUI.scale(modeless ? 2 : 4);
+      size.width = getStripeWidth();
     }
-    return  size;
+    return size;
+  }
+
+  private int getStripeWidth() {
+    Object ho = progressBar.getClientProperty("ProgressBar.stripeWidth");
+    if (ho != null) {
+      try {
+        return JBUI.scale(Integer.parseInt(ho.toString()));
+      } catch (NumberFormatException nfe) {
+        return JBUI.scale(DEFAULT_WIDTH);
+      }
+    } else {
+      return JBUI.scale(DEFAULT_WIDTH);
+    }
   }
 
   @Override
