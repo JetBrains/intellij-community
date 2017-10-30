@@ -817,7 +817,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = (if (provider is RunConfigurationBeforeRunProvider) provider.createTask(settings.configuration, this) else provider.createTask(settings.configuration)) ?: continue
+      val beforeRunTask = (provider.createTask(settings.configuration)) ?: continue
       if (beforeRunTask is PersistentStateComponent<*>) {
         // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
         beforeRunTask.isEnabled = true
