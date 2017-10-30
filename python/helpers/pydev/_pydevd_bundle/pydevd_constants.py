@@ -57,11 +57,11 @@ else:
     if python_implementation == 'CPython' and not IS_PYTHON_STACKLESS:
         # Only available for CPython!
         if (
-            (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
+            (sys.version_info[0] == 2 and sys.version_info[1] >= 6)
             or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
             or (sys.version_info[0] > 3)
             ):
-            # Supported in 2.7 or 3.3 onwards (32 or 64)
+            # Supported in 2.6,2.7 or 3.3 onwards (32 or 64)
             CYTHON_SUPPORTED = True
 
 
@@ -133,7 +133,6 @@ def protect_libraries_from_patching():
         del sys.modules[name]
 
     # import for side effects
-    import _pydev_imps._pydev_saved_modules
 
     for name in patched_modules:
         sys.modules[name] = patched_modules[name]
