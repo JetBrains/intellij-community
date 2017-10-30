@@ -49,8 +49,9 @@ public class UsageInfo {
     int effectiveEnd;
     if (startOffset == -1 && endOffset == -1) {
       // calculate natural element range
-      effectiveStart = element.getTextOffset() - elementRange.getStartOffset();
-      effectiveEnd = elementRange.getLength();
+      // Cls element.getTextOffset() returns -1
+      effectiveStart = Math.max(0, element.getTextOffset() - elementRange.getStartOffset());
+      effectiveEnd = Math.max(effectiveStart, elementRange.getLength());
     }
     else {
       effectiveStart = startOffset;

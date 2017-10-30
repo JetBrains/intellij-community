@@ -1725,13 +1725,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       AsyncProjectViewSupport support = viewPane.getAsyncSupport();
       if (support != null) {
         List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
-        if (!visitors.isEmpty()) {
-          // TODO: start visiting after updating
-          support.accept(visitors, array -> {
-            for (TreePath path : array) viewPane.myTree.makeVisible(path);
-            viewPane.myTree.setSelectionPaths(array);
-          });
-        }
+        if (!visitors.isEmpty()) support.accept(visitors, paths -> TreeUtil.selectPaths(viewPane.myTree, paths));
         return;
       }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();

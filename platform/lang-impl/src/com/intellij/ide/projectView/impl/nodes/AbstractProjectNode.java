@@ -19,7 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.*;
@@ -135,6 +135,6 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
            Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && vFile.getFileType() == ScratchFileType.INSTANCE;
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && RootType.forFile(vFile) != null;
   }
 }

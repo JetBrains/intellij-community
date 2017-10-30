@@ -29,7 +29,7 @@ import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 public class PatchFileHeaderParser {
 
   @NonNls private static final Pattern ourBaseRevisionPattern = Pattern.compile("From\\s+(" + HASH_PATTERN + ")\\s+.*");
-  @NonNls private static final Pattern ourAuthorPattern = Pattern.compile("From:\\s+(\\w+[\\W_]\\w+)\\s*(?:<(.*)>\\s*)?");
+  @NonNls private static final Pattern ourAuthorPattern = Pattern.compile("From:\\s+(.*?)\\s*(?:<(.*)>\\s*)?");
 
   @NonNls private static final Pattern ourSubjectPattern = Pattern.compile("Subject:(?:\\s+\\[PATCH.*])?\\s*(.+)");
   @NonNls private static final Pattern ourHeaderEndMarker = Pattern.compile("---\\s*");

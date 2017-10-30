@@ -29,11 +29,14 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,9 +138,9 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
         }
       })
       .createPanel();
-    return FormBuilder.createFormBuilder()
-      .addLabeledComponentFillVertically("Plugins which are required to work on this project.", dependenciesPanel)
-      .getPanel();
+    
+    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. IntelliJ IDEA will notify you if a required plugin is missing or needs an update. ");
+    return JBUI.Panels.simplePanel(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
   public boolean editSelectedDependency(JBList dependenciesList) {

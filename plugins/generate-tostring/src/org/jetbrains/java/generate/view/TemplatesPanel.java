@@ -102,6 +102,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         return "template";
     }
 
+    @Override
     @Nullable
     @NonNls
     public String getHelpTopic() {

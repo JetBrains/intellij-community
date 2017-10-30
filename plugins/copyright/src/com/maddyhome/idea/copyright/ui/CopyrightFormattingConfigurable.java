@@ -46,6 +46,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     return "Formatting";
   }
 
+  @Override
   public String getHelpTopic() {
     return getId();
   }

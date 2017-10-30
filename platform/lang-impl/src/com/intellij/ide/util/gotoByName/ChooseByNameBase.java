@@ -160,7 +160,7 @@ public abstract class ChooseByNameBase {
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myAlwaysHasMore = false;
   private Point myFocusPoint;
-  private SelectionSnapshot myCurrentChosenInfo;
+  @Nullable SelectionSnapshot currentChosenInfo;
 
   public boolean checkDisposed() {
     return myDisposedFlag;
@@ -541,8 +541,8 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        SelectionPolicy toSelect = myCurrentChosenInfo != null && myCurrentChosenInfo.hasSamePattern(ChooseByNameBase.this)
-                                   ? myCurrentChosenInfo : SelectMostRelevant.INSTANCE;
+        SelectionPolicy toSelect = currentChosenInfo != null && currentChosenInfo.hasSamePattern(ChooseByNameBase.this)
+                                   ? PreserveSelection.INSTANCE : SelectMostRelevant.INSTANCE;
         rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
       }
     });
@@ -648,7 +648,7 @@ public abstract class ChooseByNameBase {
 
         List<Object> chosenElements = getChosenElements();
         if (!chosenElements.isEmpty()) {
-          myCurrentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
+          currentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
         }
       }
     });
@@ -1362,15 +1362,16 @@ public abstract class ChooseByNameBase {
       boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
-      Set<Object> filtered = filter(elements);
+      AnchoredSet resultSet = new AnchoredSet(filter(elements));
       return new Continuation(() -> {
         if (!checkDisposed() && !myProgress.isCanceled()) {
           CalcElementsThread currentBgProcess = myCalcElementsThread;
           LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
-          backgroundCalculationFinished(elements, mySelectionPolicy);
 
+          Set<Object> filtered = resultSet.getElements();
+          backgroundCalculationFinished(filtered, mySelectionPolicy);
           myCallback.consume(filtered);
         }
       }, myModalityState);
@@ -1383,8 +1384,8 @@ public abstract class ChooseByNameBase {
         int count = elements.size();
         if (count > lastCount) {
           setElementsToList(mySelectionPolicy, ContainerUtil.newArrayList(elements));
-          if (myCurrentChosenInfo != null) {
-            mySelectionPolicy = myCurrentChosenInfo;
+          if (currentChosenInfo != null) {
+            mySelectionPolicy = PreserveSelection.INSTANCE;
           }
         }
         scheduleIncrementalListUpdate(elements, count);
@@ -1564,7 +1565,7 @@ public abstract class ChooseByNameBase {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, myCurrentChosenInfo) {
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, PreserveSelection.INSTANCE) {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();

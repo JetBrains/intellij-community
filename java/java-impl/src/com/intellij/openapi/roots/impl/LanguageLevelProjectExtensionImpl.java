@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -56,6 +57,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
+      if (myLanguageLevel == LanguageLevel.JDK_X && !Registry.is(LanguageLevel.EXPERIMENTAL_KEY)) {
+        myLanguageLevel = null;
+      }
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
     setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));

@@ -139,10 +139,11 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * Checks if this configuration supports running on the provided target (see {@link ExecutionTarget} for details).
-   * @param target target provided by {@link ExecutionTargetProvider}
+   * @deprecated 
+   * @see ExecutionTargetManager#canRun(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.ExecutionTarget)
    */
-  boolean canRunOn(@NotNull ExecutionTarget target);
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }  
 
   /**
    * Returns a factory object which can be used to create a copy of this configuration.

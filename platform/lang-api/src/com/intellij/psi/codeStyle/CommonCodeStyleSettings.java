@@ -906,6 +906,8 @@ public class CommonCodeStyleSettings {
 
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements Cloneable, JDOMExternalizable {
+    public static final IndentOptions DEFAULT_INDENT_OPTIONS = new IndentOptions();
+
     public int INDENT_SIZE = DEFAULT_INDENT_SIZE;
     public int CONTINUATION_INDENT_SIZE = DEFAULT_CONTINUATION_INDENT_SIZE;
     public int TAB_SIZE = DEFAULT_TAB_SIZE;
@@ -916,23 +918,26 @@ public class CommonCodeStyleSettings {
     public boolean USE_RELATIVE_INDENTS = false;
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
+    // region More continuations (reserved for versions 2018.x)
+    @SuppressWarnings("unused") public int DECLARATION_PARAMETER_INDENT = - 1;
+    @SuppressWarnings("unused") public int GENERIC_TYPE_PARAMETER_INDENT = -1;
+    @SuppressWarnings("unused") public int CALL_PARAMETER_INDENT = -1;
+    @SuppressWarnings("unused") public int CHAINED_CALL_INDENT = -1;
+    @SuppressWarnings("unused") public int ARRAY_ELEMENT_INDENT = -1; // array declarations
+    // endregion
+
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
     private boolean myOverrideLanguageOptions;
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
+      deserialize(element);
     }
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element, field -> {
-        if ("KEEP_INDENTS_ON_EMPTY_LINES".equals(field.getName())) {
-          return KEEP_INDENTS_ON_EMPTY_LINES;
-        }
-        return true;
-      });
+      serialize(element, DEFAULT_INDENT_OPTIONS);
     }
 
     public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {

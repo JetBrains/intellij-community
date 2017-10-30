@@ -7,6 +7,8 @@ import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
+import com.intellij.build.output.BuildOutputInstantReaderImpl;
+import com.intellij.build.output.BuildOutputParser;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -57,6 +59,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -72,6 +75,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
@@ -291,6 +295,18 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                                        ? ServiceManager.getService(myProject, DebugTasksViewManager.class)
                                                        : ServiceManager.getService(myProject, RunTasksViewManager.class);
 
+      List<BuildOutputParser> buildOutputParsers = new SmartList<>();
+      for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
+        if(task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
+          buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(task));
+        }
+      }
+
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      final BuildOutputInstantReaderImpl buildOutputInstantReader =
+        progressListener == null || buildOutputParsers.isEmpty() ? null :
+        new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
+
       final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
                                    ? mySettings.getExecutionName()
                                    : StringUtil.isNotEmpty(myConfiguration.getName())
@@ -346,6 +362,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             else {
               processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
             }
+            if (buildOutputInstantReader != null) {
+              buildOutputInstantReader.append(text);
+            }
           }
 
           @Override
@@ -391,6 +410,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
+            if (buildOutputInstantReader != null) {
+              buildOutputInstantReader.close();
+            }
           }
         };
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));

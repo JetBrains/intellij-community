@@ -471,6 +471,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     return "Language Injections";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.injection.language.injection.settings";
   }

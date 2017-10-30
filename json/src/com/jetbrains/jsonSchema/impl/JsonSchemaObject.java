@@ -1,6 +1,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -551,9 +552,7 @@ public class JsonSchemaObject {
 
     JsonSchemaObject object = (JsonSchemaObject)o;
 
-    if (!myJsonObject.equals(object.myJsonObject)) return false;
-
-    return true;
+    return myJsonObject.equals(object.myJsonObject);
   }
 
   @Override
@@ -578,11 +577,16 @@ public class JsonSchemaObject {
     }
   }
 
-  private static boolean matchPattern(@NotNull final Pattern pattern, @NotNull final String s) {
+  public static boolean matchPattern(@NotNull final Pattern pattern, @NotNull final String s) {
     try {
       return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
     } catch (ProcessCanceledException e) {
-      // something wrong with the pattern
+      // something wrong with the pattern, infinite cycle?
+      return false;
+    } catch (Exception e) {
+      // catch exceptions around to prevent things like:
+      // https://bugs.openjdk.java.net/browse/JDK-6984178
+      Logger.getInstance(JsonSchemaObject.class).info(e);
       return false;
     }
   }

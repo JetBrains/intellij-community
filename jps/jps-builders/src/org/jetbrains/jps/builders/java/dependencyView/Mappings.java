@@ -1942,6 +1942,10 @@ public class Mappings {
               debug("Retention policy change detected, adding class usage to affected usages");
               state.myAffectedUsages.add(changedClass.createUsage());
             }
+            else if (diff.targetAttributeCategoryMightChange()) {
+              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE target, adding class usage to affected usages");
+              state.myAffectedUsages.add(changedClass.createUsage());
+            }
             else {
               final Collection<ElemType> removedtargets = diff.targets().removed();
 
@@ -1955,9 +1959,9 @@ public class Mappings {
 
               if (!removedtargets.isEmpty()) {
                 debug("Removed some annotation targets, adding annotation query");
-                final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)UsageRepr
-                  .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, changedClass.name), null, EnumSet.copyOf(removedtargets));
-                state.myAnnotationQuery.add(annotationUsage);
+                state.myAnnotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(
+                  myContext, TypeRepr.createClassType(myContext, changedClass.name), null, EnumSet.copyOf(removedtargets)
+                ));
               }
 
               for (final MethodRepr m : diff.methods().added()) {
@@ -2186,8 +2190,9 @@ public class Mappings {
 
           for (UsageRepr.Usage usage : depUsages) {
             if (usage instanceof UsageRepr.AnnotationUsage) {
+              final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)usage;
               for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
-                if (query.satisfies(usage)) {
+                if (query.satisfies(annotationUsage)) {
                   debug("Added file due to annotation query");
                   myAffectedFiles.add(depFile);
                   return;

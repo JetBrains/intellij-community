@@ -22,12 +22,12 @@ import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -83,5 +83,9 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                               @NotNull Project project,
                               @NotNull IdeModelsProvider modelsProvider) {
     onSuccessImport(project);
+  }
+
+  @ApiStatus.Experimental
+  public void onFailureImport(Project project) {
   }
 }

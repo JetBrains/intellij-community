@@ -38,6 +38,9 @@ public class CucumberJvmSMFormatterUtil {
   }
 
   public static String escape(String source) {
+    if (source == null) {
+      return "";
+    }
     return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
   }
 }

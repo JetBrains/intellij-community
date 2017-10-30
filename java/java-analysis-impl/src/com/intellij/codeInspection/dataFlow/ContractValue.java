@@ -33,6 +33,13 @@ public abstract class ContractValue {
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
 
+  /**
+   * @return true if this contract value represents a bounds-checking condition
+   */
+  boolean isBoundCheckingCondition() {
+    return false;
+  }
+
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
   }
@@ -158,6 +165,19 @@ public abstract class ContractValue {
       myLeft = left;
       myRight = right;
       myRelationType = type;
+    }
+
+    @Override
+    boolean isBoundCheckingCondition() {
+      switch (myRelationType) {
+        case LE:
+        case LT:
+        case GE:
+        case GT:
+          return true;
+        default:
+          return false;
+      }
     }
 
     @Override

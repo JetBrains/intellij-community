@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,11 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     super.paintComponent(g);
     if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
       g.setColor(getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
+
+      Rectangle rect = new Rectangle(getSize());
+      JBInsets.removeFrom(rect, getInsets());
+      ((Graphics2D)g).fill(rect);
+
       g.setColor(getForeground());
     }
     myEmptyText.paintStatusText(g);

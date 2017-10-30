@@ -117,12 +117,12 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        node.update();
+        boolean updated = node.update();
         if (structure) {
           node.invalidate();
           treeStructureChanged(path, null, null);
         }
-        else {
+        else if (updated) {
           treeNodesChanged(path, null, null);
         }
       });
@@ -158,7 +158,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final List<TreeNode> getChildren(Object object) {
     Node node = getNode(object);
     List<Node> list = node == null ? null : node.children.get();
-    return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
+    if (list == null || list.isEmpty()) return emptyList();
+    list.forEach(Node::update);
+    return unmodifiableList(list);
   }
 
   @Override
@@ -269,9 +271,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       if (list != null) list.forEach(Node::dispose);
     }
 
-    private void update() {
+    private boolean update() {
       NodeDescriptor descriptor = getDescriptor();
-      if (descriptor != null) descriptor.update();
+      return descriptor != null && descriptor.update();
     }
 
     private void invalidate() {

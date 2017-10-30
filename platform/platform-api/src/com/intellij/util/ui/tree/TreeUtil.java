@@ -711,7 +711,7 @@ public final class TreeUtil {
       row--;
     }
     Object root = tree.getModel().getRoot();
-    if (root != null) {
+    if (root != null && !tree.isRootVisible()) {
       tree.expandPath(new TreePath(root));
     }
     if (leadSelectionPath != null) {
@@ -1004,12 +1004,17 @@ public final class TreeUtil {
 
   public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
                                                             @NotNull Comparator<? super T> comparator) {
+    insertNode(child, parent, model, false, comparator);
+  }
+
+  public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
+                                                            boolean allowDuplication, @NotNull Comparator<? super T> comparator) {
     int index = indexedBinarySearch(parent, child, comparator);
-    if (index >= 0) {
+    if (index >= 0 && !allowDuplication) {
       LOG.error("Node " + child + " is already added to " + parent);
       return;
     }
-    int insertionPoint = -(index + 1);
+    int insertionPoint = index >= 0 ? index : -(index + 1);
     if (model != null) {
       model.insertNodeInto(child, parent, insertionPoint);
     }

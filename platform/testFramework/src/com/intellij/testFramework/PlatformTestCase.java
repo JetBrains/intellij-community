@@ -152,11 +152,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
+    "Rider",
+    null,
     "AppCode", "CLion", "CidrCommon",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",
-    "Rider",
     "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
@@ -170,14 +171,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (ourPlatformPrefixInitialized) {
       return;
     }
-    URL resource = PlatformTestCase.class.getClassLoader().getResource("idea/ApplicationInfo.xml");
-    if (resource == null) {
-      for (String candidate : PREFIX_CANDIDATES) {
-        resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/" + candidate + "Plugin.xml");
-        if (resource != null) {
+    for (String candidate : PREFIX_CANDIDATES) {
+      String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
+      URL resource = PlatformTestCase.class.getClassLoader().getResource(markerPath);
+      if (resource != null) {
+        if (candidate != null) {
           setPlatformPrefix(candidate);
-          break;
         }
+        break;
       }
     }
   }

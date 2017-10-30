@@ -10,13 +10,6 @@ PYTHON_SUSPEND = 1
 DJANGO_SUSPEND = 2
 JINJA2_SUSPEND = 3
 
-try:
-    __setFalse = False
-except:
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
 
 class DebugInfoHolder:
     #we have to put it here because it can be set through the command line (so, the
@@ -45,6 +38,7 @@ import os
 from _pydevd_bundle import pydevd_vm_type
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
+IS_IRONPYTHON = sys.platform == 'cli'
 
 IS_JYTH_LESS25 = False
 if IS_JYTHON:
@@ -152,22 +146,6 @@ if USE_LIB_COPY:
 from _pydev_imps._pydev_saved_modules import thread
 _nextThreadIdLock = thread.allocate_lock()
 
-#=======================================================================================================================
-# Jython?
-#=======================================================================================================================
-try:
-    dict_contains = dict.has_key
-except:
-    try:
-        #Py3k does not have has_key anymore, and older versions don't have __contains__
-        dict_contains = dict.__contains__
-    except:
-        try:
-            dict_contains = dict.has_key
-        except NameError:
-            def dict_contains(d, key):
-                return d.has_key(key)
-
 if IS_PY3K:
     def dict_keys(d):
         return list(d.keys())
@@ -230,16 +208,6 @@ try:
     izip = itertools.izip
 except:
     izip = zip
-
-try:
-    object
-except NameError:
-    class object:
-        pass
-
-    import __builtin__
-
-    setattr(__builtin__, 'object', object)
 
 
 try:

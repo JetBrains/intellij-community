@@ -44,6 +44,7 @@ public interface ExtensionsArea  {
   void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
 
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, String ns);
+  void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement);
 
   String getAreaClass();
 }

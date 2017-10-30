@@ -1,11 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +57,43 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
          }
        }
     };
+  }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "RedundantExplicitVariableType";
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("redundant.explicit.var.type.display.name");
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getGroupDisplayName() {
+    return "Java Experimental";
+  }
+
+  @NotNull
+  @Override
+  public String[] getGroupPath() {
+    return new String[] {"Java", "Java language level migration aids", "Java Experimental"};
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.WARNING;
   }
 
   private static PsiElement replaceExplicitTypeWithVar(PsiTypeElement typeElement, PsiElement context) {

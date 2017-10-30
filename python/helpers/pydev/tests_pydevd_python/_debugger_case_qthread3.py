@@ -4,7 +4,10 @@ import sys
 try:
     from PySide import QtCore  # @UnresolvedImport
 except:
-    from PyQt4 import QtCore
+    try:
+        from PyQt4 import QtCore
+    except:
+        from PyQt5 import QtCore
 
 # Using a QRunnable
 # http://doc.qt.nokia.com/latest/qthreadpool.html
@@ -16,7 +19,7 @@ class Runnable(QtCore.QRunnable):
         count = 0
         app = QtCore.QCoreApplication.instance()
         while count < 5:
-            print "Increasing"
+            print("Increasing")
             time.sleep(.5)
             count += 1
         app.quit()

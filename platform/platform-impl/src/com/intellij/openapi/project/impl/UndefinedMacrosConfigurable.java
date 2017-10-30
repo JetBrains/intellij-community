@@ -41,6 +41,7 @@ public class UndefinedMacrosConfigurable implements Configurable{
     myUndefinedMacroNames = undefinedMacroNames;
   }
 
+  @Override
   public String getHelpTopic() {
     return PathMacroConfigurable.HELP_ID;
   }

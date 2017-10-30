@@ -92,6 +92,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     super.reset();
   }
 
+  @NotNull
   @Override
   protected List<CodeFoldingOptionsProvider> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);

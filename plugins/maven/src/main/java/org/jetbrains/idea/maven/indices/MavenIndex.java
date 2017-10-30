@@ -17,15 +17,11 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorBase;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
@@ -43,7 +39,11 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
+
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenIndex {
   private static final String CURRENT_VERSION = "4";
@@ -68,7 +68,8 @@ public class MavenIndex {
     LOCAL, REMOTE
   }
 
-  private final MavenIndexerWrapper myIndexer;
+  private final MavenIndexerWrapper myNexusIndexer;
+  private final NotNexusIndexer myNotNexusIndexer;
   private final File myDir;
 
   private final Set<String> myRegisteredRepositoryIds = ContainerUtil.newHashSet();
@@ -92,12 +93,13 @@ public class MavenIndex {
                     String repositoryPathOrUrl,
                     Kind kind,
                     IndexListener listener) throws MavenIndexException {
-    myIndexer = indexer;
+    myNexusIndexer = indexer;
     myDir = dir;
     myRegisteredRepositoryIds.add(repositoryId);
     myRepositoryPathOrUrl = normalizePathOrUrl(repositoryPathOrUrl);
     myKind = kind;
     myListener = listener;
+    myNotNexusIndexer = initNotNexusIndexer(kind, repositoryPathOrUrl);
 
     open();
   }
@@ -105,7 +107,7 @@ public class MavenIndex {
   public MavenIndex(MavenIndexerWrapper indexer,
                     File dir,
                     IndexListener listener) throws MavenIndexException {
-    myIndexer = indexer;
+    myNexusIndexer = indexer;
     myDir = dir;
     myListener = listener;
 
@@ -131,7 +133,7 @@ public class MavenIndex {
 
     String myRepositoryIdsStr = props.getProperty(ID_KEY);
     if (myRepositoryIdsStr != null) {
-      myRegisteredRepositoryIds.addAll(StringUtil.split(myRepositoryIdsStr, ","));
+      myRegisteredRepositoryIds.addAll(split(myRepositoryIdsStr, ","));
     }
     myRepositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
 
@@ -145,7 +147,35 @@ public class MavenIndex {
     myDataDirName = props.getProperty(DATA_DIR_NAME_KEY);
     myFailureMessage = props.getProperty(FAILURE_MESSAGE_KEY);
 
+    myNotNexusIndexer = initNotNexusIndexer(myKind, myRepositoryPathOrUrl);
+
     open();
+  }
+
+  private static NotNexusIndexer initNotNexusIndexer(Kind kind, String repositoryPathOrUrl) {
+    if (kind == Kind.REMOTE) {
+      try {
+        URL url = new URL(repositoryPathOrUrl);
+
+        String host = url.getHost();
+        if (host != null) {
+          List<String> path = split(trimStart(url.getPath(), "/"), "/");
+          if (host.equals("dl.bintray.com")) {
+            if (path.size() > 1) {
+              return new BintrayIndexer(path.get(0), path.get(1));
+            }
+          }
+          else if (host.endsWith(".bintray.com")) {
+            if (!path.isEmpty()) {
+              return new BintrayIndexer(trimEnd(host, ".bintray.com"), path.get(0));
+            }
+          }
+        }
+      }
+      catch (MalformedURLException ignored) {
+      }
+    }
+    return null;
   }
 
   public void registerId(String repositoryId) throws MavenIndexException {
@@ -308,28 +338,30 @@ public class MavenIndex {
       final File newDataContextDir = getDataContextDir(newDataDir);
       final File currentDataContextDir = getCurrentDataContextDir();
 
-      boolean reuseExistingContext = fullUpdate ?
-                                     myKind != Kind.LOCAL && hasValidContext(currentDataContextDir) :
-                                     hasValidContext(currentDataContextDir);
+      if (myNotNexusIndexer == null) {
+        boolean reuseExistingContext = fullUpdate ?
+                                       myKind != Kind.LOCAL && hasValidContext(currentDataContextDir) :
+                                       hasValidContext(currentDataContextDir);
 
-      fullUpdate = fullUpdate || !reuseExistingContext && myKind == Kind.LOCAL;
+        fullUpdate = fullUpdate || !reuseExistingContext && myKind == Kind.LOCAL;
 
-      if (reuseExistingContext) {
-        try {
-          FileUtil.copyDir(currentDataContextDir, newDataContextDir);
+        if (reuseExistingContext) {
+          try {
+            FileUtil.copyDir(currentDataContextDir, newDataContextDir);
+          }
+          catch (IOException e) {
+            throw new MavenIndexException(e);
+          }
         }
-        catch (IOException e) {
-          throw new MavenIndexException(e);
-        }
-      }
 
-      if (fullUpdate) {
-        int context = createContext(newDataContextDir, "update");
-        try {
-          updateContext(context, settings, progress);
-        }
-        finally {
-          myIndexer.releaseIndex(context);
+        if (fullUpdate) {
+          int context = createContext(newDataContextDir, "update");
+          try {
+            updateContext(context, settings, progress);
+          }
+          finally {
+            myNexusIndexer.releaseIndex(context);
+          }
         }
       }
 
@@ -349,7 +381,7 @@ public class MavenIndex {
   }
 
   private boolean hasValidContext(@NotNull File contextDir) {
-    return contextDir.isDirectory() && myIndexer.indexExists(contextDir);
+    return contextDir.isDirectory() && myNexusIndexer.indexExists(contextDir);
   }
 
   private void handleUpdateException(Exception e) {
@@ -358,17 +390,19 @@ public class MavenIndex {
   }
 
   private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {
+    if (myNotNexusIndexer != null) return 0;
+
     String indexId = myDir.getName() + "-" + suffix;
-    return myIndexer.createIndex(indexId,
-                                 myId.getValue(),
-                                 getRepositoryFile(),
-                                 getRepositoryUrl(),
-                                 contextDir);
+    return myNexusIndexer.createIndex(indexId,
+                                      myId.getValue(),
+                                      getRepositoryFile(),
+                                      getRepositoryUrl(),
+                                      contextDir);
   }
 
   private void updateContext(int indexId, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenServerIndexerException, MavenProcessCanceledException {
-    myIndexer.updateIndex(indexId, settings, progress);
+    myNexusIndexer.updateIndex(indexId, settings, progress);
   }
 
   private void updateData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {
@@ -415,30 +449,32 @@ public class MavenIndex {
     final Map<String, Set<String>> groupToArtifactMap = new THashMap<>();
     final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<>();
 
-    final StringBuilder builder = new StringBuilder();
-
     progress.pushState();
     progress.setIndeterminate(true);
 
     try {
-      myIndexer.processArtifacts(data.indexId, new MavenIndicesProcessor() {
-        @Override
-        public void processArtifacts(Collection<MavenId> artifacts) {
-          for (MavenId each : artifacts) {
-            String groupId = each.getGroupId();
-            String artifactId = each.getArtifactId();
-            String version = each.getVersion();
+      final StringBuilder builder = new StringBuilder();
+      MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
+        for (MavenId each : artifacts) {
+          String groupId = each.getGroupId();
+          String artifactId = each.getArtifactId();
+          String version = each.getVersion();
 
-            builder.setLength(0);
+          builder.setLength(0);
 
-            builder.append(groupId).append(":").append(artifactId);
-            String ga = builder.toString();
+          builder.append(groupId).append(":").append(artifactId);
+          String ga = builder.toString();
 
-            getOrCreate(groupToArtifactMap, groupId).add(artifactId);
-            getOrCreate(groupWithArtifactToVersionMap, ga).add(version);
-          }
+          getOrCreate(groupToArtifactMap, groupId).add(artifactId);
+          getOrCreate(groupWithArtifactToVersionMap, ga).add(version);
         }
-      });
+      };
+      if (myNotNexusIndexer != null) {
+        myNotNexusIndexer.processArtifacts(progress, mavenIndicesProcessor);
+      }
+      else {
+        myNexusIndexer.processArtifacts(data.indexId, mavenIndicesProcessor);
+      }
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
@@ -606,6 +642,8 @@ public class MavenIndex {
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
+    if (myNotNexusIndexer != null) return Collections.emptySet();
+
     return doIndexTask(new IndexTask<Set<MavenArtifactInfo>>() {
       public Set<MavenArtifactInfo> doTask() throws Exception {
         return myData.search(query, maxResult);
@@ -678,7 +716,7 @@ public class MavenIndex {
       MavenIndexException[] exceptions = new MavenIndexException[1];
 
       try {
-        if (indexId != 0 && releaseIndexContext) myIndexer.releaseIndex(indexId);
+        if (indexId != 0 && releaseIndexContext) myNexusIndexer.releaseIndex(indexId);
       }
       catch (MavenServerIndexerException e) {
         MavenLog.LOG.warn(e);
@@ -707,11 +745,11 @@ public class MavenIndex {
     }
 
     public MavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
-      return myIndexer.addArtifact(indexId, artifactFile);
+      return myNexusIndexer.addArtifact(indexId, artifactFile);
     }
 
     public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenServerIndexerException {
-      return myIndexer.search(indexId, query, maxResult);
+      return myNexusIndexer.search(indexId, query, maxResult);
     }
   }
 
@@ -741,7 +779,7 @@ public class MavenIndex {
     @Nullable
     @Override
     public Result<String> compute() {
-      return Result.create(StringUtil.join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
+      return Result.create(join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
         @Override
         public long getModificationCount() {
           return myRegisteredRepositoryIds.hashCode();

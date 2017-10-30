@@ -29,13 +29,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Irina.Chernushina on 4/19/2017.
@@ -115,26 +116,25 @@ public class UserDefinedJsonSchemaConfiguration {
 
   private List<PairProcessor<Project, VirtualFile>> recalculatePatterns() {
     final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
-    for (final Item pattern : patterns) {
-      if (pattern.pattern) {
+    for (final Item patternText : patterns) {
+      if (patternText.pattern) {
         result.add(new PairProcessor<Project, VirtualFile>() {
-          private final Matcher matcher = PatternUtil.fromMask(pattern.path).matcher("");
+          private final Pattern pattern = PatternUtil.fromMask(patternText.path);
 
           @Override
           public boolean process(Project project, VirtualFile file) {
-            matcher.reset(file.getName());
-            return matcher.matches();
+            return JsonSchemaObject.matchPattern(pattern, file.getName());
           }
         });
       }
-      else if (pattern.directory) {
+      else if (patternText.directory) {
         result.add((project, vfile) -> {
-          final VirtualFile relativeFile = getRelativeFile(project, pattern);
+          final VirtualFile relativeFile = getRelativeFile(project, patternText);
           return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true);
         });
       }
       else {
-        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, pattern)));
+        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)));
       }
     }
     return result;
@@ -170,6 +170,7 @@ public class UserDefinedJsonSchemaConfiguration {
         : info.relativePathToSchema != null) {
       return false;
     }
+    //noinspection RedundantIfStatement
     if (patterns != null ? !patterns.equals(info.patterns) : info.patterns != null) return false;
 
     return true;
@@ -236,6 +237,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
       if (pattern != item.pattern) return false;
       if (directory != item.directory) return false;
+      //noinspection RedundantIfStatement
       if (path != null ? !path.equals(item.path) : item.path != null) return false;
 
       return true;

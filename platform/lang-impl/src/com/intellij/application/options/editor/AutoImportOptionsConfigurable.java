@@ -45,6 +45,7 @@ public class AutoImportOptionsConfigurable
     myProject = project;
   }
 
+  @NotNull
   @Override
   protected List<AutoImportOptionsProvider> createConfigurables() {
     return ContainerUtil.mapNotNull(AutoImportOptionsProviderEP.EP_NAME.getExtensions(myProject),

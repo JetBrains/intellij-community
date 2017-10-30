@@ -93,6 +93,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     return CompilerBundle.message("validation.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.validation";
   }

@@ -56,7 +56,6 @@ import java.util.List;
  */
 public class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
-  public static final DataKey<XFramesView> DATA_KEY = DataKey.create("XDEBUGGER_FRAMES_VIEW");
 
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
@@ -174,14 +173,6 @@ public class XFramesView extends XDebugView {
     myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
-  }
-
-  public void selectFrame(XExecutionStack stack, XStackFrame frame) {
-    myThreadComboBox.setSelectedItem(stack);
-
-    myLaterInvocator.offer(() ->
-      myFramesList.setSelectedValue(frame, true)
-    );
   }
 
   private ActionToolbarImpl createToolbar() {

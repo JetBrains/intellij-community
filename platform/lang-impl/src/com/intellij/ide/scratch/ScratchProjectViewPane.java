@@ -26,9 +26,12 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -209,7 +212,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       for (RootType rootId : RootType.getAllRootIds()) {
         if (rootId.isHidden()) continue;
         MyRootNode e = new MyRootNode(getProject(), rootId, getSettings());
-        if (e.getDirectory() == null) continue;
+        if (e.isEmpty()) continue;
         list.add(e);
       }
       return list;
@@ -219,6 +222,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     protected void update(PresentationData presentation) {
       presentation.setPresentableText(getValue());
       presentation.setIcon(AllIcons.Nodes.Folder);
+    }
+
+    @Override
+    public boolean canRepresent(Object element) {
+      PsiElement item = element instanceof PsiElement ? (PsiElement)element : null;
+      VirtualFile virtualFile = item == null ? null : PsiUtilCore.getVirtualFile(item);
+      if (virtualFile == null) return false;
+      return Comparing.equal(virtualFile.getPath(), FileUtil.toSystemIndependentName(PathManager.getScratchPath()));
     }
   }
 
@@ -250,6 +261,17 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     protected void update(PresentationData presentation) {
       presentation.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       presentation.setPresentableText(getValue().getDisplayName());
+    }
+
+    @Override
+    public boolean canRepresent(Object element) {
+      return Comparing.equal(getDirectory(), element);
+    }
+
+    public boolean isEmpty() {
+      PsiDirectory directory = getDirectory();
+      if (directory == null) return true;
+      return directory.processChildren(element -> false);
     }
   }
 

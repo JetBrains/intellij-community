@@ -118,8 +118,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     else {
       // avoid duplicated actions on toolbar
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
-      EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
     }
+
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
     RollbackDialogAction rollbackAction = new RollbackDialogAction();
     rollbackAction.registerCustomShortcutSet(this, null);
@@ -260,7 +261,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   public List<Change> getDisplayedChanges() {
-    return myChanges;
+    return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
   @NotNull
@@ -278,7 +279,12 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   public List<VirtualFile> getDisplayedUnversionedFiles() {
-    return myUnversioned;
+    if (!isShowUnversioned()) return Collections.emptyList();
+
+    VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+
+    return treeModelData.userObjects(VirtualFile.class);
   }
 
   @NotNull

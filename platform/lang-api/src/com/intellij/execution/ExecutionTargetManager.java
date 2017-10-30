@@ -48,12 +48,15 @@ public abstract class ExecutionTargetManager {
   }
 
   public static boolean canRun(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
-    return settings != null && target != null && settings.canRunOn(target) && target.canRun(settings);
+    if (settings == null || target == null) return false;
+    return getInstance(settings.getConfiguration().getProject()).doCanRun(settings, target);
   }
 
   public static boolean canRun(@NotNull ExecutionEnvironment environment) {
     return canRun(environment.getRunnerAndConfigurationSettings(), environment.getExecutionTarget());
   }
+
+  protected abstract boolean doCanRun(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionTarget target);
 
   public static void update(@NotNull Project project) {
     getInstance(project).update();

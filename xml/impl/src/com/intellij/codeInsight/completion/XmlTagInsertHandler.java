@@ -45,6 +45,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -331,7 +332,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   private static String closeTag(XmlTag tag) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(tag.getProject());
     boolean html = HtmlUtil.isHtmlTag(tag);
-    boolean needsSpace = (html && settings.HTML_SPACE_INSIDE_EMPTY_TAG) ||
+    boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
                          (!html && settings.getCustomSettings(XmlCodeStyleSettings.class).XML_SPACE_INSIDE_EMPTY_TAG);
     return needsSpace ? " />" : "/>";
   }

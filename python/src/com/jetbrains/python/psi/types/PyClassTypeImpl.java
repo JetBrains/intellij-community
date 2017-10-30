@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.Lists;
@@ -178,7 +164,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location, context); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location, resolveContext); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -225,7 +211,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         .orElse(Collections.emptyList());
     }
 
-    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
+    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location, resolveContext);
     if (classMember != null) {
       final ResolveResultList list = new ResolveResultList();
       int rate = RatedResolveResult.RATE_NORMAL;
@@ -268,7 +254,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (inherited) {
       classMember =
         resolveByMembersProviders(this, name, location,
-                                  context);  //ask providers after real class introspection as providers have less priority
+                                  resolveContext);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -280,7 +266,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           PsiElement superMember =
-            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
+            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext);
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -512,9 +498,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByMembersProviders(PyClassType aClass,
                                                       String name,
                                                       @Nullable PsiElement location,
-                                                      TypeEvalContext context) {
+                                                      @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
+      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
       if (resolveResult != null) return resolveResult;
     }
 
@@ -525,10 +511,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass,
                                                                 String name,
                                                                 @Nullable PsiElement location,
-                                                                @NotNull final TypeEvalContext context) {
+                                                                @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -537,10 +523,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
+  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type,
+                                                                         String name,
+                                                                         @Nullable PyExpression location,
+                                                                         @NotNull PyResolveContext resolveContext) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(type, name, location, null);
+        final PsiElement resolveResult = provider.resolveMember(type, name, location, resolveContext);
         if (resolveResult != null) return resolveResult;
       }
     }

@@ -52,16 +52,16 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.util.ui.UIUtil.putClientProperty;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
 
 class AsyncProjectViewSupport {
@@ -91,17 +91,17 @@ class AsyncProjectViewSupport {
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
     });
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
@@ -127,31 +127,31 @@ class AsyncProjectViewSupport {
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element);
+        updateByElement(element, true);
         return true;
       }
     }, parent);
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateAll();
+        updateAllPresentations();
       }
 
       @Override
       public void fileStatusChanged(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updateByFile(file, false);
       }
     }, parent);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(this::updateByElement), parent);
+    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
     WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updatePresentationsFromRootTo(file);
       }
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updatePresentationsFromRootTo(file);
       }
     }, parent);
   }
@@ -194,45 +194,75 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.invalidate();
   }
 
-  public void update(@NotNull TreePath path) {
-    myStructureTreeModel.invalidate(path, true);
+  public void update(@NotNull TreePath path, boolean structure) {
+    myStructureTreeModel.invalidate(path, structure);
   }
 
-  public void update(@NotNull List<TreePath> list) {
-    for (TreePath path : list) update(path);
+  public void update(@NotNull List<TreePath> list, boolean structure) {
+    for (TreePath path : list) update(path, structure);
   }
 
-  public void updateByFile(@NotNull VirtualFile file) {
-    update(null, file, this::update);
+  public void updateByFile(@NotNull VirtualFile file, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByFile: " : "updatePresentationByFile: ", file);
+    update(null, file, structure);
   }
 
-  public void updateByElement(@NotNull PsiElement element) {
-    update(element, null, this::update);
+  public void updateByElement(@NotNull PsiElement element, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByElement: " : "updatePresentationByElement: ", element);
+    update(element, null, structure);
   }
 
-  private void update(PsiElement element, VirtualFile file, Consumer<List<TreePath>> consumer) {
+  private void update(PsiElement element, VirtualFile file, boolean structure) {
     SmartList<TreePath> list = new SmartList<>();
-    TreeVisitor visitor = createVisitor(element, file, path -> !list.add(path));
-    if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
+    acceptAndUpdate(createVisitor(element, file, path -> !list.add(path)), list, structure);
   }
 
-  void accept(List<TreeVisitor> visitors, Consumer<TreePath[]> consumer) {
+  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
+    if (visitor != null) myAsyncTreeModel.accept(visitor, false).done(path -> update(list, structure));
+  }
+
+  private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
+      @NotNull
+      @Override
+      protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
+        Action action = super.visit(path, node, element);
+        if (action != Action.SKIP_CHILDREN) list.add(path);
+        return action;
+      }
+    }, list, false);
+  }
+
+  private void updateAllPresentations() {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new TreeVisitor() {
+      @NotNull
+      @Override
+      public Action visit(@NotNull TreePath path) {
+        list.add(path);
+        return Action.CONTINUE;
+      }
+    }, list, false);
+  }
+
+  void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
     int size = visitors == null ? 0 : visitors.size();
-    if (size == 1) {
-      myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-        if (path != null) consumer.consume(new TreePath[]{path});
-      });
-    }
-    else if (size > 1) {
-      List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(Collectors.toList());
-      collectResults(promises, true).done(list -> {
-        TreePath[] array = list.toArray(new TreePath[list.size()]);
-        int count = 0;
-        for (int i = 0; i < array.length; i++) {
-          if (array[i] != null) array[count++] = array[i];
+    if (visitors != null && !visitors.isEmpty()) {
+      // start visiting on the background thread to ensure that root node is already invalidated
+      myStructureTreeModel.getInvoker().invokeLater(() -> {
+        if (1 == visitors.size()) {
+          myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+            if (path != null) consumer.consume(singletonList(path));
+          });
         }
-        if (count > 0) {
-          consumer.consume(count == array.length ? array : Arrays.copyOf(array, count));
+        else if (size > 1) {
+          myStructureTreeModel.getInvoker().invokeLater(() -> {
+            List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
+            collectResults(promises, true).done(list -> {
+              if (list != null && !list.isEmpty()) consumer.consume(list);
+            });
+          });
         }
       });
     }

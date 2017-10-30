@@ -31,7 +31,7 @@ import javax.swing.*;
  *   while only showing OS X 32-bit/64-bit targets for OS X configurations.<br>
  * <br>   
  * RunConfiguration can decide, if it can be run on a given target<br>
- * (see {@link com.intellij.execution.RunnerAndConfigurationSettings#canRunOn(com.intellij.execution.ExecutionTarget)} and {@link com.intellij.execution.configurations.TargetAwareRunProfile#canRunOn(com.intellij.execution.ExecutionTarget)})<br>
+ * (see {@link com.intellij.execution.configurations.TargetAwareRunProfile#canRunOn(com.intellij.execution.ExecutionTarget)})<br>
  * <br>   
  * Targets are collected from {@link com.intellij.execution.ExecutionTargetProvider} 
  */

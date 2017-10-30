@@ -26,6 +26,6 @@ public final class ArrayLength {
       System.out.println("Impossible");
     }
     Arrays.fill(x, -1);
-    Arrays.<warning descr="The call to 'fill' always fails, according to its method contracts">fill</warning>(x, -1, -1, -1);
+    Arrays.<warning descr="The call to 'fill' always fails as index is out of bounds">fill</warning>(x, -1, -1, -1);
   }
 }

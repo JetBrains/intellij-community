@@ -2786,14 +2786,8 @@
                      key="junit5.platform.runner.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
-                     implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
-                     implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
+    <inspectionToolProvider implementation="com.intellij.codeInspection.ExperimentalInspectionsProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.codeInspection.ExperimentalVarSupportFixProvider"/>
   </extensions>
 
 </idea-plugin>

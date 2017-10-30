@@ -43,7 +43,6 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -492,7 +491,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       }
 
       if (root != null) {
-        tree.removeMapping(null, root);
+        root.removeMapping(null, tree);
       }
       if (!tree.map.isEmpty()) {
         tree.map.values().forEach(node -> {
@@ -602,7 +601,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
       LinkedHashMap<Object, Integer> removed = getIndices(oldChildren, null);
       if (newChildren.isEmpty()) {
-        for (Node child : oldChildren) tree.removeMapping(node, child);
+        oldChildren.forEach(child -> child.removeMapping(node, tree));
         node.setLeaf(loaded.leaf);
         treeNodesRemoved(node, removed);
         LOG.debug("children removed: ", node.object);
@@ -636,7 +635,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       newChildren = list;
 
       if (oldChildren.isEmpty()) {
-        for (Node child : newChildren) child.insertPaths(node);
+        newChildren.forEach(child -> child.insertMapping(node));
         node.setChildren(newChildren);
         treeNodesInserted(node, inserted);
         LOG.debug("children inserted: ", node.object);
@@ -661,13 +660,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
       for (Node child : newChildren) {
         if (!removed.containsKey(child.object) && inserted.containsKey(child.object)) {
-          child.insertPaths(node);
+          child.insertMapping(node);
         }
       }
 
       for (Node child : oldChildren) {
         if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
-          tree.removeMapping(node, child);
+          child.removeMapping(node, tree);
         }
       }
 
@@ -758,18 +757,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     private final HashMap<Object, Node> map = new HashMap<>();
     private volatile Node root;
 
-    private void removeMapping(Node parent, Node child) {
-      if (parent != null && parent.loading == child) {
-        parent.loading = null;
-      }
-      else {
-        child.removePaths(parent);
-        removeEmpty(child);
-      }
-    }
-
     private void removeEmpty(@NotNull Node child) {
-      child.getChildren().forEach(this::removeEmpty);
+      child.forEachChildExceptLoading(this::removeEmpty);
       if (child.paths.isEmpty()) {
         child.queue.close();
         Node node = map.remove(child.object);
@@ -783,7 +772,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   private static final class Node {
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
-    private final SmartHashSet<TreePath> paths = new SmartHashSet<>();
+    private final Set<TreePath> paths = new SmartHashSet<>();
     private final Object object;
     private volatile boolean leaf;
     private volatile List<Node> children;
@@ -822,28 +811,31 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       return list != null ? list : emptyList();
     }
 
+    private void forEachChildExceptLoading(Consumer<Node> consumer) {
+      for (Node node : getChildren()) {
+        if (node != loading) consumer.consume(node);
+      }
+    }
+
     private void insertPath(TreePath path) {
       if (!paths.add(path)) {
         LOG.warn("node is already attached to " + path);
       }
-      for (Node child : getChildren()) {
-        child.insertPath(path.pathByAddingChild(child.object));
-      }
+      forEachChildExceptLoading(child -> child.insertPath(path.pathByAddingChild(child.object)));
     }
 
-    private void insertPaths(Stream<TreePath> stream) {
-      stream.forEach(path -> insertPath(path.pathByAddingChild(object)));
-    }
-
-    private void insertPaths(Node parent) {
+    private void insertMapping(Node parent) {
       if (parent == null) {
         insertPath(new TreePath(object));
+      }
+      else if (parent.loading == this) {
+        LOG.warn("insert loading node unexpectedly");
       }
       else if (parent.paths.isEmpty()) {
         LOG.warn("insert to invalid parent");
       }
       else {
-        insertPaths(parent.paths.stream());
+        parent.paths.forEach(path -> insertPath(path.pathByAddingChild(object)));
       }
     }
 
@@ -851,24 +843,23 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!paths.remove(path)) {
         LOG.warn("node is not attached to " + path);
       }
-      for (Node child : getChildren()) {
-        child.removePath(path.pathByAddingChild(child.object));
-      }
+      forEachChildExceptLoading(child -> child.removePath(path.pathByAddingChild(child.object)));
     }
 
-    private void removePaths(Stream<TreePath> stream) {
-      stream.forEach(path -> removePath(path.pathByAddingChild(object)));
-    }
-
-    private void removePaths(Node parent) {
+    private void removeMapping(Node parent, Tree tree) {
       if (parent == null) {
         removePath(new TreePath(object));
+        tree.removeEmpty(this);
+      }
+      else if (parent.loading == this) {
+        parent.loading = null;
       }
       else if (parent.paths.isEmpty()) {
         LOG.warn("remove from invalid parent");
       }
       else {
-        removePaths(parent.paths.stream());
+        parent.paths.forEach(path -> removePath(path.pathByAddingChild(object)));
+        tree.removeEmpty(this);
       }
     }
   }

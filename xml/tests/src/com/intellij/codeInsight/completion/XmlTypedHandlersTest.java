@@ -19,8 +19,8 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -100,7 +100,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testSingleQuotes() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -108,12 +108,12 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
       myFixture.type('=');
       myFixture.checkResult("<foo bar='<caret>'");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings.HTML_QUOTE_STYLE = quote;
     }
   }
 
   public void testNoneQuotes() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
@@ -121,7 +121,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
       myFixture.type('=');
       myFixture.checkResult("<foo bar=<caret>>text");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings.HTML_QUOTE_STYLE = quote;
     }
   }
 
@@ -264,5 +264,9 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);
     myFixture.checkResult(result);
+  }
+
+  private HtmlCodeStyleSettings getHtmlSettings() {
+    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

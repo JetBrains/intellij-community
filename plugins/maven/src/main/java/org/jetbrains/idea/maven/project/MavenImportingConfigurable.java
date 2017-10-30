@@ -146,6 +146,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return ProjectBundle.message("maven.tab.importing");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getHelpTopic() {

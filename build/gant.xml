@@ -40,7 +40,6 @@
         <include name="jdom.jar"/>
         <include name="log4j.jar"/>
         <include name="trove4j.jar"/>
-        <include name="protobuf*.jar"/>
         <include name="netty*.jar"/>
         <include name="asm-all.jar"/>
         <include name="jgoodies-forms.jar"/>
@@ -50,7 +49,6 @@
         <include name="jna-platform.jar"/>
         <include name="oromatcher.jar"/>
         <include name="snappy-in-java-*.jar"/>
-        <include name="cli-parser-*.jar"/>
         <include name="nanoxml-*.jar"/>
         <include name="aether-*-all.jar"/>
         <include name="maven-aether-provider-*-all.jar"/>
