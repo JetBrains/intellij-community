@@ -326,6 +326,7 @@ public class GraphTableController {
         }
         else if (column == COMMIT_COLUMN) {
           PrintElement printElement = findPrintElement(row, e);
+          if (printElement == null) restoreCursor(Cursor.HAND_CURSOR);
           performGraphAction(printElement, e,
                              GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
