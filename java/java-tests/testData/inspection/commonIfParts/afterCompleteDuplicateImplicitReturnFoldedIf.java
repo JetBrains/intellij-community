@@ -7,5 +7,6 @@ import java.util.Set;
 public class IfStatementWithIdenticalBranches {
   int work() {
       System.out.println();
+      return;
   }
 }

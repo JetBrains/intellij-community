@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,16 +41,25 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(PsiIfStatement ifStatement) {
-        ExtractionContext context = ExtractionContext.from(ifStatement, isOnTheFly);
-        if (context == null) return;
-        CommonPartType type = context.getType();
-        boolean mayChangeSemantics = context.mayChangeSemantics();
+        PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
+        PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
+        final boolean mayChangeSemantics;
+        final CommonPartType type;
+        if (ImplicitElse.from(thenStatements, elseStatements, ifStatement) != null || ElseIf.from(ifStatement, thenStatements) != null) {
+          mayChangeSemantics = false;
+          type = CommonPartType.COMPLETE_DUPLICATE;
+        }
+        else {
+          ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, isOnTheFly);
+          if (thenElse == null) return;
+          type = thenElse.myCommonPartType;
+          mayChangeSemantics = thenElse.myMayChangeSemantics;
+        }
         boolean warning = type != CommonPartType.WITH_VARIABLES_EXTRACT && type != CommonPartType.VARIABLES_ONLY && !mayChangeSemantics;
         ProblemHighlightType highlightType = warning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
         String message = type.getMessage(mayChangeSemantics);
         PsiElement element = warning ? ifStatement.getChildren()[0] : ifStatement;
         holder.registerProblem(element, message, highlightType, new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly));
-
       }
     };
   }
@@ -61,8 +71,8 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
                                                            @NotNull List<PsiLocalVariable> conditionVariables,
                                                            LocalEquivalenceChecker equivalence) {
     boolean equal = thenStmt instanceof PsiDeclarationStatement
-                ? equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)
-                : equivalence.statementsAreEquivalent(thenStmt, elseStmt);
+                    ? equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)
+                    : equivalence.statementsAreEquivalent(thenStmt, elseStmt);
     if (!equal) return null;
     final boolean statementMayChangeSemantics;
     final boolean equivalent;
@@ -71,12 +81,13 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenStmt, e -> false);
       equivalent = true;
       mayInfluenceCondition = mayInfluenceCondition(thenStmt, conditionVariables);
-    } else {
+    }
+    else {
       PsiLocalVariable thenVariable = extractVariable(thenStmt);
       PsiLocalVariable elseVariable = extractVariable(elseStmt);
-      if(thenVariable == null || elseVariable == null) return null;
+      if (thenVariable == null || elseVariable == null) return null;
       PsiExpression thenInitializer = thenVariable.getInitializer();
-      if(thenInitializer == null) return null;
+      if (thenInitializer == null) return null;
       statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, e -> false);
       mayInfluenceCondition = mayInfluenceCondition(thenInitializer, conditionVariables);
       equivalent = equivalence.expressionsAreEquivalent(thenInitializer, elseVariable.getInitializer());
@@ -85,12 +96,12 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean mayInfluenceCondition(@NotNull PsiElement element, @NotNull List<PsiLocalVariable> conditionVariables) {
-      return StreamEx.ofTree(element, e -> StreamEx.of(e.getChildren()))
-        .select(PsiReferenceExpression.class)
-        .map(expression -> expression.resolve())
-        .nonNull()
-        .select(PsiLocalVariable.class)
-        .anyMatch(el -> conditionVariables.contains(el));
+    return StreamEx.ofTree(element, e -> StreamEx.of(e.getChildren()))
+      .select(PsiReferenceExpression.class)
+      .map(expression -> expression.resolve())
+      .nonNull()
+      .select(PsiLocalVariable.class)
+      .anyMatch(el -> conditionVariables.contains(el));
   }
 
 
@@ -128,49 +139,65 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         PsiBlockStatement block = BlockUtils.expandSingleStatementToBlockStatement(ifStatement);
         ifStatement = (PsiIfStatement)block.getCodeBlock().getStatements()[0];
       }
-      ExtractionContext context = ExtractionContext.from(ifStatement, myIsOnTheFly);
-      if (context == null) return;
-      List<ExtractionUnit> units = context.getHeadUnits();
-
-      if (context.getImplicitElse() == null) {
-        replaceNames(ifStatement.getElseBranch(), context);
-        if (!tryCleanUpHead(ifStatement, units, factory)) return;
-        cleanUpTail(ifStatement, context);
-        PsiStatement elseBranch = ifStatement.getElseBranch();
-        PsiStatement thenBranch = ifStatement.getThenBranch();
-        boolean elseToDelete = elseBranch != null && ControlFlowUtils.unwrapBlock(elseBranch).length == 0;
-        boolean thenToDelete = thenBranch != null && ControlFlowUtils.unwrapBlock(thenBranch).length == 0;
-        if (thenToDelete && elseToDelete) {
-          ifStatement.delete();
-        }
-        else if (elseToDelete) {
-          elseBranch.delete();
-        }
-        else if (thenToDelete) {
-          PsiExpression condition = ifStatement.getCondition();
-          if (condition == null) return;
-          String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
-          String newThenBranch = elseBranch == null ? "{}" : elseBranch.getText();
-          ifStatement.replace(factory.createStatementFromText("if(" + negatedCondition + ")" + newThenBranch, ifStatement));
-        }
-      }
-      else {
-        List<PsiStatement> tailStatements = context.getTailStatements();
-        PsiIfStatement withImplicitElse = context.getImplicitElse().getIfWithImplicitElse();
-        PsiIfStatement currentIf = withImplicitElse != null ? withImplicitElse : ifStatement;
-        for (PsiStatement statement : tailStatements) {
-          currentIf.getParent().addAfter(statement.copy(), currentIf);
-        }
-        for (PsiStatement statement : tailStatements) {
-          statement.delete();
-        }
-        new CommentTracker().deleteAndRestoreComments(currentIf);
-      }
+      PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
+      PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
+      if (tryApplyThenElseFix(ifStatement, factory, thenStatements, elseStatements)) return;
+      applyImplicitElseFix(ifStatement, thenStatements, elseStatements);
     }
 
-    private static void replaceNames(@Nullable PsiStatement statement, ExtractionContext context) {
-      if(statement == null) return;
-      Map<PsiLocalVariable, String> substitutionTable = context.getSubstitutionTable();
+    private static void applyImplicitElseFix(PsiIfStatement ifStatement, PsiStatement[] thenStatements, PsiStatement[] elseStatements) {
+      ImplicitElse implicitElse = ImplicitElse.from(thenStatements, elseStatements, ifStatement);
+      if (implicitElse == null) return;
+      List<PsiStatement> commonStatements = implicitElse.myThenStatements;
+      PsiIfStatement ifToDelete = implicitElse.myIfToDelete;
+      Map<PsiLocalVariable, String> substitutionTable = implicitElse.mySubstitutionTable;
+      List<PsiStatement> implicitElseStatements = implicitElse.myImplicitElseStatements;
+      if (commonStatements.size() == implicitElseStatements.size()) { // remove return;
+        commonStatements.remove(commonStatements.size() - 1);
+      }
+      Collections.reverse(commonStatements);
+      for (PsiStatement statement : commonStatements) {
+        PsiStatement copy = (PsiStatement)statement.copy();
+        replaceNames(copy, substitutionTable);
+        ifToDelete.getParent().addAfter(copy, ifToDelete);
+      }
+      for (PsiStatement statement : implicitElseStatements) {
+        statement.delete();
+      }
+      new CommentTracker().deleteAndRestoreComments(ifToDelete);
+    }
+
+    private boolean tryApplyThenElseFix(PsiIfStatement ifStatement,
+                                        PsiElementFactory factory,
+                                        PsiStatement[] thenStatements,
+                                        PsiStatement[] elseStatements) {
+      ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, myIsOnTheFly);
+      if (thenElse == null) return false;
+      replaceNames(ifStatement.getElseBranch(), thenElse.mySubstitutionTable);
+      if (!tryCleanUpHead(ifStatement, thenElse.myHeadUnitsOfThen, factory)) return true;
+      cleanUpTail(ifStatement, thenElse.myTailStatementsOfThen);
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      boolean elseToDelete = elseBranch != null && ControlFlowUtils.unwrapBlock(elseBranch).length == 0;
+      boolean thenToDelete = thenBranch != null && ControlFlowUtils.unwrapBlock(thenBranch).length == 0;
+      if (thenToDelete && elseToDelete) {
+        ifStatement.delete();
+      }
+      else if (elseToDelete) {
+        elseBranch.delete();
+      }
+      else if (thenToDelete) {
+        PsiExpression condition = ifStatement.getCondition();
+        if (condition == null) return true;
+        String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
+        String newThenBranch = elseBranch == null ? "{}" : elseBranch.getText();
+        ifStatement.replace(factory.createStatementFromText("if(" + negatedCondition + ")" + newThenBranch, ifStatement));
+      }
+      return true;
+    }
+
+    private static void replaceNames(@Nullable PsiStatement statement, @NotNull Map<PsiLocalVariable, String> substitutionTable) {
+      if (statement == null) return;
       for (Map.Entry<PsiLocalVariable, String> entry : substitutionTable.entrySet()) {
         PsiLocalVariable variable = entry.getKey();
         String newName = entry.getValue();
@@ -241,8 +268,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       return thenStatement;
     }
 
-    private static void cleanUpTail(PsiIfStatement ifStatement, ExtractionContext context) {
-      List<PsiStatement> tailStatements = context.getTailStatements();
+    private static void cleanUpTail(@NotNull PsiIfStatement ifStatement, @NotNull List<PsiStatement> tailStatements) {
       if (!tailStatements.isEmpty()) {
         for (PsiStatement statement : tailStatements) {
           ifStatement.getParent().addAfter(statement.copy(), ifStatement);
@@ -347,125 +373,228 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     CommonPartType(@NotNull String key) {myBundleKey = key;}
   }
 
-  private static class ExtractionContext {
-    private final List<ExtractionUnit> myHeadUnits;
-    private final List<PsiStatement> myFinishingStatements; // In reversed order
-    private final CommonPartType myType;
-    private final @Nullable ImplicitElse myImplicitElse;
-    private final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
-    private final boolean myMayChangeSemantics;
-
-    @NotNull
-    public Map<PsiLocalVariable, String> getSubstitutionTable() {
-      return mySubstitutionTable;
+  @Nullable
+  private static PsiIfStatement getEnclosingIfStmt(@NotNull PsiIfStatement ifStatement) {
+    PsiElement parent = ifStatement.getParent();
+    if (parent instanceof PsiIfStatement) {
+      return (PsiIfStatement)parent;
     }
+    if (parent instanceof PsiCodeBlock) {
+      if (((PsiCodeBlock)parent).getStatements()[0] != ifStatement) return null;
+      return tryCast(parent.getParent().getParent(), PsiIfStatement.class);
+    }
+    return null;
+  }
 
-    private ExtractionContext(List<ExtractionUnit> units,
-                              List<PsiStatement> statements,
-                              CommonPartType type,
-                              @Nullable ImplicitElse implicitElse,
-                              @NotNull Map<PsiLocalVariable, String> table,
-                              boolean mayChangeSemantics) {
-      myHeadUnits = units;
-      myFinishingStatements = statements;
-      myType = type;
-      myImplicitElse = implicitElse;
+  private static boolean isMeaningful(@NotNull PsiStatement statement) {
+    if (statement instanceof PsiEmptyStatement) return false;
+    if (statement instanceof PsiBlockStatement) {
+      return ((PsiBlockStatement)statement).getCodeBlock().getStatements().length != 0;
+    }
+    return true;
+  }
+
+  private static class ImplicitElseData {
+    final List<PsiStatement> myImplicitElseStatements;
+    final PsiIfStatement myIfWithImplicitElse;
+
+    private ImplicitElseData(List<PsiStatement> implicitElseStatements, PsiIfStatement ifWithImplicitElse) {
+      myImplicitElseStatements = implicitElseStatements;
+      myIfWithImplicitElse = ifWithImplicitElse;
+    }
+  }
+
+  @Nullable
+  private static ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
+                                                        @NotNull PsiStatement[] thenStatements,
+                                                        boolean returnsNothing) {
+    int statementsLength = thenStatements.length;
+    if (statementsLength == 0) return null;
+    PsiIfStatement currentIf = ifStatement;
+    List<PsiStatement> statements = new ArrayList<>();
+    int count = 0;
+    while (currentIf != null) {
+      if (currentIf.getElseBranch() != null) return null;
+      if (currentIf != ifStatement && ControlFlowUtils.unwrapBlock(currentIf.getThenBranch()).length != 1) break;
+      PsiStatement sibling = currentIf;
+      do {
+        sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class);
+        if (sibling == null) break;
+        if (!isMeaningful(sibling)) continue;
+        count++;
+        statements.add(sibling);
+      }
+      while (count <= statementsLength);
+      if (!statements.isEmpty()) break;
+
+      currentIf = getEnclosingIfStmt(currentIf);
+    }
+    if (returnsNothing) {
+      // skip possible return;
+      if (count == statementsLength || count == statementsLength - 1) return new ImplicitElseData(statements, currentIf);
+    }
+    else {
+      if (count == statementsLength) return new ImplicitElseData(statements, currentIf);
+    }
+    return null;
+  }
+
+  private static void addLocalVariables(Set<PsiLocalVariable> variables, List<PsiStatement> statements) {
+    for (PsiStatement statement : statements) {
+      addVariables(variables, statement);
+    }
+  }
+
+  private static void addVariables(Set<PsiLocalVariable> variables, PsiStatement statement) {
+    PsiDeclarationStatement declarationStatement = tryCast(statement, PsiDeclarationStatement.class);
+    if (declarationStatement == null) return;
+    for (PsiElement element : declarationStatement.getDeclaredElements()) {
+      if (element instanceof PsiLocalVariable) {
+        variables.add((PsiLocalVariable)element);
+      }
+    }
+  }
+
+  @NotNull
+  private static PsiStatement[] unwrap(@Nullable PsiStatement statement) {
+    PsiBlockStatement block = tryCast(statement, PsiBlockStatement.class);
+    if (block != null) {
+      return Arrays.stream(block.getCodeBlock().getStatements()).filter(CommonIfPartsInspection::isMeaningful).collect(Collectors.toList())
+        .toArray(PsiStatement.EMPTY_ARRAY);
+    }
+    return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
+  }
+
+  private static class ImplicitElse {
+    final PsiIfStatement myIfToDelete;
+    final List<PsiStatement> myThenStatements;
+    final List<PsiStatement> myImplicitElseStatements;
+    final Map<PsiLocalVariable, String> mySubstitutionTable;
+
+    private ImplicitElse(PsiIfStatement ifToDelete,
+                         List<PsiStatement> thenStatements,
+                         List<PsiStatement> statements,
+                         Map<PsiLocalVariable, String> table) {
+      myIfToDelete = ifToDelete;
+      myThenStatements = thenStatements;
+      myImplicitElseStatements = statements;
       mySubstitutionTable = table;
-      myMayChangeSemantics = mayChangeSemantics;
-    }
-
-
-    public List<ExtractionUnit> getHeadUnits() {
-      return myHeadUnits;
-    }
-
-    public List<PsiStatement> getTailStatements() {
-      return myFinishingStatements;
-    }
-
-    public CommonPartType getType() {
-      return myType;
     }
 
     @Nullable
-    public ImplicitElse getImplicitElse() {
-      return myImplicitElse;
+    static ImplicitElse from(@NotNull PsiStatement[] thenBranch,
+                             @NotNull PsiStatement[] elseBranch,
+                             @NotNull PsiIfStatement ifStatement) {
+      if (elseBranch.length != 0 || thenBranch.length == 0) return null;
+      PsiStatement lastThenStatement = thenBranch[thenBranch.length - 1];
+      if (!(lastThenStatement instanceof PsiReturnStatement)) return null;
+      boolean returnsNothing = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
+      ImplicitElseData implicitElse = getIfWithImplicitElse(ifStatement, thenBranch, returnsNothing);
+      if (implicitElse == null) return null;
+      List<PsiStatement> elseStatements = implicitElse.myImplicitElseStatements;
+      Set<PsiLocalVariable> variables = new HashSet<>();
+      List<PsiStatement> thenStatements = new ArrayList<>(Arrays.asList(thenBranch));
+      addLocalVariables(variables, thenStatements);
+      addLocalVariables(variables, implicitElse.myImplicitElseStatements);
+      LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
+      if (!branchesAreEquivalent(thenBranch, elseStatements, equivalence)) return null;
+      return new ImplicitElse(implicitElse.myIfWithImplicitElse, thenStatements, elseStatements, equivalence.mySubstitutionTable);
+    }
+  }
+
+  private static class ThenElse {
+    final List<ExtractionUnit> myHeadUnitsOfThen;
+    final List<PsiStatement> myTailStatementsOfThen;
+    final boolean myMayChangeSemantics;
+    final CommonPartType myCommonPartType;
+    final Map<PsiLocalVariable, String> mySubstitutionTable;
+
+    private ThenElse(List<ExtractionUnit> headUnitsOfThen,
+                     List<PsiStatement> tailUnitsOfThen,
+                     boolean mayChangeSemantics,
+                     CommonPartType commonPartType,
+                     Map<PsiLocalVariable, String> substitutionTable) {
+      myHeadUnitsOfThen = headUnitsOfThen;
+      myTailStatementsOfThen = tailUnitsOfThen;
+      myMayChangeSemantics = mayChangeSemantics;
+      myCommonPartType = commonPartType;
+      mySubstitutionTable = substitutionTable;
     }
 
-    public boolean mayChangeSemantics() {
-      return myMayChangeSemantics;
-    }
 
-
-    private static ExtractionContext fromImplicitElse(PsiStatement[] thenBranch,
-                                                      PsiStatement[] elseBranch,
-                                                      PsiIfStatement ifStatement) {
-      if (elseBranch.length == 0 && thenBranch.length != 0) {
-        PsiStatement lastThenStatement = thenBranch[thenBranch.length - 1];
-        if (!(lastThenStatement instanceof PsiReturnStatement)) return null;
-        boolean returnsNothing = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
-        ImplicitElse implicitElse = extractImplicitElse(ifStatement, thenBranch.length - 1, returnsNothing);
-        if (implicitElse == null) return null;
-        List<PsiStatement> statements = implicitElse.getStatements();
-        Set<PsiLocalVariable> variables = new HashSet<>();
-        addLocalVariables(variables, Arrays.asList(thenBranch));
-        addLocalVariables(variables, implicitElse.getStatements());
-        LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
-        for (int i = 0, length = statements.size(); i < length; i++) {
-          PsiStatement elseStmt = statements.get(i);
-          PsiStatement thenStmt = thenBranch[i];
-          if (!equivalence.statementsAreEquivalent(thenStmt, elseStmt)) return null;
-        }
-        Collections.reverse(statements);
-        return new ExtractionContext(Collections.emptyList(), statements, CommonPartType.COMPLETE_DUPLICATE, implicitElse, new HashMap<>(),
-                                     false);
+    @Contract("true, _, _ -> true")
+    private static boolean mayChangeSemantics(boolean conditionHasSideEffects,
+                                              boolean conditionVariablesCantBeChangedTransitively,
+                                              List<ExtractionUnit> headCommonParts) {
+      if (conditionHasSideEffects) return true;
+      if (conditionVariablesCantBeChangedTransitively) {
+        return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+          .anyMatch(unit -> unit.mayInfluenceCondition() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
       }
-      return null;
-    }
-
-    private static boolean isMeaningful(@NotNull PsiStatement statement) {
-      if (statement instanceof PsiEmptyStatement) return false;
-      if (statement instanceof PsiBlockStatement) {
-        return ((PsiBlockStatement)statement).getCodeBlock().getStatements().length != 0;
-      }
-      return true;
+      return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+        .anyMatch(unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
     }
 
     @NotNull
-    private static PsiStatement[] unwrap(@Nullable PsiStatement statement) {
-      PsiBlockStatement block = tryCast(statement, PsiBlockStatement.class);
-      if (block != null) {
-        return Arrays.stream(block.getCodeBlock().getStatements()).filter(ExtractionContext::isMeaningful).collect(Collectors.toList())
-          .toArray(PsiStatement.EMPTY_ARRAY);
-      }
-      return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
+    private static LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
+      Set<PsiLocalVariable> localVariables = new HashSet<>();
+      addLocalVariables(localVariables, Arrays.asList(thenBranch));
+      addLocalVariables(localVariables, Arrays.asList(elseBranch));
+      return new LocalEquivalenceChecker(localVariables);
     }
 
-    private static void addLocalVariables(Set<PsiLocalVariable> variables, List<PsiStatement> statements) {
-      for (PsiStatement statement : statements) {
-        addVariables(variables, statement);
-      }
-    }
-
-    private static void addVariables(Set<PsiLocalVariable> variables, PsiStatement statement) {
-      PsiDeclarationStatement declarationStatement = tryCast(statement, PsiDeclarationStatement.class);
-      if (declarationStatement == null) return;
-      for (PsiElement element : declarationStatement.getDeclaredElements()) {
-        if (element instanceof PsiLocalVariable) {
-          variables.add((PsiLocalVariable)element);
+    @NotNull
+    private static CommonPartType getType(@NotNull List<ExtractionUnit> headStatements,
+                                          List<PsiStatement> tailStatements,
+                                          int thenLen,
+                                          int elseLen,
+                                          boolean declarationsAreEquivalent) {
+      if (declarationsAreEquivalent) {
+        int duplicatedStatements = headStatements.size() + tailStatements.size();
+        if (thenLen == duplicatedStatements && elseLen == duplicatedStatements) {
+          return CommonPartType.COMPLETE_DUPLICATE;
+        }
+        if (thenLen == duplicatedStatements || elseLen == duplicatedStatements) {
+          return CommonPartType.WHOLE_BRANCH;
         }
       }
+      boolean hasVariables = false;
+      boolean hasNonVariables = false;
+      for (ExtractionUnit unit : headStatements) {
+        if (unit.getThenStatement() instanceof PsiDeclarationStatement) {
+          hasVariables = true;
+        }
+        else {
+          hasNonVariables = true;
+        }
+        if (hasVariables && hasNonVariables) break;
+      }
+      if (!(hasVariables && hasNonVariables)) {
+        for (PsiStatement statement : tailStatements) {
+          if (statement instanceof PsiDeclarationStatement) {
+            hasVariables = true;
+          }
+          else {
+            hasNonVariables = true;
+          }
+          if (hasVariables && hasNonVariables) break;
+        }
+      }
+      if (hasVariables && hasNonVariables) {
+        return CommonPartType.WITH_VARIABLES_EXTRACT;
+      }
+      if (hasVariables) {
+        return CommonPartType.VARIABLES_ONLY;
+      }
+      return CommonPartType.WITHOUT_VARIABLES_EXTRACT;
     }
 
     @Nullable
-    static ExtractionContext from(@NotNull PsiIfStatement ifStatement, boolean isOnTheFly) {
-      PsiStatement[] thenBranch = unwrap(ifStatement.getThenBranch());
-      PsiStatement[] elseBranch = unwrap(ifStatement.getElseBranch());
+    static ThenElse from(@NotNull PsiIfStatement ifStatement,
+                         @NotNull PsiStatement[] thenBranch,
+                         @NotNull PsiStatement[] elseBranch,
+                         boolean isOnTheFly) {
       LocalEquivalenceChecker equivalence = getChecker(thenBranch, elseBranch);
-      ExtractionContext withImplicitElse = fromImplicitElse(thenBranch, elseBranch, ifStatement);
-      if (withImplicitElse != null) {
-        return withImplicitElse;
-      }
 
       int thenLen = thenBranch.length;
       int elseLen = elseBranch.length;
@@ -475,15 +604,16 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       if (condition == null) return null;
 
       boolean conditionHasSideEffects = SideEffectChecker.mayHaveSideEffects(condition);
-      if(!isOnTheFly && conditionHasSideEffects) return null;
+      if (!isOnTheFly && conditionHasSideEffects) return null;
       List<PsiLocalVariable> conditionVariables = new ArrayList<>();
       boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
         .allMatch(element -> {
-          if(element instanceof PsiReferenceExpression) {
+          if (element instanceof PsiReferenceExpression) {
             PsiLocalVariable localVariable = tryCast(((PsiReferenceExpression)element).resolve(), PsiLocalVariable.class);
-            if(localVariable == null) return false;
+            if (localVariable == null) return false;
             conditionVariables.add(localVariable);
-          } else if (element instanceof PsiMethodCallExpression) {
+          }
+          else if (element instanceof PsiMethodCallExpression) {
             return false;
           }
           return true;
@@ -499,8 +629,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         ExtractionUnit unit = extractHeadCommonStatement(thenStmt, elseStmt, conditionVariables,
                                                          equivalence);
         if (unit == null) break;
-        if(!isOnTheFly && unit.haveSideEffects()) break;
-        boolean dependsOnVariableWithNonEquivalentInitializer = StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
+        if (!isOnTheFly && unit.haveSideEffects()) break;
+        boolean dependsOnVariableWithNonEquivalentInitializer =
+          StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
             .select(PsiReferenceExpression.class)
             .map(ref -> ref.resolve())
             .select(PsiLocalVariable.class)
@@ -553,169 +684,67 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, thenLen, elseLen, notEquivalentVariableDeclarations.isEmpty());
 
-      boolean mayChangeSemantics = mayChangeSemantics(conditionHasSideEffects, conditionVariablesCantBeChangedTransitively, headCommonParts);
-      return new ExtractionContext(headCommonParts, tailCommonParts, type, null, equivalence.getSubstitutionTable(), mayChangeSemantics);
+      boolean mayChangeSemantics =
+        mayChangeSemantics(conditionHasSideEffects, conditionVariablesCantBeChangedTransitively, headCommonParts);
+      return new ThenElse(headCommonParts, tailCommonParts, mayChangeSemantics, type, equivalence.mySubstitutionTable);
     }
+  }
 
-    private static boolean mayChangeSemantics(boolean conditionHasSideEffects,
-                                              boolean conditionVariablesCantBeChangedTransitively,
-                                              List<ExtractionUnit> headCommonParts) {
-      if(conditionHasSideEffects) return true;
-      if(conditionVariablesCantBeChangedTransitively) {
-        return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
-          .anyMatch(unit -> unit.mayInfluenceCondition() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
-      }
-      return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
-        .anyMatch(unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+  private static boolean branchesAreEquivalent(@NotNull PsiStatement[] thenBranch,
+                                               @NotNull List<PsiStatement> statements,
+                                               @NotNull LocalEquivalenceChecker equivalence) {
+    for (int i = 0, length = statements.size(); i < length; i++) {
+      PsiStatement elseStmt = statements.get(i);
+      PsiStatement thenStmt = thenBranch[i];
+      if (!equivalence.statementsAreEquivalent(thenStmt, elseStmt)) return false;
     }
+    return true;
+  }
 
-    @NotNull
-    private static LocalEquivalenceChecker getChecker(PsiStatement[] thenBranch, PsiStatement[] elseBranch) {
-      Set<PsiLocalVariable> localVariables = new HashSet<>();
-      addLocalVariables(localVariables, Arrays.asList(thenBranch));
-      addLocalVariables(localVariables, Arrays.asList(elseBranch));
-      return new LocalEquivalenceChecker(localVariables);
-    }
+  private static class ElseIf {
+    final @NotNull PsiStatement myElseBranch;
+    final @NotNull PsiStatement myElseIfThenStatement;
+    final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
 
-    @Nullable
-    private static PsiIfStatement getEnclosingIfStmt(@NotNull PsiIfStatement ifStatement) {
-      PsiElement parent = ifStatement.getParent();
-      if (parent instanceof PsiIfStatement) {
-        return (PsiIfStatement)parent;
-      }
-      if (parent instanceof PsiCodeBlock) {
-        if (((PsiCodeBlock)parent).getStatements()[0] != ifStatement) return null;
-        return tryCast(parent.getParent().getParent(), PsiIfStatement.class);
-      }
-      return null;
-    }
-
-    static class ImplicitElse {
-      private final List<PsiStatement> myStatements;
-      private final PsiIfStatement myIfWithImplicitElse;
-
-      ImplicitElse(List<PsiStatement> statements, PsiIfStatement anElse) {
-        myStatements = statements;
-        myIfWithImplicitElse = anElse;
-      }
-
-      public List<PsiStatement> getStatements() {
-        return myStatements;
-      }
-
-      public PsiIfStatement getIfWithImplicitElse() {
-        return myIfWithImplicitElse;
-      }
+    private ElseIf(@NotNull PsiStatement elseBranch,
+                   @NotNull PsiStatement elseIfThenStatement,
+                   @NotNull Map<PsiLocalVariable, String> table) {
+      myElseBranch = elseBranch;
+      myElseIfThenStatement = elseIfThenStatement;
+      mySubstitutionTable = table;
     }
 
     @Nullable
-    private static ImplicitElse extractImplicitElse(@NotNull PsiIfStatement ifStmt,
-                                                    int returnStmtIndex,
-                                                    boolean returnsNothing) {
-      List<PsiStatement> statements = new ArrayList<>();
-      if (ifStmt.getElseBranch() != null) return null;
-      int count = 0;
-      PsiIfStatement currentIf = ifStmt;
-      do {
-        PsiStatement sibling = currentIf;
-        do {
-          sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class);
-          if (sibling == null) break;
-          if (!isMeaningful(sibling)) continue;
-          count++;
-          statements.add(sibling);
-        }
-        while (count <= returnStmtIndex);
-        PsiIfStatement nextIf = getEnclosingIfStmt(currentIf);
-        if (nextIf == null) break;
-        if (nextIf.getElseBranch() != null) return null;
-        currentIf = nextIf;
-      }
-      while (statements.size() != returnStmtIndex + 1);
-
-      if (statements.isEmpty()) return null;
-      PsiStatement last = statements.get(statements.size() - 1);
-      boolean lastIsReturn = last instanceof PsiReturnStatement;
-
-      if (lastIsReturn) {
-        if (statements.size() != returnStmtIndex + 1) return null;
-      }
-      else { // maybe last statement in method
-        PsiMethod method = PsiTreeUtil.getParentOfType(currentIf, PsiMethod.class);
-        if (method == null) return null;
-        PsiCodeBlock methodBody = method.getBody();
-        if (methodBody == null) return null;
-        if (!(returnsNothing && statements.size() == returnStmtIndex)) return null;
-        PsiStatement[] bodyStatements = methodBody.getStatements();
-        PsiStatement lastMethodStmt = bodyStatements[bodyStatements.length - 1];
-        if (lastMethodStmt != statements.get(statements.size() - 1)) return null;
-      }
-      return new ImplicitElse(statements, currentIf);
-    }
-
-    @NotNull
-    private static CommonPartType getType(@NotNull List<ExtractionUnit> headStatements,
-                                          List<PsiStatement> tailStatements,
-                                          int thenLen,
-                                          int elseLen,
-                                          boolean declarationsAreEquivalent) {
-      if (declarationsAreEquivalent) {
-        int duplicatedStatements = headStatements.size() + tailStatements.size();
-        if (thenLen == duplicatedStatements && elseLen == duplicatedStatements) {
-          return CommonPartType.COMPLETE_DUPLICATE;
-        }
-        if (thenLen == duplicatedStatements || elseLen == duplicatedStatements) {
-          return CommonPartType.WHOLE_BRANCH;
-        }
-      }
-      boolean hasVariables = false;
-      boolean hasNonVariables = false;
-      for (ExtractionUnit unit : headStatements) {
-        if (unit.getThenStatement() instanceof PsiDeclarationStatement) {
-          hasVariables = true;
-        }
-        else {
-          hasNonVariables = true;
-        }
-        if (hasVariables && hasNonVariables) break;
-      }
-      if (!(hasVariables && hasNonVariables)) {
-        for (PsiStatement statement : tailStatements) {
-          if (statement instanceof PsiDeclarationStatement) {
-            hasVariables = true;
-          }
-          else {
-            hasNonVariables = true;
-          }
-          if (hasVariables && hasNonVariables) break;
-        }
-      }
-      if (hasVariables && hasNonVariables) {
-        return CommonPartType.WITH_VARIABLES_EXTRACT;
-      }
-      if (hasVariables) {
-        return CommonPartType.VARIABLES_ONLY;
-      }
-      return CommonPartType.WITHOUT_VARIABLES_EXTRACT;
+    static ElseIf from(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement[] thenStatements) {
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      PsiIfStatement elseIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
+      if (elseIf == null) return null;
+      if (elseIf.getCondition() == null) return null;
+      PsiStatement elseIfThenBranch = elseIf.getThenBranch();
+      if (elseIfThenBranch == null) return null;
+      PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIfThenBranch);
+      if (elseIfThen.length != thenStatements.length) return null;
+      Set<PsiLocalVariable> variables = new HashSet<>();
+      addLocalVariables(variables, Arrays.asList(thenStatements));
+      addLocalVariables(variables, Arrays.asList(elseIfThen));
+      LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
+      if (!branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) return null;
+      return new ElseIf(elseBranch, elseIfThenBranch, equivalence.mySubstitutionTable);
     }
   }
 
   private static class LocalEquivalenceChecker extends EquivalenceChecker {
-    private final Set<PsiLocalVariable> myLocalVariables;
-    private final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(); // From else variable to then variable name
+    final Set<PsiLocalVariable> myLocalVariables;
+    final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(); // From else variable to then variable name
 
     private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {myLocalVariables = variables;}
-
-    public Map<PsiLocalVariable, String> getSubstitutionTable() {
-      return mySubstitutionTable;
-    }
 
     public boolean topLevelVarsAreEqualNotConsideringInitializers(@NotNull PsiStatement first,
                                                                   @NotNull PsiStatement second) {
       PsiLocalVariable localVariable1 = extractVariable(first);
       PsiLocalVariable localVariable2 = extractVariable(second);
-      if(localVariable1 == null || localVariable2 == null) return false;
-      if(!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
+      if (localVariable1 == null || localVariable2 == null) return false;
+      if (!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
         return false;
       }
       if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return false;
@@ -726,20 +755,20 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
       PsiModifierList firstModifierList = localVariable1.getModifierList();
       PsiModifierList secondModifierList = localVariable2.getModifierList();
-      if(firstModifierList != null || secondModifierList != null) {
+      if (firstModifierList != null || secondModifierList != null) {
         if (firstModifierList == null || secondModifierList == null) {
           return false;
         }
         String firstModifierListText = firstModifierList.getText();
         String secondModifierListText = secondModifierList.getText();
-        if(firstModifierListText != null && !firstModifierListText.equals(secondModifierListText)) {
+        if (firstModifierListText != null && !firstModifierListText.equals(secondModifierListText)) {
           return false;
         }
       }
       PsiAnnotation[] firstAnnotations = localVariable1.getAnnotations();
       if (firstAnnotations.length != localVariable2.getAnnotations().length || firstAnnotations.length != 0) return false;
       PsiType firstType = localVariable1.getType();
-      if(!firstType.equals(localVariable2.getType())) return false;
+      if (!firstType.equals(localVariable2.getType())) return false;
       String firstName = localVariable1.getName();
       String secondName = localVariable2.getName();
       if (firstName == null || !firstName.equals(secondName)) {
@@ -751,7 +780,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     @Override
     protected Match localVariablesAreEquivalent(@NotNull PsiLocalVariable localVariable1,
                                                 @NotNull PsiLocalVariable localVariable2) {
-      if(!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
+      if (!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
         return super.localVariablesAreEquivalent(localVariable1, localVariable2);
       }
       if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return EXACT_MISMATCH;
@@ -775,11 +804,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
           String firstVarName = firstVar.getName();
           String secondVarName = secondVar.getName();
           if (firstVarName != null && secondVarName != null) {
-            if (firstVarName.equals(secondVarName) || firstVarName.equals(mySubstitutionTable.get(secondVar))) {
-              return EXACT_MATCH;
-            } else {
-              return EXACT_MISMATCH;
-            }
+            return firstVarName.equals(secondVarName) || firstVarName.equals(mySubstitutionTable.get(secondVar))
+                   ? EXACT_MATCH
+                   : EXACT_MISMATCH;
           }
         }
       }
