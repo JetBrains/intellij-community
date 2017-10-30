@@ -588,7 +588,7 @@ public class JavaKeywordCompletion {
     if (psiElement().withoutText(".").inside(
       psiElement(PsiModifierList.class).withParent(
         not(psiElement(PsiParameter.class)).andNot(psiElement(PsiParameterList.class)))).accepts(prev) &&
-        !psiElement().inside(PsiAnnotationParameterList.class).accepts(prev)) {
+        (!psiElement().inside(PsiAnnotationParameterList.class).accepts(prev) || prev.textMatches(")"))) {
       return true;
     }
 
