@@ -85,8 +85,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     super(project);
     final Set<PsiElement> toMove = new LinkedHashSet<>();
     for (PsiElement element : elements) {
+      PsiUtilCore.ensureValid(element);
       if (element instanceof PsiClassOwner) {
-        Collections.addAll(toMove, ((PsiClassOwner)element).getClasses());
+        for (PsiClass aClass : ((PsiClassOwner)element).getClasses()) {
+          PsiUtilCore.ensureValid(aClass);
+          toMove.add(aClass);
+        }
       } else {
         toMove.add(element);
       }
