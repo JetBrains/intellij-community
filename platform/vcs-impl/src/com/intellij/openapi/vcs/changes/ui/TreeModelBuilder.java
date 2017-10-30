@@ -373,13 +373,10 @@ public class TreeModelBuilder {
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode node) {
     ChangesBrowserNode collapsedNode = node;
-    while (collapsedNode.getChildCount() == 1) {
+    while (collapsedNode.getUserObject() instanceof FilePath && collapsedNode.getChildCount() == 1) {
       ChangesBrowserNode child = (ChangesBrowserNode)collapsedNode.getChildAt(0);
-
-      ChangesBrowserNode collapsed = collapseParentWithOnlyChild(collapsedNode, child);
-      if (collapsed == null) break;
-
-      collapsedNode = collapsed;
+      if (!(child.getUserObject() instanceof FilePath) || child.isLeaf()) break;
+      collapsedNode = child;
     }
 
     if (collapsedNode != node) {
@@ -396,16 +393,6 @@ public class TreeModelBuilder {
       ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
       collapseDirectories(model, child);
     }
-  }
-
-  @Nullable
-  private static ChangesBrowserNode collapseParentWithOnlyChild(@NotNull ChangesBrowserNode parent, @NotNull ChangesBrowserNode child) {
-    if (parent.getUserObject() instanceof FilePath &&
-        child.getUserObject() instanceof FilePath &&
-        !child.isLeaf()) {
-      return child;
-    }
-    return null;
   }
 
   @NotNull
