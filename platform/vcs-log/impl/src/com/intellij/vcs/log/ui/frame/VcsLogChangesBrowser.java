@@ -24,12 +24,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
@@ -67,6 +69,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
+  @NotNull private final Set<VirtualFile> myRoots = ContainerUtil.newHashSet();
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
 
@@ -114,6 +117,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   public void resetSelectedDetails() {
     myChanges.clear();
     myChangesToParents.clear();
+    myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
   }
@@ -121,6 +125,9 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
     myChanges.clear();
     myChangesToParents.clear();
+    myRoots.clear();
+
+    myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
     if (detailsList.isEmpty()) {
       myViewer.setEmptyText("No commits selected");
@@ -194,12 +201,23 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @Override
   public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.VCS.is(dataId)) {
-      List<Change> selectedChanges = VcsTreeModelData.selected(myViewer).userObjects(Change.class);
-      Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(selectedChanges, myProject);
-      if (abstractVcs.size() == 1) return notNull(getFirstItem(abstractVcs)).getKeyInstanceMethod();
-      return null;
+      AbstractVcs vcs = getVcs();
+      if (vcs == null) return null;
+      return vcs.getKeyInstanceMethod();
     }
     return super.getData(dataId);
+  }
+
+  @Nullable
+  private AbstractVcs getVcs() {
+    List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
+    if (allVcs.size() == 1) return notNull(getFirstItem(allVcs));
+
+    List<Change> selectedChanges = VcsTreeModelData.selected(myViewer).userObjects(Change.class);
+    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(selectedChanges, myProject);
+    if (selectedVcs.size() == 1) return notNull(getFirstItem(selectedVcs));
+    
+    return null;
   }
 
   @Nullable
