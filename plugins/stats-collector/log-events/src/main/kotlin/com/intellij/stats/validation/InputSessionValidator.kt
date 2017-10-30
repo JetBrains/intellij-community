@@ -49,22 +49,29 @@ class InputSessionValidator(private val sessionValidationResult: SessionValidati
     private fun processCompletionSession(session: List<EventLine>) {
         if (session.isEmpty()) return
         if (session.any { !it.isValid }) {
-            dumpSession(session, isValidSession = false)
+            dumpSession(session, isValidSession = false, errorMessage = "Event line is invalid")
             return
         }
 
         var isValidSession = false
+        var errorMessage = ""
         val initial = session.first()
         if (initial.event is CompletionStartedEvent) {
             val state = CompletionValidationState(initial.event)
             session.drop(1).forEach { state.accept(it.event!!) }
-            isValidSession = state.isFinished && state.isValid
+            isValidSession = state.isSessionValid()
+            if (!isValidSession) {
+                errorMessage = state.errorMessage()
+            }
+        }
+        else {
+            errorMessage = "Session starts with other event: ${initial.event?.actionType}"
         }
 
-        dumpSession(session, isValidSession)
+        dumpSession(session, isValidSession, errorMessage)
     }
 
-    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
+    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean, errorMessage: String) {
         if (isValidSession) {
             sessionValidationResult.addValidSession(session)
         }

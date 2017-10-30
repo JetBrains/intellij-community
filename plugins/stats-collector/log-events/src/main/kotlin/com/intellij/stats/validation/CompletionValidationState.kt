@@ -26,8 +26,11 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
     var completionList     = event.completionListIds
     var currentId          = getSafeCurrentId(completionList, currentPosition)
 
-    var isValid = true
-    var isFinished = false
+    private var isValid = true
+    private var isFinished = false
+    private var errorMessage = ""
+
+    var events = mutableListOf<LogEvent>(event)
 
     private fun updateState(nextEvent: LookupStateLogData) {
         currentPosition = nextEvent.currentPosition
@@ -39,20 +42,26 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
     }
 
     private fun getSafeCurrentId(completionList: List<Int>, position: Int): Int {
-        if (completionList.isEmpty()) {
-            return -1
+        return if (completionList.isEmpty()) {
+            -1
         }
         else if (position < completionList.size && position >= 0) {
-            return completionList[position]
+            completionList[position]
         }
         else {
+            if (errorMessage.isEmpty()) {
+                errorMessage = "completion list size: ${completionList.size}, requested position: $position"
+            }
             isValid = false
-            return -2
+            -2
         }
     }
 
     fun accept(nextEvent: LogEvent) {
+        events.add(nextEvent)
+
         if (isFinished) {
+            errorMessage = "activity after completion finish session"
             isValid = false
         }
         else if (isValid) {
@@ -63,40 +72,53 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
     override fun visit(event: DownPressedEvent) {
         val beforeDownPressedPosition = currentPosition
         updateState(event)
-        updateValid((beforeDownPressedPosition + 1) % completionList.size == currentPosition)
+        val isCorrectPosition = (beforeDownPressedPosition + 1) % completionList.size == currentPosition
+        updateValid(isCorrectPosition,
+                "position after up pressed event incorrect, before event $beforeDownPressedPosition, " +
+                        "now $currentPosition, " +
+                        "elements in list ${completionList.size}"
+        )
     }
 
-    private fun updateValid(value: Boolean) {
+    private fun updateValid(value: Boolean, error: String) {
+        val wasValidBefore = isValid
         isValid = isValid && value
+        if (wasValidBefore && !isValid) {
+            errorMessage = error
+        }
     }
 
     override fun visit(event: UpPressedEvent) {
         val beforeUpPressedPosition = currentPosition
         updateState(event)
 
-        updateValid((completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition)
+        val isCorrectPosition = (completionList.size + beforeUpPressedPosition - 1) % completionList.size == currentPosition
+        updateValid(isCorrectPosition,
+                "position after up pressed event incorrect, before event $beforeUpPressedPosition, " +
+                "now $currentPosition, " +
+                "elements in list ${completionList.size}"
+        )
     }
 
     override fun visit(event: TypeEvent) {
-        val newIds = event.newCompletionIds()
-        val allIds = (completionList + newIds).toSet()
-
-        updateValid(allIds.containsAll(event.completionListIds))
-
         updateState(event)
-        updateValid(allCompletionItemIds.containsAll(completionList))
+        updateValid(allCompletionItemIds.containsAll(completionList),
+                "TypeEvent: all elements in completion are registered")
     }
 
     override fun visit(event: BackspaceEvent) {
         updateState(event)
-        updateValid(allCompletionItemIds.containsAll(completionList))
+        updateValid(allCompletionItemIds.containsAll(completionList),
+                "Backspace: some elements in completion list are not registered")
     }
 
     override fun visit(event: ExplicitSelectEvent) {
         val selectedIdBefore = currentId
         updateState(event)
 
-        updateValid(selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null)
+        updateValid(selectedIdBefore == currentId && allCompletionItemIds.find { it == currentId } != null,
+                "Selected element was not registered")
+
         isFinished = true
     }
 
@@ -106,8 +128,24 @@ class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor
 
     override fun visit(event: TypedSelectEvent) {
         val id = event.selectedId
-        updateValid(completionList[currentPosition] == id)
+        updateValid(completionList[currentPosition] == id,
+                "Element selected by typing is not the same id")
+
         isFinished = true
+    }
+
+
+    fun isSessionValid(): Boolean {
+        return isValid && isFinished
+    }
+
+    fun errorMessage(): String {
+        return if (isValid && !isFinished) {
+            "Session was not finished"
+        }
+        else {
+            errorMessage
+        }
     }
 
 }

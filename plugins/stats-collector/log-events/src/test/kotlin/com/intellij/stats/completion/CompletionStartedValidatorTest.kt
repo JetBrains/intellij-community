@@ -67,21 +67,20 @@ class SelectedItemTest {
     @Test
     fun `explicit select`() {
         state.accept(LogEventFixtures.explicit_select_position_0)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `explicit select of incorrect item`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.explicit_select_position_1)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
     fun `completion cancelled`() {
         state.accept(LogEventFixtures.completion_cancelled)
-        assertThat(state.isValid).isEqualTo(true)
-        assertThat(state.isFinished).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 }
 
@@ -98,16 +97,16 @@ class TypeBackspaceValidatorTest {
     @Test
     fun `type test`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `type completion list only narrows on typing`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_1_2)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
@@ -115,7 +114,7 @@ class TypeBackspaceValidatorTest {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
         state.accept(LogEventFixtures.selected_by_typing_1)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
@@ -123,14 +122,14 @@ class TypeBackspaceValidatorTest {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.type_event_current_pos_0_left_id_0)
         state.accept(LogEventFixtures.selected_by_typing_0)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `type and backspace`() {
         state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
         state.accept(LogEventFixtures.backspace_event_pos_0_left_0_1_2)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 }
 
@@ -147,25 +146,25 @@ class UpDownValidationTest {
     @Test
     fun `down pressed, new position 1, state is valid`() {
         state.accept(LogEventFixtures.down_event_new_pos_1)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `down pressed, new pos 2, invalid`() {
         state.accept(LogEventFixtures.down_event_new_pos_2)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
     fun `down pressed, new pos 0, invalid`() {
         state.accept(LogEventFixtures.down_event_new_pos_0)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
     fun `down pressed, new position 0, state is not valid`() {
         state.accept(LogEventFixtures.down_event_new_pos_0)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
@@ -173,20 +172,20 @@ class UpDownValidationTest {
         state.accept(LogEventFixtures.down_event_new_pos_1)
         state.accept(LogEventFixtures.down_event_new_pos_2)
         state.accept(LogEventFixtures.down_event_new_pos_0)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `up pressed, new position is 2, state is valid`() {
         state.accept(LogEventFixtures.up_pressed_new_pos_2)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `up pressed twice, new position 1, state is valid`() {
         state.accept(LogEventFixtures.up_pressed_new_pos_2)
         state.accept(LogEventFixtures.up_pressed_new_pos_1)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
@@ -194,19 +193,19 @@ class UpDownValidationTest {
         state.accept(LogEventFixtures.up_pressed_new_pos_2)
         state.accept(LogEventFixtures.up_pressed_new_pos_1)
         state.accept(LogEventFixtures.up_pressed_new_pos_0)
-        assertThat(state.isValid).isEqualTo(true)
+        assertThat(state.isSessionValid()).isEqualTo(true)
     }
 
     @Test
     fun `up pressed, new pos 1, invalid`() {
         state.accept(LogEventFixtures.up_pressed_new_pos_1)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
 
     @Test
     fun `up pressed, new pos 0, invalid`() {
         state.accept(LogEventFixtures.up_pressed_new_pos_0)
-        assertThat(state.isValid).isEqualTo(false)
+        assertThat(state.isSessionValid()).isEqualTo(false)
     }
     
 }

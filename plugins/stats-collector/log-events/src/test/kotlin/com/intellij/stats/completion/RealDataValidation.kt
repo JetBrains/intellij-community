@@ -55,6 +55,7 @@ class RealDataValidation {
         val totalLines = chunkFiles.map { file(it) }.map { it.reader().readLines() }.flatten()
 
         separator.validate(totalLines)
+        assert(sessionStatuses.count { !it.value } == 12)
     }
 
 
