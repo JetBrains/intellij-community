@@ -37,9 +37,11 @@ public class CommaSeparatedIntegersField extends JBTextField {
     this(null, Integer.MIN_VALUE, Integer.MAX_VALUE, null);
   }
 
-  public CommaSeparatedIntegersField(@Nullable String valueName, int minValue, int maxValue, String optionalText) {
+  public CommaSeparatedIntegersField(@Nullable String valueName, int minValue, int maxValue, @Nullable String optionalText) {
     myValueEditor = new CommaSeparatedIntegersValueEditor(this, valueName, minValue, maxValue);
-    getEmptyText().setText(optionalText);
+    if (optionalText != null) {
+      getEmptyText().setText(optionalText);
+    }
   }
 
   public void setValue(@NotNull List<Integer> newValue) {
