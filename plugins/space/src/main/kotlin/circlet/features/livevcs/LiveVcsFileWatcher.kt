@@ -2,16 +2,12 @@ package circlet.features.livevcs
 
 import circlet.components.*
 import circlet.utils.*
-import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.*
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
-import com.intellij.openapi.editor.ex.*
-import com.intellij.openapi.editor.impl.*
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vcs.*
@@ -97,7 +93,7 @@ class LiveVcsFileWatcher(private val project: Project,
                         }
                     }
                 }.modifiedFiles
-                log.info { "got mofified files" }
+                log.info { "got modified files" }
                 if (!lifetime.isTerminated) {
                     processConflicts(lifetime, modifiedFiles, client)
                     log.info { "done processing conflicts" }
