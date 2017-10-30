@@ -69,7 +69,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @NotNull
-  private PsiType[] inferParameters() {
+  public PsiType[] inferParameters() {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignature);

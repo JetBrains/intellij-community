@@ -8,6 +8,7 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.util.Slow
 
 /**
  * Character and char are skipped intentionally.
@@ -15,6 +16,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
  * Current spec https://github.com/apache/groovy/blob/master/src/spec/doc/core-differences-java.adoc#conversions
  * Bug: https://issues.apache.org/jira/browse/GROOVY-7557
  */
+@Slow
 class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
 
   List<String> types = ['boolean', 'int', 'double', 'String', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',

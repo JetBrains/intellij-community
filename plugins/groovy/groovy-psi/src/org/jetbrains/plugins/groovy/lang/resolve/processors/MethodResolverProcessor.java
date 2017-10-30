@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -104,9 +90,10 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final NotNullComputable<PsiSubstitutor> substitutorComputer =
         () -> mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
 
+      PsiSubstitutor substitutor = substitutorComputer.compute();
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
-      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, partialSubstitutor, myPlace, true);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, true);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
       GroovyMethodResultImpl candidate = new GroovyMethodResultImpl(
