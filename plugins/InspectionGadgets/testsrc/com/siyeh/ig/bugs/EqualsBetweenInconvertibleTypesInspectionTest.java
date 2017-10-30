@@ -128,6 +128,34 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testGeneratedEquals() {
+    doTest("class A {\n" +
+           "    int i;\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public boolean equals(Object o) {\n" +
+           "      if (this == o) return true;\n" +
+           "      if (o == null || getClass() != o.getClass()) return false; // <-- a warning here is unexpected\n" +
+           "      A a = (A)o;\n" +
+           "      if (i != a.i) return false;\n" +
+           "      return true;\n" +
+           "    }\n" +
+           "    @Override\n" +
+           "    public int hashCode() {\n" +
+           "      return i;\n" +
+           "    }\n" +
+           "  }");
+  }
+
+  public void testWilcards() {
+    doTest("import java.util.*;" +
+           "class X {" +
+           "  boolean x(Class<? extends Date> a, Class<? extends Map<String, String>> b) {" +
+           "    return b./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(a);" +
+           "  }" +
+           "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {

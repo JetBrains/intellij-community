@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -82,7 +83,6 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) return;
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) {
         return;
@@ -94,35 +94,65 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
         return;
       }
       final PsiType rhsType = rhs.getType();
-      if (lhsType == null || rhsType == null || !TypeUtils.areConvertible(lhsType, rhsType)) {
-        // red code
+      if (lhsType == null || rhsType == null ||
+          TypeConversionUtil.isPrimitiveAndNotNull(lhsType) || TypeConversionUtil.isPrimitiveAndNotNull(rhsType) ||
+          !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      if (existsSharedSubclass(lhsType, rhsType)) {
-        return;
-      }
-      registerError(expression.getOperationSign(), lhsType, rhsType, true);
+      deepCheck(lhsType, rhsType, expression.getOperationSign());
     }
 
     void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
-      boolean convertible = TypeUtils.areConvertible(leftType, rightType);
-      if (convertible && (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND || existsSharedSubclass(leftType, rightType))) return;
-      if (TypeUtils.mayBeEqualByContract(leftType, rightType)) return;
       PsiElement name = expression.getReferenceNameElement();
-      registerError(name == null ? expression : name, leftType, rightType, convertible);
+      if (name == null) {
+        return;
+      }
+      if (TypeUtils.areConvertible(leftType, rightType) || TypeUtils.mayBeEqualByContract(leftType, rightType)) {
+        deepCheck(leftType, rightType, name);
+        return;
+      }
+      registerError(name, leftType, rightType, false);
     }
 
-    private boolean existsSharedSubclass(@NotNull PsiType leftType, @NotNull PsiType rightType) {
-      if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return true;
+    private void deepCheck(@NotNull PsiType leftType, @NotNull PsiType rightType, PsiElement highlightLocation) {
+      if (leftType instanceof PsiCapturedWildcardType) {
+        leftType = ((PsiCapturedWildcardType)leftType).getUpperBound();
+      }
+      if (rightType instanceof PsiCapturedWildcardType) {
+        rightType = ((PsiCapturedWildcardType)rightType).getUpperBound();
+      }
+      if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return;
       PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftType);
       PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
-      if (leftClass == null || rightClass == null) return true;
+      if (leftClass == null || rightClass == null) return;
       if (!rightClass.isInterface()) {
         PsiClass tmp = leftClass;
         leftClass = rightClass;
         rightClass = tmp;
       }
-      return InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly());
+      if (leftClass == rightClass || TypeUtils.mayBeEqualByContract(leftType, rightType)) {
+        // check type parameters
+        if (leftType instanceof PsiClassType && rightType instanceof PsiClassType) {
+          final PsiType[] leftParameters = ((PsiClassType)leftType).getParameters();
+          final PsiType[] rightParameters = ((PsiClassType)rightType).getParameters();
+          if (leftParameters.length == rightParameters.length) {
+            for (int i = 0, length = leftParameters.length; i < length; i++) {
+              final PsiType leftParameter = leftParameters[i];
+              final PsiType rightParameter = rightParameters[i];
+              if (!TypeUtils.areConvertible(leftParameter, rightParameter) && !TypeUtils.mayBeEqualByContract(leftParameter, rightParameter)) {
+                registerError(highlightLocation, leftType, rightType, false);
+                return;
+              }
+              deepCheck(leftParameter, rightParameter, highlightLocation);
+            }
+          }
+        }
+      }
+      else {
+        if (WARN_IF_NO_MUTUAL_SUBCLASS_FOUND & !InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) {
+          registerError(highlightLocation, leftType, rightType, true);
+        }
+      }
     }
   }
 }
