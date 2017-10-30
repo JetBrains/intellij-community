@@ -46,7 +46,7 @@ public abstract class StubProcessingHelperBase {
                                                       @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " + file.getCanonicalPath() + " (" + file.getFileType() + ")");
+      LOG.error("Stub index points to a file without PSI: " + file.getFileType());
       onInternalError(file);
       return true;
     }
