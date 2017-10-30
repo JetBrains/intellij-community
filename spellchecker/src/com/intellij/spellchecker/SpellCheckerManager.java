@@ -140,7 +140,6 @@ public class SpellCheckerManager implements Disposable {
 
   private void fillEngineDictionary() {
     spellChecker.reset();
-    final List<Loader> loaders = new SmartList<>();
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
@@ -148,7 +147,7 @@ public class SpellCheckerManager implements Disposable {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
           final InputStream stream = loaderClass.getResourceAsStream(dictionary);
           if (stream != null) {
-            loaders.add(new StreamLoader(stream, dictionary));
+            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
           }
           else {
             LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
@@ -161,16 +160,12 @@ public class SpellCheckerManager implements Disposable {
       for (String folder : settings.getDictionaryFoldersPaths()) {
         SPFileUtil.processFilesRecursively(folder, s -> {
           if (!disabledDictionaries.contains(s)) {
-            loaders.add(new FileLoader(s));
+            spellChecker.loadDictionary(new FileLoader(s));
           }
         });
 
       }
     }
-    for (Loader loader : loaders) {
-      spellChecker.loadDictionary(loader);
-    }
-
     final AggregatedDictionaryState dictionaryState = ServiceManager.getService(project, AggregatedDictionaryState.class);
     dictionaryState.addDictStateListener((dict) -> restartInspections());
     userDictionary = dictionaryState.getDictionary();
