@@ -23,12 +23,12 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author max
+ * This instruction pops a top-of-stack value dereferencing it (so nullability warning might be issued if top-of-stack is nullable value).
  */
-public class FieldReferenceInstruction extends Instruction {
+public class DereferenceInstruction extends Instruction {
   private final @NotNull PsiExpression myExpression;
 
-  public FieldReferenceInstruction(@NotNull PsiExpression expression) {
+  public DereferenceInstruction(@NotNull PsiExpression expression) {
     myExpression = expression;
   }
 
@@ -38,7 +38,7 @@ public class FieldReferenceInstruction extends Instruction {
   }
 
   public String toString() {
-    return "FIELD_REFERENCE: " + myExpression.getText();
+    return "DEREFERENCE: " + myExpression.getText();
   }
 
   @NotNull

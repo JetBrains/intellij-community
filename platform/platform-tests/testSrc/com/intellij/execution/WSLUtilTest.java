@@ -6,12 +6,14 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 
+import static com.intellij.execution.wsl.WSLDistributionLegacy.LEGACY_WSL;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -19,7 +21,7 @@ public class WSLUtilTest {
 
   @Test
   public void testWslToWinPath() {
-    assumeTrue(WSLUtil.hasWSL());
+    assumeTrue(LEGACY_WSL.isAvailable());
 
     assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include");
     assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc");
@@ -35,7 +37,7 @@ public class WSLUtilTest {
 
   @Test
   public void testWinToWslPath() {
-    assumeTrue(WSLUtil.hasWSL());
+    assumeTrue(LEGACY_WSL.isAvailable());
 
     assertWinPath("c:\\foo", "/mnt/c/foo");
     assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
@@ -46,30 +48,30 @@ public class WSLUtilTest {
 
   @Test
   public void testPaths() {
-    assumeTrue(WSLUtil.hasWSL());
+    assumeTrue(LEGACY_WSL.isAvailable());
 
     final String originalWinPath = "c:\\usr\\something\\bin\\gcc";
-    final String winPath = WSLUtil.getWindowsPath(WSLUtil.getWslPath(originalWinPath));
+    final String winPath = LEGACY_WSL.getWindowsPath(LEGACY_WSL.getWslPath(originalWinPath));
     assertEquals(originalWinPath, winPath);
 
     final String originalWslPath = "/usr/bin/gcc";
-    final String wslPath = WSLUtil.getWslPath(WSLUtil.getWindowsPath(originalWslPath));
+    final String wslPath = LEGACY_WSL.getWslPath(LEGACY_WSL.getWindowsPath(originalWslPath));
     assertEquals(originalWslPath, wslPath);
   }
 
   @Test
   public void testResolveSymlink() throws Exception {
-    assumeTrue(WSLUtil.hasWSL());
+    assumeTrue(LEGACY_WSL.isAvailable());
 
     final File winFile = FileUtil.createTempFile("the_file.txt", null);
     final File winSymlink = new File(new File(FileUtil.getTempDirectory()), "sym_link");
 
     try {
-      final String file = WSLUtil.getWslPath(winFile.getPath());
-      final String symlink = WSLUtil.getWslPath(winSymlink.getPath());
+      final String file = LEGACY_WSL.getWslPath(winFile.getPath());
+      final String symlink = LEGACY_WSL.getWslPath(winSymlink.getPath());
       mkSymlink(file, symlink);
 
-      final String resolved = WSLUtil.getWindowsPath(WSLUtil.resolveSymlink(symlink));
+      final String resolved = LEGACY_WSL.getWindowsPath(LEGACY_WSL.resolveSymlink(symlink));
       assertTrue(FileUtil.exists(resolved));
       assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
     }
@@ -80,11 +82,11 @@ public class WSLUtilTest {
   }
 
   private static void assertWinPath(@NotNull String winPath, @NotNull String wslPath) {
-    assertEquals(wslPath, WSLUtil.getWslPath(prepare(winPath)));
+    assertEquals(wslPath, LEGACY_WSL.getWslPath(prepare(winPath)));
   }
 
   private static void assertWslPath(@NotNull String wslPath, @NotNull String winPath) {
-    assertEquals(prepare(winPath), WSLUtil.getWindowsPath(wslPath));
+    assertEquals(prepare(winPath), LEGACY_WSL.getWindowsPath(wslPath));
   }
 
   private static String prepare(@NotNull String path) {
@@ -100,9 +102,9 @@ public class WSLUtilTest {
     cl.setExePath("ln");
     cl.addParameters("-s", file, symlink);
 
-    final GeneralCommandLine cmd = WSLUtil.patchCommandLine(cl, null, null, false);
+    final GeneralCommandLine cmd = LEGACY_WSL.patchCommandLine(cl, null, null, false);
     final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
-    final ProcessOutput output = process.runProcess(10_000);
+    final ProcessOutput output = WSLUtil.addInputCloseListener(process).runProcess(10_000);
     assertFalse(output.isTimeout());
     assertEquals(0, output.getExitCode());
   }

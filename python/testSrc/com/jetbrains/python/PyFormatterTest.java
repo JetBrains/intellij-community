@@ -857,6 +857,76 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testMultilineIfConditionKeywordAtEnd() {
+    doTest();
+  }
+
+  // PY-21328
+  public void testMultilineIfConditionLessComparisonsKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionKeywordAtStart() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesNegatedKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtEndSecondOperandIsReference() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtStart() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionNestedExpressions() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesNestedExpressions() {
+    doTest();
+  }
+
+  public void testMultilineElifCondition() {
+    doTest();
+  }
+
+  public void testMultilineElifConditionInParentheses() {
+    doTest();
+  }
+
+  // PY-22035
+  public void testMultilineIfConditionComplex() {
+    doTest();
+  }
+
+  // PY-24160
+  public void testMultilineIfConditionInParenthesesHangingIndent() {
+    doTest();
+  }
+
+  public void testMultilineBinaryExpressionInsideGenerator() {
+    doTest();
+  }
+
+  public void testNotParenthesisedBinaryExpressions() {
+    doTest();
+  }
+
+  public void testGluedStringLiteralInParentheses() {
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }

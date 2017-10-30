@@ -184,7 +184,7 @@ public class NetUtils {
                                       int expectedContentLength) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
-      indicator.setIndeterminate(expectedContentLength < 0);
+      indicator.setIndeterminate(expectedContentLength <= 0);
     }
     CountingGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CountingGZIPInputStream.class);
     final byte[] buffer = new byte[8 * 1024];

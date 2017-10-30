@@ -169,9 +169,7 @@ public class SSBasedInspectionOptions {
     if (indices.length == 0) return;
     final int delta = down ? 1 : -1;
     myTemplatesList.removeSelectionInterval(0, myConfigurations.size() - 1);
-    for (int i = down ? indices[indices.length - 1] : 0;
-         down ? i >= 0 : i < indices.length;
-         i -= delta) {
+    for (int i = down ? indices.length - 1 : 0; down ? i >= 0 : i < indices.length; i -= delta) {
       final int index = indices[i];
       final Configuration temp = myConfigurations.get(index);
       myConfigurations.set(index, myConfigurations.get(index + delta));
@@ -196,7 +194,7 @@ public class SSBasedInspectionOptions {
           return new SearchDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return myConfiguration.copy();
+              return configuration.copy();
             }
           };
         }
@@ -204,7 +202,7 @@ public class SSBasedInspectionOptions {
           return new ReplaceDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return myConfiguration.copy();
+              return configuration.copy();
             }
           };
         }

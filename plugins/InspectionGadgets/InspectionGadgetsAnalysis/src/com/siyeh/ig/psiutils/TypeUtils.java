@@ -255,7 +255,8 @@ public class TypeUtils {
 
   /**
    * Returns true if instances of two given types may be equal according to equals method contract even if they belong to
-   * inconvertible classes (e.g. {@code ArrayList} and {@code LinkedList}).
+   * inconvertible classes (e.g. {@code ArrayList} and {@code LinkedList}). This method does not check any type parameters that
+   * may be present.
    *
    * @param type1 first type
    * @param type2 second type
@@ -272,15 +273,6 @@ public class TypeUtils {
     if (class2 == null) return false;
     PsiClass superClass = JavaPsiFacade.getInstance(class1.getProject()).findClass(className, class1.getResolveScope());
     if (superClass == null) return false;
-    if (!InheritanceUtil.isInheritorOrSelf(class1, superClass, true) || !InheritanceUtil.isInheritorOrSelf(class2, superClass, true)) {
-      return false;
-    }
-    PsiTypeParameter[] parameters = superClass.getTypeParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiType subst1 = PsiUtil.substituteTypeParameter(type1, className, i, false);
-      PsiType subst2 = PsiUtil.substituteTypeParameter(type2, className, i, false);
-      if (subst1 != null && subst2 != null && !subst1.isConvertibleFrom(subst2)) return false;
-    }
-    return true;
+    return InheritanceUtil.isInheritorOrSelf(class1, superClass, true) && InheritanceUtil.isInheritorOrSelf(class2, superClass, true);
   }
 }
