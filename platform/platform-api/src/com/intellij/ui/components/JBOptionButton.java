@@ -265,7 +265,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   private boolean isSimpleButton() {
-    return myOptions == null;
+    return myOptions == null || myOptions.length == 0;
   }
 
 
