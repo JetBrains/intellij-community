@@ -77,8 +77,8 @@ class ScrollPainter extends RegionPainter.Alpha {
       value("win.editor.thumb.darcula.alpha.base", 89),
       value("win.editor.thumb.darcula.alpha.delta", 166),
       new ColorFunction(
-        value("win.editor.thumb.darcula.color.min", 0x8C),
-        value("win.editor.thumb.darcula.color.max", 0xA1)),
+        value("win.editor.thumb.darcula.fill.min", 0x8C),
+        value("win.editor.thumb.darcula.fill.max", 0xA1)),
       gray("win.editor.thumb.darcula.border", 0x1F));
 
     private static final RegionPainter<Float> DEFAULT_OLD = new Protected(new SubtractColor(0, .25f, .15f, Gray.x80, Gray.xA6),
@@ -88,8 +88,8 @@ class ScrollPainter extends RegionPainter.Alpha {
       value("win.editor.thumb.default.alpha.base", 140),
       value("win.editor.thumb.default.alpha.delta", 115),
       new ColorFunction(
-        value("win.editor.thumb.default.color.min", 0x9E),
-        value("win.editor.thumb.default.color.max", 0xBD)),
+        value("win.editor.thumb.default.fill.min", 0x9E),
+        value("win.editor.thumb.default.fill.max", 0xBD)),
       gray("win.editor.thumb.default.border", 0x8C));
 
     static final RegionPainter<Float> DARCULA = new RegionPainter<Float>() {
@@ -114,8 +114,8 @@ class ScrollPainter extends RegionPainter.Alpha {
         value("mac.editor.thumb.darcula.alpha.base", 102),
         value("mac.editor.thumb.darcula.alpha.delta", 153),
         new ColorFunction(
-          value("mac.editor.thumb.darcula.color.min", 0x8C),
-          value("mac.editor.thumb.darcula.color.max", 0xA1)),
+          value("mac.editor.thumb.darcula.fill.min", 0x8C),
+          value("mac.editor.thumb.darcula.fill.max", 0xA1)),
         gray("mac.editor.thumb.darcula.border", 0x1F));
 
       private static final RegionPainter<Float> DEFAULT_OLD = Thumb.Mac.DEFAULT;
@@ -124,8 +124,8 @@ class ScrollPainter extends RegionPainter.Alpha {
         value("mac.editor.thumb.default.alpha.base", 102),
         value("mac.editor.thumb.default.alpha.delta", 153),
         new ColorFunction(
-          value("mac.editor.thumb.default.color.min", 0x59),
-          value("mac.editor.thumb.default.color.max", 0x73)),
+          value("mac.editor.thumb.default.fill.min", 0x59),
+          value("mac.editor.thumb.default.fill.max", 0x73)),
         null);
 
       static final RegionPainter<Float> DARCULA = new RegionPainter<Float>() {
