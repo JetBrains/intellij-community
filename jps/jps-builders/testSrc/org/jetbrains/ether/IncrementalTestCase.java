@@ -95,7 +95,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  private void modify(int stage) {
+  protected void modify(int stage) {
     final String removedSuffix = stage == 0? ".remove" : ".remove" + stage;
     final String newSuffix = stage == 0? ".new" : ".new" + stage;
 
