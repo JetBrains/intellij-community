@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -410,9 +412,9 @@ public class TreeModelBuilder {
       return child;
     }
 
-    if (parent instanceof ChangesBrowserModuleNode &&
+    if (parentUserObject instanceof Module &&
         childUserObject instanceof FilePath) {
-      FilePath parentPath = ((ChangesBrowserModuleNode)parent).getModuleRoot();
+      FilePath parentPath = VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath((Module)parentUserObject));
       FilePath childPath = (FilePath)childUserObject;
       if (!parentPath.equals(childPath)) return null;
 
