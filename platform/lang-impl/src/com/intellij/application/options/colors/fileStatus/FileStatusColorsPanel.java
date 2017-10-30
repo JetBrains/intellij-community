@@ -95,7 +95,7 @@ public class FileStatusColorsPanel {
 
   private void updateCustomizedLabel() {
     boolean isVisible = myModel.containsCustomSettings();
-    myCustomizedLabel.setForeground(isVisible ? JBColor.GRAY : JBColor.background());
+    myCustomizedLabel.setForeground(isVisible ? JBColor.GRAY : UIUtil.getLabelBackground());
   }
 
   private void adjustTableSize() {
