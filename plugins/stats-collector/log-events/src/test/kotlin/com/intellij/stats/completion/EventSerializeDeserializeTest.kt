@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
-import com.intellij.stats.completion.*
 import com.intellij.stats.completion.events.*
 import junit.framework.Assert.assertEquals
 import org.assertj.core.api.Assertions.assertThat

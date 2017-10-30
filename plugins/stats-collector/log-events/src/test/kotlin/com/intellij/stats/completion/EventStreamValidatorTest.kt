@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
-import com.intellij.stats.completion.LogEventSerializer
 import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.validation.InputSessionValidator
 import com.intellij.stats.validation.SimpleSessionValidationResult
@@ -43,12 +42,12 @@ class EventStreamValidatorTest {
     @Test
     fun up_down_actions() {
         val list = listOf(
-          LogEventFixtures.completion_started_3_items_shown,
-          LogEventFixtures.down_event_new_pos_1,
-          LogEventFixtures.up_pressed_new_pos_0,
-          LogEventFixtures.up_pressed_new_pos_2,
-          LogEventFixtures.up_pressed_new_pos_1,
-          LogEventFixtures.explicit_select_position_1
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.down_event_new_pos_1,
+                LogEventFixtures.up_pressed_new_pos_0,
+                LogEventFixtures.up_pressed_new_pos_2,
+                LogEventFixtures.up_pressed_new_pos_1,
+                LogEventFixtures.explicit_select_position_1
         )
         validate(list, list.serialize(), expectedErr = emptyList())
     }
@@ -56,12 +55,12 @@ class EventStreamValidatorTest {
     @Test
     fun up_down_actions_wrong() {
         val list = listOf(
-          LogEventFixtures.completion_started_3_items_shown,
-          LogEventFixtures.down_event_new_pos_1,
-          LogEventFixtures.up_pressed_new_pos_0,
-          LogEventFixtures.up_pressed_new_pos_2,
-          LogEventFixtures.up_pressed_new_pos_1,
-          LogEventFixtures.explicit_select_position_0
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.down_event_new_pos_1,
+                LogEventFixtures.up_pressed_new_pos_0,
+                LogEventFixtures.up_pressed_new_pos_2,
+                LogEventFixtures.up_pressed_new_pos_1,
+                LogEventFixtures.explicit_select_position_0
         )
         validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
@@ -69,10 +68,10 @@ class EventStreamValidatorTest {
     @Test
     fun selected_by_typing() {
         val list = listOf(
-          LogEventFixtures.completion_started_3_items_shown,
-          LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
-          LogEventFixtures.type_event_current_pos_0_left_id_0,
-          LogEventFixtures.selected_by_typing_0
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
+                LogEventFixtures.type_event_current_pos_0_left_id_0,
+                LogEventFixtures.selected_by_typing_0
         )
         validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
@@ -80,10 +79,10 @@ class EventStreamValidatorTest {
     @Test
     fun selected_by_typing_error() {
         val list = listOf(
-          LogEventFixtures.completion_started_3_items_shown,
-          LogEventFixtures.type_event_current_pos_0_left_ids_0_1,
-          LogEventFixtures.down_event_new_pos_1,
-          LogEventFixtures.explicit_select_position_1
+                LogEventFixtures.completion_started_3_items_shown,
+                LogEventFixtures.type_event_current_pos_0_left_ids_0_1,
+                LogEventFixtures.down_event_new_pos_1,
+                LogEventFixtures.explicit_select_position_1
         )
         validate(list, expectedOut = list.serialize(), expectedErr = emptyList())
     }

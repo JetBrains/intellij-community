@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.events.completion
+package com.intellij.stats.completion
 
 import com.intellij.stats.completion.events.*
 import com.intellij.stats.validation.CompletionValidationState
