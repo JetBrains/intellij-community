@@ -196,7 +196,7 @@ public class SSBasedInspectionOptions {
           return new SearchDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return myConfiguration.copy();
+              return configuration.copy();
             }
           };
         }
@@ -204,7 +204,7 @@ public class SSBasedInspectionOptions {
           return new ReplaceDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return myConfiguration.copy();
+              return configuration.copy();
             }
           };
         }
