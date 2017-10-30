@@ -296,8 +296,9 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     return availableLength;
   }
 
-  private static Shape getShapedRect(float x, float y, float w, float h, float ar) {
-    return UIUtil.isUnderWin10LookAndFeel() ? new Rectangle2D.Float(x, y, w, h) : new RoundRectangle2D.Float(x, y, w, h, ar, ar);
+  private Shape getShapedRect(float x, float y, float w, float h, float ar) {
+    boolean flatEnds = UIUtil.isUnderWin10LookAndFeel() || progressBar.getClientProperty("ProgressBar.flatEnds") == Boolean.TRUE;
+    return flatEnds ? new Rectangle2D.Float(x, y, w, h) : new RoundRectangle2D.Float(x, y, w, h, ar, ar);
   }
 
   private static boolean isSimplified() {
