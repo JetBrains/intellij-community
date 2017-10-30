@@ -46,7 +46,6 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.function.ToIntFunction
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
@@ -446,11 +445,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-    messagePanel.border = EmptyBorder(30, 0, 0, 0)
+    messagePanel.border = JBUI.Borders.empty(30, 0, 0, 0)
     messagePanel.add(JLabel("Press the"))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
-    addIcon.border = EmptyBorder(0, 0, 0, 5)
+    addIcon.border = JBUI.Borders.empty(0, 0, 0, 5)
     messagePanel.add(addIcon)
 
     val configurationTypeDescription = if (configurationType != null)
