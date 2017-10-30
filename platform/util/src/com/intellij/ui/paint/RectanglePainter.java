@@ -17,7 +17,7 @@ package com.intellij.ui.paint;
 
 import com.intellij.util.ui.RegionPainter;
 
-import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
@@ -74,9 +74,9 @@ public enum RectanglePainter implements RegionPainter<Integer> {
     }
   };
 
-  public static void paint(Graphics2D g, int x, int y, int width, int height, int arc, Color fill, Color draw) {
+  public static void paint(Graphics2D g, int x, int y, int width, int height, int arc, Paint fill, Paint draw) {
     if (fill != null) {
-      g.setColor(fill);
+      g.setPaint(fill);
       if (draw != null) {
         int sw = 1; // stroke width
         int dw = sw + sw;
@@ -87,7 +87,7 @@ public enum RectanglePainter implements RegionPainter<Integer> {
       }
     }
     if (draw != null) {
-      g.setColor(draw);
+      g.setPaint(draw);
       DRAW.paint(g, x, y, width, height, arc);
     }
   }
