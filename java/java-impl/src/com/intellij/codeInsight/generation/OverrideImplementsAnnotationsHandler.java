@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_INFERRED;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
@@ -47,14 +46,8 @@ public interface OverrideImplementsAnnotationsHandler {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
 
-        int flags = CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE;
-        if (AnnotationUtil.isAnnotated(source, annotation, flags) &&
-            !AnnotationUtil.isAnnotated(target, annotation, flags)) {
-          PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(source, annotation);
-          if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
-            continue;
-          }
-
+        int flags = CHECK_EXTERNAL | CHECK_TYPE;
+        if (AnnotationUtil.isAnnotated(source, annotation, flags) && !AnnotationUtil.isAnnotated(target, annotation, flags)) {
           PsiModifierList modifierList = target.getModifierList();
           assert modifierList != null : target;
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList);
