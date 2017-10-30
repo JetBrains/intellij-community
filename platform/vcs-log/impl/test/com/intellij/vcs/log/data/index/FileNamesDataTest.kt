@@ -41,6 +41,47 @@ class FileNamesDataTest : TestCase() {
     assertEquals(mapOf(Pair(0, oldFile), Pair(1, file), Pair(2, file)), data.buildPathsMap())
   }
 
+  fun `test history with simple merge`() {
+    val data = TestFileNamesData()
+
+    val file = LocalFilePath("file.txt", false)
+
+    data.add(0, file, mutableListOf(modification()), listOf())
+    data.add(1, file, mutableListOf(modification()), listOf(0))
+    // 3 is merge commit of 1 and 2
+    // where 1 had a change, 2 did not
+    data.add(3, file, mutableListOf(null, modification()), listOf(1, 2))
+
+    assertEquals(file, data.getPathInParentRevision(3, 1, file))
+    assertEquals(file, data.getPathInParentRevision(3, 2, file))
+    assertEquals(mapOf(Pair(0, file), Pair(1, file), Pair(3, file)), data.buildPathsMap())
+  }
+
+  fun `test history with merge rename`() {
+    val data = TestFileNamesData()
+
+    val file = LocalFilePath("file.txt", false)
+    val oldFile = LocalFilePath("oldfile.txt", false)
+
+    val renameFrom = ChangeData(RENAMED_FROM, data.getPathId(file))
+    val renameTo = ChangeData(RENAMED_TO, data.getPathId(oldFile))
+
+    data.add(0, oldFile, mutableListOf(modification()), listOf())
+    // commit 1 renames file
+    data.add(1, file, mutableListOf(renameTo), listOf(0))
+    data.add(1, oldFile, mutableListOf(renameFrom), listOf(0))
+    // commit 3 is a merge of 1 and 2
+    // since file was renamed in 1, then file is renamed the same way from 2 to 3
+    data.add(3, file, mutableListOf(null, renameTo), listOf(1, 2))
+    data.add(3, oldFile, mutableListOf(null, renameFrom), listOf(1, 2))
+
+    assertEquals(file, data.getPathInParentRevision(3, 1, file))
+    assertEquals(oldFile, data.getPathInParentRevision(3, 2, file))
+    assertEquals(file, data.getPathInChildRevision(3, 1, file))
+    assertEquals(file, data.getPathInChildRevision(3, 2, oldFile))
+    assertEquals(mapOf(Pair(0, oldFile), Pair(1, file), Pair(3, file)), data.buildPathsMap())
+  }
+
   private fun modification() = ChangeData(MODIFIED, -1)
 }
 
