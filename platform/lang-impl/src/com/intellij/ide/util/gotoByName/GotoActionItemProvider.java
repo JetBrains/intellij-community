@@ -25,6 +25,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -55,7 +56,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   public GotoActionItemProvider(GotoActionModel model) {
     myModel = model;
-    myIntentions = NotNullLazyValue.createValue(() -> myModel.getAvailableIntentions());
+    myIntentions = NotNullLazyValue.createValue(() -> ReadAction.compute(() -> myModel.getAvailableIntentions()));
   }
 
   @NotNull

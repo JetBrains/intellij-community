@@ -72,6 +72,6 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
       void actionPerformed(AnActionEvent e) {
       }
     }
-    new GotoActionModel.ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT, new GotoActionModel(project, null, null, null))
+    new GotoActionModel.ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT, new GotoActionModel(project, null, null))
   }
 }

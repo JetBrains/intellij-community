@@ -38,7 +38,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -74,7 +74,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable private final Project myProject;
   private final Component myContextComponent;
   @Nullable private final Editor myEditor;
-  @Nullable private final PsiFile myFile;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
@@ -94,15 +93,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private final ModalityState myModality;
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
-    this(project, component, editor, file, ModalityState.defaultModalityState());
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor) {
+    this(project, component, editor, ModalityState.defaultModalityState());
   }
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file, @Nullable ModalityState modalityState) {
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
     myEditor = editor;
-    myFile = file;
     myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     assert mainMenu != null;
@@ -112,8 +110,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && myEditor != null && myFile != null) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, myFile);
+    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, PsiDocumentManager.getInstance(myProject).getPsiFile(
+        myEditor.getDocument()));
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
