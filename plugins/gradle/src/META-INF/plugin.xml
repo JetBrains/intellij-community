@@ -244,5 +244,10 @@
       <add-to-group group-id="ExternalSystemView.BaseProjectMenu" relative-to-action="ExternalSystem.RefreshProject" anchor="after"/>
     </group>
 
+    <group id="Internal.Gradle" text="Gradle" popup="true">
+      <action  id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
   </actions>
 </idea-plugin>

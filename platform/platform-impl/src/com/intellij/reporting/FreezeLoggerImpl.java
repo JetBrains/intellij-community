@@ -77,7 +77,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
   private static void sendDumpsInBackground(ThreadInfo[] infos, boolean isInDumbMode) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ThreadDumpInfo info = new ThreadDumpInfo(infos, isInDumbMode);
-      String report = ReporterKt.createReportLine("typing-freeze-dumps", info);
+      String report = ReporterKt.createReportLine("typing-freeze-dumps", "random_session_id", info);
       if (!StatsSender.INSTANCE.send(report, true)) {
         LOG.debug("Error while reporting thread dump");
       }

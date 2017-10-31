@@ -19,6 +19,7 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
@@ -186,7 +187,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         final RunContentDescriptor contentDescriptor;
         Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
         contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
-        ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
+        BuildProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
           ExecutionConsole executionConsole = null;
           BuildConsoleView buildConsoleView = null;
@@ -306,7 +307,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
         myViewManager.onBuildStart(buildInfo);
         myProgressWatcher.addBuild(buildInfo);
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content);
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content, processHandler);
       }
       else {
         if (event instanceof FinishBuildEvent) {

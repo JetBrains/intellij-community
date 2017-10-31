@@ -98,7 +98,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     if (USE_CACHE) {
       final ResolveCache cache = ResolveCache.getInstance(getElement().getProject());
-      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, incompleteCode);
+      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, true, incompleteCode);
     }
     else {
       return multiResolveInner();
@@ -182,7 +182,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (e == element || element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
-      results.add(r);
+      results.add(changePropertyMethodToSameNameGetter(r, name));
     }
     return results;
   }
@@ -196,6 +196,27 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     return false;
+  }
+
+  @NotNull
+  private static RatedResolveResult changePropertyMethodToSameNameGetter(@NotNull RatedResolveResult resolveResult, @NotNull String name) {
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PyFunction) {
+      final Property property = ((PyFunction)element).getProperty();
+      if (property != null) {
+        final PyCallable getter = property.getGetter().valueOrNull();
+        final PyCallable setter = property.getSetter().valueOrNull();
+        final PyCallable deleter = property.getDeleter().valueOrNull();
+
+        if (getter != null && name.equals(getter.getName()) &&
+            (setter == null || name.equals(setter.getName())) &&
+            (deleter == null || name.equals(deleter.getName()))) {
+          return resolveResult.replace(getter);
+        }
+      }
+    }
+
+    return resolveResult;
   }
 
   private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
@@ -527,12 +548,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           final PsiElement resolveResult = resolve();
           if (resolveResult == element) {
-            return true;
-          }
-
-          // we shadow their name or they shadow ours (PY-6241)
-          if (resolveResult instanceof PsiNamedElement && resolveResult instanceof ScopeOwner && element instanceof ScopeOwner &&
-              theirScopeOwner == ScopeUtil.getScopeOwner(resolveResult)) {
             return true;
           }
 
