@@ -65,7 +65,7 @@ class OneLevelSourceMap(override val outFile: String?,
   override fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Int {
     val index = sourceResolver.findSourceIndex(sourceUrls, sourceFile, localFileUrlOnly)
     if (index == -1 && resolver != null) {
-      return resolver.value?.let { sourceResolver.findSourceIndex(sourceFile, it) } ?: -1
+      return resolver.value?.let { sourceResolver.findSourceIndex(it) } ?: -1
     }
     return index
   }

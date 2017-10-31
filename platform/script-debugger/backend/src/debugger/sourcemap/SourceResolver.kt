@@ -41,7 +41,10 @@ fun SourceResolver(rawSources: List<String>,
 }
 
 interface SourceFileResolver {
-  fun resolve(sourceFile: VirtualFile?, map: ObjectIntHashMap<Url>): Int
+  /**
+   * Return -1 if no match
+   */
+  fun resolve(map: ObjectIntHashMap<Url>): Int
 }
 
 class SourceResolver(private val rawSources: List<String>, internal val canonicalizedUrls: Array<Url>, private val sourceContents: List<String>?) {
@@ -85,7 +88,7 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
     return if (index < 0) null else rawSources[index]
   }
 
-  internal fun findSourceIndex(sourceFile: VirtualFile?, resolver: SourceFileResolver) = resolver.resolve(sourceFile, canonicalizedUrlToSourceIndex)
+  internal fun findSourceIndex(resolver: SourceFileResolver) = resolver.resolve(canonicalizedUrlToSourceIndex)
 
   fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
     for (sourceUrl in sourceUrls) {
