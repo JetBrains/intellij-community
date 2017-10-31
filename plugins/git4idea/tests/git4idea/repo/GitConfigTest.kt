@@ -13,303 +13,249 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.repo;
+package git4idea.repo
 
-import com.google.common.collect.Collections2;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitStandardRemoteBranch;
-import git4idea.test.GitPlatformTest;
-import git4idea.test.GitTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.util.containers.ContainerUtil.getFirstItem
+import git4idea.GitLocalBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.test.GitPlatformTest
+import git4idea.test.createRepository
+import git4idea.test.git
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+class GitConfigTest : GitPlatformTest() {
 
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static git4idea.test.GitExecutor.git;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-
-public class GitConfigTest extends GitPlatformTest {
-
-  public void testRemotes() throws IOException {
-    Collection<TestSpec> objects = loadRemotes();
-    for (TestSpec spec : objects) {
-      doTestRemotes(spec.name, spec.config, spec.result);
+  fun testRemotes() {
+    val objects = loadRemotes()
+    for (spec in objects) {
+      doTestRemotes(spec.name, spec.config, spec.result)
     }
   }
 
-  public void testBranches() throws IOException {
-    Collection<TestSpec> objects = loadBranches();
-    for (TestSpec spec : objects) {
-      doTestBranches(spec.name, spec.config, spec.result);
+  fun testBranches() {
+    val objects = loadBranches()
+    for (spec in objects) {
+      doTestBranches(spec.name, spec.config, spec.result)
     }
   }
 
   //inspired by IDEA-135557
-  public void test_branch_with_hash_symbol() {
-    createRepository();
-    addRemote("http://example.git");
-    git("update-ref refs/remotes/origin/a#branch HEAD");
-    git("branch --track a#branch origin/a#branch");
+  fun `test branch with hash symbol`() {
+    createRepository()
+    addRemote("http://example.git")
+    git("update-ref refs/remotes/origin/a#branch HEAD")
+    git("branch --track a#branch origin/a#branch")
 
-    File gitDir = new File(projectPath, ".git");
-    GitConfig config = GitConfig.read(new File(gitDir, "config"));
-    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir);
-    GitRepositoryReader reader = new GitRepositoryReader(GitRepositoryFiles.getInstance(dir));
-    GitBranchState state = reader.readState(config.parseRemotes());
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
-    assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
-               ContainerUtil.exists(trackInfos, info -> info.getLocalBranch().getName().equals("a#branch") &&
-                                                    info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch")));
+    val gitDir = File(projectPath, ".git")
+    val config = GitConfig.read(File(gitDir, "config"))
+    val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir)
+    val reader = GitRepositoryReader(GitRepositoryFiles.getInstance(dir!!))
+    val state = reader.readState(config.parseRemotes())
+    val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
+    assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
+               trackInfos.any { it.localBranch.name == "a#branch" && it.remoteBranch.nameForLocalOperations == "origin/a#branch" })
   }
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
-  public void test_remote_unspecified_section() {
-    createRepository();
-    addRemote("git@github.com:foo/bar.git");
-    git("config remote.pushdefault origin");
+  fun `test remote unspecified section`() {
+    createRepository()
+    addRemote("git@github.com:foo/bar.git")
+    git("config remote.pushdefault origin")
 
-    assertSingleRemoteInConfig();
+    assertSingleRemoteInConfig()
   }
 
-  public void test_invalid_section_with_remote_prefix_is_ignored() {
-    createRepository();
-    addRemote("git@github.com:foo/bar.git");
-    git("config remote-cfg.newkey newval");
+  fun `test invalid section with remote prefix is ignored`() {
+    createRepository()
+    addRemote("git@github.com:foo/bar.git")
+    git("config remote-cfg.newkey newval")
 
-    assertSingleRemoteInConfig();
+    assertSingleRemoteInConfig()
   }
 
-  public void test_config_options_are_case_insensitive() {
-    createRepository();
-    addRemote("git@github.com:foo/bar.git");
-    String pushUrl = "git@github.com:foo/push.git";
-    git("config remote.origin.pushurl " + pushUrl);
+  fun `test config options are case insensitive`() {
+    createRepository()
+    addRemote("git@github.com:foo/bar.git")
+    val pushUrl = "git@github.com:foo/push.git"
+    git("config remote.origin.pushurl " + pushUrl)
 
-    GitConfig config = readConfig();
-    GitRemote remote = getFirstItem(config.parseRemotes());
-    assertNotNull(remote);
-    assertSameElements("pushurl parsed incorrectly", remote.getPushUrls(), singletonList(pushUrl));
+    val config = readConfig()
+    val remote = getFirstItem(config.parseRemotes())
+    assertNotNull(remote)
+    assertSameElements("pushurl parsed incorrectly", remote!!.pushUrls, listOf(pushUrl))
   }
 
-  public void test_config_values_are_case_sensitive() {
-    createRepository();
-    String url = "git@GITHUB.com:foo/bar.git";
-    addRemote(url);
+  fun `test config values are case sensitive`() {
+    createRepository()
+    val url = "git@GITHUB.com:foo/bar.git"
+    addRemote(url)
 
-    GitConfig config = readConfig();
-    GitRemote remote = getFirstItem(config.parseRemotes());
-    assertNotNull(remote);
-    assertSameElements(remote.getUrls(), singletonList(url));
+    val config = readConfig()
+    val remote = getFirstItem(config.parseRemotes())
+    assertNotNull(remote)
+    assertSameElements(remote!!.urls, listOf(url))
   }
 
-  public void test_config_sections_are_case_insensitive() throws IOException {
-    createRepository();
-    addRemote("git@github.com:foo/bar.git");
-    File configFile = configFile();
-    FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"));
+  fun `test config sections are case insensitive`() {
+    createRepository()
+    addRemote("git@github.com:foo/bar.git")
+    val configFile = configFile()
+    FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"))
 
-    assertSingleRemoteInConfig();
+    assertSingleRemoteInConfig()
   }
 
-  public void test_config_section_values_are_case_sensitive() {
-    createRepository();
-    String expectedName = "ORIGIN";
-    addRemote(expectedName, "git@github.com:foo/bar.git");
+  fun `test config section values are case sensitive`() {
+    createRepository()
+    val expectedName = "ORIGIN"
+    addRemote(expectedName, "git@github.com:foo/bar.git")
 
-    GitConfig config = readConfig();
-    GitRemote remote = getFirstItem(config.parseRemotes());
-    assertNotNull(remote);
-    assertEquals("Remote name is incorrect", expectedName, remote.getName());
+    val config = readConfig()
+    val remote = getFirstItem(config.parseRemotes())
+    assertNotNull(remote)
+    assertEquals("Remote name is incorrect", expectedName, remote!!.name)
   }
 
-  private static void addRemote(@NotNull String url) {
-    addRemote("origin", url);
+  private fun createRepository() {
+    createRepository(myProject, myProjectPath, true)
   }
 
-  private static void addRemote(@NotNull String name, @NotNull String url) {
-    git(String.format("remote add %s %s", name, url));
+  private fun readConfig(): GitConfig {
+    return GitConfig.read(configFile())
   }
 
   private void createRepository() {
     GitTestUtil.createRepository(myProject, projectPath, true);
   }
 
-  private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
-    assertEquals("Number of remotes is incorrect", 1, remotes.size());
-    GitRemote remote = getFirstItem(remotes);
-    assertNotNull(remote);
-    assertEquals("origin", remote.getName());
-    assertEquals("git@github.com:foo/bar.git", remote.getFirstUrl());
+  private fun assertSingleRemoteInConfig() {
+    val remotes = readConfig().parseRemotes()
+    assertSingleRemote(remotes)
   }
 
-  @NotNull
-  private GitConfig readConfig() {
-    return GitConfig.read(configFile());
+  private fun doTestRemotes(testName: String, configFile: File, resultFile: File) {
+    val config = GitConfig.read(configFile)
+    VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile))
   }
 
-  @NotNull
-  private File configFile() {
-    File gitDir = new File(projectPath, ".git");
-    return new File(gitDir, "config");
+  private fun configFile(): File {
+    val gitDir = File(myProjectPath, ".git")
+    return File(gitDir, "config")
   }
 
-  private void assertSingleRemoteInConfig() {
-    Collection<GitRemote> remotes = readConfig().parseRemotes();
-    assertSingleRemote(remotes);
+  private fun doTestBranches(testName: String, configFile: File, resultFile: File) {
+    val expectedInfos = readBranchResults(resultFile)
+    val localBranches = expectedInfos.map { it.localBranch }
+    val remoteBranches = expectedInfos.map { it.remoteBranch }
+
+    VcsTestUtil.assertEqualCollections(testName, GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches), expectedInfos)
   }
 
-  private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(configFile);
-    VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile));
+  private fun loadRemotes() = loadConfigData(getTestDataFolder("remote"))
+
+  private fun loadBranches() = loadConfigData(getTestDataFolder("branch"))
+
+  private class TestSpec(internal var name: String, internal var config: File, internal var result: File)
+
+  private fun addRemote(url: String) {
+    addRemote("origin", url)
   }
 
-  private void doTestBranches(String testName, File configFile, File resultFile) throws IOException {
-    Collection<GitBranchTrackInfo> expectedInfos = readBranchResults(resultFile);
-    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, input -> {
-      assert input != null;
-      return input.getLocalBranch();
-    });
-    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, input -> {
-      assert input != null;
-      return input.getRemoteBranch();
-    });
-
-    VcsTestUtil.assertEqualCollections(testName,
-                                       GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches),
-                                       expectedInfos);
+  private fun addRemote(name: String, url: String) {
+    git("remote add $name $url")
   }
 
-  public Collection<TestSpec> loadRemotes() throws IOException {
-    return loadConfigData(getTestDataFolder("remote"));
-  }
-  
-  public Collection<TestSpec> loadBranches() throws IOException {
-    return loadConfigData(getTestDataFolder("branch"));
-  }
-
-  private static File getTestDataFolder(String subfolder) {
-    File testData = getTestDataFolder();
-    return new File(new File(testData, "config"), subfolder);
+  private fun assertSingleRemote(remotes: Collection<GitRemote>) {
+    assertEquals("Number of remotes is incorrect", 1, remotes.size)
+    val remote = getFirstItem(remotes)
+    assertNotNull(remote)
+    assertEquals("origin", remote!!.name)
+    assertEquals("git@github.com:foo/bar.git", remote.firstUrl)
   }
 
-  @NotNull
-  public static Collection<TestSpec> loadConfigData(@NotNull File dataFolder) throws IOException {
-    File[] tests = dataFolder.listFiles((dir, name) -> !name.startsWith("."));
-    Collection<TestSpec> data = ContainerUtil.newArrayList();
-    for (File testDir : tests) {
-      File descriptionFile = null;
-      File configFile = null;
-      File resultFile = null;
-      File[] files = testDir.listFiles();
-      assertNotNull("No test specifications found in " + testDir.getPath(), files);
-      for (File file : files) {
-        if (file.getName().endsWith("_desc.txt")) {
-          descriptionFile = file;
-        }
-        else if (file.getName().endsWith("_config.txt")) {
-          configFile = file;
-        }
-        else if (file.getName().endsWith("_result.txt")) {
-          resultFile = file;
+  private fun getTestDataFolder(subfolder: String): File {
+    val pluginRoot = File(PluginPathManager.getPluginHomePath("git4idea"))
+    val testData = File(pluginRoot, "testData")
+    return File(File(testData, "config"), subfolder)
+  }
+
+  private fun loadConfigData(dataFolder: File): Collection<TestSpec> {
+    val tests = dataFolder.listFiles { _, name -> !name.startsWith(".") }
+    val data = mutableListOf<TestSpec>()
+    for (testDir in tests) {
+      var descriptionFile: File? = null
+      var configFile: File? = null
+      var resultFile: File? = null
+      val files = testDir.listFiles()
+      assertNotNull("No test specifications found in " + testDir.path, files)
+      for (file in files!!) {
+        when {
+          file.name.endsWith("_desc.txt") -> descriptionFile = file
+          file.name.endsWith("_config.txt") -> configFile = file
+          file.name.endsWith("_result.txt") -> resultFile = file
         }
       }
-      assertNotNull(String.format("description file not found in %s among %s", testDir, Arrays.toString(testDir.list())), descriptionFile);
-      assertNotNull(String.format("config file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), configFile);
-      assertNotNull(String.format("result file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), resultFile);
+      val message = " file not found in $testDir among ${Arrays.toString(testDir.list())}"
+      assertNotNull("description $message", descriptionFile)
+      assertNotNull("config $message", configFile)
+      assertNotNull("result $message", resultFile)
 
-      String testName = FileUtil.loadFile(descriptionFile).split("\n")[0]; // description is in the first line of the desc-file
+      val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
       if (!testName.toLowerCase().startsWith("ignore")) {
-        data.add(new TestSpec(testName, configFile, resultFile));
+        data.add(TestSpec(testName, configFile!!, resultFile!!))
       }
     }
-    return data;
+    return data
   }
 
-  @NotNull
-  public static File getTestDataFolder() {
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    return new File(pluginRoot, "testData");
-  }
-
-  private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
-    String content = FileUtil.loadFile(file);
-    Collection<GitBranchTrackInfo> remotes = new ArrayList<>();
-    List<String> remStrings = StringUtil.split(content, "BRANCH");
-    for (String remString : remStrings) {
+  private fun readBranchResults(file: File): Collection<GitBranchTrackInfo> {
+    val content = FileUtil.loadFile(file)
+    val remotes = ArrayList<GitBranchTrackInfo>()
+    val remStrings = StringUtil.split(content, "BRANCH")
+    for (remString in remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
-        continue;
+        continue
       }
-      String[] info = StringUtil.splitByLines(remString.trim());
-      String branch = info[0];
-      GitRemote remote = getRemote(info[1]);
-      String remoteBranchAtRemote = info[2];
-      String remoteBranchHere = info[3];
-      boolean merge = info[4].equals("merge");
-      remotes.add(new GitBranchTrackInfo(new GitLocalBranch(branch),
-                                         new GitStandardRemoteBranch(remote, remoteBranchAtRemote),
-                                         merge));
+      val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
+      val branch = info[0]
+      val remote = getRemote(info[1])
+      val remoteBranchAtRemote = info[2]
+      val remoteBranchHere = info[3]
+      val merge = info[4] == "merge"
+      remotes.add(GitBranchTrackInfo(GitLocalBranch(branch), GitStandardRemoteBranch(remote, remoteBranchAtRemote), merge))
     }
-    return remotes;
+    return remotes
   }
 
-  private static GitRemote getRemote(String remoteString) {
-    String[] remoteInfo = remoteString.split(" ");
-    return new GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
-                         getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4));
+  private fun getRemote(remoteString: String): GitRemote {
+    val remoteInfo = remoteString.split(" ")
+    return GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
+                     getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4))
   }
 
-  private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
-    String content = FileUtil.loadFile(resultFile);
-    Set<GitRemote> remotes = new HashSet<>();
-    List<String> remStrings = StringUtil.split(content, "REMOTE");
-    for (String remString : remStrings) {
+  private fun readRemoteResults(resultFile: File): Set<GitRemote> {
+    val content = FileUtil.loadFile(resultFile)
+    val remotes = mutableSetOf<GitRemote>()
+    for (remString in content.split("REMOTE")) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
-        continue;
+        continue
       }
-      String[] info = StringUtil.splitByLines(remString.trim());
-      String name = info[0];
-      List<String> urls = getSpaceSeparatedStrings(info[1]);
-      Collection<String> pushUrls = getSpaceSeparatedStrings(info[2]);
-      List<String> fetchSpec = getSpaceSeparatedStrings(info[3]);
-      List<String> pushSpec = getSpaceSeparatedStrings(info[4]);
-      GitRemote remote = new GitRemote(name, urls, pushUrls, fetchSpec, pushSpec);
-      remotes.add(remote);
+      val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
+      val name = info[0]
+      val urls = info[1].split(" ")
+      val pushUrls = info[2].split(" ")
+      val fetchSpec = info[3].split(" ")
+      val pushSpec = info[4].split(" ")
+      remotes.add(GitRemote(name, urls, pushUrls, fetchSpec, pushSpec))
     }
-    return remotes;
+    return remotes
   }
 
-  private static List<String> getSpaceSeparatedStrings(String line) {
-    if (StringUtil.isEmptyOrSpaces(line)) {
-      return Collections.emptyList();
-    }
-    return asList(line.split(" "));
-  }
-
-  private static List<String> getSingletonOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? Collections.emptyList() : singletonList(array[i]);
-  }
-
-  private static class TestSpec {
-    @NotNull String name;
-    @NotNull File config;
-    @NotNull File result;
-
-    public TestSpec(@NotNull String testName, @NotNull File configFile, @NotNull File resultFile) {
-      this.name = testName;
-      this.config = configFile;
-      this.result = resultFile;
-    }
-  }
-
+  private fun getSingletonOrEmpty(array: List<String>, i: Int) = if (array.size < i + 1) emptyList() else listOf(array[i])
 }
