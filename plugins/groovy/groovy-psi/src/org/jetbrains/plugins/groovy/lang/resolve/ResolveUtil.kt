@@ -30,7 +30,7 @@ fun PsiScopeProcessor.shouldProcessDynamicProperties(): Boolean {
   return getHint(DynamicMembersHint.KEY)?.shouldProcessProperties() ?: false
 }
 
-fun PsiScopeProcessor.shoudProcessMethods(): Boolean {
+fun PsiScopeProcessor.shouldProcessMethods(): Boolean {
   return ResolveUtil.shouldProcessMethods(getHint(ElementClassHint.KEY))
 }
 
