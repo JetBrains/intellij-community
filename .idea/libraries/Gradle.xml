@@ -7,6 +7,7 @@
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-core-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-groovy-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-launcher-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-groovy-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-process-services-4.0.jar!/" />

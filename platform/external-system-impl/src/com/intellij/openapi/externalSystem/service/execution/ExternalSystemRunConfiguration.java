@@ -272,7 +272,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmAgentSetup);
       copyUserDataTo(task);
 
-      final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task);
+      final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
+                                   ? mySettings.getExecutionName()
+                                   : StringUtil.isNotEmpty(myConfiguration.getName())
+                                     ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
+                                     myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
+                                     mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+
+      final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
       final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
         consoleManager = getConsoleManagerFor(task);
 
@@ -306,13 +313,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       final BuildOutputInstantReaderImpl buildOutputInstantReader =
         progressListener == null || buildOutputParsers.isEmpty() ? null :
         new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
-
-      final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
-                                   ? mySettings.getExecutionName()
-                                   : StringUtil.isNotEmpty(myConfiguration.getName())
-                                     ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
-                                     myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
-                                     mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
 
       JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
 

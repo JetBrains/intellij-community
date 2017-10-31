@@ -17,6 +17,7 @@ package com.intellij.build.events.impl;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -40,7 +41,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   private final String myBuildTitle;
   private final String myWorkingDir;
   @Nullable
-  private ProcessHandler myProcessHandler;
+  private BuildProcessHandler myProcessHandler;
   private Consumer<ConsoleView> myAttachedConsoleConsumer;
   @NotNull
   private List<AnAction> myRestartActions = new SmartList<>();
@@ -70,7 +71,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   @Nullable
   @Override
-  public ProcessHandler getProcessHandler() {
+  public BuildProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
@@ -104,7 +105,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
     return myAttachedConsoleConsumer;
   }
 
-  public StartBuildEventImpl withProcessHandler(@Nullable ProcessHandler processHandler,
+  public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
                                                 @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
     myAttachedConsoleConsumer = attachedConsoleConsumer;
