@@ -845,7 +845,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public boolean isIgnored(VirtualFile vf) {
+  public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed()) return false;
 

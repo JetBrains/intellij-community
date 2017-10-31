@@ -272,7 +272,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
-  public abstract boolean isIgnored(VirtualFile vf);
+  public abstract boolean isIgnored(@NotNull VirtualFile vf);
 
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
