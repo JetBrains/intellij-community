@@ -15,14 +15,13 @@
  */
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -30,15 +29,17 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Map;
 
 public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
@@ -54,10 +55,22 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
     .put(BufferedImage.class.getName(), "UIUtil.createImage()")
     .build();
 
+  @Nullable
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new UastVisitorAdapter(new AbstractUastVisitor() {
+  public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(method, manager, isOnTheFly);
+  }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(field, manager, isOnTheFly);
+  }
+
+  @Nullable
+  private static ProblemDescriptor[] checkBody(@NotNull UElement uElement, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    List<ProblemDescriptor> descriptors = new SmartList<>();
+    uElement.accept(new AbstractUastVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
         if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
@@ -66,14 +79,16 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
             final String name = psiClass.getQualifiedName();
             String replacement = CLASSES.get(name);
             if (replacement != null) {
-              holder.registerProblem(ObjectUtils.assertNotNull(expression.getPsi()),
-                                     "Please use '" + replacement + "' instead",
-                                     ProblemHighlightType.LIKE_DEPRECATED);
+              descriptors.add(manager.createProblemDescriptor(ObjectUtils.assertNotNull(expression.getPsi()),
+                                                              "Please use '" + replacement + "' instead", true,
+                                                              ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));
             }
           }
         }
         return true;
       }
     });
+
+    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 }
