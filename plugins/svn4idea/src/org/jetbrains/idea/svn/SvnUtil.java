@@ -608,10 +608,6 @@ public class SvnUtil {
     return StringUtil.join(parts, "/");
   }
 
-  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
-    return Url.append(base, subPath);
-  }
-
   @NotNull
   public static Url removePathTail(@NotNull Url url) throws SvnBindException {
     // TODO: Fix - remove tail only from path

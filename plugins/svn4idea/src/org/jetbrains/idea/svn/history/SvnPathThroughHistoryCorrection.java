@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.Url;
 
 import java.util.Map;
@@ -59,7 +58,7 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
   private boolean parentPathChanged(String copyPath, String thisEntryPath) {
     if (Url.isAncestor(thisEntryPath, myPath)) {
       final String relativePath = Url.getRelative(thisEntryPath, myPath);
-      myPath = SvnUtil.appendMultiParts(copyPath, relativePath);
+      myPath = Url.append(copyPath, relativePath);
       return true;
     }
     return false;
