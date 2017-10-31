@@ -742,11 +742,16 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      if (outerName != null) {
-        myOuterClassName.set(outerName);
-      }
-      if (innerName == null) {
-        myAnonymousClassFlag.set(true);
+      if (myContext.get(name) == myName) {
+        // set outer class name only if we are parsing the real inner class and 
+        // not the reference to inner class inside some top-level class
+        myAccess |= access; // information about some access flags for the inner class is missing from the mask passed to 'visit' method
+        if (outerName != null) {
+          myOuterClassName.set(outerName);
+        }
+        if (innerName == null) {
+          myAnonymousClassFlag.set(true);
+        }
       }
     }
 
