@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
@@ -36,14 +37,15 @@ public class PyRequirementVersionSpec {
   @NotNull
   private final String myVersion;
 
+  @NotNull
+  private final Comparator<String> myVersionComparator;
+
   /**
    * @deprecated Use {@link com.jetbrains.python.packaging.PyRequirement} instead.
    * This constructor will be removed in 2018.2.
    */
   public PyRequirementVersionSpec(@NotNull PyRequirementRelation relation, @NotNull PyRequirementVersion version) {
-    myRelation = relation;
-    myParsedVersion = version;
-    myVersion = myParsedVersion.getPresentableText();
+    this(relation, version, version.getPresentableText(), VERSION_COMPARATOR);
   }
 
   /**
@@ -51,9 +53,26 @@ public class PyRequirementVersionSpec {
    * This constructor will be removed in 2018.2.
    */
   public PyRequirementVersionSpec(@NotNull String version) {
-    myRelation = PyRequirementRelation.STR_EQ;
-    myParsedVersion = null;
+    this(PyRequirementRelation.STR_EQ, null, version, VERSION_COMPARATOR);
+  }
+
+  private PyRequirementVersionSpec(@NotNull PyRequirementRelation relation,
+                                   @Nullable PyRequirementVersion parsedVersion,
+                                   @NotNull String version,
+                                   @NotNull Comparator<String> versionComparator) {
+    myRelation = relation;
+    myParsedVersion = parsedVersion;
     myVersion = version;
+    myVersionComparator = versionComparator;
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public PyRequirementVersionSpec withVersionComparator(@NotNull Comparator<String> comparator) {
+    return new PyRequirementVersionSpec(myRelation, myParsedVersion, myVersion, comparator);
   }
 
   @Override
@@ -88,25 +107,25 @@ public class PyRequirementVersionSpec {
   public boolean matches(@NotNull String version) {
     switch (myRelation) {
       case LT:
-        return VERSION_COMPARATOR.compare(version, myVersion) < 0;
+        return myVersionComparator.compare(version, myVersion) < 0;
       case LTE:
-        return VERSION_COMPARATOR.compare(version, myVersion) <= 0;
+        return myVersionComparator.compare(version, myVersion) <= 0;
       case GT:
-        return VERSION_COMPARATOR.compare(version, myVersion) > 0;
+        return myVersionComparator.compare(version, myVersion) > 0;
       case GTE:
-        return VERSION_COMPARATOR.compare(version, myVersion) >= 0;
+        return myVersionComparator.compare(version, myVersion) >= 0;
       case EQ:
         Objects.requireNonNull(myParsedVersion);
 
         final Pair<String, String> publicAndLocalVersions = splitIntoPublicAndLocalVersions(myParsedVersion);
         final Pair<String, String> otherPublicAndLocalVersions = splitIntoPublicAndLocalVersions(version);
         final boolean publicVersionsAreSame =
-          VERSION_COMPARATOR.compare(otherPublicAndLocalVersions.first, publicAndLocalVersions.first) == 0;
+          myVersionComparator.compare(otherPublicAndLocalVersions.first, publicAndLocalVersions.first) == 0;
 
         return publicVersionsAreSame &&
                (publicAndLocalVersions.second.isEmpty() || otherPublicAndLocalVersions.second.equals(publicAndLocalVersions.second));
       case NE:
-        return VERSION_COMPARATOR.compare(version, myVersion) != 0;
+        return myVersionComparator.compare(version, myVersion) != 0;
       case COMPATIBLE:
         Objects.requireNonNull(myParsedVersion);
 
