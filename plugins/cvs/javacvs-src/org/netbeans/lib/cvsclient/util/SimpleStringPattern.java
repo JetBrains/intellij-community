@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author  Thomas Singer
@@ -28,7 +29,7 @@ public final class SimpleStringPattern
 	private static final char MATCH_EACH = '*';
 	private static final char MATCH_ONE = '?';
 
-	private final List<SubPattern> subPatterns = new ArrayList();
+	private final List<SubPattern> subPatterns = new ArrayList<>();
 
 	/**
 	 * Creates a SimpleStringPattern for the specified definition.
@@ -39,13 +40,13 @@ public final class SimpleStringPattern
 	}
 
 	/**
-	 * Returns whether the specified string matches thiz pattern.
+	 * Returns whether the specified string matches this pattern.
 	 */
 	public boolean doesMatch(String string) {
 		int index = 0;
 		SubPattern subPattern = null;
-		for (int i = 0, length = subPatterns.size(); i < length ; i++) {
-			subPattern = subPatterns.get(i);
+		for (SubPattern subPattern1 : subPatterns) {
+			subPattern = subPattern1;
 			index = subPattern.doesMatch(string, index);
 			if (index < 0) {
 				return false;
@@ -82,7 +83,6 @@ public final class SimpleStringPattern
 				addSubPattern(match, prevSubPattern);
 				prevSubPattern = MATCH_ONE;
 				index++;
-				continue;
 			}
 		}
 		final String match = definition.substring(prevIndex);
@@ -107,12 +107,7 @@ public final class SimpleStringPattern
 	}
 
 	public String toString() {
-          final StringBuilder buffer = new StringBuilder();
-		for (int i = 0, length = subPatterns.size(); i < length; i++) {
-			final SubPattern subPattern = subPatterns.get(i);
-			buffer.append(subPattern.toString());
-		}
-		return buffer.toString();
+		return subPatterns.stream().map(Object::toString).collect(Collectors.joining());
 	}
 
 	private static abstract class SubPattern {
