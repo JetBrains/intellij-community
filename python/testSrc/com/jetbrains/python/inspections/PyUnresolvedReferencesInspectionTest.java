@@ -12,7 +12,6 @@ import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -571,7 +570,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     assertEquals("foo.py", fooVFile.getName());
 
     final PsiFile fooPsiFile = PsiManager.getInstance(myFixture.getProject()).findFile(fooVFile);
-    assertNotParsed((PyFile)fooPsiFile);
+    assertNotParsed(fooPsiFile);
   }
 
   // PY-23164
@@ -646,6 +645,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-26368
   public void testForwardReferencesInClassBody() {
     doTest();
+  }
+
+  // PY-26243
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-26243
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
   }
 
   @NotNull
