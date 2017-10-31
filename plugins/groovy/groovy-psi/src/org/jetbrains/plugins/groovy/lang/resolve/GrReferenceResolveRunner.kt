@@ -181,7 +181,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     if (parent is GrMethodCall) return null
     val name = referenceName ?: return null
     if (name.isEmpty() || !name.first().isUpperCase()) return null
-    val qname = getQualifiedReferenceName() ?: return null
+    val qname = qualifiedReferenceName ?: return null
     return facade.findClass(qname, scope)
   }
 
@@ -192,7 +192,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   for (parent in parents().drop(1)) {
     if (parent !is GrReferenceExpression) return null
     if (parent.resolveClass() == null) continue
-    val qname = getQualifiedReferenceName()!!
+    val qname = qualifiedReferenceName!!
     return facade.findPackage(qname)
   }
 
@@ -208,15 +208,16 @@ private fun GrReferenceExpression.resolveLocalVariable(): GroovyResolveResult? {
   return processor.resolveResult
 }
 
-private fun GrReferenceElement<*>.getQualifiedReferenceName(): String? {
-  val parts = mutableListOf<String>()
-  var current = this
-  while (true) {
-    val name = current.referenceName ?: return null
-    parts.add(name)
-    val qualifier = current.qualifier ?: break
-    qualifier as? GrReferenceExpression ?: return null
-    current = qualifier
+internal val GrReferenceElement<*>.qualifiedReferenceName: String?
+  get() {
+    val parts = mutableListOf<String>()
+    var current = this
+    while (true) {
+      val name = current.referenceName ?: return null
+      parts.add(name)
+      val qualifier = current.qualifier ?: break
+      qualifier as? GrReferenceElement<*> ?: return null
+      current = qualifier
+    }
+    return parts.reversed().joinToString(separator = ".")
   }
-  return parts.reversed().joinToString(separator = ".")
-}
