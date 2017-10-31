@@ -846,12 +846,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean isIgnored(VirtualFile vf) {
-    if (Registry.is("ide.hide.excluded.files")) {
-      return myExcludedIndex.isExcludedFile(vf);
-    }
-    else {
-      return myExcludedIndex.isUnderIgnored(vf);
-    }
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return false;
+
+      if (Registry.is("ide.hide.excluded.files")) {
+        return myExcludedIndex.isExcludedFile(vf);
+      }
+      else {
+        return myExcludedIndex.isUnderIgnored(vf);
+      }
+    });
   }
 
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
