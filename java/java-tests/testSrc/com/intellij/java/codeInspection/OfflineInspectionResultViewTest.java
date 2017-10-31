@@ -211,11 +211,11 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "   -" + myDataFlowToolWrapper + "\n" +
                                            "    -Module: 'testOfflineView'\n" +
                                            "     -<default>\n" +
-                                           "      -Test2\n" +
-                                           "       -m123()\n" +
-                                           "        'equals()' called on itself\n" +
                                            "      -Test\n" +
                                            "       -m()\n" +
+                                           "        'equals()' called on itself\n" +
+                                           "      -Test2\n" +
+                                           "       -m123()\n" +
                                            "        'equals()' called on itself\n"
                                          );
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
@@ -243,9 +243,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "      Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -EqualsWithItself\n" +
-                                           "    -Test2\n" +
-                                           "     'equals()' called on itself\n" +
                                            "    -Test\n" +
+                                           "     'equals()' called on itself\n" +
+                                           "    -Test2\n" +
                                            "     'equals()' called on itself\n"
                                          );
     TreeUtil.selectNode(tree, tree.getRoot());
@@ -281,9 +281,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "      Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -EqualsWithItself\n" +
-                                           "    -Test2\n" +
-                                           "     'equals()' called on itself\n" +
                                            "    -Test\n" +
+                                           "     'equals()' called on itself\n" +
+                                           "    -Test2\n" +
                                            "     'equals()' called on itself\n"
                                           );
   }

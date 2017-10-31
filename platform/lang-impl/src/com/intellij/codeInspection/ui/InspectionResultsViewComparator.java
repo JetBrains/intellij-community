@@ -157,9 +157,10 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
             if (positionComparing != 0) {
               return positionComparing;
             }
-          } else {
-            return file1.hashCode() - file2.hashCode();
           }
+          int res = file1.getName().compareToIgnoreCase(file2.getName());
+          if (res != 0) return res;
+          return file1.getPath().compareToIgnoreCase(file2.getPath());
         }
         if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
           final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
@@ -176,7 +177,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
         if (file1.equals(file2)) return 0;
         final int cmp = compareEntitiesByName(entity1, entity2);
         if (cmp != 0) return cmp;
-        return file1.hashCode() - file2.hashCode();
+        return file1.getPath().compareToIgnoreCase(file2.getPath());
       }
     }
     if (entity1 != null && entity2 != null) {
