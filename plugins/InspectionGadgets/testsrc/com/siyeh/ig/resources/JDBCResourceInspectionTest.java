@@ -21,6 +21,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ALL")
 public class JDBCResourceInspectionTest extends LightInspectionTestCase {
 
   public void testCorrectClose() {
