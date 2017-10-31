@@ -781,7 +781,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
+  public FormattingModel createFormattingModelForPsiFile(@NotNull final PsiFile file,
                                                          @NotNull final Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
