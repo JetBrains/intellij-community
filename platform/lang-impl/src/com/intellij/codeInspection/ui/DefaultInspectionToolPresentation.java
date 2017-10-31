@@ -257,13 +257,13 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       if (o1 instanceof ProblemDescriptor) {
         ProblemDescriptorBase p1 = (ProblemDescriptorBase)o1;
         ProblemDescriptorBase p2 = (ProblemDescriptorBase)o2;
-        if (!Comparing.equal(p1.getDescriptionTemplate(), p2.getDescriptionTemplate())) return false;
-        if (!Comparing.equal(p1.getTextRange(), p2.getTextRange())) return false;
         if (!Comparing.equal(p1.getHighlightType(), p2.getHighlightType())) return false;
         if (!Comparing.equal(p1.getProblemGroup(), p2.getProblemGroup())) return false;
+        if (!Comparing.equal(p1.getDescriptionTemplate(), p2.getDescriptionTemplate())) return false;
         if (!Comparing.equal(p1.getLineNumber(), p2.getLineNumber())) return false;
         if (!Comparing.equal(p1.getStartElement(), p2.getStartElement())) return false;
         if (!Comparing.equal(p1.getEndElement(), p2.getEndElement())) return false;
+        if (!Comparing.equal(p1.getTextRange(), p2.getTextRange())) return false;
       }
       else {
         if (!o1.toString().equals(o2.toString())) return false;
