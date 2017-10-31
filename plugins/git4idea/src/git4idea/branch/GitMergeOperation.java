@@ -256,7 +256,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private String getCommonErrorTitle() {
-    return "Couldn't merge " + myBranchToMerge;
+    return "Could Not Merge " + myBranchToMerge;
   }
 
   @Override
@@ -355,9 +355,7 @@ class GitMergeOperation extends GitBranchOperation {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyImportantWarning("Merged branch " + myBranchToMerge + " with conflicts",
-                                                                "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>",
-                                                                getResolveLinkListener());
+      notifyWarning(myBranchToMerge + " Merged with Conflicts","");
     }
   }
 
