@@ -137,7 +137,31 @@ interface JvmDeclarationUElement : UElement {
 
 
 val UElement?.sourcePsiElement: PsiElement?
-  get() = (this as? JvmDeclarationUElement)?.sourcePsi
+  get() = fun(): PsiElement? {
+    val element = (this as? JvmDeclarationUElement)?.sourcePsi ?: return null;
+
+    // All following is a workaround for KT-21025 when returned `sourcePsi` is not actually a source psi
+    // and also it is a copy of a similar hack in `AbstractBaseUastLocalInspectionTool` in 173-branch
+    // Refer IDEA-CR-25636 and IDEA-CR-25766
+    val desiredFile = this?.getContainingUFile()?.psi ?: return element
+
+    fun inFile(element: PsiElement): Boolean {
+      val file = element.containingFile ?: return false
+      return file.viewProvider === desiredFile.viewProvider
+    }
+
+    if (inFile(element)) return element
+    val navigationElement = element.navigationElement ?: return element
+    if (inFile(navigationElement)) return navigationElement
+
+    // last resort
+    val elementAtSamePosition = desiredFile.findElementAt(navigationElement.textRange.startOffset)
+    return if (elementAtSamePosition != null && elementAtSamePosition.text == navigationElement.text) {
+      elementAtSamePosition
+    }
+    else element // it can't be helped
+  }()
+
 
 @ApiStatus.Experimental
 @SuppressWarnings("unchecked")
