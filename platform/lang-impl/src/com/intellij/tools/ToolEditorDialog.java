@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -28,6 +29,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -40,7 +42,10 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class ToolEditorDialog extends DialogWrapper {
-  private final Project myProject;
+  private static final String ADVANCED_OPTIONS_EXPANDED_KEY = "ExternalToolDialog.advanced.expanded";
+  private static final boolean ADVANCED_OPTIONS_EXPANDED_DEFAULT = false;
+
+  @Nullable private final Project myProject;
 
   private boolean myEnabled;
 
@@ -105,8 +110,16 @@ public class ToolEditorDialog extends DialogWrapper {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(title);
-    myAdvancedOptionsSeparator.on();
     myAdvancedOptionsPanel.setBorder(JBUI.Borders.emptyLeft(IdeBorderFactory.TITLED_BORDER_INDENT));
+
+    boolean on = PropertiesComponent.getInstance().getBoolean(ADVANCED_OPTIONS_EXPANDED_KEY, ADVANCED_OPTIONS_EXPANDED_DEFAULT);
+    if (on) {
+      myAdvancedOptionsSeparator.on();
+    }
+    else {
+      myAdvancedOptionsSeparator.off();
+    }
+
     init();
     addListeners();
   }
@@ -167,13 +180,13 @@ public class ToolEditorDialog extends DialogWrapper {
       @Override
       protected void onImpl() {
         myAdvancedOptionsPanel.setVisible(true);
-        //PropertiesComponent.getInstance(myProject).setValue(ADVANCED_OPTIONS_OPEN_KEY, true);
+        PropertiesComponent.getInstance().setValue(ADVANCED_OPTIONS_EXPANDED_KEY, true, ADVANCED_OPTIONS_EXPANDED_DEFAULT);
       }
 
       @Override
       protected void offImpl() {
         myAdvancedOptionsPanel.setVisible(false);
-        //PropertiesComponent.getInstance(myProject).setValue(ADVANCED_OPTIONS_OPEN_KEY, false);
+        PropertiesComponent.getInstance().setValue(ADVANCED_OPTIONS_EXPANDED_KEY, false, ADVANCED_OPTIONS_EXPANDED_DEFAULT);
       }
     };
   }
@@ -312,9 +325,5 @@ public class ToolEditorDialog extends DialogWrapper {
   private static String convertString(String s) {
     if (s != null && s.trim().isEmpty()) return null;
     return s;
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 }
