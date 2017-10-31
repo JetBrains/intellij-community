@@ -2,6 +2,7 @@
 
 package com.intellij.tools;
 
+import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
@@ -12,10 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextBrowseFolderListener;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -223,13 +221,6 @@ public class ToolEditorDialog extends DialogWrapper {
     myInsertParametersMacroButton.addActionListener(new InsertMacroActionListener(myArgumentsField.getTextField()));
     myInsertWorkingDirectoryMacroButton.addActionListener(new InsertMacroActionListener(myWorkingDirField.getTextField()));
 
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void textChanged(DocumentEvent event) {
-        handleOKButton();
-      }
-    });
-
     myUseConsoleCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -239,8 +230,23 @@ public class ToolEditorDialog extends DialogWrapper {
     });
   }
 
-  private void handleOKButton() {
-    setOKActionEnabled(!myNameField.getText().trim().isEmpty());
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    if (myNameField.getText().trim().isEmpty()) {
+      return new ValidationInfo("Name not specified", myNameField);
+    }
+
+    final String filtersText = myOutputFilterField.getText().trim();
+    if (!filtersText.isEmpty()) {
+      for (String s : StringUtil.splitByLines(filtersText)) {
+        if (!s.contains(RegexpFilter.FILE_PATH_MACROS)) {
+          return new ValidationInfo("Each output filter must contain " + RegexpFilter.FILE_PATH_MACROS + " macro", myOutputFilterField);
+        }
+      }
+    }
+
+    return null;
   }
 
   public Tool getData() {
@@ -313,8 +319,6 @@ public class ToolEditorDialog extends DialogWrapper {
     myProgramField.setText(tool.getProgram());
     myArgumentsField.setText(tool.getParameters());
     myOutputFilterField.setText(Arrays.stream(tool.getOutputFilters()).map(f -> f.getRegExp()).collect(Collectors.joining("\n")));
-
-    handleOKButton();
   }
 
   @Override
