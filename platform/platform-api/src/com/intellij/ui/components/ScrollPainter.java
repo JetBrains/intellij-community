@@ -33,7 +33,7 @@ import java.util.function.IntSupplier;
  */
 class ScrollPainter extends RegionPainter.Alpha {
   private static final Color x0D = gray("mac.scroll.thumb.darcula.border", 0x0D);
-  private static final Color xA6 = gray("mac.scroll.thumb.darcula.color", 0xA6);
+  private static final Color xA6 = gray("mac.scroll.thumb.darcula.fill", 0xA6);
 
   private static Color gray(String key, int defaultValue) {
     return new JBColor(() -> {
