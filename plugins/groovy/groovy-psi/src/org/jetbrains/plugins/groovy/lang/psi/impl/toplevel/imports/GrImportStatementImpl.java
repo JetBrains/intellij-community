@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
@@ -44,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrImportStatementStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor;
@@ -54,6 +41,7 @@ import java.util.List;
 import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS;
 import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.METHOD;
 import static com.intellij.util.containers.ContainerUtil.zip;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.PsiImportUtil.createImportFromStatement;
 
 /**
  * @author ilyas
@@ -82,6 +70,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    PsiUtil.LOG.warn("Use org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports");
     if (!shouldProcess(processor)) return true;
     if (isAncestor(place)) return true;
     if (isStatic() && lastParent instanceof GrImportStatement) return true;
@@ -362,5 +351,11 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     }
 
     return findChildByType(GroovyTokenTypes.mIDENT);
+  }
+
+  @Nullable
+  @Override
+  public GroovyImport getImport() {
+    return createImportFromStatement(this);
   }
 }

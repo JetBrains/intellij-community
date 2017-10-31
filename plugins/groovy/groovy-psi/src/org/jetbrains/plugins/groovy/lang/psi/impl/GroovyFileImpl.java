@@ -5,7 +5,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
@@ -15,6 +14,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,20 +36,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
-import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.concurrent.ConcurrentMap;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getDefaultImports;
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getImports;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -181,38 +185,31 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
       return true;
     }
 
-    boolean processClasses = ResolveUtil.shouldProcessClasses(classHint);
-
-    GrImportStatement[] importStatements = getImportStatements();
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, false)) return false;
-
-    GroovyScriptClass scriptClass = getScriptClass();
-    if (scriptClass != null && StringUtil.isJavaIdentifier(scriptClass.getName())) {
-
-      if (!(lastParent instanceof GrTypeDefinition)) {
-        if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
+    final BooleanFunction<Iterable<? extends GroovyImport>> processImports = imports -> {
+      for (GroovyImport anImport : imports) {
+        if (!anImport.processDeclarations(processor, state, place, this)) return false;
       }
+      return true;
+    };
 
-      if (processClasses) {
-        if (!ResolveUtil.processElement(processor, scriptClass, state)) return false;
-      }
+    final GroovyScriptClass scriptClass = getScriptClass();
+    if (scriptClass != null && !(lastParent instanceof GrTypeDefinition)) {
+      if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
     }
 
-    if (processClasses) {
-      for (GrTypeDefinition definition : getTypeDefinitions()) {
-        if (!ResolveUtil.processElement(processor, definition, state)) return false;
-      }
-    }
+    final GroovyFileImports imports = getImports(this);
+    if (!processImports.fun(imports.getRegularImports())) return false;
+    if (!processImports.fun(imports.getStaticImports())) return false;
+    if (!processClassesInFile(this, processor, state)) return false;
 
     if (ResolveUtil.shouldProcessProperties(classHint)) {
       if (!processChildrenScopes(processor, state, lastParent, place)) return false;
     }
 
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, true)) return false;
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.SIMPLE, null)) return false;
-    if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ON_DEMAND, null)) return false;
-    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, this)) return false;
+    if (!processClassesInPackage(this, processor, state, place)) return false;
+    if (!processImports.fun(imports.getStarImports())) return false;
+    if (!processImports.fun(imports.getStaticStarImports())) return false;
+    if (!processImports.fun(getDefaultImports())) return false;
 
     if (ResolveUtil.shouldProcessPackages(classHint)) {
 
@@ -247,18 +244,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
   public boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
     return isScript() &&
-        !(lastParent instanceof GrTypeDefinition) &&
-        PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
-  }
-
-  protected boolean processImports(PsiScopeProcessor processor,
-                                   @NotNull ResolveState state,
-                                   @Nullable PsiElement lastParent,
-                                   @NotNull PsiElement place,
-                                   @NotNull GrImportStatement[] importStatements,
-                                   @NotNull ImportKind kind,
-                                   @Nullable Boolean processStatic) {
-    return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, kind, processStatic);
+           !(lastParent instanceof GrTypeDefinition) &&
+           PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
   }
 
   @NotNull
@@ -268,19 +255,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
   @Override
   public boolean isTopControlFlowOwner() {
-    return true;
-  }
-
-  private boolean processDeclarationsInPackage(@NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @Nullable PsiElement lastParent,
-                                               @NotNull PsiElement place) {
-    if (ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) {
-      PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getPackageName());
-      if (aPackage != null) {
-        return aPackage.processDeclarations(new PackageSkippingProcessor(processor), state, lastParent, place);
-      }
-    }
     return true;
   }
 
