@@ -28,7 +28,6 @@
     <mapping directory="$PROJECT_DIR$/../analytics-library" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../base" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../data-binding" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../sherpa" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/appindexing" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/cloud/testing" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/cloud/tools" vcs="Git" />

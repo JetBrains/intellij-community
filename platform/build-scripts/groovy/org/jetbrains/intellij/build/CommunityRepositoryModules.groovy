@@ -253,7 +253,6 @@ class CommunityRepositoryModules {
       withModule("manifest-merger")
       withModule("adt-ui", "adt-ui.jar")
       withModule("repository")
-      withModule("sherpa-ui", "constraint-layout.jar")
       withModule("pixelprobe", "pixalprobe.jar")
       withModule("manifest-merger", "manifest-merger.jar")
       withModule("ddmlib", "sdk-tools.jar")

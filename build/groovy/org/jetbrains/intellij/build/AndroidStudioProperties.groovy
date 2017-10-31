@@ -138,8 +138,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("db-baseLibrary", "data-binding.jar")
       withModule("db-compilerCommon", "data-binding.jar")
       withModule("db-compiler", "data-binding.jar")
-      withModule("sherpa-solver", "constraint-layout.jar")
-      withModule("sherpa-ui", "constraint-layout.jar")
       withModule("sdklib", "sdklib.jar")
       withModule("sdk-common", "sdk-common.jar")
       withModule("layoutlib-api", "layoutlib-api.jar")

@@ -124,16 +124,16 @@ betas.)
     ```
     --- a/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
     +++ b/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
-    @@ -129,9 +129,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
+    @@ -135,9 +135,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
            withModule("adt-ui", "adt-ui.jar")
            withModule("adt-ui-model", "adt-ui.jar")
            withModule("repository")
     -      withModule("db-baseLibrary", "data-binding.jar")
     -      withModule("db-compilerCommon", "data-binding.jar")
     -      withModule("db-compiler", "data-binding.jar")
-           withModule("sherpa-solver", "constraint-layout.jar")
-           withModule("sherpa-ui", "constraint-layout.jar")
            withModule("sdklib", "sdklib.jar")
+           withModule("sdk-common", "sdk-common.jar")
+           withModule("layoutlib-api", "layoutlib-api.jar")
     ```
 
     Also edit the tools/adt/idea/android/android.iml file to depend on the prebuilt instead of the module.
