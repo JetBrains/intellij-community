@@ -1844,4 +1844,6 @@ class Bar {{
     assert myFixture.lookupElementStrings == null
   }
 
+  void testNoNonAnnotationMethods() { doAntiTest() }
+
 }
