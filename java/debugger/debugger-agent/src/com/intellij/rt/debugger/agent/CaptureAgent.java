@@ -207,12 +207,16 @@ public class CaptureAgent {
       return name + "$$$capture";
     }
 
+    private static String getMethodDisplayName(String className, String methodName, String desc) {
+      return className + "." + methodName + desc;
+    }
+
     @Override
     public MethodVisitor visitMethod(final int access, String name, final String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_BRIDGE) == 0) {
         for (final CapturePoint capturePoint : myCapturePoints) {
           if (capturePoint.myMethodName.equals(name)) {
-            final String methodDisplayName = capturePoint.myClassName + "." + name + desc;
+            final String methodDisplayName = getMethodDisplayName(capturePoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
             }
@@ -244,7 +248,7 @@ public class CaptureAgent {
 
         for (InsertPoint insertPoint : myInsertPoints) {
           if (insertPoint.myMethodName.equals(name)) {
-            String methodDisplayName = insertPoint.myClassName + "." + name + desc;
+            String methodDisplayName = getMethodDisplayName(insertPoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + methodDisplayName);
             }
