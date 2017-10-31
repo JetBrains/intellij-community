@@ -249,6 +249,10 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             assert isinstance(feature, Feature), feature
             scenarios = []
             for scenario in feature.scenarios:
+                try:
+                    scenario.tags.extend(feature.tags)
+                except AttributeError:
+                    pass
                 if isinstance(scenario, ScenarioOutline):
                     scenarios.extend(scenario.scenarios)
                 else:
