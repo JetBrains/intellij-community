@@ -2302,6 +2302,20 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-25751
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("Union[aaa.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
+  // PY-25751
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("Union[__init__.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
   // PY-26269
   public void testDontReplaceDictValueWithReceiverType() {
     runWithLanguageLevel(
