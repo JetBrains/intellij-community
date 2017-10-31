@@ -149,10 +149,7 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (untrackedFilesDetector.wasMessageDetected()) {
-          var description = commitDetails(commit) +
-                            "<br/>Some untracked working tree files would be overwritten by $operationName.<br/>" +
-                            "Please move, remove or add them before you can $operationName. <a href='view'>View them</a>"
-          description += getSuccessfulCommitDetailsIfAny(successfulCommits)
+          var description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
                                                                     untrackedFilesDetector.relativeFilePaths, operationName, description)
