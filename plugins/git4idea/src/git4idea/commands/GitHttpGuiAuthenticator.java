@@ -44,9 +44,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
-import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
-import static com.intellij.credentialStore.CredentialAttributesKt.getAndMigrateCredentials;
+import static com.intellij.credentialStore.CredentialAttributesKt.*;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -67,6 +65,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @NotNull private final String myTitle;
   @NotNull private final Collection<String> myUrlsFromCommand;
+  private final boolean myIgnoreAuthenticationRequest;
 
   @Nullable private String myPassword;
   @Nullable private String myPasswordKey;
@@ -78,10 +77,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull Collection<String> url) {
+  GitHttpGuiAuthenticator(@NotNull Project project,
+                          @NotNull GitCommand command,
+                          @NotNull Collection<String> url,
+                          boolean ignoreAuthenticationRequest) {
     myProject = project;
     myTitle = "Git " + StringUtil.capitalize(command.name());
     myUrlsFromCommand = url;
+    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
   @Override
@@ -94,26 +97,33 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myWasCancelled) { // already pressed cancel in askUsername
       return "";
     }
+    String password = null;
     myUnifiedUrl = getUnifiedUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(getUnifiedUrl(url));
     if (authData != null && authData.second.getPassword() != null) {
-      String password = authData.second.getPassword();
+      password = ObjectUtils.assertNotNull(authData.second.getPassword());
       myDataProvider = authData.first;
       myPassword = password;
       LOG.debug("askPassword. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl= " + getUnifiedUrl(url) +
-                ", login=" + authData.second.getLogin() + ", passwordKnown=" + (password != null));
+                ", login=" + authData.second.getLogin() + ", passwordKnown=true");
       myIsMemoryOnly = ThreeState.UNSURE;
       return password;
     }
 
-    myPasswordKey = getUnifiedUrl(url);
-    CredentialRequestResult result = CredentialPromptDialog.askCredentials(myProject,
-                                                                           myTitle, "Password for " + getDisplayableUrl(url),
-                                                                           credentialAttributes(myPasswordKey), false, false);
-    String password = result == null ? null : result.getCredentials().getPasswordAsString();
-    LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
+    CredentialRequestResult result = null;
+    if (!myIgnoreAuthenticationRequest) {
+      myPasswordKey = getUnifiedUrl(url);
+      result = CredentialPromptDialog.askCredentials(myProject,
+                                                     myTitle,
+                                                     "Password for " + getDisplayableUrl(url),
+                                                     credentialAttributes(myPasswordKey), false,
+                                                     false);
+      password = result == null ? null : result.getCredentials().getPasswordAsString();
+      LOG.debug("askPassword. Password was asked and returned: " +
+                (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
+    }
     if (password == null) {
-      myWasCancelled = true;
+      myWasCancelled = !myIgnoreAuthenticationRequest;
       return "";
     }
     myIsMemoryOnly = ThreeState.fromBoolean(result.isMemoryOnly());
@@ -157,10 +167,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return login;
     }
 
-    AuthDialog dialog = showAuthDialog(getDisplayableUrl(url), login);
-    LOG.debug("askUsername. Showed dialog:" + (dialog == null ? "NULL" : dialog.isOK() ? "OK" : "Cancel"));
+    AuthDialog dialog = null;
+    if (!myIgnoreAuthenticationRequest) {
+      dialog = showAuthDialog(getDisplayableUrl(url), login);
+      LOG.debug("askUsername. Showed dialog:" + (dialog == null ? "NULL" : dialog.isOK() ? "OK" : "Cancel"));
+    }
     if (dialog == null || !dialog.isOK()) {
-      myWasCancelled = true;
+      myWasCancelled = !myIgnoreAuthenticationRequest;
       return "";
     }
 
