@@ -34,6 +34,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -80,7 +81,7 @@ public class PatternCompiler {
           filesToScan.add(file);
         }
 
-        if (filesToScan.size() == 0) {
+        if (filesToScan.isEmpty()) {
           throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
         }
         result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
@@ -114,6 +115,7 @@ public class PatternCompiler {
     }
   }
 
+  @TestOnly
   public static String getLastFindPlan() {
     return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
   }
@@ -148,8 +150,7 @@ public class PatternCompiler {
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
 
     final int patternEndOffset = last.getTextRange().getEndOffset();
-    if (elements.size() == 0 ||
-        checkErrorElements(file, patternEndOffset, patternEndOffset, varEndOffsets, true) != Boolean.TRUE) {
+    if (elements.isEmpty() || checkErrorElements(file, patternEndOffset, patternEndOffset, varEndOffsets, true) != Boolean.TRUE) {
       return elements;
     }
 
