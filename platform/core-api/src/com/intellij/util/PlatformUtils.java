@@ -18,10 +18,10 @@ package com.intellij.util;
 import com.intellij.openapi.application.ApplicationInfo;
 
 /**
- * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party IDEs not listed
- * here won't be able to use that. So <strong>it's strongly not recommended to use methods from this class</strong>. If you need to
- * customize behavior of the platform somewhere, you should create a special application service for that and override it in a specific IDE
- * (look at {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization} for example).
+ * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
+ * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * If you need to customize behavior of the platform somewhere, you should create a special application service for that and override it in
+ * a specific IDE (look at {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization} for example).
  *
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
