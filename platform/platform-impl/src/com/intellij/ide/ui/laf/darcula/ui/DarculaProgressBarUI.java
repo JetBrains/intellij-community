@@ -286,16 +286,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   private static boolean isSimplified() {
-    return false/*PowerSaveMode.isEnabled() || RemoteDesktopService.isRemoteSession()*/;
-  }
-
-  // --------------------------------------------------------------------------------------
-  // TODO: remove methods. Not used anymore.
-  @Deprecated
-  protected volatile int offset = 0;
-
-  @Deprecated
-  protected int getPeriodLength() {
-    return 0;
+    // TODO improve user experience based on System.properties
+    // Avoid using Services directly to make UI code independent.
+    return false;
   }
 }
