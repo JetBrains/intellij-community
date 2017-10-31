@@ -1922,8 +1922,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
-  @Override
-  public String getManualOrderOptionText() {
+  protected String getManualOrderOptionText() {
     return IdeBundle.message("action.manual.order");
   }
 
