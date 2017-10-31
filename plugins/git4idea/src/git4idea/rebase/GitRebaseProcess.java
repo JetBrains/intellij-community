@@ -417,8 +417,7 @@ public class GitRebaseProcess {
                                        boolean somethingWasRebased,
                                        @NotNull Collection<GitRepository> successful,
                                        MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
-    String message = GitUntrackedFilesHelper.createUntrackedFilesOverwrittenDescription("rebase", true) +
-                     mentionRetryAndAbort(somethingWasRebased, successful) +
+    String message = mentionRetryAndAbort(somethingWasRebased, successful) +
                      mentionSkippedCommits(skippedCommits) +
                      GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
     GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, currentRepository.getRoot(), untrackedPaths, "rebase", message);
