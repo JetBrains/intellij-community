@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -355,7 +356,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   @Override
   public List<PyRequirement> parseRequirements(@NotNull String text) {
-    return PyRequirement.fromText(text);
+    return ContainerUtil.map(PyRequirement.fromText(text),
+                             req -> req.withVersionComparator(PyPackageVersionComparator.getSTR_COMPARATOR()));
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException

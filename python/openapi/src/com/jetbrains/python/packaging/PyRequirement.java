@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
@@ -292,6 +293,15 @@ public class PyRequirement {
     myVersionSpecs = versionSpecs;
     myInstallOptions = Collections.unmodifiableList(installOptions);
     myExtras = extras;
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  public PyRequirement withVersionComparator(@NotNull Comparator<String> comparator) {
+    return new PyRequirement(myName,
+                             ContainerUtil.map(myVersionSpecs, spec -> spec.withVersionComparator(comparator)), myInstallOptions, myExtras);
   }
 
   @NotNull
