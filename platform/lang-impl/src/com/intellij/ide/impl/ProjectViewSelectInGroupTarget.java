@@ -63,11 +63,9 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
       }
     }
     targetsToCheck.addAll(targets);
-    for (final SelectInTarget target : targetsToCheck) {
-      if (target.canSelect(context)) {
-          target.selectIn(context, requestFocus);
-      }
-    }
+    targetsToCheck.stream().filter(t -> t.canSelect(context)).findFirst().ifPresent(target -> {
+      target.selectIn(context, requestFocus);
+    });
   }
 
   @Override
