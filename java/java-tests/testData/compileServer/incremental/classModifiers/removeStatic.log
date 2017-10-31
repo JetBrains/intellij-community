@@ -7,7 +7,9 @@ src/A.java
 End of files
 Cleaning output files:
 out/production/RemoveStatic/B.class
+out/production/RemoveStatic/C.class
 End of files
 Compiling files:
 src/B.java
+src/C.java
 End of files
