@@ -2,90 +2,138 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.Arrays.asList;
 
 /**
  * Basic functionality for git handler execution.
  */
 abstract class GitImplBase implements Git {
-  protected static final Logger LOG = Logger.getInstance(Git.class);
-
-  @Override
-  @NotNull
-  public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
-    return run(handlerConstructor);
-  }
-
   @NotNull
   @Override
   public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
     return runCommand(() -> handler);
   }
 
+  @Override
   @NotNull
-  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor) {
-    final List<String> errorOutput = new ArrayList<>();
-    final List<String> output = new ArrayList<>();
-    final List<String> synchronizedErrorOutput = Collections.synchronizedList(errorOutput);
-    final List<String> synchronizedOutput = Collections.synchronizedList(output);
-    final AtomicInteger exitCode = new AtomicInteger();
-    final AtomicBoolean startFailed = new AtomicBoolean();
+  public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
+    return run(handlerConstructor, () -> new OutputCollector() {
+      @Override
+      public void outputLineReceived(@NotNull String line) {
+        addOutputLine(line);
+      }
 
-    int authAttempt = 0;
+      @Override
+      public void errorLineReceived(@NotNull String line) {
+        if (!looksLikeError(line)) {
+          addOutputLine(line);
+        }
+        else {
+          addErrorLine(line);
+        }
+      }
+    });
+  }
+
+  @NotNull
+  public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
+    return run(() -> handler, () -> new OutputCollector() {
+      @Override
+      protected void outputLineReceived(@NotNull String line) {}
+
+      @Override
+      protected void errorLineReceived(@NotNull String line) {
+        addErrorLine(line);
+      }
+    });
+  }
+
+  @NotNull
+  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
+                                      @NotNull Computable<OutputCollector> outputCollectorConstructor) {
+    @NotNull GitLineHandler handler;
+    @NotNull OutputCollector outputCollector;
+    @NotNull GitCommandResultListener resultListener;
+
     boolean authFailed;
-    boolean success;
+    int authAttempt = 0;
     do {
-      synchronizedErrorOutput.clear();
-      synchronizedOutput.clear();
-      exitCode.set(0);
-      startFailed.set(false);
+      handler = handlerConstructor.compute();
 
-      GitLineHandler handler = handlerConstructor.compute();
-      handler.addLineListener(new GitLineHandlerListener() {
-        @Override public void onLineAvailable(String line, Key outputType) {
-          if (outputType == ProcessOutputTypes.STDOUT) {
-            synchronizedOutput.add(line);
-          }
-          else if (outputType == ProcessOutputTypes.STDERR) {
-            if (!looksLikeError(line)) {
-              synchronizedOutput.add(line);
-            }
-            else {
-              synchronizedErrorOutput.add(line);
-            }
-          }
-        }
+      outputCollector = outputCollectorConstructor.compute();
+      resultListener = new GitCommandResultListener(outputCollector);
 
-        @Override public void processTerminated(int code) {
-          exitCode.set(code);
-        }
-
-        @Override public void startFailed(Throwable t) {
-          startFailed.set(true);
-          synchronizedErrorOutput.add("Failed to start Git process");
-        }
-      });
+      handler.addLineListener(resultListener);
 
       handler.runInCurrentThread(null);
       authFailed = handler.hasHttpAuthFailed();
-      success = !startFailed.get() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
     while (authFailed && authAttempt++ < 2);
-    return new GitCommandResult(success, exitCode.get(), errorOutput, output);
+    return new GitCommandResult(
+      !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
+      resultListener.myExitCode,
+      outputCollector.myErrorOutput,
+      outputCollector.myOutput);
+  }
+
+  private static class GitCommandResultListener implements GitLineHandlerListener {
+    private final OutputCollector myOutputCollector;
+
+    private int myExitCode = 0;
+    private boolean myStartFailed = false;
+
+    public GitCommandResultListener(OutputCollector outputCollector) {
+      myOutputCollector = outputCollector;
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (outputType == ProcessOutputTypes.STDOUT) {
+        myOutputCollector.outputLineReceived(line);
+      }
+      else if (outputType == ProcessOutputTypes.STDERR) {
+        myOutputCollector.errorLineReceived(line);
+      }
+    }
+
+    @Override
+    public void processTerminated(int code) {
+      myExitCode = code;
+    }
+
+    @Override
+    public void startFailed(Throwable t) {
+      myStartFailed = true;
+      myOutputCollector.errorLineReceived("Failed to start Git process " + t.getLocalizedMessage());
+    }
+  }
+
+  private static abstract class OutputCollector {
+    final List<String> myOutput = new ArrayList<>();
+    final List<String> myErrorOutput = new ArrayList<>();
+
+    final void addOutputLine(@NotNull String line) {
+      synchronized (myOutput) {
+        myOutput.add(line);
+      }
+    }
+
+    final void addErrorLine(@NotNull String line) {
+      synchronized (myErrorOutput) {
+        myErrorOutput.add(line);
+      }
+    }
+
+    abstract void outputLineReceived(@NotNull String line);
+
+    abstract void errorLineReceived(@NotNull String line);
   }
 
   private static boolean looksLikeError(@NotNull final String text) {
