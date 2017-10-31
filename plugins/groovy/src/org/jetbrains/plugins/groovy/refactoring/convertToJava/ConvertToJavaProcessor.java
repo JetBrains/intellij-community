@@ -148,7 +148,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     String fileName = prefix + ".java";
     int index = 1;
     while (fileNames.contains(fileName)) {
-      fileName = prefix + index + ".java";
+      fileName = prefix + (index++) + ".java";
     }
     return fileName;
   }
