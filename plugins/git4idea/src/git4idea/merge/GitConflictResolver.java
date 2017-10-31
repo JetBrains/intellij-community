@@ -16,7 +16,8 @@
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -195,8 +196,13 @@ public class GitConflictResolver {
                   myParams.myErrorNotificationAdditionalDescription);
   }
 
-  private void notifyWarning(String title, String content) {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(title, content, new ResolveNotificationListener());
+  protected void notifyWarning(String title, String content) {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
+    notification.addAction(NotificationAction.createSimple("Resolve...", () -> {
+      notification.expire();
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
+    }));
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
