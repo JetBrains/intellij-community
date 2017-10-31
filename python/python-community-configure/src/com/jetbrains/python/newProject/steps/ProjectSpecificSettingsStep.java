@@ -182,7 +182,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PythonProjectGenerator generator = ObjectUtils.tryCast(myProjectGenerator, PythonProjectGenerator.class);
     final Sdk sdk = getInterpreterPanelSdk();
 
-    if (generator == null || sdk == null) return true;
+    if (generator == null || sdk == null) {
+      myInstallFramework = true;
+      return true;
+    }
 
     try {
       generator.checkProjectCanBeCreatedOnSdk(sdk, new File(myLocationField.getText()));
