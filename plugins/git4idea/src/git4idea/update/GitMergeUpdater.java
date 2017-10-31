@@ -56,14 +56,15 @@ import static java.util.Arrays.asList;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManager myChangeListManager;
 
-  public GitMergeUpdater(Project project, @NotNull Git git,
-                         VirtualFile root,
-                         final GitBranchPair branchAndTracked,
-                         ProgressIndicator progressIndicator,
-                         UpdatedFiles updatedFiles) {
-    super(project, git, root, branchAndTracked, progressIndicator, updatedFiles);
+  public GitMergeUpdater(@NotNull Project project,
+                         @NotNull Git git,
+                         @NotNull GitRepository repository,
+                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull ProgressIndicator progressIndicator,
+                         @NotNull UpdatedFiles updatedFiles) {
+    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
