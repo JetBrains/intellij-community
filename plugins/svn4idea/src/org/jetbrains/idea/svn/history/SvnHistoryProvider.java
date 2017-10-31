@@ -40,7 +40,6 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -517,7 +516,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     private boolean checkForParentChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
-      String path = SVNPathUtil.removeTail(lastPathBefore);
+      String path = Url.removeTail(lastPathBefore);
       while (path.length() > 0) {
         final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
@@ -528,7 +527,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           }
           break;
         }
-        path = SVNPathUtil.removeTail(path);
+        path = Url.removeTail(path);
       }
       return false;
     }
@@ -538,7 +537,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private boolean checkForChildChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       for (String key : logEntry.getChangedPaths().keySet()) {
-        if (SVNPathUtil.isAncestor(lastPathBefore, key)) {
+        if (Url.isAncestor(lastPathBefore, key)) {
           return true;
         }
       }

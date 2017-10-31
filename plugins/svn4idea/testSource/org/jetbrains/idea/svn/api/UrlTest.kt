@@ -73,6 +73,47 @@ class UrlTest {
     assertCommonUrl("http://aaa/bbb", "http://aaa/bbb/bbb", "http://aaa/bbb")
   }
 
+  @Test
+  fun tail() {
+    assertTail("aaa", "aaa")
+    assertTail("aaa/", "aaa")
+    assertTail("aaa/bbb", "bbb")
+  }
+
+  @Test
+  fun `remove tail`() {
+    assertRemoveTail("aaa", "")
+    assertRemoveTail("aaa/", "")
+    assertRemoveTail("/aaa", "")
+    assertRemoveTail("aaa/bbb", "aaa")
+  }
+
+  @Test
+  fun `append paths as strings`() {
+    assertAppend("", "aaa", "aaa")
+    assertAppend("/", "aaa", "aaa")
+    assertAppend("aaa", "", "aaa")
+    assertAppend("aaa", "/", "aaa")
+    assertAppend("aaa/", "", "aaa")
+    assertAppend("/aaa", "aaa", "/aaa/aaa")
+    assertAppend("aaa/", "aaa", "aaa/aaa")
+    assertAppend("aaa/", "/aaa", "aaa/aaa")
+    assertAppend("aaa/", "/aaa/", "aaa/aaa")
+  }
+
+  @Test
+  fun `is ancestor relative`() {
+    assertAncestorRelative("", "", true, "")
+    assertAncestorRelative("", "/", true, "")
+    assertAncestorRelative("/", "", false, null)
+    assertAncestorRelative("aaa", "aaa", true, "")
+    assertAncestorRelative("aaa/", "aaa", false, null)
+    assertAncestorRelative("aaa", "aaa/", true, "")
+    assertAncestorRelative("aaa", "aaa/aaa", true, "aaa")
+    assertAncestorRelative("/aaa", "/aaa/aaa", true, "aaa")
+    assertAncestorRelative("aaa", "aaaaa/aaa", false, null)
+  }
+
   private fun assertUrl(value: String,
                         protocol: String = "",
                         host: String = "",
@@ -95,5 +136,13 @@ class UrlTest {
     val commonAncestorUrl = Url.parse(url1, false).commonAncestorWith(Url.parse(url2, false))
 
     if (commonAncestor == null) assertNull(commonAncestorUrl) else assertEquals(commonAncestor, commonAncestorUrl?.toDecodedString())
+  }
+
+  private fun assertTail(url: String, tail: String) = assertEquals(tail, Url.tail(url))
+  private fun assertRemoveTail(url: String, withoutTail: String) = assertEquals(withoutTail, Url.removeTail(url))
+  private fun assertAppend(url1: String, url2: String, expected: String) = assertEquals(expected, Url.append(url1, url2))
+  private fun assertAncestorRelative(parent: String, child: String, isAncestor: Boolean, relative: String?) {
+    assertEquals(isAncestor, Url.isAncestor(parent, child))
+    assertEquals(relative, Url.getRelative(parent, child))
   }
 }

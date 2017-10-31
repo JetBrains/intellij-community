@@ -18,7 +18,6 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.ArrayList;
 
@@ -101,11 +100,11 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   private static boolean hasEmptyName(@NotNull Url url) {
-    return StringUtil.isEmpty(SVNPathUtil.tail(url.getPath()));
+    return StringUtil.isEmpty(url.getTail());
   }
 
   private static boolean hasDefaultName(@NotNull Url url) {
-    String name = SVNPathUtil.tail(url.getPath());
+    String name = url.getTail();
 
     return name.equalsIgnoreCase(DEFAULT_TRUNK_NAME) ||
            name.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) ||

@@ -12,7 +12,6 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 
@@ -57,11 +56,8 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     Url sourceUrl = correctSourceUrl(url, workingCopyUrl.toString());
 
     if (sourceUrl != null) {
-      SvnIntegrateChangesTask integrateTask =
-        new SvnIntegrateChangesTask(myVcs, workingCopy, myMergerFactory, sourceUrl, SvnBundle.message(
-          "action.Subversion.integrate.changes.messages.title"), myVcs.getSvnConfiguration().isMergeDryRun(),
-                                    SVNPathUtil.tail(myCurrentBranch.toString()));
-
+      SvnIntegrateChangesTask integrateTask = new SvnIntegrateChangesTask(myVcs, workingCopy, myMergerFactory, sourceUrl, SvnBundle.message(
+        "action.Subversion.integrate.changes.messages.title"), myVcs.getSvnConfiguration().isMergeDryRun(), myCurrentBranch.getTail());
       integrateTask.queue();
     }
   }

@@ -21,7 +21,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,7 +97,7 @@ public class SelectBranchPopup {
 
   @NotNull
   private static String getBranchName(@NotNull SvnBranchItem branch) {
-    return SVNPathUtil.tail(branch.getUrl());
+    return Url.tail(branch.getUrl());
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -195,7 +194,7 @@ public class SelectBranchPopup {
       JBList<Object> branchList = new JBList<>(items);
       branchList.setCellRenderer(new BranchRenderer());
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-        .setTitle(SVNPathUtil.tail(selectedValue))
+        .setTitle(Url.tail(selectedValue))
         .setResizable(true)
         .setItemChoosenCallback(() -> {
           if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {

@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -104,7 +103,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myToURLText.addActionListener(e -> {
       try {
         Url url = createUrl(myToURLText.getText());
-        String dstName = SVNPathUtil.tail(mySrcURL.toDecodedString());
+        String dstName = mySrcURL.getTail();
         Url destination = SelectLocationDialog
           .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
 

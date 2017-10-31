@@ -49,7 +49,6 @@ import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -63,6 +62,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -994,7 +994,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     if (entry != null) {
       if (entry.getRepositoryRoot() != null) {
         if (! entry.getRepositoryRoot().equals(url)) {
-          relativePath = SVNPathUtil.getRelativePath(entry.getRepositoryRoot().toString(), url.toDecodedString());
+          relativePath = getRelativeUrl(entry.getRepositoryRoot(), url);
         }
       } else {
         relativePath = entry.getRelativePath();
@@ -1078,7 +1078,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     List<Change> changes =
       myVCS.getFactoryFromSettings().createDiffClient().compare(Target.on(sourceURL), Target.on(targetURL));
 
-    showDiffEditorResults(changes, SVNPathUtil.tail(sourceURL.toString()), SVNPathUtil.tail(targetURL.toString()));
+    showDiffEditorResults(changes, sourceURL.getTail(), targetURL.getTail());
   }
 
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {

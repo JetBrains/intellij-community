@@ -44,7 +44,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.net.URI;
@@ -579,7 +578,7 @@ public class SvnUtil {
   }
 
   public static boolean isAncestor(@NotNull Url parentUrl, @NotNull Url childUrl) {
-    return SVNPathUtil.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
+    return Url.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
   public static String getRelativeUrl(@NotNull Url parentUrl, @NotNull Url childUrl) {
@@ -610,18 +609,13 @@ public class SvnUtil {
   }
 
   public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
-    if (StringUtil.isEmpty(subPath)) return base;
-    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
-    String result = base;
-    for (String part : parts) {
-      result = SVNPathUtil.append(result, part);
-    }
-    return result;
+    return Url.append(base, subPath);
   }
 
   @NotNull
   public static Url removePathTail(@NotNull Url url) throws SvnBindException {
-    return createUrl(SVNPathUtil.removeTail(url.toDecodedString()));
+    // TODO: Fix - remove tail only from path
+    return createUrl(Url.removeTail(url.toDecodedString()));
   }
 
   @NotNull

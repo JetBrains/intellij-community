@@ -11,7 +11,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.*;
@@ -109,13 +108,13 @@ public class SvnBranchConfigurationNew {
   @Nullable
   public String getBaseUrl(String url) {
     if (myTrunkUrl != null) {
-      if (SVNPathUtil.isAncestor(myTrunkUrl, url)) {
+      if (Url.isAncestor(myTrunkUrl, url)) {
         return cutEndSlash(myTrunkUrl);
       }
     }
     for(String branchUrl: myBranchMap.keySet()) {
-      if (SVNPathUtil.isAncestor(branchUrl, url)) {
-        String relativePath = SVNPathUtil.getRelativePath(branchUrl, url);
+      if (Url.isAncestor(branchUrl, url)) {
+        String relativePath = Url.getRelative(branchUrl, url);
         int secondSlash = relativePath.indexOf("/");
         return cutEndSlash(branchUrl + (secondSlash == -1 ? relativePath : relativePath.substring(0, secondSlash)));
       }

@@ -15,7 +15,6 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 
@@ -100,8 +99,8 @@ public abstract class ElementWithBranchComparer {
       return null;
     }
 
-    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrl.toString());
-    return createUrl(SVNPathUtil.append(myBranchUrl, relativePath));
+    String relativePath = SvnUtil.getRelativeUrl(thisBranchForUrl, fileUrl);
+    return createUrl(Url.append(myBranchUrl, relativePath));
   }
 
   private void reportException(final SvnBindException e) {

@@ -16,7 +16,6 @@ import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.Comparator;
@@ -108,7 +107,7 @@ public class PointMerger extends Merger {
       final String path1 = after1.getFullPath();
       final String path2 = after2.getFullPath();
 
-      final String ancestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
+      final String ancestor = Url.getCommonAncestor(path1, path2);
       return path1.equals(ancestor) ? -1 : 1;
     }
   }

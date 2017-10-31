@@ -13,9 +13,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import java.io.File;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 
 public class SvnCopyPathTracker {
@@ -39,8 +36,8 @@ public class SvnCopyPathTracker {
           myCurrentPath = entryPath.getCopyPath();
           return;
         }
-        else if (isAncestor(entryPath.getPath(), myCurrentPath)) {
-          myCurrentPath = append(entryPath.getCopyPath(), getRelativePath(entryPath.getPath(), myCurrentPath));
+        else if (Url.isAncestor(entryPath.getPath(), myCurrentPath)) {
+          myCurrentPath = Url.append(entryPath.getCopyPath(), Url.getRelative(entryPath.getPath(), myCurrentPath));
           myHadChanged = true;
           return;
         }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.api
 import com.google.common.net.UrlEscapers
 import com.intellij.util.io.URLUtil
 import org.apache.http.client.utils.URIBuilder
+import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.net.URI
 import java.net.URISyntaxException
@@ -17,12 +18,12 @@ class Url private constructor(innerUri: URI) {
   val userInfo: String? = uri.userInfo
   val path = uri.path.orEmpty().removeSuffix("/")
 
+  val tail get() = path.substringAfterLast('/')
+
   fun commonAncestorWith(url: Url): Url? {
     if (protocol != url.protocol || host != url.host || port != url.port || userInfo != url.userInfo) return null
 
-    val commonPath = (path.splitToSequence('/') zip url.path.splitToSequence('/'))
-      .takeWhile { it.first == it.second }
-      .joinToString("/", "/") { it.first }
+    val commonPath = SvnUtil.ensureStartSlash(getCommonAncestor(path, url.path))
 
     return try {
       wrap { URIBuilder(uri).setPath(commonPath).build() }
@@ -66,6 +67,38 @@ class Url private constructor(innerUri: URI) {
       if (uri.fragment != null) throw SvnBindException("$uri could not contain fragment")
       uri
     }
+
+    @JvmStatic
+    fun tail(url: String) = url.removeSuffix("/").substringAfterLast('/')
+
+    @JvmStatic
+    fun removeTail(url: String) = url.removeSuffix("/").substringBeforeLast('/', "")
+
+    @JvmStatic
+    fun append(url1: String, url2: String): String {
+      val prefix = url1.removeSuffix("/")
+      val suffix = url2.removePrefix("/").removeSuffix("/")
+      val separator = if (prefix.isEmpty() || suffix.isEmpty()) "" else "/"
+      return prefix + separator + suffix
+    }
+
+    @JvmStatic
+    fun getRelative(parent: String, child: String): String? {
+      if (parent == child) return ""
+      if (parent.isEmpty()) return child.removePrefix("/")
+
+      val parentWithSlash = ensureEndSlash(parent)
+      return if (child.startsWith(parentWithSlash)) child.substring(parentWithSlash.length) else null
+    }
+
+    @JvmStatic
+    fun isAncestor(parent: String, child: String) = parent.isEmpty() || child.startsWith(
+      parent) && (parent.last() == '/' || child.getOrElse(parent.length, { '/' }) == '/')
+
+    @JvmStatic
+    fun getCommonAncestor(url1: String, url2: String) = (url1.splitToSequence('/') zip url2.splitToSequence('/'))
+      .takeWhile { it.first == it.second }
+      .joinToString("/") { it.first }
 
     private fun hasDefaultPort(uri: URI) = uri.port < 0 || uri.port == DEFAULT_PORTS[uri.scheme]
     private fun fixDefaultPort(uri: URI) = if (uri.port >= 0 && hasDefaultPort(uri)) URIBuilder(uri).setPort(-1).build() else uri

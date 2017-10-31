@@ -28,7 +28,6 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -236,10 +235,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       // this piece: for copied-from (or moved) and further modified
       for (String addedPath : myAddedPaths) {
         String copyFromPath = myCopiedAddedPaths.get(addedPath);
-        if ((copyFromPath != null) && (SVNPathUtil.isAncestor(addedPath, path))) {
+        if ((copyFromPath != null) && (Url.isAncestor(addedPath, path))) {
           if (addedPath.length() < path.length()) {
-            final String relative = SVNPathUtil.getRelativePath(addedPath, path);
-            copyFromPath = SVNPathUtil.append(copyFromPath, relative);
+            String relative = Url.getRelative(addedPath, path);
+            copyFromPath = Url.append(copyFromPath, relative);
           }
           final ExternallyRenamedChange renamedChange = new ExternallyRenamedChange(myListsHolder.createRevisionLazily(copyFromPath, true),
                                                      myListsHolder.createRevisionLazily(path, false), copyFromPath);
@@ -515,9 +514,9 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       String current = path;
       // backwards
       for (String key : after2before.descendingKeySet()) {
-        if (SVNPathUtil.isAncestor(key, current)) {
-          final String relativePath = SVNPathUtil.getRelativePath(key, current);
-          current = SVNPathUtil.append(after2before.get(key), relativePath);
+        if (Url.isAncestor(key, current)) {
+          final String relativePath = Url.getRelative(key, current);
+          current = Url.append(after2before.get(key), relativePath);
         }
       }
       return current;
@@ -528,7 +527,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     final Url becameUrl;
     Url wasUrl;
     try {
-      becameUrl = createUrl(SVNPathUtil.append(myRepositoryRoot, path));
+      becameUrl = createUrl(Url.append(myRepositoryRoot, path));
       wasUrl = becameUrl;
 
       if (change instanceof ExternallyRenamedChange && change.getBeforeRevision() != null) {
@@ -536,7 +535,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
         if (originUrl != null) {
           // use another url for origin
-          wasUrl = createUrl(SVNPathUtil.append(myRepositoryRoot, originUrl));
+          wasUrl = createUrl(Url.append(myRepositoryRoot, originUrl));
         }
       }
     }
@@ -763,7 +762,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         return;
       }
 
-      myCommon = SVNPathUtil.getCommonPathAncestor(myCommon, value);
+      myCommon = Url.getCommonAncestor(myCommon, value);
     }
 
     public String getCommon() {
@@ -781,7 +780,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         myCachedInfoLoaded = false;
         return;
       }
-      Url absoluteUrl = parseUrl(SVNPathUtil.append(myRepositoryRoot, commonPath), false);
+      Url absoluteUrl = parseUrl(Url.append(myRepositoryRoot, commonPath), false);
       myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
       if (myWcRoot != null) {
         myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getVirtualFile(), absoluteUrl);
@@ -810,6 +809,6 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   public boolean allPathsUnder(final String path) {
     final String commonRelative = myCommonPathSearcher.getCommon();
 
-    return commonRelative != null && SVNPathUtil.isAncestor(path, SVNPathUtil.append(myRepositoryRoot, commonRelative));
+    return commonRelative != null && Url.isAncestor(path, Url.append(myRepositoryRoot, commonRelative));
   }
 }

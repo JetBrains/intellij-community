@@ -18,7 +18,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -139,7 +138,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         catch (SvnBindException e) {
           LOG.error(e);
         }
-        myBranchField.setText(SVNPathUtil.tail(url));
+        myBranchField.setText(Url.tail(url));
       }
     }, message("select.branch.popup.general.title"), myPanel);
   }
@@ -181,7 +180,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     mySourceUrl = rootInfo.getUrl();
     Url branchUrl = getBranchForUrl(mySourceUrl);
     if (branchUrl != null) {
-      myBranchField.setText(SVNPathUtil.tail(branchUrl.toDecodedString()));
+      myBranchField.setText(branchUrl.getTail());
     }
 
     myURLText.setText(mySourceUrl != null ? mySourceUrl.toDecodedString() : "");

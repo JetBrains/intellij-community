@@ -44,7 +44,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -324,12 +323,12 @@ public class CopiesPanel {
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
       try {
         Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
+        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, Url.tail(branchUrl), root);
 
         new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
       catch (SvnBindException e) {
-        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + SVNPathUtil.tail(branchUrl));
+        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + Url.tail(branchUrl));
       }
     }, "Select branch", mergeLabel);
   }

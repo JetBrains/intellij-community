@@ -42,7 +42,6 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.JBUI.insets;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.tail;
 
 public class CopyOptionsDialog extends DialogWrapper {
 
@@ -73,7 +72,7 @@ public class CopyOptionsDialog extends DialogWrapper {
       subPath, node.getParent() instanceof RepositoryTreeNode ? (RepositoryTreeNode)node.getParent() : null));
     myBrowser.addChangeListener(e -> update());
 
-    myNameField.setText(tail(myURL.getPath()));
+    myNameField.setText(myURL.getTail());
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {

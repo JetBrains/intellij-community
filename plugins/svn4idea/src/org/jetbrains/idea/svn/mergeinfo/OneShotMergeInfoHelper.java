@@ -20,7 +20,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.*;
@@ -33,7 +32,6 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.reverseOrder;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
 
@@ -93,8 +91,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull
   public MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
     MergeCheckResult result = MergeCheckResult.NOT_EXISTS;
-    String sourceRelativePath =
-      SVNPathUtil.getRelativePath(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
+    String sourceRelativePath = Url.getRelative(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
 
     // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
     if (sourceRelativePath != null) {
@@ -122,7 +119,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   }
 
   private static boolean isUnder(@NotNull String parentUrl, @NotNull String childUrl) {
-    return ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
+    return ".".equals(parentUrl) || Url.isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
   }
 
   private static class InfoProcessor implements PairProcessor<String, Map<String, MergeRangeList>> {
@@ -153,7 +150,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       }
       else {
         String mergedPathAffectingSourcePath =
-          find(mergedPathsMap.keySet(), path -> isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
+          find(mergedPathsMap.keySet(), path -> Url.isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
 
         if (mergedPathAffectingSourcePath != null) {
           MergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
@@ -244,10 +241,10 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     boolean atLeastOneUnderBranch = false;
 
     for (LogEntryPath path : entry.getChangedPaths().values()) {
-      if (isAncestor(localURL, path.getPath())) {
+      if (Url.isAncestor(localURL, path.getPath())) {
         return true;
       }
-      if (!atLeastOneUnderBranch && isAncestor(relativeBranch, path.getPath())) {
+      if (!atLeastOneUnderBranch && Url.isAncestor(relativeBranch, path.getPath())) {
         atLeastOneUnderBranch = true;
       }
     }

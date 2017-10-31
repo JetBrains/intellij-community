@@ -14,7 +14,6 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -99,7 +98,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     if (myParentNode instanceof RepositoryTreeRootNode) {
       return myURL.toString();
     }
-    return SVNPathUtil.tail(myURL.getPath());
+    return myURL.getTail();
   }
 
   public void reload(@NotNull Expander expander, boolean removeCurrentChildren) {
