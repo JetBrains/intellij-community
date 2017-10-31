@@ -377,16 +377,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processVMDeathEvent(SuspendContextImpl suspendContext, Event event) {
-    try {
-      preprocessEvent(suspendContext, null);
-      cancelRunToCursorBreakpoint();
-    }
-    finally {
-      if (myEventThread != null) {
-        myEventThread.stopListening();
-        myEventThread = null;
+    // do not destroy another process on reattach
+    if (isAttached() && getVirtualMachineProxy().getVirtualMachine() == event.virtualMachine()) {
+      try {
+        preprocessEvent(suspendContext, null);
+        cancelRunToCursorBreakpoint();
       }
-      closeProcess(false);
+      finally {
+        if (myEventThread != null) {
+          myEventThread.stopListening();
+          myEventThread = null;
+        }
+        closeProcess(false);
+      }
     }
 
     if(event != null) {
