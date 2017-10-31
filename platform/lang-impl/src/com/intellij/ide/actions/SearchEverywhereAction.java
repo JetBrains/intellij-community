@@ -192,7 +192,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Editor myEditor;
   private FileEditor myFileEditor;
-  private PsiFile myFile;
   private HistoryItem myHistoryItem;
 
   @Override
@@ -597,7 +596,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (e != null) {
       myEditor = e.getData(CommonDataKeys.EDITOR);
       myFileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
-      myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
       e = AnActionEvent.createFromAnAction(this, me, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(myFocusOwner));
@@ -1982,7 +1980,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private GotoActionItemProvider createActionProvider() {
-      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
+      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor) {
         @Override
         protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
           MatchMode mode = super.actionMatches(pattern, matcher, anAction);

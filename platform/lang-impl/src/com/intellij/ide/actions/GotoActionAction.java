@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +69,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
-    GotoActionModel model = new GotoActionModel(project, component, editor, file);
+    GotoActionModel model = new GotoActionModel(project, component, editor);
     GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
       public void elementChosen(@NotNull ChooseByNamePopup popup, @NotNull Object element) {
