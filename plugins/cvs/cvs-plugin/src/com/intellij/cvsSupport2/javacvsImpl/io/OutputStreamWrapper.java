@@ -39,12 +39,12 @@ public class OutputStreamWrapper extends OutputStream{
     myOutputStream.close();
   }
 
-  public void write(byte b[]) throws IOException {
+  public void write(byte[] b) throws IOException {
     myOutputStream.write(b);
     myStatistics.send(b.length);
   }
 
-  public void write(byte b[], int off, int len) throws IOException {
+  public void write(byte[] b, int off, int len) throws IOException {
     myOutputStream.write(b, off, len);
     myStatistics.send(len);
 

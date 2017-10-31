@@ -47,7 +47,7 @@ public abstract class AbstractOutputStreamWriter extends Writer {
 		writeChar((char)chr, outputStream);
 	}
 
-	public final void write(char buffer[], int offset, int length) throws IOException {
+	public final void write(char[] buffer, int offset, int length) throws IOException {
 		if (offset < 0
 		        || length < 0
 		        || offset + length > buffer.length) {
