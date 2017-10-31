@@ -39,6 +39,7 @@ iml_project(
         "//tools/adt/idea/android-uitests",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/observable-demo",
+        "//tools/adt/idea/profilers-atrace",
         "//tools/adt/idea/project-system-gradle:project-system-gradle-tests",
         "//tools/adt/idea/sdk-updates:sdk-updates-tests",
         "//tools/adt/idea/updater-ui",

@@ -259,6 +259,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/platform-tests.iml" filepath="$PROJECT_DIR$/platform/platform-tests/platform-tests.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers/profilers.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers/profilers.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" group="android/profilers" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-atrace/profilers-atrace.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-atrace/profilers-atrace.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" group="android" />
