@@ -44,6 +44,10 @@ public class UndesirableClassUsageInspectionTest extends PluginModuleTestCase {
 
     myFixture.configureByText("Testing.java",
                               "public class Testing {" +
+                              " " + classFqn + " name = " +
+                              "<warning descr=\"Please use '" + replacementText + "' instead\">" +
+                              "new " + classFqn + "()" +
+                              "</warning>;" +
                               "  public void method() {" +
                               "<warning descr=\"Please use '" + replacementText + "' instead\">" +
                               "new " + classFqn + "()" +

@@ -34,9 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
@@ -60,8 +58,19 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
   @Nullable
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(method, manager, isOnTheFly);
+  }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(field, manager, isOnTheFly);
+  }
+
+  @Nullable
+  private static ProblemDescriptor[] checkBody(@NotNull UElement uElement, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> descriptors = new SmartList<>();
-    method.accept(new AbstractUastVisitor() {
+    uElement.accept(new AbstractUastVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
         if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
