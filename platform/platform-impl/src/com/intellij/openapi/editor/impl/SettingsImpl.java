@@ -338,10 +338,11 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isUseTabCharacter(Project project) {
+    if (myUseTabCharacter != null) return myUseTabCharacter.booleanValue();
     PsiFile file = getPsiFile(project);
-    return myUseTabCharacter != null
-           ? myUseTabCharacter.booleanValue()
-           : CodeStyleSettingsManager.getIndentOptions(file).USE_TAB_CHARACTER;
+    return file != null
+           ? CodeStyleSettingsManager.getIndentOptions(file).USE_TAB_CHARACTER
+           : CodeStyleSettingsManager.getSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override
@@ -405,7 +406,9 @@ public class SettingsImpl implements EditorSettings {
           FileType fileType = file != null ? file.getFileType() : null;
           tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
         } else {
-          tabSize = CodeStyleSettingsManager.getIndentOptions(file).TAB_SIZE;
+          tabSize = file != null ?
+                    CodeStyleSettingsManager.getIndentOptions(file).TAB_SIZE :
+                    CodeStyleSettingsManager.getSettings(project).getTabSize(null);
         }
       }
     }

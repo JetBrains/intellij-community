@@ -106,8 +106,7 @@ public class IndentSelectionAction extends EditorAction {
       endIndex = document.getLineCount() - 1;
     }
     
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    int blockIndent = CodeStyleSettingsManager.getIndentOptions(file).INDENT_SIZE;
+    int blockIndent = CodeStyleSettingsManager.getIndentOptions(project, document).INDENT_SIZE;
     doIndent(endIndex, startIndex, document, project, editor, blockIndent);
   }
 
