@@ -4,7 +4,8 @@ Entry point module to run a file in the interactive console.
 import os
 import sys
 import traceback
-from pydevconsole import InterpreterInterface, process_exec_queue, start_console_server, init_mpl_in_console
+from pydevconsole import do_exit, InterpreterInterface, process_exec_queue, start_console_server, init_set_return_control_back, \
+    activate_mpl_if_already_imported
 from _pydev_imps._pydev_saved_modules import threading, _queue
 
 from _pydev_bundle import pydev_imports
@@ -136,7 +137,7 @@ if __name__ == '__main__':
 
     sys.stdin = StdIn(interpreter, host, client_port, sys.stdin)
 
-    init_mpl_in_console(interpreter)
+    init_set_return_control_back(interpreter)
 
     try:
         success = connect_status_queue.get(True, 60)
@@ -152,5 +153,7 @@ if __name__ == '__main__':
     interpreter.get_namespace().update(globals)
 
     interpreter.ShowConsole()
+
+    activate_mpl_if_already_imported(interpreter)
 
     process_exec_queue(interpreter)
