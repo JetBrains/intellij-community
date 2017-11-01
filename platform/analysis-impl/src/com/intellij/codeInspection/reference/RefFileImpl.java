@@ -28,7 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefFileImpl extends RefElementImpl implements RefFile {
   RefFileImpl(PsiFile elem, RefManager manager) {
+    this(elem, manager, true);
+  }
+
+  protected RefFileImpl(PsiFile elem, RefManager manager, boolean addParent) {
     super(elem, manager);
+    if (!addParent) return;
     final VirtualFile vFile = elem.getVirtualFile();
     if (vFile == null) return;
     final VirtualFile parentDirectory = vFile.getParent();

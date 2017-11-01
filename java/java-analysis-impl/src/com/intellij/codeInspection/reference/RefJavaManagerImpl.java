@@ -346,7 +346,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   @Nullable
   public String getGroupName(final RefEntity entity) {
-    if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
+    if (entity instanceof RefFile && (!(entity instanceof RefJavaFileImpl) || ((RefJavaFileImpl)entity).isModuleFile())) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 

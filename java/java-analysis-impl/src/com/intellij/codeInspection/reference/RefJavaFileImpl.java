@@ -18,14 +18,24 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 
 public class RefJavaFileImpl extends RefFileImpl {
   private final RefModule myRefModule;
+  private final boolean myModuleFile;
 
   RefJavaFileImpl(PsiJavaFile elem, RefManager manager) {
-    super(elem, manager);
+    super(elem, manager, false);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(elem));
-    ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(elem.getPackageName())).add(this);
+    myModuleFile = PsiUtil.isModuleFile(elem);
+    String packageName = elem.getPackageName();
+    if (!packageName.isEmpty()) {
+      ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);
+    } else if (myRefModule != null) {
+      ((RefModuleImpl)myRefModule).add(this);
+    } else {
+      ((RefProjectImpl)manager.getRefProject()).add(this);
+    }
   }
 
   @Override
@@ -36,5 +46,9 @@ public class RefJavaFileImpl extends RefFileImpl {
   @Override
   public RefModule getModule() {
     return myRefModule;
+  }
+
+  boolean isModuleFile() {
+    return myModuleFile;
   }
 }
