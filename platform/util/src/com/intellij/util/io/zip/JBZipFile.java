@@ -411,20 +411,24 @@ public class JBZipFile {
   }
 
   /**
-   * Number of bytes in local file header up to the &quot;length of
-   * filename&quot; entry.
+   * Number of bytes in local file header up to the &quot;crc&quot; entry.
    */
-  static final long LFH_OFFSET_FOR_FILENAME_LENGTH =
+  static final long LFH_OFFSET_FOR_CRC =
     /* local file header signature     */ WORD
                                           /* version needed to extract       */ + SHORT
                                           /* general purpose bit flag        */ + SHORT
                                           /* compression method              */ + SHORT
                                           /* last mod file time              */ + SHORT
-                                          /* last mod file date              */ + SHORT
+                                          /* last mod file date              */ + SHORT;
+
+  /**
+   * Number of bytes in local file header up to the &quot;length of filename&quot; entry.
+   */
+  static final long LFH_OFFSET_FOR_FILENAME_LENGTH =
+                                          LFH_OFFSET_FOR_CRC
                                           /* crc-32                          */ + WORD
                                           /* compressed size                 */ + WORD
                                           /* uncompressed size               */ + WORD;
-
 
   /**
    * Retrieve a String from the given bytes using the encoding set
