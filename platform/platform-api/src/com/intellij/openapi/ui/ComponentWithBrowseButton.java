@@ -64,7 +64,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setFocusable(false);
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextField && Experiments.isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
-      ((ExtendableTextField)myComponent).addExtension(new ExtendableTextField.Extension() {
+      ExtendableTextField.Extension action = new ExtendableTextField.Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
           return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
@@ -83,7 +83,14 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
             }
           };
         }
-      });
+      };
+      ((ExtendableTextField)myComponent).addExtension(action);
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          action.getActionOnClick().run();
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
     }
     add(myComponent, BorderLayout.CENTER);
 
