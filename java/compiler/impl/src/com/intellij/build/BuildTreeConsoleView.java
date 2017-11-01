@@ -53,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,8 +151,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     };
 
-    final TreeCellRenderer treeCellRenderer = treeTable.getTree().getCellRenderer();
-    treeTable.getTree().setCellRenderer(new TreeCellRenderer() {
+    TreeTableTree tree = treeTable.getTree();
+    final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
+    tree.setCellRenderer(new TreeCellRenderer() {
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,
@@ -189,7 +191,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myTimeColumn.setResizable(false);
     updateTimeColumnWidth("Running for " + StringUtil.formatDuration(11111L), true);
 
-    TreeTableTree tree = treeTable.getTree();
+    TreeUtil.installActions(tree);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
     myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);

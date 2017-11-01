@@ -263,8 +263,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
     return content;
   }
 
-  public void startBuildNotified(@NotNull Content content, @NotNull BuildProcessHandler processHandler) {
-    new CloseListener(content, processHandler);
+  public void startBuildNotified(@NotNull Content content, @Nullable BuildProcessHandler processHandler) {
+    if (processHandler != null) {
+      new CloseListener(content, processHandler);
+    }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
