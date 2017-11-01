@@ -80,10 +80,11 @@ class ExceptionRegistryTest : TestCase() {
 
     assertNotNull(ExceptionRegistry.find("5E389B3192074C7A8260CA82B0ECEE09"))
 
-    assertEquals(17, ExceptionRegistry.count)
+    assertEquals(19, ExceptionRegistry.count)
 
     assertEquals("""
         11 379B89010804F9BC03263B09AF393F22
+         2 F52091828CFC727203AB58D3BBF1A612
          2 5E389B3192074C7A8260CA82B0ECEE09
          1 6F4781E61570E16948ECCE200C16B548
          1 E287C482DD9EA73DD035362F503A7183
@@ -102,12 +103,14 @@ class ExceptionRegistryTest : TestCase() {
 
     assertEquals("""
         11 379B89010804F9BC03263B09AF393F22
+         2 F52091828CFC727203AB58D3BBF1A612
          2 5E389B3192074C7A8260CA82B0ECEE09
         """.trimIndent(),
         getFrequencyReport(threshold = 2, includeSummaries = false).trimIndent())
 
     assertEquals("""
         11 379B89010804F9BC03263B09AF393F22 FileNotFoundException: FileInputStream.open0←open:195←<init>:138←CompilerBackwardReferenceIndex.ver…
+         2 F52091828CFC727203AB58D3BBF1A612 NullPointerException: ExceptionRegistryTest${'$'}NullPointerException←
          2 5E389B3192074C7A8260CA82B0ECEE09 XmlPullParserException: KXmlParser.exception←error←pushEntity←pushText←nextImpl←next←BridgeXmlBlock…
          1 6F4781E61570E16948ECCE200C16B548 NullPointerException: DateUtils.getDayOfWeekString:248←CalendarView.setUpHeader:1034←<init>:403←333…
          1 E287C482DD9EA73DD035362F503A7183 ArithmeticException: MyCustomView.<init>:13←NativeConstructorAccessorImpl.newInstance0←newInstance:…
@@ -391,6 +394,12 @@ java.io.FileNotFoundException:
             "\tat java.util.concurrent.ThreadPoolExecutor\$Worker.run(ThreadPoolExecutor.java:918)\n" +
             "\tat java.lang.Thread.run(Thread.java:680)\n"))
 
+    // With -XX:+OmitStackTraceInFastThrow, the JVM may throw "fast", canned exceptions without a stack trace.
+    result.add(NullPointerException())
+    result.add(NullPointerException())
+
     return result
   }
+
+  private class NullPointerException internal constructor() : Exception("", null, false, false) // no stack trace
 }

@@ -159,7 +159,9 @@ object ExceptionRegistry {
     }
 
     // Last frame: use a leaf frame instead at the end so we can store the java class name
-    val leaf = curr.addLeaf(stackTrace[0], throwable.javaClass)
+    val leaf = curr.addLeaf(
+        if (stackTrace.isNotEmpty()) stackTrace[0] else StackTraceElement(throwable.javaClass.name, "", "", 0),
+        throwable.javaClass)
     if (leaf.count == 1) {
       leafFrames.add(leaf)
     }
