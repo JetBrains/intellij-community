@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
+import com.jetbrains.python.debugger.pydev.DebuggerCommunication;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,16 +19,18 @@ import java.util.concurrent.Future;
 public abstract class BaseDebuggerReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance(BaseDebuggerReader.class);
 
-  @NotNull private final DebuggerMessageHandler myDebuggerMessageHandler;
+  @NotNull private final DebuggerCommunication myDebuggerMessageHandler;
   @NotNull private StringBuilder myTextBuilder = new StringBuilder();
 
-  public BaseDebuggerReader(@NotNull InputStream inputStream, @NotNull Charset charset, @NotNull DebuggerMessageHandler debuggerMessageHandler) {
+  public BaseDebuggerReader(@NotNull InputStream inputStream,
+                            @NotNull Charset charset,
+                            @NotNull DebuggerCommunication debuggerMessageHandler) {
     super(inputStream, charset);
     myDebuggerMessageHandler = debuggerMessageHandler;
   }
 
   @NotNull
-  protected DebuggerMessageHandler getDebuggerMessageHandler() {
+  protected DebuggerCommunication getDebuggerMessageHandler() {
     return myDebuggerMessageHandler;
   }
 

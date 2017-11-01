@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
 
-public class RemoteDebugger implements DebuggerMessageHandler, ProcessDebugger {
+public class RemoteDebugger implements DebuggerCommunication, ProcessDebugger {
   private static final int RESPONSE_TIMEOUT = 60000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");

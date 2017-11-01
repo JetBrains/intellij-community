@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
-import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
+import com.jetbrains.python.debugger.pydev.DebuggerCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +59,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Nullable private Socket mySocket;
   @Nullable private volatile DebuggerReader myDebuggerReader;
 
-  public ClientModeDebuggerTransport(@NotNull DebuggerMessageHandler debuggerMessageHandler,
+  public ClientModeDebuggerTransport(@NotNull DebuggerCommunication debuggerMessageHandler,
                                      @NotNull String host,
                                      int port) {
     super(debuggerMessageHandler);
@@ -258,7 +258,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
      */
     private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
 
-    public DebuggerReader(@NotNull DebuggerMessageHandler debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
+    public DebuggerReader(@NotNull DebuggerCommunication debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
       super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
       start(getClass().getName());
     }

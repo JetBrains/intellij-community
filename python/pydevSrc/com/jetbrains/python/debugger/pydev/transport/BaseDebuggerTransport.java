@@ -1,7 +1,7 @@
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
+import com.jetbrains.python.debugger.pydev.DebuggerCommunication;
 import com.jetbrains.python.debugger.pydev.ProtocolFrame;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,9 +17,11 @@ public abstract class BaseDebuggerTransport implements DebuggerTransport {
 
   protected final Object mySocketObject = new Object();
 
-  @NotNull protected final DebuggerMessageHandler myDebuggerMessageHandler;
+  @NotNull protected final DebuggerCommunication myDebuggerMessageHandler;
 
-  protected BaseDebuggerTransport(@NotNull DebuggerMessageHandler debuggerMessageHandler) {myDebuggerMessageHandler = debuggerMessageHandler;}
+  protected BaseDebuggerTransport(@NotNull DebuggerCommunication debuggerMessageHandler) {
+    myDebuggerMessageHandler = debuggerMessageHandler;
+  }
 
   @Override
   public boolean sendFrame(@NotNull final ProtocolFrame frame) {

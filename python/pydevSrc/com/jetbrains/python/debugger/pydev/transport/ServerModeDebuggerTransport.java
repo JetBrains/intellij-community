@@ -2,7 +2,7 @@ package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
+import com.jetbrains.python.debugger.pydev.DebuggerCommunication;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private volatile Socket mySocket;
   private int myConnectionTimeout;
 
-  public ServerModeDebuggerTransport(DebuggerMessageHandler debuggerMessageHandler, @NotNull ServerSocket socket, int connectionTimeout) {
+  public ServerModeDebuggerTransport(DebuggerCommunication debuggerMessageHandler, @NotNull ServerSocket socket, int connectionTimeout) {
     super(debuggerMessageHandler);
     myServerSocket = socket;
     myConnectionTimeout = connectionTimeout;
@@ -115,7 +115,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   }
 
   public static class DebuggerReader extends BaseDebuggerReader {
-    public DebuggerReader(@NotNull DebuggerMessageHandler debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
+    public DebuggerReader(@NotNull DebuggerCommunication debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
       super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
       start(getClass().getName());
     }
