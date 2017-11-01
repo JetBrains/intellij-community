@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   public final JLabel getFieldLabel() {
     if (myLabel == null){
       myLabel = new JLabel(myLabelText);
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
       myLabel.setLabelFor(getComponent());      
     }
     return myLabel;
@@ -114,11 +115,11 @@ public abstract class AbstractFieldPanel extends JPanel {
 
     if (myLabelText != null) {
       myLabel = new JLabel(myLabelText);
-      this.add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      this.add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
       myLabel.setLabelFor(myComponent);
     }
 
-    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
       if (Experiments.isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextField) {
@@ -152,7 +153,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         browseButton.setFocusable(false);
         browseButton.addActionListener(myBrowseButtonActionListener);
         myButtons.add(browseButton);
-        this.add(browseButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 2, 0, 0), 0, 0));
+        this.add(browseButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsLeft(2), 0, 0));
       }
     }
     if (myViewerDialogTitle != null) {
@@ -171,7 +172,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       });
       myButtons.add(showViewerButton);
-      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     }
   }
 
