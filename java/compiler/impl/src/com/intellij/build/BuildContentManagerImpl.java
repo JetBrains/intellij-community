@@ -329,7 +329,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
       if (myContent == null) return;
 
       final Content content = myContent;
-      content.getManager().removeContentManagerListener(this);
+      ContentManager contentManager = content.getManager();
+      if(contentManager != null) {
+        contentManager.removeContentManagerListener(this);
+      }
       ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
       content.release();
       myContent = null;
