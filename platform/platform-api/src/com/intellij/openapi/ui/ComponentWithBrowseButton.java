@@ -67,7 +67,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       ((ExtendableTextField)myComponent).addExtension(new ExtendableTextField.Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
-          return AllIcons.Actions.Stub;
+          return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
         }
 
         @Override
