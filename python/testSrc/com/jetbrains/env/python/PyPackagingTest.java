@@ -44,6 +44,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     super.runPythonTest(testTask);
   }
 
+  @Staging
   @Test
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
@@ -100,6 +101,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
   @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {
