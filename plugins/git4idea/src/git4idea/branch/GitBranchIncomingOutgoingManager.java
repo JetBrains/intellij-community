@@ -3,6 +3,7 @@ package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +18,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,20 +37,37 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   final Map<GitRepository, Collection<GitLocalBranch>> myLocalBranchesToPull = ContainerUtil.newConcurrentMap();
   final Map<GitRepository, Collection<GitLocalBranch>> myLocalBranchesToPush = ContainerUtil.newConcurrentMap();
   @NotNull private final Project myProject;
-  private ScheduledFuture<?> myPeriodicalUpdater;
+  @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
 
-  public GitBranchIncomingOutgoingManager(@NotNull Project project) {
+  GitBranchIncomingOutgoingManager(@NotNull Project project) {
     myProject = project;
-    myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchInfo(), 1, 30, TimeUnit.SECONDS);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        if (myPeriodicalUpdater != null) {
-          myPeriodicalUpdater.cancel(true);
-          myPeriodicalUpdater = null;
+  }
+
+  public static GitBranchIncomingOutgoingManager getInstance(Project project) {
+    return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
+  }
+
+  @CalledInAwt
+  public void startScheduling() {
+    myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
+    if (myPeriodicalUpdater == null) {
+      myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchInfo(), 1, 5, TimeUnit.MINUTES);
+      Disposer.register(myProject, new Disposable() {
+        @Override
+        public void dispose() {
+          stopScheduling();
         }
-      }
-    });
+      });
+    }
+  }
+
+  @CalledInAwt
+  public void stopScheduling() {
+    if (myPeriodicalUpdater != null) {
+      myPeriodicalUpdater.cancel(true);
+      myPeriodicalUpdater = null;
+    }
+    myProject.getMessageBus().connect().disconnect();
   }
 
   @NotNull
