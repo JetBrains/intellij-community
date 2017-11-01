@@ -2322,6 +2322,33 @@ public class PyTypeTest extends PyTestCase {
            "    expr = cfg");
   }
 
+  // PY-26061
+  public void testUnknownDictValues() {
+    doTest("list",
+           "expr = dict().values()");
+  }
+
+  // PY-26061
+  public void testUnresolvedGenericReplacement() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Any",
+                   "from typing import TypeVar, Generic, List\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "V = TypeVar('V')\n" +
+                   "\n" +
+                   "class B(Generic[T]):\n" +
+                   "    def f(self) -> T:\n" +
+                   "        ...\n" +
+                   "\n" +
+                   "class C(B[V], Generic[V]):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "expr = C().f()\n")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
