@@ -90,6 +90,12 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
 
   public void stopMovie() {
     repaintTree();
+
+    // running nodes likely will not receive stop event yet after stop build event
+    for (ExecutionNode node : myNodes) {
+      node.setIconProvider(() -> AllIcons.Process.State.YellowStr);
+      node.setEndTime(System.currentTimeMillis());
+    }
     myNodes.clear();
     cancelAlarm();
   }
