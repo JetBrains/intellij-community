@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ public class ProgressWithTimeoutInDispatch extends AbstractProgressIndicatorExBa
    *
    * @throws ProcessCanceledException
    */
+  @ApiStatus.Experimental
   @Nullable
   public static <T> T execInDispatchWithTimeout(@NotNull Computable<T> action, long timeoutMs) throws ProcessCanceledException {
     final Application application = ApplicationManager.getApplication();
