@@ -99,6 +99,10 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
+    getWords(first, minLength, maxLength, result::add);
+  }
+
+  public void getWords(char first, int minLength, int maxLength, @NotNull Consumer<String> consumer) {
     int index = alphabet.getIndex(first, false);
     if (index == -1) return;
 
@@ -109,11 +113,17 @@ public final class CompressedDictionary implements Dictionary {
       for (int x = 0; x < data.length; x += length) {
         if (encoder.getFirstLetterIndex(data[x]) == index) {
           String decoded = encoder.decode(data, x, x + length);
-          result.add(decoded);
+          consumer.consume(decoded);
         }
       }
       i++;
     }
+  }
+
+
+  @Override
+  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+      getWords(word.charAt(0), 0, Integer.MAX_VALUE, consumer);
   }
 
   @NotNull

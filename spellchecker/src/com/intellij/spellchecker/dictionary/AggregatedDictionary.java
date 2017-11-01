@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,15 @@ public class AggregatedDictionary implements EditableDictionary {
   @Override
   public void traverse(@NotNull final Consumer<String> consumer) {
     cachedDictionary.traverse(consumer);
+  }
+
+  @Override
+  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+    traverse(s -> {
+      if (!StringUtil.isEmpty(s) && s.charAt(0) == word.charAt(0) && s.length() >= 0 && s.length() <= Integer.MAX_VALUE) {
+        consumer.consume(s);
+      }
+    });
   }
 
   @Override
