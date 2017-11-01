@@ -69,14 +69,14 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         Shape outerRect = new RoundRectangle2D.Double(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom),
                                                       ARC_SIZE, ARC_SIZE);
         Paint p;
-        if (isDefaultButton(c)) {
+        if (!b.isEnabled()) {
+          p = Gray.xF1;
+        } else if (isDefaultButton(c)) {
           p = IntelliJLaf.isGraphite() ?
               new GradientPaint(w/2, i.top, new Color(0xb2b2b7), w/2, h - (i.top + i.bottom), new Color(0x929297)) :
               new GradientPaint(w/2, i.top, new Color(0x68b2fa), w/2, h - (i.top + i.bottom), new Color(0x0e80ff));
-        } else if (b.isEnabled()) {
-          p = Gray.xFF;
         } else {
-          p = Gray.xF1;
+          p = Gray.xFF;
         }
 
         g2.setPaint(p);
@@ -90,14 +90,14 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
                                                    h - lw*2 - (i.top + i.bottom),
                                                    ARC_SIZE - lw, ARC_SIZE - lw), false);
 
-        if (isDefaultButton(c)) {
+        if (!b.isEnabled()) {
+          p = new GradientPaint(w/2, i.top, Gray.xD2, w/2, h - (i.top + i.bottom), Gray.xC3);
+        } else if (isDefaultButton(c)) {
           p = IntelliJLaf.isGraphite() ?
               new GradientPaint(w/2, i.top, new Color(0xa5a5ab), w/2, h - (i.top + i.bottom), new Color(0x7d7d83)) :
               new GradientPaint(w/2, i.top, new Color(0x4ba0f8), w/2, h - (i.top + i.bottom), new Color(0x095eff));
-        } else if (b.isEnabled()) {
-          p = new GradientPaint(w/2, i.top, Gray.xC9, w/2, h - (i.top + i.bottom), Gray.xAC);
         } else {
-          p = new GradientPaint(w/2, i.top, Gray.xD2, w/2, h - (i.top + i.bottom), Gray.xC3);
+          p = new GradientPaint(w/2, i.top, Gray.xC9, w/2, h - (i.top + i.bottom), Gray.xAC);
         }
 
         g2.setPaint(p);
