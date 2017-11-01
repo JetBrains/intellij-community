@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -68,6 +69,24 @@ public class DictionaryTest {
 
     assertEquals(onDisk, dictionary.getWords());
   }
+  
+  @Test
+  public void testGetSuggestions(){
+    final ArrayList<String> suggestions = new ArrayList<>();
+    Dictionary dictionary = CompressedDictionary.create(getLoader(ENGLISH_DIC), myTransformation);
+    dictionary.getSuggestions("typpo",suggestions::add);
+    assert suggestions.contains("typo");
+    assert suggestions.stream().anyMatch(a -> a.charAt(0) == 't');
+  }
+
+  @Test
+  public void testNoSuggestions(){
+    final ArrayList<String> suggestions = new ArrayList<>();
+    Dictionary dictionary = CompressedDictionary.create(getLoader(ENGLISH_DIC), myTransformation);
+    dictionary.getSuggestions("руссский",suggestions::add);
+    assert suggestions.isEmpty();
+  }
+
 
   private Dictionary loadDictionaryPerformanceTest(final String name, int time) {
     final Ref<Dictionary> ref = Ref.create();

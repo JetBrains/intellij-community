@@ -23,14 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.EditDistance;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +37,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static com.intellij.util.text.EditDistance.optimalAlignment;
+import static java.util.stream.Collectors.toList;
 
 public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
@@ -132,25 +133,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return transform;
   }
 
-  private static void restore(char startFrom, int j, Collection<? extends Dictionary> dictionaries, Collection<String> result) {
-    for (Dictionary o : dictionaries) {
-      restore(startFrom, j, o, result);
-    }
-  }
-
-  private static void restore(final char first, final int j, Dictionary dictionary, final Collection<String> result) {
-    if (dictionary instanceof CompressedDictionary) {
-      ((CompressedDictionary)dictionary).getWords(first, 0, j, result);
-    }
-    else {
-      dictionary.traverse(s -> {
-        if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= 0 && s.length() <= j) {
-          result.add(s);
-        }
-      });
-    }
-  }
-
   /**
    * @param transformed
    * @param dictionaries
@@ -188,30 +170,18 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
     String transformed = transform.transform(word);
     if (transformed == null) return Collections.emptyList();
-
-    List<String> rawSuggestions = new ArrayList<>();
-    restore(transformed.charAt(0), Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
-    restore(word.charAt(0), Integer.MAX_VALUE, dictionaries, rawSuggestions);
-    if (rawSuggestions.isEmpty()) return Collections.emptyList();
-
-    List<Suggestion> suggestions = new ArrayList<>(rawSuggestions.size());
-    for (String rawSuggestion : rawSuggestions) {
-      int distance = EditDistance.optimalAlignment(transformed, rawSuggestion, true);
-      suggestions.add(new Suggestion(rawSuggestion, distance));
+    List<Suggestion> suggestions = new ArrayList<>();
+    for (Dictionary dict : concat(bundledDictionaries, dictionaries)) {
+      dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, optimalAlignment(transformed, s, true))));
     }
 
     Collections.sort(suggestions);
-    int limit = Math.min(maxSuggestions, suggestions.size());
-    List<String> result = new ArrayList<>(limit);
     int bestMetrics = suggestions.get(0).getMetrics();
-    for (int i = 0; i < limit; i++) {
-      Suggestion suggestion = suggestions.get(i);
-      if (bestMetrics - suggestion.getMetrics() > quality) {
-        break;
-      }
-      result.add(i, suggestion.getWord());
-    }
-    return result;
+    return suggestions.stream()
+      .limit(maxSuggestions)
+      .filter(i -> bestMetrics - i.getMetrics() < quality)
+      .map(Suggestion::getWord)
+      .collect(toList());
   }
 
   @Override
