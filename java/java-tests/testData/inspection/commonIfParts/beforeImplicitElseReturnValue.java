@@ -5,12 +5,10 @@ import java.util.List;
 import java.util.Set;
 
 public class IfStatementWithIdenticalBranches {
-  int getX() {
-    return 42;
-  }
-
   int work() {
-      int y = getX();
-      return y;
+    if<caret>(true)  {
+      return 12;
+    }
+    return 12;
   }
 }

@@ -11,5 +11,6 @@ public class IfStatementWithIdenticalBranches {
 
   void work() {
       int x = getX();
+      return;
   }
 }

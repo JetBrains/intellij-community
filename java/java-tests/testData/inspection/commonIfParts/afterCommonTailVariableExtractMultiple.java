@@ -7,7 +7,7 @@ public class Main {
 
   private void work(int i){};
 
-  public void test(int a, int b) {
+  public int test(int a, int b) {
       int c;
       if(true) {
           c = a + b;

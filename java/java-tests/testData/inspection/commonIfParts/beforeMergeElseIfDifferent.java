@@ -1,4 +1,4 @@
-// "Extract common part removing branch " "false"
+// "Merge else if statement" "false"
 
 import java.util.Collection;
 import java.util.List;
@@ -9,14 +9,13 @@ public class IfStatementWithIdenticalBranches {
     return 42;
   }
 
-  int work() {
-    if(true) <caret> {
-      final int y = getX();
-      return y;
-    } else {
+  void work() {
+    if<caret> (true) {
+      int x = 12;
+    } else if(false) {
       int x = getX();
-      System.out.println(x);
-      return x;
+    } else{
+      int y = 13;
     }
   }
 }

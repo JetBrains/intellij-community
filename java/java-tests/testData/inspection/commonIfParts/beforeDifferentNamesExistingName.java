@@ -1,4 +1,4 @@
-// "Extract common part removing branch " "true"
+// "Extract common part removing branch " "false"
 
 import java.util.Collection;
 import java.util.List;
@@ -10,10 +10,14 @@ public class IfStatementWithIdenticalBranches {
   }
 
   int work() {
+    if<caret>(true)  {
       final int y = getX();
-      if (!true) {
-          System.out.println(y);
-      }
       return y;
+    } else {
+      final int x = getX();
+      final int y = getX();
+      System.out.println(x);
+      return x;
+    }
   }
 }

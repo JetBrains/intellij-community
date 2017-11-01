@@ -9,7 +9,7 @@ public class IfStatementWithIdenticalBranches {
     return 42;
   }
 
-  void work() {
+  int work() {
     if<caret>(true)  {
       final int y = getX();
       return y;

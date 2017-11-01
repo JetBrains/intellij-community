@@ -20,7 +20,7 @@ public class Test {
   }
 
   class Test {
-    void work() {
+    int work() {
       if<caret> (true) {
         @MyAnnotation1 Object x = null;
         return 42;
