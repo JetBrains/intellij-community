@@ -17,10 +17,10 @@ public abstract class BaseDebuggerTransport implements DebuggerTransport {
 
   protected final Object mySocketObject = new Object();
 
-  @NotNull protected final DebuggerCommunication myDebuggerMessageHandler;
+  @NotNull protected final DebuggerCommunication myDebuggerCommunication;
 
-  protected BaseDebuggerTransport(@NotNull DebuggerCommunication debuggerMessageHandler) {
-    myDebuggerMessageHandler = debuggerMessageHandler;
+  protected BaseDebuggerTransport(@NotNull DebuggerCommunication debuggerCommunication) {
+    myDebuggerCommunication = debuggerCommunication;
   }
 
   @Override

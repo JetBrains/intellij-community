@@ -24,8 +24,8 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private volatile Socket mySocket;
   private int myConnectionTimeout;
 
-  public ServerModeDebuggerTransport(DebuggerCommunication debuggerMessageHandler, @NotNull ServerSocket socket, int connectionTimeout) {
-    super(debuggerMessageHandler);
+  public ServerModeDebuggerTransport(DebuggerCommunication debuggerCommunication, @NotNull ServerSocket socket, int connectionTimeout) {
+    super(debuggerCommunication);
     myServerSocket = socket;
     myConnectionTimeout = connectionTimeout;
   }
@@ -41,7 +41,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
     try {
       synchronized (mySocketObject) {
-        myDebuggerReader = new DebuggerReader(myDebuggerMessageHandler, mySocket.getInputStream());
+        myDebuggerReader = new DebuggerReader(myDebuggerCommunication, mySocket.getInputStream());
       }
     }
     catch (IOException e) {
@@ -110,22 +110,22 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   protected void onSocketException() {
-    myDebuggerMessageHandler.disconnect();
-    myDebuggerMessageHandler.fireCommunicationError();
+    myDebuggerCommunication.disconnect();
+    myDebuggerCommunication.fireCommunicationError();
   }
 
   public static class DebuggerReader extends BaseDebuggerReader {
-    public DebuggerReader(@NotNull DebuggerCommunication debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
+    public DebuggerReader(@NotNull DebuggerCommunication debuggerCommunication, @NotNull InputStream stream) throws IOException {
+      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerCommunication); //TODO: correct encoding?
       start(getClass().getName());
     }
 
     @Override
     protected void onExit() {
-      getDebuggerMessageHandler().fireExitEvent();
+      getDebuggerCommunication().fireExitEvent();
     }
 
     @Override
-    protected void onCommunicationError() {getDebuggerMessageHandler().fireCommunicationError();}
+    protected void onCommunicationError() {getDebuggerCommunication().fireCommunicationError();}
   }
 }

@@ -59,10 +59,10 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Nullable private Socket mySocket;
   @Nullable private volatile DebuggerReader myDebuggerReader;
 
-  public ClientModeDebuggerTransport(@NotNull DebuggerCommunication debuggerMessageHandler,
+  public ClientModeDebuggerTransport(@NotNull DebuggerCommunication debuggerCommunication,
                                      @NotNull String host,
                                      int port) {
-    super(debuggerMessageHandler);
+    super(debuggerCommunication);
     myHost = host;
     myPort = port;
   }
@@ -111,7 +111,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           synchronized (mySocketObject) {
             stream = mySocket.getInputStream();
           }
-          myDebuggerReader = new DebuggerReader(myDebuggerMessageHandler, stream);
+          myDebuggerReader = new DebuggerReader(myDebuggerCommunication, stream);
         }
         catch (IOException e) {
           LOG.debug("Failed to create debugger reader", e);
@@ -122,7 +122,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           beforeHandshake.countDown();
           try {
-            myDebuggerMessageHandler.handshake();
+            myDebuggerCommunication.handshake();
             myDebuggerReader.connectionApproved();
             return true;
           }
@@ -194,9 +194,9 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   protected void onSocketException() {
-    myDebuggerMessageHandler.disconnect();
+    myDebuggerCommunication.disconnect();
     if (myState == State.APPROVED) {
-      myDebuggerMessageHandler.fireCommunicationError();
+      myDebuggerCommunication.fireCommunicationError();
     }
   }
 
@@ -258,22 +258,22 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
      */
     private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
 
-    public DebuggerReader(@NotNull DebuggerCommunication debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
+    public DebuggerReader(@NotNull DebuggerCommunication debuggerCommunication, @NotNull InputStream stream) throws IOException {
+      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerCommunication); //TODO: correct encoding?
       start(getClass().getName());
     }
 
     @Override
     protected void onExit() {
       if (myConnectionApproved.get()) {
-        getDebuggerMessageHandler().fireExitEvent();
+        getDebuggerCommunication().fireExitEvent();
       }
     }
 
     @Override
     protected void onCommunicationError() {
       if (myConnectionApproved.get()) {
-        getDebuggerMessageHandler().fireCommunicationError();
+        getDebuggerCommunication().fireCommunicationError();
       }
     }
 

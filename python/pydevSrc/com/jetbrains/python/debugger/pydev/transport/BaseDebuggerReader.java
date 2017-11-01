@@ -19,19 +19,19 @@ import java.util.concurrent.Future;
 public abstract class BaseDebuggerReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance(BaseDebuggerReader.class);
 
-  @NotNull private final DebuggerCommunication myDebuggerMessageHandler;
+  @NotNull private final DebuggerCommunication myDebuggerCommunication;
   @NotNull private StringBuilder myTextBuilder = new StringBuilder();
 
   public BaseDebuggerReader(@NotNull InputStream inputStream,
                             @NotNull Charset charset,
-                            @NotNull DebuggerCommunication debuggerMessageHandler) {
+                            @NotNull DebuggerCommunication debuggerCommunication) {
     super(inputStream, charset);
-    myDebuggerMessageHandler = debuggerMessageHandler;
+    myDebuggerCommunication = debuggerCommunication;
   }
 
   @NotNull
-  protected DebuggerCommunication getDebuggerMessageHandler() {
-    return myDebuggerMessageHandler;
+  protected DebuggerCommunication getDebuggerCommunication() {
+    return myDebuggerCommunication;
   }
 
   protected void doRun() {
@@ -99,7 +99,7 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
       }
 
       for (String line : lines) {
-        myDebuggerMessageHandler.processResponse(line + "\n");
+        myDebuggerCommunication.processResponse(line + "\n");
       }
     }
   }
