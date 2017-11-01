@@ -666,7 +666,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   @NotNull
   private CodeFormatterFacade getFormatterFacade(@NotNull FileViewProvider viewProvider) {
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getFileSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
     assert document != null;

@@ -221,7 +221,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     if (file.isValid()) {
       return new DocCommentSettings() {
         private final JavaCodeStyleSettings mySettings =
-          CodeStyleSettingsManager.getSettings(file.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+          CodeStyleSettingsManager.getCustomSettings(file, JavaCodeStyleSettings.class);
 
         @Override
         public boolean isDocFormattingEnabled() {
