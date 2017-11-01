@@ -133,46 +133,7 @@ public class DaemonStatusAction {
                                     daemonExpirationStatus, null, null, null, null));
       }
 
-
-      //if (daemonStatuses.isEmpty()) {
-      //LOGGER.quiet("No Gradle daemons are running.");
-      //}
-
-      //if (!daemonStatuses.isEmpty() || !stopEvents.isEmpty()) {
-      //LOGGER.quiet(String.format("%1$6s %2$-8s %3$s", "PID", "STATUS", "INFO"));
-      //}
-
-      //this.printRunningDaemons(daemonStatuses);
-      //this.printStoppedDaemons(stopEvents);
-      //LOGGER.quiet("");
-      //LOGGER.quiet("Only Daemons for the current Gradle version are displayed. See " +
-      //             this.documentationRegistry.getDocumentationFor("gradle_daemon", "sec:status"));
-
       return daemons;
     }
-
-    //void printRunningDaemons(List<Status> statuses) {
-    //  if (!statuses.isEmpty()) {
-    //    Iterator i$ = statuses.iterator();
-    //
-    //    while (i$.hasNext()) {
-    //      Status status = (Status)i$.next();
-    //      Long pid = status.getPid();
-    //      LOGGER.quiet(String.format("%1$6s %2$-8s %3$s", pid == null ? "PID unknown" : pid, status.getStatus(), status.getVersion()));
-    //    }
-    //  }
-    //}
-    //
-    //void printStoppedDaemons(List<DaemonStopEvent> stopEvents) {
-    //  if (!stopEvents.isEmpty()) {
-    //    Iterator i$ = stopEvents.iterator();
-    //
-    //    while (i$.hasNext()) {
-    //      DaemonStopEvent event = (DaemonStopEvent)i$.next();
-    //      Long pid = event.getPid();
-    //      LOGGER.quiet(String.format("%1$6s %2$-8s %3$s", pid == null ? "PID unknown" : pid, "STOPPED", "(" + event.getReason() + ")"));
-    //    }
-    //  }
-    //}
   }
 }
