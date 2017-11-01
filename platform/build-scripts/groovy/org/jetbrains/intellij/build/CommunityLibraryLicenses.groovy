@@ -388,7 +388,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
-    new LibraryLicense(name: "Plantuml", libraryName: "plantuml", version: "1.2017.18", license: "Apache 2.0",
+    new LibraryLicense(name: "Plantuml", libraryName: "plantuml.jar", version: "1.2017.18", license: "Apache 2.0",
                        url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("Coverage"),
