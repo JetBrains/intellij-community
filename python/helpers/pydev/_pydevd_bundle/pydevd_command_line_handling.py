@@ -130,7 +130,6 @@ def process_command_line(argv):
 
             del argv[i]
 
-
         elif argv[i] == '--file':
             # --file is special because it's the last one (so, no handler for it).
             del argv[i]
