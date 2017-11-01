@@ -160,8 +160,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PyImportedNameDefiner definer = (PyImportedNameDefiner)definition;
         final List<RatedResolveResult> resolvedResults = definer.multiResolveName(name);
         for (RatedResolveResult result : resolvedResults) {
-          final PsiElement resolved = result.getElement();
-          ret.add(new ImportedResolveResult(resolved, getRate(resolved, context), definer));
+          ret.add(new ImportedResolveResult(result.getElement(), result.getRate(), definer));
         }
         if (resolvedResults.isEmpty()) {
           ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_NORMAL, definer));
