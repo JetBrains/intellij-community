@@ -384,7 +384,10 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x",
                        license: "link (commercial license)", url: "http://yourkit.com/",
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
-    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
+                       url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "Plantuml", libraryName: "plantuml", version: "1.2017.18", license: "Apache 2.0",
+                       url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),
