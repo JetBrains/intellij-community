@@ -75,7 +75,7 @@ public class UnindentSelectionAction extends EditorAction {
 
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
-    int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).INDENT_SIZE;
+    int blockIndent = CodeStyleSettingsManager.getIndentOptions(file).INDENT_SIZE;
     IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);
   }
 }

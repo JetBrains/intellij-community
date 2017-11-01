@@ -221,7 +221,7 @@ public class EditorActionUtil {
   private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).SMART_TABS;
+    return CodeStyleSettingsManager.getIndentOptions(file).SMART_TABS;
   }
 
   public static boolean isWordOrLexemeStart(@NotNull Editor editor, int offset, boolean isCamel) {
