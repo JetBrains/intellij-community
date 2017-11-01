@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
@@ -57,12 +56,6 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   @Override
   public int getSelectionMode() {
     return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
-  }
-
-  @NotNull
-  @Override
-  public String getWindowId() {
-    return ToolWindowId.BUILD;
   }
 
   @Override
