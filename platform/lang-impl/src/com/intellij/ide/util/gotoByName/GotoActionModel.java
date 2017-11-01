@@ -261,7 +261,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     int emptyIconWidth = EMPTY_ICON.getIconWidth();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
     if (width <= emptyIconWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
                           (emptyIconWidth - width) / 2, 
                           (emptyIconHeight - height) / 2);
     }
