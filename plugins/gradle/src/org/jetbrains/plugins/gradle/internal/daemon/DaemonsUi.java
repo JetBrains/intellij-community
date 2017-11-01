@@ -129,12 +129,6 @@ public class DaemonsUi implements Disposable {
   }
 
   private static class DaemonsTable extends ListTableWithButtons<DaemonState> {
-    public DaemonsTable() {
-      //MultiLineTableCellRenderer renderer = new MultiLineTableCellRenderer();
-      //set TableCellRenderer into a specified JTable column class
-      //getTableView().setDefaultRenderer(String[].class, renderer);
-    }
-
     @Override
     protected ListTableModel createListModel() {
       final ColumnInfo pidColumn = new DaemonsTable.TableColumn("PID", 80) {
