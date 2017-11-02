@@ -48,6 +48,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -204,8 +206,10 @@ public class GrClassImplUtil {
       }
     }
 
-    for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+    if (shouldProcessTypeParameters(processor)) {
+      for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
+        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+      }
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 
 @JvmField val NON_CODE = Key.create<Boolean?>("groovy.process.non.code.members")
@@ -55,6 +56,12 @@ fun PsiScopeProcessor.shouldProcessMembers(): Boolean {
   return hint.shouldProcess(DeclarationKind.CLASS) ||
          hint.shouldProcess(DeclarationKind.FIELD) ||
          hint.shouldProcess(DeclarationKind.METHOD)
+}
+
+fun PsiScopeProcessor.shouldProcessTypeParameters(): Boolean {
+  if (shouldProcessClasses()) return true
+  val groovyKindHint = getHint(GroovyResolveKind.HINT_KEY) ?: return true
+  return groovyKindHint.shouldProcess(GroovyResolveKind.TYPE_PARAMETER)
 }
 
 fun PsiScopeProcessor.shouldProcessProperties(): Boolean {
