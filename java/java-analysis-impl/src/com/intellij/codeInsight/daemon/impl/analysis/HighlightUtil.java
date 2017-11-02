@@ -2690,11 +2690,13 @@ public class HighlightUtil extends HighlightUtilBase {
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
+
     if (resolved instanceof PsiClass &&
         ((PsiClass)resolved).getContainingClass() == null &&
-        PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
-        PsiUtil.isFromDefaultPackage((PsiClass)resolved)) {
-      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        PsiUtil.isFromDefaultPackage(resolved) &&
+        (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
+         PsiUtil.isModuleFile(containingFile))) {
+      String description = JavaErrorMessages.message("class.in.default.package", ((PsiClass)resolved).getName());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
     }
 
