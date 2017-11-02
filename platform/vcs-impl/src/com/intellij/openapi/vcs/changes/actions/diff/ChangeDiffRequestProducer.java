@@ -33,6 +33,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -63,10 +64,10 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
-  public static final String YOUR_VERSION = "Your version";
-  public static final String SERVER_VERSION = "Server version";
-  public static final String BASE_VERSION = "Base Version";
-  public static final String MERGED_VERSION = "Merged Version";
+  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
+  public static final String SERVER_VERSION = DiffBundle.message("merge.version.title.their");
+  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
+  public static final String MERGED_VERSION = DiffBundle.message("merge.version.title.merged");
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
@@ -344,7 +345,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       DiffContent content2 = createContent(project, aRev, context, indicator);
 
       final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
-      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
+      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, BASE_VERSION);
       final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
       String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, YOUR_VERSION);
 

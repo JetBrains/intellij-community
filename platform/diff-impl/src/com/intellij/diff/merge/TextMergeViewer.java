@@ -121,7 +121,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   @NotNull
   private static List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
     List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
-    titles.set(ThreeSide.BASE.getIndex(), "Result");
+    titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
     return titles;
   }
 
