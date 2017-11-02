@@ -61,7 +61,7 @@ import java.util.*;
 
 import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
 
-public final class PackageViewPane extends AbstractProjectViewPSIPane {
+public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
