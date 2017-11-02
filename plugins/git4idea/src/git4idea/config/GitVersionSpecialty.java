@@ -191,6 +191,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  INCOMING_OUTGOING_BRANCH_INFO {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   LF_SEPARATORS_IN_STDIN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

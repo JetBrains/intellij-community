@@ -15,6 +15,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.config.GitVcsSettings;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
@@ -51,7 +52,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   public void startScheduling() {
     myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
     if (myPeriodicalUpdater == null) {
-      myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchInfo(), 1, 5, TimeUnit.MINUTES);
+      myPeriodicalUpdater = JobScheduler.getScheduler()
+        .scheduleWithFixedDelay(() -> updateBranchInfo(), 1, GitVcsSettings.getInstance(myProject).getBranchInfoUpdateTime(),
+                                TimeUnit.MINUTES);
       Disposer.register(myProject, new Disposable() {
         @Override
         public void dispose() {
