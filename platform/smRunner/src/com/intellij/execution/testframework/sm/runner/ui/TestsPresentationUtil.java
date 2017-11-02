@@ -102,7 +102,7 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(StringUtil.formatDuration(time)).append(')');
+      sb.append('(').append(StringUtil.formatDuration(time, "\u2009")).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
