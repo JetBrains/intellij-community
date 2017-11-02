@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessClasses
  * - [name] = `Bar`
  * - [isAliased] = `false`
  */
-
 class RegularImport internal constructor(
   override val statement: GrImportStatement?,
   val classFqn: String,
@@ -39,6 +38,7 @@ class RegularImport internal constructor(
   override val isAliased: Boolean = getShortName(classFqn) != name
 
   override fun resolve(file: GroovyFile): PsiClass? {
+    if (!file.packageName.isEmpty() && '.' !in classFqn) return null
     val facade = JavaPsiFacade.getInstance(file.project)
     return facade.findClass(classFqn, file.resolveScope)
   }
