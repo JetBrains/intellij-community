@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
@@ -10,8 +8,11 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -146,6 +147,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
         if (targetClasses.length > 0) {
           PsiReference ref = restoreReference();
           if (ref != null) {
+            DumbService.getInstance(project).completeJustSubmittedTasks();
             new AddImportAction(project, ref, editor, targetClasses).execute();
           }
         }
