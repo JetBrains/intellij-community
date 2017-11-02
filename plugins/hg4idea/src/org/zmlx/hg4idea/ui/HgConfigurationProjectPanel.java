@@ -15,12 +15,14 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgProjectConfigurable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -29,23 +31,20 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 
-public class HgConfigurationProjectPanel {
-
-  @NotNull private final HgProjectSettings myProjectSettings;
-
+public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder> {
   private JPanel myMainPanel;
   private JCheckBox myCheckIncomingOutgoingCbx;
   private JCheckBox myIgnoredWhitespacesInAnnotationsCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JButton myTestButton;
   private JBCheckBox mySyncControl;
-  private final HgVcs myVcs;
 
-  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @NotNull Project project) {
-    myProjectSettings = projectSettings;
-    myVcs = HgVcs.getInstance(project);
-    loadSettings();
+  @NotNull private final Project myProject;
+
+  public HgConfigurationProjectPanel(@NotNull Project project) {
+    myProject = project;
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         String executable = getCurrentPath();
@@ -72,43 +71,49 @@ public class HgConfigurationProjectPanel {
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Mercurial"));
   }
 
-  public boolean isModified() {
-    boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
-    return executableModified ||
-           myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing() ||
-           ((myProjectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected()) ||
-           myIgnoredWhitespacesInAnnotationsCbx.isSelected() != myProjectSettings.isWhitespacesIgnoredInAnnotations();
-  }
-
-  public void saveSettings() {
-    myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
-    myProjectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
-    myProjectSettings.setHgExecutable(getCurrentPath());
-    myProjectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
-    myVcs.checkVersion();
-  }
-
   private String getCurrentPath() {
     return myPathSelector.getText().trim();
   }
 
-  public void loadSettings() {
-    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing());
-    myIgnoredWhitespacesInAnnotationsCbx.setSelected(myProjectSettings.isWhitespacesIgnoredInAnnotations());
-    myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
-    mySyncControl.setSelected(myProjectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
-  }
-
-  public JPanel getPanel() {
-    return myMainPanel;
-  }
-
   private void createUIComponents() {
-    myPathSelector = new HgSetExecutablePathPanel(myProjectSettings);
+    myPathSelector = new HgSetExecutablePathPanel();
+  }
+
+  @Override
+  public void reset(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    myCheckIncomingOutgoingCbx.setSelected(settings.getProjectSettings().isCheckIncomingOutgoing());
+    myIgnoredWhitespacesInAnnotationsCbx.setSelected(settings.getProjectSettings().isWhitespacesIgnoredInAnnotations());
+    myPathSelector.setText(settings.getGlobalSettings().getHgExecutable());
+    mySyncControl.setSelected(settings.getProjectSettings().getSyncSetting() == DvcsSyncSettings.Value.SYNC);
+  }
+
+  @Override
+  public boolean isModified(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    boolean executableModified = !getCurrentPath().equals(settings.getProjectSettings().getHgExecutable());
+    return executableModified ||
+           myCheckIncomingOutgoingCbx.isSelected() != settings.getProjectSettings().isCheckIncomingOutgoing() ||
+           ((settings.getProjectSettings().getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected()) ||
+           myIgnoredWhitespacesInAnnotationsCbx.isSelected() != settings.getProjectSettings().isWhitespacesIgnoredInAnnotations();
+  }
+
+  @Override
+  public void apply(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
+    settings.getProjectSettings().setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
+    if (myCheckIncomingOutgoingCbx.isSelected()) {
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
+    }
+    else {
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
+    }
+    settings.getProjectSettings().setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
+    settings.getProjectSettings().setHgExecutable(getCurrentPath());
+    settings.getProjectSettings().setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
+    Objects.requireNonNull(HgVcs.getInstance(myProject)).checkVersion();
   }
 
   @NotNull
-  public HgProjectSettings getProjectSettings() {
-    return myProjectSettings;
+  @Override
+  public JComponent getComponent() {
+    return myMainPanel;
   }
 }

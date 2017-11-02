@@ -17,29 +17,15 @@ import java.util.Set;
  * and checks validity of the selected file to be an hg executable.
  */
 class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
-
-  private final Set<ActionListener> myOkListeners = new HashSet<>();
-
-  HgSetExecutablePathPanel(final HgProjectSettings projectSettings) {
+  HgSetExecutablePathPanel() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         String path = files[0].getPath();
         if (!HgUtil.isExecutableValid(path)) {
           throw new ConfigurationException(HgVcsMessages.message("hg4idea.configuration.executable.error", path));
         }
-        for (ActionListener okListener : myOkListeners) {
-          okListener.actionPerformed(null);
-        }
       }
     };
     addBrowseFolderListener(HgVcsMessages.message("hg4idea.configuration.title"), HgVcsMessages.message("hg4idea.configuration.description"), null, descriptor);
   }
-
-  /**
-   * Adds a listener which will be called when file chooser dialog is closed successfully.
-   */
-  void addOKListener(ActionListener listener) {
-    myOkListeners.add(listener);
-  }
-
 }

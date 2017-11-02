@@ -145,7 +145,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(getProject(), projectSettings);
+    return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
   }
 
   @NotNull
