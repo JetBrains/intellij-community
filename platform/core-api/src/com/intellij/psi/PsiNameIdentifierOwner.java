@@ -18,6 +18,11 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * A Psi element which has a name given by an identifier token in the Psi tree.
+ * <p/>
+ * Implementors should also override {@link PsiElement#getTextOffset()} to return
+ * the relative offset of the identifier token.
+ *
  * @author yole
  */
 public interface PsiNameIdentifierOwner extends PsiNamedElement {
