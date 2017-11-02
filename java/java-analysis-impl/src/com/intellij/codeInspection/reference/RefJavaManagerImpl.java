@@ -357,14 +357,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
-    if (refEntity instanceof RefElement) {
-      final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
-      if (pointer != null) {
-        final PsiFile psiFile = pointer.getContainingFile();
-        if (psiFile instanceof PsiJavaFile) {
-          appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
-        }
-      }
+    String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
+    if (packageName != null) {
+      final Element packageElement = new Element("package");
+      packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
+      element.addContent(packageElement);
     }
   }
 
@@ -374,12 +371,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
-  }
-
-  private static void appendPackageElement(final Element element, final String packageName) {
-    final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
-    element.addContent(packageElement);
   }
 
   @Override
