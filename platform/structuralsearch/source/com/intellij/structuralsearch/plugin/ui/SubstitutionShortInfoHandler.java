@@ -135,7 +135,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
         final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
-        append(buf, "reference target matches: " + text);
+        append(buf, SSRBundle.message("reference.target.tooltip.message",
+                                      constraint.isInvertReference() ? SSRBundle.message("not.tooltip.message") : "", text));
       }
 
       if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
