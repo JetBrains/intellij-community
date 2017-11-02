@@ -41,11 +41,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
                                                            new Color(0x0075da) :
                                                            new JBColor(Gray.x80, Gray.x83));
 
-  private static final Color RED = new JBColor(new Color(0xd80000), new Color(0xff4053));
-  private static final Color RED_LIGHT = new JBColor(new Color(0xfb8f89), new Color(0xf4a2a0));
+  private static final Color RED = new JBColor(0xd80000, 0xff4053);
+  private static final Color RED_LIGHT = new JBColor(0xfb8f89, 0xf4a2a0);
 
-  private static final Color GREEN = new JBColor(new Color(0x34b171), new Color(0x008f50));
-  private static final Color GREEN_LIGHT = new JBColor(new Color(0x7ee8a5), new Color(0x5dc48f));
+  private static final Color GREEN = new JBColor(0x34b171, 0x008f50);
+  private static final Color GREEN_LIGHT = new JBColor(0x7ee8a5, 0x5dc48f);
 
   private static final int CYCLE_TIME_DEFAULT = 800;
   private static final int REPAINT_INTERVAL_DEFAULT = 50;
