@@ -38,6 +38,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   @Override
   public void clear() {
     scanned.clear();
+    scannedText.clear();
     scannedComments.clear();
     scannedLiterals.clear();
   }
@@ -91,6 +92,6 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
   @Override
   public boolean isScannedSomething() {
-    return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;
+    return !scanned.isEmpty() || !scannedText.isEmpty() || !scannedComments.isEmpty() || !scannedLiterals.isEmpty();
   }
 }
