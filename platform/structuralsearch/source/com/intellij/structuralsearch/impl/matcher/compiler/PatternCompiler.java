@@ -345,13 +345,14 @@ public class PatternCompiler {
 
     final StringBuilder buf = new StringBuilder();
 
-    Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getSearchPattern());
+    final Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getSearchPattern());
 
-    int segmentsCount = template.getSegmentsCount();
-    String text = template.getTemplateText();
+    final int segmentsCount = template.getSegmentsCount();
+    final String text = template.getTemplateText();
     int prevOffset = 0;
+    final Set<String> seen = new HashSet<>();
 
-    for(int i=0;i<segmentsCount;++i) {
+    for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
 
@@ -364,71 +365,73 @@ public class PatternCompiler {
       buf.append(prefix);
       buf.append(name);
 
-      MatchVariableConstraint constraint = options.getVariableConstraint(name);
-      if (constraint==null) {
-        // we do not edited the constraints
-        constraint = new MatchVariableConstraint();
-        constraint.setName(name);
-        options.addVariableConstraint(constraint);
-      }
+      if (seen.add(name)) {
+        // the same variable can occur multiple times in a single template
+        // no need to process it more than once
 
-      SubstitutionHandler handler = result.createSubstitutionHandler(
-        name,
-        prefix + name,
-        constraint.isPartOfSearchResults(),
-        constraint.getMinCount(),
-        constraint.getMaxCount(),
-        constraint.isGreedy()
-      );
+        MatchVariableConstraint constraint = options.getVariableConstraint(name);
+        if (constraint == null) {
+          // we do not edited the constraints
+          constraint = new MatchVariableConstraint();
+          constraint.setName(name);
+          options.addVariableConstraint(constraint);
+        }
 
-      if(constraint.isWithinHierarchy()) {
-        handler.setSubtype(true);
-      }
-
-      if(constraint.isStrictlyWithinHierarchy()) {
-        handler.setStrictSubtype(true);
-      }
-
-      MatchPredicate predicate;
-
-      if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
-        predicate = new RegExpPredicate(
-          constraint.getRegExp(),
-          options.isCaseSensitiveMatch(),
+        SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
-          constraint.isWholeWordsOnly(),
-          constraint.isPartOfSearchResults()
+          prefix + name,
+          constraint.isPartOfSearchResults(),
+          constraint.getMinCount(),
+          constraint.getMaxCount(),
+          constraint.isGreedy()
         );
-        if (constraint.isInvertRegExp()) {
-          predicate = new NotPredicate(predicate);
+
+        if (constraint.isWithinHierarchy()) {
+          handler.setSubtype(true);
         }
-        addPredicate(handler, predicate);
-      }
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-        predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
-
-        if (constraint.isInvertReference()) {
-          predicate = new NotPredicate(predicate);
+        if (constraint.isStrictlyWithinHierarchy()) {
+          handler.setStrictSubtype(true);
         }
-        addPredicate(handler, predicate);
-      }
 
-      addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, name, constraint, handler);
-
-      if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
-        predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
-        if (constraint.isInvertContainsConstraint()) {
-          predicate = new NotPredicate(predicate);
+        if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
+          MatchPredicate predicate = new RegExpPredicate(
+            constraint.getRegExp(),
+            options.isCaseSensitiveMatch(),
+            name,
+            constraint.isWholeWordsOnly(),
+            constraint.isPartOfSearchResults()
+          );
+          if (constraint.isInvertRegExp()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
         }
-        addPredicate(handler, predicate);
-      }
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        assert false;
-      }
+        if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
+          MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
 
+          if (constraint.isInvertReference()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
+        }
+
+        addExtensionPredicates(options, constraint, handler);
+        addScriptConstraint(project, name, constraint, handler);
+
+        if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
+          MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
+          if (constraint.isInvertContainsConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
+        }
+
+        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+          assert false;
+        }
+      }
       prevOffset = offset;
     }
 
