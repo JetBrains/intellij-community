@@ -311,7 +311,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
     private CloseListener(@NotNull final Content content, @NotNull BuildProcessHandler processHandler) {
       myContent = content;
-      content.getManager().addContentManagerListener(this);
+      ContentManager contentManager = content.getManager();
+      if (contentManager != null) {
+        contentManager.addContentManagerListener(this);
+      }
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
       myProcessHandler = processHandler;
     }
