@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult;
+import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -456,7 +457,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, GrCodeReferencePolyVariantResolver.INSTANCE);
+    //return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
   }
 
   @NotNull
