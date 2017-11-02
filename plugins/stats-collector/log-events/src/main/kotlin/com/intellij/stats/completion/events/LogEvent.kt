@@ -21,11 +21,16 @@ import com.intellij.stats.completion.LogEventVisitor
 import com.intellij.stats.completion.LookupEntryInfo
 
 
-abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {
+abstract class LogEvent(
+        @Transient var userUid: String,
+        @Transient var sessionUid: String,
+        @Transient var actionType: Action
+) {
+
     @Transient var recorderId = "completion-stats"
+    @Transient var recorderVersion = "3"
     @Transient var timestamp = System.currentTimeMillis()
-    @Transient var sessionUid: String = sessionId
-    @Transient var actionType: Action = type
+    @Transient var bucket = "0"
 
     abstract fun accept(visitor: LogEventVisitor)
 }

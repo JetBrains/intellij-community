@@ -23,7 +23,7 @@ import java.lang.reflect.Field
 object JsonSerializer {
     private val gson = Gson()
     private val ignoredFields = setOf(
-      "recorderId", "timestamp", "sessionUid", "actionType", "userUid"
+      "recorderId", "timestamp", "sessionUid", "actionType", "userUid", "bucket", "recorderVersion"
     )
 
     fun toJson(obj: Any): String = gson.toJson(obj)
@@ -69,24 +69,34 @@ object LogEventSerializer {
 
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
+        return "${event.timestamp}\t" +
+                "${event.recorderId}\t" +
+                "${event.recorderVersion}\t" +
+                "${event.userUid}\t" +
+                "${event.sessionUid}\t" +
+                "${event.bucket}\t" +
+                "${event.actionType}\t" +
+                JsonSerializer.toJson(event)
     }
 
 
     fun fromString(line: String): DeserializedLogEvent {
-        val pair = tabSeparatedValues(line) ?: return DeserializedLogEvent(null, emptySet(), emptySet())
-        val items = pair.first
-        val start = pair.second
+        val parseResult = parseTabSeparatedLine(line, 7) ?: return DeserializedLogEvent(null, emptySet(), emptySet())
+        val elements = parseResult.elements
+        val endOffset = parseResult.endOffset
 
-        val timestamp = items[0].toLong()
-        val recorderId = items[1]
-        val userUid = items[2]
-        val sessionUid = items[3]
-        val actionType = Action.valueOf(items[4])
+        val timestamp = elements[0].toLong()
+        val recorderId = elements[1]
+        val recorderVersion = elements[2]
+
+        val userUid = elements[3]
+        val sessionUid = elements[4]
+        val bucket = elements[5]
+        val actionType = Action.valueOf(elements[6])
 
         val clazz = actionClassMap[actionType] ?: return DeserializedLogEvent(null, emptySet(), emptySet())
 
-        val json = line.substring(start + 1)
+        val json = line.substring(endOffset + 1)
         val result = JsonSerializer.fromJson(json, clazz)
 
         val event = result.value
@@ -94,23 +104,25 @@ object LogEventSerializer {
         event.userUid = userUid
         event.timestamp = timestamp
         event.recorderId = recorderId
+        event.recorderVersion = recorderVersion
         event.sessionUid = sessionUid
+        event.bucket = bucket
         event.actionType = actionType
 
         return DeserializedLogEvent(event, result.unknownFields, result.absentFields)
     }
 
-    private fun tabSeparatedValues(line: String): Pair<List<String>, Int>? {
+    private fun parseTabSeparatedLine(line: String, elementsCount: Int): TabSeparatedParseResult? {
         val items = mutableListOf<String>()
         var start = -1
         return try {
-            for (i in 0..4) {
+            for (i in 0 until elementsCount) {
                 val nextSpace = line.indexOf('\t', start + 1)
                 val newItem = line.substring(start + 1, nextSpace)
                 items.add(newItem)
                 start = nextSpace
             }
-            Pair(items, start)
+            TabSeparatedParseResult(items, start)
         }
         catch (e: Exception) {
             null
@@ -118,6 +130,9 @@ object LogEventSerializer {
     }
 
 }
+
+
+class TabSeparatedParseResult(val elements: List<String>, val endOffset: Int)
 
 
 class DeserializedLogEvent(
