@@ -44,6 +44,7 @@ public class TestStatusLine extends JPanel {
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
+    myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));

@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.junit.Ignore
 
 import static com.intellij.psi.CommonClassNames.*
 
@@ -95,7 +94,6 @@ class TypeInferenceTest extends TypeInferenceTestBase {
     assertTrue(ref.type.equalsToText("java.lang.String"))
   }
 
-  @Ignore
   void testLeastUpperBoundClosureType() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").element
     assertInstanceOf(ref.type, PsiImmediateClassType.class)
@@ -135,7 +133,6 @@ class TypeInferenceTest extends TypeInferenceTestBase {
     assertNotNull(resolve("A.groovy"))
   }
 
-  @Ignore
   void testMethodCallInvokedOnArrayAccess() {
     final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy")
     assertNotNull(reference)
@@ -788,5 +785,33 @@ def bar(CharSequence xx) {
   }  
 }
 ''', 'java.lang.String'
+  }
+
+  void 'test generic tuple inference with type param'() {
+    doTest '''\
+
+def <T> T func(T arg){
+    return arg
+}
+
+def bar() {
+    def ll = func([[""]])
+    l<caret>l
+}
+''', 'java.util.List<java.util.List<java.lang.String>>'
+  }
+
+  void 'test generic tuple inference with type param 2'() {
+    doTest '''\
+
+def <T> T func(T arg){
+    return arg
+}
+
+def bar() {
+    def ll = func([["", 1]])
+    l<caret>l
+}
+''', 'java.util.List<java.util.List<java.io.Serializable>>'
   }
 }

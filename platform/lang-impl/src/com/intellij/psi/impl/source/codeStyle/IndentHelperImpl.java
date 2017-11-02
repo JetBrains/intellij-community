@@ -21,8 +21,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class IndentHelperImpl extends IndentHelper {
   //----------------------------------------------------------------------------------------------------
@@ -90,18 +92,25 @@ public class IndentHelperImpl extends IndentHelper {
     }
   }
 
-  public static String fillIndent(Project project, FileType fileType, int indent) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+  /**
+   * @deprecated Use {@link #fillIndent(CommonCodeStyleSettings.IndentOptions, int)} instead.
+   */
+  @Deprecated
+  public static String fillIndent(Project project,  FileType fileType, int indent) {
+    return fillIndent(CodeStyleSettingsManager.getSettings(project).getIndentOptions(fileType), indent);
+  }
+
+  public static String fillIndent(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions, int indent) {
     int indentLevel = (indent + INDENT_FACTOR / 2) / INDENT_FACTOR;
     int spaceCount = indent - indentLevel * INDENT_FACTOR;
-    int indentLevelSize = indentLevel * settings.getIndentSize(fileType);
+    int indentLevelSize = indentLevel * indentOptions.INDENT_SIZE;
     int totalSize = indentLevelSize + spaceCount;
 
     StringBuilder buffer = new StringBuilder();
-    if (settings.useTabCharacter(fileType)) {
-      if (settings.isSmartTabs(fileType)) {
-        int tabCount = indentLevelSize / settings.getTabSize(fileType);
-        int leftSpaces = indentLevelSize - tabCount * settings.getTabSize(fileType);
+    if (indentOptions.USE_TAB_CHARACTER) {
+      if (indentOptions.SMART_TABS) {
+        int tabCount = indentLevelSize / indentOptions.TAB_SIZE;
+        int leftSpaces = indentLevelSize - tabCount * indentOptions.TAB_SIZE;
         for (int i = 0; i < tabCount; i++) {
           buffer.append('\t');
         }
@@ -112,9 +121,9 @@ public class IndentHelperImpl extends IndentHelper {
       else {
         int size = totalSize;
         while (size > 0) {
-          if (size >= settings.getTabSize(fileType)) {
+          if (size >= indentOptions.TAB_SIZE) {
             buffer.append('\t');
-            size -= settings.getTabSize(fileType);
+            size -= indentOptions.TAB_SIZE;
           }
           else {
             buffer.append(' ');

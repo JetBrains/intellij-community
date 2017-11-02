@@ -3,6 +3,7 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-api-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-launcher-4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

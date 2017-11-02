@@ -71,16 +71,25 @@ public abstract class ServersToolWindowManager {
 
       boolean doShow = !toolWindow.isAvailable() && available;
       if (toolWindow.isAvailable() && !available) {
-        toolWindow.hide(null);
+        hideToolWindow(toolWindow);
       }
-      toolWindow.setAvailable(available, null);
       if (showIfAvailable && doShow) {
-        toolWindow.show(null);
+        showToolWindow(toolWindow);
       }
     });
   }
 
-  private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+  protected void hideToolWindow(@NotNull ToolWindow toolWindow) {
+    toolWindow.hide(null);
+    toolWindow.setAvailable(false, null);
+  }
+
+  protected void showToolWindow(@NotNull ToolWindow toolWindow) {
+    toolWindow.setAvailable(true, null);
+    toolWindow.show(null);
+  }
+
+  protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(myIcon);
     getFactory().createToolWindowContent(project, toolWindow);
@@ -89,4 +98,9 @@ public abstract class ServersToolWindowManager {
 
   @NotNull
   protected abstract ServersToolWindowFactory getFactory();
+
+  @NotNull
+  protected final Project getProject() {
+    return myProject;
+  }
 }

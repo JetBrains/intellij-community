@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.jetbrains.python.psi.LanguageLevel;
@@ -43,8 +44,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method COULD be made abstract in Py3K
    */
   public void testStaticNoObjectPy3() {
-    setLanguageLevel(LanguageLevel.PYTHON32);
-    ensureStaticNoObject(true);
+    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> ensureStaticNoObject(true));
   }
 
   /**

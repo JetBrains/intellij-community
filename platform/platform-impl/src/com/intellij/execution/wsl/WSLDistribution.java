@@ -49,6 +49,8 @@ public class WSLDistribution {
   @NotNull
   private final String myId;
   @NotNull
+  private final String myMsId;
+  @NotNull
   private final String myExeName;
   @NotNull
   private final String myPresentableName;
@@ -77,11 +79,12 @@ public class WSLDistribution {
   }
 
   public WSLDistribution(@NotNull WSLDistribution dist) {
-    this(dist.myId, dist.myExeName, dist.myPresentableName);
+    this(dist.myId, dist.myMsId, dist.myExeName, dist.myPresentableName);
   }
 
-  WSLDistribution(@NotNull String id, @NotNull String exeName, @NotNull String presentableName) {
+  WSLDistribution(@NotNull String id, @NotNull String msId, @NotNull String exeName, @NotNull String presentableName) {
     myId = id;
+    myMsId = msId;
     myExeName = exeName;
     myPresentableName = presentableName;
   }
@@ -380,6 +383,11 @@ public class WSLDistribution {
   @NotNull
   public String getId() {
     return myId;
+  }
+
+  @NotNull
+  public String getMsId() {
+    return myMsId;
   }
 
   @NotNull

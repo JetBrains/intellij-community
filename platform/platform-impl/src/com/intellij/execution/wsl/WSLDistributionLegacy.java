@@ -24,7 +24,7 @@ public class WSLDistributionLegacy extends WSLDistribution {
   });
 
   private WSLDistributionLegacy() {
-    super("UBUNTU_LEGACY", "bash.exe", "Ubuntu (Legacy)");
+    super("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
   }
 
   @Nullable

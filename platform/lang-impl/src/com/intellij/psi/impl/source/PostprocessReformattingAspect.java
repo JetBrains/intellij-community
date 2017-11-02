@@ -643,7 +643,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
       final int oldIndent = IndentHelperImpl.getIndent(file.getProject(), file.getFileType(), oldIndentStr, true);
       final String newIndentStr = IndentHelperImpl
-        .fillIndent(file.getProject(), file.getFileType(), Math.max(oldIndent + indentAdjustment, 0));
+        .fillIndent(CodeStyleSettingsManager.getIndentOptions(file), Math.max(oldIndent + indentAdjustment, 0));
       document.replaceString(indent.getStartOffset() + 1, indent.getEndOffset(), newIndentStr);
     }
   }
@@ -666,7 +666,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   @NotNull
   private CodeFormatterFacade getFormatterFacade(@NotNull FileViewProvider viewProvider) {
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getFileSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
     assert document != null;

@@ -2279,6 +2279,7 @@ public class UIUtil {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        //noinspection CollectionAddedToSelf
         queue.offer(queue);
       }
     });

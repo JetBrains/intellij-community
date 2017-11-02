@@ -1,0 +1,9 @@
+public class X {
+  void varargFunction(int x, String... y) {
+      ...
+  }
+
+  void f(int i) {
+    varargFunction(12, "AAA", "BBB", "CCC");
+  }
+}

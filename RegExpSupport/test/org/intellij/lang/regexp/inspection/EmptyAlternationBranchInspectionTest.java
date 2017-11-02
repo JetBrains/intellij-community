@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("RegExpSingleCharAlternation")
 public class EmptyAlternationBranchInspectionTest extends RegExpInspectionTestCase {
 
   public void testVeryEmpty() {
