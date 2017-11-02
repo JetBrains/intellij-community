@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -380,6 +378,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
             Object o1 = exposer.m1(null, null);
             Object o2 = exposer.m2(null, null);
           }
+        }""".trimIndent())
+  }
+
+  fun testAccessingDefaultPackage() {
+    addFile("X.java", "public class X {\n  public static class XX extends X { }\n}")
+    highlight("""
+        module M {
+          uses <error descr="Class 'X' is in the default package">X</error>;
+          provides <error descr="Class 'X' is in the default package">X</error> with <error descr="Class 'X' is in the default package">X</error>.XX;
         }""".trimIndent())
   }
 
