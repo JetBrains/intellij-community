@@ -798,7 +798,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     int baseSize = vertical ? baseBounds.width : baseBounds.height;
 
     int maxSize = baseSize - (thumb ? borderSize * 2 : 0);
-    int minSize = Math.min(baseSize / 2, 7) + (thumb ? 0 : borderSize * 2);
+    int minSize = Math.min(baseSize / 2, JBUI.scale(7)) + (thumb ? 0 : borderSize * 2);
 
     int currentSize = minSize + (int)(myMouseOverScrollbarExpandLevel * (maxSize - minSize));
 
