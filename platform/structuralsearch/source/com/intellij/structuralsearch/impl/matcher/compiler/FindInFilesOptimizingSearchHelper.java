@@ -24,6 +24,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final SearchScope myScope;
   private final boolean myCaseSensitive;
 
+  private boolean myTransactionStarted = false;
+
   FindInFilesOptimizingSearchHelper(SearchScope scope, boolean caseSensitive, Project project) {
     myScope = scope;
     myCaseSensitive = caseSensitive;
@@ -53,6 +55,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   @Override
   protected void doAddSearchWordInCode(final String refname) {
+    myTransactionStarted = true;
     CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname,
                                                                      (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_PLAIN_TEXT),
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
@@ -60,24 +63,29 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   @Override
   protected void doAddSearchWordInText(final String refname) {
+    myTransactionStarted = true;
     CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
   protected void doAddSearchWordInComments(final String refname) {
+    myTransactionStarted = true;
     CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_COMMENTS,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
   protected void doAddSearchWordInLiterals(final String refname) {
+    myTransactionStarted = true;
     CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_STRINGS,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
   public void endTransaction() {
+    if (!myTransactionStarted) return;
+    myTransactionStarted = false;
     super.endTransaction();
     final THashSet<PsiFile> map = filesToScan;
     if (!map.isEmpty()) map.clear();
