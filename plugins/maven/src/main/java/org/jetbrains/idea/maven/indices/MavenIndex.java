@@ -47,7 +47,7 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenIndex {
-  private static final String CURRENT_VERSION = "4.1";
+  private static final String CURRENT_VERSION = "5";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -39,6 +40,8 @@ import org.jetbrains.idea.maven.server.*;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
 import org.sonatype.nexus.index.context.IndexingContext;
+import org.sonatype.nexus.index.creator.JarFileContentsIndexCreator;
+import org.sonatype.nexus.index.creator.MinimalArtifactInfoIndexCreator;
 import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
@@ -84,7 +87,8 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
                                                                    indexDir,
                                                                    url,
                                                                    null, // repo update url
-                                                                   NexusIndexer.FULL_INDEX);
+                                                                   Arrays.asList(new TinyArtifactInfoIndexCreator(),
+                                                                                 new JarFileContentsIndexCreator()));
       int id = System.identityHashCode(context);
       myIndices.put(id, context);
       return id;
@@ -222,10 +226,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
         String version = uInfoParts.get(2);
         if (groupId == null || artifactId == null || version == null) continue;
 
-        String info = doc.get(ArtifactInfo.INFO);
-        List<String> infoParts = StringUtil.split(info, ArtifactInfo.FS);
-        String packaging = infoParts.isEmpty() ? null : infoParts.get(0);
-
+        String packaging = doc.get(ArtifactInfo.PACKAGING);
         String description = doc.get(ArtifactInfo.DESCRIPTION);
 
         result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
@@ -368,6 +369,42 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       }
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
+      }
+    }
+  }
+
+  private static class TinyArtifactInfoIndexCreator extends MinimalArtifactInfoIndexCreator {
+
+    @Override
+    public void updateDocument(ArtifactInfo ai, Document doc) {
+      super.updateDocument(ai, doc);
+
+      doc.removeField(ArtifactInfo.INFO);
+
+      doc.removeField(ArtifactInfo.GROUP_ID);
+      doc.removeField(ArtifactInfo.ARTIFACT_ID);
+      doc.removeField(ArtifactInfo.VERSION);
+
+      doc.removeField(ArtifactInfo.NAME);
+      doc.removeField(ArtifactInfo.CLASSIFIER);
+      doc.removeField(ArtifactInfo.SHA1);
+
+      String packaging = doc.get(ArtifactInfo.PACKAGING);
+      if (packaging != null) {
+        doc.removeField(ArtifactInfo.PACKAGING);
+        doc.add(new Field(ArtifactInfo.PACKAGING, packaging, Field.Store.YES, Field.Index.NO));
+      }
+
+      if ("maven-archetype".equals(packaging)) {
+        String description = doc.get(ArtifactInfo.DESCRIPTION);
+
+        doc.removeField(ArtifactInfo.DESCRIPTION);
+        if (description != null) {
+          doc.add(new Field(ArtifactInfo.DESCRIPTION, description, Field.Store.YES, Field.Index.NO));
+        }
+      }
+      else {
+        doc.removeField(ArtifactInfo.DESCRIPTION);
       }
     }
   }

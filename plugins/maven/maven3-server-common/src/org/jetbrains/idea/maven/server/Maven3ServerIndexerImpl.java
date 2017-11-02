@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -90,7 +91,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
                                                                    indexDir,
                                                                    url,
                                                                    null, // repo update url
-                                                                   Arrays.asList(new MinimalArtifactInfoIndexCreator(),
+                                                                   Arrays.asList(new TinyArtifactInfoIndexCreator(),
                                                                                  new JarFileContentsIndexCreator()));
       int id = System.identityHashCode(context);
       myIndices.put(id, context);
@@ -245,10 +246,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         String version = uInfoParts.get(2);
         if (groupId == null || artifactId == null || version == null) continue;
 
-        String info = doc.get(ArtifactInfo.INFO);
-        List<String> infoParts = StringUtil.split(info, ArtifactInfoRecord.FS);
-        String packaging = infoParts.isEmpty() ? null : infoParts.get(0);
-
+        String packaging = doc.get(ArtifactInfo.PACKAGING);
         String description = doc.get(ArtifactInfo.DESCRIPTION);
 
         result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
@@ -397,6 +395,59 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
       }
+    }
+  }
+
+  private static class TinyArtifactInfoIndexCreator extends MinimalArtifactInfoIndexCreator {
+
+    private static final IndexerField FLD_PACKAGING_NOT_INDEXED =
+      new IndexerField(MAVEN.PACKAGING, IndexerFieldVersion.V1, ArtifactInfo.PACKAGING,"Artifact Packaging (not indexed, stored)",
+                       Field.Store.YES, Field.Index.NO);
+
+    private static final IndexerField FLD_DESCRIPTION_NOT_INDEXED =
+      new IndexerField(MAVEN.DESCRIPTION, IndexerFieldVersion.V1, ArtifactInfo.DESCRIPTION, "Artifact description (not indexed, stored)",
+                       Field.Store.YES, Field.Index.NO);
+
+    @Override
+    public void updateDocument(ArtifactInfo ai, Document doc) {
+      super.updateDocument(ai, doc);
+
+      doc.removeField(ArtifactInfo.INFO);
+
+      doc.removeField(ArtifactInfo.GROUP_ID);
+      doc.removeField(ArtifactInfo.ARTIFACT_ID);
+      doc.removeField(ArtifactInfo.VERSION);
+
+      doc.removeField(FLD_GROUP_ID.getKey());
+      doc.removeField(FLD_ARTIFACT_ID.getKey());
+      doc.removeField(FLD_VERSION.getKey());
+
+      doc.removeField(ArtifactInfo.NAME);
+      doc.removeField(ArtifactInfo.CLASSIFIER);
+      doc.removeField(ArtifactInfo.SHA1);
+
+      String packaging = doc.get(ArtifactInfo.PACKAGING);
+      if (packaging != null) {
+        doc.removeField(ArtifactInfo.PACKAGING);
+        doc.add(FLD_PACKAGING_NOT_INDEXED.toField(packaging));
+      }
+
+      if ("maven-archetype".equals(packaging)) {
+        String description = doc.get(ArtifactInfo.DESCRIPTION);
+
+        doc.removeField(ArtifactInfo.DESCRIPTION);
+        if (description != null) {
+          doc.add(FLD_DESCRIPTION_NOT_INDEXED.toField(description));
+        }
+      }
+      else {
+        doc.removeField(ArtifactInfo.DESCRIPTION);
+      }
+    }
+
+    @Override
+    public Collection<IndexerField> getIndexerFields() {
+      return Arrays.asList(ArtifactInfoRecord.FLD_UINFO, FLD_PACKAGING_NOT_INDEXED, FLD_DESCRIPTION_NOT_INDEXED);
     }
   }
 }
