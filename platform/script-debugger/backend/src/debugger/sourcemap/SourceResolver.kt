@@ -48,7 +48,7 @@ interface SourceFileResolver {
   fun resolve(rawSources: List<String>): Int = -1
 }
 
-class SourceResolver(private val rawSources: List<String>, internal val canonicalizedUrls: Array<Url>, private val sourceContents: List<String>?) {
+class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls: Array<Url>, private val sourceContents: List<String>?) {
   companion object {
     fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
