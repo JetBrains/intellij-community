@@ -120,7 +120,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public Element getState() {
     final Element e = new Element("state");
-    writeExternal(e, getFilteredModuleList(getModules(), false));
+    writeExternal(e, getFilteredModuleList(myProject, getModules(), false));
     return e;
   }
 

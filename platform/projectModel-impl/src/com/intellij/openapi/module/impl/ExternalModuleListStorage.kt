@@ -6,6 +6,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -18,8 +19,12 @@ internal class ExternalModuleListStorage(private val project: Project) : Persist
 
   override fun getState(): Element {
     val e = Element("state")
+    if (!project.isExternalStorageEnabled) {
+      return e
+    }
+
     val moduleManager = ModuleManagerImpl.getInstanceImpl(project)
-    moduleManager.writeExternal(e, getFilteredModuleList(moduleManager.modules, true))
+    moduleManager.writeExternal(e, getFilteredModuleList(project, moduleManager.modules, true))
     return e
   }
 
@@ -38,7 +43,11 @@ internal class ExternalModuleListStorage(private val project: Project) : Persist
   }
 }
 
-fun getFilteredModuleList(modules: Array<Module>, isExternal: Boolean): List<Module> {
+fun getFilteredModuleList(project: Project, modules: Array<Module>, isExternal: Boolean): List<Module> {
+  if (!project.isExternalStorageEnabled) {
+    return modules.asList()
+  }
+
   val externalProjectSystemRegistry = ExternalProjectSystemRegistry.getInstance()
   return modules.filter { (externalProjectSystemRegistry.getExternalSource(it) != null) == isExternal }
 }
