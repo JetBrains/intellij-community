@@ -79,7 +79,7 @@ public class TestStatusLine extends JPanel {
 
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
-    myState.append(" – " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
