@@ -677,6 +677,19 @@ public final class PsiUtil extends PsiUtilCore {
            && isConstantExpression(field.getInitializer());
   }
 
+  /**
+   * Checks whether the passed {@link PsiElement} is a constant field (static final field with initializer).
+   */
+  public static boolean isConstantField(PsiElement element) {
+    if (!(element instanceof PsiField)) {
+      return false;
+    }
+    PsiField field = (PsiField)element;
+    return field.hasModifierProperty(PsiModifier.STATIC) &&
+           field.hasModifierProperty(PsiModifier.FINAL) &&
+           field.hasInitializer();
+  }
+
   public static boolean allMethodsHaveSameSignature(@NotNull PsiMethod[] methods) {
     if (methods.length == 0) return true;
     final MethodSignature methodSignature = methods[0].getSignature(PsiSubstitutor.EMPTY);

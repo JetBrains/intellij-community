@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactorJBundle;
@@ -271,7 +272,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       protected Object getAbstractColumnValue(MemberInfo memberInfo) {
         if (isExtractAsEnum()) {
           final PsiMember member = memberInfo.getMember();
-          if (isConstantField(member)) {
+          if (PsiUtil.isConstantField(member)) {
             return Boolean.valueOf(enumConstants.contains(memberInfo));
           }
         }
@@ -283,7 +284,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         final MemberInfo info = memberInfo.get(rowIndex);
         if (info.isChecked()) {
           final PsiMember member = info.getMember();
-          if (isConstantField(member)) {
+          if (PsiUtil.isConstantField(member)) {
             if (enumConstants.isEmpty()) return true;
             final MemberInfo currentEnumConstant = enumConstants.get(0);
             if (((PsiField)currentEnumConstant.getMember()).getType().equals(((PsiField)member).getType())) return true;
@@ -380,27 +381,20 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
           break;
         }
       }
-      if (selected != null && isConstantField(selected.getMember())) {
+      if (selected != null && PsiUtil.isConstantField(selected.getMember())) {
         enumConstants.add(selected);
         selected.setToAbstract(true);
       }
     }
     for (MemberInfo info : memberInfo) {
       final PsiMember member = info.getMember();
-      if (isConstantField(member)) {
+      if (PsiUtil.isConstantField(member)) {
         if (enumConstants.isEmpty() || ((PsiField)enumConstants.get(0).getMember()).getType().equals(((PsiField)member).getType())) {
           if (!enumConstants.contains(info)) enumConstants.add(info);
           info.setToAbstract(true);
         }
       }
     }
-  }
-
-  private static boolean isConstantField(PsiMember member) {
-    return member instanceof PsiField &&
-           member.hasModifierProperty(PsiModifier.STATIC) &&
-           // member.hasModifierProperty(PsiModifier.FINAL) &&
-           ((PsiField)member).hasInitializer();
   }
 
   @Override

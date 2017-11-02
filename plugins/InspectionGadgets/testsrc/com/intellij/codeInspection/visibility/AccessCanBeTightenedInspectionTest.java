@@ -369,4 +369,20 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
+
+  public void testSuggestForConstants() {
+    myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
+    doTest("class SuggestForConstants {\n" +
+           "    <warning descr=\"Access can be private\">public</warning> static final String MY_CONSTANT = \"a\";\n" +
+           "    private final String myField = MY_CONSTANT;" +
+           "}");
+  }
+
+  public void testDoNotSuggestForConstants() {
+    myVisibilityInspection.SUGGEST_FOR_CONSTANTS = false;
+    doTest("class DoNotSuggestForConstants {\n" +
+           "    public static final String MY_CONSTANT = \"a\";\n" +
+           "    private final String myField = MY_CONSTANT;" +
+           "}");
+  }
 }
