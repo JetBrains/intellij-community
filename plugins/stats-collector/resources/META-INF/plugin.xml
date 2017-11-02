@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.533</version>
+  <version>0.0.534</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -57,8 +57,7 @@
                         serviceImplementation="com.intellij.sorting.MLRanker">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
-                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
+    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
