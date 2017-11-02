@@ -661,12 +661,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     if (testingFinished) {
-      if (myTotalTestCount == 0) {
-        myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
-                                    ? JBColor.LIGHT_GRAY
-                                    : ColorProgressBar.RED);
-      }
-      myStatusLine.onTestsDone(myTestsRootNode.getMagnitudeInfo());
+      boolean noTestsWereRun = myTotalTestCount == 0 && (myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached());
+      myStatusLine.onTestsDone(noTestsWereRun ? null : myTestsRootNode.getMagnitudeInfo());
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
       myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
                                              new SideBorder(editorBackground, SideBorder.LEFT)));

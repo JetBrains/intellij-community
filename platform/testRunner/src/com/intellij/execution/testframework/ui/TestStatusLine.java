@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,9 @@ public class TestStatusLine extends JPanel {
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
     myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     setStatusColor(ColorProgressBar.GREEN);
-    add(myState, BorderLayout.CENTER);
+    JPanel stateWrapper = new JPanel(new BorderLayout());
+    stateWrapper.add(myState, BorderLayout.NORTH);
+    add(stateWrapper, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
@@ -76,7 +79,7 @@ public class TestStatusLine extends JPanel {
 
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
-    myState.append(" - " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(" – " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
@@ -105,7 +108,7 @@ public class TestStatusLine extends JPanel {
     }
 
     if (testsTotal > 0) {
-      myState.append(" of " + getTestsTotalMessage(testsTotal));
+      myState.append(" of " + getTestsTotalMessage(testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
@@ -114,9 +117,11 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setIndeterminate(flag);
   }
 
-  public void onTestsDone(TestStateInfo.Magnitude info) {
+  public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
     myProgressPanel.remove(myProgressBar);
-    myState.setIcon(TestIconMapper.getIcon(info));
+    if (info != null) {
+      myState.setIcon(TestIconMapper.getIcon(info));
+    }
   }
 
   private static String getTestsTotalMessage(int testsTotal) {
