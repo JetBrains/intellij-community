@@ -45,8 +45,13 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
   public void record(@NotNull AnAction action) {
     try {
+      if (UsagesCollector.isNotBundledPluginClass(action.getClass())) {
+        return;
+      }
+
       AWTEvent e = EventQueue.getCurrentEvent();
       String path = null;
+
       if (e instanceof ItemEvent) {
         path = getPathFromMenuItem(e, action);
       }
