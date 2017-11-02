@@ -28,9 +28,10 @@ import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.server.IndexedMavenId;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
 import org.jetbrains.idea.maven.server.MavenServerIndexerException;
@@ -46,7 +47,7 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenIndex {
-  private static final String CURRENT_VERSION = "4";
+  private static final String CURRENT_VERSION = "4.1";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
 
@@ -63,6 +64,7 @@ public class MavenIndex {
 
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
+  private static final String ARCHETYPES_MAP_FILE = "archetypes-map.dat";
 
   public enum Kind {
     LOCAL, REMOTE
@@ -448,6 +450,7 @@ public class MavenIndex {
                                  MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
     final Map<String, Set<String>> groupToArtifactMap = new THashMap<>();
     final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<>();
+    final Map<String, Set<String>> archetypeIdToDescriptionMap = new THashMap<>();
 
     progress.pushState();
     progress.setIndeterminate(true);
@@ -455,18 +458,20 @@ public class MavenIndex {
     try {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
-        for (MavenId each : artifacts) {
-          String groupId = each.getGroupId();
-          String artifactId = each.getArtifactId();
-          String version = each.getVersion();
-
+        for (IndexedMavenId id : artifacts) {
           builder.setLength(0);
 
-          builder.append(groupId).append(":").append(artifactId);
+          builder.append(id.groupId).append(":").append(id.artifactId);
           String ga = builder.toString();
 
-          getOrCreate(groupToArtifactMap, groupId).add(artifactId);
-          getOrCreate(groupWithArtifactToVersionMap, ga).add(version);
+          getOrCreate(groupToArtifactMap, id.groupId).add(id.artifactId);
+          getOrCreate(groupWithArtifactToVersionMap, ga).add(id.version);
+
+          if ("maven-archetype".equals(id.packaging)) {
+            builder.setLength(0);
+            builder.append(id.version).append(":").append(id.description);
+            getOrCreate(archetypeIdToDescriptionMap, ga).add(builder.toString());
+          }
         }
       };
       if (myNotNexusIndexer != null) {
@@ -478,6 +483,7 @@ public class MavenIndex {
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
+      persist(archetypeIdToDescriptionMap, data.archetypeIdToDescriptionMap);
     }
     finally {
       progress.popState();
@@ -526,21 +532,20 @@ public class MavenIndex {
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(new IndexTask<Object>() {
       public Object doTask() throws Exception {
-        MavenId id = myData.addArtifact(artifactFile);
+        IndexedMavenId id = myData.addArtifact(artifactFile);
 
-        String groupId = id.getGroupId();
-        String artifactId = id.getArtifactId();
-        String version = id.getVersion();
+        myData.hasGroupCache.put(id.groupId, true);
 
-        myData.hasGroupCache.put(groupId, true);
-
-        String groupWithArtifact = groupId + ":" + artifactId;
+        String groupWithArtifact = id.groupId + ":" + id.artifactId;
 
         myData.hasArtifactCache.put(groupWithArtifact, true);
-        myData.hasVersionCache.put(groupWithArtifact + ':' + version, true);
+        myData.hasVersionCache.put(groupWithArtifact + ':' + id.version, true);
 
-        addToCache(myData.groupToArtifactMap, groupId, artifactId);
-        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
+        addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
+        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+        if ("maven-archetype".equals(id.packaging)) {
+          addToCache(myData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + id.description);
+        }
         myData.flush();
 
         return null;
@@ -651,6 +656,29 @@ public class MavenIndex {
     }, Collections.emptySet());
   }
 
+  public synchronized Set<MavenArchetype> getArchetypes() {
+    return doIndexTask(() -> {
+      Set<MavenArchetype> archetypes = new THashSet<>();
+      for (String ga : myData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
+        List<String> gaParts = split(ga, ":");
+
+        String groupId = gaParts.get(0);
+        String artifactId = gaParts.get(1);
+
+        for (String vd : myData.archetypeIdToDescriptionMap.get(ga)) {
+          int index = vd.indexOf(':');
+          if (index == -1) continue;
+
+          String version = vd.substring(0, index);
+          String description = vd.substring(index + 1);
+
+          archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+        }
+      }
+      return archetypes;
+    }, Collections.emptySet());
+  }
+
   private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
     assert Thread.holdsLock(this);
 
@@ -688,6 +716,7 @@ public class MavenIndex {
   private class IndexData {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
+    final PersistentHashMap<String, Set<String>> archetypeIdToDescriptionMap;
 
     final Map<String, Boolean> hasGroupCache = new THashMap<>();
     final Map<String, Boolean> hasArtifactCache = new THashMap<>();
@@ -699,6 +728,7 @@ public class MavenIndex {
       try {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
+        archetypeIdToDescriptionMap = createPersistentMap(new File(dir, ARCHETYPES_MAP_FILE));
 
         indexId = createContext(getDataContextDir(dir), dir.getName());
       }
@@ -725,6 +755,7 @@ public class MavenIndex {
 
       safeClose(groupToArtifactMap, exceptions);
       safeClose(groupWithArtifactToVersionMap, exceptions);
+      safeClose(archetypeIdToDescriptionMap, exceptions);
 
       if (exceptions[0] != null) throw exceptions[0];
     }
@@ -742,9 +773,10 @@ public class MavenIndex {
     public void flush() throws IOException {
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
+      archetypeIdToDescriptionMap.force();
     }
 
-    public MavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
+    public IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
       return myNexusIndexer.addArtifact(indexId, artifactFile);
     }
 

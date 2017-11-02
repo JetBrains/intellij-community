@@ -5,11 +5,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.server.IndexedMavenId;
 import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
 import org.jetbrains.idea.maven.server.MavenServerIndexerException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -25,6 +24,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.util.text.StringUtil.split;
 
 /**
  * @author ibessonov
@@ -135,21 +136,24 @@ class BintrayIndexer implements NotNexusIndexer {
         throw new IOException("Unexpected response format, JSON array expected from " + request.getURL());
       }
 
-      List<MavenId> mavenIds = new ArrayList<>();
+      List<IndexedMavenId> mavenIds = new ArrayList<>();
       for (JsonElement el : array) {
         JsonObject jo = el.getAsJsonObject();
         JsonArray systemIds = jo.getAsJsonArray("system_ids");
         JsonArray versions = jo.getAsJsonArray("versions");
+        JsonElement desc = jo.get("desc");
+        String description = desc == null ? null : desc.getAsString();
+
         if (systemIds != null && versions != null) {
           for (JsonElement systemId : systemIds) {
             String groupAndArtifactId = systemId.getAsString();
-            List<String> list = StringUtil.split(groupAndArtifactId, ":");
+            List<String> list = split(groupAndArtifactId, ":");
             if (list.size() != 2) continue;
 
             String groupId = list.get(0);
             String artifactId = list.get(1);
             for (JsonElement version : versions) {
-              mavenIds.add(new MavenId(groupId, artifactId, version.getAsString()));
+              mavenIds.add(new IndexedMavenId(groupId, artifactId, version.getAsString(), null, description));
             }
           }
         }

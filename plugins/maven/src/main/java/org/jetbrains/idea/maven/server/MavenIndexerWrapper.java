@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -127,7 +126,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     });
   }
 
-  public MavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
+  public IndexedMavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
     return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile));
   }
 

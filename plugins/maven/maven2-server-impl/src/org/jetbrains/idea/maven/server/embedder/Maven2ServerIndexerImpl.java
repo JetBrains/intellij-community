@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.server.*;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
@@ -210,20 +209,26 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       IndexReader r = getIndex(indexId).getIndexReader();
       int total = r.numDocs();
 
-      List<MavenId> result = new ArrayList<MavenId>(Math.min(CHUNK_SIZE, total));
+      List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
       for (int i = 0; i < total; i++) {
         if (r.isDeleted(i)) continue;
 
         Document doc = r.document(i);
         String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
-        List<String> parts = StringUtil.split(uinfo, "|");
-        String groupId = parts.get(0);
-        String artifactId = parts.get(1);
-        String version = parts.get(2);
+        List<String> uInfoParts = StringUtil.split(uinfo, ArtifactInfo.FS);
+        String groupId = uInfoParts.get(0);
+        String artifactId = uInfoParts.get(1);
+        String version = uInfoParts.get(2);
         if (groupId == null || artifactId == null || version == null) continue;
 
-        result.add(new MavenId(groupId, artifactId, version));
+        String info = doc.get(ArtifactInfo.INFO);
+        List<String> infoParts = StringUtil.split(info, ArtifactInfo.FS);
+        String packaging = infoParts.isEmpty() ? null : infoParts.get(0);
+
+        String description = doc.get(ArtifactInfo.DESCRIPTION);
+
+        result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
 
         if (result.size() == CHUNK_SIZE) {
           processor.processArtifacts(result);
@@ -240,7 +245,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
-  public MavenId addArtifact(int indexId, File artifactFile) throws MavenServerIndexerException {
+  public IndexedMavenId addArtifact(int indexId, File artifactFile) throws MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
       ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
@@ -248,8 +253,8 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
 
       addArtifact(myIndexer, index, artifactContext);
 
-      org.sonatype.nexus.index.ArtifactInfo a = artifactContext.getArtifactInfo();
-      return new MavenId(a.groupId, a.artifactId, a.version);
+      ArtifactInfo a = artifactContext.getArtifactInfo();
+      return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
@@ -301,7 +306,6 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
   public Collection<MavenArchetype> getArchetypes() throws RemoteException {
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
-    doCollectArchetypes("nexus", result);
     return result;
   }
 
