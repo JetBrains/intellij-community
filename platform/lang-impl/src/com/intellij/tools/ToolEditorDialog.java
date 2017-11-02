@@ -234,7 +234,7 @@ public class ToolEditorDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (myNameField.getText().trim().isEmpty()) {
-      return new ValidationInfo("Name not specified", myNameField);
+      return new ValidationInfo("Specify the tool name", myNameField);
     }
 
     final String filtersText = myOutputFilterField.getText().trim();
