@@ -65,6 +65,20 @@ class ValidatorTest {
     }
 
     @Test
+    fun testInvalidWithoutBacket() {
+        val file = file("data/no_bucket.txt")
+        separator.validate(file.readLines())
+        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+    }
+
+    @Test
+    fun testInvalidWithoutVersion() {
+        val file = file("data/no_version.txt")
+        separator.validate(file.readLines())
+        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+    }
+
+    @Test
     fun testDataWithExtraFieldInvalid() {
         val file = file("data/extra_field.txt")
         separator.validate(file.readLines())
