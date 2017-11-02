@@ -16,6 +16,7 @@
 package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -26,16 +27,13 @@ import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
@@ -97,15 +95,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       }
     }, this);
 
-    final JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
-
-    final XBreakpoint bpn = new XLineBreakpointImpl<>(breakPointType,
-                                                      ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject))
-                                                        .getBreakpointManager(),
-                                                      new JavaLineBreakpointProperties(),
-                                                      new LineBreakpointState<>());
-
-    myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
+    myBreakpoint = new MyConstructorBreakpoints(myProject);
     myBreakpoint.createRequestForPreparedClass(debugProcess, ref);
   }
 
@@ -190,13 +180,14 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
   }
 
-  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> {
+  private final class MyConstructorBreakpoints extends MyConstructorBreakpointBase {
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
+    private final String myDisplayName = "MemoryViewConstructorTracker:" + myClassName;
     private volatile boolean myIsEnabled = false;
     private volatile boolean myIsDeleted = false;
 
-    MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
-      super(project, xBreakpoint);
+    MyConstructorBreakpoints(Project project) {
+      super(project);
       setVisible(false);
     }
 
@@ -214,7 +205,13 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     @Override
-    public void reload() {
+    public String getDisplayName() {
+      return myDisplayName;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return myIsEnabled;
     }
 
     void delete() {
@@ -269,6 +266,89 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
         disable();
       }
+    }
+  }
+
+  /**
+   * Contains stubs for all methods which can use xBreakpoint implicitly
+   * Inspired by com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint
+   */
+  private static class MyConstructorBreakpointBase extends LineBreakpoint<JavaLineBreakpointProperties> {
+    private final JavaLineBreakpointProperties myProperties = new JavaLineBreakpointProperties();
+
+    protected MyConstructorBreakpointBase(@NotNull Project project) {
+      super(project, null);
+    }
+
+    @Override
+    public String getSuspendPolicy() {
+      return DebuggerSettings.SUSPEND_THREAD;
+    }
+
+    @Nullable
+    @Override
+    public SourcePosition getSourcePosition() {
+      return null;
+    }
+
+    @Override
+    public int getLineIndex() {
+      return -1;
+    }
+
+    @Override
+    public boolean isConditionEnabled() {
+      return false;
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
+    }
+
+    @Override
+    public String getEventMessage(LocatableEvent event) {
+      return "";
+    }
+
+    @Override
+    public void reload() {
+    }
+
+    @Override
+    protected boolean isMuted(@NotNull DebugProcessImpl debugProcess) {
+      return false;
+    }
+
+    @Override
+    protected boolean isVisible() {
+      return false;
+    }
+
+    @Override
+    protected boolean isLogEnabled() {
+      return false;
+    }
+
+    @Override
+    protected boolean isLogExpressionEnabled() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    protected JavaLineBreakpointType getXBreakpointType() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    protected JavaLineBreakpointProperties getProperties() {
+      return myProperties;
+    }
+
+    @Override
+    protected void fireBreakpointChanged() {
     }
   }
 }
