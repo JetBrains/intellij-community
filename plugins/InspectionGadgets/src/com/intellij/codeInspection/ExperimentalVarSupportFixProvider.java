@@ -107,7 +107,7 @@ public class ExperimentalVarSupportFixProvider extends UnresolvedReferenceQuickF
       message.setBackground(UIUtil.getOptionPaneBackground());
       message.setPreferredSize(JBUI.size(500, 100));
       message.setText(UIUtil.toHtml(
-        "You must accept the terms of legal notice of beta Java specification to enable support for local variable type inference, i.e. recognition of keyword 'var' and inspections to replace explicit types with 'var' and return.<br/><br/>" +
+        "You must accept the terms of legal notice of the beta Java specification to enable support for local variable type inference, i.e. recognition of keyword 'var' and inspections to replace explicit types with 'var' and return.<br/><br/>" +
         "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>"));
       panel.add(message, BorderLayout.CENTER);
       return panel;
