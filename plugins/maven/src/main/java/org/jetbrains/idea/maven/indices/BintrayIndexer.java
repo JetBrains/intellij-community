@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +139,7 @@ class BintrayIndexer implements NotNexusIndexer {
         JsonArray systemIds = jo.getAsJsonArray("system_ids");
         JsonArray versions = jo.getAsJsonArray("versions");
         JsonElement desc = jo.get("desc");
-        String description = desc == null ? null : desc.getAsString();
+        String description = desc == null || desc == JsonNull.INSTANCE ? null : desc.getAsString();
 
         if (systemIds != null && versions != null) {
           for (JsonElement systemId : systemIds) {
