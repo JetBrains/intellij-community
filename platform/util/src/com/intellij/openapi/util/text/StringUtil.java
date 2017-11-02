@@ -1609,14 +1609,14 @@ public class StringUtil extends StringUtilRt {
       remainder = count % multiplier;
       count /= multiplier;
       if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        sb.insert(0, units[i]).insert(0, remainder).insert(0, partSeparator);
+        sb.insert(0, units[i]).insert(0, "\u2009").insert(0, remainder).insert(0, partSeparator);
       }
     }
     if (partSeparator != null || remainder == 0) {
-      sb.insert(0, units[i]).insert(0, count);
+      sb.insert(0, units[i]).insert(0, "\u2009").insert(0, count);
     }
     else if (remainder > 0) {
-      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
+      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1])).append("\u2009").append(units[i]);
     }
     return sb.toString();
   }
