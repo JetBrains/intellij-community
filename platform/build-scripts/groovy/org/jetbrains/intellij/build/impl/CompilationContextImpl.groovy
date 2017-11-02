@@ -142,14 +142,18 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     def kotlinPluginLibPath = "$kotlinHomePath/lib"
-    if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
+    def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
+    if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+      }
+      ["kotlin-runtime.jar"].each {
+        BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
       }
     }
     else {
       messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
+        "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     }
   }
 
