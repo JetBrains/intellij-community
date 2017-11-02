@@ -37,6 +37,27 @@ class WinExeInstallerBuilder {
     this.jreDirectoryPath = jreDirectoryPath
   }
 
+  private void generateInstallationConfigFileForSilentMode() {
+    if (new File(customizer.silentInstallationConfig).exists()) {
+      def extensionsList = customizer.fileAssociations
+      String associations = "; List of associations. To create an association change value to 1.\n"
+      if (! extensionsList.isEmpty()) {
+        for (int i = 0; i < extensionsList.size(); i++) {
+          associations += extensionsList.get(i) + "=0\n"
+        }
+      } else {
+        associations = "; There are no associations for the product.\n"
+      }
+      buildContext.messages.info(associations)
+      buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
+        fileset(file: customizer.silentInstallationConfig)
+        filterset(begintoken: "@@", endtoken: "@@") {
+          filter(token: "List of associations", value: associations)
+        }
+      }
+    }
+  }
+
   void buildInstaller(String winDistPath) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
@@ -62,6 +83,9 @@ class WinExeInstallerBuilder {
         exclude(name: "version*")
       }
     }
+
+    generateInstallationConfigFileForSilentMode()
+
     if (SystemInfoRt.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
       ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
