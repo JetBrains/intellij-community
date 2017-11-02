@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.swing.*;
 import java.awt.*;
 
 public class AccessibleContextUtil {
@@ -137,6 +138,13 @@ public class AccessibleContextUtil {
       return;
     }
     component.getAccessibleContext().setAccessibleParent(null);
+  }
+
+  /**
+   * @deprecated use {@link #setParent(Component, Component)} instead
+   */
+  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
+    setParent((Component)component, newParent);
   }
 
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator, @Nullable String s2) {
