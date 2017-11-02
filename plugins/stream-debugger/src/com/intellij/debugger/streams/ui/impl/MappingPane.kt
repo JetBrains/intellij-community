@@ -36,6 +36,7 @@ class MappingPane(name: String,
   init {
     val label = JBLabel(name, SwingConstants.CENTER)
     label.toolTipText = fullCallExpression
+    label.border = JBUI.Borders.empty(2, 0, 3, 0)
     add(label, BorderLayout.NORTH)
     add(MyDrawPane(), BorderLayout.CENTER)
   }

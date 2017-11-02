@@ -4,13 +4,14 @@ package com.intellij.debugger.streams.ui.impl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.icons.AllIcons
+import com.intellij.ui.components.JBLabel
 import javax.swing.JTree
 
 /**
  * @author Vitaliy.Bibaev
  */
 class ExceptionView(context: EvaluationContextImpl, ex: TraceElement)
-  : CollectionView("Cause", SingleElementTree(ex.value!!, listOf(ex), context)) {
+  : CollectionView(JBLabel("Cause"), SingleElementTree(ex.value!!, listOf(ex), context)) {
   init {
     instancesTree.cellRenderer = object : TraceTreeCellRenderer() {
       override fun customizeCellRenderer(tree: JTree,
