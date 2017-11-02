@@ -371,7 +371,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     rebuildAndSelect(false, myInitialElement).processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      FilteringTreeBuilder.revalidateTree(myTree);
+      revalidateTree(myTree);
       myTreeHasBuilt.setDone();
       installUpdater();
     }));
@@ -474,7 +474,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
       TreeUtil.ensureSelection(myTree);
-      FilteringTreeBuilder.revalidateTree(myTree);
+      revalidateTree(myTree);
       Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
       if (userObject != null && Comparing.equal(element, unwrapValue(userObject))) {
         myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
@@ -844,7 +844,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
                   TreeUtil.expand(getTree(), 2);
                   TreeUtil.ensureSelection(myTree);
                   mySpeedSearch.refreshSelection();
-                  FilteringTreeBuilder.revalidateTree(myTree);
+                  revalidateTree(myTree);
                   result.setResult(p);
                 })));
       }
@@ -1163,4 +1163,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return parents;
   }
 
+  private static void revalidateTree(JTree tree) {
+    tree.revalidate();
+    tree.repaint();
+  }
 }
