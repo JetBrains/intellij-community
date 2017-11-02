@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
+import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -717,7 +718,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     for (element in parentNode.children) {
       val config = loadConfiguration(element, false)
-      if (selectedConfigurationId == null && element.getAttributeValue(SELECTED_ATTR).toBoolean()) {
+      if (selectedConfigurationId == null && element.getAttributeBooleanValue(SELECTED_ATTR)) {
         selectedConfigurationId = config.uniqueID
       }
     }
@@ -805,7 +806,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     else {
       addConfiguration(settings)
-      if (element.getAttributeValue(SELECTED_ATTR).toBoolean()) {
+      if (element.getAttributeBooleanValue(SELECTED_ATTR)) {
         // to support old style
         selectedConfiguration = settings
       }
