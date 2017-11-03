@@ -48,7 +48,7 @@ class RegularImport internal constructor(
     if (!processor.checkName(name, state)) return true
 
     val clazz = resolve(file) ?: return true
-    return processor.execute(clazz, state.put(ClassHint.RESOLVE_CONTEXT, statement))
+    return processor.execute(clazz, state.put(ClassHint.RESOLVE_CONTEXT, statement).put(importedNameKey, name))
   }
 
   override fun toString(): String = "import $classFqn as $name"

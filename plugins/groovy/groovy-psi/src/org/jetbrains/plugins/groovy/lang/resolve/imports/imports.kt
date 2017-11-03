@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -12,6 +13,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.defaultRegularImpo
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.defaultStarImports
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.doGetImports
 
+@JvmField
+val importedNameKey = Key.create<String>("groovy.imported.via.name")
 val defaultImports = defaultStarImports + defaultRegularImports
 
 fun GroovyFile.getImports(): GroovyFileImports {

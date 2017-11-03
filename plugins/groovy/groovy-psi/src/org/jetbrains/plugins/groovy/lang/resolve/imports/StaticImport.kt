@@ -51,7 +51,7 @@ class StaticImport internal constructor(
       for ((memberName, alias) in namesMapping) {
         if (hintName != null && hintName != alias) continue
         val delegate = StaticMembersFilteringProcessor(each, memberName)
-        if (!clazz.processDeclarations(delegate, stateWithContext, null, place)) return false
+        if (!clazz.processDeclarations(delegate, stateWithContext.put(importedNameKey, alias), null, place)) return false
       }
     }
     return true
