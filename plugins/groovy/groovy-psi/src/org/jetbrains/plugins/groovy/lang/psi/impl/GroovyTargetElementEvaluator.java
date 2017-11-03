@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -35,11 +36,18 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
     if (sourceElement instanceof GrCodeReferenceElement) {
       GrNewExpression newExpr;
 
-      if (sourceElement.getParent() instanceof GrNewExpression) {
-        newExpr = (GrNewExpression)sourceElement.getParent();
+      PsiElement parent = sourceElement.getParent();
+      if (parent instanceof GrNewExpression) {
+        newExpr = (GrNewExpression)parent;
       }
-      else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
-        newExpr = (GrNewExpression)sourceElement.getParent().getParent();
+      else if (parent instanceof GrAnonymousClassDefinition) {
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof GrNewExpression) {
+          newExpr = (GrNewExpression)grandParent;
+        }
+        else {
+          return null;
+        }
       }
       else {
         return null;
