@@ -18,7 +18,7 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
-import org.toml.lang.core.psi.TomlFile
+import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlElementTypes
 import org.toml.lang.psi.impl.createPsiElement
 
@@ -27,7 +27,7 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile = TomlFile(viewProvider)
 
-    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? =
+    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
         LanguageUtil.canStickTokensTogetherByLexer(left, right, TomlLexer())
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY

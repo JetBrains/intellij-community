@@ -30,7 +30,6 @@ interface TomlKeyValue : TomlElement {
 
 interface TomlKey : TomlElement
 
-
 interface TomlLiteral : TomlValue
 
 interface TomlArray : TomlValue {

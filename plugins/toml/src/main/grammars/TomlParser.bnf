@@ -1,7 +1,6 @@
 // https://github.com/toml-lang/toml/blob/master/toml.abnf
 {
-  // We employ hand-written Kotlin PSI
-  generatePsi=false
+  generatePsi=false // We employ hand-written Kotlin PSI
   parserClass="org.toml.lang.parse.TomlParser"
   parserUtilClass="org.toml.lang.parse.TomlParserUtil"
 
@@ -9,27 +8,6 @@
   elementTypeClass="org.toml.lang.psi.TomlCompositeType"
   tokenTypeClass="org.toml.lang.psi.TomlTokenType"
 
-//    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
-//
-//    elementTypeClass="org.toml.lang.core.psi.TomlElementType"
-//    tokenTypeClass="org.toml.lang.psi.TomlTokenType"
-
-//    tokens=[
-//      string='regexp:("[^"]*")'
-//      number='regexp:(\d|_)+'
-//      simple_number='regexp:(\d|_)+'
-//      boolean='regexp:true|false'
-//      simple_key='regexp:[0-9_\-a-zA-Z]+'
-//      space='regexp:\s+'
-//      date='date'
-//      dot='.'
-//      comma=','
-//      eq='='
-//      lbracket='['
-//      rbracket=']'
-//      lbrace='{'
-//      rbrace='}'
-//    ]
   tokens=[
     COMMENT="regexp:#.*"
 

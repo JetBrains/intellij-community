@@ -22,7 +22,7 @@ class TomlKeyValueImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlKeyValue
 
 
 class TomlKeyImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlKey
-class TomlLiteralImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlValue
+class TomlLiteralImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlLiteral
 
 class TomlArrayImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlArray {
     override val elements: List<TomlValue>

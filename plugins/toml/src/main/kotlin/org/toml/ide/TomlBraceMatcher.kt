@@ -9,9 +9,9 @@ import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import org.toml.lang.psi.TomlElementTypes.*
 
 class TomlBraceMatcher : PairedBraceMatcher {
-
     override fun getPairs() = PAIRS
 
     override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean = true
@@ -21,8 +21,8 @@ class TomlBraceMatcher : PairedBraceMatcher {
 
     companion object {
         private val PAIRS: Array<BracePair> = arrayOf(
-//            BracePair(TomlTypes.LBRACE, TomlTypes.RBRACE, false),
-//            BracePair(TomlTypes.LBRACKET, TomlTypes.RBRACKET, false)
+            BracePair(L_CURLY, R_CURLY, false),
+            BracePair(L_BRACKET, R_BRACKET, false)
         )
     }
 }
