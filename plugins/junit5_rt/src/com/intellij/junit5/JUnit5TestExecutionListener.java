@@ -122,7 +122,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void dynamicTestRegistered(TestIdentifier testIdentifier) {
-    int i = 0;
+    myTestPlan.add(testIdentifier);
   }
 
   @Override
