@@ -361,11 +361,10 @@ public class PatternCompiler {
         throw new MalformedPatternException();
       }
 
-      buf.append(text.substring(prevOffset, offset));
-      buf.append(prefix);
-      buf.append(name);
+      final String compiledName = prefix + name;
+      buf.append(text.substring(prevOffset, offset)).append(compiledName);
 
-      if (seen.add(name)) {
+      if (seen.add(compiledName)) {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
 
@@ -379,7 +378,7 @@ public class PatternCompiler {
 
         SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
-          prefix + name,
+          compiledName,
           constraint.isPartOfSearchResults(),
           constraint.getMinCount(),
           constraint.getMaxCount(),
