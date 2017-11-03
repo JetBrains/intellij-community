@@ -12,8 +12,8 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>New parser, lexer and PSI</li>
-            <li>PSI support reference contributors, so third-party plugins can inject references into TOML files</li>
+            <li>New parser, lexer and PSI.</li>
+            <li>PSI supports reference contributors, so third-party plugins can inject references into TOML files.</li>
         </ul>
     ]]>
     </change-notes>
