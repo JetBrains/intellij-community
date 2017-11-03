@@ -47,7 +47,6 @@ class TomlParserDefinition : ParserDefinition {
         val WHITE_SPACES: TokenSet = TokenSet.create(TokenType.WHITE_SPACE)
         val COMMENTS: TokenSet = TokenSet.create(TomlTypes.COMMENT)
     }
-
 }
 
 

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.toml.lang.core.psi.TomlTypes
 
-class TomlBraceMatcher() : PairedBraceMatcher {
+class TomlBraceMatcher : PairedBraceMatcher {
 
     override fun getPairs() = PAIRS
 

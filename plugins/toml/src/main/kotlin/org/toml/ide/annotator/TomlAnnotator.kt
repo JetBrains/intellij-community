@@ -16,7 +16,7 @@ class TomlAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (element is TomlInlineTable) {
             val whiteSpaces = PsiTreeUtil.findChildrenOfType(element, PsiWhiteSpace::class.java)
-            if (whiteSpaces.any { '\n' in it.text }) {
+            if (whiteSpaces.any { it.textContains('\n') }) {
                 holder.createErrorAnnotation(element, "Inline tables are intended to appear on a single line")
             }
         }

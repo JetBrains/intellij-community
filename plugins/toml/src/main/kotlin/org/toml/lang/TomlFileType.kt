@@ -10,14 +10,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
 
 object TomlFileType : LanguageFileType(TomlLanguage) {
-    object DEFAULTS {
-        val EXTENSION = "toml"
-        val DESCRIPTION = "TOML file"
-    }
-
-    override fun getName() = DEFAULTS.DESCRIPTION
-    override fun getDescription() = DEFAULTS.DESCRIPTION
-    override fun getDefaultExtension() = DEFAULTS.EXTENSION
+    override fun getName() = "TOML file"
+    override fun getDescription() = "TOML file"
+    override fun getDefaultExtension() = "toml"
 
     override fun getIcon() = AllIcons.FileTypes.Text!!
 
