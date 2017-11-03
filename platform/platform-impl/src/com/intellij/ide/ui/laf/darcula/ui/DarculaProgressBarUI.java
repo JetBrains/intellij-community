@@ -24,7 +24,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
   private static final Color REMAINDER_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
                                                                  Gray.xCC :
-                                                                 new JBColor(Gray.xC4, Gray.x69));
+                                                                 new JBColor(Gray.xC4, Gray.x55));
 
   @SuppressWarnings("UseJBColor")
   private static final Color FINISHED_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
