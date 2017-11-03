@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,17 +119,35 @@ public class JpsProjectLoader extends JpsLoaderBase {
         loadComponents(dir, defaultConfigFile, serializer, myProject);
       }
     }
+
+    Path externalConfigDir = resolveExternalProjectConfig("project");
+    if (externalConfigDir != null) {
+      LOG.info("External project config dir is used: " + externalConfigDir);
+    }
+
+    Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), "ProjectModuleManager");
+    Element externalModuleData = externalConfigDir == null ? null : loadRootElement(externalConfigDir.resolve("modules.xml"));
+    if (externalModuleData != null) {
+      String componentName = externalModuleData.getAttributeValue("name");
+      LOG.assertTrue(componentName != null && componentName.startsWith("External"));
+      externalModuleData.setAttribute("name", componentName.substring("External".length()));
+      if (moduleData == null) {
+        moduleData = externalModuleData;
+      }
+      else {
+        JDOMUtil.deepMerge(moduleData, externalModuleData);
+      }
+    }
+
     Path workspaceFile = dir.resolve("workspace.xml");
-    loadModules(loadRootElement(dir.resolve("modules.xml")), projectSdkType, workspaceFile);
+    loadModules(moduleData, projectSdkType, workspaceFile);
 
     Runnable timingLog = TimingLog.startActivity("loading project libraries");
     for (Path libraryFile : listXmlFiles(dir.resolve("libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
     }
 
-    Path externalConfigDir = resolveExternalProjectConfig("project");
     if (externalConfigDir != null) {
-      LOG.info("External project config dir is used: " + externalConfigDir);
       loadProjectLibraries(loadRootElement(externalConfigDir.resolve("libraries.xml")));
     }
 
@@ -207,7 +211,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    loadModules(iprRoot, projectSdkType, iwsFile);
+    loadModules(JDomSerializationUtil.findComponent(iprRoot, "ProjectModuleManager"), projectSdkType, iwsFile);
     loadProjectLibraries(JDomSerializationUtil.findComponent(iprRoot, "libraryTable"));
     loadArtifacts(JDomSerializationUtil.findComponent(iprRoot, "ArtifactManager"));
     if (hasRunConfigurationSerializers()) {
@@ -239,10 +243,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(@Nullable Element root, final @Nullable JpsSdkType<?> projectSdkType, Path workspaceFile) {
+  private void loadModules(@Nullable Element componentElement, final @Nullable JpsSdkType<?> projectSdkType, @NotNull Path workspaceFile) {
     Runnable timingLog = TimingLog.startActivity("loading modules");
-    Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
-    if (componentRoot == null) return;
+    if (componentElement == null) {
+      return;
+    }
 
     Set<String> unloadedModules = new HashSet<>();
     if (!myLoadUnloadedModules && Files.exists(workspaceFile)) {
@@ -254,7 +259,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
     final Set<Path> foundFiles = new THashSet<>();
     final List<Path> moduleFiles = new ArrayList<>();
-    for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
+    for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final Path file = Paths.get(path);
       if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
