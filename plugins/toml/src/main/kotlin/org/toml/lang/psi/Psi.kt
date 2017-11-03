@@ -18,7 +18,7 @@ interface TomlKeyValueOwner : TomlElement {
 }
 
 interface TomlHeaderOwner: TomlElement {
-    val header: TomlHeader
+    val header: TomlTableHeader
 }
 
 // endregion
@@ -41,7 +41,7 @@ interface TomlTable : TomlKeyValueOwner, TomlHeaderOwner
 interface TomlArrayTable : TomlKeyValueOwner, TomlHeaderOwner
 interface TomlInlineTable : TomlKeyValueOwner
 
-interface TomlHeader : TomlValue {
+interface TomlTableHeader : TomlValue {
     val names: List<TomlKey>
 }
 

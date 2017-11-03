@@ -87,20 +87,7 @@ TOML File
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     TomlLiteralImpl(LITERAL)
-      PsiElement(LITERAL_STRING)(''Tom ')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
-      PsiElement(BASIC_STRING)('"Dubs"')
-    PsiErrorElement:'=' expected, got 'Preston-Werner'
-      <empty list>
-  PsiWhiteSpace(' ')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
-      PsiElement(BARE_KEY)('Preston-Werner')
-    PsiErrorElement:'=' expected, got '''
-      <empty list>
-    TomlLiteralImpl(LITERAL)
-      PsiElement(LITERAL_STRING)(''')
+      PsiElement(LITERAL_STRING)(''Tom "Dubs" Preston-Werner'')
   PsiWhiteSpace('\n')
   TomlKeyValueImpl(KEY_VALUE)
     TomlKeyImpl(KEY)
@@ -118,7 +105,7 @@ TOML File
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     TomlLiteralImpl(LITERAL)
-      PsiElement(LITERAL_STRING)(''''I [dw]on't need \d{2} apples'''')
+      PsiElement(MULTILINE_LITERAL_STRING)(''''I [dw]on't need \d{2} apples'''')
   PsiWhiteSpace('\n')
   TomlKeyValueImpl(KEY_VALUE)
     TomlKeyImpl(KEY)

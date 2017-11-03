@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
 import org.toml.lang.core.psi.TomlFile
+import org.toml.lang.psi.TomlElementTypes
 import org.toml.lang.psi.impl.createPsiElement
 
 class TomlParserDefinition : ParserDefinition {
@@ -44,7 +45,7 @@ class TomlParserDefinition : ParserDefinition {
     companion object {
         val FILE: IFileElementType = IFileElementType(TomlLanguage)
         val WHITE_SPACES: TokenSet = TokenSet.create(TokenType.WHITE_SPACE)
-        val COMMENTS: TokenSet = TokenSet.EMPTY//TokenSet.create(TomlTypes.COMMENT)
+        val COMMENTS: TokenSet = TokenSet.create(TomlElementTypes.COMMENT)
     }
 }
 

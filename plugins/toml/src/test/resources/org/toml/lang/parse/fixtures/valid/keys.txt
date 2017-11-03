@@ -64,24 +64,19 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValueImpl(KEY_VALUE)
     TomlKeyImpl(KEY)
-      PsiElement(LITERAL_STRING)(''key2' = ')
-    PsiErrorElement:'=' expected, got '"value"'
-      <empty list>
+      PsiElement(LITERAL_STRING)(''key2'')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
     TomlLiteralImpl(LITERAL)
       PsiElement(BASIC_STRING)('"value"')
   PsiWhiteSpace('\n')
   TomlKeyValueImpl(KEY_VALUE)
     TomlKeyImpl(KEY)
-      PsiElement(LITERAL_STRING)(''quoted ')
-    PsiErrorElement:'=' expected, got '"value"'
-      <empty list>
-    TomlLiteralImpl(LITERAL)
-      PsiElement(BASIC_STRING)('"value"')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
-      PsiElement(LITERAL_STRING)('' = ')
-    PsiErrorElement:'=' expected, got '"value"'
-      <empty list>
+      PsiElement(LITERAL_STRING)(''quoted "value"'')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
     TomlLiteralImpl(LITERAL)
       PsiElement(BASIC_STRING)('"value"')
   PsiWhiteSpace('\n\n')
@@ -96,8 +91,9 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValueImpl(KEY_VALUE)
     TomlKeyImpl(KEY)
-      PsiElement(LITERAL_STRING)(''' = ')
-    PsiErrorElement:'=' expected, got '"value"'
-      <empty list>
+      PsiElement(LITERAL_STRING)('''')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
     TomlLiteralImpl(LITERAL)
       PsiElement(BASIC_STRING)('"value"')

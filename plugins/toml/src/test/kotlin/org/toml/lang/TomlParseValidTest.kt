@@ -18,9 +18,11 @@ class TomlParseValidTest
     fun testNumbers() = doTest()
     fun testBoolean() = doTest()
     fun testTime() = doTest()
-
+    fun testArrays() = doTest()
+    fun testTables() = doTest()
+    fun testInlineTables() = doTest()
+    fun testArrayTables() = doTest()
 
     override fun getTestDataPath() = "src/test/resources"
     private fun doTest() = doTest(true)
-
 }

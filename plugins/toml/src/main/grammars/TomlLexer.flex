@@ -24,15 +24,20 @@ COMMENT=#[^\n\r]*
 BOOLEAN=true|false
 
 BARE_KEY_OR_NUMBER=-?[0-9]+
+BARE_KEY_OR_DATE={DATE}
+
 NUMBER=[-+]?
  (0|[1-9](_?[0-9])*) // no leading zeros
  (\.[0-9](_?[0-9])*)?
  ([eE][-+]?[1-9](_?[0-9])*)?
-BARE_KEY=[0-9_\-a-zA-Z]+
 
 DATE=[0-9]{4}-[0-9]{2}-[0-9]{2}
-  ([Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?)?
-  ([Zz]|[+-][0-9]{2}:[0-9]{2})?
+TIME=[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?
+OFFSET=[Zz]|[+-][0-9]{2}:[0-9]{2}
+DATE_TIME= ({DATE} ([Tt]{TIME})? | {TIME}) {OFFSET}?
+
+BARE_KEY=[0-9_\-a-zA-Z]+
+
 
 ESCAPE = \\[^]
 BASIC_STRING=\"
@@ -42,7 +47,7 @@ MULTILINE_BASIC_STRING=(\"\"\")
   ([^\"] | {ESCAPE} | \"[^\"] | \"\"[^\"])*
 (\"\"\")?
 LITERAL_STRING=\'
-  ([^\r\n\"] | {ESCAPE})*
+  ([^\r\n\'] | {ESCAPE})*
 (\')?
 MULTILINE_LITERAL_STRING=(\'\'\')
   ([^\'] | {ESCAPE} | \'[^\'] | \'\'[^\'])*
@@ -57,10 +62,10 @@ MULTILINE_LITERAL_STRING=(\'\'\')
   {BOOLEAN} { return BOOLEAN; }
 
   {BARE_KEY_OR_NUMBER} { return BARE_KEY_OR_NUMBER; }
-  {NUMBER} { return NUMBER; }
-  {BARE_KEY} { return BARE_KEY; }
-
-  {DATE} { return DATE; }
+  {BARE_KEY_OR_DATE}   { return BARE_KEY_OR_DATE; }
+  {NUMBER}    { return NUMBER; }
+  {BARE_KEY}  { return BARE_KEY; }
+  {DATE_TIME} { return DATE_TIME; }
 
   {BASIC_STRING}   { return BASIC_STRING; }
   {LITERAL_STRING} { return LITERAL_STRING; }
@@ -68,14 +73,12 @@ MULTILINE_LITERAL_STRING=(\'\'\')
   {MULTILINE_LITERAL_STRING} { return MULTILINE_LITERAL_STRING; }
 
   "=" { return EQ; }
-
-
-//  "."                   { return DOT; }
-//  ","                   { return COMMA; }
-//  "["                   { return LBRACKET; }
-//  "]"                   { return RBRACKET; }
-//  "{"                   { return LBRACE; }
-//  "}"                   { return RBRACE; }
+  "," { return COMMA; }
+  "." { return DOT; }
+  "[" { return L_BRACKET; }
+  "]" { return R_BRACKET; }
+  "{" { return L_CURLY; }
+  "}" { return R_CURLY; }
 
   [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }

@@ -36,10 +36,10 @@
     BOOLEAN
 
     BARE_KEY_OR_NUMBER="regexp:\d+"
+    BARE_KEY_OR_DATE="regexp:\d{4}-\d{2}-\d{2}"
     NUMBER
     BARE_KEY
-
-    DATE
+    DATE_TIME
 
     BASIC_STRING
     LITERAL_STRING
@@ -47,43 +47,47 @@
     MULTILINE_LITERAL_STRING
 
     EQ='='
+    COMMA=','
+    DOT='.'
+    L_BRACKET='['
+    R_BRACKET=']'
+    L_CURLY='{'
+    R_CURLY='}'
   ]
 }
 
 File ::= FileForm*
 
-private FileForm ::= KeyValue
+private FileForm ::= KeyValue | ArrayTable | Table {recoverWhile=FileForm_recover}
+private FileForm_recover ::= !(
+  BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '['
+)
 
 KeyValue ::= Key '=' Value {pin=1}
 
-private Value ::= Literal
-Literal ::= Number | BOOLEAN | DATE
+Key ::= BareKey | BASIC_STRING | LITERAL_STRING
+private BareKey ::= BARE_KEY
+  | <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>>
+  | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
+
+
+private Value ::= Literal | Array | InlineTable
+
+Literal ::= Number | Date | BOOLEAN
   | BASIC_STRING | LITERAL_STRING
   | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
 
 private Number ::= <<remap 'BARE_KEY_OR_NUMBER' 'NUMBER'>> | NUMBER
+private Date ::= <<remap 'BARE_KEY_OR_DATE' 'DATE_TIME'>> | DATE_TIME
 
-Key ::= BareKey | BASIC_STRING | LITERAL_STRING
-private BareKey ::= <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>> | BARE_KEY
+Array ::= '[' ArrayElement* ']' {pin=1}
+private ArrayElement ::= Value (','|&']') {pin=1}
 
-//tomlFile ::= expression *
-//
-//expression ::= key_value | table | table_array
-//
-//table ::= table_header table_entries
-//table_header ::= '[' path ']'
-//
-//table_array ::= table_array_header table_entries
-//table_array_header ::= '[' '[' path ']' ']'
-//
-//key ::= simple_key | simple_number | string
-//path ::= key ('.' key) *
-//table_entries ::= key_value *
-//
-//key_value ::= key '=' value
-//
-////TODO inline_table should be on the single line
-//inline_table ::= '{' (key_value (',' key_value)* ','?)? '}'
-//
-//value ::= string | simple_number | number | boolean | date | array | inline_table
-//array ::= '[' (value (',' value)* ','?)? ']'
+Table ::= TableHeader KeyValue*
+TableHeader ::= '[' Key ('.' Key)* ']' {pin=1}
+
+ArrayTable ::= ArrayTableHeader KeyValue*
+ArrayTableHeader ::= '[''[' Key ('.' Key)* ']'']' {pin=2 elementType=TableHeader}
+
+InlineTable ::= '{' InlineTableElement* '}' {pin=1}
+private InlineTableElement ::= KeyValue (','|&'}') {pin=1}
