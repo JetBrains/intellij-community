@@ -282,7 +282,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return false;
   }
 
-  private void onValidThread(Runnable runnable) {
+  public void onValidThread(Runnable runnable) {
     processor.foreground.invokeLaterIfNeeded(runnable);
   }
 
