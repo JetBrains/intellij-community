@@ -538,7 +538,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     final String method;
     final Object[] args;
 
-    private Node(final Node target, final String method, final Object[] args) {
+    Node(@Nullable Node target, @Nullable String method, @Nullable Object[] args) {
       this.target = target;
       this.method = method;
       this.args = args;
@@ -620,6 +620,9 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
     @Override
     public String toString() {
+      if (myNode.target == ERROR_NODE && myNode.args == null) {
+        return myNode.method;
+      }
       StringBuilder sb = new StringBuilder();
       appendNode(myNode, sb);
       return sb.toString();
@@ -628,14 +631,15 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     private static void appendNode(Node node, StringBuilder sb) {
       if (node.target == ERROR_NODE) {
         sb.append(node.method);
+        return;
       }
-      if (node.target != null) {
+      else if (node.target != null) {
         appendNode(node.target, sb);
         sb.append('.');
       }
       sb.append(node.method).append('(');
       boolean first = true;
-      for (Object arg : node.args) {
+      for (Object arg : (node.args == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : node.args)) {
         if (first) first = false;
         else sb.append(',').append(' ');
         if (arg instanceof Node) {
