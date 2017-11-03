@@ -252,6 +252,15 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
   }
 
+  @Nullable
+  public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
+    PsiJavaModule javaModule = ContainerUtil.getFirstItem(JavaModuleNameIndex.getInstance().get(fqName,
+                                                                                                manager.getProject(),
+                                                                                                GlobalSearchScope.projectScope(manager.getProject())));
+
+    return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
+  }
+
   @NotNull
   private static Map<String, List<String>> getPackagesExportedByModule(@NotNull PsiJavaModule javaModule) {
     Map<String, List<String>> exportedPackages = new THashMap<>();

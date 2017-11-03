@@ -295,6 +295,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
     }
+    if (JAVA_MODULE.equals(type)) {
+      return RefJavaModuleImpl.moduleFromExternalName(myRefManager, fqName);
+    }
     return null;
   }
 
