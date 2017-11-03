@@ -19,12 +19,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -264,5 +267,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
 
     return PsiType.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public CodeReferenceKind getKind() {
+    return doGetKind(this);
   }
 }

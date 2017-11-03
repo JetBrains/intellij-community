@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
@@ -46,22 +46,6 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
       CodeReferenceKind.REFERENCE -> ref.resolveReference()
     }
     return results
-  }
-}
-
-private enum class CodeReferenceKind {
-  PACKAGE_REFERENCE,
-  IMPORT_REFERENCE,
-  REFERENCE
-}
-
-private fun GrCodeReferenceElement.getKind(): CodeReferenceKind {
-  val parent = parent
-  return when (parent) {
-    is GrPackageDefinition -> CodeReferenceKind.PACKAGE_REFERENCE
-    is GrImportStatement -> CodeReferenceKind.IMPORT_REFERENCE
-    is GrCodeReferenceElement -> parent.getKind()
-    else -> CodeReferenceKind.REFERENCE
   }
 }
 
