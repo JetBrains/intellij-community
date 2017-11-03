@@ -1,148 +1,148 @@
 TOML File
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('table')
       PsiElement(])(']')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('table-1')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('key1')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"some string"')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('key2')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('123')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('table-2')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('key1')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"another string"')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('key2')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('456')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('dog')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BASIC_STRING)('"tater.man"')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('type')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"pug"')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('a')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('b')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('c')
       PsiElement(])(']')
   PsiWhiteSpace('            ')
   PsiComment(COMMENT)('# this is best practice')
   PsiWhiteSpace('\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('d')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('e')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('f')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('          ')
   PsiComment(COMMENT)('# same as [d.e.f]')
   PsiWhiteSpace('\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('g')
       PsiWhiteSpace(' ')
       PsiElement(.)('.')
       PsiWhiteSpace('  ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('h')
       PsiWhiteSpace('  ')
       PsiElement(.)('.')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('i')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('    ')
   PsiComment(COMMENT)('# same as [g.h.i]')
   PsiWhiteSpace('\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('j')
       PsiWhiteSpace(' ')
       PsiElement(.)('.')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BASIC_STRING)('"ʞ"')
       PsiWhiteSpace(' ')
       PsiElement(.)('.')
       PsiWhiteSpace(' ')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(LITERAL_STRING)(''l'')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
@@ -155,55 +155,55 @@ TOML File
   PsiWhiteSpace('\n')
   PsiComment(COMMENT)('# [x.y.z] need these')
   PsiWhiteSpace('\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('x')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('y')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('z')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('w')
       PsiElement(])(']')
   PsiWhiteSpace(' ')
   PsiComment(COMMENT)('# for this to work')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('a')
       PsiElement(.)('.')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('b')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('c')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('1')
   PsiWhiteSpace('\n\n')
-  TomlTableImpl(TABLE)
-    TomlTableHeaderImpl(TABLE_HEADER)
+  TomlTable
+    TomlTableHeader
       PsiElement([)('[')
-      TomlKeyImpl(KEY)
+      TomlKey
         PsiElement(BARE_KEY)('a')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    TomlKeyValueImpl(KEY_VALUE)
-      TomlKeyImpl(KEY)
+    TomlKeyValue
+      TomlKey
         PsiElement(BARE_KEY)('d')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('2')

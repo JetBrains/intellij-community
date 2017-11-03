@@ -1,205 +1,205 @@
 TOML File
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('3')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"red"')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"yellow"')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"green"')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr3')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlArrayImpl(ARRAY)
+      TomlArray
         PsiElement([)('[')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('1')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('2')
         PsiWhiteSpace(' ')
         PsiElement(])(']')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlArrayImpl(ARRAY)
+      TomlArray
         PsiElement([)('[')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('3')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('4')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('5')
         PsiElement(])(']')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr4')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(BASIC_STRING)('"all"')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(LITERAL_STRING)(''strings'')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(MULTILINE_BASIC_STRING)('"""are the same"""')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(MULTILINE_LITERAL_STRING)(''''type'''')
       PsiElement(])(']')
   PsiWhiteSpace('\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr5')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlArrayImpl(ARRAY)
+      TomlArray
         PsiElement([)('[')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('1')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(NUMBER)('2')
         PsiWhiteSpace(' ')
         PsiElement(])(']')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlArrayImpl(ARRAY)
+      TomlArray
         PsiElement([)('[')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(BASIC_STRING)('"a"')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(BASIC_STRING)('"b"')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
-        TomlLiteralImpl(LITERAL)
+        TomlLiteral
           PsiElement(BASIC_STRING)('"c"')
         PsiElement(])(']')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace('\n\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr6')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('2.0')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiWhiteSpace(' ')
   PsiComment(COMMENT)('# INVALID')
   PsiWhiteSpace('\n\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr7')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace('\n  ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('3')
       PsiWhiteSpace('\n')
       PsiElement(])(']')
   PsiWhiteSpace('\n\n')
-  TomlKeyValueImpl(KEY_VALUE)
-    TomlKeyImpl(KEY)
+  TomlKeyValue
+    TomlKey
       PsiElement(BARE_KEY)('arr8')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    TomlArrayImpl(ARRAY)
+    TomlArray
       PsiElement([)('[')
       PsiWhiteSpace('\n  ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('1')
       PsiElement(,)(',')
       PsiWhiteSpace('\n  ')
-      TomlLiteralImpl(LITERAL)
+      TomlLiteral
         PsiElement(NUMBER)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
