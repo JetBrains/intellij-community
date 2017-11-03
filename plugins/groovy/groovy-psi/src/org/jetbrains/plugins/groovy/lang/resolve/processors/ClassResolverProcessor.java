@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_CLASS;
 
@@ -11,10 +10,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
  * @author ven
  */
 public class ClassResolverProcessor extends ResolverProcessorImpl {
-  public ClassResolverProcessor(String refName, GrReferenceElement ref) {
-    super(refName, RESOLVE_KINDS_CLASS, ref, ref.getTypeArguments());
-  }
-
   public ClassResolverProcessor(String refName, PsiElement place) {
     super(refName, RESOLVE_KINDS_CLASS, place, PsiType.EMPTY_ARRAY);
   }

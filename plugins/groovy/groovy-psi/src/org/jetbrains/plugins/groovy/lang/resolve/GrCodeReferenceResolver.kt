@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
@@ -38,14 +38,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcess
 internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement> {
 
   override fun resolve(ref: GrCodeReferenceElement, incomplete: Boolean): Collection<GroovyResolveResult> {
-    val kind = ref.getKind()
-    @Suppress("UnnecessaryVariable")
-    val results = when (kind) {
-      CodeReferenceKind.PACKAGE_REFERENCE -> ref.resolveAsPackageReference()
-      CodeReferenceKind.IMPORT_REFERENCE -> ref.resolveAsImportReference()
-      CodeReferenceKind.REFERENCE -> ref.resolveReference()
+    return when (ref.kind) {
+      PACKAGE_REFERENCE -> ref.resolveAsPackageReference()
+      IMPORT_REFERENCE -> ref.resolveAsImportReference()
+      REFERENCE -> ref.resolveReference()
     }
-    return results
   }
 }
 

@@ -63,7 +63,7 @@ fun GrCodeReferenceElement.doGetKind(): CodeReferenceKind {
   return when (parent) {
     is GrPackageDefinition -> CodeReferenceKind.PACKAGE_REFERENCE
     is GrImportStatement -> CodeReferenceKind.IMPORT_REFERENCE
-    is GrCodeReferenceElement -> parent.getKind()
+    is GrCodeReferenceElement -> parent.kind
     else -> CodeReferenceKind.REFERENCE
   }
 }

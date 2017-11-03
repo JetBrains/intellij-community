@@ -9,16 +9,13 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -28,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.getQualifiedReferenceName;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -80,62 +78,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return findChildByType(TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
   }
 
-  public enum ReferenceKind {
-    CLASS,
-    CLASS_OR_PACKAGE,
-    PACKAGE_FQ,
-    CLASS_FQ,
-    CLASS_OR_PACKAGE_FQ,
-    STATIC_MEMBER_FQ,
-  }
-
-  public ReferenceKind getKind(boolean forCompletion) {
-    if (isClassReferenceForNew()) {
-      return ReferenceKind.CLASS_OR_PACKAGE;
-    }
-
-    PsiElement parent = getParent();
-    if (parent instanceof GrCodeReferenceElementImpl) {
-      ReferenceKind parentKind = ((GrCodeReferenceElementImpl)parent).getKind(forCompletion);
-      if (parentKind == ReferenceKind.CLASS) {
-        return ReferenceKind.CLASS_OR_PACKAGE;
-      }
-      else if (parentKind == ReferenceKind.STATIC_MEMBER_FQ) {
-        return isQualified() ? ReferenceKind.CLASS_FQ : ReferenceKind.CLASS;
-      }
-      else if (parentKind == ReferenceKind.CLASS_FQ) return ReferenceKind.CLASS_OR_PACKAGE_FQ;
-      return parentKind;
-    }
-    else if (parent instanceof GrPackageDefinition) {
-      return ReferenceKind.PACKAGE_FQ;
-    }
-    else if (parent instanceof GrDocReferenceElement) {
-      return ReferenceKind.CLASS_OR_PACKAGE;
-    }
-    else if (parent instanceof GrImportStatement) {
-      final GrImportStatement importStatement = (GrImportStatement)parent;
-      if (importStatement.isStatic()) {
-        return importStatement.isOnDemand() ? ReferenceKind.CLASS : ReferenceKind.STATIC_MEMBER_FQ;
-      }
-      else {
-        return forCompletion || importStatement.isOnDemand() ? ReferenceKind.CLASS_OR_PACKAGE_FQ : ReferenceKind.CLASS_FQ;
-      }
-    }
-    else if (parent instanceof GrNewExpression || parent instanceof GrAnonymousClassDefinition) {
-      PsiElement newExpr = parent instanceof GrAnonymousClassDefinition ? parent.getParent() : parent;
-      assert newExpr instanceof GrNewExpression;
-    }
-
-    return ReferenceKind.CLASS;
-  }
-
   @Override
   @NotNull
   public String getCanonicalText() {
-    final ReferenceKind kind = getKind(false);
-    switch (kind) {
-      case CLASS:
-      case CLASS_OR_PACKAGE:
+    switch (getKind()) {
+      case PACKAGE_REFERENCE:
+      case IMPORT_REFERENCE:
+        return getTextSkipWhiteSpaceAndComments();
+      case REFERENCE:
         final PsiElement target = resolve();
         if (target instanceof PsiTypeParameter) {
           return StringUtil.notNullize(((PsiTypeParameter)target).getName());
@@ -166,15 +116,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           LOG.assertTrue(target == null);
           return getTextSkipWhiteSpaceAndComments();
         }
-
-      case CLASS_FQ:
-      case CLASS_OR_PACKAGE_FQ:
-      case PACKAGE_FQ:
-      case STATIC_MEMBER_FQ:
-        return getTextSkipWhiteSpaceAndComments();
       default:
-        LOG.assertTrue(false);
-        return null;
+        throw new IllegalStateException();
     }
   }
 
@@ -196,17 +139,20 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public boolean isFullyQualified() {
-    switch (getKind(false)) {
-      case PACKAGE_FQ:
-      case CLASS_FQ:
-      case CLASS_OR_PACKAGE_FQ:
-      case STATIC_MEMBER_FQ:
-      case CLASS_OR_PACKAGE:
-        if (resolve() instanceof PsiPackage) return true;
-      case CLASS:
+    PsiElement resolved = resolve();
+    if (resolved instanceof PsiPackage) {
+      return true;
     }
-    final GrCodeReferenceElement qualifier = getQualifier();
-    return qualifier != null && ((GrCodeReferenceElementImpl)qualifier).isFullyQualified();
+    else if (resolved instanceof PsiClass) {
+      final String qualifiedReferenceName = getQualifiedReferenceName(this);
+      if (qualifiedReferenceName == null) return false;
+      final String classFqn = ((PsiClass)resolved).getQualifiedName();
+      if (classFqn == null) return false;
+      return qualifiedReferenceName.equals(classFqn);
+    }
+    else {
+      return false;
+    }
   }
 
   @Override
@@ -225,12 +171,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  private boolean isClassReferenceForNew() {
-    PsiElement parent = getParent();
-    while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
-    return parent instanceof GrNewExpression;
   }
 
   @Override
