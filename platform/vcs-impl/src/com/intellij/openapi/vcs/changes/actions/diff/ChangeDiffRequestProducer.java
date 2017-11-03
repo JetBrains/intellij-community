@@ -37,10 +37,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
@@ -395,16 +392,21 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
         return contentFactory.create(project, vFile);
       }
 
+      DiffContent content;
       if (revision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return contentFactory.createFromBytes(project, revisionContent, filePath);
+        content = contentFactory.createFromBytes(project, revisionContent, filePath);
       }
       else {
         String revisionContent = revision.getContent();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return contentFactory.create(project, revisionContent, filePath);
+        content = contentFactory.create(project, revisionContent, filePath);
       }
+
+      content.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(revision.getFile(), revision.getRevisionNumber()));
+
+      return content;
     }
     catch (IOException | VcsException e) {
       LOG.info(e);
