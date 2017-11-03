@@ -88,21 +88,6 @@ public class PyUtil {
   private PyUtil() {
   }
 
-  @NotNull
-  public static <T extends PyElement> T[] getAllChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
-    List<T> result = new SmartList<>();
-    for (PsiElement child : element.getChildren()) {
-      if (instanceOf(child, aClass)) {
-        //noinspection unchecked
-        result.add((T)child);
-      }
-      else {
-        ContainerUtil.addAll(result, getAllChildrenOfType(child, aClass));
-      }
-    }
-    return ArrayUtil.toObjectArray(result, aClass);
-  }
-
   /**
    * @see PyUtil#flattenedParensAndTuples
    */
@@ -154,18 +139,6 @@ public class PyUtil {
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
   }
-
-  // Poor man's filter
-  // TODO: move to a saner place
-
-  public static boolean instanceOf(Object obj, Class... possibleClasses) {
-    if (obj == null || possibleClasses == null) return false;
-    for (Class cls : possibleClasses) {
-      if (cls.isInstance(obj)) return true;
-    }
-    return false;
-  }
-
 
   /**
    * Produce a reasonable representation of a PSI element, good for debugging.
@@ -850,7 +823,7 @@ public class PyUtil {
       // concurrent hash map is a null-hostile collection
       return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
-    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key 
+    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key
     // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
     final Optional<P> wrappedParam = Optional.ofNullable(param);
     Optional<T> value = cache.get(wrappedParam);
@@ -1463,8 +1436,8 @@ public class PyUtil {
       caretOffset--;
       element = psiFile.findElementAt(caretOffset);
     }
-    while (caretOffset >= lineStartOffset && instanceOf(element, toSkip));
-    return instanceOf(element, toSkip) ? null : element;
+    while (caretOffset >= lineStartOffset && PsiTreeUtil.instanceOf(element, toSkip));
+    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
   }
 
   @Nullable
@@ -1498,11 +1471,11 @@ public class PyUtil {
       int lineNumber = document.getLineNumber(caretOffset);
       lineEndOffset = document.getLineEndOffset(lineNumber);
     }
-    while (caretOffset < lineEndOffset && instanceOf(element, toSkip)) {
+    while (caretOffset < lineEndOffset && PsiTreeUtil.instanceOf(element, toSkip)) {
       caretOffset++;
       element = psiFile.findElementAt(caretOffset);
     }
-    return instanceOf(element, toSkip) ? null : element;
+    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
   }
 
   /**
