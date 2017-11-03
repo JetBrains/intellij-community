@@ -7,6 +7,8 @@ package org.toml.lang.psi.impl
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.psi.*
 import org.toml.lang.psi.TomlElementTypes.*
@@ -21,8 +23,15 @@ class TomlKeyValueImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlKeyValue
 }
 
 
-class TomlKeyImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlKey
-class TomlLiteralImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlLiteral
+class TomlKeyImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlKey {
+    override fun getReferences(): Array<PsiReference>
+        = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+}
+
+class TomlLiteralImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlLiteral {
+    override fun getReferences(): Array<PsiReference>
+        = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+}
 
 class TomlArrayImpl(node: ASTNode) : ASTWrapperPsiElement(node), TomlArray {
     override val elements: List<TomlValue>
