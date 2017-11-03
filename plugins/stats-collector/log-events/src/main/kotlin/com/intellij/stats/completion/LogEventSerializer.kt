@@ -142,6 +142,6 @@ class DeserializedLogEvent(
 ) {
 
     val isFailed: Boolean
-      get() = unknownEventFields.isNotEmpty() || absentEventFields.isNotEmpty()
+      get() = event == null || unknownEventFields.isNotEmpty() || absentEventFields.isNotEmpty()
 
 }
