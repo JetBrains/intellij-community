@@ -109,12 +109,6 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
-
-    if (tree.getUI() instanceof WideSelectionTreeUI && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      setMyBorder(null);
-      setIpad(new Insets(0, 2,  0, 2));
-    }
-
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     return this;
