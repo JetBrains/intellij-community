@@ -65,8 +65,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
-
 /**
  * @author ilyas
  */
@@ -161,11 +159,8 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (shouldProcessTypeParameters(processor)) {
-      for (final GrTypeParameter typeParameter : getTypeParameters()) {
-        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
-      }
-    }
+    final GrTypeParameterList list = getTypeParameterList();
+    if (list != null && !list.processDeclarations(processor, state, lastParent, place)) return false;
 
     if (ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) {
       for (final GrParameter parameter : getParameters()) {
