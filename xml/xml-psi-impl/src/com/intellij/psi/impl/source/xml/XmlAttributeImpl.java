@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -367,6 +368,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
 
   @Nullable
   private VolatileState getFreshState() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     VolatileState state = myVolatileState;
     if (state == null) {
       state = recalculate();
