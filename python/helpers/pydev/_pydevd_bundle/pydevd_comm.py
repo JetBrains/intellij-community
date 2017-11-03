@@ -67,7 +67,7 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -1484,7 +1484,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
-            t = GetValueAsyncThread(dbg, self.sequence, var_objects)
+            t = GetValueAsyncThread(dbg, self.thread_id, self.frame_id, self.sequence, var_objects)
             t.start()
         except:
             exc = get_exception_traceback_str()
@@ -1494,16 +1494,23 @@ class InternalLoadFullValue(InternalThreadCommand):
 
 
 class GetValueAsyncThread(PyDBDaemonThread):
-    def __init__(self, py_db, seq, var_objects):
+    def __init__(self, py_db, thread_id, frame_id, seq, var_objects):
         PyDBDaemonThread.__init__(self)
         self.py_db = py_db
+        self.thread_id = thread_id
+        self.frame_id = frame_id
         self.seq = seq
         self.var_objs = var_objects
+        self.cancel_event = threading.Event()
 
     def _on_run(self):
+        start = time.time()
         xml = StringIO.StringIO()
         xml.write("<xml>")
         for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
             xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
         xml.write("</xml>")
         cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
