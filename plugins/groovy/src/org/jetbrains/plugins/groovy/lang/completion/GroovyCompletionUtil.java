@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
@@ -331,10 +329,10 @@ public class GroovyCompletionUtil {
     return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  private static LookupElementBuilder setupLookupBuilder(PsiElement element,
-                                                         PsiSubstitutor substitutor,
-                                                         LookupElementBuilder builder,
-                                                         @Nullable PsiElement position) {
+  public static LookupElement setupLookupBuilder(PsiElement element,
+                                                 PsiSubstitutor substitutor,
+                                                 LookupElementBuilder builder,
+                                                 @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
@@ -609,7 +607,8 @@ public class GroovyCompletionUtil {
 
   public static void processVariants(GrReferenceElement referenceElement, PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
     if (referenceElement instanceof GrCodeReferenceElementImpl) {
-      CompleteCodeReferenceElement.processVariants((GrCodeReferenceElementImpl)referenceElement, consumer, matcher);
+      CompleteReferenceElementKt.complete((GrCodeReferenceElement)referenceElement, matcher, consumer);
+      //CompleteCodeReferenceElement.processVariants((GrCodeReferenceElementImpl)referenceElement, consumer, matcher);
     }
     else if (referenceElement instanceof GrReferenceExpressionImpl) {
       CompleteReferenceExpression.processVariants(matcher, consumer, (GrReferenceExpressionImpl)referenceElement, parameters);
