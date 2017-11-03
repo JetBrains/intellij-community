@@ -30,7 +30,7 @@ abstract class LogEvent(
     @Transient var recorderId = "completion-stats"
     @Transient var recorderVersion = "3"
     @Transient var timestamp = System.currentTimeMillis()
-    @Transient var bucket = "0"
+    @Transient var bucket = "-1"
 
     abstract fun accept(visitor: LogEventVisitor)
 }
