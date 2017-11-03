@@ -15,6 +15,7 @@ class TomlFileTypeFactory : FileTypeFactory() {
         consumer.consume(TomlFileType,
             ExactFileNameMatcher("Cargo.lock"),
             ExactFileNameMatcher("Gopkg.lock"),
+            ExactFileNameMatcher("Pipfile"),
             ExtensionFileNameMatcher(TomlFileType.defaultExtension))
     }
 }
