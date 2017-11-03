@@ -1,10 +1,10 @@
 import keyword
 import os
 
-from pycharm_generator_utils.constants import *
 from pycharm_generator_utils.util_methods import *
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
+
 
 class emptylistdict(dict):
     """defaultdict not available before 2.5; simplest reimplementation using [] as default"""
@@ -16,6 +16,7 @@ class emptylistdict(dict):
             it = []
             self.__setitem__(item, it)
             return it
+
 
 class Buf(object):
     """Buffers data in a list, can write to a file. Indentation is provided externally."""
@@ -56,6 +57,7 @@ class ClassBuf(Buf):
     def __init__(self, name, indenter):
         super(ClassBuf, self).__init__(indenter)
         self.name = name
+
 
 #noinspection PyUnresolvedReferences,PyBroadException
 class ModuleRedeclarator(object):
@@ -205,7 +207,6 @@ class ModuleRedeclarator(object):
                 return r
                 # NOTE: here we could handle things like defaultdict, sets, etc if we wanted
         return "None"
-
 
     def fmt_value(self, out, p_value, indent, prefix="", postfix="", as_name=None, seen_values=None):
         """
@@ -472,7 +473,6 @@ class ModuleRedeclarator(object):
         return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (
             class_name, func_name) in PREDEFINED_BUILTIN_SIGS
 
-
     def redo_function(self, out, p_func, p_name, indent, p_class=None, p_modname=None, classname=None, seen=None):
         """
         Restore function argument list as best we can.
@@ -602,7 +602,6 @@ class ModuleRedeclarator(object):
         if deco and not HAS_DECORATORS:
             out(indent, p_name, " = ", deco, "(", p_name, ")", deco_comment)
         out(0, "") # empty line after each item
-
 
     def redo_class(self, out, p_class, p_name, indent, p_modname=None, seen=None, inspect_dir=False):
         """
@@ -765,8 +764,6 @@ class ModuleRedeclarator(object):
         if not methods and not properties and not others:
             out(indent + 1, "pass")
 
-
-
     def redo_simple_header(self, p_name):
         """Puts boilerplate code on the top"""
         out = self.header_buf.out # 1st class methods rule :)
@@ -798,7 +795,6 @@ class ModuleRedeclarator(object):
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
 
-
     def redo_imports(self):
         module_type = type(sys)
         for item_name in self.module.__dict__.keys():
@@ -819,7 +815,6 @@ class ModuleRedeclarator(object):
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "")
             self.imports_buf.out(0, "# imports")
-
 
     def redo(self, p_name, inspect_dir):
         """
