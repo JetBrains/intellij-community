@@ -75,7 +75,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Path to silent.config which contains set of properties to manage UI options to install product in silent mode
    */
-  String silentInstallationConfig = ""
+  String silentInstallationConfig = null
 
   /**
    * Name of the root directory in Windows .zip archive
