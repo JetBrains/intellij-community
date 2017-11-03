@@ -7,7 +7,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -207,17 +206,3 @@ private fun GrReferenceExpression.resolveLocalVariable(): GroovyResolveResult? {
   treeWalkUp(processor, state)
   return processor.resolveResult
 }
-
-internal val GrReferenceElement<*>.qualifiedReferenceName: String?
-  get() {
-    val parts = mutableListOf<String>()
-    var current = this
-    while (true) {
-      val name = current.referenceName ?: return null
-      parts.add(name)
-      val qualifier = current.qualifier ?: break
-      qualifier as? GrReferenceElement<*> ?: return null
-      current = qualifier
-    }
-    return parts.reversed().joinToString(separator = ".")
-  }

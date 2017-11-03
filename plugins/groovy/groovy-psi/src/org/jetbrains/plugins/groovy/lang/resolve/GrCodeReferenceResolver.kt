@@ -191,7 +191,7 @@ private fun PsiClass.getPackage(): PsiPackage? {
 }
 
 @Suppress("LiftReturnOrAssignment")
-private fun GrCodeReferenceElement.processClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+fun GrCodeReferenceElement.processClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   val qualifier = qualifier
   if (qualifier == null) {
     return processAsUnqualifiedType(processor, state)
@@ -214,11 +214,6 @@ private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceEl
     if (!processInnersInHierarchy(clazz, processor, state.put(PsiSubstitutor.KEY, result.substitutor), this)) return false
   }
   return true
-}
-
-private fun GrReferenceElement<*>.resolveClassFqn(): PsiClass? {
-  val fqn = qualifiedReferenceName ?: return null
-  return JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope)
 }
 
 private fun GrReferenceElement<*>.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
