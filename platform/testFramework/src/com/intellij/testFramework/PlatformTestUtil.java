@@ -74,6 +74,7 @@ import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
@@ -247,6 +248,13 @@ public class PlatformTestUtil {
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
+  }
+
+  @TestOnly
+  public static void waitForCallback(@NotNull ActionCallback callback) {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    callback.doWhenDone(() -> promise.setResult(null));
+    waitForPromise(promise);
   }
 
   @TestOnly

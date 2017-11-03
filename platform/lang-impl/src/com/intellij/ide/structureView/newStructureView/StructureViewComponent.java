@@ -285,7 +285,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (myUseATM) {
       myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate();
+        myStructureTreeModel.invalidate(null);
       });
     }
     else {
