@@ -78,12 +78,16 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testRunFinished(Result result) {
-    dumpQueue(true);
-    for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
-      Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
-      myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
+    try {
+      dumpQueue(true);
     }
-    myStartedSuites.clear();
+    finally {
+      for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
+        Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
+        myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
+      }
+      myStartedSuites.clear();
+    }
   }
 
   public void testStarted(Description description) {
@@ -93,8 +97,10 @@ public class JUnit4TestListener extends RunListener {
   private void testStarted(Description description, String methodName) {
     final List parents = (List)myParents.get(description);
     if (myCurrentTest != null && (parents == null || parents.isEmpty() || !((List)parents.get(0)).contains(myCurrentTest))) {
-      myWaitingQueue.put(description, new TestEvent());
-      return;
+      if (!myWaitingQueue.containsKey(description)) {
+        myWaitingQueue.put(description, new TestEvent());
+        return;
+      }
     }
 
     myCurrentTest = description;
@@ -307,7 +313,8 @@ public class JUnit4TestListener extends RunListener {
     if (methodName == null) {
       methodName = JUnit4ReflectionUtil.getMethodName(description);
       if (methodName != null && (parent == null || !isParameter(parent))) {
-        methodName = getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
+        String shortName = getShortName(JUnit4ReflectionUtil.getClassName(description));
+        methodName = shortName.length() == 0 ?  methodName : shortName + "." + methodName;
       }
 
       if (!acceptNull && methodName == null && description.getChildren().isEmpty()) {
@@ -369,9 +376,9 @@ public class JUnit4TestListener extends RunListener {
       Description description = (Description)iterator.next();
       TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
       if (acceptUnfinished || testEvent.isFinished()) {
-        iterator.remove();
-
         testStarted(description, testEvent.getMethodName());
+
+        iterator.remove();
 
         Failure failure = testEvent.getFailure();
         if (testEvent.isIgnored()) {
