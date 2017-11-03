@@ -133,16 +133,16 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     }
 
     if (f != null) {
-      LOG.info("Found pregenerated skeletons at " + f.getPath());
+      LOG.info("Found pre-generated skeletons at " + f.getPath());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
       if (virtualFile == null) {
-        LOG.info("Could not find pregenerated skeletons in VFS");
+        LOG.info("Could not find pre-generated skeletons in VFS");
         return null;
       }
       return new ArchivedSkeletons(JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile));
     }
     else {
-      LOG.info("Not found pregenerated skeletons at " + root);
+      LOG.info("Not found pre-generated skeletons at " + root);
       return null;
     }
   }
@@ -175,7 +175,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
         }
       }
       if (pregenerated != null && (targetDir.exists() || targetDir.mkdirs())) {
-        LOG.info("Pregenerated skeleton for " + moduleName);
+        LOG.info("Pre-generated skeleton for " + moduleName);
         File target = new File(targetDir, pregenerated.getName());
         try {
           FileOutputStream fos = new FileOutputStream(target);
@@ -187,7 +187,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
           }
         }
         catch (IOException e) {
-          LOG.info("Error copying pregenerated skeleton", e);
+          LOG.info("Error copying pre-generated skeleton", e);
           return false;
         }
         return true;
@@ -197,7 +197,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
 
     @Override
     public void unpackPreGeneratedSkeletons(String skeletonDir) {
-      ProgressManager.progress("Unpacking pregenerated skeletons...");
+      ProgressManager.progress("Unpacking pre-generated skeletons...");
       try {
         final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(myArchiveRoot);
         if (jar != null) {
@@ -206,7 +206,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
         }
       }
       catch (IOException e) {
-        LOG.info("Error unpacking pregenerated skeletons", e);
+        LOG.info("Error unpacking pre-generated skeletons", e);
       }
     }
   }
