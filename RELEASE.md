@@ -184,7 +184,9 @@ For AOSP push:
  1. Update the build scripts such that they no longer reference any of
     the closed source plugins such as the C++ support; this means removing
     the vendor/ plugin references from .idea/modules.xml, community-main.xml,
-    and build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+    build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy,
+    .idea/runConfigurations/OneStudio.xml and the reference in .idea/ant.xml
+    to vendor/google3.
 
  2. Remove the build.xml reference which calls ant in tools/adt/idea to
     build the protobufs from source; instead, after a build, check these

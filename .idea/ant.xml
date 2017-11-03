@@ -9,5 +9,6 @@
     <buildFile url="file://$PROJECT_DIR$/../adt/idea/android/build.xml">
       <executeOn event="beforeCompilation" target="preBuild" />
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/../vendor/google3/blaze/build.xml" />
   </component>
 </project>
