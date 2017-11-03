@@ -20,7 +20,6 @@ import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlElementTypes
-import org.toml.lang.psi.impl.createPsiElement
 
 class TomlParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser = TomlParser()
@@ -40,7 +39,8 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun createLexer(project: Project?): Lexer = TomlLexer()
 
-    override fun createElement(node: ASTNode): PsiElement = createPsiElement(node)
+    override fun createElement(node: ASTNode): PsiElement =
+        throw UnsupportedOperationException(node.elementType.toString()) // See org.toml.lang.psi.impl.TomlASTFactory
 
     companion object {
         val FILE: IFileElementType = IFileElementType(TomlLanguage)

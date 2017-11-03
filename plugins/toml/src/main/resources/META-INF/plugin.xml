@@ -10,23 +10,24 @@
       TOML language support
     ]]></description>
 
-    <!--<change-notes><![CDATA[-->
-    <!--Add change notes here.<br>-->
-    <!--<em>most HTML tags may be used</em>-->
-    <!--]]>-->
-    <!--</change-notes>-->
-
+    <change-notes><![CDATA[
+        <ul>
+            <li>New parser, lexer and PSI</li>
+            <li>PSI support reference contributors, so third-party plugins can inject references into TOML files</li>
+        </ul>
+    ]]>
+    </change-notes>
 
     <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
+        <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
         <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
         <annotator language="TOML" implementationClass="org.toml.ide.TomlAnnotator"/>
     </extensions>
-
 </idea-plugin>

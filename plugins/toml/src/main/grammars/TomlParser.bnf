@@ -1,5 +1,6 @@
 // https://github.com/toml-lang/toml/blob/master/toml.abnf
 {
+  generate=[psi="no"]
   generatePsi=false // We employ hand-written Kotlin PSI
   parserClass="org.toml.lang.parse.TomlParser"
   parserUtilClass="org.toml.lang.parse.TomlParserUtil"
