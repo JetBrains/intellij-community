@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -111,8 +112,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
     if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, PsiDocumentManager.getInstance(myProject).getPsiFile(
-        myEditor.getDocument()));
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
