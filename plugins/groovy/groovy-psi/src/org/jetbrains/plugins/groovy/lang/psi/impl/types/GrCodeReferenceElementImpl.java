@@ -6,19 +6,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -27,21 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethodsSimple;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterAccessorMethods;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -151,12 +134,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case CLASS:
       case CLASS_OR_PACKAGE:
         final PsiElement target = resolve();
-        if (target instanceof PsiClass) {
+        if (target instanceof PsiTypeParameter) {
+          return StringUtil.notNullize(((PsiTypeParameter)target).getName());
+        }
+        else if (target instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)target;
           String name = aClass.getQualifiedName();
-          if (name == null) { //parameter types don't have qualified name
-            name = aClass.getName();
-          }
+          if (name == null) return "";
+
           final PsiType[] types = getTypeArguments();
           if (types.length == 0) return name;
 
@@ -250,215 +235,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return false;
   }
 
-  private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
-
-    @Override
-    @NotNull
-    public GroovyResolveResult[] resolve(@NotNull GrCodeReferenceElementImpl reference, boolean incompleteCode) {
-      if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
-      final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
-      if (results.length == 0) return results;
-
-      List<GroovyResolveResult> imported = new ArrayList<>();
-      final PsiType[] args = reference.getTypeArguments();
-      for (int i = 0; i < results.length; i++) {
-        GroovyResolveResult result = results[i];
-        final PsiElement element = result.getElement();
-        if (element instanceof PsiClass) {
-          final PsiSubstitutor substitutor = result.getSubstitutor();
-          final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass)element, args);
-          PsiElement context = result.getCurrentFileResolveContext();
-          GroovyResolveResultImpl newResult =
-            new GroovyResolveResultImpl(element, context, null, newSubstitutor, result.isAccessible(), result.isStaticsOK());
-          results[i] = newResult;
-          if (context instanceof GrImportStatement) {
-            imported.add(newResult);
-          }
-        }
-      }
-      if (!imported.isEmpty()) {
-        return imported.toArray(new GroovyResolveResult[imported.size()]);
-      }
-
-      return results;
-    }
-
-    @NotNull
-    private static GroovyResolveResult[] _resolve(@NotNull GrCodeReferenceElementImpl ref,
-                                                  @NotNull PsiManager manager,
-                                                  @NotNull ReferenceKind kind) {
-      final String refName = ref.getReferenceName();
-      if (refName == null) {
-        return GroovyResolveResult.EMPTY_ARRAY;
-      }
-
-      switch (kind) {
-        case CLASS_OR_PACKAGE_FQ:
-        case CLASS_FQ:
-        case PACKAGE_FQ: {
-          String qName = PsiUtil.getQualifiedReferenceText(ref);
-          LOG.assertTrue(qName != null, ref.getText());
-          final PsiElement element = resolveClassOrPackagePreferInner(ref, kind, qName, JavaPsiFacade.getInstance(manager.getProject()));
-          if (element instanceof PsiClass || element instanceof PsiPackage) {
-            final GroovyResolveResult result = new ElementGroovyResult<>(element);
-            return new GroovyResolveResult[]{result};
-          }
-          return GroovyResolveResult.EMPTY_ARRAY;
-        }
-
-        case CLASS: {
-          ResolverProcessor processor = new ClassResolverProcessor(refName, ref);
-          GrCodeReferenceElement qualifier = ref.getQualifier();
-          if (qualifier != null) {
-            PsiElement qualifierResolved = qualifier.resolve();
-            if (qualifierResolved instanceof PsiPackage || qualifierResolved instanceof PsiClass) {
-              qualifierResolved.processDeclarations(processor, ResolveState.initial(), null, ref);
-              return processor.getCandidates();
-            }
-          }
-          else {
-            // if ref is an annotation name reference we should not process declarations of annotated elements
-            // because inner annotations are not permitted and it can cause infinite recursion
-            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
-            if (placeToStartWalking != null) {
-              treeWalkUp(placeToStartWalking, processor, ResolveState.initial(), ref);
-              GroovyResolveResult[] candidates = processor.getCandidates();
-              if (candidates.length > 0) return candidates;
-            }
-          }
-
-          break;
-        }
-
-        case CLASS_OR_PACKAGE: {
-          GroovyResolveResult[] classResult = _resolve(ref, manager, ReferenceKind.CLASS);
-
-          if (classResult.length == 1 && !classResult[0].isAccessible()) {
-            GroovyResolveResult[] packageResult = _resolve(ref, manager, ReferenceKind.PACKAGE_FQ);
-            if (packageResult.length != 0) {
-              return packageResult;
-            }
-          }
-          else if (classResult.length == 0) {
-            return _resolve(ref, manager, ReferenceKind.PACKAGE_FQ);
-          }
-
-          return classResult;
-        }
-        case STATIC_MEMBER_FQ: {
-          final GrCodeReferenceElement qualifier = ref.getQualifier();
-          if (qualifier == null) break;
-
-          final PsiElement resolved = qualifier.resolve();
-          if (!(resolved instanceof PsiClass)) break;
-
-          final PsiClass clazz = (PsiClass)resolved;
-
-          final List<GroovyResolveResult> result = new ArrayList<>();
-          processFields(refName, clazz, result);
-          processMethods(refName, clazz, result);
-          processInnerClasses(refName, clazz, result);
-          processAccessors(refName, clazz, result);
-          return collapseReflectedMethodsSimple(result).toArray(GroovyResolveResult.EMPTY_ARRAY);
-        }
-      }
-
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    @Nullable
-    private static PsiElement resolveClassOrPackagePreferInner(@NotNull GrCodeReferenceElementImpl ref,
-                                                               @NotNull ReferenceKind kind,
-                                                               String qName,
-                                                               JavaPsiFacade facade) {
-      if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.CLASS_FQ) {
-        final PsiFile file = ref.getContainingFile();
-        boolean qualified = qName.indexOf('.') > 0;
-        if (qualified || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
-          //prefer inner classes, because groovyc does that as well
-          PsiElement container = qualified ? resolveClassOrPackagePreferInner(ref, kind, StringUtil.getPackageName(qName), facade) : null;
-          PsiClass aClass = container instanceof PsiClass ? ((PsiClass)container).findInnerClassByName(StringUtil.getShortName(qName), true) : null;
-          if (aClass == null) {
-            aClass = facade.findClass(qName, ref.getResolveScope());
-          }
-          if (aClass != null) {
-            return aClass;
-          }
-        }
-      }
-
-      if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.PACKAGE_FQ) {
-        return facade.findPackage(qName);
-      }
-
-      return null;
-    }
-
-    private static PsiFile getContainingFileSkippingStubFiles(GrCodeReferenceElementImpl ref) {
-      PsiFile file = ref.getContainingFile();
-      while (file != null && !file.isPhysical() && file.getContext() != null) {
-        PsiElement context = file.getContext();
-        file = context.getContainingFile();
-      }
-      return file;
-    }
-
-    private static boolean isAnnotationRef(GrCodeReferenceElement ref) {
-      final PsiElement parent = ref.getParent();
-      return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
-    }
-
-    private static void processAccessors(String refName,
-                                         PsiClass clazz,
-                                         List<GroovyResolveResult> result) {
-      final List<GroovyResolveResult> propertyResults = new ArrayList<>();
-      final String booleanGetter = GroovyPropertyUtils.getGetterNameBoolean(refName);
-      final String nonBooleanGetter = GroovyPropertyUtils.getGetterNameNonBoolean(refName);
-      final String setter = GroovyPropertyUtils.getSetterName(refName);
-
-      processMethods(booleanGetter, clazz, propertyResults);
-      processMethods(nonBooleanGetter, clazz, propertyResults);
-      processMethods(setter, clazz, propertyResults);
-      result.addAll(filterAccessorMethods(propertyResults));
-    }
-
-    private static void processInnerClasses(String refName,
-                                            PsiClass clazz,
-                                            List<GroovyResolveResult> result) {
-      final PsiClass innerClass = clazz.findInnerClassByName(refName, true);
-      if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC)) {
-        result.add(new ElementGroovyResult<>(innerClass));
-      }
-    }
-
-    private static void processFields(String refName,
-                                      PsiClass clazz,
-                                      List<GroovyResolveResult> result) {
-      final PsiField field = clazz.findFieldByName(refName, true);
-      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-        result.add(new ElementGroovyResult<>(field));
-      }
-    }
-
-    private static void processMethods(String refName,
-                                       PsiClass clazz,
-                                       List<GroovyResolveResult> result) {
-      final PsiMethod[] methods = clazz.findMethodsByName(refName, true);
-      for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          result.add(new ElementGroovyResult<>(method));
-        }
-      }
-    }
-  }
-
-  private static final OurResolver RESOLVER = new OurResolver();
-
   @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, GrCodeReferencePolyVariantResolver.INSTANCE);
-    //return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
   }
 
   @NotNull
