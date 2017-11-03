@@ -63,7 +63,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       Registry.get("java.completion.argument.hints.internal").setValue(false);
     }
     if (WelcomeWizardUtil.getCompletionCaseSensitive() != null) {
-      COMPLETION_CASE_SENSITIVE = NONE;
+      //noinspection MagicConstant
+      COMPLETION_CASE_SENSITIVE =  WelcomeWizardUtil.getCompletionCaseSensitive();
     }
   }
 

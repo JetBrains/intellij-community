@@ -131,15 +131,15 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
       defaultAutoScrollToSource = it
     }
-    WelcomeWizardUtil.getNoTabs()?.let {
-      editorTabPlacement = TABS_NONE
+    WelcomeWizardUtil.getTabsPlacement()?.let {
+      editorTabPlacement = it
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      overrideLafFonts = true;
+      overrideLafFonts = true
       fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      overrideLafFonts = true;
+      overrideLafFonts = true
       fontFace = it
     }
   }

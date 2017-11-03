@@ -28,9 +28,9 @@ public class WelcomeWizardUtil {
   private static volatile String ourWizardMacKeymap;
   private static volatile String ourWizardEditorScheme;
   private static volatile Boolean ourAutoScrollToSource;
-  private static volatile Boolean ourCompletionCaseSensitive;
+  private static volatile Integer ourCompletionCaseSensitive;
   private static volatile Boolean ourManualOrder;
-  private static volatile Boolean ourNoTabs;
+  private static volatile Integer ourTabsPlacement;
   private static volatile Integer ourContinuationIndent;
   private static volatile Integer ourAppearanceFontSize;
   private static volatile String ourAppearanceFontFace;
@@ -92,11 +92,11 @@ public class WelcomeWizardUtil {
     Registry.get("debugger.click.disable.breakpoints").setValue(xcodeLikeBreakpoints);
   }
 
-  public static void setCompletionCaseSensitive(Boolean completionCaseSensitive) {
+  public static void setCompletionCaseSensitive(Integer completionCaseSensitive) {
     ourCompletionCaseSensitive = completionCaseSensitive;
   }
 
-  public static Boolean getCompletionCaseSensitive() {
+  public static Integer getCompletionCaseSensitive() {
     return ourCompletionCaseSensitive;
   }
 
@@ -108,12 +108,12 @@ public class WelcomeWizardUtil {
     ourManualOrder = manualOrder;
   }
 
-  public static void setNoTabs(Boolean noTabs) {
-    ourNoTabs = noTabs;
+  public static void setTabsPlacement(Integer tabsPlacement) {
+    ourTabsPlacement = tabsPlacement;
   }
 
-  public static Boolean getNoTabs() {
-    return ourNoTabs;
+  public static Integer getTabsPlacement() {
+    return ourTabsPlacement;
   }
 
   public static void setContinuationIndent(Integer continuationIndent) {
