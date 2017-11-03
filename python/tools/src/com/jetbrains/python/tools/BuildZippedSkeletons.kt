@@ -56,7 +56,7 @@ fun main(args: Array<String>) {
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
 
 
-      refresher.regenerateSkeletons(SkeletonVersionChecker(0))
+      refresher.regenerateSkeletons(SkeletonVersionChecker(SkeletonVersionChecker.PREGENERATED_VERSION))
 
 
       val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))

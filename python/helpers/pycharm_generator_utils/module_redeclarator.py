@@ -1,8 +1,10 @@
 import keyword
+import os
 
-from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.constants import *
+from pycharm_generator_utils.util_methods import *
 
+is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
 
 class emptylistdict(dict):
     """defaultdict not available before 2.5; simplest reimplementation using [] as default"""
@@ -781,7 +783,9 @@ class ModuleRedeclarator(object):
         out(0, "# module ", p_name, mod_name) # line 2
 
         BUILT_IN_HEADER = "(built-in)"
-        if self.mod_filename:
+        if is_pregenerated is not None:
+            filename = '(pre-generated)'
+        elif self.mod_filename:
             filename = self.mod_filename
         elif p_name in sys.builtin_module_names:
             filename = BUILT_IN_HEADER
