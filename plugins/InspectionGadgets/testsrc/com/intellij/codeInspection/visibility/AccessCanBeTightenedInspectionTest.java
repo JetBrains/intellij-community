@@ -34,11 +34,17 @@ import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
-  private VisibilityInspection myVisibilityInspection = createTool();
+  private VisibilityInspection myVisibilityInspection;
 
   @Override
   protected LocalInspectionTool getInspection() {
     return myVisibilityInspection.getSharedLocalInspectionTool();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    myVisibilityInspection = createTool();
+    super.setUp();
   }
 
   @Override

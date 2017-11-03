@@ -614,9 +614,10 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         node.addContent(new Element("disabledExtension").setAttribute("id", entry.getKey()));
       }
     }
-    for (Element child : new ArrayList<>(node.getChildren())) {
+    for (Element child : node.getChildren()) {
       if ("SUGGEST_FOR_CONSTANTS".equals(child.getAttributeValue("name")) && "true".equals(child.getAttributeValue("value"))) {
         node.removeContent(child);
+        break;
       }
     }
   }

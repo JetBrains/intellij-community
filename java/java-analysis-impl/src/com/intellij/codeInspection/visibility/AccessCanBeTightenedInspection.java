@@ -87,7 +87,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     private void checkMember(@NotNull final PsiMember member) {
-      if (!myVisibilityInspection.SUGGEST_FOR_CONSTANTS && PsiUtil.isConstantField(member)) {
+      if (!myVisibilityInspection.SUGGEST_FOR_CONSTANTS && isConstantField(member)) {
         return;
       }
 
@@ -289,6 +289,13 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static boolean isInnerClass(@NotNull PsiClass memberClass) {
     return memberClass.getContainingClass() != null || memberClass instanceof PsiAnonymousClass;
+  }
+
+  private static boolean isConstantField(PsiMember member) {
+    return member instanceof PsiField &&
+           member.hasModifierProperty(PsiModifier.STATIC) &&
+           member.hasModifierProperty(PsiModifier.FINAL) &&
+           ((PsiField)member).hasInitializer();
   }
 
   private static boolean isInReferenceList(@Nullable PsiElement list, @NotNull final PsiMember member) {
