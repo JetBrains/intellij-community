@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.toml.lang.core.parser
+package org.toml.lang.parse
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageUtil
@@ -18,9 +18,8 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
-import org.toml.lang.core.lexer.TomlLexer
 import org.toml.lang.core.psi.TomlFile
-import org.toml.lang.core.psi.TomlTypes
+import org.toml.lang.psi.impl.createPsiElement
 
 class TomlParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser = TomlParser()
@@ -40,12 +39,12 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun createLexer(project: Project?): Lexer = TomlLexer()
 
-    override fun createElement(node: ASTNode?): PsiElement = TomlTypes.Factory.createElement(node)
+    override fun createElement(node: ASTNode): PsiElement = createPsiElement(node)
 
     companion object {
         val FILE: IFileElementType = IFileElementType(TomlLanguage)
         val WHITE_SPACES: TokenSet = TokenSet.create(TokenType.WHITE_SPACE)
-        val COMMENTS: TokenSet = TokenSet.create(TomlTypes.COMMENT)
+        val COMMENTS: TokenSet = TokenSet.EMPTY//TokenSet.create(TomlTypes.COMMENT)
     }
 }
 

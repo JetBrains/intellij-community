@@ -29,7 +29,7 @@
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
-        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
+        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
 
         <!-- Syntax Highlighter -->
 

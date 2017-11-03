@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.toml.lang.core.lexer
+package org.toml.lang.parse
 
 import com.intellij.lexer.FlexAdapter
 import java.io.Reader

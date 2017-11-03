@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.toml.lang.core.lexer
+package org.toml.lang.psi
 
 import com.intellij.psi.tree.IElementType
 import org.toml.lang.TomlLanguage
 
 
 class TomlTokenType(debugName: String) : IElementType(debugName, TomlLanguage)
+class TomlCompositeType(debugName: String) : IElementType(debugName, TomlLanguage)

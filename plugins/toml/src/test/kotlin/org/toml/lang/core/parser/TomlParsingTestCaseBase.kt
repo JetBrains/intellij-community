@@ -7,6 +7,7 @@ package org.toml.lang.core.parser
 
 import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
+import org.toml.lang.parse.TomlParserDefinition
 
 abstract class TomlParsingTestCaseBase(@NonNls dataPath: String)
 : ParsingTestCase("org/toml/lang/core/parser/fixtures/" + dataPath, "toml", true /*lowerCaseFirstLetter*/, TomlParserDefinition()) {
