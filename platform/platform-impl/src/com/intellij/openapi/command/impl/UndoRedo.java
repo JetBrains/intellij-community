@@ -98,6 +98,15 @@ abstract class UndoRedo {
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
+      UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup.getCommandTimestamp());
+      if (globalUndoableGroup != null) {
+        if(isRedo())
+          myManager.redo(null);
+        else
+          myManager.undo(null);
+
+        return false;
+      }
       reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
       return false;
     }
