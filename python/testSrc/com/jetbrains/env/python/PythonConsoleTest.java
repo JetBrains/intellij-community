@@ -81,6 +81,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testLineByLineInput() {
     runPythonTest(new PyConsoleTask() {
       @Override
