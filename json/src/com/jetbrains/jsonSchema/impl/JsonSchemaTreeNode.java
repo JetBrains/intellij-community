@@ -35,11 +35,13 @@ public class JsonSchemaTreeNode {
   @Nullable private final JsonSchemaObject mySchema;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps = new SmartList<>();
 
+  @Nullable private final JsonSchemaTreeNode myParent;
   @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
     assert schema != null || parent != null;
+    myParent = parent;
     mySchema = schema;
     if (parent != null && !parent.getSteps().isEmpty()) {
       mySteps.addAll(parent.getSteps().subList(1, parent.getSteps().size()));
@@ -111,6 +113,11 @@ public class JsonSchemaTreeNode {
     return mySteps;
   }
 
+  @Nullable
+  public JsonSchemaTreeNode getParent() {
+    return myParent;
+  }
+
   @NotNull
   public List<JsonSchemaTreeNode> getChildren() {
     return myChildren;
@@ -136,6 +143,7 @@ public class JsonSchemaTreeNode {
     if (myNothing != node.myNothing) return false;
     if (myResolveState != node.myResolveState) return false;
     if (mySchema != null ? !mySchema.equals(node.mySchema) : node.mySchema != null) return false;
+    //noinspection RedundantIfStatement
     if (!mySteps.equals(node.mySteps)) return false;
 
     return true;
