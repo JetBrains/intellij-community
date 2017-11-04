@@ -18,3 +18,5 @@ It's possible to extend TOML support from other plugins:
   * `TomlKey` and `TomlValue` are `ContributedReferenceHost`s, so
     it's possible to inject references into them from third-party plugins,
     and provide completion and goto definition.
+    
+See https://github.com/intellij-rust/intellij-rust/pull/1982/ for an example.    
