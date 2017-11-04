@@ -43,6 +43,13 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
+    boolean available = isAvailable(editor, undoManager);
+    if (!available && editor != null) {
+      //fallback to global undo
+      perform(null, undoManager);
+      return;
+    }
+
     perform(editor, undoManager);
   }
 
@@ -55,12 +62,21 @@ public abstract class UndoRedoAction extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
-    presentation.setEnabled(isAvailable(editor, undoManager));
+    presentation.setEnabled(isAvailableWithFallback(editor, undoManager));
 
     Pair<String, String> pair = getActionNameAndDescription(editor, undoManager);
 
     presentation.setText(pair.first);
     presentation.setDescription(pair.second);
+  }
+
+  private boolean isAvailableWithFallback(FileEditor editor, UndoManager manager) {
+    boolean result = isAvailable(editor, manager);
+    if (!result && editor != null) {
+      //fallback to global undo
+      return isAvailable(null, manager);
+    }
+    return result;
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
