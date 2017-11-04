@@ -363,7 +363,7 @@ public final class ParametersList implements Cloneable {
   private static Map<String, String> computeMacroMap() {
     // ApplicationManager.getApplication() will return null if executed in ParameterListTest
     Application application = ApplicationManager.getApplication();
-    if (application == null) {
+    if (application == null || application.isUnitTestMode() && ourTestMacros != null) {
       return ourTestMacros;
     }
     Map<String, String> map = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
