@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -223,7 +224,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final VirtualFile root, FilePath path) {
-    return relativePath(VfsUtil.virtualToIoFile(root), path.getIOFile());
+    return relativePath(VfsUtilCore.virtualToIoFile(root), path.getIOFile());
   }
 
   /**
@@ -247,7 +248,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final File root, VirtualFile file) {
-    return relativePath(root, VfsUtil.virtualToIoFile(file));
+    return relativePath(root, VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
@@ -259,7 +260,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final VirtualFile root, VirtualFile file) {
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
+    return relativePath(VfsUtilCore.virtualToIoFile(root), VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
@@ -274,7 +275,7 @@ public class VcsFileUtil {
     if (root == null) {
       file.getPath();
     }
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
+    return relativePath(VfsUtilCore.virtualToIoFile(root), VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
