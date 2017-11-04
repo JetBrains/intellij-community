@@ -395,7 +395,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<T>>() {
       @Override
       public Iterator<T> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).transform(Stateful.copy(function));
+        return JBIterator.from(iterator).map(Stateful.copy(function));
       }
     });
   }
