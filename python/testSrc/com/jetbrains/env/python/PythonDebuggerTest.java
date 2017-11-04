@@ -86,6 +86,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testPydevMonkey() {
     unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
@@ -176,6 +177,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -395,6 +397,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testRunToLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
