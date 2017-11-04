@@ -238,14 +238,14 @@ public class PyTypeModelBuilder {
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
-                                        : tupleType.getElementTypes(myContext);
+                                        : tupleType.getElementTypes();
 
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous());
     }
     else if (type instanceof PyCollectionType) {
       final String name = type.getName();
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(myContext);
+      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
       boolean nullOnlyTypes = true;
       for (PyType elementType : elementTypes) {
         if (elementType != null) {

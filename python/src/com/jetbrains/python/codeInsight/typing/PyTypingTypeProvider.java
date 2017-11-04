@@ -952,7 +952,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyClassType classType = as(coroutineOrGeneratorType, PyClassType.class);
 
     if (genericType != null && classType != null && ArrayUtil.contains(classType.getClassQName(), COROUTINE, GENERATOR)) {
-      return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(context), 2, null));
+      return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null));
     }
 
     return null;
