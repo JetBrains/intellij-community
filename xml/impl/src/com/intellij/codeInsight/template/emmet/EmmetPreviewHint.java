@@ -39,6 +39,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +54,15 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @NotNull private final Editor myParentEditor;
   @NotNull private final Editor myEditor;
   @NotNull private final Alarm myAlarm = new Alarm(this);
-  private boolean isDisposed = false;
+  private volatile boolean isDisposed = false;
 
   private EmmetPreviewHint(@NotNull JBPanel panel, @NotNull Editor editor, @NotNull Editor parentEditor) {
     super(panel);
     myParentEditor = parentEditor;
     myEditor = editor;
+
+    final Disposable parentDisposable = ObjectUtils.coalesce(ObjectUtils.tryCast(parentEditor, Disposable.class), parentEditor.getProject());
+    Disposer.register(parentDisposable, this);
 
     final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myParentEditor);
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -199,6 +203,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   public void dispose() {
     isDisposed = true;
     myAlarm.cancelAllRequests();
+    super.hide();
     EmmetPreviewHint existingBalloon = myParentEditor.getUserData(KEY);
     if (existingBalloon == this) {
       myParentEditor.putUserData(KEY, null);
