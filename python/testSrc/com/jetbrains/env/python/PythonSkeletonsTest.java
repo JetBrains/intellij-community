@@ -28,6 +28,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
@@ -112,6 +113,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
   // PY-4349
   @Test
+  @Staging
   public void testFakeNamedTuple() {
     runTest(new SkeletonsTask() {
       @Override
