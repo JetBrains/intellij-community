@@ -53,6 +53,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -117,10 +118,19 @@ public class PythonSdkUpdater implements StartupActivity {
 
     String sdkHome = sdk.getHomePath();
     if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
-      application.executeOnPooledThread(() -> {
+      final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
         sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
                         PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
       });
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
+        try {
+          updateSdkFeature.get();
+        }
+        catch (final InterruptedException | java.util.concurrent.ExecutionException e) {
+          throw new AssertionError("Exception thrown while synchronizing with sdk updater ", e);
+        }
+      }
     }
 
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
