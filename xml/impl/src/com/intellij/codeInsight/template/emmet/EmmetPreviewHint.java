@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -196,7 +197,12 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(this));
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      Disposer.dispose(this);
+    } else {
+      application.invokeLater(() -> Disposer.dispose(this));
+    }
   }
 
   @Override
