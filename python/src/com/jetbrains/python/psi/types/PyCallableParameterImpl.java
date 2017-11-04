@@ -188,7 +188,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
         return collectionType.getIteratedItemType();
       }
       else if (isKeywordContainer()) {
-        return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 1, null);
+        return ContainerUtil.getOrElse(collectionType.getElementTypes(), 1, null);
       }
     }
 
