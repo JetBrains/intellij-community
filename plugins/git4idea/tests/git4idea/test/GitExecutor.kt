@@ -46,7 +46,7 @@ private fun doCallGit(command: String, ignoreNonZeroExitCode: Boolean): String {
   split.add(0, gitExecutable())
   val workingDir = ourCurrentDir()
   debug("[" + workingDir.name + "] # git " + command)
-  for (attempt in 0..MAX_RETRIES - 1) {
+  for (attempt in 0 until MAX_RETRIES) {
     var stdout: String
     try {
       stdout = run(workingDir, split, ignoreNonZeroExitCode)
@@ -209,8 +209,4 @@ internal class TestFile internal constructor(val project: Project, val file: Fil
   fun exists() = file.exists()
 
   fun read() = FileUtil.loadFile(file)
-}
-
-class TestCommit internal constructor(shortHash: String, hash: String) {
-
 }
