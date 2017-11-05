@@ -17,7 +17,6 @@ package git4idea.push
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -25,7 +24,6 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.UpdateMethod
@@ -197,11 +195,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[repository]!!)
     cd(repository)
     val commitMessages = StringUtil.splitByLines(log("--pretty=%s"))
-    val mergeCommitsInTheLog = ContainerUtil.exists(commitMessages, object : Condition<String> {
-      override fun value(s: String): Boolean {
-        return s.toLowerCase().contains("merge")
-      }
-    })
+    val mergeCommitsInTheLog = commitMessages.any { it.toLowerCase().contains("merge") }
     assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog)
   }
 
@@ -492,13 +486,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun getUpdatedFiles(group: FileGroup): Collection<String> {
-    val getRelative = object : Function<String, String> {
-      override fun `fun`(path: String): String {
-        return FileUtil.getRelativePath(File(myProjectPath), File(path))!!
-      }
-    }
     val result = ContainerUtil.newArrayList<String>()
-    result.addAll(ContainerUtil.map(group.files, getRelative))
+    result.addAll(group.files.map { FileUtil.getRelativePath(File(myProjectPath), File(it))!! })
     for (child in group.children) {
       result.addAll(getUpdatedFiles(child))
     }
