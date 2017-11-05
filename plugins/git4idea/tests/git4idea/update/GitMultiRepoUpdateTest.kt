@@ -33,11 +33,11 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    val mainRepo = setupRepositories(projectPath, "parent", "bro")
     repository = mainRepo.projectRepo
     bro = mainRepo.bro
 
-    val communityDir = File(myProjectPath, "community")
+    val communityDir = File(projectPath, "community")
     assertTrue(communityDir.mkdir())
     val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
     community = enclosingRepo.projectRepo
@@ -53,7 +53,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val hash = last()
 
     val updatedRepos = mutableListOf<GitRepository>()
-    myGit.mergeListener = {
+    git.mergeListener = {
       updatedRepos.add(it)
     }
 

@@ -103,7 +103,7 @@ public class GitLogParserTest extends GitPlatformTest {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myRoot = myProjectRoot;
+    myRoot = projectRoot;
     myRecord = RECORD1; // for single record tests
     myNewRefsFormat = false;
   }
@@ -257,7 +257,7 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {
-    List<String> actual = ContainerUtil.map(actualPaths, path -> FileUtil.getRelativePath(new File(myProjectPath), path.getIOFile()));
+    List<String> actual = ContainerUtil.map(actualPaths, path -> FileUtil.getRelativePath(new File(projectPath), path.getIOFile()));
     List<String> expected = ContainerUtil.map(expectedPaths, s -> FileUtil.toSystemDependentName(s));
     assertOrderedEquals(actual, expected);
   }
@@ -291,11 +291,11 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   private String getBeforePath(Change actualChange) {
-    return FileUtil.getRelativePath(new File(myProjectPath), actualChange.getBeforeRevision().getFile().getIOFile());
+    return FileUtil.getRelativePath(new File(projectPath), actualChange.getBeforeRevision().getFile().getIOFile());
   }
 
   private String getAfterPath(Change actualChange) {
-    return FileUtil.getRelativePath(new File(myProjectPath), actualChange.getAfterRevision().getFile().getIOFile());
+    return FileUtil.getRelativePath(new File(projectPath), actualChange.getAfterRevision().getFile().getIOFile());
   }
 
   private enum GitTestLogRecordInfo {

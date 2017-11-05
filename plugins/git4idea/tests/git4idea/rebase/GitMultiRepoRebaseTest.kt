@@ -41,16 +41,16 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    Executor.cd(myProjectRoot)
+    Executor.cd(projectRoot)
     val community = mkdir("community")
     val contrib = mkdir("contrib")
 
-    myUltimate = createRepository(myProjectPath)
+    myUltimate = createRepository(projectPath)
     myCommunity = createRepository(community.path)
     myContrib = createRepository(contrib.path)
     myAllRepositories = listOf(myUltimate, myCommunity, myContrib)
 
-    Executor.cd(myProjectRoot)
+    Executor.cd(projectRoot)
     touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
@@ -86,7 +86,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     myUltimate.assertNoLocalChanges()
 
     var confirmation: String? = null
-    myDialogManager.onMessage {
+    dialogManager.onMessage {
       confirmation = it
       Messages.YES
     }
@@ -107,10 +107,10 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val localChange = LocalChange(myCommunity, "new.txt", "Some content")
     `fail with critical error while rebasing 2nd root after some commits are applied`(localChange)
 
-    myVcsNotifier.lastNotification
+    vcsNotifier.lastNotification
 
     var confirmation: String? = null
-    myDialogManager.onMessage {
+    dialogManager.onMessage {
       confirmation = it
       Messages.YES
     }
@@ -208,19 +208,19 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       it.`diverge feature and master`()
       git(it, "checkout master")
     }
-    myGit.setShouldRebaseFail { it == myContrib }
+    git.setShouldRebaseFail { it == myContrib }
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     try {
-      GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
+      GitBranchWorker(myProject, git, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
     }
     finally {
-      myGit.setShouldRebaseFail { false }
+      git.setShouldRebaseFail { false }
     }
 
     var confirmation: String? = null
-    myDialogManager.onMessage {
+    dialogManager.onMessage {
       confirmation = it
       Messages.YES
     }
@@ -241,12 +241,12 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     myAllRepositories.forEach { it.`diverge feature and master`() }
     localChange?.generate()
 
-    myGit.setShouldRebaseFail { it == myContrib }
+    git.setShouldRebaseFail { it == myContrib }
     try {
       rebase("master")
     }
     finally {
-      myGit.setShouldRebaseFail { false }
+      git.setShouldRebaseFail { false }
     }
   }
 
@@ -260,7 +260,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       rebase("master")
     }
     finally {
-      myGit.setShouldRebaseFail { false }
+      git.setShouldRebaseFail { false }
     }
   }
 

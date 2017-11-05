@@ -41,12 +41,12 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
     myProject.messageBus.connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
 
-    val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
-    worker.checkoutNewBranch("foo", listOf(myRepo))
+    val worker = GitBranchWorker(myProject, git, GitBranchWorkerTest.TestUiHandler())
+    worker.checkoutNewBranch("foo", listOf(repo))
     TestCase.assertEquals("foo", toBranch)
     TestCase.assertEquals("master", fromBranch)
 
-    worker.checkout("master", false, listOf(myRepo))
+    worker.checkout("master", false, listOf(repo))
     TestCase.assertEquals("master", toBranch)
     TestCase.assertEquals("foo", fromBranch)
   }
@@ -71,11 +71,11 @@ class GitBranchContextTest: GitSingleRepoTest() {
     }
     PlatformTestUtil.registerExtension(Extensions.getArea(project), WorkingContextProvider.EP_NAME, TestContextProvider(), testRootDisposable)
 
-    val worker = GitBranchWorker(myProject, myGit, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(myProject, git, GitBranchWorkerTest.TestUiHandler())
     value = "master"
-    worker.checkoutNewBranch("foo", listOf(myRepo))
+    worker.checkoutNewBranch("foo", listOf(repo))
     value = "foo"
-    worker.checkout("master", false, listOf(myRepo))
+    worker.checkout("master", false, listOf(repo))
     TestCase.assertEquals("master", value)
   }
 }

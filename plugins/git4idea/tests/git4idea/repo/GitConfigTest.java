@@ -62,7 +62,7 @@ public class GitConfigTest extends GitPlatformTest {
     git("update-ref refs/remotes/origin/a#branch HEAD");
     git("branch --track a#branch origin/a#branch");
 
-    File gitDir = new File(myProjectPath, ".git");
+    File gitDir = new File(projectPath, ".git");
     GitConfig config = GitConfig.read(new File(gitDir, "config"));
     VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir);
     GitRepositoryReader reader = new GitRepositoryReader(GitRepositoryFiles.getInstance(dir));
@@ -142,7 +142,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   private void createRepository() {
-    GitTestUtil.createRepository(myProject, myProjectPath, true);
+    GitTestUtil.createRepository(myProject, projectPath, true);
   }
 
   private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
@@ -160,7 +160,7 @@ public class GitConfigTest extends GitPlatformTest {
 
   @NotNull
   private File configFile() {
-    File gitDir = new File(myProjectPath, ".git");
+    File gitDir = new File(projectPath, ".git");
     return new File(gitDir, "config");
   }
 

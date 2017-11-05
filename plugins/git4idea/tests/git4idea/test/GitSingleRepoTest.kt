@@ -32,13 +32,13 @@ import java.nio.file.Paths
 
 abstract class GitSingleRepoTest : GitPlatformTest() {
 
-  protected lateinit var myRepo: GitRepository
+  protected lateinit var repo: GitRepository
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myRepo = createRepository(myProject, myProjectPath, makeInitialCommit())
-    cd(myProjectPath)
+    repo = createRepository(myProject, projectPath, makeInitialCommit())
+    cd(projectPath)
   }
 
   protected open fun makeInitialCommit() = true
@@ -50,7 +50,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
 
   protected fun prepareUnversionedFile(filePath: String): VirtualFile {
-    val path = Paths.get(myProjectPath, filePath)
+    val path = Paths.get(projectPath, filePath)
     Files.createDirectories(path.parent)
     Files.createFile(path)
 
@@ -72,10 +72,10 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     updateChangeListManager()
   }
 
-  protected fun build(f: RepoBuilder.() -> Unit) = build(myRepo, f)
+  protected fun build(f: RepoBuilder.() -> Unit) = build(repo, f)
 
   protected fun assertUnversioned(file: VirtualFile) {
-    assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(myProjectPath, changeListManager.allChanges),
+    assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(projectPath, changeListManager.allChanges),
                changeListManager.isUnversioned(file))
   }
 }

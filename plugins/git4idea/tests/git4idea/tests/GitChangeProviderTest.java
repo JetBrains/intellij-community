@@ -83,7 +83,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     myVcs = GitVcs.getInstance(myProject);
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
-    GitTestUtil.createFileStructure(myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    GitTestUtil.createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     addCommit("initial");
 
     atxt = getVirtualFile("a.txt");
@@ -91,12 +91,12 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     dir_ctxt = getVirtualFile("dir/c.txt");
     subdir_dtxt = getVirtualFile("dir/subdir/d.txt");
 
-    myRootDir = myProjectRoot;
+    myRootDir = projectRoot;
     mySubDir = myRootDir.findChild("dir");
 
     myDirtyScope = new MockDirtyScope(myProject, myVcs);
 
-    cd(myProjectPath);
+    cd(projectPath);
   }
 
   @Override
@@ -106,7 +106,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
 
   @Nullable
   private VirtualFile getVirtualFile(@NotNull String relativePath) {
-    return VfsUtil.findFileByIoFile(new File(myProjectPath, relativePath), true);
+    return VfsUtil.findFileByIoFile(new File(projectPath, relativePath), true);
   }
 
   protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
@@ -249,7 +249,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   }
 
   protected String tos(FilePath fp) {
-    return FileUtil.getRelativePath(new File(myProjectPath), fp.getIOFile());
+    return FileUtil.getRelativePath(new File(projectPath), fp.getIOFile());
   }
 
   protected String tos(Change change) {

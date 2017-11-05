@@ -31,8 +31,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    repo = createRepository(myProject, myProjectPath, true)
-    cd(myProjectPath)
+    repo = createRepository(myProject, projectPath, true)
+    cd(projectPath)
 
     val parent = prepareRemoteRepo(repo)
     git("push -u origin master")
@@ -49,7 +49,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     updateChangeListManager()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -66,7 +66,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     updateChangeListManager()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -81,7 +81,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     broRepo.commitAndPush()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -90,9 +90,9 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun createBroRepo(broName: String, parentRepo: File): File {
-    cd(myTestRoot)
+    cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
-    return File(myTestRoot, broName)
+    return File(testRoot, broName)
   }
 
   private fun updateWithRebase(): GitUpdateResult {

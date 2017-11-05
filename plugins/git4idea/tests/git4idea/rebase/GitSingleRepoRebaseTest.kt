@@ -21,9 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.util.Functions
 import com.intellij.util.LineSeparator
-import git4idea.GitUtil
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
@@ -32,7 +30,6 @@ import git4idea.test.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
-import kotlin.reflect.jvm.javaField
 import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
@@ -41,7 +38,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   override fun setUp() {
     super.setUp()
-    repo = createRepository(myProjectPath)
+    repo = createRepository(projectPath)
   }
 
   fun `test simple case`() {
@@ -154,7 +151,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test rebase failed for unknown reason`() {
     repo.`diverge feature and master`()
-    myGit.setShouldRebaseFail { true }
+    git.setShouldRebaseFail { true }
     rebaseOnMaster()
     `assert unknown error notification`()
   }
@@ -169,7 +166,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.assertRebaseInProgress()
     repo.resolveConflicts()
 
-    myGit.setShouldRebaseFail { true }
+    git.setShouldRebaseFail { true }
 
     GitRebaseUtils.continueRebase(myProject)
 
@@ -214,7 +211,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
     LocalChange(repo, "new.txt", "content").generate()
 
-    myGit.setShouldRebaseFail { true }
+    git.setShouldRebaseFail { true }
 
     rebaseOnMaster()
 
@@ -232,7 +229,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test critical error should show notification and not restore local changes`() {
     repo.`diverge feature and master`()
     LocalChange(repo, "new.txt", "content").generate()
-    myGit.setShouldRebaseFail { true }
+    git.setShouldRebaseFail { true }
 
     rebaseOnMaster()
 
@@ -245,12 +242,12 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     val localChange = LocalChange(repo, "new.txt", "content").generate()
 
     var attempt = 0
-    myGit.setShouldRebaseFail { attempt == 0 }
+    git.setShouldRebaseFail { attempt == 0 }
 
     rebaseOnMaster()
 
     attempt++
-    myVcsNotifier.lastNotification
+    vcsNotifier.lastNotification
 
     GitRebaseUtils.continueRebase(myProject)
 
@@ -263,7 +260,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`prepare simple conflict`()
     val localChange = LocalChange(repo, "new.txt", "content").generate()
     `do nothing on merge`()
-    myDialogManager.onMessage { Messages.YES }
+    dialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
 
@@ -280,13 +277,13 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`prepare simple conflict`()
     LocalChange(repo, "new.txt", "content").generate()
     `do nothing on merge`()
-    myDialogManager.onMessage { Messages.YES }
+    dialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
 
     `assert conflict not resolved notification with link to stash`()
 
-    myGit.setShouldRebaseFail { true }
+    git.setShouldRebaseFail { true }
     GitRebaseUtils.abort(myProject, EmptyProgressIndicator())
 
     repo.assertRebaseInProgress()
@@ -413,7 +410,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
 
-    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
+    git.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
       it.lines().mapIndexed { i, s ->
         if (i != 0) s
         else s.replace("pick", "edit")
@@ -423,7 +420,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseInteractively()
 
     assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
-    assertEquals("The repository must be in the 'SUSPENDED' state", repo, myGitRepositoryManager.ongoingRebaseSpec!!.ongoingRebase)
+    assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(myProject)
 
@@ -467,7 +464,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       #body starting with a hash
       """.trimIndent()
 
-    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
+    git.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
       it.lines().mapIndexed { i, s ->
         if (i != 0) s
         else s.replace("pick", "reword")
@@ -475,7 +472,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }, null))
 
     var receivedMessage : String? = null
-    myDialogManager.onDialog(GitRebaseUnstructuredEditor::class.java, { it ->
+    dialogManager.onDialog(GitRebaseUnstructuredEditor::class.java, { it ->
       receivedMessage = it.text
       val field = GitRebaseUnstructuredEditor::class.java.getDeclaredField("myTextEditor")
       field.isAccessible = true
@@ -493,7 +490,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test cancel in interactive rebase should show no error notification`() {
     repo.`diverge feature and master`()
 
-  myDialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
+  dialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
     assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
@@ -510,7 +507,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       feature(0) {}
     }
 
-    myDialogManager.onMessage { Messages.CANCEL }
+    dialogManager.onMessage { Messages.CANCEL }
     assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
@@ -528,7 +525,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
-    GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
+    GitBranchWorker(myProject, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
 
     assertSuccessfulRebaseNotification("Checked out feature and rebased it on master")
     repo.`assert feature rebased on master`()

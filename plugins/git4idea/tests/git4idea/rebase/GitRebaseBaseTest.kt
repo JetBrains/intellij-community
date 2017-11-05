@@ -107,7 +107,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
     vcsHelper.onMerge {
       this.resolveConflicts()
-      myGit.setShouldRebaseFail { true }
+      git.setShouldRebaseFail { true }
     }
   }
 

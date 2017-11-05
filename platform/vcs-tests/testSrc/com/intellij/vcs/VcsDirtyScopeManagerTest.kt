@@ -75,7 +75,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test dirty files from different roots`() {
-    val otherRoot = createSubRoot(myTestRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRootFile, "otherRoot")
     val file = createFile(baseRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -101,7 +101,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   // this is already implicitly checked in several other tests, but better to have it explicit
   fun `test all roots from a single vcs belong to a single scope`() {
-    val otherRoot = createSubRoot(myTestRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRootFile, "otherRoot")
     val file = createFile(baseRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -113,7 +113,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
-    val file = createFile(myTestRootFile, "outside.txt")
+    val file = createFile(testRootFile, "outside.txt")
 
     dirtyScopeManager.fileDirty(file)
 

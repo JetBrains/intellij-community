@@ -79,7 +79,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
       on_master
 
       (cherry picked from commit ${shortHash(commit)})""".trimIndent())
-    myRepo.assertCommitted {
+    repo.assertCommitted {
       modified("c.txt")
     }
     assertSuccessfulNotification("Cherry-pick successful",
@@ -89,7 +89,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun cherryPick(hashes: List<String>) {
     val details = readDetails(hashes)
-    GitCherryPicker(myProject, myGit).cherryPick(details)
+    GitCherryPicker(myProject, git).cherryPick(details)
   }
 
   protected fun cherryPick(vararg hashes: String) {

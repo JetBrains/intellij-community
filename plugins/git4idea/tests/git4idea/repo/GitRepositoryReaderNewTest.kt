@@ -39,7 +39,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   // IDEA-152632
   fun `test current branch is known during rebase`() {
     makeCommit("file.txt")
-    conflict(myRepo, "feature")
+    conflict(repo, "feature")
     git("checkout feature")
     git("rebase master", true)
 
@@ -52,9 +52,9 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
 
   fun `test rebase with conflicts while being on detached HEAD`() {
     makeCommit("file.txt")
-    conflict(myRepo, "feature")
-    commit(myRepo)
-    commit(myRepo)
+    conflict(repo, "feature")
+    commit(repo)
+    commit(repo)
     git("checkout HEAD^")
     git("rebase feature", true)
 
@@ -98,9 +98,9 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     git("update-ref refs/remotes/my/remote/master HEAD")
     git("config branch.master.remote my/remote")
     git("config branch.master.merge refs/heads/master")
-    myRepo.update()
+    repo.update()
 
-    val trackInfo = GitBranchUtil.getTrackInfoForBranch(myRepo, myRepo.currentBranch!!)!!
+    val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, repo.currentBranch!!)!!
     val remote = trackInfo.remote
     assertEquals("my/remote", remote.name)
     assertEquals("http://my.remote.git", remote.firstUrl)
@@ -130,9 +130,9 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     git("branch UpperCase")
     git("checkout uppercase")
 
-    myRepo.update()
-    assertEquals("UpperCase", myRepo.currentBranchName)
-    assertEquals(myRepo.branches.findBranchByName("UpperCase"), myRepo.branches.findBranchByName("uppercase"))
+    repo.update()
+    assertEquals("UpperCase", repo.currentBranchName)
+    assertEquals(repo.branches.findBranchByName("UpperCase"), repo.branches.findBranchByName("uppercase"))
     assertEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
   }
 
@@ -144,19 +144,19 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     git("branch UpperCase") // doesn't fail on case-sensitive OS: new branch is created
     git("checkout UpperCase")
 
-    myRepo.update()
-    assertEquals("UpperCase", myRepo.currentBranchName)
-    assertEquals(3, myRepo.branches.localBranches.size)
-    assertNotEquals(myRepo.branches.findBranchByName("uppercase"), myRepo.branches.findBranchByName("UpperCase"))
+    repo.update()
+    assertEquals("UpperCase", repo.currentBranchName)
+    assertEquals(3, repo.branches.localBranches.size)
+    assertNotEquals(repo.branches.findBranchByName("uppercase"), repo.branches.findBranchByName("UpperCase"))
     assertNotEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
   }
 
   fun `test non-branch files are ignored`() {
     tac("f.txt")
-    assertTrue(File(myRepo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile())
+    assertTrue(File(repo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile())
 
-    myRepo.update()
-    assertSameElements(listOf("master"), myRepo.branches.localBranches.map { it.name })
+    repo.update()
+    assertSameElements(listOf("master"), repo.branches.localBranches.map { it.name })
   }
 
   private fun moveToDetachedHead(): String {
@@ -167,7 +167,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   }
 
   private fun readState(): GitBranchState {
-    val gitFiles = myRepo.repositoryFiles
+    val gitFiles = repo.repositoryFiles
     val config = GitConfig.read(gitFiles.configFile)
     val reader = GitRepositoryReader(gitFiles)
     val remotes = config.parseRemotes()

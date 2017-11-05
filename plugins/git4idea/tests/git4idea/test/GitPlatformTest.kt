@@ -40,11 +40,11 @@ import java.io.File
 
 abstract class GitPlatformTest : VcsPlatformTest() {
 
-  protected lateinit var myGitRepositoryManager: GitRepositoryManager
-  protected lateinit var myGitSettings: GitVcsSettings
-  protected lateinit var myGit: TestGitImpl
-  protected lateinit var myVcs: GitVcs
-  protected lateinit var myDialogManager: TestDialogManager
+  protected lateinit var repositoryManager: GitRepositoryManager
+  protected lateinit var settings: GitVcsSettings
+  protected lateinit var git: TestGitImpl
+  protected lateinit var vcs: GitVcs
+  protected lateinit var dialogManager: TestDialogManager
   protected lateinit var vcsHelper: MockVcsHelper
   protected lateinit var logProvider: GitLogProvider
 
@@ -52,20 +52,20 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    myGitSettings = GitVcsSettings.getInstance(myProject)
-    myGitSettings.appSettings.setPathToGit(gitExecutable())
+    settings = GitVcsSettings.getInstance(myProject)
+    settings.appSettings.setPathToGit(gitExecutable())
 
-    myDialogManager = service<DialogManager>() as TestDialogManager
+    dialogManager = service<DialogManager>() as TestDialogManager
     vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
-    myGit = overrideService<Git, TestGitImpl>()
-    myVcs = GitVcs.getInstance(myProject)!!
-    myVcs.doActivate()
+    repositoryManager = GitUtil.getRepositoryManager(myProject)
+    git = overrideService<Git, TestGitImpl>()
+    vcs = GitVcs.getInstance(myProject)!!
+    vcs.doActivate()
 
     logProvider = findGitLogProvider(myProject)
 
-    assumeSupportedGitVersion(myVcs)
+    assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
   }
@@ -73,9 +73,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      if (wasInit { myDialogManager }) myDialogManager.cleanup()
-      if (wasInit { myGit }) myGit.reset()
-      if (wasInit { myGitSettings }) myGitSettings.appSettings.setPathToGit(null)
+      if (wasInit { dialogManager }) dialogManager.cleanup()
+      if (wasInit { git }) git.reset()
+      if (wasInit { settings }) settings.appSettings.setPathToGit(null)
     }
     finally {
       super.tearDown()
@@ -95,8 +95,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")): File {
-    cd(myTestRoot)
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git")): File {
+    cd(testRoot)
     git("clone --bare '${source.root.path}' ${target.path}")
     cd(source)
     git("remote add origin '${target.path}'")
@@ -128,15 +128,15 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   private fun createParentRepo(parentName: String): File {
-    Executor.cd(myTestRoot)
+    Executor.cd(testRoot)
     git("init --bare $parentName.git")
-    return File(myTestRoot, parentName + ".git")
+    return File(testRoot, parentName + ".git")
   }
 
   private fun createBroRepo(broName: String, parentRepo: File): File {
-    Executor.cd(myTestRoot)
+    Executor.cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
-    return File(myTestRoot, broName)
+    return File(testRoot, broName)
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
@@ -157,7 +157,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
-  protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, myProjectRoot, hashes)
+  protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes)
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 

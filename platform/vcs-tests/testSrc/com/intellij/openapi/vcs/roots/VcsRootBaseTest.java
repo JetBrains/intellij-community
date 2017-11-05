@@ -56,12 +56,12 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    cd(myProjectRoot);
+    cd(projectRoot);
     Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
     myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
     mkdir("repository");
-    myProjectRoot.refresh(false, true);
-    myRepository = myProjectRoot.findChild("repository");
+    projectRoot.refresh(false, true);
+    myRepository = projectRoot.findChild("repository");
 
     myVcs = new MockAbstractVcs(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
@@ -117,7 +117,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
     if (!contentRoots.isEmpty()) {
       EdtTestUtil.runInEdtAndWait(() -> {
         for (String root : contentRoots) {
-          VirtualFile f = myProjectRoot.findFileByRelativePath(root);
+          VirtualFile f = projectRoot.findFileByRelativePath(root);
           if (f != null) {
             myRootModel.addContentEntry(f);
           }
@@ -133,7 +133,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
       f.mkdirs();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }
-    myProjectRoot.refresh(false, true);
+    projectRoot.refresh(false, true);
   }
 
   private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {

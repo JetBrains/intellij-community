@@ -42,7 +42,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
     assertFalse("File should have been deleted", file.exists())
-    myRepo.assertLatestSubjects("Revert \"${commit.subject}\"")
+    repo.assertLatestSubjects("Revert \"${commit.subject}\"")
   }
 
   fun `test local changes would be overwritten by revert`() {
@@ -76,7 +76,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revert(commit2, commit1)
 
-    myRepo.assertLatestSubjects(
+    repo.assertLatestSubjects(
       "Revert \"${commit1.subject}\"",
       "Revert \"${commit2.subject}\""
     )
@@ -97,7 +97,7 @@ class GitRevertTest : GitSingleRepoTest() {
       However revert succeeded for the following commit:
       ${commit2.id.toShortString()} ${commit2.subject}""")
     assertFalse("File should have been deleted", rFile.exists())
-    myRepo.assertLatestSubjects("Revert \"${commit2.subject}\"")
+    repo.assertLatestSubjects("Revert \"${commit2.subject}\"")
   }
 
   fun `test two commits reverted, one more was skipped because empty`() {
@@ -116,7 +116,7 @@ class GitRevertTest : GitSingleRepoTest() {
       ${commit2.id.toShortString()} was skipped, because all changes have already been reverted.
     """)
 
-    myRepo.assertLatestSubjects(
+    repo.assertLatestSubjects(
       "Revert \"${commit1.subject}\"",
       "Revert \"${commit3.subject}\""
     )
@@ -168,7 +168,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertSuccessfulNotification("Revert successful", listOf(commit3, conflictingCommit, commit1).joinToString("<br/>")
       { "${it.id.toShortString()} ${it.subject}"})
-    myRepo.assertLatestSubjects(
+    repo.assertLatestSubjects(
       "Revert \"${commit1.subject}\"",
       "Revert \"${conflictingCommit.subject}\"",
       "Revert \"${commit3.subject}\""
@@ -189,7 +189,7 @@ class GitRevertTest : GitSingleRepoTest() {
     assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
     assertFalse("File should have been deleted", file.exists())
 
-    val changes = VcsLogUtil.getDetails(logProvider, myProjectRoot, listOf("HEAD")).first().changes
+    val changes = VcsLogUtil.getDetails(logProvider, projectRoot, listOf("HEAD")).first().changes
     val beforeRevision = createRevision(getFilePath(file.file), GitRevisionNumber.HEAD, myProject, Charset.defaultCharset())
     assertOrderedEquals("Incorrect reverting commit", changes, Change(beforeRevision, null))
   }
@@ -214,7 +214,7 @@ class GitRevertTest : GitSingleRepoTest() {
   fun `test reverting commit doesn't preserve authorship of the original commit`() {
     file("a.txt").create("initial\n").add()
     git("commit --author='Original Author <original@example.com>' -m original_commit")
-    val commit = GitLogUtil.collectFullDetails(myProject, myProjectRoot, "-1").first()
+    val commit = GitLogUtil.collectFullDetails(myProject, projectRoot, "-1").first()
 
     vcsHelper.onCommit { false }
 
@@ -242,7 +242,7 @@ class GitRevertTest : GitSingleRepoTest() {
     GitRevertOperation(myProject, listOf(commit), false).execute()
 
     assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
-    myRepo.assertCommitted {
+    repo.assertCommitted {
       modified(renamed)
     }
   }

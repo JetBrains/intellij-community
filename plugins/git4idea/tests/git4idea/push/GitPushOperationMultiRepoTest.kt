@@ -37,24 +37,24 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    val mainRepo = setupRepositories(projectPath, "parent", "bro")
     ultimate = mainRepo.projectRepo
     brultimate = mainRepo.bro
 
-    val communityDir = File(myProjectPath, "community")
+    val communityDir = File(projectPath, "community")
     assertTrue(communityDir.mkdir())
     val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
     community = enclosingRepo.projectRepo
     brommunity = enclosingRepo.bro
 
-    cd(myProjectPath)
+    cd(projectPath)
     refresh()
     updateRepositories()
   }
 
   fun `test try push from all roots even if one fails`() {
     // fail in the first repo
-    myGit.onPush {
+    git.onPush {
       if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>(), null)
       else null
     }
