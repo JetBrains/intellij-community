@@ -60,7 +60,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     repositoryManager = GitUtil.getRepositoryManager(project)
     git = overrideService<Git, TestGitImpl>()
-    vcs = GitVcs.getInstance(project)!!
+    vcs = GitVcs.getInstance(project)
     vcs.doActivate()
 
     logProvider = findGitLogProvider(project)
@@ -139,15 +139,15 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return File(testRoot, broName)
   }
 
-  protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
+  private fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
     AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY)
   }
 
-  protected fun addSilently() {
+  private fun addSilently() {
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD)
   }
 
-  protected fun removeSilently() {
+  private fun removeSilently() {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE)
   }
 
