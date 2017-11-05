@@ -37,17 +37,17 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    repo = createRepository(myProject, projectPath, makeInitialCommit())
+    repo = createRepository(project, projectPath, makeInitialCommit())
     cd(projectPath)
   }
 
   protected open fun makeInitialCommit() = true
 
   protected fun VcsConfiguration.StandardConfirmation.doSilently() =
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_ACTION_SILENTLY)
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_ACTION_SILENTLY)
 
   protected fun VcsConfiguration.StandardConfirmation.doNothing() =
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
 
   protected fun prepareUnversionedFile(filePath: String): VirtualFile {
     val path = Paths.get(projectPath, filePath)
@@ -62,13 +62,13 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     return file
   }
 
-  protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(myProject, this, dir)!!
+  protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(project, this, dir)!!
 
   protected fun VirtualFile.createFile(fileName: String, content: String = Math.random().toString()) =
-    VcsTestUtil.createFile(myProject, this, fileName, content)!!
+    VcsTestUtil.createFile(project, this, fileName, content)!!
 
   protected fun renameFile(file: VirtualFile, newName: String) {
-    VcsTestUtil.renameFileInCommand(myProject, file, newName)
+    VcsTestUtil.renameFileInCommand(project, file, newName)
     updateChangeListManager()
   }
 

@@ -162,7 +162,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
           val relativePath = VcsFileUtil.relativePath(projectRoot, path)
           val hash = revision.asString()
 
-          val actualContent = GitFileUtils.getFileContent(myProject, projectRoot, hash, relativePath)
+          val actualContent = GitFileUtils.getFileContent(project, projectRoot, hash, relativePath)
           assertOrderedEquals(content, actualContent)
         }
       }

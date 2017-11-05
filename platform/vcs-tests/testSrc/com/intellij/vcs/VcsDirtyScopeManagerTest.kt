@@ -36,9 +36,9 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject)
-    vcs = MockAbstractVcs(myProject)
-    baseRoot = myProject.baseDir
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+    vcs = MockAbstractVcs(project)
+    baseRoot = project.baseDir
     basePath = getFilePath(baseRoot)
 
     disableVcsDirtyScopeVfsListener()
@@ -125,7 +125,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   fun `test mark files from different VCSs dirty produce two dirty scopes`() {
     val basePath = getFilePath(baseRoot)
     val subRoot = createDir(baseRoot, "othervcs")
-    val otherVcs = MockAbstractVcs(myProject, "otherVCS")
+    val otherVcs = MockAbstractVcs(project, "otherVCS")
     vcsManager.registerVcs(otherVcs)
     registerRootMapping(subRoot.virtualFile!!, otherVcs)
 
@@ -141,11 +141,11 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   private fun disableVcsDirtyScopeVfsListener() {
-    myProject.service<VcsDirtyScopeVfsListener>().setForbid(true)
+    project.service<VcsDirtyScopeVfsListener>().setForbid(true)
   }
 
   private fun disableChangeListManager() {
-    (ChangeListManager.getInstance(myProject) as ChangeListManagerImpl).freeze("For tests")
+    (ChangeListManager.getInstance(project) as ChangeListManagerImpl).freeze("For tests")
   }
 
   private fun createSubRoot(parent: VirtualFile, name: String): FilePath {

@@ -39,9 +39,9 @@ class GitBranchContextTest: GitSingleRepoTest() {
       }
     }
 
-    myProject.messageBus.connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
+    project.messageBus.connect().subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
 
-    val worker = GitBranchWorker(myProject, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
     worker.checkoutNewBranch("foo", listOf(repo))
     TestCase.assertEquals("foo", toBranch)
     TestCase.assertEquals("master", fromBranch)
@@ -52,7 +52,7 @@ class GitBranchContextTest: GitSingleRepoTest() {
   }
 
   fun testBranchContext() {
-    WorkingContextManager.getInstance(myProject).contextFile.delete()
+    WorkingContextManager.getInstance(project).contextFile.delete()
 
     var value = ""
 
@@ -71,7 +71,7 @@ class GitBranchContextTest: GitSingleRepoTest() {
     }
     PlatformTestUtil.registerExtension(Extensions.getArea(project), WorkingContextProvider.EP_NAME, TestContextProvider(), testRootDisposable)
 
-    val worker = GitBranchWorker(myProject, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
     value = "master"
     worker.checkoutNewBranch("foo", listOf(repo))
     value = "foo"

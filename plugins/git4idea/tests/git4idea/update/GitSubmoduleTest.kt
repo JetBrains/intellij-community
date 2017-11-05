@@ -81,7 +81,7 @@ class GitSubmoduleTest : GitPlatformTest() {
       reposInActualOrder.add(it)
     }
 
-    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
     assertOrder(reposInActualOrder)
@@ -119,7 +119,7 @@ class GitSubmoduleTest : GitPlatformTest() {
       reposInActualOrder.add(it)
     }
 
-    GitPushOperation(myProject, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
+    GitPushOperation(project, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
     assertOrder(reposInActualOrder)
   }
 
@@ -138,7 +138,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     elderRepo = addSubmoduleInProject(elder.remote, elder.name)
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     git(mainRepo, "submodule update --init --recursive") // this initializes the grandchild submodule
-    grandchildRepo = registerRepo(myProject, "${projectPath}/elder/grandchild")
+    grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
     git(grandchildRepo, "checkout master") // git submodule is initialized in detached HEAD state by default
   }
 
@@ -156,7 +156,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun addSubmoduleInProject(submoduleUrl: File, moduleName: String, relativePath: String? = null): GitRepository {
     addSubmodule(File(projectPath), submoduleUrl, relativePath)
     val rootPath = "${projectPath}/${relativePath ?: moduleName}"
-    return registerRepo(myProject, rootPath)
+    return registerRepo(project, rootPath)
   }
 
   private fun createPlainRepo(moduleName: String): Repos {

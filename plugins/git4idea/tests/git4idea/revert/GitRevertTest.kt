@@ -184,13 +184,13 @@ class GitRevertTest : GitSingleRepoTest() {
       true
     }
 
-    GitRevertOperation(myProject, listOf(commit), false).execute()
+    GitRevertOperation(project, listOf(commit), false).execute()
 
     assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
     assertFalse("File should have been deleted", file.exists())
 
     val changes = VcsLogUtil.getDetails(logProvider, projectRoot, listOf("HEAD")).first().changes
-    val beforeRevision = createRevision(getFilePath(file.file), GitRevisionNumber.HEAD, myProject, Charset.defaultCharset())
+    val beforeRevision = createRevision(getFilePath(file.file), GitRevisionNumber.HEAD, project, Charset.defaultCharset())
     assertOrderedEquals("Incorrect reverting commit", changes, Change(beforeRevision, null))
   }
 
@@ -205,7 +205,7 @@ class GitRevertTest : GitSingleRepoTest() {
       true
     }
 
-    GitRevertOperation(myProject, listOf(commit), false).execute()
+    GitRevertOperation(project, listOf(commit), false).execute()
 
     `assert commit dialog was shown`()
     assertEquals("Commit message is incorrect", commitMessageForRevert(commit), actualMessage)
@@ -214,11 +214,11 @@ class GitRevertTest : GitSingleRepoTest() {
   fun `test reverting commit doesn't preserve authorship of the original commit`() {
     file("a.txt").create("initial\n").add()
     git("commit --author='Original Author <original@example.com>' -m original_commit")
-    val commit = GitLogUtil.collectFullDetails(myProject, projectRoot, "-1").first()
+    val commit = GitLogUtil.collectFullDetails(project, projectRoot, "-1").first()
 
     vcsHelper.onCommit { false }
 
-    GitRevertOperation(myProject, listOf(commit), false).execute()
+    GitRevertOperation(project, listOf(commit), false).execute()
 
     val comment = commitMessageForRevert(commit)
     val list = changeListManager.assertChangeListExists(comment)
@@ -239,7 +239,7 @@ class GitRevertTest : GitSingleRepoTest() {
       true
     }
 
-    GitRevertOperation(myProject, listOf(commit), false).execute()
+    GitRevertOperation(project, listOf(commit), false).execute()
 
     assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
     repo.assertCommitted {
@@ -261,5 +261,5 @@ class GitRevertTest : GitSingleRepoTest() {
     return commitToRevert
   }
 
-  private fun revert(vararg commit: VcsFullCommitDetails) = GitRevertOperation(myProject, listOf(*commit), true).execute()
+  private fun revert(vararg commit: VcsFullCommitDetails) = GitRevertOperation(project, listOf(*commit), true).execute()
 }

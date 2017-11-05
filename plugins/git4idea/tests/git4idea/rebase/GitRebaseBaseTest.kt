@@ -29,7 +29,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
 
-  override fun createRepository(rootDir: String) = createRepository(myProject, rootDir, false)
+  override fun createRepository(rootDir: String) = createRepository(project, rootDir, false)
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.rebase")
 

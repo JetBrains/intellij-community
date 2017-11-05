@@ -31,7 +31,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    repo = createRepository(myProject, projectPath, true)
+    repo = createRepository(project, projectPath, true)
     cd(projectPath)
 
     val parent = prepareRemoteRepo(repo)
@@ -96,7 +96,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun updateWithRebase(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
+    return GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
   }
 
   private fun File.commitAndPush() {

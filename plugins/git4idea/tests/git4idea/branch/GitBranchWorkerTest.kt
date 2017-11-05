@@ -82,7 +82,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val hashMap = myRepositories.map { it to it.currentRevision!! }.toMap()
     myRepositories.forEach { cd(it); tac("f.txt") }
 
-    GitBranchWorker(myProject, git, TestUiHandler()).createBranch("feature", myRepositories.map{ it to "HEAD^" }.toMap())
+    GitBranchWorker(project, git, TestUiHandler()).createBranch("feature", myRepositories.map{ it to "HEAD^" }.toMap())
 
     assertCurrentBranch("master")
     myRepositories.forEach {
@@ -453,7 +453,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     // IDEA-99849
     prepareLocalChangesOverwrittenBy(last)
 
-    val brancher = GitBranchWorker(myProject, git, object : TestUiHandler() {
+    val brancher = GitBranchWorker(project, git, object : TestUiHandler() {
       override fun showSmartOperationDialog(project: Project,
                                             changes: List<Change>,
                                             paths: Collection<String>,
@@ -476,7 +476,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     unmergedFiles(second)
 
     var rollbackProposed = false
-    val brancher = GitBranchWorker(myProject, git, object : TestUiHandler() {
+    val brancher = GitBranchWorker(project, git, object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
         rollbackProposed = true
         return true
@@ -598,7 +598,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     // delete feature fully merged to current HEAD, but not to the upstream
     var dialogShown = false
-    val brancher = GitBranchWorker(myProject, git, object : TestUiHandler() {
+    val brancher = GitBranchWorker(project, git, object : TestUiHandler() {
       override fun showBranchIsNotFullyMergedDialog(project: Project,
                                                     history: Map<GitRepository, List<GitCommit>>,
                                                     baseBranches: Map<GitRepository, String>,
@@ -673,7 +673,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("branch $todelete")
     git("push -u origin todelete")
 
-    GitSharedSettings.getInstance(myProject).setForcePushProhibitedPatters(listOf("todelete"))
+    GitSharedSettings.getInstance(project).setForcePushProhibitedPatters(listOf("todelete"))
 
     first.deleteBranch(todelete)
 
@@ -822,7 +822,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     prepareLocalAndRemoteBranch("feature", track = true)
     git(last, "checkout feature")
 
-    GitBranchWorker(myProject, git, object : TestUiHandler() {
+    GitBranchWorker(project, git, object : TestUiHandler() {
       override fun confirmRemoteBranchDeletion(branchName: String,
                                                trackingBranches: MutableCollection<String>,
                                                repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
@@ -870,27 +870,27 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun checkoutNewBranch(name: String, uiHandler: GitBranchUiHandler) {
-    val brancher = GitBranchWorker(myProject, git, uiHandler)
+    val brancher = GitBranchWorker(project, git, uiHandler)
     brancher.checkoutNewBranch(name, myRepositories)
   }
 
   private fun checkoutBranch(name: String, uiHandler: GitBranchUiHandler) {
-    val brancher = GitBranchWorker(myProject, git, uiHandler)
+    val brancher = GitBranchWorker(project, git, uiHandler)
     brancher.checkout(name, false, myRepositories)
   }
 
   private fun checkoutRevision(reference: String, uiHandler: GitBranchUiHandler) {
-    val brancher = GitBranchWorker(myProject, git, uiHandler)
+    val brancher = GitBranchWorker(project, git, uiHandler)
     brancher.checkout(reference, true, myRepositories)
   }
 
   private fun mergeBranch(name: String, uiHandler: GitBranchUiHandler) {
-    val brancher = GitBranchWorker(myProject, git, uiHandler)
+    val brancher = GitBranchWorker(project, git, uiHandler)
     brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories)
   }
 
   private fun deleteBranch(name: String, uiHandler: GitBranchUiHandler) {
-    val brancher = GitBranchWorker(myProject, git, uiHandler)
+    val brancher = GitBranchWorker(project, git, uiHandler)
     brancher.deleteBranch(name, myRepositories)
   }
 
@@ -922,7 +922,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun deleteRemoteBranch(branchName: String, decision: GitBranchUiHandler.DeleteRemoteBranchDecision) {
-    GitBranchWorker(myProject, git, object : TestUiHandler() {
+    GitBranchWorker(project, git, object : TestUiHandler() {
       override fun confirmRemoteBranchDeletion(branchName: String,
                                                trackingBranches: MutableCollection<String>,
                                                repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
@@ -933,7 +933,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun GitRepository.deleteBranch(branchName: String) {
-    GitBranchWorker(myProject, git, TestUiHandler()).deleteBranch(branchName, listOf(this))
+    GitBranchWorker(project, git, TestUiHandler()).deleteBranch(branchName, listOf(this))
   }
 
   private fun `assert successful deleted branch notification`(branchName: String,

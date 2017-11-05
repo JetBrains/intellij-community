@@ -43,7 +43,7 @@ class GitRmTest : GitSingleRepoTest() {
     vf!!
 
     runInEdtAndWait {
-      CommandProcessor.getInstance().executeCommand(myProject, {
+      CommandProcessor.getInstance().executeCommand(project, {
         runWriteAction {
           vf.delete(this)
         }

@@ -30,7 +30,7 @@ class GitResetTest : GitSingleRepoTest() {
   fun `test file is refreshed on hard reset`() {
     val (oldHash, vf) = prepare()
 
-    GitResetOperation(myProject, mapOf(repo to oldHash), GitResetMode.HARD, EmptyProgressIndicator()).execute()
+    GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.HARD, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
     assertEquals("Branch is on incorrect point", oldHash.asString(), last())
@@ -40,7 +40,7 @@ class GitResetTest : GitSingleRepoTest() {
   fun `test file status is refreshed on soft reset`() {
     val (oldHash, vf) = prepare()
 
-    GitResetOperation(myProject, mapOf(repo to oldHash), GitResetMode.SOFT, EmptyProgressIndicator()).execute()
+    GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.SOFT, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
     assertEquals("Branch is on incorrect point", oldHash.asString(), last())

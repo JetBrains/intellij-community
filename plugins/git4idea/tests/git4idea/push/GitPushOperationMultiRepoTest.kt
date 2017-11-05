@@ -69,7 +69,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     val map = ContainerUtil.newHashMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>()
     map.put(ultimate, spec1)
     map.put(community, spec2)
-    val result = GitPushOperation(myProject, pushSupport, map, null, false, false).execute()
+    val result = GitPushOperation(project, pushSupport, map, null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
     val result2 = result.results[community]!!
@@ -92,7 +92,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     val mainSpec = makePushSpec(ultimate, "master", "origin/master")
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
-    val result = GitPushOperation(myProject, pushSupport,
+    val result = GitPushOperation(project, pushSupport,
                                   Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(ultimate, mainSpec), null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
@@ -141,7 +141,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     // push only to 1 repo, otherwise the push would recreate the deleted branch, and the error won't reproduce
     val pushSpecs = mapOf(ultimate to makePushSpec(ultimate, "feature", "origin/feature"))
-    val result = GitPushOperation(myProject, pushSupport, pushSpecs, null, false, false).execute()
+    val result = GitPushOperation(project, pushSupport, pushSpecs, null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
     assertResult(GitPushRepoResult.Type.SUCCESS, 2, "feature", "origin/feature", GitUpdateResult.SUCCESS, result1)

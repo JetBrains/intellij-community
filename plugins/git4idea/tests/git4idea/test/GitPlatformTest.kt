@@ -52,18 +52,18 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    settings = GitVcsSettings.getInstance(myProject)
+    settings = GitVcsSettings.getInstance(project)
     settings.appSettings.setPathToGit(gitExecutable())
 
     dialogManager = service<DialogManager>() as TestDialogManager
-    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
+    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(project)
 
-    repositoryManager = GitUtil.getRepositoryManager(myProject)
+    repositoryManager = GitUtil.getRepositoryManager(project)
     git = overrideService<Git, TestGitImpl>()
-    vcs = GitVcs.getInstance(myProject)!!
+    vcs = GitVcs.getInstance(project)!!
     vcs.doActivate()
 
-    logProvider = findGitLogProvider(myProject)
+    logProvider = findGitLogProvider(project)
 
     assumeSupportedGitVersion(vcs)
     addSilently()
@@ -89,7 +89,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {
-    return createRepository(myProject, rootDir)
+    return createRepository(project, rootDir)
   }
 
   /**
@@ -116,7 +116,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     val parentRepo = createParentRepo(parentName)
     val broRepo = createBroRepo(broName, parentRepo)
 
-    val repository = createRepository(myProject, repoRoot)
+    val repository = createRepository(project, repoRoot)
     cd(repository)
     git("remote add origin " + parentRepo.path)
     git("push --set-upstream origin master:master")
@@ -140,7 +140,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY)
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY)
   }
 
   protected fun addSilently() {

@@ -89,7 +89,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun cherryPick(hashes: List<String>) {
     val details = readDetails(hashes)
-    GitCherryPicker(myProject, git).cherryPick(details)
+    GitCherryPicker(project, git).cherryPick(details)
   }
 
   protected fun cherryPick(vararg hashes: String) {

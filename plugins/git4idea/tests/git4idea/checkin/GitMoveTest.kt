@@ -66,7 +66,7 @@ class GitMoveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     runInEdtAndWait {
-      CommandProcessor.getInstance().executeCommand(myProject, {
+      CommandProcessor.getInstance().executeCommand(project, {
         runWriteAction {
           original.delete(this)
         }

@@ -72,14 +72,14 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
     testStartedIndicator = enableDebugLogging()
 
-    projectRoot = myProject.baseDir
+    projectRoot = project.baseDir
     projectPath = projectRoot.path
 
-    changeListManager = ChangeListManager.getInstance(myProject) as ChangeListManagerImpl
-    vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
+    changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
-    vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(myProject)
-    vcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
+    vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
+    vcsNotifier = project.service<VcsNotifier>() as TestVcsNotifier
   }
 
   @Throws(Exception::class)
@@ -138,8 +138,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   protected fun updateChangeListManager() {
-    val changeListManager = ChangeListManager.getInstance(myProject)
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
+    val changeListManager = ChangeListManager.getInstance(project)
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
     changeListManager.ensureUpToDate(false)
   }
 

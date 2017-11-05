@@ -164,7 +164,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   fun `test retry doesn't touch successful repositories`() {
     `fail with critical error while rebasing 2nd root`()
 
-    GitRebaseUtils.continueRebase(myProject)
+    GitRebaseUtils.continueRebase(project)
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
     assertAllRebased()
@@ -178,7 +178,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     `do nothing on merge`()
     rebase("master")
-    GitRebaseUtils.continueRebase(myProject)
+    GitRebaseUtils.continueRebase(project)
 
     `assert conflict not resolved notification`()
     assertNotRebased("feature", "master", myCommunity)
@@ -197,7 +197,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       mergeDialogShown = true
       myCommunity.resolveConflicts()
     }
-    GitRebaseUtils.continueRebase(myProject)
+    GitRebaseUtils.continueRebase(project)
 
     assertTrue("Merge dialog was not shown", mergeDialogShown)
     assertAllRebased()
@@ -213,7 +213,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     try {
-      GitBranchWorker(myProject, git, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
+      GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
     }
     finally {
       git.setShouldRebaseFail { false }
@@ -265,11 +265,11 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun rebase(onto: String) {
-    GitTestingRebaseProcess(myProject, GitRebaseParams(onto), myAllRepositories).rebase()
+    GitTestingRebaseProcess(project, GitRebaseParams(onto), myAllRepositories).rebase()
   }
 
   private fun abortOngoingRebase() {
-    GitRebaseUtils.abort(myProject, EmptyProgressIndicator())
+    GitRebaseUtils.abort(project, EmptyProgressIndicator())
   }
 
   private fun assertAllRebased() {

@@ -91,7 +91,7 @@ class GitRemoteTest : GitPlatformTest() {
     val cloneWaiter = CountDownLatch(1)
     executeOnPooledThread {
       val projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "")
-      GitCheckoutProvider.doClone(myProject, git, projectName, testRoot.path, url)
+      GitCheckoutProvider.doClone(project, git, projectName, testRoot.path, url)
       cloneWaiter.countDown()
     }
     return cloneWaiter
