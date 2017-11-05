@@ -1507,6 +1507,10 @@ public class UIUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
+  /**
+   * IntelliJ Platform does not support Nimbus look-n-feel
+   * @deprecated
+   */
   public static boolean isUnderNimbusLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Nimbus");
   }
