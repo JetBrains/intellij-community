@@ -36,6 +36,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -382,8 +383,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
             delegate.prepareForDeletion(element);
           }
         }
-
-        element.delete();
+      }
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
+      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+      for (SmartPsiElementPointer<PsiElement> pointer : pointers) {
+        PsiElement element = pointer.getElement();
+        if (element != null) {
+          element.delete();
+        }
       }
       if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
     } catch (IncorrectOperationException e) {
