@@ -60,7 +60,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
   }
 
-  fun test_successful_push() {
+  fun `test successful push`() {
     val hash = makeCommit("file.txt")
     val result = push("master", "origin/master")
 
@@ -68,7 +68,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertPushed(hash, "master")
   }
 
-  fun test_push_new_branch() {
+  fun `test push new branch`() {
     git("checkout -b feature")
     val result = push("feature", "origin/feature")
 
@@ -76,7 +76,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertBranchExists("feature")
   }
 
-  fun test_push_new_branch_with_commits() {
+  fun `test push new branch with commits`() {
     Executor.touch("feature.txt", "content")
     addCommit("feature commit")
     val hash = last()
@@ -88,18 +88,18 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertPushed(hash, "feature")
   }
 
-  fun test_upstream_is_set_for_new_branch() {
+  fun `test upstream is set for new branch`() {
     git("checkout -b feature")
     push("feature", "origin/feature")
     assertUpstream("feature", "origin", "feature")
   }
 
-  fun test_upstream_is_not_modified_if_already_set() {
+  fun `test upstream is not modified if already set`() {
     push("master", "origin/feature")
     assertUpstream("master", "origin", "master")
   }
 
-  fun test_rejected_push_to_tracked_branch_proposes_to_update() {
+  fun `test rejected push to tracked branch proposes to update`() {
     pushCommitFromBro()
 
     var dialogShown = false
@@ -114,7 +114,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", result)
   }
 
-  fun test_rejected_push_to_other_branch_doesnt_propose_to_update() {
+  fun `test rejected push to other branch doesnt propose to update`() {
     pushCommitFromBro()
     cd(repository)
     git("checkout -b feature")
@@ -131,7 +131,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(REJECTED_NO_FF, -1, "feature", "origin/master", result)
   }
 
-  fun test_push_is_rejected_too_many_times() {
+  fun `test push is rejected too many times`() {
     pushCommitFromBro()
     cd(repository)
     val hash = makeCommit("afile.txt")
@@ -163,7 +163,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertFalse("The commit shouldn't be pushed", history.contains(hash))
   }
 
-  fun test_use_selected_update_method_for_all_consecutive_updates() {
+  fun `test use selected update method for all consecutive updates`() {
     pushCommitFromBro()
     cd(repository)
     makeCommit("afile.txt")
@@ -205,7 +205,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog)
   }
 
-  fun test_force_push() {
+  fun `test force push`() {
     val lostHash = pushCommitFromBro()
     cd(repository)
     val hash = makeCommit("anyfile.txt")
@@ -220,7 +220,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals(hash, StringUtil.splitByLines(history)[0])
   }
 
-  fun test_dont_propose_to_update_if_force_push_is_rejected() {
+  fun `test dont propose to update if force push is rejected`() {
     var dialogShown = false
     myDialogManager.onDialog(GitRejectedPushUpdateDialog::class.java, {
       dialogShown = true
@@ -234,7 +234,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
-  fun test_dont_silently_update_if_force_push_is_rejected() {
+  fun `test dont silently update if force push is rejected`() {
     myGitSettings.updateType = UpdateMethod.REBASE
     myGitSettings.setAutoUpdateIfPushRejected(true)
 
@@ -257,7 +257,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     return Pair.create(pushedHash, result)
   }
 
-  fun test_merge_after_rejected_push() {
+  fun `test merge after rejected push`() {
     val broHash = pushCommitFromBro()
     cd(repository)
     val hash = makeCommit("file.txt")
@@ -306,7 +306,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals("", git("branch -r --contains $hash"))
   }
 
-  fun test_update_with_conflicts_cancels_push() {
+  fun `test update with conflicts cancels push`() {
     Executor.cd(broRepo.path)
     Executor.append("bro.txt", "bro content")
     makeCommit("msg")
@@ -323,7 +323,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, listOf("bro.txt"), result)
   }
 
-  fun test_push_tags() {
+  fun `test push tags`() {
     cd(repository)
     git("tag v1")
 
@@ -337,7 +337,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals("refs/tags/v1", pushedTags[0])
   }
 
-  fun test_skip_pre_push_hook() {
+  fun `test skip pre push hook`() {
     cd(repository)
     val hash = makeCommit("file.txt")
 
@@ -352,7 +352,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertPushed(hash, "master")
   }
 
-  fun test_warn_if_rebasing_over_merge() {
+  fun `test warn if rebasing over merge`() {
     generateUnpushedMergedCommitProblem()
 
     var rebaseOverMergeProblemDetected = false
@@ -364,7 +364,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertTrue(rebaseOverMergeProblemDetected)
   }
 
-  fun test_warn_if_silently_rebasing_over_merge() {
+  fun `test warn if silently rebasing over merge`() {
     generateUnpushedMergedCommitProblem()
 
     myGitSettings.setAutoUpdateIfPushRejected(true)
@@ -379,7 +379,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertTrue(rebaseOverMergeProblemDetected)
   }
 
-  fun test_dont_overwrite_rebase_setting_when_chose_to_merge_due_to_unpushed_merge_commits() {
+  fun `test dont overwrite rebase setting when chose to merge due to unpushed merge commits`() {
     generateUnpushedMergedCommitProblem()
 
     myGitSettings.updateType = UpdateMethod.REBASE
@@ -395,7 +395,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
         UpdateMethod.REBASE, myGitSettings.updateType)
   }
 
-  fun test_respect_branch_default_setting_for_rejected_push_dialog() {
+  fun `test respect branch default setting for rejected push dialog`() {
     generateUpdateNeeded()
     myGitSettings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
@@ -416,7 +416,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
         defaultActionName.toLowerCase().contains("merge"))
   }
 
-  fun test_respect_branch_default_setting_for_silent_update_when_rejected_push() {
+  fun `test respect branch default setting for silent update when rejected push`() {
     generateUpdateNeeded()
     myGitSettings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
@@ -428,7 +428,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   // there is no "branch default" choice in the rejected push dialog
   // => simply don't rewrite the setting if the same value is chosen, as was default value initially
-  fun test_dont_overwrite_branch_default_setting_when_agree_in_rejected_push_dialog() {
+  fun `test dont overwrite branch default setting when agree in rejected push dialog`() {
     generateUpdateNeeded()
     myGitSettings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
