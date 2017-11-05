@@ -444,11 +444,11 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private fun generateUnpushedMergedCommitProblem() {
     pushCommitFromBro()
     cd(repository)
-    git("checkout -b branch1")
-    makeCommit("branch1.txt")
+    prepareConflict("master", "feature", "branch1.txt")
     git("checkout master")
-    makeCommit("master.txt")
-    git("merge branch1")
+    git("merge feature", true)
+    git("add -u .")
+    git("commit -m 'merged with conflicts'")
   }
 
   private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {

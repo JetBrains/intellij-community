@@ -149,6 +149,19 @@ fun mv(from: File, to: File) {
   mv(from.path, to.path)
 }
 
+fun GitPlatformTest.prepareConflict(initialBranch: String = "master",
+                                    featureBranch: String = "feature",
+                                    conflictingFile: String = "c.txt"): String {
+  checkout(initialBranch)
+  val file = file(conflictingFile)
+  file.create("initial\n").addCommit("initial")
+  branch(featureBranch)
+  val commit = file.append("master\n").addCommit("on_master").hash()
+  checkout(featureBranch)
+  file.append("feature\n").addCommit("on_feature")
+  return commit
+}
+
 private fun printVersionTheFirstTime() {
   if (!myVersionPrinted) {
     myVersionPrinted = true
