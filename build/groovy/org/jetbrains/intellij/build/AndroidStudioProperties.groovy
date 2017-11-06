@@ -161,6 +161,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("builder-test-api", "sdk-tools.jar")
       withModule("android-annotations", "sdk-tools.jar")
       withModule("layoutinspector", "sdk-tools.jar")
+      withModule("java-lib-model", "sdk-tools.jar")
+      withModule("java-lib-model-builder", "sdk-tools.jar")
 
       withJpsModule("android-gradle-jps")
       withJpsModule("android-jps-plugin")
