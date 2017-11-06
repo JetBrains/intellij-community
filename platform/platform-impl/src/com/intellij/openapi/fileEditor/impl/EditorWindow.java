@@ -509,11 +509,11 @@ public class EditorWindow {
     @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
 
-    @Override
+    /*@Override
     public void addNotify() {
       super.addNotify();
       requestFocusInWindow();
-    }
+    }*/
 
     TComp(@NotNull EditorWindow window, @NotNull EditorWithProviderComposite editor) {
       super(new BorderLayout());
