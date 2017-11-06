@@ -61,16 +61,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private IdeGlassPane myGlassPane;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private boolean myPaintDefaultIfSingle = false;
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);
-    myOptions = options;
     myMoreRec = new Rectangle(0, 0, AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
 
-    myUnderPopup = fillMenu(true);
-    myAbovePopup = fillMenu(false);
-    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    myOptions = options;
+    applyOptions();
   }
 
   @Override
@@ -103,6 +100,10 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   @Override
   public void mouseMoved(MouseEvent e) {
+    if(isSimpleButton()) {
+      return;
+    }
+
     final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
     final boolean insideRec = getBounds().contains(event.getPoint());
     boolean buttonsNotPressed = (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
@@ -153,7 +154,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myMoreRec.x < event.getX()) {
+    if (!isSimpleButton() && myMoreRec.x < event.getX()) {
       return myOptionTooltipText;
     } else {
       return super.getToolTipText(event);
@@ -162,7 +163,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
-    if (myMoreRecMouse.contains(e.getPoint())) {
+    if (!isSimpleButton() && myMoreRecMouse.contains(e.getPoint())) {
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
         if (!myPopupIsShowing) {
           togglePopup();
@@ -174,7 +175,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     }
   }
 
-  public void togglePopup() {
+  private void togglePopup() {
     if (myPopupIsShowing) {
       closePopup();
     } else {
@@ -183,8 +184,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   public void showPopup(final Action actionToSelect, final boolean ensureSelection) {
-    if (myPopupIsShowing) return;
-    
+    if (myPopupIsShowing || isSimpleButton()) return;
+
     myPopupIsShowing = true;
     final Point loc = getLocationOnScreen();
     final Rectangle screen = ScreenUtil.getScreenRectangle(loc);
@@ -217,7 +218,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     popup.show(this, 0, y);
 
     SwingUtilities.invokeLater(() -> {
-      if (popup == null || !popup.isShowing() || !myPopupIsShowing) return;
+      if (isSimpleButton() || !popup.isShowing() || !myPopupIsShowing) return;
 
       Action selection = actionToSelect;
       if (selection == null && myOptions.length > 0 && ensureSelection) {
@@ -249,19 +250,31 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   public void updateOptions(@Nullable Action[] options) {
-    if (options == null) {
-      options = new Action[0];
-    }
+    closePopup();
 
     myOptions = options;
-    myUnderPopup = fillMenu(true);
-    myAbovePopup = fillMenu(false);
-    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    applyOptions();
+
     repaint();
   }
 
+  private void applyOptions() {
+    myUnderPopup = fillMenu(true);
+    myAbovePopup = fillMenu(false);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+  }
+
+  private boolean isSimpleButton() {
+    return myOptions == null || myOptions.length == 0;
+  }
+
+
   private JPopupMenu fillMenu(boolean under) {
     final JPopupMenu result = new JBPopupMenu();
+    if (isSimpleButton()) {
+      myOptionInfos.clear();
+      return result;
+    }
 
     if (under && myOptions.length > 0) {
       final JMenuItem mainAction = new JBMenuItem(getAction());
@@ -339,7 +352,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
       return myAction;
     }
   }
-  
+
   private OptionInfo getMenuInfo(Action each) {
     final String text = (String)each.getValue(Action.NAME);
     int mnemonic = -1;
@@ -357,9 +370,9 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
       }
       plainText.append(ch);
     }
-    
+
     return new OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each);
-    
+
   }
 
   public Set<OptionInfo> getOptionInfos() {
@@ -369,7 +382,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
-    if (myPaintDefaultIfSingle && myOptions.length == 0) {
+    if (isSimpleButton()) {
       return;
     }
 
@@ -411,9 +424,5 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   public void setOkToProcessDefaultMnemonics(boolean ok) {
     myOkToProcessDefaultMnemonics = ok;
-  }
-
-  public void setPaintDefaultIfSingle(boolean value) {
-    myPaintDefaultIfSingle = value;
   }
 }

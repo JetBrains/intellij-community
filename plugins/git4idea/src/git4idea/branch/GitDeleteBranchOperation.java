@@ -19,7 +19,6 @@ import com.google.common.collect.Maps;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -144,29 +143,14 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     String message = "<b>Deleted Branch:</b> " + myBranchName;
     if (unmergedCommits) message += "<br/>Unmerged commits were discarded";
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(new NotificationAction(RESTORE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        restoreInBackground(notification);
-      }
-    });
+    notification.addAction(NotificationAction.createSimple(RESTORE, () -> restoreInBackground(notification)));
     if (unmergedCommits) {
-      notification.addAction(new NotificationAction(VIEW_COMMITS) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          viewUnmergedCommitsInBackground(notification);
-        }
-      });
+      notification.addAction(NotificationAction.createSimple(VIEW_COMMITS, () -> viewUnmergedCommitsInBackground(notification)));
     }
     if (!myTrackedBranches.isEmpty() &&
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
-      notification.addAction(new NotificationAction(DELETE_TRACKED_BRANCH) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          deleteTrackedBranchInBackground();
-        }
-      });
+      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> deleteTrackedBranchInBackground()));
     }
     myNotifier.notify(notification);
   }

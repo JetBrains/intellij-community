@@ -147,7 +147,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(700);
+    List<HighlightInfo> infos = startTest(800);
     assertEmpty(infos);
   }
 }

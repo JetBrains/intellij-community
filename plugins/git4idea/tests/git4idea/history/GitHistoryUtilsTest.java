@@ -149,7 +149,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
 
     assertEquals(myRevisionsAfterRename.size(), 5);
-    cd(myProjectPath);
+    cd(projectPath);
   }
 
   @Override
@@ -252,7 +252,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     StringBuilder sb = new StringBuilder();
     for (VcsFileRevision revision : history) {
       GitFileRevision rev = (GitFileRevision)revision;
-      String relPath = FileUtil.getRelativePath(new File(myProjectPath), rev.getPath().getIOFile());
+      String relPath = FileUtil.getRelativePath(new File(projectPath), rev.getPath().getIOFile());
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(rev.getHash()), rev.getCommitMessage(), relPath));
     }
     return sb.toString();
@@ -262,7 +262,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     int maxSubjectLength = findMaxLength(commits, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (TestCommit commit : commits) {
-      String relPath = FileUtil.getRelativePath(new File(myProjectPath), new File(commit.myPath));
+      String relPath = FileUtil.getRelativePath(new File(projectPath), new File(commit.myPath));
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.getHash()), commit.getCommitMessage(), relPath));
     }
     return sb.toString();
@@ -329,7 +329,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     addCommit("recreated bfile");
 
     refresh();
-    myRepo.update();
+    repo.update();
 
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile));
     assertTrue(!state.isItemExists());
@@ -347,12 +347,12 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
     Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-    GitFileHistory.loadHistory(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
+    GitFileHistory.loadHistory(myProject, toFilePath(bfile), repo.getRoot(), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }
 
   public void testOnlyHashesHistory() throws Exception {
-    final List<Pair<SHAHash, Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), myProjectRoot);
+    final List<Pair<SHAHash, Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), projectRoot);
     assertEquals(history.size(), myRevisionsAfterRename.size());
     Iterator<GitTestRevision> itAfterRename = myRevisionsAfterRename.iterator();
     for (Pair<SHAHash, Date> pair : history) {
@@ -369,7 +369,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     touch("file.txt", "content");
     addCommit(message);
 
-    GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), details::add);
+    GitHistoryUtils.loadDetails(myProject, repo.getRoot(), details::add);
 
     VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
     assertNotNull(lastCommit);
@@ -391,7 +391,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
     expected = ContainerUtil.reverse(expected);
 
-    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, myRepo.getRoot(),
+    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, repo.getRoot(),
                                                                                  "--max-count=" + commitCount),
                                                   detail -> detail.getId().asString());
 

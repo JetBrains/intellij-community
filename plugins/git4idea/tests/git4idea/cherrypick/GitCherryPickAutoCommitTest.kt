@@ -21,7 +21,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    myGitSettings.isAutoCommitOnCherryPick = true
+    settings.isAutoCommitOnCherryPick = true
   }
 
   fun `test simple cherry-pick`() {

@@ -229,7 +229,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
     boolean showNewLine = isNewLineAvailable();
     boolean wrongVisibility =
-      ((myClearButton.getParent() != null) != showClearIcon) || ((myNewLineButton.getParent() != null) != showNewLine);
+      ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
     LayoutManager layout = myIconsPanel.getLayout();
     boolean wrongLayout = !(layout instanceof GridLayout);

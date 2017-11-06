@@ -33,11 +33,11 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    val mainRepo = setupRepositories(projectPath, "parent", "bro")
     repository = mainRepo.projectRepo
     bro = mainRepo.bro
 
-    val communityDir = File(myProjectPath, "community")
+    val communityDir = File(projectPath, "community")
     assertTrue(communityDir.mkdir())
     val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
     community = enclosingRepo.projectRepo
@@ -53,7 +53,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val hash = last()
 
     val updatedRepos = mutableListOf<GitRepository>()
-    myGit.mergeListener = {
+    git.mergeListener = {
       updatedRepos.add(it)
     }
 
@@ -85,7 +85,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     cd(bromunity)
     git("push origin :feature")
 
-    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
@@ -93,7 +93,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun updateWithMerge(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
+    return GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
   }
 
   private fun repositories() = listOf(repository, community)

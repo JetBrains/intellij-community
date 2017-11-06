@@ -916,15 +916,9 @@ public class SystemBuilder {
     ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 
     for (final PsiElement element : victims) {
-      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-        if (!verifyMethod(element, victims, helper)) {
-          continue;
-        }
-      }
-      else if (element instanceof PsiMethod) {
-        if (!verifyMethod(element, victims, helper)) {
-          continue;
-        }
+      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod ||
+          element instanceof PsiMethod) {
+        verifyMethod(element, victims, helper);
       }
     }
 

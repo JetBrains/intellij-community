@@ -93,11 +93,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent, "Anonymous #ref #loc can be replaced with lambda",
-                                                                 new LocalQuickFix[]{new ReplaceWithLambdaFix()},
-                                                                 type, false, rangeInElement,
-                                                                 type != ProblemHighlightType.INFORMATION, true);
-          holder.registerProblem(descriptor);
+          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+                                 type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
     };

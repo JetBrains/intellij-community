@@ -291,7 +291,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @Override
   public String getRunClass() {
     final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+    return !Comparing.strEqual(data.TEST_OBJECT, TEST_CLASS) &&
+           !Comparing.strEqual(data.TEST_OBJECT, TEST_METHOD) ? null : data.getMainClassName();
   }
 
   @Override

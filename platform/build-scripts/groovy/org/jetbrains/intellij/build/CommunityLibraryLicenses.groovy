@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 
 /**
+ * Defines information about licenses of libraries located in 'community', 'contrib' and 'android' repositories.
+ *
  * @author nik
  */
 @CompileStatic
@@ -16,9 +18,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
     new LibraryLicense(name: "aether-api", version: "1.13.1", libraryName: "aether-api-1.13.1.jar", license: "Apache 2.0",
                        url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)",
-                       url: "http://lookandfeel.incors.com/",
-                       licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase"),
     new LibraryLicense(name: "Android Builder Model", libraryName: "builder-model", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder", libraryName: "android-builder", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model", version: "0.4-SNAPSHOT", license: "Apache 2.0",
@@ -368,7 +367,7 @@ class CommunityLibraryLicenses {
                        url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/"),
     new LibraryLicense(name: "Xerces", version: "2.11", license: "Apache 2.0", url: "http://xerces.apache.org/xerces2-j/",
                        licenseUrl: "http://xerces.apache.org/xerces2-j/"),
-    new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.16.1", license: "Apache 2.0",
+    new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.20.1", license: "Apache 2.0",
                        url: "https://github.com/xerial/sqlite-jdbc"),
     new LibraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0",
                        url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html"),
@@ -384,7 +383,10 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x",
                        license: "link (commercial license)", url: "http://yourkit.com/",
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
-    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
+                       url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "Plantuml", libraryName: "plantuml.jar", version: "1.2017.18", license: "Apache 2.0",
+                       url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),

@@ -61,6 +61,8 @@ class StructureNode implements StructureElement {
     for (int i = isList ? 1 : 0; i < children.size(); i++) {
       children = shrinkChild(suitable, children, i);
     }
+
+    shrinkAlternativeListRecursion(suitable, children);
   }
 
   private static List<StructureElement> shrinkChild(Predicate<StructureElement> suitable, List<StructureElement> children, int index) {
@@ -121,6 +123,29 @@ class StructureNode implements StructureElement {
       return true;
     }
     return false;
+  }
+
+  private static void shrinkAlternativeListRecursion(Predicate<StructureElement> suitable, List<StructureElement> children) {
+    if (seemsAlternative(children)) {
+      StructureElement child1 = deparenthesize(children.get(1));
+      if (child1 instanceof StructureNode && ((StructureNode)child1).isList() && ((StructureNode)child1).children.size() == 2) {
+        StructureElement singleListElement = deparenthesize(((StructureNode)child1).children.get(1));
+        if (singleListElement instanceof StructureNode && seemsAlternative(((StructureNode)singleListElement).children)) {
+          suitable.test(singleListElement);
+        }
+      }
+    }
+  }
+
+  private static StructureElement deparenthesize(StructureElement e) {
+    while (e instanceof StructureNode && ((StructureNode)e).children.size() == 1) {
+      e = ((StructureNode)e).children.get(0);
+    }
+    return e;
+  }
+
+  private static boolean seemsAlternative(List<StructureElement> children) {
+    return children.size() == 2 && deparenthesize(children.get(0)) instanceof IntData && children.get(1) instanceof StructureNode;
   }
 
   @Override

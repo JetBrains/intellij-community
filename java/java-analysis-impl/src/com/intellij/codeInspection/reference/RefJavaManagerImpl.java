@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
-    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   private final PsiMethod myAppMainPattern;
@@ -295,6 +295,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
     }
+    if (JAVA_MODULE.equals(type)) {
+      return RefJavaModuleImpl.moduleFromExternalName(myRefManager, fqName);
+    }
     return null;
   }
 
@@ -357,14 +360,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
-    if (refEntity instanceof RefElement) {
-      final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
-      if (pointer != null) {
-        final PsiFile psiFile = pointer.getContainingFile();
-        if (psiFile instanceof PsiJavaFile) {
-          appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
-        }
-      }
+    String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
+    if (packageName != null) {
+      final Element packageElement = new Element("package");
+      packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
+      element.addContent(packageElement);
     }
   }
 
@@ -374,12 +374,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
-  }
-
-  private static void appendPackageElement(final Element element, final String packageName) {
-    final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
-    element.addContent(packageElement);
   }
 
   @Override

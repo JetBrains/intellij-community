@@ -26,12 +26,12 @@ class GitSha1Test : GitSingleRepoTest() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    createFileStructure(myProjectRoot, A_FILE)
+    createFileStructure(projectRoot, A_FILE)
     addCommit("initial")
   }
 
   fun `test sha for add`() {
-    cd(myProjectPath)
+    cd(projectPath)
     val newFile = "newFile.txt"
     touch(newFile, "Hello World!")
     add(newFile)
@@ -39,16 +39,16 @@ class GitSha1Test : GitSingleRepoTest() {
   }
 
   fun `test sha for del`() {
-    cd(myProjectPath)
-    val path = myProjectRoot.findChild(A_FILE)!!.path
+    cd(projectPath)
+    val path = projectRoot.findChild(A_FILE)!!.path
     val expectedBefore = git("hash-object $path")
     git("rm $path")
     checkSha1ForSingleChange(expectedBefore, BlobIndexUtil.NOT_COMMITTED_HASH)
   }
 
   fun `test sha for modified`() {
-    cd(myProjectPath)
-    val virtualFile = myProjectRoot.findChild(A_FILE)
+    cd(projectPath)
+    val virtualFile = projectRoot.findChild(A_FILE)
     val path = virtualFile!!.path
     val expectedBefore = git("hash-object $path")
     setFileText(virtualFile, "echo content\n with line separator")

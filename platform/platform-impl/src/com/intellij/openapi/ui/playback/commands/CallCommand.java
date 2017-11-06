@@ -117,7 +117,6 @@ public class CallCommand extends AbstractCommand {
         return Pair.create(method, eachClass);
       }
       catch (NoSuchMethodException ignored) {
-        continue;
       }
     }
 

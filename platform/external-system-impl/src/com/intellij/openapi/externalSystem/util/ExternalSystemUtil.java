@@ -427,7 +427,7 @@ public class ExternalSystemUtil {
           return;
         }
 
-        final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask) {
+        final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask, projectName + " import") {
           @Override
           protected void destroyProcessImpl() {
             cancellImport();

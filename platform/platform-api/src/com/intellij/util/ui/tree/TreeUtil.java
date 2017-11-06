@@ -46,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -1136,5 +1137,80 @@ public final class TreeUtil {
   @NotNull
   public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
     return Comparator.comparingInt(tree::getRowForPath);
+  }
+
+  /**
+   * Processes nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be processed
+   * @param visitor  a visitor that controls processing of tree nodes
+   * @param consumer a path consumer called on done
+   */
+  public static void accept(@NotNull JTree tree, @NotNull TreeVisitor visitor, @Nullable Consumer<TreePath> consumer) {
+    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
+    if (acceptor != null) {
+      Promise<TreePath> promise = acceptor.apply(visitor);
+      if (consumer != null) promise.processed(path -> consumer.accept(path));
+    }
+    else {
+      TreeModel model = tree.getModel();
+      TreePath path = model == null ? null : accept(model, visitor);
+      if (consumer != null) consumer.accept(path);
+    }
+  }
+
+  private static TreePath accept(@NotNull TreeModel model, @NotNull TreeVisitor visitor) {
+    Object root = model.getRoot();
+    if (root != null) {
+      TreePath path = new TreePath(root);
+      switch (visitor.visit(path)) {
+        case INTERRUPT:
+          return path; // path is found
+        case CONTINUE:
+          return accept(model, visitor, path);
+        default:
+          break; // skip children and/or siblings
+      }
+    }
+    return null;
+  }
+
+  private static TreePath accept(@NotNull TreeModel model, @NotNull TreeVisitor visitor, @NotNull TreePath path) {
+    ArrayDeque<ArrayDeque<TreePath>> stack = new ArrayDeque<>();
+    stack.push(children(model, path));
+    while (path != null) {
+      ArrayDeque<TreePath> siblings = stack.peek();
+      if (siblings == null) return null; // nothing to process
+
+      TreePath next = siblings.poll();
+      if (next == null) {
+        assert siblings == stack.poll();
+        path = path.getParentPath();
+      }
+      else {
+        switch (visitor.visit(next)) {
+          case INTERRUPT:
+            return next; // path is found
+          case CONTINUE:
+            stack.push(children(model, path = next));
+            break;
+          case SKIP_SIBLINGS:
+            siblings.clear();
+            break;
+          case SKIP_CHILDREN:
+            break;
+        }
+      }
+    }
+    assert stack.isEmpty();
+    return null;
+  }
+
+  private static ArrayDeque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
+    Object object = path.getLastPathComponent();
+    int count = model.getChildCount(object);
+    ArrayDeque<TreePath> deque = new ArrayDeque<>(count);
+    for (int i = 0; i < count; i++) deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    return deque;
   }
 }

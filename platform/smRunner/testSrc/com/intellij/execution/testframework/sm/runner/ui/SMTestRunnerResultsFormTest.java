@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 
 /**
  * @author Roman Chernyatchik
@@ -378,7 +377,6 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     
     myResultsViewer.onTestingFinished(myTestsRootNode);
     assertEquals(0, myResultsViewer.getTotalTestCount());
-    assertEquals(Color.LIGHT_GRAY, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Failure() {
@@ -418,24 +416,6 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
     assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
-  }
-
-  public void testCustomProgress_NotRun() {
-    myResultsViewer.onTestingStarted(myTestsRootNode);
-    myResultsViewer.onTestingFinished(myTestsRootNode);
-
-    assertEquals(Color.LIGHT_GRAY, myResultsViewer.getTestsStatusColor());
-  }
-
-  public void testCustomProgress_NotRun_ReporterAttached() {
-    myResultsViewer.onTestingStarted(myTestsRootNode);
-    myTestsRootNode.setTestsReporterAttached();
-    myResultsViewer.onTestingFinished(myTestsRootNode);
-
-    // e.g. reporter attached but tests were actually launched
-    // seems cannot happen in current implementation but is expected behaviour
-    // for future
-    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Terminated_SmthFailed() {

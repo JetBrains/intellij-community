@@ -34,7 +34,7 @@ public class LibraryData extends AbstractNamedData implements Named, ProjectCoor
   }
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
-    super(owner, name, name.isEmpty() ? "" : String.format("%s: %s", owner.getReadableName(), name));
+    super(owner, name, name.isEmpty() ? "" : owner.getReadableName() + ": " + name);
     myUnresolved = unresolved;
   }
 

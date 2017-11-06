@@ -31,7 +31,7 @@ class GitLineHandlerTest : GitSingleRepoTest() {
   private fun `check handler with text`(text: List<String>, expectedLines: List<String>) {
     val lineCollector = LineCollector()
 
-    val handler = GitLineHandler(project, myProjectRoot, GitCommand.LOG)
+    val handler = GitLineHandler(project, projectRoot, GitCommand.LOG)
     handler.addLineListener(lineCollector)
 
     for (line in text) {

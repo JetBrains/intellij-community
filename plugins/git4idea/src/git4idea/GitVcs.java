@@ -20,7 +20,6 @@ import com.intellij.notification.BrowseNotificationAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -399,12 +398,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         String message = String.format("At least %s is required.",GitVersion.MIN.getPresentation());
         Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
         notification.addAction(new BrowseNotificationAction("Download...", "http://git-scm.com/download"));
-        notification.addAction(new NotificationAction("Configure...") {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
-          }
-        });
+        notification.addAction(NotificationAction.createSimple("Configure...", () ->
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName())));
         VcsNotifier.getInstance(myProject).notify(notification);
       }
     }

@@ -350,7 +350,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       boolean isInjected = parent instanceof PsiFile
                            && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent);
-      // A bit hacky depends on navigation offset correctly overridden
+      // A bit hacky: depends on the named element's text offset being overridden correctly
       if (!isInjected && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
         if (evaluator == null || evaluator.isAcceptableNamedParent(parent)) {
           return parent;

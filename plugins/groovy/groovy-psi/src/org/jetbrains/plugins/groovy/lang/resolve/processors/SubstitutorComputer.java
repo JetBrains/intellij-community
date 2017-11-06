@@ -212,8 +212,8 @@ public class SubstitutorComputer {
           }
 
           if (argType instanceof GrTupleType) {
-            PsiType rawGenericType = TypesUtil.rawSecondGeneric(argType, method.getProject());
-            argType = rawGenericType != null ? rawGenericType : argType;
+            PsiType rawWildcardType = TypesUtil.rawWildcard(argType, method);
+            argType = rawWildcardType != null ? rawWildcardType : argType;
           }
 
           if (argType != null) {

@@ -32,3 +32,17 @@ class MySuite {
     return null;
   }
 }
+
+class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> extends junit.framework.TestCase {
+  public static class Inner extends junit.framework.TestCase {
+    public void test1() {}
+  }
+}
+
+class Test5WithInner {
+  static class Inner {
+    @org.junit.jupiter.api.Test
+    void test1() {}
+  }
+}
+

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
@@ -92,7 +93,10 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
         return;
       }
 
-      if (checkClassHasTestMethods(aClass, applicableFrameworks, true)) {
+      Set<TestFramework> applicableToNestedClasses = applicableFrameworks.stream()
+        .filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).acceptNestedClasses())
+        .collect(Collectors.toSet());
+      if (hasTestMethods(aClass, applicableFrameworks, applicableToNestedClasses, true)) {
         return;
       }
 
@@ -100,7 +104,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
         PsiManager manager = aClass.getManager();
         PsiClass superClass = aClass.getSuperClass();
         while (superClass != null && manager.isInProject(superClass)) {
-          if (checkClassHasTestMethods(superClass, applicableFrameworks, false)) {
+          if (hasTestMethods(superClass, applicableFrameworks, applicableToNestedClasses, false)) {
             return;
           }
           superClass = superClass.getSuperClass();
@@ -109,9 +113,14 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
       registerClassError(aClass);
     }
 
-    private boolean checkClassHasTestMethods(@NotNull PsiClass aClass, Set<TestFramework> applicableFrameworks, boolean checkSuite) {
+    private boolean hasTestMethods(@NotNull PsiClass aClass,
+                                   Set<TestFramework> selfFrameworks,
+                                   Set<TestFramework> nestedTestFrameworks,
+                                   boolean checkSuite) {
+
       PsiMethod[] methods = aClass.getMethods();
-      for (TestFramework framework : applicableFrameworks) {
+
+      for (TestFramework framework : selfFrameworks) {
         if (checkSuite && framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isSuiteClass(aClass)) {
           return true;
         }
@@ -120,6 +129,16 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
           return true;
         }
       }
+
+      if (!nestedTestFrameworks.isEmpty()) {
+        for (PsiClass innerClass : aClass.getInnerClasses()) {
+          if (innerClass.hasModifierProperty(PsiModifier.STATIC) &&
+              hasTestMethods(innerClass, nestedTestFrameworks, nestedTestFrameworks, false)) {
+            return true;
+          }
+        }
+      }
+
       return false;
     }
   }

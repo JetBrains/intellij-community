@@ -51,4 +51,8 @@ public class ClassModifierTest extends IncrementalTestCase {
   public void testSetFinal1() {
     doTest();
   }
+  
+  public void testChangeInnerClassModifiers() {
+    doTest();
+  }
 }

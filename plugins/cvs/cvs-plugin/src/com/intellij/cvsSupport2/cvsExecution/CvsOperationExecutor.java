@@ -115,8 +115,7 @@ public class CvsOperationExecutor {
         setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
         handler.run(myProject, myExecutor);
-        if (myResult.finishedUnsuccessfully(handler)) return;
-
+        myResult.finishedUnsuccessfully(handler);
       }
       catch (ProcessCanceledException ex) {
         myResult.setIsCanceled();

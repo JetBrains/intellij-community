@@ -24,7 +24,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
   private static final Color REMAINDER_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
                                                                  Gray.xCC :
-                                                                 new JBColor(Gray.xC4, Gray.x69));
+                                                                 new JBColor(Gray.xC4, Gray.x55));
 
   @SuppressWarnings("UseJBColor")
   private static final Color FINISHED_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
@@ -34,14 +34,18 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   @SuppressWarnings("UseJBColor")
   private static final Color START_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
                                                              new Color(0x76b8f8) :
-                                                             new JBColor(Gray.x80, Gray.x83));
-  private static final Color END_COLOR = FINISHED_COLOR;
+                                                             new JBColor(Gray.xC4, Gray.x69));
 
-  private static final Color RED = new JBColor(new Color(0xd80000), new Color(0xff4053));
-  private static final Color RED_LIGHT = new JBColor(new Color(0xfb8f89), new Color(0xf4a2a0));
+  @SuppressWarnings("UseJBColor")
+  private static final Color END_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
+                                                           new Color(0x0075da) :
+                                                           new JBColor(Gray.x80, Gray.x83));
 
-  private static final Color GREEN = new JBColor(new Color(0x34b171), new Color(0x008f50));
-  private static final Color GREEN_LIGHT = new JBColor(new Color(0x7ee8a5), new Color(0x5dc48f));
+  private static final Color RED = new JBColor(0xd80000, 0xff4053);
+  private static final Color RED_LIGHT = new JBColor(0xfb8f89, 0xf4a2a0);
+
+  private static final Color GREEN = new JBColor(0x34b171, 0x008f50);
+  private static final Color GREEN_LIGHT = new JBColor(0x7ee8a5, 0x5dc48f);
 
   private static final int CYCLE_TIME_DEFAULT = 800;
   private static final int REPAINT_INTERVAL_DEFAULT = 50;
@@ -286,16 +290,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   private static boolean isSimplified() {
-    return false/*PowerSaveMode.isEnabled() || RemoteDesktopService.isRemoteSession()*/;
-  }
-
-  // --------------------------------------------------------------------------------------
-  // TODO: remove methods. Not used anymore.
-  @Deprecated
-  protected volatile int offset = 0;
-
-  @Deprecated
-  protected int getPeriodLength() {
-    return 0;
+    // TODO improve user experience based on System.properties
+    // Avoid using Services directly to make UI code independent.
+    return false;
   }
 }

@@ -30,7 +30,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
       super.tearDown();
       throw e;
     }
-    Executor.cd(myProjectRoot);
+    Executor.cd(projectRoot);
     try {
       myOldGlobalAutoCrlfValue = git("config --global core.autocrlf", true);
       git("config --global --unset core.autocrlf", true);
@@ -120,9 +120,9 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
     createCrlfFile("src/win7");
 
     List<VirtualFile> files = ContainerUtil.map(asList("unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"),
-                                                s -> VfsUtil.findFileByIoFile(new File(myProjectRoot.getPath(), s), true));
+                                                s -> VfsUtil.findFileByIoFile(new File(projectRoot.getPath(), s), true));
     assertTrue("Warning should be done, since one of the files has CRLFs and no related attributes",
-               GitCrlfProblemsDetector.detect(myProject, myGit, files).shouldWarn());
+               GitCrlfProblemsDetector.detect(myProject, git, files).shouldWarn());
   }
 
   private void gitattributes(String content) throws IOException {
@@ -134,7 +134,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
   }
 
   private GitCrlfProblemsDetector detect(VirtualFile file) {
-    return GitCrlfProblemsDetector.detect(myProject, myGit, Collections.singleton(file));
+    return GitCrlfProblemsDetector.detect(myProject, git, Collections.singleton(file));
   }
 
   private void createCrlfFile(String relPath) throws IOException {
@@ -148,7 +148,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
 
   private File createFile(String relPath) throws IOException {
     List<String> split = StringUtil.split(relPath, "/");
-    File parent = new File(myProjectRoot.getPath());
+    File parent = new File(projectRoot.getPath());
     for (Iterator<String> it = split.iterator(); it.hasNext(); ) {
       String item = it.next();
       File file = new File(parent, item);

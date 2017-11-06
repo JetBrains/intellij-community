@@ -50,7 +50,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   public void commandStarted(CommandEvent event) {
     myCommandLevel++;
     if (myCommandLevel == 1) {
-      myAnotherProjectCommand = (event.getProject() != null) != (event.getProject() == myProject);
+      myAnotherProjectCommand = (event.getProject() == null) == (event.getProject() == myProject);
     }
 
     if (LOG.isDebugEnabled()) {

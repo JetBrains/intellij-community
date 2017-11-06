@@ -80,7 +80,7 @@ private fun parseMap(reader: JsonReaderEx,
         version = reader.nextInt()
       }
       "sourceRoot" -> {
-        sourceRoot = readSourcePath(reader)
+        sourceRoot = StringUtil.nullize(readSourcePath(reader))
         if (sourceRoot != null && sourceRoot != "/") {
           sourceRoot = UriUtil.trimTrailingSlashes(sourceRoot)
         }
@@ -180,7 +180,7 @@ private fun parseMap(reader: JsonReaderEx,
   return OneLevelSourceMap(file, GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory(sources, sourcesContent), !names.isNullOrEmpty())
 }
 
-private fun readSourcePath(reader: JsonReaderEx) = PathUtil.toSystemIndependentName(StringUtil.nullize(reader.nextString().trim { it <= ' ' }))
+private fun readSourcePath(reader: JsonReaderEx): String = PathUtil.toSystemIndependentName(reader.nextString().trim { it <= ' ' })
 
 private fun readMappings(value: String,
                          initialLine: Int,
@@ -262,7 +262,7 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
   else {
     sources = SmartList<String>()
     do {
-      var sourceUrl = readSourcePath(reader)
+      var sourceUrl: String = readSourcePath(reader)
       if (!sourceRoot.isNullOrEmpty()) {
         if (sourceRoot == "/") {
           sourceUrl = "/$sourceUrl"

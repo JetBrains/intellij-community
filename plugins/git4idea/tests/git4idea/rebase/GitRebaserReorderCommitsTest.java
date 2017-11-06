@@ -41,7 +41,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
 
   @Override protected void setUp() throws Exception {
     super.setUp();
-    GitTestUtil.createRepository(myProject, myProjectPath, false);
+    GitTestUtil.createRepository(myProject, projectPath, false);
     myRebaser = new GitRebaser(myProject, Git.getInstance(), new EmptyProgressIndicator());
     myFirstCommit = makeCommit();
     BuiltInServerManager.getInstance().waitForStart();
@@ -53,38 +53,38 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
   }
 
   public void testReorderingNothingShouldDoNothing() {
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.emptyList());
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Collections.emptyList());
     assertCommits(myFirstCommit);
   }
 
   public void testReorderingOneShouldDoNothing() {
     String hash = makeCommit();
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.singletonList(hash));
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Collections.singletonList(hash));
     assertCommits(myFirstCommit, hash);
   }
 
   public void testReorderingAllShouldDoNothing() {
     String hash1 = makeCommit();
     String hash2 = makeCommit();
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hash1, hash2));
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Arrays.asList(hash1, hash2));
     assertCommits(myFirstCommit, hash1, hash2);
   }
 
   public void disabled_testReorderingOldestShouldDoNothing() {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[0], hashes[1]));
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Arrays.asList(hashes[0], hashes[1]));
     assertCommits(myFirstCommit, hashes[0], hashes[1], hashes[2]);
   }
 
   public void disabled_testReorderingOneCommit() {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.singletonList(hashes[2]));
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Collections.singletonList(hashes[2]));
     assertCommits(myFirstCommit, hashes[2], hashes[0], hashes[1]);
   }
 
   public void disabled_testReorderingTwoCommits() {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[2], hashes[1]));
+    myRebaser.reoderCommitsIfNeeded(projectRoot, myFirstCommit, Arrays.asList(hashes[2], hashes[1]));
     assertCommits(myFirstCommit, hashes[2], hashes[1], hashes[0]);
   }
 

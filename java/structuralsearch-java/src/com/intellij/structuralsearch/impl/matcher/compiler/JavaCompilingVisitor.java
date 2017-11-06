@@ -18,14 +18,10 @@ import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -138,21 +134,23 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       return true;
     }
 
-    private void addDescendantsOf(String refname, boolean subtype, CompileContext context) {
-      final OptimizingSearchHelper searchHelper = context.getSearchHelper();
-      final List<PsiClass> classes = buildDescendants(refname, subtype, context);
+    private void addDescendantsOf(String className, boolean includeSelf, CompileContext context) {
+      final SearchScope scope = context.getOptions().getScope();
+      if (!(scope instanceof GlobalSearchScope)) return;
 
-      for (final PsiClass aClass : classes) {
-        if (aClass instanceof PsiAnonymousClass) {
-          searchHelper.addWordToSearchInCode(((PsiAnonymousClass)aClass).getBaseClassReference().getReferenceName());
-        }
-        else {
+      final OptimizingSearchHelper searchHelper = context.getSearchHelper();
+      final PsiClass[] classes = PsiShortNamesCache.getInstance(context.getProject()).getClassesByName(className, (GlobalSearchScope)scope);
+
+      for (PsiClass aClass : classes) {
+        if (includeSelf) {
           searchHelper.addWordToSearchInCode(aClass.getName());
         }
+        ClassInheritorsSearch.search(aClass, scope, true).forEach(c -> {
+          searchHelper.addWordToSearchInCode(c.getName());
+          return true;
+        });
       }
-      if (!classes.isEmpty()) {
-        searchHelper.endTransaction();
-      }
+      searchHelper.endTransaction();
     }
   }
 
@@ -505,30 +503,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitElement(PsiElement element) {
     myCompilingVisitor.handle(element);
     super.visitElement(element);
-  }
-
-  private static List<PsiClass> buildDescendants(String className, boolean includeSelf, CompileContext context) {
-    final SearchScope scope = context.getOptions().getScope();
-    if (!(scope instanceof GlobalSearchScope)) return Collections.emptyList();
-
-    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
-    final PsiClass[] classes = cache.getClassesByName(className, (GlobalSearchScope)scope);
-    final List<PsiClass> results = new ArrayList<>();
-
-    final Processor<PsiClass> processor = aClass -> {
-      results.add(aClass);
-      return true;
-    };
-
-    for (PsiClass aClass : classes) {
-      ClassInheritorsSearch.search(aClass, scope, true).forEach(processor);
-    }
-
-    if (includeSelf) {
-      Collections.addAll(results, classes);
-    }
-
-    return results;
   }
 
   @Override

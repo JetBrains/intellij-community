@@ -110,7 +110,6 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
          return;
 
       default:
-        return;
     }
   }
 

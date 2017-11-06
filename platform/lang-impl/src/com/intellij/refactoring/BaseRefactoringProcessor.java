@@ -548,15 +548,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(() -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun));
+      DumbService.getInstance(myProject).smartInvokeLater(() -> doRun());
     }
     else {
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
     }
   }
 

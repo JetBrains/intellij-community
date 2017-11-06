@@ -59,12 +59,12 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#com.intellij.openapi.vcs.roots")
 
   fun `test root is added automatically in simple case`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
+    assertTrue(File(projectPath, DOT_MOCK).mkdir())
 
     VcsRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded()
 
     assertNoNotification()
-    assertSameElements(vcsManager.allVersionedRoots, myProjectRoot)
+    assertSameElements(vcsManager.allVersionedRoots, projectRoot)
   }
 
   fun `test nothing is added automatically if two roots detected`() {
@@ -75,7 +75,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertFalse("No roots should be auto-added since it is not the simple case", vcsManager.hasAnyMappings())
     assertSuccessfulNotification("Unregistered VCS roots detected","""
       The following directories are roots of VCS repositories, but they are not registered in the Settings:
-      ${toSystemDependentName(myProjectPath)}
+      ${toSystemDependentName(projectPath)}
       ${toSystemDependentName(subRoot.path)}
       <a>Add roots</a> <a>Configure</a> <a>Ignore</a>
       """.trimIndent())
@@ -83,13 +83,13 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
   // IDEA-168690
   fun `test root is not added back if explicitly removed`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    vcsManager.setDirectoryMapping(myProjectPath, vcs.name)
-    assertSameElements(vcsManager.allVersionedRoots, myProjectRoot)
+    assertTrue(File(projectPath, DOT_MOCK).mkdir())
+    vcsManager.setDirectoryMapping(projectPath, vcs.name)
+    assertSameElements(vcsManager.allVersionedRoots, projectRoot)
 
-    val mapping = vcsManager.getDirectoryMappingFor(getFilePath(myProjectRoot))
+    val mapping = vcsManager.getDirectoryMappingFor(getFilePath(projectRoot))
     vcsManager.removeDirectoryMapping(mapping)
-    VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(myProjectPath))
+    VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(projectPath))
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
@@ -106,14 +106,14 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
     assertFalse("The root shouldn't be auto-added because it is not the only one", vcsManager.hasAnyMappings())
     assertSuccessfulNotification("Unregistered VCS root detected","""
-      The directory ${toSystemDependentName(myProjectPath)} is under mock, but is not registered in the Settings.
+      The directory ${toSystemDependentName(projectPath)} is under mock, but is not registered in the Settings.
       <a>Add root</a> <a>Configure</a> <a>Ignore</a>
       """.trimIndent())
   }
 
   private fun createNestedRoots(): File {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    val subRoot = File(myProjectPath, "lib")
+    assertTrue(File(projectPath, DOT_MOCK).mkdir())
+    val subRoot = File(projectPath, "lib")
     assertTrue(File(subRoot, DOT_MOCK).mkdirs())
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subRoot)
     return subRoot

@@ -123,7 +123,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   @Override
   public void addNotify() {
     super.addNotify();
-    myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, myToolbarComponent.getPreferredSize().width));
+    myStatusLine.setBorder(BorderFactory.createEmptyBorder(JBUI.scale(3), 0, 0, myToolbarComponent.getPreferredSize().width));
   }
 
   private boolean splitVertically() {

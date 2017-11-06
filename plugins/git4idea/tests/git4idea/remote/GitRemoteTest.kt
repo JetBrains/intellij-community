@@ -78,7 +78,7 @@ class GitRemoteTest : GitPlatformTest() {
     authenticator.supplyPassword("incorrect")
 
     assertTrue("Clone didn't complete during the reasonable period of time", cloneWaiter.await(30, TimeUnit.SECONDS))
-    assertFalse("Repository directory shouldn't be created", File(myTestRoot, projectName).exists())
+    assertFalse("Repository directory shouldn't be created", File(testRoot, projectName).exists())
     assertErrorNotification("Clone failed", "Authentication failed for '$url/'")
   }
 
@@ -91,7 +91,7 @@ class GitRemoteTest : GitPlatformTest() {
     val cloneWaiter = CountDownLatch(1)
     executeOnPooledThread {
       val projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "")
-      GitCheckoutProvider.doClone(myProject, myGit, projectName, myTestRoot.path, url)
+      GitCheckoutProvider.doClone(project, git, projectName, testRoot.path, url)
       cloneWaiter.countDown()
     }
     return cloneWaiter
@@ -99,7 +99,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private fun assertCloneSuccessful(cloneCompleted: CountDownLatch) {
     assertTrue("Clone didn't complete during the reasonable period of time", cloneCompleted.await(30, TimeUnit.SECONDS))
-    assertTrue("Repository directory was not found", File(myTestRoot, projectName).exists())
+    assertTrue("Repository directory was not found", File(testRoot, projectName).exists())
   }
 
   private fun assertPasswordAsked() {

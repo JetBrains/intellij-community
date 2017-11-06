@@ -37,6 +37,28 @@ class WinExeInstallerBuilder {
     this.jreDirectoryPath = jreDirectoryPath
   }
 
+  private void generateInstallationConfigFileForSilentMode() {
+    if (customizer.silentInstallationConfig != null) {
+      if (new File(customizer.silentInstallationConfig).exists()) {
+        def extensionsList = customizer.fileAssociations
+        String associations = "; List of associations. To create an association change value to 1.\n"
+        if (! extensionsList.isEmpty()) {
+          associations += extensionsList.collect { "$it=0\n" }.join("")
+        } else {
+          associations = "; There are no associations for the product.\n"
+        }
+        buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
+          fileset(file: customizer.silentInstallationConfig)
+          filterset(begintoken: "@@", endtoken: "@@") {
+            filter(token: "List of associations", value: associations)
+          }
+        }
+      }
+    } else {
+        buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
+    }
+  }
+
   void buildInstaller(String winDistPath) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
@@ -62,6 +84,9 @@ class WinExeInstallerBuilder {
         exclude(name: "version*")
       }
     }
+
+    generateInstallationConfigFileForSilentMode()
+
     if (SystemInfoRt.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
       ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")

@@ -19,9 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.ChangeInfo;
-import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
-import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -119,14 +116,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         ((PsiManagerEx)file.getManager()).beforeChildReplacement(event);
       }
 
+      if (!(myOldChild instanceof FileElement) || !(myNewChild instanceof FileElement)) {
+        changeEvent.addElementaryChange(myOldChild.getTreeParent());
+      }
+
       myNewChild.rawRemove();
       myOldChild.rawReplaceWithList(myNewChild);
-
-      if (!(myOldChild instanceof FileElement) || !(myNewChild instanceof FileElement)) {
-        ReplaceChangeInfoImpl change = new ReplaceChangeInfoImpl(myNewChild);
-        change.setReplaced(myOldChild);
-        changeEvent.addElementaryChange(myNewChild, change);
-      }
 
       myNewChild.clearCaches();
       if (!(myNewChild instanceof FileElement)) {
@@ -159,7 +154,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         ((PsiManagerEx)file.getManager()).beforeChildRemoval(event);
       }
 
-      changeEvent.addElementaryChange(myOldNode, ChangeInfoImpl.create(ChangeInfo.REMOVED, myOldNode));
+      changeEvent.addElementaryChange(myOldParent);
 
       myOldNode.rawRemove();
       myOldParent.subtreeChanged();
@@ -198,6 +193,8 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         ((PsiManagerEx)file.getManager()).beforeChildAddition(event);
       }
 
+      changeEvent.addElementaryChange(myOldParent);
+
       myNewNode.rawRemove();
       if (anchor != null) {
         anchor.rawInsertAfterMe(myNewNode);
@@ -210,8 +207,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
           myOldParent.rawAddChildren(myNewNode);
         }
       }
-
-      changeEvent.addElementaryChange(myNewNode, ChangeInfoImpl.create(ChangeInfo.ADD, myNewNode));
 
       myNewNode.clearCaches();
       myOldParent.subtreeChanged();

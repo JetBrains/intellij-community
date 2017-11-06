@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
+import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -51,12 +53,11 @@ public class EmmetPreviewUtil {
       final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
       if (templatePrefix != null) {
         try {
-          ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(),
-                                   expandPrimitiveAbbreviations, 0);
-          TemplateImpl template = callback.getGeneratedTemplate();
-          String templateText = template != null ? template.getTemplateText() : null;
-          if (!StringUtil.isEmpty(templateText)) {
-            return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
+          final int limit = Registry.intValue("emmet.segments.limit");
+          ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(), expandPrimitiveAbbreviations, limit);
+          final TemplateImpl template = callback.getGeneratedTemplate();
+          if (template != null) {
+            return getFormattedText(template, file, limit);
           }
         }
         catch (EmmetException e) {
@@ -64,6 +65,22 @@ public class EmmetPreviewUtil {
         }
 
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getFormattedText(@NotNull final TemplateImpl template, @NotNull final PsiFile file, int limit) {
+    final String templateText;
+    if (template.getVariableCount() > 0 && template.getVariableCount() < limit/2) {
+      final LiveTemplateBuilder builder = new LiveTemplateBuilder(false, limit);
+      builder.insertTemplate(0, template, Collections.emptyMap());
+      templateText = builder.getTextForPreview();
+    } else {
+      templateText = template.getTemplateText();
+    }
+    if (!StringUtil.isEmpty(templateText)) {
+      return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
     }
     return null;
   }

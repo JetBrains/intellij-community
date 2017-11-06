@@ -236,23 +236,23 @@ public class TestsUIUtil {
       } else{
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-          String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
-                                                      : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
           myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +
                           (ignoredCount > 0 ? ", ignored: " + ignoredCount : notStartedCount > 0 ? ", not started: " + notStartedCount : "");
-          myText = passedCount + " passed, " + failedCount + " failed" + notStartedMessage;
+          String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
+                                                      : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
+          myText = failedCount + " failed, " + passedCount + " passed" + notStartedMessage;
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
           myTitle = "Tests Ignored";
           myBalloonText = "Tests ignored: " + ignoredCount + ", passed: " + passedCount;
-          myText = passedCount + " passed, " + ignoredCount + " ignored";
+          myText = ignoredCount + " ignored, " + passedCount + " passed";
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
           myBalloonText = "Failed to start: " + notStartedCount + ", passed: " + passedCount;
-          myText = passedCount + " passed, " + notStartedCount + " not started";
+          myText = notStartedCount + " not started, " + passedCount + " passed";
           myType = MessageType.ERROR;
         }
         else {

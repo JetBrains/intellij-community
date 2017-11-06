@@ -46,7 +46,7 @@ private fun doCallGit(command: String, ignoreNonZeroExitCode: Boolean): String {
   split.add(0, gitExecutable())
   val workingDir = ourCurrentDir()
   debug("[" + workingDir.name + "] # git " + command)
-  for (attempt in 0..MAX_RETRIES - 1) {
+  for (attempt in 0 until MAX_RETRIES) {
     var stdout: String
     try {
       stdout = run(workingDir, split, ignoreNonZeroExitCode)
@@ -149,6 +149,19 @@ fun mv(from: File, to: File) {
   mv(from.path, to.path)
 }
 
+fun GitPlatformTest.prepareConflict(initialBranch: String = "master",
+                                    featureBranch: String = "feature",
+                                    conflictingFile: String = "c.txt"): String {
+  checkout(initialBranch)
+  val file = file(conflictingFile)
+  file.create("initial\n").addCommit("initial")
+  branch(featureBranch)
+  val commit = file.append("master\n").addCommit("on_master").hash()
+  checkout(featureBranch)
+  file.append("feature\n").addCommit("on_feature")
+  return commit
+}
+
 private fun printVersionTheFirstTime() {
   if (!myVersionPrinted) {
     myVersionPrinted = true
@@ -209,8 +222,4 @@ internal class TestFile internal constructor(val project: Project, val file: Fil
   fun exists() = file.exists()
 
   fun read() = FileUtil.loadFile(file)
-}
-
-class TestCommit internal constructor(shortHash: String, hash: String) {
-
 }

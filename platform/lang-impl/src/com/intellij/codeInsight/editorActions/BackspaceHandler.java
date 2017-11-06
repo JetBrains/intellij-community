@@ -184,7 +184,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     // Decrease column down to indentation * n
-    final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentOptionsByFile(file).INDENT_SIZE;
+    final int indent = CodeStyleSettingsManager.getIndentOptions(file).INDENT_SIZE;
     int column = (caretPos.column - 1) / indent * indent;
     if (column < 0) {
       column = 0;

@@ -46,7 +46,7 @@ class EscapePreprocessor extends FilterReader {
   }
 
   @Override
-  public int read(char cbuf[], int off, int len) throws IOException {
+  public int read(char[] cbuf, int off, int len) throws IOException {
     final int i = read();
     if (i == -1) {
       return -1;

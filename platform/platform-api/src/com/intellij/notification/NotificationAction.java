@@ -20,6 +20,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiConsumer;
+
 /**
  * @author Alexander Lobas
  */
@@ -34,4 +36,19 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
+
+  @NotNull
+  public static NotificationAction create(@NotNull String text, @NotNull BiConsumer<AnActionEvent, Notification> performAction) {
+    return new NotificationAction(text) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        performAction.accept(e, notification);
+      }
+    };
+  }
+
+  @NotNull
+  public static NotificationAction createSimple(@NotNull String text, @NotNull Runnable performAction) {
+    return create(text, (event, notification) -> performAction.run());
+  }
 }

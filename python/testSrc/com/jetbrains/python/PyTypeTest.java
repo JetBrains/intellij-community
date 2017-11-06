@@ -8,7 +8,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -182,28 +181,22 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("str",
-             "def foo(x: str) -> list:\n" +
-             "    expr = x");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("str",
+                   "def foo(x: str) -> list:\n" +
+                   "    expr = x")
+    );
   }
 
   public void testReturnTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("list",
-             "def foo(x) -> list:\n" +
-             "    return x\n" +
-             "expr = foo(None)");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("list",
+                   "def foo(x) -> list:\n" +
+                   "    return x\n" +
+                   "expr = foo(None)")
+    );
   }
 
   public void testEpydocReturnType() {
@@ -2309,6 +2302,20 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-25751
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("Union[aaa.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
+  // PY-25751
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("Union[__init__.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
   // PY-26269
   public void testDontReplaceDictValueWithReceiverType() {
     runWithLanguageLevel(
@@ -2327,6 +2334,33 @@ public class PyTypeTest extends PyTestCase {
            "    assert isinstance(cfg, str)\n" +
            "    cfg.split()\n" +
            "    expr = cfg");
+  }
+
+  // PY-26061
+  public void testUnknownDictValues() {
+    doTest("list",
+           "expr = dict().values()");
+  }
+
+  // PY-26061
+  public void testUnresolvedGenericReplacement() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Any",
+                   "from typing import TypeVar, Generic, List\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "V = TypeVar('V')\n" +
+                   "\n" +
+                   "class B(Generic[T]):\n" +
+                   "    def f(self) -> T:\n" +
+                   "        ...\n" +
+                   "\n" +
+                   "class C(B[V], Generic[V]):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "expr = C().f()\n")
+    );
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

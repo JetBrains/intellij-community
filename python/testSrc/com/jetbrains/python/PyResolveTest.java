@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
@@ -27,7 +13,6 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
@@ -300,14 +285,13 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testSuperPy3k() {  // PY-1330
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
-      assertEquals("A", pyFunction.getContainingClass().getName());
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> {
+        final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
+        assertEquals("A", pyFunction.getContainingClass().getName());
+      }
+    );
   }
 
   public void testStackOverflow() {
@@ -1245,5 +1229,11 @@ public class PyResolveTest extends PyResolveTestCase {
     final PyFunction dunderLt = assertInstanceOf(element, PyFunction.class);
     assertEquals("__lt__", dunderLt.getName());
     assertEquals("str", dunderLt.getContainingClass().getName());
+  }
+
+  // PY-26006
+  public void testSOEDecoratingFunctionWithSameNameDecorator() {
+    final PyFunction function = assertInstanceOf(doResolve(), PyFunction.class);
+    assertEquals(4, function.getTextOffset());
   }
 }

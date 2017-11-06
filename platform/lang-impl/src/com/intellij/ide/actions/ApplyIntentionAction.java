@@ -21,11 +21,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -60,9 +60,9 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   @Nullable
-  public static ApplyIntentionAction[] getAvailableIntentions(final Editor editor, final PsiFile file) {
-    final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
-    ApplicationManager.getApplication().runReadAction(() -> ShowIntentionsPass.getActionsToShow(editor, file, info, -1));
+  public static ApplyIntentionAction[] getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
+    ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
+    ShowIntentionsPass.getActionsToShow(editor, file, info, -1);
     if (info.isEmpty()) return null;
 
     final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<>();

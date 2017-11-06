@@ -44,7 +44,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
 
-  private final JEditorPane myBrowser;
+  private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
   private final List<TipAndTrickBean> myTips = ContainerUtil.newArrayList();
 
@@ -53,9 +53,9 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     if (isWin10OrNewer && !isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
     }
-    myBrowser = TipUIUtil.createTipBrowser();
-    myBrowser.setBorder(JBUI.Borders.empty(8, 12));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
+    myBrowser = TipUIUtil.createBrowser();
+    myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser.getComponent(), true);
     scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
 
@@ -94,7 +94,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     setTip(tip, lastTip, myBrowser, settings);
   }
 
-  private void setTip(TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
+  private void setTip(TipAndTrickBean tip, int lastTip, TipUIUtil.Browser browser, GeneralSettings settings) {
     TipUIUtil.openTipInBrowser(tip, browser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));

@@ -11,43 +11,35 @@ import org.jetbrains.annotations.NotNull;
 public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   public void testDictCompExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testSetLiteralExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testSetCompExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testExceptBlock() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testImportStatement() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testImportErrorCaught() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testStarExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON35);
-    doTest();
+    doTest(LanguageLevel.PYTHON35);
   }
 
   public void testBinaryExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testNumericLiteralExpression() {
@@ -67,8 +59,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testRaiseFrom() {
-    setLanguageLevel(LanguageLevel.PYTHON32);
-    doTest();
+    doTest(LanguageLevel.PYTHON32);
   }
 
   public void testReprExpression() {
@@ -76,8 +67,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testWithStatement() {
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest();
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testPyClass() {
@@ -105,8 +95,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testCallExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    doTest();
+    doTest(LanguageLevel.PYTHON30);
   }
 
   public void testBasestring() {

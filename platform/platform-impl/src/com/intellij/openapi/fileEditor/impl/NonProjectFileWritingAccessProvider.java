@@ -55,7 +55,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final NotNullLazyKey<AtomicInteger, UserDataHolder> ACCESS_ALLOWED
     = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
 
-  private static final AtomicBoolean myInitialized = new AtomicBoolean(); 
+  private static final AtomicBoolean myInitialized = new AtomicBoolean();
 
   @NotNull private final Project myProject;
   @Nullable private static NullableFunction<List<VirtualFile>, UnlockOption> ourCustomUnlocker;
@@ -67,7 +67,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public NonProjectFileWritingAccessProvider(@NotNull Project project) {
     myProject = project;
-    
+
     if (myInitialized.compareAndSet(false, true)) {
       VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileListener());
     }
@@ -108,7 +108,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   @Nullable
   private UnlockOption askToUnlock(@NotNull List<VirtualFile> files) {
     if (ourCustomUnlocker != null) return ourCustomUnlocker.fun(files);
-    
+
     NonProjectFileWritingAccessDialog dialog = new NonProjectFileWritingAccessDialog(myProject, files);
     if (!dialog.showAndGet()) return null;
     return dialog.getUnlockOption();
@@ -124,18 +124,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
 
     if (documentHistory.isRecentlyChanged(file)) return true;
-    
+
     if (!getApp().isUnitTestMode()
         && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
       return true;
     }
-    
+
     VirtualFile each = file;
     while (each != null) {
       if (ACCESS_ALLOWED.getValue(each).get() > 0) return true;
       each = each.getParent();
     }
-    
+
     return isProjectFile(file, project);
   }
 
@@ -148,7 +148,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
-    
+
     if (project instanceof ProjectEx && !project.isDefault()) {
       if (ProjectKt.getStateStore(project).isProjectFile(file)) {
         return true;
@@ -176,18 +176,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public static void disableChecksDuring(@NotNull Runnable runnable) {
     Application app = getApp();
-    if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) == Boolean.TRUE) {
-      // reject disabling checks if checks in tests are enabled explicitly
+    ACCESS_ALLOWED.getValue(app).incrementAndGet();
+    try {
       runnable.run();
     }
-    else {
-      ACCESS_ALLOWED.getValue(app).incrementAndGet();
-      try {
-        runnable.run();
-      }
-      finally {
-        ACCESS_ALLOWED.getValue(app).decrementAndGet();
-      }
+    finally {
+      ACCESS_ALLOWED.getValue(app).decrementAndGet();
     }
   }
 
@@ -195,7 +189,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   public static void enableChecksInTests(@NotNull Disposable disposable) {
     getApp().putUserData(ENABLE_IN_TESTS, Boolean.TRUE);
     getApp().putUserData(ACCESS_ALLOWED, null);
-    
+
     Disposer.register(disposable, () -> {
       getApp().putUserData(ENABLE_IN_TESTS, null);
       getApp().putUserData(ACCESS_ALLOWED, null);
@@ -204,7 +198,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   private static boolean isAllAccessAllowed() {
     Application app = getApp();
-    
+
     // disable checks in tests, if not asked
     if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) != Boolean.TRUE) {
       return true;

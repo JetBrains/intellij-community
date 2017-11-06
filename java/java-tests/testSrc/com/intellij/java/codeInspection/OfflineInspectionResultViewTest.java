@@ -152,20 +152,20 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "    -Module: 'testOfflineWithInvalid'\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
+                                           "       -f()\n" +
+                                           "        -D\n" +
+                                           "         -b()\n" +
+                                           "          -anonymous (Runnable)\n" +
+                                           "           -run()\n" +
+                                           "            Variable <code>i</code> is never used.\n" +
+                                           "          Variable <code>r</code> is never used.\n" +
+                                           "       -ff()\n" +
+                                           "        Variable <code>a</code> is never used.\n" +
+                                           "        Variable <code>d</code> is never used.\n" +
                                            "       -foo()\n" +
                                            "        Variable <code>j</code> is never used.\n" +
                                            "       -main(String[])\n" +
                                            "        Variable <code>test</code> is never used.\n" +
-                                           "       -f()\n" +
-                                           "        -D\n" +
-                                           "         -b()\n" +
-                                           "          Variable <code>r</code> is never used.\n" +
-                                           "          -anonymous (Runnable)\n" +
-                                           "           -run()\n" +
-                                           "            Variable <code>i</code> is never used.\n" +
-                                           "       -ff()\n" +
-                                           "        Variable <code>a</code> is never used.\n" +
-                                           "        Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -EqualsWithItself\n" +
                                            "    -Module: 'testOfflineWithInvalid'\n" +
@@ -193,20 +193,20 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "    -Module: 'testOfflineView'\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
+                                           "       -f()\n" +
+                                           "        -D\n" +
+                                           "         -b()\n" +
+                                           "          -anonymous (Runnable)\n" +
+                                           "           -run()\n" +
+                                           "            Variable <code>i</code> is never used.\n" +
+                                           "          Variable <code>r</code> is never used.\n" +
+                                           "       -ff()\n" +
+                                           "        Variable <code>a</code> is never used.\n" +
+                                           "        Variable <code>d</code> is never used.\n" +
                                            "       -foo()\n" +
                                            "        Variable <code>j</code> is never used.\n" +
                                            "       -main(String[])\n" +
                                            "        Variable <code>test</code> is never used.\n" +
-                                           "       -f()\n" +
-                                           "        -D\n" +
-                                           "         -b()\n" +
-                                           "          Variable <code>r</code> is never used.\n" +
-                                           "          -anonymous (Runnable)\n" +
-                                           "           -run()\n" +
-                                           "            Variable <code>i</code> is never used.\n" +
-                                           "       -ff()\n" +
-                                           "        Variable <code>a</code> is never used.\n" +
-                                           "        Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -" + myDataFlowToolWrapper + "\n" +
                                            "    -Module: 'testOfflineView'\n" +
@@ -227,20 +227,20 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "  -Declaration redundancy\n" +
                                            "   -unused\n" +
                                            "    -Test\n" +
+                                           "     -f()\n" +
+                                           "      -D\n" +
+                                           "       -b()\n" +
+                                           "        -anonymous (Runnable)\n" +
+                                           "         -run()\n" +
+                                           "          Variable <code>i</code> is never used.\n" +
+                                           "        Variable <code>r</code> is never used.\n" +
+                                           "     -ff()\n" +
+                                           "      Variable <code>a</code> is never used.\n" +
+                                           "      Variable <code>d</code> is never used.\n" +
                                            "     -foo()\n" +
                                            "      Variable <code>j</code> is never used.\n" +
                                            "     -main(String[])\n" +
                                            "      Variable <code>test</code> is never used.\n" +
-                                           "     -f()\n" +
-                                           "      -D\n" +
-                                           "       -b()\n" +
-                                           "        Variable <code>r</code> is never used.\n" +
-                                           "        -anonymous (Runnable)\n" +
-                                           "         -run()\n" +
-                                           "          Variable <code>i</code> is never used.\n" +
-                                           "     -ff()\n" +
-                                           "      Variable <code>a</code> is never used.\n" +
-                                           "      Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -EqualsWithItself\n" +
                                            "    -Test\n" +
@@ -265,20 +265,20 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "  -Declaration redundancy\n" +
                                            "   -unused\n" +
                                            "    -Test\n" +
+                                           "     -f()\n" +
+                                           "      -D\n" +
+                                           "       -b()\n" +
+                                           "        -anonymous (Runnable)\n" +
+                                           "         -run()\n" +
+                                           "          Variable <code>i</code> is never used.\n" +
+                                           "        Variable <code>r</code> is never used.\n" +
+                                           "     -ff()\n" +
+                                           "      Variable <code>a</code> is never used.\n" +
+                                           "      Variable <code>d</code> is never used.\n" +
                                            "     -foo()\n" +
                                            "      Variable <code>j</code> is never used.\n" +
                                            "     -main(String[])\n" +
                                            "      Variable <code>test</code> is never used.\n" +
-                                           "     -f()\n" +
-                                           "      -D\n" +
-                                           "       -b()\n" +
-                                           "        Variable <code>r</code> is never used.\n" +
-                                           "        -anonymous (Runnable)\n" +
-                                           "         -run()\n" +
-                                           "          Variable <code>i</code> is never used.\n" +
-                                           "     -ff()\n" +
-                                           "      Variable <code>a</code> is never used.\n" +
-                                           "      Variable <code>d</code> is never used.\n" +
                                            "  -Probable bugs\n" +
                                            "   -EqualsWithItself\n" +
                                            "    -Test\n" +

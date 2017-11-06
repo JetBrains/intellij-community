@@ -33,13 +33,11 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
@@ -63,10 +61,10 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
-  public static final String YOUR_VERSION = "Your version";
-  public static final String SERVER_VERSION = "Server version";
-  public static final String BASE_VERSION = "Base Version";
-  public static final String MERGED_VERSION = "Merged Version";
+  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
+  public static final String SERVER_VERSION = DiffBundle.message("merge.version.title.their");
+  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
+  public static final String MERGED_VERSION = DiffBundle.message("merge.version.title.merged");
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
@@ -344,7 +342,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       DiffContent content2 = createContent(project, aRev, context, indicator);
 
       final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
-      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
+      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, BASE_VERSION);
       final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
       String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, YOUR_VERSION);
 
@@ -394,16 +392,21 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
         return contentFactory.create(project, vFile);
       }
 
+      DiffContent content;
       if (revision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return contentFactory.createFromBytes(project, revisionContent, filePath);
+        content = contentFactory.createFromBytes(project, revisionContent, filePath);
       }
       else {
         String revisionContent = revision.getContent();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return contentFactory.create(project, revisionContent, filePath);
+        content = contentFactory.create(project, revisionContent, filePath);
       }
+
+      content.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(revision.getFile(), revision.getRevisionNumber()));
+
+      return content;
     }
     catch (IOException | VcsException e) {
       LOG.info(e);

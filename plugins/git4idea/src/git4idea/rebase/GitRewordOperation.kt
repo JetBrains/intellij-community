@@ -15,10 +15,8 @@
  */
 package git4idea.rebase
 
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -192,11 +190,9 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun notifySuccess() {
     val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
-    notification.addAction(object : NotificationAction("Undo") {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        notification.expire()
-        undoInBackground()
-      }
+    notification.addAction(NotificationAction.createSimple("Undo") {
+      notification.expire()
+      undoInBackground()
     })
 
     val connection = project.messageBus.connect()

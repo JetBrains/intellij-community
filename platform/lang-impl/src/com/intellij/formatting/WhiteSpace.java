@@ -161,7 +161,6 @@ public class WhiteSpace {
 
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
-    if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements

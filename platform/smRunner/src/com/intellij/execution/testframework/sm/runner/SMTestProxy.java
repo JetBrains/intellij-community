@@ -376,7 +376,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
+    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
   }
 
   @Override

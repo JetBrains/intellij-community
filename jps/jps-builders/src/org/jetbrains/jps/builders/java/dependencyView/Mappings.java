@@ -1935,6 +1935,13 @@ public class Mappings {
             state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, changedClass.name));
           }
 
+          if (!changedClass.isAnonymous() && !isEmpty(changedClass.getOuterClassName()) && !changedClass.isPrivate()) {
+            if (addedModifiers != 0 || diff.removedModifiers() != 0) {
+              debug("Some modifiers (access flags) were changed for non-private inner class, adding class usage to affected usages");
+              state.myAffectedUsages.add(changedClass.createUsage());
+            }
+          }
+          
           if (changedClass.isAnnotation()) {
             debug("Class is annotation, performing annotation-specific analysis");
 

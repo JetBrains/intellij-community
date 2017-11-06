@@ -3,23 +3,36 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionTool {
+public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+  private int MINIMAL_WARN_DELTA_SIZE = 30;
+
+  private static final CallMatcher STREAM_EMPTY = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "empty")
+    .parameterCount(0);
+  private static final CallMatcher STREAM_OF = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "ofNullable").parameterCount(1),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
+  );
 
   @NotNull
   @Override
@@ -33,16 +46,32 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
       public void visitIfStatement(PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
         if(context == null) return;
-        String method = getMethod(context.getExpression());
-        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method),
+        String method = getMethodWithClass(context.getExpressionToReplace(), context.isStream());
+
+        PsiStatement nextToDelete = context.getNextToDelete();
+        int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
+        boolean isInfoLevel = ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
+        ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
+        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method));
+      }
+
+      @NotNull
+      private ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
+        if(context.isStream()) {
+          return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        }
+        if (isInfoLevel) {
+          return ProblemHighlightType.INFORMATION;
+        }
+        return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
 
       @Override
       public void visitConditionalExpression(PsiConditionalExpression ternary) {
         TernaryNotNullContext context = TernaryNotNullContext.from(ternary);
         if(context == null) return;
-        String method = getMethod(context.getNonNullExpr());
+        String method = getMethodWithClass(context.getNonNullExpr(), false);
         holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
                                new ReplaceWithRequireNonNullFix(method));
       }
@@ -58,14 +87,14 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
     @NotNull
     @Override
     public String getName() {
-      return "Replace condition with Objects." + myMethod;
+      return InspectionsBundle.message("inspection.require.non.null.message", myMethod);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace null checked condition with Objects static method";
+      return InspectionsBundle.message("inspection.require.non.null");
     }
 
     @Override
@@ -76,10 +105,16 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
         NotNullContext context = NotNullContext.from((PsiIfStatement)element);
         if (context == null) return;
         CommentTracker tracker = new CommentTracker();
-        PsiExpression expression = context.getExpression();
-        PsiExpression requireCall = createRequireExpression(tracker, expression, project, context.getVariable(), context.getReference());
-        context.getReference().replace(requireCall);
-
+        PsiExpression expression = context.getExpressionToReplace();
+        if(!context.isStream()) {
+          PsiExpression requireCall = createRequireExpression(tracker, expression, project, context.getVariable(), context.getReference());
+          context.getReference().replace(requireCall);
+        } else {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+          String streamOfNullableText = CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".ofNullable(" + context.getVariable().getName() + ")";
+          PsiExpression streamOfNullable = factory.createExpressionFromText(streamOfNullableText, expression);
+          expression.replace(streamOfNullable);
+        }
         result = tracker.replaceAndRestoreComments(context.getIfStatement(), context.getNullBranchStmt());
         if (context.getNextToDelete() != null) {
           context.getNextToDelete().delete();
@@ -115,30 +150,33 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   private static class NotNullContext {
-    private final @NotNull PsiExpression myExpression;
+    private final @NotNull PsiExpression myExpressionToReplace;
     private final @NotNull PsiExpression myReference;
     private final @NotNull PsiStatement myNullBranchStmt;
     private final @NotNull PsiVariable myVariable;
     private final @NotNull PsiIfStatement myIfStatement;
     private final @Nullable PsiStatement myNextToDelete;
+    private final boolean myIsStream;
 
-    private NotNullContext(@NotNull PsiExpression expression,
+    private NotNullContext(@NotNull PsiExpression expressionToReplace,
                            @NotNull PsiExpression reference,
                            @NotNull PsiStatement nullBranchStmt,
                            @NotNull PsiVariable variable,
                            @NotNull PsiIfStatement statement,
-                           @Nullable PsiStatement nextToDelete) {
-      myExpression = expression;
+                           @Nullable PsiStatement nextToDelete,
+                           boolean isStream) {
+      myExpressionToReplace = expressionToReplace;
       myReference = reference;
       myNullBranchStmt = nullBranchStmt;
       myVariable = variable;
       myIfStatement = statement;
       myNextToDelete = nextToDelete;
+      myIsStream = isStream;
     }
 
     @NotNull
-    public PsiExpression getExpression() {
-      return myExpression;
+    public PsiExpression getExpressionToReplace() {
+      return myExpressionToReplace;
     }
 
     @NotNull
@@ -168,6 +206,18 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
       return myNullBranchStmt;
     }
 
+    public boolean isStream() {
+      return myIsStream;
+    }
+
+
+    int getLenAfterReplace() {
+      int lengthAfterReplace = getExpressionToReplace().getTextLength() + getMethodWithClass(getExpressionToReplace(), isStream()).length();
+      if(!isStream()) {
+        lengthAfterReplace += getNullBranchStmt().getTextLength() + 6;
+      }
+      return lengthAfterReplace;
+    }
 
     @Nullable
     static NotNullContext from(@NotNull PsiIfStatement ifStatement) {
@@ -210,19 +260,33 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
       PsiExpression nonNullDiff = tryCast(match.getRightDiff(), PsiExpression.class);
       if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) {
         TopmostQualifierDiff qualifierDiff = TopmostQualifierDiff.from(nullDiff, nonNullDiff);
-        if(qualifierDiff == null) return null;
+        if(qualifierDiff == null) {
+          PsiMethodCallExpression nullCall = tryCast(nullDiff, PsiMethodCallExpression.class);
+          PsiMethodCallExpression nonNullCall = tryCast(nonNullDiff, PsiMethodCallExpression.class);
+          if(nullCall == null || nonNullCall == null) return null;
+          if(!STREAM_EMPTY.test(nonNullCall) || !STREAM_OF.test(nullCall)) return null;
+          PsiExpression maybeRef = nullCall.getArgumentList().getExpressions()[0];
+          if (!ExpressionUtils.isReferenceTo(maybeRef, variable)) return null;
+          return new NotNullContext(nullCall, maybeRef, nullBranch, variable, ifStatement, null, true);
+        }
         nullDiff = qualifierDiff.getLeft();
         nonNullDiff = qualifierDiff.getRight();
         if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) return null;
       }
       if(NullnessUtil.getExpressionNullness(nonNullDiff) != Nullness.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullDiff)) return null;
-      return new NotNullContext(nonNullDiff, nullDiff, nullBranch, variable, ifStatement, toDelete);
+      return new NotNullContext(nonNullDiff, nullDiff, nullBranch, variable, ifStatement, toDelete, false);
     }
   }
 
-  static String getMethod(PsiExpression expression) {
+  @NotNull
+  private static String getMethod(PsiExpression expression) {
     return ExpressionUtils.isSimpleExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
+  }
+
+  @NotNull
+  private static String getMethodWithClass(PsiExpression expression, boolean isStream) {
+    return isStream ? "Stream.ofNullable" : "Objects." + getMethod(expression);
   }
 
   @Nullable

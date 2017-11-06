@@ -24,11 +24,11 @@ import java.io.File
 class GitBareWorkTreeTest : GitWorkTreeBaseTest() {
 
   override fun initMainRepo(): String {
-    val sourceRepo = File(myTestRoot, "source")
+    val sourceRepo = File(testRoot, "source")
     assertTrue(sourceRepo.mkdir())
     initRepo(sourceRepo.path, true)
 
-    val mainDir = File(myTestRoot, "main.git")
+    val mainDir = File(testRoot, "main.git")
     val path = mainDir.path
     cloneRepo(sourceRepo.path, path, true)
     return path

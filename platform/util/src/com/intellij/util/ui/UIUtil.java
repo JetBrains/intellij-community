@@ -212,9 +212,7 @@ public class UIUtil {
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
     return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
-                                 isSel
-                                 ? table.getSelectionBackground()
-                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+                     isSel ? table.getSelectionBackground() : table.getBackground());
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
@@ -1039,12 +1037,6 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Tree.selectionBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Tree.selectionBackground");
   }
 
@@ -1065,12 +1057,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Table[Enabled+Selected].textBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Table.selectionBackground");
   }
 
@@ -1198,9 +1184,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionForeground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("Table[Enabled+Selected].textForeground");
-    }
     return UIManager.getColor("Table.selectionForeground");
   }
 
@@ -1217,11 +1200,6 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      final Color color = UIManager.getColor("List.background");
-      //noinspection UseJBColor
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-    }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
@@ -1259,9 +1237,6 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("List[Selected].textBackground");  // Nimbus
-    }
     return UIManager.getColor("List.selectionBackground");
   }
 
@@ -1340,11 +1315,8 @@ public class UIUtil {
 
   public static Color getSeparatorColor() {
     Color separatorColor = getSeparatorForeground();
-    if (isUnderAlloyLookAndFeel()) {
+    if (false) {
       separatorColor = getSeparatorShadow();
-    }
-    if (isUnderNimbusLookAndFeel()) {
-      separatorColor = getSeparatorColorUnderNimbus();
     }
     //under GTK+ L&F colors set hard
     if (isUnderGTKLookAndFeel()) {
@@ -1448,7 +1420,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedCollapsedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
@@ -1460,7 +1431,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedExpandedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
@@ -1486,14 +1456,24 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Alloy");
+    return false;
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
-    return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1507,18 +1487,29 @@ public class UIUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isUnderNimbusLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Nimbus");
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
+
+  /**
+   * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderNimbusLookAndFeel() {
+    return false;
+  }
+
+  /**
+   * JGoodies Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("JGoodies");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -2279,6 +2270,7 @@ public class UIUtil {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        //noinspection CollectionAddedToSelf
         queue.offer(queue);
       }
     });
@@ -2498,7 +2490,6 @@ public class UIUtil {
 
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() ||
-           isUnderNimbusLookAndFeel() ||
            isUnderGTKLookAndFeel();
   }
 

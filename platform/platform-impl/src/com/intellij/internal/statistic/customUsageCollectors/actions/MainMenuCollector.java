@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.customUsageCollectors.actions;
 
 import com.intellij.internal.statistic.UsagesCollector;
@@ -59,8 +45,13 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
   public void record(@NotNull AnAction action) {
     try {
+      if (UsagesCollector.isNotBundledPluginClass(action.getClass())) {
+        return;
+      }
+
       AWTEvent e = EventQueue.getCurrentEvent();
       String path = null;
+
       if (e instanceof ItemEvent) {
         path = getPathFromMenuItem(e, action);
       }
@@ -85,11 +76,24 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
       .map(o -> ((ActionMenu)o).getText())
       .collect(Collectors.toList());
     if (groups.size() > 0) {
-      String text = action.getTemplatePresentation().getText(); //avoid user data in Action Presentation
+      String text = getActionText(action);
       groups.add(text);
       return convertMenuItemsToKey(groups);
     }
     return null;
+  }
+
+  private static final HashMap<String, String> ourBlackList = new HashMap<>();
+  static {
+    ourBlackList.put("com.intellij.ide.ReopenProjectAction", "Reopen Project");
+  }
+
+  private static String getActionText(@NotNull AnAction action) {
+    String text = ourBlackList.get(action.getClass().getName());
+    if (text != null) {
+      return text;
+    }
+    return action.getTemplatePresentation().getText(); //avoid user data in Action Presentation
   }
 
   @NotNull
@@ -106,7 +110,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
       src = ((MenuItem)src).getParent();
     }
     if (items.size() > 1) {
-      items.set(items.size() - 1, action.getTemplatePresentation().getText()); //avoid user data in Action Presentation
+      items.set(items.size() - 1, getActionText(action));
     }
     return convertMenuItemsToKey(items);
   }

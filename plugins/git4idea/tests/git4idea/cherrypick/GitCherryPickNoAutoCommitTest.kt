@@ -22,7 +22,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    myGitSettings.isAutoCommitOnCherryPick = false
+    settings.isAutoCommitOnCherryPick = false
   }
 
   fun `test commit dialog shown on cherry pick`() {
@@ -150,7 +150,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} Modify the file")
     assertLastMessage("Modify the file\n\n(cherry picked from commit ${shortHash(commit)})")
-    myRepo.assertCommitted {
+    repo.assertCommitted {
       modified(initialName)
     }
     changeListManager.assertOnlyDefaultChangelist()

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
+  @Staging
   public void testConsolePrint() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -80,6 +81,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testLineByLineInput() {
     runPythonTest(new PyConsoleTask() {
       @Override

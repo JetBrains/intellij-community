@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.ProjectTopics
@@ -76,7 +74,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
       val fileSpec = storages.firstOrNull()?.value
       if (fileSpec == "libraries") {
         val result = ArrayList<Storage>(storages.size + 1)
-        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectStorage::class.java))
+        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectFilteringStorage::class.java))
         result.addAll(storages)
         return result
       }
