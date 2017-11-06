@@ -487,6 +487,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setResizable(true)
       .setMovable(true)
       .setRequestFocus(requestFocus)
+      .setFocusable(false)
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
       .setTitle(getTitle(element, false))
       .setCouldPin(pinCallback)

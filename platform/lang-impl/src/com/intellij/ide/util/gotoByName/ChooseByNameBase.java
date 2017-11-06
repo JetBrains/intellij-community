@@ -522,6 +522,11 @@ public abstract class ChooseByNameBase {
               if (isDescendingFromTemporarilyFocusableToolWindow(oppositeComponent)) {
                 return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
               }
+/*
+              if (haveCommonOwner(oppositeComponent, e.getComponent()))
+              {
+                return;
+              }*/
 
               hideHint();
             }
@@ -666,6 +671,34 @@ public abstract class ChooseByNameBase {
     if (modalityState != null) {
       rebuildList(SelectionPolicyKt.fromIndex(myInitialIndex), 0, modalityState, null);
     }
+  }
+
+  private boolean haveCommonOwner (Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set ownerSet = new HashSet();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null || !(owner instanceof JDialog) || !(owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null || !(owner instanceof JDialog) || !(owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
   private boolean isDescendingFromTemporarilyFocusableToolWindow(@Nullable Component component) {
