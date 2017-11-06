@@ -1502,9 +1502,14 @@ public class UIUtil {
     return false;
   }
 
+  /**
+   * JGoodies Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("JGoodies");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
