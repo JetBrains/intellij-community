@@ -17,141 +17,135 @@
 
 package git4idea.test
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
 import com.intellij.vcs.log.impl.VcsLogUtil
+import git4idea.commands.Git
+import git4idea.commands.GitLineHandler
+import git4idea.commands.getGitCommandInstance
 import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
 import java.io.File
 
-private val LOG: Logger = logger("#git4idea.test.GitExecutor")
-private val MAX_RETRIES = 3
 private var myVersionPrinted = false
 
 fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 
-@JvmOverloads fun git(command: String, ignoreNonZeroExitCode: Boolean = false): String {
-  printVersionTheFirstTime()
-  return doCallGit(command, ignoreNonZeroExitCode)
+@JvmOverloads fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
+  printVersionTheFirstTime(project)
+  return doCallGit(project, command, ignoreNonZeroExitCode)
 }
 
-private fun doCallGit(command: String, ignoreNonZeroExitCode: Boolean): String {
-  val split = splitCommandInParameters(command)
-  split.add(0, gitExecutable())
+private fun doCallGit(project: Project, command: String, ignoreNonZeroExitCode: Boolean): String {
   val workingDir = ourCurrentDir()
-  debug("[" + workingDir.name + "] # git " + command)
-  for (attempt in 0 until MAX_RETRIES) {
-    var stdout: String
-    try {
-      stdout = run(workingDir, split, ignoreNonZeroExitCode)
-      if (!isIndexLockFileError(stdout)) {
-        return stdout
-      }
-    }
-    catch (e: Executor.ExecutionException) {
-      stdout = e.output
-      if (!isIndexLockFileError(stdout)) {
-        throw e
-      }
-    }
+  val split = splitCommandInParameters(command)
+  val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.addParameters(split.subList(1, split.size))
 
-    LOG.info("Index lock file error, attempt #$attempt: $stdout")
+  val result = Git.getInstance().runCommand(handler)
+  if (result.exitCode != 0 && !ignoreNonZeroExitCode) {
+    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}")
   }
-  throw RuntimeException("fatal error during execution of Git command: \$command")
+  return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }
 
-private fun isIndexLockFileError(stdout: String): Boolean {
-  return stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")
+@JvmOverloads
+fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
+fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
+
+fun cd(repository: GitRepository) = cd(repository.root.path)
+
+@JvmOverloads
+fun GitRepository.add(path: String = ".") = cd { add(project, path) }
+
+fun GitPlatformTest.add(path: String = ".") = add(project, path)
+private fun add(project: Project, path: String = ".") = git(project, "add --verbose " + path)
+
+fun GitRepository.addCommit(message: String) = cd { addCommit(project, message) }
+fun GitPlatformTest.addCommit(message: String) = addCommit(project, message)
+private fun addCommit(project: Project, message: String): String {
+  add(project)
+  return commit(project, message)
 }
 
-fun git(repository: GitRepository?, command: String): String {
-  if (repository != null) {
-    cd(repository)
-  }
-  return git(command)
+fun GitRepository.branch(name: String) = cd { branch(project, name) }
+fun GitPlatformTest.branch(name: String) = branch(project, name)
+private fun branch(project: Project, name: String) = git(project, "branch $name")
+
+fun GitRepository.checkout(vararg params: String) = cd { checkout(project, *params) }
+fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
+private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
+
+fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
+fun GitPlatformTest.checkoutNew(branchName: String, startPoint: String = "") = checkoutNew(project, branchName, startPoint)
+private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
+  git(project, "checkout -b $branchName $startPoint")
+
+fun GitRepository.commit(message: String) = cd { commit(project, message) }
+fun GitPlatformTest.commit(message: String) = commit(project, message)
+private fun commit(project: Project, message: String): String {
+  git(project, "commit -m '$message'")
+  return last(project)
 }
 
-fun cd(repository: GitRepository) {
-  cd(repository.root.path)
-}
+@JvmOverloads
+fun GitRepository.tac(file: String, content: String = "content" + Math.random()) = cd { tac(project, file, content) }
 
-@JvmOverloads fun add(path: String = ".") {
-  git("add --verbose " + path)
-}
-
-fun addCommit(message: String): String {
-  add()
-  return commit(message)
-}
-
-fun branch(name: String) : String {
-  return git("branch $name")
-}
-
-fun checkout(vararg params: String) {
-  git("checkout ${params.joinToString(" ")}")
-}
-
-fun checkoutNew(branchName: String, startPoint: String = ""): String {
-  return git("checkout -b $branchName $startPoint")
-}
-
-fun commit(message: String): String {
-  git("commit -m '$message'")
-  return last()
-}
-
-@JvmOverloads fun tac(file: String, content: String = "content" + Math.random()): String {
+fun GitPlatformTest.tac(file: String, content: String = "content" + Math.random()) = tac(project, file, content)
+private fun tac(project: Project, file: String, content: String): String {
   touch(file, content)
-  return addCommit("Touched $file")
+  return addCommit(project, "Touched $file")
 }
 
-fun tacp(file: String): String {
+fun GitRepository.tacp(file: String) = cd { tacp(project, file) }
+fun GitPlatformTest.tacp(file: String) = tacp(project, file)
+private fun tacp(project: Project, file: String): String {
   touch(file)
-  addCommit("Touched $file")
-  return git("push")
+  addCommit(project, "Touched $file")
+  return git(project, "push")
 }
 
-fun appendAndCommit(file: String, additionalContent: String) : String {
+fun GitRepository.appendAndCommit(file: String, additionalContent: String) = cd { appendAndCommit(project, file, additionalContent) }
+fun GitPlatformTest.appendAndCommit(file: String, additionalContent: String) = appendAndCommit(project, file, additionalContent)
+private fun appendAndCommit(project: Project, file: String, additionalContent: String): String {
   append(file, additionalContent)
-  add(file)
-  return commit("Add more content")
+  add(project, file)
+  return commit(project, "Add more content")
 }
 
-fun modify(file: String): String {
+fun GitRepository.modify(file: String): String = cd { modify(project, file) }
+fun GitPlatformTest.modify(file: String): String = modify(project, file)
+private fun modify(project: Project, file: String): String {
   overwrite(file, "content" + Math.random())
-  return addCommit("modified " + file)
+  return addCommit(project, "modified " + file)
 }
 
-fun last(): String {
-  return git("log -1 --pretty=%H")
-}
+fun GitRepository.last() = cd { last(project) }
+fun GitPlatformTest.last() = last(project)
+private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
-fun lastMessage(): String {
-  return git("log -1 --pretty=%B")
-}
+fun GitRepository.lastMessage() = cd { lastMessage(project) }
+fun GitPlatformTest.lastMessage() = lastMessage(project)
+private fun lastMessage(project: Project) = git(project, "log -1 --pretty=%B")
 
-fun log(vararg params: String): String {
-  return git("log " + StringUtil.join(params, " "))
-}
+fun GitRepository.log(vararg params: String) = cd { log(project, *params) }
+fun GitPlatformTest.log(vararg params: String) = log(project, *params)
+private fun log(project: Project, vararg params: String) = git(project, "log " + StringUtil.join(params, " "))
 
-fun mv(fromPath: String, toPath: String) {
-  git("mv $fromPath $toPath")
-}
+fun GitRepository.mv(fromPath: String, toPath: String) = cd { mv(project, fromPath, toPath) }
+fun GitPlatformTest.mv(fromPath: String, toPath: String) = mv(project, fromPath, toPath)
+private fun mv(project: Project, fromPath: String, toPath: String) = git(project, "mv $fromPath $toPath")
 
-fun mv(from: File, to: File) {
+fun GitRepository.mv(from: File, to: File) {
   mv(from.path, to.path)
 }
 
-fun GitPlatformTest.prepareConflict(initialBranch: String = "master",
-                                    featureBranch: String = "feature",
-                                    conflictingFile: String = "c.txt"): String {
+fun GitRepository.prepareConflict(initialBranch: String = "master",
+                                  featureBranch: String = "feature",
+                                  conflictingFile: String = "c.txt"): String {
   checkout(initialBranch)
   val file = file(conflictingFile)
   file.create("initial\n").addCommit("initial")
@@ -162,16 +156,21 @@ fun GitPlatformTest.prepareConflict(initialBranch: String = "master",
   return commit
 }
 
-private fun printVersionTheFirstTime() {
+private fun printVersionTheFirstTime(project: Project) {
   if (!myVersionPrinted) {
     myVersionPrinted = true
-    doCallGit("version", false)
+    doCallGit(project, "version", false)
   }
 }
 
-internal fun GitPlatformTest.file(fileName: String): TestFile {
+private fun GitRepository.cd(command: () -> String): String {
+  cd(this)
+  return command()
+}
+
+internal fun GitRepository.file(fileName: String): TestFile {
   val f = child(fileName)
-  return TestFile(this.project!!, f)
+  return TestFile(this, f)
 }
 
 private class GitExecutorHolder {
@@ -181,7 +180,7 @@ private class GitExecutorHolder {
   }
 }
 
-internal class TestFile internal constructor(val project: Project, val file: File) {
+internal class TestFile internal constructor(val repo: GitRepository, val file: File) {
 
   fun append(content: String): TestFile {
     FileUtil.writeToFile(file, content.toByteArray(), true)
@@ -205,19 +204,19 @@ internal class TestFile internal constructor(val project: Project, val file: Fil
   }
 
   fun add(): TestFile {
-    add(file.path)
+    repo.add(file.path)
     return this
   }
 
   fun addCommit(message: String): TestFile {
     add()
-    commit(message)
+    repo.commit(message)
     return this
   }
 
-  fun hash() = last()
+  fun hash() = repo.last()
 
-  fun details() = VcsLogUtil.getDetails(findGitLogProvider(project), project.baseDir, listOf(hash())).first()!!
+  fun details() = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(hash())).first()!!
 
   fun exists() = file.exists()
 

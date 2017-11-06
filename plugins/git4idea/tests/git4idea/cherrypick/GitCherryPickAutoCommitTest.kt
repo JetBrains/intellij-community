@@ -49,7 +49,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test unresolved conflict with cherry-picked commit should produce a changelist`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `do nothing on merge`()
 
     cherryPick(commit)
@@ -67,7 +67,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test resolve conflicts but cancel commit`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `mark as resolved on merge`()
     vcsHelper.onCommit { false }
 

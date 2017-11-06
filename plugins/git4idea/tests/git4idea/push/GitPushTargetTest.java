@@ -21,8 +21,6 @@ import git4idea.GitRemoteBranch;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
 
-import static git4idea.test.GitExecutor.git;
-
 public class GitPushTargetTest extends GitSingleRepoTest {
 
   @Override

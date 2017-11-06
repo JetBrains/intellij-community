@@ -80,7 +80,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test create new branch without checkout not at HEAD`() {
     val hashMap = myRepositories.map { it to it.currentRevision!! }.toMap()
-    myRepositories.forEach { cd(it); tac("f.txt") }
+    myRepositories.forEach { cd(it); it.tac("f.txt") }
 
     GitBranchWorker(project, git, TestUiHandler()).createBranch("feature", myRepositories.map{ it to "HEAD^" }.toMap())
 
@@ -492,7 +492,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun `test delete branch that is fully merged`() {
     val todelete = "todelete"
     for (repository in myRepositories) {
-      git(repository, "branch $todelete")
+      repository.git("branch $todelete")
     }
 
     deleteBranch(todelete, TestUiHandler())
@@ -618,7 +618,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun `prepare_delete_branch_failure_in_2nd_repo`() {
     for (repository in myRepositories) {
-      git(repository, "branch todelete")
+      repository.git("branch todelete")
     }
     git.onBranchDelete {
       if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf(), null)
@@ -682,7 +682,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test merge branch that is up to date`() {
     for (repository in myRepositories) {
-      git(repository, "branch master2")
+      repository.git("branch master2")
     }
 
     mergeBranch("master2", TestUiHandler())
@@ -694,8 +694,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test merge one simple and other up to date`() {
     branchWithCommit(first, "master2", "branch_file.txt", "branch content")
-    git(last, "branch master2")
-    git(second, "branch master2")
+    last.git("branch master2")
+    second.git("branch master2")
 
     mergeBranch("master2", TestUiHandler())
 
@@ -766,9 +766,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun `test checkout in detached head`() {
     cd(first)
     touch("file.txt", "some content")
-    add("file.txt")
-    commit("msg")
-    git(first, "checkout HEAD^")
+    first.add("file.txt")
+    first.commit("msg")
+    first.git("checkout HEAD^")
 
     checkoutBranch("master", TestUiHandler())
     assertCurrentBranch("master")
@@ -820,7 +820,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test delete remote branch when its tracking local branch is partially checked out`() {
     prepareLocalAndRemoteBranch("feature", track = true)
-    git(last, "checkout feature")
+    last.git("checkout feature")
 
     GitBranchWorker(project, git, object : TestUiHandler() {
       override fun confirmRemoteBranchDeletion(branchName: String,
@@ -841,9 +841,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val parentRoot = File(testRoot, "parentRoot")
     parentRoot.mkdir()
     for (repository in myRepositories) {
-      git(repository, "branch $name")
+      repository.git("branch $name")
       prepareRemoteRepo(repository, File(parentRoot, "${repository.root.name}-parent.git"))
-      git(repository, "push ${if (track) "-u" else ""} origin $name")
+      repository.git("push ${if (track) "-u" else ""} origin $name")
     }
   }
 
@@ -905,7 +905,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun prepareUnmergedBranch(unmergedRepo: GitRepository) {
     for (repository in myRepositories) {
-      git(repository, "branch todelete")
+      repository.git("branch todelete")
     }
     cd(unmergedRepo)
     git("checkout todelete")
@@ -1021,18 +1021,18 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun getCurrentBranch(repository: GitRepository): String {
-    return git(repository, "branch").lines().find { it.contains("*") }!!.replace('*', ' ').trim()
+    return repository.git("branch").lines().find { it.contains("*") }!!.replace('*', ' ').trim()
   }
 
   private fun assertCurrentRevision(repository: GitRepository, reference: String) {
-    val expectedRef = git(repository, "rev-parse " + "HEAD")
-    val currentRef = git(repository, "rev-parse " + reference)
+    val expectedRef = repository.git("rev-parse " + "HEAD")
+    val currentRef = repository.git("rev-parse " + reference)
 
     assertEquals("Current revision is incorrect in ${repository}", expectedRef, currentRef)
   }
 
   private fun assertBranchDeleted(repo: GitRepository, branch: String) {
-    assertFalse("Branch $branch should have been deleted from $repo", git(repo, "branch").contains(branch))
+    assertFalse("Branch $branch should have been deleted from $repo", repo.git("branch").contains(branch))
   }
 
   private fun assertBranchExists(repo: GitRepository, branch: String) {

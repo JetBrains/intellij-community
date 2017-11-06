@@ -484,7 +484,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseInteractively("HEAD^")
 
     assertEquals("Initial message is incorrect", initialMessage, receivedMessage)
-    assertEquals("Resulting message is incorrect", newMessage, git("log HEAD --no-walk --pretty=%B"))
+    assertLastMessage(newMessage)
   }
 
   fun `test cancel in interactive rebase should show no error notification`() {
@@ -521,7 +521,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test checkout with rebase`() {
     repo.`diverge feature and master`()
-    git(repo, "checkout master")
+    repo.git("checkout master")
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
@@ -543,4 +543,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   private fun simpleParams(newBase: String): GitRebaseParams {
     return GitRebaseParams(newBase)
   }
+
+  internal fun file(path: String) = repo.file(path)
 }

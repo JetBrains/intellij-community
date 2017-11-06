@@ -78,4 +78,9 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(projectPath, changeListManager.allChanges),
                changeListManager.isUnversioned(file))
   }
+
+  @JvmOverloads
+  protected fun git(command: String, ignoreExitCode: Boolean = false) = repo.git(command, ignoreExitCode)
+
+  internal fun file(path: String) = repo.file(path)
 }

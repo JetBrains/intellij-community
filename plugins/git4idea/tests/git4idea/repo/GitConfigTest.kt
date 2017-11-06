@@ -122,16 +122,12 @@ class GitConfigTest : GitPlatformTest() {
     assertEquals("Remote name is incorrect", expectedName, remote!!.name)
   }
 
-  private fun createRepository() {
-    createRepository(myProject, myProjectPath, true)
+  private fun createRepository(): GitRepository {
+    return createRepository(myProject, projectPath, true)
   }
 
   private fun readConfig(): GitConfig {
     return GitConfig.read(configFile())
-  }
-
-  private void createRepository() {
-    GitTestUtil.createRepository(myProject, projectPath, true);
   }
 
   private fun assertSingleRemoteInConfig() {
@@ -145,7 +141,7 @@ class GitConfigTest : GitPlatformTest() {
   }
 
   private fun configFile(): File {
-    val gitDir = File(myProjectPath, ".git")
+    val gitDir = File(projectPath, ".git")
     return File(gitDir, "config")
   }
 

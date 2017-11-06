@@ -211,4 +211,9 @@ public abstract class GithubTest extends GitPlatformTest {
   protected boolean runInDispatchThread() {
     return true;
   }
+
+
+  protected void git(@NotNull String command) {
+    GitExecutor.git(this, command, false);
+  }
 }

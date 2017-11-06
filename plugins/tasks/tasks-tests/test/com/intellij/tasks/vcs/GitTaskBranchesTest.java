@@ -61,8 +61,8 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   @Override
   protected void createAndCommitChanges(@NotNull Repository repository) {
     touch("foo.txt");
-    git("add foo.txt");
-    git("commit -m commit");
+    git((GitRepository)repository, "add foo.txt");
+    git((GitRepository)repository, "commit -m commit");
     repository.update();
   }
 

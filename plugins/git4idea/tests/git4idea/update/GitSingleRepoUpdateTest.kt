@@ -109,4 +109,6 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   private fun assertSuccessfulUpdate(result: GitUpdateResult) {
     assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
   }
+
+  internal fun file(path: String) = repo.file(path)
 }

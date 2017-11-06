@@ -40,6 +40,7 @@ import java.util.Set;
 import static com.intellij.openapi.vcs.Executor.echo;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
+import static git4idea.test.GitTestUtil.readAllRefs;
 import static java.util.Collections.singleton;
 
 public class GitLogProviderTest extends GitSingleRepoTest {
@@ -69,7 +70,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_refresh_with_new_tagged_branch() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(projectRoot, myObjectsFactory);
+    Set<VcsRef> prevRefs = readAllRefs(this, projectRoot, myObjectsFactory);
     createTaggedBranch();
 
     List<VcsCommitMetadata> expectedLog = log();
@@ -79,11 +80,11 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_refresh_when_new_tag_moved() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(projectRoot, myObjectsFactory);
+    Set<VcsRef> prevRefs = readAllRefs(this, projectRoot, myObjectsFactory);
     git("tag -f ATAG");
 
     List<VcsCommitMetadata> expectedLog = log();
-    Set<VcsRef> refs = GitTestUtil.readAllRefs(projectRoot, myObjectsFactory);
+    Set<VcsRef> refs = readAllRefs(this, projectRoot, myObjectsFactory);
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(projectRoot, new RequirementsImpl(1000, true, prevRefs));
     assertSameElements(block.getCommits(), expectedLog);
     assertSameElements(block.getRefs(), refs);
@@ -91,12 +92,12 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_new_tag_on_old_commit() throws VcsException {
     prepareSomeHistory();
-    Set<VcsRef> prevRefs = GitTestUtil.readAllRefs(projectRoot, myObjectsFactory);
+    Set<VcsRef> prevRefs = readAllRefs(this, projectRoot, myObjectsFactory);
     List<VcsCommitMetadata> log = log();
     String firstCommit = log.get(log.size() - 1).getId().asString();
     git("tag NEW_TAG " + firstCommit);
 
-    Set<VcsRef> refs = GitTestUtil.readAllRefs(projectRoot, myObjectsFactory);
+    Set<VcsRef> refs = readAllRefs(this, projectRoot, myObjectsFactory);
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(projectRoot, new RequirementsImpl(1000, true, prevRefs));
     assertSameElements(block.getRefs(), refs);
   }
@@ -162,18 +163,18 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_filter_by_text() throws Exception {
-    String initial = last();
+    String initial = last(repo);
 
     String fileName = "f";
 
     touch(fileName, "content" + Math.random());
-    String smallBrackets = addCommit("[git] " + fileName);
+    String smallBrackets = addCommit(repo ,"[git] " + fileName);
     echo(fileName, "content" + Math.random());
-    String bigBrackets = addCommit("[GIT] " + fileName);
+    String bigBrackets = addCommit(repo, "[GIT] " + fileName);
     echo(fileName, "content" + Math.random());
-    String smallNoBrackets = addCommit("git " + fileName);
+    String smallNoBrackets = addCommit(repo, "git " + fileName);
     echo(fileName, "content" + Math.random());
-    String bigNoBrackets = addCommit("GIT " + fileName);
+    String bigNoBrackets = addCommit(repo, "GIT " + fileName);
 
     String text = "[git]";
     assertEquals(Collections.singletonList(smallBrackets), getFilteredHashes(
@@ -251,21 +252,21 @@ public class GitLogProviderTest extends GitSingleRepoTest {
    */
   private List<String> generateHistoryForFilters(boolean takeAllUsers, boolean allBranches) {
     List<String> hashes = ContainerUtil.newArrayList();
-    hashes.add(last());
+    hashes.add(last(repo));
 
-    GitTestUtil.setupUsername("bob.smith", "bob.smith@example.com");
+    GitTestUtil.setupUsername(myProject, "bob.smith", "bob.smith@example.com");
     if (takeAllUsers) {
-      String commitByBob = tac("file.txt");
+      String commitByBob = tac(repo, "file.txt");
       hashes.add(commitByBob);
     }
-    GitTestUtil.setupDefaultUsername();
+    GitTestUtil.setupDefaultUsername(myProject);
 
-    hashes.add(tac("file1.txt"));
+    hashes.add(tac(repo, "file1.txt"));
     git("checkout -b feature");
-    String commitOnlyInFeature = tac("file2.txt");
+    String commitOnlyInFeature = tac(repo, "file2.txt");
     hashes.add(commitOnlyInFeature);
     git("checkout master");
-    String commitOnlyInMaster = tac("master.txt");
+    String commitOnlyInMaster = tac(repo, "master.txt");
     if (allBranches) hashes.add(commitOnlyInMaster);
 
     Collections.reverse(hashes);
@@ -279,29 +280,29 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
-  private static void prepareSomeHistory() {
-    tac("a.txt");
+  private void prepareSomeHistory() {
+    tac(repo, "a.txt");
     git("tag ATAG");
-    tac("b.txt");
+    tac(repo, "b.txt");
   }
 
-  private static void prepareLongHistory(int size) {
+  private void prepareLongHistory(int size) {
     for (int i = 0; i < size; i++) {
       String file = "a" + (i % 10) + ".txt";
       if (i < 10) {
-        tac(file);
+        tac(repo, file);
       }
       else {
-        modify(file);
+        modify(repo, file);
       }
     }
   }
 
-  private static void createTaggedBranch() {
-    String hash = last();
-    tac("c.txt");
-    tac("d.txt");
-    tac("e.txt");
+  private void createTaggedBranch() {
+    String hash = last(repo);
+    tac(repo, "c.txt");
+    tac(repo, "d.txt");
+    tac(repo, "e.txt");
     git("tag poor-tag");
     git("reset --hard " + hash);
   }
