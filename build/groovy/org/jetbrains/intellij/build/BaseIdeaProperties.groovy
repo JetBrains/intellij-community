@@ -115,7 +115,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")
-        withProjectLibrary("jgoodies-looks")
         withProjectLibrary("commons-net")
         withProjectLibrary("snakeyaml")
         withoutProjectLibrary("Ant")

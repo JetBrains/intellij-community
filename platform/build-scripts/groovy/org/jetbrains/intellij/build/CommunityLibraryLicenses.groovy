@@ -188,8 +188,6 @@ class CommunityLibraryLicenses {
                        url: "http://www.jgoodies.com/freeware/libraries/looks/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "1.1-preview 2006-05-04 11:55:37", license: "BSD",
                        url: "http://www.jgoodies.com/freeware/libraries/forms/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
-    new LibraryLicense(name: "JGoodies Looks", libraryName: "jgoodies-looks", version: "2.4.2", license: "BSD",
-                       url: "http://www.jgoodies.com/freeware/libraries/looks/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "jgraphx", libraryName: "jgraphx-3.4.0.1", version: "3.4.0.1", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
