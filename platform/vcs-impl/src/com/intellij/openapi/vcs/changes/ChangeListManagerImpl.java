@@ -931,9 +931,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
+  public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
     synchronized (myDataLock) {
-      Collection<LocalChangeList> changelists = myWorker.getInvolvedListsFilterChanges(changes, validChanges);
+      Collection<LocalChangeList> changelists = myWorker.getInvolvedLists(changes);
       return ContainerUtil.map(changelists, LocalChangeList::copy);
     }
   }

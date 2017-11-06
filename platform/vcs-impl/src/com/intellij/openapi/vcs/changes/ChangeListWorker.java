@@ -626,25 +626,20 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
-    Set<LocalChangeList> includedListsCopies = new HashSet<>();
-    Map<Change, LocalChangeList> internalMap = new HashMap<>();
+  public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
+    List<LocalChangeList> result = new ArrayList<>();
 
     for (LocalChangeList list : myMap.values()) {
-      for (Change change : list.getChanges()) {
-        internalMap.put(change, list);
+      Collection<Change> listChanges = list.getChanges();
+      for (Change change : changes) {
+        if (listChanges.contains(change)) {
+          result.add(list);
+          break;
+        }
       }
     }
 
-    for (Change change : changes) {
-      LocalChangeList list = internalMap.get(change);
-      if (list != null) {
-        includedListsCopies.add(list);
-        validChanges.add(change);
-      }
-    }
-
-    return includedListsCopies;
+    return result;
   }
 
   @Nullable
