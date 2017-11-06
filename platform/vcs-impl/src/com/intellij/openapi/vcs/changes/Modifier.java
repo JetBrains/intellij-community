@@ -27,7 +27,7 @@ import java.util.List;
  * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
  * (after update is done)
  */
-public class Modifier implements ChangeListsWriteOperations {
+public class Modifier {
   private ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
@@ -40,7 +40,6 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   @NotNull
-  @Override
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
@@ -48,14 +47,12 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  @Override
   public String setDefault(String name) {
     SetDefault command = new SetDefault(name);
     impl(command);
     return command.getPrevious();
   }
 
-  @Override
   public boolean removeChangeList(@NotNull String name) {
     RemoveList command = new RemoveList(name);
     impl(command);
@@ -63,7 +60,6 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  @Override
   public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
@@ -84,14 +80,12 @@ public class Modifier implements ChangeListsWriteOperations {
     }
   }
 
-  @Override
   public boolean setReadOnly(String name, boolean value) {
     SetReadOnly command = new SetReadOnly(name, value);
     impl(command);
     return command.isResult();
   }
 
-  @Override
   public boolean editName(@NotNull String fromName, @NotNull String toName) {
     EditName command = new EditName(fromName, toName);
     impl(command);
@@ -99,7 +93,6 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  @Override
   public String editComment(@NotNull String fromName, String newComment) {
     EditComment command = new EditComment(fromName, newComment);
     impl(command);
