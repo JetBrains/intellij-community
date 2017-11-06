@@ -1315,7 +1315,7 @@ public class UIUtil {
 
   public static Color getSeparatorColor() {
     Color separatorColor = getSeparatorForeground();
-    if (isUnderAlloyLookAndFeel()) {
+    if (false) {
       separatorColor = getSeparatorShadow();
     }
     //under GTK+ L&F colors set hard
@@ -1456,14 +1456,24 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Alloy");
+    return false;
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
-    return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1483,12 +1493,13 @@ public class UIUtil {
 
 
   /**
-   * IntelliJ Platform does not support Nimbus look-n-feel
+   * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
    * @deprecated
    */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Nimbus");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
