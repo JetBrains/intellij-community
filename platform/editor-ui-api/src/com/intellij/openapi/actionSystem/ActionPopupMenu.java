@@ -30,6 +30,10 @@ public interface ActionPopupMenu {
    */
   JPopupMenu getComponent();
 
+  String getPlace();
+
+  ActionGroup getActionGroup();
+
   /**
    * Will be used for data-context retrieval.
    */

@@ -29,6 +29,7 @@ import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsColl
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
@@ -126,6 +127,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final MultiMap<String,String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
   private final List<ActionPopupMenuImpl> myPopups = new ArrayList<>();
@@ -1079,11 +1081,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void addActionPopup(final ActionPopupMenuImpl menu) {
-    myPopups.add(menu);
+    boolean added = myPopups.add(menu);
+    if (added) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.onActionPopupMenuCreated(menu);
+      }
+    }
   }
 
   public void removeActionPopup(final ActionPopupMenuImpl menu) {
     final boolean removed = myPopups.remove(menu);
+    if (removed) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.onActionPopupMenuReleased(menu);
+      }
+    }
     if (removed && myPopups.isEmpty()) {
       flushActionPerformed();
     }
@@ -1113,6 +1125,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @Override
   public boolean isTransparentOnlyActionsUpdateNow() {
     return myTransparentOnlyUpdate;
+  }
+
+  @Override
+  public void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable) {
+    myActionPopupMenuListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myActionPopupMenuListeners.remove(listener);
+      }
+    });
   }
 
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {

@@ -66,6 +66,16 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     return myMenu;
   }
 
+  @Override
+  public String getPlace() {
+    return myMenu.myPlace;
+  }
+
+  @Override
+  public ActionGroup getActionGroup() {
+    return myMenu.myGroup;
+  }
+
   public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
