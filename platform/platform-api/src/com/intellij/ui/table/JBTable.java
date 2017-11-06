@@ -21,8 +21,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -528,8 +528,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private static boolean isTableDecorationSupported() {
-    return UIUtil.isUnderAlloyLookAndFeel()
-           || UIUtil.isUnderNativeMacLookAndFeel()
+    return UIUtil.isUnderNativeMacLookAndFeel()
            || UIUtil.isUnderDarcula()
            || UIUtil.isUnderIntelliJLaF()
            || UIUtil.isUnderWindowsLookAndFeel();
