@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static cucumber.api.Result.Type.*;
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escape;
 
 @SuppressWarnings("unused")
 public class CucumberJvm2SMFormatter implements Formatter {
@@ -174,7 +175,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private static String getStepName(TestStep step) {
-    return step.getStepText();
+    return escape(step.getStepText());
   }
 
   private static void outCommand(String s) {
@@ -210,6 +211,6 @@ public class CucumberJvm2SMFormatter implements Formatter {
     if (isScenarioOutline(testCase)) {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
-    return testCase.getName();
+    return escape(testCase.getName());
   }
 }
