@@ -146,6 +146,10 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
   }
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
+    if (entity1 != null && entity2 != null) {
+      int cmp = compareEntitiesByName(entity1, entity2);
+      if (cmp != 0) return cmp;
+    }
     if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
       VirtualFile file1 = ((RefFile)entity1).getPointer().getVirtualFile();
       VirtualFile file2 = ((RefFile)entity2).getPointer().getVirtualFile();
@@ -156,10 +160,6 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
       if (cmp != 0) return cmp;
       cmp = file1.getPath().compareToIgnoreCase(file2.getPath());
       return cmp;
-    }
-    if (entity1 != null && entity2 != null) {
-      int cmp = compareEntitiesByName(entity1, entity2);
-      if (cmp != 0) return cmp;
     }
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
       final SmartPsiElementPointer p1 = ((RefElement)entity1).getPointer();
