@@ -12,6 +12,7 @@ import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -37,17 +38,19 @@ import java.util.stream.Stream;
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static final String DIALOG_TITLE = "Stream Trace";
+  private static final String IS_FLAT_MODE_PROPERTY = "org.jetbrains.debugger.streams:isTraceWindowInFlatMode";
+  private static final boolean IS_DEFAULT_MODE_FLAT = false;
 
   private static final int DEFAULT_WIDTH = 870;
   private static final int DEFAULT_HEIGHT = 400;
   private static final String FLAT_MODE_NAME = "Flat Mode";
   private static final String TABBED_MODE_NAME = "Split Mode";
-  private final JPanel myCenterPane;
+  private final MyCenterPane myCenterPane;
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
   private final JBTabsPaneImpl myTabsPane;
 
-  private MyMode myMode = MyMode.SPLIT;
+  private MyMode myMode;
 
   public EvaluationAwareTraceWindow(@NotNull XDebugSession session, @NotNull StreamChain chain) {
     super(session.getProject(), true);
@@ -60,9 +63,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }, myDisposable);
     setModal(false);
     setTitle(DIALOG_TITLE);
-    final JBCardLayout layout = new JBCardLayout();
-    myCenterPane = new JPanel(layout);
-    myCenterPane.add(myTabsPane.getComponent());
+    myCenterPane = new MyCenterPane();
+    myCenterPane.add(MyMode.SPLIT.name(), myTabsPane.getComponent());
+
     myTabContents = new ArrayList<>();
     final QualifierExpression qualifierExpression = chain.getQualifierExpression();
     final MyPlaceholder firstTab = new MyPlaceholder();
@@ -79,8 +82,15 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
 
     myFlatContent = new MyPlaceholder();
-    myCenterPane.add(myFlatContent);
+    myCenterPane.add(MyMode.FLAT.name(), myFlatContent);
     myCenterPane.setPreferredSize(new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+
+    if (!PropertiesComponent.getInstance().isValueSet(IS_FLAT_MODE_PROPERTY)) {
+      PropertiesComponent.getInstance().setValue(IS_FLAT_MODE_PROPERTY, IS_DEFAULT_MODE_FLAT);
+    }
+
+    myMode = PropertiesComponent.getInstance().getBoolean(IS_FLAT_MODE_PROPERTY) ? MyMode.FLAT : MyMode.SPLIT;
+    updateWindowMode(myCenterPane, myMode);
 
     init();
   }
@@ -204,9 +214,19 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return controllers;
   }
 
+  private static void updateWindowMode(@NotNull MyCenterPane pane, @NotNull MyMode mode) {
+    pane.getLayout().show(pane, mode.name());
+    PropertiesComponent.getInstance().setValue(IS_FLAT_MODE_PROPERTY, MyMode.FLAT.equals(mode));
+  }
+
+  @NotNull
+  private static String getButtonText(@NotNull MyMode mode) {
+    return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+  }
+
   private class MyToggleViewAction extends DialogWrapperAction {
     MyToggleViewAction() {
-      super(FLAT_MODE_NAME);
+      super(getButtonText(myMode));
     }
 
     @Override
@@ -217,12 +237,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
         button.setText(getButtonText(myMode));
       }
 
-      ((JBCardLayout)myCenterPane.getLayout()).next(myCenterPane);
-    }
-
-    @NotNull
-    private String getButtonText(@NotNull MyMode mode) {
-      return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+      updateWindowMode(myCenterPane, myMode);
     }
 
     @NotNull
@@ -247,5 +262,16 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   private enum MyMode {
     FLAT, SPLIT
+  }
+
+  private static class MyCenterPane extends JPanel {
+    MyCenterPane() {
+      super(new JBCardLayout());
+    }
+
+    @Override
+    public JBCardLayout getLayout() {
+      return (JBCardLayout)super.getLayout();
+    }
   }
 }
