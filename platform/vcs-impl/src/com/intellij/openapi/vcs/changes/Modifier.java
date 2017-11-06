@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.local.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /** synchronization aspect is external for this class; only logic here
@@ -35,7 +35,7 @@ public class Modifier {
   public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
-    myCommandQueue = new LinkedList<>();
+    myCommandQueue = new ArrayList<>();
   }
 
   @NotNull
