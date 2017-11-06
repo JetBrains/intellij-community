@@ -673,23 +673,23 @@ public class CompositeElement extends TreeElement {
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
     final ASTNode firstChild = anotherParent.getFirstChildNode();
-    ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-      @Override
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        remove((TreeChangeEventImpl)destinationTreeChange, (TreeElement)anotherParent.getFirstChildNode(), null);
-      }
-    }, (TreeElement)anotherParent);
+    ChangeUtil.prepareAndRunChangeAction(
+      event -> remove((TreeChangeEventImpl)event, (TreeElement)anotherParent.getFirstChildNode(), null), 
+      (TreeElement)anotherParent);
 
     if (firstChild != null) {
-      ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-        @Override
-        public void makeChange(TreeChangeEvent destinationTreeChange) {
-          TreeElement first = getFirstChildNode();
-          remove((TreeChangeEventImpl)destinationTreeChange, first, null);
-          add((TreeChangeEventImpl)destinationTreeChange, CompositeElement.this, (TreeElement)firstChild);
-          if(getTreeParent() != null){
-            repairRemovedElement(CompositeElement.this, first);
-          }
+      ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
+        TreeElement first = getFirstChildNode();
+        TreeChangeEventImpl event = (TreeChangeEventImpl)destinationTreeChange;
+        CompositeElement parent = getTreeParent();
+        if (parent != null) {
+          // treat all replacements as one big childrenChanged to simplify resulting PSI/document events
+          event.addElementaryChange(parent); 
+        }
+        remove(event, first, null);
+        add(event, this, (TreeElement)firstChild);
+        if(parent != null) {
+          repairRemovedElement(this, first);
         }
       }, this);
     }
