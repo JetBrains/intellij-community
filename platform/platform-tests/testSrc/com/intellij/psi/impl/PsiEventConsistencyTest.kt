@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
-import com.intellij.lang.ASTFactory
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiFile
@@ -21,19 +20,22 @@ import one.util.streamex.IntStreamEx
 /**
  * @author peter
  */
-@Suppress("unused") // enable after fixing the bugs due to which the test fails
-abstract class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
+class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
 
   fun testPsiDocSynchronization() {
     PropertyChecker.forAll(commands()).shouldHold { cmd ->
-      val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
-      val document = file.viewProvider.document!!
-      WriteCommandAction.runWriteCommandAction(project) {
-        cmd.performChange(file)
-        assertEquals(document.text, file.text)
-        assertEquals(document.text, file.node.text)
-      }
+      runCommand(cmd)
       true
+    }
+  }
+
+  private fun runCommand(cmd: AstCommand) {
+    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
+    val document = file.viewProvider.document!!
+    WriteCommandAction.runWriteCommandAction(project) {
+      cmd.performChange(file)
+      assertEquals(document.text, file.text)
+      assertEquals(document.text, file.node.text)
     }
   }
 
@@ -73,14 +75,19 @@ abstract class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase
   }
 
   private data class NodeCoordinates(val offsetHint: Int, val depth: Int) {
+    var found : String? = null
     fun findNode(file: PsiFile): TreeElement {
       val node = file.node as FileElement
+      found = node.toString()
       var elem : TreeElement = node.findLeafElementAt(offsetHint % (file.textLength + 1)) ?: return node
       for (i in 0..depth) {
         elem = elem.treeParent ?: break
       }
+      found = elem.toString()
       return elem
     }
+
+    override fun toString() = found ?: "never"
   }
 
   private val genCoords = Generator.zipWith(Generator.naturals(), Generator.integers(0, 5), ::NodeCoordinates)
@@ -97,19 +104,29 @@ abstract class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase
   private val compositeTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Composite" + i, null) }.toList()
 
   private val leaves = Generator.zipWith(Generator.sampledFrom(leafTypes), Generator.asciiLetters()) { type, c ->
-    withDummyHolder(ASTFactory.leaf(type, c.toString())) }
+    createLeaf(type, c.toString())
+  }
+
+  private fun createLeaf(type: IElementType, text: String): TreeElement {
+    return withDummyHolder(object : LeafPsiElement(type, text) {
+      override fun toString() = text
+    })
+  }
 
   private val composites : Generator<TreeElement> = Generator.sampledFrom(compositeTypes).flatMap { type ->
     Generator.listsOf(IntDistribution.uniform(0, 5), nodes).map { children ->
-      val composite = withDummyHolder(object: CompositePsiElement(type) {
-        override fun toString(): String {
-          return super.toString() + children.toString()
-        }
-      })
-      children.forEach(composite::addChild)
-      composite
+      createComposite(type, children)
     }
   }
+
+  private fun createComposite(type: IElementType, children: List<TreeElement>): TreeElement {
+    val composite = withDummyHolder(object : CompositePsiElement(type) {
+      override fun toString() = getChildren(null).asList().toString()
+    })
+    children.forEach(composite::addChild)
+    return composite
+  }
+
   private val nodes = Generator.frequency(4, leaves, 2, composites)
 
   private fun withDummyHolder(e: TreeElement): TreeElement {
