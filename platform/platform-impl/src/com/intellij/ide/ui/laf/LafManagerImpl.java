@@ -56,7 +56,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
@@ -517,7 +516,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
+    if (UIUtil.isUnderJGoodiesLookAndFeel()) {
       final Color bg = new ColorUIResource(56, 117, 215);
       final Color fg = new ColorUIResource(255, 255, 255);
       uiDefaults.put("info", bg);
