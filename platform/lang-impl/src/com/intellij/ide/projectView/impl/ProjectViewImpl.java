@@ -1922,6 +1922,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
+  protected String getManualOrderOptionText() {
+    return IdeBundle.message("action.manual.order");
+  }
+
   @Override
   public boolean isSortByType(String paneId) {
     return getPaneOptionValue(mySortByType, paneId, ourSortByTypeDefaults);
@@ -1936,7 +1940,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ManualOrderAction extends ToggleAction implements DumbAware {
     private ManualOrderAction() {
-      super(IdeBundle.message("action.manual.order"), IdeBundle.message("action.manual.order"), AllIcons.ObjectBrowser.Sorted);
+      super(getManualOrderOptionText(), getManualOrderOptionText(), AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
