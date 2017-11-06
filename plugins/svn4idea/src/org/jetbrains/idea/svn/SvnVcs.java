@@ -15,8 +15,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -68,11 +66,11 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
@@ -91,8 +89,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
-  private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
-    createSoftMap();
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -481,46 +477,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return mySvnDiffProvider;
   }
 
-  private static Trinity<Long, Long, Long> getTimestampForPropertiesChange(final File ioFile, final boolean isDir) {
-    final File dir = isDir ? ioFile : ioFile.getParentFile();
-    final String relPath = SVNAdminUtil.getPropPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    final String relPathBase = SVNAdminUtil.getPropBasePath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    final String relPathRevert = SVNAdminUtil.getPropRevertPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    return new Trinity<>(new File(dir, relPath).lastModified(), new File(dir, relPathBase).lastModified(),
-                         new File(dir, relPathRevert).lastModified());
-  }
-
-  private static boolean trinitiesEqual(final Trinity<Long, Long, Long> t1, final Trinity<Long, Long, Long> t2) {
-    if (t2.first == 0 && t2.second == 0 && t2.third == 0) return false;
-    return t1.equals(t2);
-  }
-
   @Nullable
-  public PropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws VcsException {
-    Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
-    final Pair<PropertyValue, Trinity<Long, Long, Long>> cachedValue = cachedMap == null ? null : cachedMap.get(propName);
-
-    final File ioFile = virtualToIoFile(file);
-    final Trinity<Long, Long, Long> tsTrinity = getTimestampForPropertiesChange(ioFile, file.isDirectory());
-
-    if (cachedValue != null) {
-      // zero means that a file was not found
-      if (trinitiesEqual(cachedValue.getSecond(), tsTrinity)) {
-        return cachedValue.getFirst();
-      }
-    }
-
+  public PropertyValue getPropertyWithCaching(@NotNull VirtualFile file, @NotNull String propName) throws VcsException {
+    // TODO Method is called in EDT - fix
+    File ioFile = virtualToIoFile(file);
     PropertyClient client = getFactory(ioFile).createPropertyClient();
-    final PropertyValue value = client.getProperty(Target.on(ioFile, Revision.WORKING), propName, false, Revision.WORKING);
 
-    if (cachedMap == null) {
-      cachedMap = new HashMap<>();
-      myPropertyCache.put(keyForVf(file), cachedMap);
-    }
-
-    cachedMap.put(propName, Pair.create(value, tsTrinity));
-
-    return value;
+    return client.getProperty(Target.on(ioFile, Revision.WORKING), propName, false, Revision.WORKING);
   }
 
   @Override
@@ -736,10 +699,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myMergeProvider = new SvnMergeProvider(myProject);
     }
     return myMergeProvider;
-  }
-
-  private static String keyForVf(final VirtualFile vf) {
-    return vf.getUrl();
   }
 
   @Override
