@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -229,7 +226,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
 
       Builder builder = new Builder().append(title).append(fileTitle);
-      if (!SystemInfo.isMac || builder.isEmpty()) {
+      if (Boolean.getBoolean("ide.ui.version.in.title")) {
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+      }
+      else if (!SystemInfo.isMac || builder.isEmpty()) {
         builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       frame.setTitle(builder.toString());
