@@ -114,7 +114,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
-  @get:OptionTag("LANGUAGE_FLAGS") var languageFlags by storedProperty(true)
+  @get:OptionTag("LANGUAGE_FLAGS") var languageFlags by storedProperty(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
   @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by storedProperty(true)
