@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -78,7 +64,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
-  private static boolean myUpdatingTitle;
+  private static boolean ourUpdatingTitle;
 
   private String myTitle;
   private String myFileTitle;
@@ -203,9 +189,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public void setTitle(final String title) {
-    if (myUpdatingTitle) {
+    if (ourUpdatingTitle) {
       super.setTitle(title);
-    } else {
+    }
+    else {
       myTitle = title;
     }
 
@@ -234,10 +221,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
-    if (myUpdatingTitle) return;
+    if (ourUpdatingTitle) return;
 
     try {
-      myUpdatingTitle = true;
+      ourUpdatingTitle = true;
 
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
 
@@ -248,7 +235,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       frame.setTitle(builder.toString());
     }
     finally {
-      myUpdatingTitle = false;
+      ourUpdatingTitle = false;
     }
   }
 
