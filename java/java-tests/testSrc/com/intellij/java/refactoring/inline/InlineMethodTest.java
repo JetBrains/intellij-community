@@ -339,6 +339,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Constructor <b><code>SomeClass.SomeClass()</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>InlineWithPrivateConstructorAccessMain.main(String...)</code></b>");
   }
 
+  public void testExprLambdaExpandToCodeBlock() {
+    doTestInlineThisOnly();
+  }
+
   public void testSuperCallWhenUnqualifiedInline() {
     doTestInlineThisOnly();
   }

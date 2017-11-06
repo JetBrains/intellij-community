@@ -314,9 +314,12 @@ public class InlineUtil {
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.None;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
+    PsiElement callParent = methodCall.getParent();
+    if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
+      return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpressionStatement) {
+      PsiStatement callStatement = (PsiStatement)callParent;
       PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
       if (callerMethod != null) {
         final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
