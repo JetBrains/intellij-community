@@ -367,8 +367,13 @@ public class IdeEventQueue extends EventQueue {
     ourAppIsLoaded = false;
   }
 
+  private boolean skipTypedEvents;
+
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+
+    if (skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
+
     checkForTimeJump();
 
     if (!appIsLoaded()) {
@@ -425,6 +430,26 @@ public class IdeEventQueue extends EventQueue {
           }
         });
     }
+  }
+
+  private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+      WindowEvent wfe = (WindowEvent)e;
+      if (wfe.getWindow().getParent() != null && wfe.getWindow().getParent() == wfe.getOppositeWindow()) {
+        skipTypedEvents = true;
+      }
+    }
+
+    if (skipTypedEvents && e instanceof KeyEvent) {
+      if (e.getID() == KeyEvent.KEY_TYPED) {
+        ((KeyEvent)e).consume();
+        return true;
+      } else  {
+        skipTypedEvents = false;
+      }
+    }
+
+    return false;
   }
 
   //As we rely on system time monotonicity in many places let's log anomalies at least.
