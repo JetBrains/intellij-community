@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBScrollPane;
@@ -138,6 +139,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   protected void checkName(@NotNull T member, @NotNull String name, @NotNull ProblemsHolder holder) {
+    if (member instanceof SyntheticElement) return;
     checkName(member, shortName -> {
       LocalQuickFix[] fixes;
       if (holder.isOnTheFly()) {
