@@ -272,21 +272,31 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final PsiClass superClass = PsiUtil.resolveClassInType(type);
         if (superClass != null) {
           final Set<PsiClass> targetContainingClasses = new HashSet<>();
+          PsiElement qualifiedCall = null;
           for (UsageInfo info : usagesIn) {
             final PsiElement element = info.getElement();
             if (element != null) {
               final PsiClass targetContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
               if (targetContainingClass != null &&
-                  (!InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true) || PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
+                  (!InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true) ||
+                   PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
                 targetContainingClasses.add(targetContainingClass);
+              }
+              else if (element instanceof PsiReferenceExpression && !ControlFlowUtil.isUnqualified((PsiReferenceExpression)element)) {
+                qualifiedCall = ((PsiReferenceExpression)element).getQualifierExpression();
               }
             }
           }
+          final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+          LOG.assertTrue(methodCallExpression != null);
           if (!targetContainingClasses.isEmpty()) {
-            final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
-            LOG.assertTrue(methodCallExpression != null);
             conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
                                            StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ","));
+          }
+
+          if (qualifiedCall != null) {
+            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessible on qualifier "
+                                           + qualifiedCall.getText());
           }
         }
       }
