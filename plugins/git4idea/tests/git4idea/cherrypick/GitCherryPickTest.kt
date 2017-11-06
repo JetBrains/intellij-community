@@ -100,13 +100,4 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     return HashImpl.build(hash).toShortString()
   }
 
-  protected fun prepareConflict(): String {
-    val file = file("c.txt")
-    file.create("initial\n").addCommit("initial")
-    branch("feature")
-    val commit = file.append("master\n").addCommit("on_master").hash()
-    checkout("feature")
-    file.append("feature\n").addCommit("on_feature")
-    return commit
-  }
 }

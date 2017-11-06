@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,68 +29,65 @@ import java.util.List;
  * different kinds of ruby tests, rails configuration, etc). Coverage support require to reorder args
  * in cmdline, add rcov runner script, etc. Without groups it would be harder to parse abstract list of arguments
  */
-public class ParamsGroup implements Cloneable {
-  private static final Logger LOG = Logger.getInstance(ParamsGroup.class.getName());
+public final class ParamsGroup implements Cloneable {
 
-  private String myGroupId;
-  private ParametersList myGroupParams = new ParametersList();
+  private final String myGroupId;
+  private final ParametersList myParamList;
 
-  public ParamsGroup(@NotNull final String groupId) {
-    myGroupId = groupId;
+  public ParamsGroup(@NotNull String groupId) {
+    this(groupId, new ParametersList());
   }
 
+  private ParamsGroup(@NotNull String groupId, @NotNull ParametersList paramList) {
+    myGroupId = groupId;
+    myParamList = paramList;
+  }
+
+  @NotNull
   public String getId() {
     return myGroupId;
   }
 
-  public void addParameter(@NotNull @NonNls final String parameter) {
-    myGroupParams.add(parameter);
+  public void addParameter(@NotNull String parameter) {
+    myParamList.add(parameter);
   }
 
-  public void addParameterAt(int index, @NotNull @NonNls final String parameter) {
-    myGroupParams.addAt(index, parameter);
+  public void addParameterAt(int index, @NotNull String parameter) {
+    myParamList.addAt(index, parameter);
   }
 
-  public void addParameters(@NotNull final String... parameters) {
+  public void addParameters(@NotNull String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
     }
   }
 
-  public void addParameters(@NotNull final List<String> parameters) {
-    for (final String parameter : parameters) {
+  public void addParameters(@NotNull List<String> parameters) {
+    for (String parameter : parameters) {
       addParameter(parameter);
     }
   }
 
-  public void addParametersString(@NotNull @NonNls final String parametersString) {
+  public void addParametersString(@NotNull String parametersString) {
     addParameters(ParametersList.parse(parametersString));
   }
 
   public List<String> getParameters() {
-    return myGroupParams.getList();
+    return myParamList.getList();
   }
 
   public ParametersList getParametersList() {
-    return myGroupParams;
+    return myParamList;
   }
 
+  /** @noinspection MethodDoesntCallSuperMethod*/
   @Override
   public ParamsGroup clone() {
-     try {
-       final ParamsGroup clone = (ParamsGroup)super.clone();
-       clone.myGroupId = myGroupId;
-       clone.myGroupParams = myGroupParams.clone();
-       return clone;
-     }
-     catch (CloneNotSupportedException e) {
-       LOG.error(e);
-       return null;
-     }
+    return new ParamsGroup(myGroupId, myParamList.clone());
    }
 
   @Override
   public String toString() {
-    return myGroupId;
+    return myGroupId + ":" + myParamList;
   }
 }

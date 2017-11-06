@@ -69,24 +69,19 @@ public abstract class ServersToolWindowManager {
         return;
       }
 
-      boolean doShow = !toolWindow.isAvailable() && available;
-      if (toolWindow.isAvailable() && !available) {
-        hideToolWindow(toolWindow);
-      }
-      if (showIfAvailable && doShow) {
-        showToolWindow(toolWindow);
-      }
+      doUpdateWindowAvailable(toolWindow, showIfAvailable, available);
     });
   }
 
-  protected void hideToolWindow(@NotNull ToolWindow toolWindow) {
-    toolWindow.hide(null);
-    toolWindow.setAvailable(false, null);
-  }
-
-  protected void showToolWindow(@NotNull ToolWindow toolWindow) {
-    toolWindow.setAvailable(true, null);
-    toolWindow.show(null);
+  protected void doUpdateWindowAvailable(@NotNull ToolWindow toolWindow, boolean showIfAvailable, boolean available) {
+    boolean doShow = !toolWindow.isAvailable() && available;
+    if (toolWindow.isAvailable() && !available) {
+      toolWindow.hide(null);
+    }
+    toolWindow.setAvailable(available, null);
+    if (showIfAvailable && doShow) {
+      toolWindow.show(null);
+    }
   }
 
   protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {

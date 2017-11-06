@@ -29,11 +29,11 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -224,7 +224,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final VirtualFile root, FilePath path) {
-    return relativePath(VfsUtil.virtualToIoFile(root), path.getIOFile());
+    return relativePath(VfsUtilCore.virtualToIoFile(root), path.getIOFile());
   }
 
   /**
@@ -248,7 +248,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final File root, VirtualFile file) {
-    return relativePath(root, VfsUtil.virtualToIoFile(file));
+    return relativePath(root, VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
@@ -260,7 +260,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final VirtualFile root, VirtualFile file) {
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
+    return relativePath(VfsUtilCore.virtualToIoFile(root), VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
@@ -275,7 +275,7 @@ public class VcsFileUtil {
     if (root == null) {
       file.getPath();
     }
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
+    return relativePath(VfsUtilCore.virtualToIoFile(root), VfsUtilCore.virtualToIoFile(file));
   }
 
   /**
@@ -348,42 +348,6 @@ public class VcsFileUtil {
         dirty.fileDirty(file);
       }
     }
-  }
-
-  /**
-   * The get the possible base for the path. It tries to find the parent for the provided path.
-   *
-   * @param file the file to get base for
-   * @param path the path to to check
-   * @return the file base
-   */
-  @Nullable
-  public static VirtualFile getPossibleBase(final VirtualFile file, final String... path) {
-    if (file == null || path.length == 0) return null;
-
-    VirtualFile current = file;
-    final List<VirtualFile> backTrace = new ArrayList<>();
-    int idx = path.length - 1;
-    while (current != null) {
-      if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {
-        if (idx == 0) {
-          return current;
-        }
-        --idx;
-      }
-      else if (idx != path.length - 1) {
-        int diff = path.length - 1 - idx - 1;
-        for (int i = 0; i < diff; i++) {
-          current = backTrace.remove(backTrace.size() - 1);
-        }
-        idx = path.length - 1;
-        continue;
-      }
-      backTrace.add(current);
-      current = current.getParent();
-    }
-
-    return null;
   }
 
   public static void addFilesToVcsWithConfirmation(@NotNull Project project, VirtualFile... virtualFiles) {

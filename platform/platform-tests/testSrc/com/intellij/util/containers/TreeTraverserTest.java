@@ -226,20 +226,33 @@ public class TreeTraverserTest extends TestCase {
 
   // JBIterable ----------------------------------------------
 
+  public void testSingleElement() {
+    JBIterable<String> it = JBIterable.of("42");
+    assertEquals(1, it.size());
+    assertEquals("42", it.first());
+    assertEquals("42", it.last());
+    assertEquals("42", it.single());
+    assertEquals("[42, 42]", it.append(it).toList().toString());
+    assertEquals("[42, 42]", it.repeat(2).toList().toString());
+    assertEquals("[42, 42, 48, 48]", it.append("42").append(Arrays.asList("48", "48")).toList().toString());
+    assertEquals("[42, 42, 48, 48, 49]", it.append("42").append(Arrays.asList("48", "48")).append("49").toList().toString());
+    assertEquals("[42, 42, 48, 48, 49]", it.append("42").append(JBIterable.of("48").append("48")).append("49").toList().toString());
+  }
+
   public void testFirstLastSingle() {
-    assertEquals(null, JBIterable.empty().first());
-    assertEquals(null, JBIterable.empty().last());
-    assertEquals(null, JBIterable.empty().single());
+    assertNull(JBIterable.empty().first());
+    assertNull(JBIterable.empty().last());
+    assertNull(JBIterable.empty().single());
 
     assertEquals("a", JBIterable.generate("a", o -> o + "a").first());
     assertEquals("aaa", JBIterable.generate("a", o -> o + "a").take(3).last());
     assertEquals("a", JBIterable.generate("a", o -> o + "a").take(1).single());
-    assertEquals(null, JBIterable.generate("a", o -> o + "a").take(2).single());
+    assertNull(JBIterable.generate("a", o -> o + "a").take(2).single());
 
     assertEquals("a", JBIterable.from(Arrays.asList("a", "aa", "aaa")).first());
     assertEquals("aaa", JBIterable.from(Arrays.asList("a", "aa", "aaa")).last());
     assertEquals("a", JBIterable.of("a").single());
-    assertEquals(null, JBIterable.of("a", "aa", "aaa").single());
+    assertNull(JBIterable.of("a", "aa", "aaa").single());
   }
 
   public void testOfAppendNulls() {
@@ -556,9 +569,9 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(root), it2.backtrace().toList());
     assertEquals(Arrays.asList(root), it3.backtrace().toList());
 
-    assertEquals(null, it1.parent());
-    assertEquals(null, it2.parent());
-    assertEquals(null, it3.parent());
+    assertNull(it1.parent());
+    assertNull(it2.parent());
+    assertNull(it3.parent());
   }
 
   public void testTreeBacktraceTransformed() {

@@ -15,9 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -37,7 +35,7 @@ public class MatchResult {
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     List<JsonSchemaObject> schemas = new ArrayList<>();
     Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
-    iterateTree(root, (parent, node) -> {
+    iterateTree(root, node -> {
       if (node.isAny()) return true;
       int groupNumber = node.getExcludingGroupNumber();
       if (groupNumber < 0) {
@@ -54,20 +52,16 @@ public class MatchResult {
   }
 
   public static void iterateTree(@NotNull JsonSchemaTreeNode root,
-                                 @NotNull final PairProcessor<JsonSchemaTreeNode, JsonSchemaTreeNode> parentChildConsumer) {
-    final ArrayDeque<Pair<JsonSchemaTreeNode, JsonSchemaTreeNode>> queue = new ArrayDeque<>();
-    final Consumer<JsonSchemaTreeNode> queueChildren = node -> node.getChildren().forEach(child -> queue.add(Pair.create(node, child)));
-    queueChildren.consume(root);
+                                 @NotNull final Processor<JsonSchemaTreeNode> processor) {
+    final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
     while (!queue.isEmpty()) {
-      final Pair<JsonSchemaTreeNode, JsonSchemaTreeNode> pair = queue.removeFirst();
-      final JsonSchemaTreeNode node = pair.getSecond();
+      final JsonSchemaTreeNode node = queue.removeFirst();
       if (node.getChildren().isEmpty()) {
-        if (!node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState()) &&
-            !parentChildConsumer.process(pair.getFirst(), node)) {
+        if (!node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState()) && !processor.process(node)) {
           break;
         }
       } else {
-        queueChildren.consume(node);
+        queue.addAll(node.getChildren());
       }
     }
   }

@@ -52,7 +52,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
   }
 
-  fun test_try_push_from_all_roots_even_if_one_fails() {
+  fun `test try push from all roots even if one fails`() {
     // fail in the first repo
     myGit.onPush {
       if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>(), null)
@@ -79,7 +79,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2)
   }
 
-  fun test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() {
+  fun `test update all roots on reject when needed even if only one in push spec`() {
     cd(brultimate)
     val broHash = makeCommit("bro.txt")
     git("push")

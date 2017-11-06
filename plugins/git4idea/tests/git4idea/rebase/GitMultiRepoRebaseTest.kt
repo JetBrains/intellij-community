@@ -20,12 +20,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.mkdir
 import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.vcs.test.cleanupForAssertion
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.UNKNOWN_ERROR_TEXT
-import com.intellij.vcs.test.cleanupForAssertion
 import git4idea.test.git
 import git4idea.test.resolveConflicts
 import org.mockito.Mockito
@@ -69,19 +69,19 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test abort from critical error during rebasing 2nd root, before any commits were applied`() {
-    val localChange = LocalChange(myUltimate, "new.txt", "Some content")
+    val localChange = LocalChange(myCommunity, "new.txt", "Some content")
     `fail with critical error while rebasing 2nd root`(localChange)
 
     assertErrorNotification("Rebase Failed",
         """
-        community: $UNKNOWN_ERROR_TEXT <br/>
+        contrib: $UNKNOWN_ERROR_TEXT <br/>
         You can <a>retry</a> or <a>abort</a> rebase.
         $LOCAL_CHANGES_WARNING
         """)
 
-    myUltimate.`assert feature rebased on master`()
-    myCommunity.`assert feature not rebased on master`()
+    myCommunity.`assert feature rebased on master`()
     myContrib.`assert feature not rebased on master`()
+    myUltimate.`assert feature not rebased on master`()
     assertNoRebaseInProgress(myAllRepositories)
     myUltimate.assertNoLocalChanges()
 
@@ -95,7 +95,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
-                 cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
+                 cleanupForAssertion("Do you want to rollback the successful rebase in community?"),
                  cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
@@ -104,7 +104,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test abort from critical error while rebasing 2nd root, after some commits were applied`() {
-    val localChange = LocalChange(myUltimate, "new.txt", "Some content")
+    val localChange = LocalChange(myCommunity, "new.txt", "Some content")
     `fail with critical error while rebasing 2nd root after some commits are applied`(localChange)
 
     myVcsNotifier.lastNotification
@@ -119,7 +119,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
-                 cleanupForAssertion("Do you want just to abort rebase in community, or also rollback the successful rebase in project?"),
+                 cleanupForAssertion("Do you want just to abort rebase in contrib, or also rollback the successful rebase in community?"),
                  cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
@@ -208,7 +208,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       it.`diverge feature and master`()
       git(it, "checkout master")
     }
-    myGit.setShouldRebaseFail { it == myCommunity }
+    myGit.setShouldRebaseFail { it == myContrib }
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
@@ -229,7 +229,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
-                 cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
+                 cleanupForAssertion("Do you want to rollback the successful rebase in community?"),
                  cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach {
@@ -241,7 +241,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     myAllRepositories.forEach { it.`diverge feature and master`() }
     localChange?.generate()
 
-    myGit.setShouldRebaseFail { it == myCommunity }
+    myGit.setShouldRebaseFail { it == myContrib }
     try {
       rebase("master")
     }
@@ -251,9 +251,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun `fail with critical error while rebasing 2nd root after some commits are applied`(localChange: LocalChange? = null) {
+    myCommunity.`diverge feature and master`()
+    myContrib.`make rebase fail on 2nd commit`()
     myUltimate.`diverge feature and master`()
-    myCommunity.`make rebase fail on 2nd commit`()
-    myContrib.`diverge feature and master`()
     localChange?.generate()
 
     try {
