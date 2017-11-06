@@ -36,8 +36,8 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -818,14 +818,13 @@ public final class TreeUtil {
   }
 
   /**
-   * Promises to expands all nodes in the specified tree.
+   * Promises to expand all nodes in the specified tree.
    *
    * @param tree a tree, which nodes should be expanded
    */
-  public static Promise<JTree> promiseExpandAll(@NotNull JTree tree) {
-    AsyncPromise<JTree> promise = new AsyncPromise<>();
-    expandAll(tree, () -> promise.setResult(tree));
-    return promise;
+  @NotNull
+  public static Promise<TreePath> promiseExpandAll(@NotNull JTree tree) {
+    return promiseExpand(tree, Integer.MAX_VALUE);
   }
 
   /**
@@ -835,14 +834,8 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, Runnable onDone) {
-    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
-    if (acceptor != null) {
-      expand(tree, acceptor, Integer.MAX_VALUE, onDone);
-    }
-    else {
-      expandAll(tree);
-      if (onDone != null) onDone.run();
-    }
+    Promise<TreePath> promise = promiseExpandAll(tree);
+    if (onDone != null) promise.processed(path -> onDone.run());
   }
 
   /**
@@ -871,48 +864,31 @@ public final class TreeUtil {
   }
 
   /**
-   * Promises to expands some nodes in the specified tree.
+   * Promises to expand some nodes in the specified tree.
    *
    * @param tree  a tree, which nodes should be expanded
-   * @param depth a depth from visible root
+   * @param depth a depth starting from the root node
    */
-  public static Promise<JTree> promiseExpand(@NotNull JTree tree, int depth) {
-    AsyncPromise<JTree> promise = new AsyncPromise<>();
-    expand(tree, depth, () -> promise.setResult(tree));
-    return promise;
+  @NotNull
+  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
+    return promiseAccept(tree, path -> {
+      int count = path.getPathCount();
+      if (count > depth) return TreeVisitor.Action.SKIP_SIBLINGS;
+      tree.expandPath(path);
+      return TreeVisitor.Action.CONTINUE;
+    });
   }
 
   /**
    * Expands some nodes in the specified tree and runs the specified task on done.
    *
    * @param tree   a tree, which nodes should be expanded
-   * @param depth  a depth from visible root
+   * @param depth  a depth starting from the root node
    * @param onDone a task to run after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, Runnable onDone) {
-    if (depth < Integer.MAX_VALUE && !tree.isRootVisible()) depth++;
-    Function<TreeVisitor, Promise<TreePath>> acceptor = depth <= 0 ? null : getTreeAcceptor(tree);
-    if (acceptor != null) {
-      expand(tree, acceptor, depth, onDone);
-    }
-    else {
-      if (depth > 0) expand(tree, depth);
-      if (onDone != null) onDone.run();
-    }
-  }
-
-  private static void expand(@NotNull JTree tree, @NotNull Function<TreeVisitor, Promise<TreePath>> acceptor, int depth, Runnable onDone) {
-    Promise<TreePath> promise = acceptor.apply(new TreeVisitor() {
-      @NotNull
-      @Override
-      public Action visit(@NotNull TreePath path) {
-        int count = path.getPathCount();
-        if (count > depth) return Action.SKIP_SIBLINGS;
-        tree.expandPath(path);
-        return Action.CONTINUE;
-      }
-    });
-    if (onDone != null) promise.processed(ignored -> onDone.run());
+    Promise<TreePath> promise = promiseExpand(tree, depth);
+    if (onDone != null) promise.processed(path -> onDone.run());
   }
 
   @NotNull
@@ -1151,6 +1127,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to process nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be processed
+   * @param visitor a visitor that controls processing of tree nodes
+   */
+  @NotNull
+  public static Promise<TreePath> promiseAccept(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
+    if (acceptor != null) return acceptor.apply(visitor);
+    TreeModel model = tree.getModel();
+    return model == null ? Promises.rejectedPromise() : Promises.resolvedPromise(accept(model, visitor));
+  }
+
+  /**
    * Processes nodes in the specified tree.
    *
    * @param tree     a tree, which nodes should be processed
@@ -1158,16 +1148,8 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void accept(@NotNull JTree tree, @NotNull TreeVisitor visitor, @Nullable Consumer<TreePath> consumer) {
-    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
-    if (acceptor != null) {
-      Promise<TreePath> promise = acceptor.apply(visitor);
-      if (consumer != null) promise.processed(path -> consumer.accept(path));
-    }
-    else {
-      TreeModel model = tree.getModel();
-      TreePath path = model == null ? null : accept(model, visitor);
-      if (consumer != null) consumer.accept(path);
-    }
+    Promise<TreePath> promise = promiseAccept(tree, visitor);
+    if (consumer != null) promise.processed(path -> consumer.accept(path));
   }
 
   private static TreePath accept(@NotNull TreeModel model, @NotNull TreeVisitor visitor) {
