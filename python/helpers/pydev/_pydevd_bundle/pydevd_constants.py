@@ -108,6 +108,14 @@ LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
 DEFAULT_VALUE = "__pydevd_value_async"
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
+SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True'
+
+
+if SHOW_DEBUG_INFO_ENV:
+    # show debug info before the debugger start
+    DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = True
+    DebugInfoHolder.DEBUG_TRACE_LEVEL = 3
+    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = 1
 
 
 def protect_libraries_from_patching():
