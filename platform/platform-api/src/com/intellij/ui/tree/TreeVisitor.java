@@ -16,6 +16,7 @@
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.TreePath;
 import java.util.function.Function;
@@ -45,6 +46,19 @@ public interface TreeVisitor {
      * Continue without visiting the node siblings.
      */
     SKIP_SIBLINGS,
+  }
+
+
+  /**
+   * Represents a tree model that accepts a tree visitor and promises a result.
+   */
+  interface Acceptor {
+    /**
+     * @param visitor an object that controls visiting a tree structure
+     * @return a promise that will be resolved when visiting is finished
+     */
+    @NotNull
+    Promise<TreePath> accept(@NotNull TreeVisitor visitor);
   }
 
 

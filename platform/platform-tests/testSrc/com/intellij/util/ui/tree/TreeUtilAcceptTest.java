@@ -296,7 +296,6 @@ public final class TreeUtilAcceptTest {
     invokeLater(promise, () -> {
       @SuppressWarnings("UndesirableClassUsage")
       JTree tree = new JTree(model);
-      if (atm != null) TreeUtil.setTreeAcceptor(tree, atm::accept);
       new Runnable() {
         @Override
         public void run() {
