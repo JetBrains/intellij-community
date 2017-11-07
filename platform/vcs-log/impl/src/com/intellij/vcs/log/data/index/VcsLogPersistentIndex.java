@@ -584,6 +584,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
+    private volatile long myStartTime;
 
     public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
       myRoot = root;
@@ -597,7 +598,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      long startTime = System.currentTimeMillis();
+      myStartTime = System.currentTimeMillis();
 
       LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
@@ -633,18 +634,19 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         if (isIndexed(myRoot)) {
           myIndexingTime.get(myRoot).set(0);
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
-        } else {
-          myIndexingTime.get(myRoot).updateAndGet(t -> t + (System.currentTimeMillis() - startTime));
+        }
+        else {
+          myIndexingTime.get(myRoot).updateAndGet(t -> t + (System.currentTimeMillis() - myStartTime));
         }
 
-        report(startTime);
+        report();
 
         flush();
       }
     }
 
-    private void report(long startTime) {
-      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - startTime);
+    private void report() {
+      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - myStartTime);
       if (myFull) {
         LOG.debug(formattedTime +
                   " for indexing " +
@@ -691,8 +693,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
-          VcsLogPersistentIndex.this.storeDetail(detail);
+          storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();
+
+          checkRunningTooLong(indicator);
         }, !myReindex);
 
         displayProgress(indicator);
@@ -707,9 +711,18 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
+        checkRunningTooLong(indicator);
         indicator.checkCanceled();
         displayProgress(indicator);
       });
+    }
+
+    private void checkRunningTooLong(@NotNull ProgressIndicator indicator) {
+      long time = myIndexingTime.get(myRoot).get() + (System.currentTimeMillis() - myStartTime);
+      if (time >= 20 * 60 * 1000) {
+        LOG.warn("Indexing commits in " + myRoot.getName() + " is taking too long (" + StopWatch.formatTime(time) + "), cancelling.");
+        indicator.cancel();
+      }
     }
 
     public void displayProgress(@NotNull ProgressIndicator indicator) {
