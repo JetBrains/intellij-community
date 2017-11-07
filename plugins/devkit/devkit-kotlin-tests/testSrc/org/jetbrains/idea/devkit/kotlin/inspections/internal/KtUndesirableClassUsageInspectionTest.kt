@@ -37,17 +37,21 @@ class KtUndesirableClassUsageInspectionTest : LightCodeInsightFixtureTestCase() 
   }
 
   private fun doTest(classFqn: String, replacementText: String) {
+    val shortName = StringUtil.getShortName(classFqn)
     myFixture.addClass("package " + StringUtil.getPackageName(classFqn) + ";" +
-                       "public class " + StringUtil.getShortName(classFqn) + " {}")
+                       "public class " + shortName + " {}")
 
     myFixture.configureByText("Testing.kt", """
 
       import $classFqn
 
       class Testing {
-         val name = <warning descr="Please use '$replacementText' instead">${StringUtil.getShortName(classFqn)}()</warning>;
+         val name = <warning descr="Please use '$replacementText' instead">$shortName()</warning>;
          fun method() {
-         <warning descr="Please use '$replacementText' instead">${StringUtil.getShortName(classFqn)}()</warning>;
+         <warning descr="Please use '$replacementText' instead">$shortName()</warning>;
+         }
+         fun methodParam(p: $shortName = <warning descr="Please use '$replacementText' instead">$shortName()</warning>):String {
+           return "${"\$p"}"
          }
        }
        """.trimMargin())
