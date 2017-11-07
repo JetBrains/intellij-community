@@ -780,6 +780,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("<caret>class C { int vararg(int... args){ return 0; } void m() { vararg() } }");
   }
 
+  public void testNoLinksInParameterJavadoc() throws Exception {
+    configureJava("class C { void m() { String.for<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><hint text=\", args:\"/>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }

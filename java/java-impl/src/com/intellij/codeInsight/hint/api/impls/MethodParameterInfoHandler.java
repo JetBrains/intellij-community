@@ -601,6 +601,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (context.isSingleParameterInfo()) {
           String javaDoc = new JavaDocInfoGenerator(param.getProject(), param).generateMethodParameterJavaDoc();
           if (javaDoc != null) {
+            javaDoc = removeHyperlinks(javaDoc);
             if (javaDoc.length() < 100) {
               buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
             }
@@ -649,6 +650,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.getDefaultParameterColor()
       );
     }
+  }
+
+  private static String removeHyperlinks(String html) {
+    return html.replaceAll("<a.*?>", "").replaceAll("</a>", "");
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
