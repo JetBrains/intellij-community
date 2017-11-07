@@ -825,7 +825,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myTitleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
-    if (Registry.is("ide.find.enter.as.ok", false) || isReplaceState) {
+    if (Registry.is("ide.find.enter.as.ok", false)) {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER));
     } else {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
