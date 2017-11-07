@@ -991,7 +991,12 @@ public class AbstractPopup implements JBPopup {
     };
 
     if (myRequestFocus) {
-      myPreferredFocusedComponent.requestFocus();
+      if (myPreferredFocusedComponent != null) {
+        myPreferredFocusedComponent.requestFocus();
+      } else {
+        _requestFocus();
+      }
+
       window.setAutoRequestFocus(true);
 
       delayKeyEventsUntilFocusSettlesDown();
