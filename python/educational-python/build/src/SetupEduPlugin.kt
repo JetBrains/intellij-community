@@ -17,5 +17,8 @@ fun main(args: Array<String>) {
   val resourcesPath = FileUtil.join(rootPath, "python", "educational-python", "resources")
   val files = File(resourcesPath).listFiles(
     FileFilter { pathname -> pathname.name.matches(Regex("EduTools-[0-9.]+-[0-9.]+-[0-9.]+.zip")) })
+  if (files.isEmpty()) {
+    throw IllegalStateException("EduTools bundled plugin is not found in $resourcesPath")
+  }
   ZipUtil.extract(files[0], outputDir, null)
 }
