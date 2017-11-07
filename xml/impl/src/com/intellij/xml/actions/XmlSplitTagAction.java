@@ -16,6 +16,7 @@
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,7 @@ public class XmlSplitTagAction implements IntentionAction {
           if (parent != null && parent instanceof XmlText && parent.getText().trim().length() > 0) {
             final PsiElement grandParent = parent.getParent();
             if (grandParent != null && !isInsideUnsplittableElement(grandParent)) {
-              return true;
+              return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset) == null;
             }
           }
         }
