@@ -1165,3 +1165,19 @@ java_library(
         "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
     ],
 )
+
+java_library(
+    name = "commons-lang",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.6:jar"],
+)
+
+java_library(
+    name = "juniversalchardet-1.0.3",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
+    runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
+)

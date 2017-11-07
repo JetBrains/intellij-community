@@ -402,6 +402,8 @@ class CommunityLibraryLicenses {
                        license: "link (commercial license)", url: "http://yourkit.com/",
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
+                       url: "https://code.google.com/archive/p/juniversalchardet"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="juniversalchardet-1.0.3">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/juniversalchardet-1.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/googlecode/juniversalchardet/juniversalchardet/1.0.3/juniversalchardet-1.0.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
