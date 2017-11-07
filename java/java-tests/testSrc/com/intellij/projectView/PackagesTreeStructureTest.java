@@ -218,7 +218,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     ((AbstractProjectTreeStructure) packageViewPane.getTreeStructure()).setProviders(new ResourceBundleGrouper(myProject));
     packageViewPane.updateFromRoot(true);
     JTree tree = packageViewPane.getTree();
-    PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, levels - 1)); // -1 because root node is not visible
+    PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, levels));
     PlatformTestUtil.assertTreeEqual(tree, expected);
     BaseProjectViewTestCase.checkContainsMethod(packageViewPane.getTreeStructure().getRootElement(), packageViewPane.getTreeStructure());
     Disposer.dispose(packageViewPane);
