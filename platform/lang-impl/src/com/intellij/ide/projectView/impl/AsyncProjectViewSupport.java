@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.util.ui.tree.TreeUtil.setTreeAcceptor;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
@@ -296,10 +295,6 @@ class AsyncProjectViewSupport {
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
     tree.setModel(model);
-    setTreeAcceptor(tree, model::accept);
-    Disposer.register(model, () -> {
-      setTreeAcceptor(tree, null);
-      tree.setModel(null);
-    });
+    Disposer.register(model, () -> tree.setModel(null));
   }
 }
