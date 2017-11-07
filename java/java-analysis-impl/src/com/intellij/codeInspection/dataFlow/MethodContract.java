@@ -71,7 +71,7 @@ public abstract class MethodContract {
 
   abstract String getArgumentsPresentation();
 
-  abstract List<ContractValue> getConditions();
+  public abstract List<ContractValue> getConditions();
 
   @Override
   public String toString() {
@@ -91,7 +91,7 @@ public abstract class MethodContract {
       }
 
       @Override
-      List<ContractValue> getConditions() {
+      public List<ContractValue> getConditions() {
         return Collections.emptyList();
       }
     };
@@ -114,7 +114,7 @@ public abstract class MethodContract {
       }
 
       @Override
-      List<ContractValue> getConditions() {
+      public List<ContractValue> getConditions() {
         return Collections.singletonList(condition);
       }
     };

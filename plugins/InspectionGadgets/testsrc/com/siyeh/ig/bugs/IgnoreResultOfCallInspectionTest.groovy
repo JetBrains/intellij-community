@@ -281,4 +281,16 @@ class Test {
 }
 """
   }
+
+  void testOptionalOrElseThrow() {
+    doTest """
+import java.util.Optional;
+
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+class Test {
+  void test(Optional<String> opt) {
+    opt.orElseThrow(RuntimeException::new);
+  }
+}"""
+  }
 }

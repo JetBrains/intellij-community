@@ -209,8 +209,9 @@ public class SideEffectChecker {
     if (method.getName().startsWith("assert") || method.getName().startsWith("check")) {
       return true;
     }
-    return ControlFlowAnalyzer.getMethodContracts(method).stream()
-      .anyMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
+    return ControlFlowAnalyzer.getMethodCallContracts(method, null).stream()
+      .filter(mc -> mc.getConditions().stream().noneMatch(cv -> cv.isBoundCheckingCondition()))
+      .anyMatch(mc -> mc.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION);
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {
