@@ -44,7 +44,8 @@ class WinExeInstallerBuilder {
         String associations = "; List of associations. To create an association change value to 1.\n"
         if (! extensionsList.isEmpty()) {
           associations += extensionsList.collect { "$it=0\n" }.join("")
-        } else {
+        }
+        else {
           associations = "; There are no associations for the product.\n"
         }
         buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
@@ -54,7 +55,11 @@ class WinExeInstallerBuilder {
           }
         }
       }
-    } else {
+      else {
+        buildContext.messages.warning("Silent config file for Windows installer won't be generated. The template doesn't exist: '${customizer.silentInstallationConfig}'")
+      }
+    }
+    else {
         buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
     }
   }
