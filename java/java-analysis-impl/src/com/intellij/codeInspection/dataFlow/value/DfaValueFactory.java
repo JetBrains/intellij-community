@@ -30,6 +30,8 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -199,6 +201,10 @@ public class DfaValueFactory {
 
   public <T> DfaValue getFactValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
     return getFactFactory().createValue(factType, value);
+  }
+
+  public Collection<DfaValue> getValues() {
+    return Collections.unmodifiableCollection(myValues);
   }
 
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {

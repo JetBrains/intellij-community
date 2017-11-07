@@ -99,7 +99,7 @@ public class DataFlowRunner {
   final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
                                    @NotNull InstructionVisitor visitor,
                                    boolean ignoreAssertions,
-                                   @NotNull Collection<DfaMemoryState> initialStates) {
+                                   @NotNull Collection<? extends DfaMemoryState> initialStates) {
     try {
       final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;

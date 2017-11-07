@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -178,7 +179,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
                                             ProblemsHolder holder,
                                             StandardDataFlowRunner dfaRunner,
-                                            Collection<DfaMemoryState> initialStates) {
+                                            Collection<? extends DfaMemoryState> initialStates) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
@@ -186,7 +187,20 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
       MultiMap<PsiElement,DfaMemoryState> nestedClosures = dfaRunner.getNestedClosures();
       for (PsiElement closure : nestedClosures.keySet()) {
-        analyzeDfaWithNestedClosures(closure, holder, dfaRunner, nestedClosures.get(closure));
+        List<DfaVariableValue> unusedVars = StreamEx.of(dfaRunner.getFactory().getValues())
+          .select(DfaVariableValue.class)
+          .filter(var -> var.getQualifier() == null)
+          .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
+                         !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
+          .toList();
+        Collection<? extends DfaMemoryState> states = nestedClosures.get(closure);
+        if (!unusedVars.isEmpty()) {
+          List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
+            .peek(state -> unusedVars.forEach(state::flushVariable))
+            .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
+          states = StateQueue.mergeGroup(stateList);
+        }
+        analyzeDfaWithNestedClosures(closure, holder, dfaRunner, states);
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {

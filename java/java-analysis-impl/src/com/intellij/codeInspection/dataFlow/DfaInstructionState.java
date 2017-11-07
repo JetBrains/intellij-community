@@ -109,7 +109,7 @@ class StateQueue {
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }                                                                      
 
-  private static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
+  static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
     if (group.size() < 2) {
       return group;
     }
