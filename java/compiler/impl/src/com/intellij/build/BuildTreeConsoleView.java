@@ -113,7 +113,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
             if (userObject instanceof ExecutionNode) {
               String duration = ((ExecutionNode)userObject).getDuration();
-              updateTimeColumnWidth("_" + duration, false);
+              updateTimeColumnWidth("___" + duration, false);
               return duration;
             }
           }
