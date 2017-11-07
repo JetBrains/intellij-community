@@ -1,0 +1,9 @@
+class Main {
+  public static void main(String[] args) {
+    int i = 0;
+    <spot>while(true) {
+      i++;
+      if(i >= 12) break;
+    }</spot>
+  }
+}
