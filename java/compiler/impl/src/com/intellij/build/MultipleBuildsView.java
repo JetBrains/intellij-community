@@ -198,6 +198,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           boolean focusContent = contentDescriptor.isAutoFocusContent();
           myBuildContentManager.setSelectedContent(
             myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
+          Disposer.register(this, contentDescriptor);
         }
         else {
           myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
