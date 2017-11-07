@@ -270,7 +270,7 @@ public class ChangeListWorker {
     }
 
     for (ListData list : myLists) {
-      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.name);
+      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
       if (changesBeforeUpdate.contains(change)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
@@ -335,11 +335,6 @@ public class ChangeListWorker {
     if (list == null || list.isReadOnly) return false;
 
     list.name = toName;
-
-    OpenTHashSet<Change> changesBeforeUpdateFrom = myChangesBeforeUpdateMap.remove(fromName);
-    OpenTHashSet<Change> changesBeforeUpdateTo = myChangesBeforeUpdateMap.put(toName, changesBeforeUpdateFrom);
-    LOG.assertTrue(changesBeforeUpdateTo == null, "old changes for new changelist name found during rename");
-
     return true;
   }
 
@@ -436,7 +431,7 @@ public class ChangeListWorker {
 
   private void startProcessingChanges(@NotNull ListData list) {
     OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)list.changes);
-    myChangesBeforeUpdateMap.put(list.name, changesBeforeUpdate);
+    myChangesBeforeUpdateMap.put(list.id, changesBeforeUpdate);
   }
 
   @NotNull
@@ -479,7 +474,7 @@ public class ChangeListWorker {
   private boolean doneProcessingChanges(@NotNull ListData list,
                                         @NotNull List<Change> removedChanges,
                                         @NotNull List<Change> addedChanges) {
-    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.name);
+    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
     for (Change newChange : list.changes) {
       Change oldChange = findOldChange(changesBeforeUpdate, newChange);
