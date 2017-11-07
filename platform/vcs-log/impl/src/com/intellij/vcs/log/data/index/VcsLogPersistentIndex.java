@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
@@ -79,6 +80,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController;
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = ContainerUtil.newHashMap();
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -117,6 +119,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());
+      myIndexingTime.put(root, new AtomicLong());
     }
 
     Disposer.register(disposableParent, this);
@@ -628,7 +631,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         if (!myReindex) myNumberOfTasks.get(myRoot).decrementAndGet();
 
         if (isIndexed(myRoot)) {
+          myIndexingTime.get(myRoot).set(0);
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
+        } else {
+          myIndexingTime.get(myRoot).updateAndGet(t -> t + (System.currentTimeMillis() - startTime));
         }
 
         report(startTime);
