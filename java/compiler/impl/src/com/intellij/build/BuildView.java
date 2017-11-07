@@ -34,6 +34,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -136,6 +137,9 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
                              runContentDescriptor.getExecutionConsole() != this ?
                              runContentDescriptor.getExecutionConsole() : new BuildTextConsoleView(myProject);
       addView(executionConsoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+      if(runContentDescriptor != null) {
+        Disposer.register(this, runContentDescriptor);
+      }
     }
 
     BuildProcessHandler processHandler = startBuildEvent.getProcessHandler();
