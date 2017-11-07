@@ -41,6 +41,7 @@ import java.util.Map.Entry;
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.SwingConstants.LEFT;
 
 /**
@@ -76,7 +77,7 @@ final class BreadcrumbsConfigurable implements Configurable {
           }
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3));
+      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUI.scale(10) : 0, 0));
       map.values().stream().sorted((box1, box2) -> naturalCompare(box1.getText(), box2.getText())).forEach(box -> boxes.add(box));
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));
