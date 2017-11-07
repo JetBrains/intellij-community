@@ -74,7 +74,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     if (lastPart == null) {
       lastPart = prefix;
     }
-    lastPart = StringUtil.trimLeading(lastPart, ' ');
+    lastPart = StringUtil.trimLeading(lastPart);
     return lastPart;
   }
 

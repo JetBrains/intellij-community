@@ -64,7 +64,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         if (subParts.size() == 2) {
           idSubPart = subParts.get(1);
         }
-        else if (isBeforeOrAfterKeyword(StringUtil.trimLeading(orderPart, ' '), false)) {
+        else if (isBeforeOrAfterKeyword(StringUtil.trimLeading(orderPart), false)) {
           // This order part is, for instance, 'after ' or 'before:'. In such cases IDs reference should be provided.
           idSubPart = "";
         }
