@@ -3,7 +3,6 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.*;
-import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -12,8 +11,7 @@ import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -25,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Aleev
  */
 public class JUnitRunDashboardContributor extends RunDashboardContributor {
+  private static final SimpleTextAttributes IGNORE_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
+  private static final SimpleTextAttributes ERROR_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
+
   public JUnitRunDashboardContributor() {
     super(JUnitConfigurationType.getInstance());
   }
@@ -55,13 +58,7 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
         presentation.setIcon(renderer.getIcon());
       }
 
-      String shortSummary = TestsUIUtil.getTestShortSummary(rootNode);
-      if (!StringUtil.isEmpty(shortSummary)) {
-        presentation.addText(" [" + shortSummary + "]",
-                             resultsViewer.getFailedTestCount() > 0 ?
-                             new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MessageType.ERROR.getTitleForeground()) :
-                             SimpleTextAttributes.GRAY_ATTRIBUTES);
-      }
+      addTestSummary(presentation, resultsViewer);
     }
     finally {
       RunDashboardAnimator animator = RunDashboardManager.getInstance(node.getProject()).getAnimator();
@@ -74,6 +71,43 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
         }
       }
     }
+  }
+
+  private static void addTestSummary(@NotNull PresentationData presentation, @NotNull SMTestRunnerResultsForm resultsViewer) {
+    int total = resultsViewer.getTotalTestCount();
+    int finished = resultsViewer.getFinishedTestCount();
+    int failed = resultsViewer.getFailedTestCount();
+    int ignored = resultsViewer.getIgnoredTestCount();
+
+    if (total == 0) {
+      total = finished + failed + ignored;
+      if (total == 0) return;
+    }
+
+    int passed = Math.max(0, finished - failed - ignored);
+
+    presentation.addText(" [", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    boolean addSeparator = false;
+    if (failed > 0) {
+      presentation.addText("failed: " + failed, ERROR_ATTRIBUTES);
+      addSeparator = true;
+    }
+    if (passed > 0 || ignored + failed == 0) {
+      if (addSeparator) {
+        presentation.addText(", ", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
+      presentation.addText("passed: " + passed, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      addSeparator = true;
+    }
+
+    if (ignored > 0) {
+      if (addSeparator) {
+        presentation.addText(", ", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
+      presentation.addText("ignored: " + ignored, IGNORE_ATTRIBUTES);
+    }
+
+    presentation.addText(" of " + total +"]", SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @Override
