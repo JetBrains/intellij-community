@@ -128,7 +128,7 @@ public class ConcurrentMapsTest {
     Map<String, String> map = ContainerUtil.createSoftMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
-    assertTrue(map.containsKey("AB"));
+    assertEquals("ab", map.get("AB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
@@ -142,8 +142,8 @@ public class ConcurrentMapsTest {
     String keyU = StringUtil.toUpperCase(keyL);
     String value = "asdfab";
     map.put(keyL, value);
-    assertTrue(map.containsKey(keyU));
-    assertTrue(map.containsKey(keyL));
+    assertSame(value, map.get(keyU));
+    assertSame(value, map.get(keyL));
     String removed = map.remove("aB");
     assertSame(value, removed);
     assertTrue(map.isEmpty());
@@ -172,7 +172,7 @@ public class ConcurrentMapsTest {
       }
     };
     map.put(key, "ab");
-    assertTrue(map.containsKey(key));
+    assertSame("ab", map.get(key));
     map.remove(key);
     assertTrue(map.isEmpty());
   }
@@ -184,7 +184,7 @@ public class ConcurrentMapsTest {
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
-    assertTrue(map.containsKey("AB"));
+    assertSame("ab",map.get("AB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
@@ -232,7 +232,7 @@ public class ConcurrentMapsTest {
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
-    assertTrue(map.containsKey("AB"));
+    assertSame("ab", map.get("AB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
