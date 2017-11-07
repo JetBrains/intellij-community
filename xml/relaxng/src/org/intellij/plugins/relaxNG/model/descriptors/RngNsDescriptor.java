@@ -19,6 +19,7 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -26,10 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -56,6 +54,8 @@ import java.util.*;
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
     Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());
+
+  private static final Key<CachedValue<XmlElementDescriptor>> ROOT_KEY = Key.create("ROOT_DESCRIPTOR");
 
   private XmlFile myFile;
   private PsiElement myElement;
@@ -100,7 +100,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   private XmlElementDescriptor findRootDescriptor(final XmlTag tag) {
-    return CachedValuesManager.getCachedValue(tag, () -> {
+    return CachedValuesManager.getCachedValue(tag, ROOT_KEY, () -> {
       final XmlElementDescriptor descr = findRootDescriptorInner(tag);
       if (descr != null) {
         return CachedValueProvider.Result.create(descr, descr.getDependences(), getDependences());
