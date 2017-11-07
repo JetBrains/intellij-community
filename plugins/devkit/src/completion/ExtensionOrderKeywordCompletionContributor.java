@@ -38,7 +38,6 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
                                     @NotNull CompletionResultSet result) {
         String prefix = getCompletionPrefix(parameters);
         if (shouldProposeKeywordsAfterPrefix(prefix)) {
-          //FIXME completion not working when there's a keyword prefix like "bef"
           result.addAllElements(KEYWORD_COMPLETION_VARIANTS);
         }
       }
@@ -69,21 +68,28 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     return document.getText(new TextRange(startOffset, endOffset));
   }
 
-  private static boolean shouldProposeKeywordsAfterPrefix(String prefix) {
+  @NotNull
+  private static String getPrefixLastPart(String prefix) {
     String lastPart = StringUtil.substringAfterLast(prefix, LoadingOrder.ORDER_RULE_SEPARATOR);
     if (lastPart == null) {
       lastPart = prefix;
     }
     lastPart = StringUtil.trimLeading(lastPart, ' ');
-    return !lastPart.contains(" "); // propose keywords if there's only a single word (or empty prefix)
+    return lastPart;
+  }
+
+  private static boolean shouldProposeKeywordsAfterPrefix(String prefix) {
+    return !getPrefixLastPart(prefix).contains(" "); // propose keywords if there's only a single word (or empty prefix)
   }
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     String prefix = result.getPrefixMatcher().getPrefix();
     if (prefix.endsWith(LoadingOrder.ORDER_RULE_SEPARATOR)) {
-      // keywords should be proposed after comma even without space
-      result = result.withPrefixMatcher("");
+      result = result.withPrefixMatcher(""); // keywords should be proposed after comma even without space
+    }
+    else {
+      result = result.withPrefixMatcher(getPrefixLastPart(prefix));
     }
 
     super.fillCompletionVariants(parameters, result);
