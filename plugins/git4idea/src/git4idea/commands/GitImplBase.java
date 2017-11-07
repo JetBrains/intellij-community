@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -10,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +40,8 @@ abstract class GitImplBase implements Git {
   private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor) {
     final List<String> errorOutput = new ArrayList<>();
     final List<String> output = new ArrayList<>();
+    final List<String> synchronizedErrorOutput = Collections.synchronizedList(errorOutput);
+    final List<String> synchronizedOutput = Collections.synchronizedList(output);
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
 
@@ -45,21 +49,23 @@ abstract class GitImplBase implements Git {
     boolean authFailed;
     boolean success;
     do {
-      errorOutput.clear();
-      output.clear();
+      synchronizedErrorOutput.clear();
+      synchronizedOutput.clear();
       exitCode.set(0);
       startFailed.set(false);
 
       GitLineHandler handler = handlerConstructor.compute();
       handler.addLineListener(new GitLineHandlerListener() {
         @Override public void onLineAvailable(String line, Key outputType) {
-          if (looksLikeError(line)) {
-            synchronized (errorOutput) {
-              errorOutput.add(line);
+          if (outputType == ProcessOutputTypes.STDOUT) {
+            synchronizedOutput.add(line);
+          }
+          else if (outputType == ProcessOutputTypes.STDERR) {
+            if (!looksLikeError(line)) {
+              synchronizedOutput.add(line);
             }
-          } else {
-            synchronized (output) {
-              output.add(line);
+            else {
+              synchronizedErrorOutput.add(line);
             }
           }
         }
@@ -70,7 +76,7 @@ abstract class GitImplBase implements Git {
 
         @Override public void startFailed(Throwable t) {
           startFailed.set(true);
-          errorOutput.add("Failed to start Git process");
+          synchronizedErrorOutput.add("Failed to start Git process");
         }
       });
 

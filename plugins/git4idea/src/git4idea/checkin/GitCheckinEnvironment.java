@@ -506,10 +506,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private static PartialOperation isMergeCommit(final VcsException ex) {
     String message = ex.getMessage();
-    if (message.contains("fatal: cannot do a partial commit during a merge")) {
+    if (message.contains("cannot do a partial commit during a merge")) {
       return PartialOperation.MERGE;
     }
-    if (message.contains("fatal: cannot do a partial commit during a cherry-pick")) {
+    if (message.contains("cannot do a partial commit during a cherry-pick")) {
       return PartialOperation.CHERRY_PICK;
     }
     return PartialOperation.NONE;
