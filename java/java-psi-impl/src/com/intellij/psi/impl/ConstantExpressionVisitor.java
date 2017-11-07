@@ -447,11 +447,9 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       if (operandValue instanceof Number) {
         if (operandValue instanceof Double) {
           value = new Double(-((Number)operandValue).doubleValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Float) {
           value = new Float(-((Number)operandValue).floatValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Long) {
           value = Long.valueOf(-((Number)operandValue).longValue());
