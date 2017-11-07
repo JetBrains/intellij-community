@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -40,7 +41,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +62,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     myParentEditor = parentEditor;
     myEditor = editor;
 
-    final Disposable parentDisposable = ObjectUtils.coalesce(ObjectUtils.tryCast(parentEditor, Disposable.class), parentEditor.getProject());
-    Disposer.register(parentDisposable, this);
+    registerForDispose(parentEditor);
 
     final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myParentEditor);
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -85,6 +84,18 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         }
       }
     }, this);
+  }
+
+  private void registerForDispose(@NotNull Editor editor) {
+    final Disposable parentDisposable;
+    if (editor instanceof EditorImpl) {
+      parentDisposable = ((EditorImpl)editor).getDisposable();
+    } else {
+      parentDisposable = editor.getProject();
+    }
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   public void showHint() {
