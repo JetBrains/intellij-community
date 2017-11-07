@@ -28,6 +28,7 @@ import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
@@ -156,24 +157,24 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
   private static class OrderReferencedIdPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     private final String myReferencedId;
-    private final ExtensionPoint myExtensionPoint;
-
+    private final Extension myExtension;
 
     public OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
                                          @NotNull String referencedId, @NotNull Extension extension) {
       super(element, rangeInElement);
       myReferencedId = referencedId;
-      myExtensionPoint = extension.getExtensionPoint();
+      myExtension = extension;
     }
 
     @Nullable
     @Override
     public PsiElement resolve() {
-      if (myExtensionPoint == null) {
+      ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
+      if (extensionPoint == null) {
         return null;
       }
 
-      ExtensionLocator epAndIdLocator = ExtensionLocator.byExtensionPointAndId(myExtensionPoint, myReferencedId);
+      ExtensionLocator epAndIdLocator = ExtensionLocator.byExtensionPointAndId(extensionPoint, myReferencedId);
       List<ExtensionCandidate> candidates = epAndIdLocator.findCandidates();
       if (candidates.isEmpty()) {
         return null;
@@ -199,7 +200,12 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @NotNull
     @Override
     public Object[] getVariants() {
-      ExtensionLocator epLocator = ExtensionLocator.byExtensionPoint(myExtensionPoint);
+      ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
+      if (extensionPoint == null) {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+
+      ExtensionLocator epLocator = ExtensionLocator.byExtensionPoint(extensionPoint);
       List<ExtensionCandidate> candidates = epLocator.findCandidates();
       DomManager domManager = DomManager.getDomManager(getElement().getProject());
 
@@ -212,8 +218,12 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         }
       }
 
+      String currentExtensionId = myExtension.getId().getStringValue();
       List<LookupElement> idCompletionVariantsList = new ArrayList<>();
       for (Extension e : extensionsForThisEp) {
+        if (Objects.equals(currentExtensionId, e.getId().getStringValue())) {
+          continue; // do not suggest the same extension id
+        }
         String id = e.getId().getStringValue();
         if (StringUtil.isNotEmpty(id)) {
           DomTarget extensionTarget = DomTarget.getTarget(e);
@@ -233,7 +243,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve ''{0}'' " + (myExtensionPoint != null ? myExtensionPoint.getEffectiveName() + " " : "") + "extension";
+      ExtensionPoint ep = myExtension.getExtensionPoint();
+      return "Cannot resolve ''{0}'' " + (ep != null ? ep.getEffectiveName() + " " : "") + "extension";
     }
 
     @Override
