@@ -820,23 +820,7 @@ public final class TreeUtil {
    * @param levels depths of the expantion
    */
   public static void expand(@NotNull JTree tree, int levels) {
-    Object root = tree.getModel().getRoot();
-    if (root == null) return;
-    expand(tree, new TreePath(root), levels);
-  }
-
-  private static boolean expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {
-    if (levels == 0) return false;
-    tree.expandPath(path);
-    TreeNode node = (TreeNode)path.getLastPathComponent();
-    Enumeration children = node.children();
-
-    boolean isReady = true;
-    while (children.hasMoreElements()) {
-      if (!expand(tree, path.pathByAddingChild(children.nextElement()) , levels - 1))
-        isReady = false;
-    }
-    return isReady;
+    promiseExpand(tree, levels);
   }
 
   /**
