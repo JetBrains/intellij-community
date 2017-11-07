@@ -18,6 +18,7 @@ import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +120,13 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyReferenceExpression) {
           if (PyNames.DICT.equals(rightExpression.getName())) return -1;
 
-          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
+          final List<QualifiedRatedResolveResult> resolveResults =
+            ((PyReferenceExpression)rightExpression).multiFollowAssignmentsChain(resolveContext);
+          if (resolveResults.isEmpty()) {
+            return -1;
+          }
+
+          final PsiElement pyElement = PyUtil.filterTopPriorityResults(resolveResults).get(0).getElement();
           if (pyElement == rightExpression || !(pyElement instanceof PyExpression)) {
             return -1;
           }
