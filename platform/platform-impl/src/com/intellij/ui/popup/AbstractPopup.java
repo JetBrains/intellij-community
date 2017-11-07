@@ -918,7 +918,6 @@ public class AbstractPopup implements JBPopup {
     final Window window = getContentWindow(myContent);
 
     if (myFocusable) {
-      window.setAutoRequestFocus(true);
       window.setFocusableWindowState(true);
       window.setFocusable(true);
       window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
@@ -949,11 +948,11 @@ public class AbstractPopup implements JBPopup {
       });
     }
 
-    myPopup.show();
-
-    if (myPreferredFocusedComponent != null) {
-      myPreferredFocusedComponent.requestFocus();
+    if (!myRequestFocus) {
+      window.setAutoRequestFocus(false);
     }
+
+    myPopup.show();
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
@@ -992,9 +991,8 @@ public class AbstractPopup implements JBPopup {
     };
 
     if (myRequestFocus) {
-      getPopupWindow().setFocusableWindowState(true);
-      getPopupWindow().setFocusable(true);
-      getFocusManager().doWhenFocusSettlesDown(() -> _requestFocus());
+      myPreferredFocusedComponent.requestFocus();
+      window.setAutoRequestFocus(true);
 
       delayKeyEventsUntilFocusSettlesDown();
     } else {
