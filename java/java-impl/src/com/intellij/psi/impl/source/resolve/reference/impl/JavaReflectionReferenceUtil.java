@@ -94,6 +94,12 @@ public class JavaReflectionReferenceUtil {
   public static final String NEW_INSTANCE = "newInstance";
   public static final String TYPE = "TYPE";
 
+  // Atomic field updaters
+  public static final String NEW_UPDATER = "newUpdater";
+  public static final String ATOMIC_LONG_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicLongFieldUpdater";
+  public static final String ATOMIC_INTEGER_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicIntegerFieldUpdater";
+  public static final String ATOMIC_REFERENCE_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicReferenceFieldUpdater";
+
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
   @Nullable
@@ -336,6 +342,14 @@ public class JavaReflectionReferenceUtil {
 
   static boolean isPublic(@NotNull PsiMember member) {
     return member.hasModifierProperty(PsiModifier.PUBLIC);
+  }
+
+  static boolean isAtomicallyUpdateable(@NotNull PsiField field) {
+    if (field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
+      return false;
+    }
+    final PsiType type = field.getType();
+    return !(type instanceof PsiPrimitiveType) || PsiType.INT.equals(type) || PsiType.LONG.equals(type);
   }
 
   @Nullable

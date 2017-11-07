@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.ProcessingContext;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.or;
+import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -47,6 +49,15 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     .methodCallParameter(1, psiMethod()
       .withName(HANDLE_FACTORY_METHOD_NAMES)
       .definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP));
+
+  public static final PsiJavaElementPattern.Capture<PsiLiteral> ATOMIC_NUMERIC_PATTERN =
+    psiLiteral().methodCallParameter(1, psiMethod().withName(NEW_UPDATER)
+      .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(ATOMIC_LONG_FIELD_UPDATER,
+                                                                                  ATOMIC_INTEGER_FIELD_UPDATER))));
+
+  public static final PsiJavaElementPattern.Capture<PsiLiteral> ATOMIC_REFERENCE_PATTERN =
+    psiLiteral().methodCallParameter(2, psiMethod().withName(NEW_UPDATER)
+      .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(ATOMIC_REFERENCE_FIELD_UPDATER)));
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -73,5 +84,21 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     });
 
     registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReference.JavaLangInvokeHandleReferenceProvider());
+
+    JavaReflectionReferenceProvider atomicProvider = new JavaReflectionReferenceProvider() {
+      @Override
+      protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                     @NotNull PsiReferenceExpression methodReference,
+                                                     @NotNull ProcessingContext context) {
+        PsiElement parent = literalArgument.getParent();
+        if (parent instanceof PsiExpressionList) {
+          PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();
+          return new PsiReference[]{new JavaLangClassMemberReference(literalArgument, arguments[0])};
+        }
+        return PsiReference.EMPTY_ARRAY;
+      }
+    };
+    registrar.registerReferenceProvider(ATOMIC_NUMERIC_PATTERN, atomicProvider);
+    registrar.registerReferenceProvider(ATOMIC_REFERENCE_PATTERN, atomicProvider);
   }
 }
