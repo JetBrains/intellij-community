@@ -62,6 +62,8 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
+
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
@@ -174,7 +176,7 @@
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor" />
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 

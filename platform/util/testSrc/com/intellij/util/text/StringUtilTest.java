@@ -2,6 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
@@ -615,5 +616,17 @@ public class StringUtilTest {
     assertEquals("", StringUtil.substringAfterLast("abc", ""));
     assertNull(StringUtil.substringAfterLast("abc", "1"));
     assertNull(StringUtil.substringAfterLast("", "1"));
+  }
+
+  @Test
+  public void testGetWordIndicesIn() {
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)),
+                 StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
   }
 }

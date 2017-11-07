@@ -23,6 +23,7 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -359,6 +360,40 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     finally {
       PsiUtil.markAsIdeaProject(project, false)
     }
+  }
+
+  void testOrderAttributeHighlighting() {
+    myFixture.testHighlighting("orderAttributeHighlighting.xml")
+  }
+
+  // separate tests for 'order' attribute completion because cannot test all cases with completeBasicAllCarets
+
+  void testOrderAttributeCompletionKeywordsInEmptyValue() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml",
+                                     LoadingOrder.FIRST_STR, LoadingOrder.LAST_STR,
+                                     LoadingOrder.BEFORE_STR.trim(), LoadingOrder.AFTER_STR.trim())
+  }
+
+  void testOrderAttributeCompletionBeforeKeyword() {
+    myFixture.testCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml")
+  }
+
+  void testOrderAttributeCompletionKeywords() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml",
+                                     LoadingOrder.FIRST_STR, LoadingOrder.LAST_STR,
+                                     LoadingOrder.BEFORE_STR.trim(), LoadingOrder.AFTER_STR.trim())
+  }
+
+  void testOrderAttributeCompletionIds() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+  }
+
+  void testOrderAttributeCompletionIdsWithFirst() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+  }
+
+  void testOrderAttributeCompletionFirstKeywordWithId() {
+    myFixture.testCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml")
   }
 
   private void testHighlightingInIdeaProject(String path) {

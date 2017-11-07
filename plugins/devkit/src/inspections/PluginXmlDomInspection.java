@@ -23,7 +23,9 @@ import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -269,6 +271,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if ("icon".equals(attributeDescription.getXmlElementName())) {
         annotateResolveProblems(holder, attributeValue);
       }
+      else if ("order".equals(attributeDescription.getXmlElementName())) {
+        annotateOrderAttributeProblems(holder, attributeValue);
+      }
 
       final PsiElement declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
       if (declaration instanceof PsiField) {
@@ -334,6 +339,22 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       highlightDeprecated(skipForDefault, DevKitBundle.message("inspections.plugin.xml.skipForDefaultProject.deprecated"),
                           holder, true, true);
     }
+  }
+
+  private static void annotateOrderAttributeProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
+    String orderValue = attributeValue.getStringValue();
+    if (StringUtil.isEmpty(orderValue)) {
+      return;
+    }
+
+    try {
+      LoadingOrder.readOrder(orderValue);
+    } catch (AssertionError ignore) {
+      holder.createProblem(attributeValue, HighlightSeverity.ERROR, DevKitBundle.message("inspections.plugin.xml.invalid.order.attribute"));
+      return; // no need to resolve references for invalid attribute value
+    }
+
+    annotateResolveProblems(holder, attributeValue);
   }
 
   private static void annotateResolveProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
