@@ -706,7 +706,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private static boolean isAssertionEffectively(PsiElement psiAnchor, boolean evaluatesToTrue) {
-    PsiElement parent = psiAnchor.getParent();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
     if (parent instanceof PsiAssertStatement) {
       return evaluatesToTrue;
     }
