@@ -43,13 +43,11 @@ class WinExeInstallerBuilder {
         def extensionsList = customizer.fileAssociations
         String associations = "; List of associations. To create an association change value to 1.\n"
         if (! extensionsList.isEmpty()) {
-          for (int i = 0; i < extensionsList.size(); i++) {
-            associations += extensionsList.get(i) + "=0\n"
-          }
-        } else {
+          associations += extensionsList.collect { "$it=0\n" }.join("")
+        }
+        else {
           associations = "; There are no associations for the product.\n"
         }
-        buildContext.messages.info(associations)
         buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
           fileset(file: customizer.silentInstallationConfig)
           filterset(begintoken: "@@", endtoken: "@@") {
@@ -57,7 +55,11 @@ class WinExeInstallerBuilder {
           }
         }
       }
-    } else {
+      else {
+        buildContext.messages.warning("Silent config file for Windows installer won't be generated. The template doesn't exist: '${customizer.silentInstallationConfig}'")
+      }
+    }
+    else {
         buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
     }
   }
