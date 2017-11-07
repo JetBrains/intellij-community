@@ -393,6 +393,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(editor, true));
           return;
         }
+
+        if (UIUtil.haveCommonOwner(e.getComponent(), e.getOppositeComponent())) {
+          return;
+        }
+
         onFocusLost();
       }
     });
