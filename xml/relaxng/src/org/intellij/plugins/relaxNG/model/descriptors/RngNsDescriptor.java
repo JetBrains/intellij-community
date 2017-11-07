@@ -55,7 +55,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
     Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());
 
-  private static final Key<ParameterizedCachedValue<XmlElementDescriptor, RngNsDescriptor>> ROOT_KEY = Key.create("ROOT_DESCRIPTOR");
+  private static final Key<CachedValue<XmlElementDescriptor>> ROOT_KEY = Key.create("ROOT_DESCRIPTOR");
 
   private XmlFile myFile;
   private PsiElement myElement;
@@ -100,19 +100,15 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   private XmlElementDescriptor findRootDescriptor(final XmlTag tag) {
-    return CachedValuesManager.getManager(tag.getProject())
-        .getParameterizedCachedValue(tag, ROOT_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngNsDescriptor>() {
-          @Override
-          public CachedValueProvider.Result<XmlElementDescriptor> compute(RngNsDescriptor o) {
-            final XmlElementDescriptor descr = o.findRootDescriptorInner(tag);
-            if (descr != null) {
-              return CachedValueProvider.Result.create(descr, descr.getDependences(), o.getDependences());
-            }
-            else {
-              return CachedValueProvider.Result.create(null, o.getDependences());
-            }
-          }
-        }, false, this);
+    return CachedValuesManager.getCachedValue(tag, ROOT_KEY, () -> {
+      final XmlElementDescriptor descr = findRootDescriptorInner(tag);
+      if (descr != null) {
+        return CachedValueProvider.Result.create(descr, descr.getDependences(), getDependences());
+      }
+      else {
+        return CachedValueProvider.Result.create(null, getDependences());
+      }
+    });
   }
 
   private XmlElementDescriptor findRootDescriptorInner(XmlTag tag) {
