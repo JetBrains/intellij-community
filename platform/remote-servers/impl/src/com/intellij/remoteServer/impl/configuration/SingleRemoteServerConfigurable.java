@@ -51,7 +51,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     C innerConfiguration = XmlSerializerUtil.createCopy(configuration);
     myInnerServer = new RemoteServerImpl<>("<temp inner server>", server.getType(), innerConfiguration);
     myInnerApplied = false;
-    myUncheckedApply = false;
+    myUncheckedApply = isNew || server.getType().canAutoDetectConfiguration();
 
     myConfigurable = createConfigurable(server, innerConfiguration);
 
