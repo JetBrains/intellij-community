@@ -2,12 +2,13 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
@@ -135,18 +136,26 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     private void addDescendantsOf(String className, boolean includeSelf, CompileContext context) {
-      final SearchScope scope = context.getOptions().getScope();
-      if (!(scope instanceof GlobalSearchScope)) return;
-
       final OptimizingSearchHelper searchHelper = context.getSearchHelper();
-      final PsiClass[] classes = PsiShortNamesCache.getInstance(context.getProject()).getClassesByName(className, (GlobalSearchScope)scope);
+      if (!searchHelper.doOptimizing()) return;
+      final Project project = context.getProject();
 
+      // use project and libraries scope, because super class may be outside the scope of the search
+      final GlobalSearchScope projectAndLibraries = ProjectScope.getAllScope(project);
+      final PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(className, projectAndLibraries);
+      if (classes.length == 0) {
+        // to fail fast with "does not match anything in scope" result on unknown class name
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(className, true, GlobalCompilingVisitor.OccurenceKind.CODE, context);
+        return;
+      }
       for (PsiClass aClass : classes) {
         if (includeSelf) {
-          searchHelper.addWordToSearchInCode(aClass.getName());
+          final String name = aClass.getName();
+          if (name != null) searchHelper.addWordToSearchInCode(name);
         }
-        ClassInheritorsSearch.search(aClass, scope, true).forEach(c -> {
-          searchHelper.addWordToSearchInCode(c.getName());
+        ClassInheritorsSearch.search(aClass, projectAndLibraries, true).forEach(c -> {
+          final String name = c.getName();
+          if (name != null) searchHelper.addWordToSearchInCode(name);
           return true;
         });
       }
