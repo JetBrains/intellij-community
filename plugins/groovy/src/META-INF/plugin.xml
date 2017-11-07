@@ -416,7 +416,8 @@
                         serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslErrorReporterImpl"/>
 
     <!-- Groovy language -->
-    <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
+    <lang.syntaxHighlighterFactory language="Groovy"
+                                   implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighterFactory"/>
 
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyKeywordAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
