@@ -170,8 +170,7 @@ public abstract class StubTreeLoader {
     Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
       pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
     List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
-    return "path = " + provider.getVirtualFile().getPath() +
-           ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
+    return ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
            "], files = [" + StringUtil.join(provider.getAllFiles(), fileClassName, ", ") +
