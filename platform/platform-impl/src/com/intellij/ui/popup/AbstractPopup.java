@@ -686,6 +686,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private void disposePopup() {
+    all.remove(this);
     if (myPopup != null) {
       resetWindow();
       myPopup.hide(true);
