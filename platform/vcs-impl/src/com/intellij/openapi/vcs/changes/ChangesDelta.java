@@ -24,21 +24,12 @@ import java.util.Set;
 
 public class ChangesDelta {
   private final PlusMinusModify<BaseRevision> myDeltaListener;
-  private boolean myInitialized;
 
   public ChangesDelta(@NotNull PlusMinusModify<BaseRevision> deltaListener) {
     myDeltaListener = deltaListener;
   }
 
   public boolean notifyPathsChanged(final ChangeListsIndexes was, final ChangeListsIndexes became) {
-    if (!myInitialized) {
-      myInitialized = true;
-      for (BaseRevision pair : was.getAffectedFilesUnderVcs()) {
-        myDeltaListener.plus(pair);
-      }
-      return true;  //+-
-    }
-
     final Set<BaseRevision> toRemove = new HashSet<>();
     final Set<BaseRevision> toAdd = new HashSet<>();
     final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
