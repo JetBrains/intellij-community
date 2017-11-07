@@ -376,9 +376,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private void processVMDeathEvent(SuspendContextImpl suspendContext, Event event) {
+  private void processVMDeathEvent(SuspendContextImpl suspendContext, @Nullable Event event) {
     // do not destroy another process on reattach
-    if (isAttached() && getVirtualMachineProxy().getVirtualMachine() == event.virtualMachine()) {
+    if (isAttached() && (event == null || getVirtualMachineProxy().getVirtualMachine() == event.virtualMachine())) {
       try {
         preprocessEvent(suspendContext, null);
         cancelRunToCursorBreakpoint();
