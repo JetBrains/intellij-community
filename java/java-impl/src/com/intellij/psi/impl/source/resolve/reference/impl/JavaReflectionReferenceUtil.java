@@ -35,10 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -458,6 +455,9 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
+    if (ExpressionUtils.isNullLiteral(maybeArray)) {
+      return PsiExpression.EMPTY_ARRAY;
+    }
     if (isVarargAsArray(maybeArray)) {
       final PsiExpression argumentsDefinition = findDefinition(maybeArray);
       if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
