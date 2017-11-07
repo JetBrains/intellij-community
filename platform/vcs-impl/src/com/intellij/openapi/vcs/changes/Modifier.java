@@ -73,7 +73,7 @@ public class Modifier {
   }
 
   @Nullable
-  public String editComment(@NotNull String fromName, String newComment) {
+  public String editComment(@NotNull String fromName, @NotNull String newComment) {
     EditComment command = new EditComment(fromName, newComment);
     impl(command);
     return command.getOldComment();

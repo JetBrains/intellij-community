@@ -41,9 +41,9 @@ public class SetDefault implements ChangeListCommand {
       return;
     }
 
-    myOldDefaultListCopy = worker.getDefaultList().copy();
+    myOldDefaultListCopy = worker.getDefaultList();
     myPrevious = worker.setDefault(myNewDefaultName);
-    myNewDefaultListCopy = worker.getDefaultList().copy();
+    myNewDefaultListCopy = worker.getDefaultList();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

@@ -47,17 +47,17 @@ public class AddList implements ChangeListCommand {
 
       myWasListCreated = true;
       myOldComment = null;
-      myNewListCopy = worker.addChangeList(myName, myComment, id, myData).copy();
+      myNewListCopy = worker.addChangeList(myName, myComment, id, myData);
     }
     else if (StringUtil.isNotEmpty(myComment)) {
       myWasListCreated = false;
       myOldComment = worker.editComment(myName, myComment);
-      myNewListCopy = list.copy();
+      myNewListCopy = worker.getChangeListByName(myName);
     }
     else {
       myWasListCreated = false;
       myOldComment = null;
-      myNewListCopy = list.copy();
+      myNewListCopy = list;
     }
   }
 

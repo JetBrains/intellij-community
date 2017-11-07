@@ -728,7 +728,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
     synchronized (myDataLock) {
-      return ContainerUtil.map(myWorker.getChangeLists(), LocalChangeList::copy);
+      return myWorker.getChangeLists();
     }
   }
 
@@ -861,15 +861,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList findChangeList(final String name) {
     synchronized (myDataLock) {
-      return myWorker.getChangeListCopyByName(name);
+      return myWorker.getChangeListByName(name);
     }
   }
 
   @Override
   public LocalChangeList getChangeList(String id) {
     synchronized (myDataLock) {
-      LocalChangeList list = myWorker.getChangeListById(id);
-      return list != null ? list.copy() : null;
+      return myWorker.getChangeListById(id);
     }
   }
 
@@ -947,7 +946,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public String editComment(@NotNull final String fromName, final String newComment) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        final String oldComment = myModifier.editComment(fromName, newComment);
+        final String oldComment = myModifier.editComment(fromName, StringUtil.notNullize(newComment));
         myChangesViewManager.scheduleRefresh();
         return oldComment;
       }
@@ -968,7 +967,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
-      return myWorker.getDefaultList().copy();
+      return myWorker.getDefaultList();
     }
   }
 
@@ -984,8 +983,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
     synchronized (myDataLock) {
-      Collection<LocalChangeList> changelists = myWorker.getInvolvedLists(changes);
-      return ContainerUtil.map(changelists, LocalChangeList::copy);
+      return myWorker.getInvolvedLists(changes);
     }
   }
 
@@ -993,8 +991,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
-      LocalChangeList list = myWorker.getChangeListForChange(change);
-      return list != null ? list.copy() : null;
+      return myWorker.getChangeListForChange(change);
     }
   }
 
@@ -1022,8 +1019,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public LocalChangeList getChangeList(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
-      LocalChangeList list = myWorker.getChangeListFor(file);
-      return list != null ? list.copy() : null;
+      return myWorker.getChangeListFor(file);
     }
   }
 
