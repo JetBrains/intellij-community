@@ -4,6 +4,12 @@
 package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopesCore
 import groovy.lang.GroovyObject
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import java.io.File
@@ -15,4 +21,17 @@ private fun doGetBundledGroovyFile(): File {
   val jar = File(jarPath)
   assert(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(jar.name).matches()) { "Incorrect path to groovy JAR: " + jarPath }
   return jar
+}
+
+val bundledGroovyJarRoot by lazy(::doGetBundledGroovyRoot)
+
+private fun doGetBundledGroovyRoot(): VirtualFile? {
+  val jar = bundledGroovyFile
+  val jarFile = VfsUtil.findFileByIoFile(jar, false) ?: return null
+  return JarFileSystem.getInstance().getJarRootForLocalFile(jarFile)
+}
+
+fun createBundledGroovyScope(project: Project): GlobalSearchScope? {
+  val root = bundledGroovyJarRoot ?: return null
+  return GlobalSearchScopesCore.directoryScope(project, root, true)
 }
