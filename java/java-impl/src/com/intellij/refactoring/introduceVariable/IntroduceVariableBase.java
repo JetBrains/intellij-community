@@ -1116,11 +1116,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       LOG.assertTrue(parentRange.getStartOffset() <= rangeMarker.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
-      if (StringUtil.unquoteString(beg).trim().length() == 0 && prefix == null) beg = "";
+      //noinspection SSBasedInspection (suggested replacement breaks behavior)
+      if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
 
       LOG.assertTrue(rangeMarker.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
-      if (StringUtil.unquoteString(end).trim().length() == 0 && suffix == null) end = "";
+      //noinspection SSBasedInspection (suggested replacement breaks behavior)
+      if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
       final String start = beg + (prefix != null ? prefix : "");
       refIdx[0] = start.length();
