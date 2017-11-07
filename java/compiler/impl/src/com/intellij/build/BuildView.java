@@ -33,6 +33,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -82,7 +83,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   @Override
   public void onEvent(BuildEvent event) {
     if (event instanceof StartBuildEvent) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
         onStartBuild((StartBuildEvent)event);
         for (BuildEvent buildEvent : myAfterStartEvents) {
           processEvent(buildEvent);
