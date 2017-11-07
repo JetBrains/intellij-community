@@ -75,7 +75,7 @@ public class RootIndex {
     myProject = project;
     myInfoCache = cache;
 
-    ApplicationManager.getApplication().isReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final RootInfo info = buildRootInfo(project);
 
