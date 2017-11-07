@@ -89,7 +89,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   void loadProperties() {
     XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
     if (masterBreakpoint != null) {
-      myMasterBreakpointChooser.setSelectesBreakpoint(masterBreakpoint);
+      myMasterBreakpointChooser.setSelectedBreakpoint(masterBreakpoint);
       myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
     }
     updateAfterBreakpointHitPanel();
