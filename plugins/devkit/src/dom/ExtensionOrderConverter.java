@@ -62,19 +62,19 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         List<String> subParts = splitOrderPart(orderPart);
         if (subParts.isEmpty()) {
           // last symbol is ','
-          return Collections.singletonList(new OrderKeywordPsiReference(getElement(), range, orderPart));
+          return Collections.emptyList();
         }
 
-        String firstSubPart = subParts.get(0);
-        String secondSubPart = null;
-        if (subParts.size() > 1) {
-          secondSubPart = subParts.get(1);
+        String idSubPart = null; // second one, after keyword subpart
+        if (subParts.size() == 2) {
+          idSubPart = subParts.get(1);
         }
         else if (isBeforeOrAfterKeyword(StringUtil.trimLeading(orderPart, ' '), false)) {
           // This order part is, for instance, 'after ' or 'before:'. In such cases IDs reference should be provided.
-          secondSubPart = "";
+          idSubPart = "";
         }
-        if (subParts.size() > 2 || (secondSubPart != null && !isBeforeOrAfterKeyword(firstSubPart))) {
+
+        if (subParts.size() > 2 || (idSubPart != null && !isBeforeOrAfterKeyword(subParts.get(0)))) {
           // Order value can't contain more than 3 subparts. If there are two subparts, first one must be 'before' or 'after'.
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
         }
@@ -84,18 +84,16 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
           LOG.error("Unexpected empty word indices list for 'order' part: " + orderPart);
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
         }
-        if (secondSubPart != null && secondSubPart.isEmpty()) {
+        if (idSubPart != null && idSubPart.isEmpty()) { // right after the before/after keyword
           wordIndices.add(new TextRange(orderPart.length(), orderPart.length()));
         }
 
-        TextRange firstSubPartRange = wordIndices.get(0).shiftRight(range.getStartOffset());
-        OrderKeywordPsiReference keywordReference = new OrderKeywordPsiReference(getElement(), firstSubPartRange, firstSubPart);
-        if (secondSubPart == null) {
-          return Collections.singletonList(keywordReference);
+        if (idSubPart == null) {
+          return Collections.emptyList();
         }
-        TextRange secondSubPartRange = wordIndices.get(1).shiftRight(range.getStartOffset());
-        return ContainerUtil.list(keywordReference,
-                                  new OrderReferencedIdPsiReference(getElement(), secondSubPartRange, secondSubPart, extension));
+        assert wordIndices.size() == 2;
+        TextRange idSubPartRange = wordIndices.get(1).shiftRight(range.getStartOffset());
+        return ContainerUtil.list(new OrderReferencedIdPsiReference(getElement(), idSubPartRange, idSubPart, extension));
       }
     }.getPsiReferences();
   }
@@ -116,15 +114,6 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
   private static List<TextRange> getWordIndicesInOrderPart(String orderPart) {
     return StringUtil.getWordIndicesIn(orderPart, ContainerUtil.set(' ', ':'));
-  }
-
-  private static boolean isCompleteKeyword(String str) {
-    return isFirstOrLastKeyword(str) || isBeforeOrAfterKeyword(str);
-  }
-
-  private static boolean isFirstOrLastKeyword(String str) {
-    return LoadingOrder.FIRST_STR.equalsIgnoreCase(str) ||
-           LoadingOrder.LAST_STR.equalsIgnoreCase(str);
   }
 
   private static boolean isBeforeOrAfterKeyword(String str) {
@@ -163,38 +152,6 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public String getUnresolvedMessagePattern() {
       return DevKitBundle.message("invalid.order.attribute.part", myOrderPart);
-    }
-
-    @Override
-    public boolean isSoft() {
-      return true;
-    }
-  }
-
-  private static class OrderKeywordPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    private final String myText;
-
-    public OrderKeywordPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, @NotNull String text) {
-      super(element, rangeInElement);
-      myText = text;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement resolve() {
-      return isCompleteKeyword(myText) ? getElement() : null;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return KEYWORD_COMPLETION_VARIANTS;
-    }
-
-    @NotNull
-    @Override
-    public String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("invalid.order.attribute.keyword", myText);
     }
 
     @Override
