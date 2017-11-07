@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
 
-  private val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")!!
+  private val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestRunner")!!
   private val criticalError = Ref<Boolean>(false)
 
 
