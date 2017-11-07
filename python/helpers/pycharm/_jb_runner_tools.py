@@ -179,7 +179,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
             loc = possible_location.find("(")
             if loc > 0:
                 possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
+            properties["locationHint"] = u"python<{0}>://{1}".format(PROJECT_DIR, possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -188,7 +188,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         # Shortcut for name
         try:
-            properties["name"] = str(properties["name"]).split(".")[-1]
+            properties["name"] = properties["name"].split(".")[-1]
         except IndexError:
             pass
 
