@@ -4211,4 +4211,32 @@ public class UIUtil {
     if(component.isCursorSet() && component.getCursor() == cursor) return;
     component.setCursor(cursor);
   }
+
+  public static boolean haveCommonOwner(Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set <Window> ownerSet = new HashSet<Window>();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private static Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
+  }
 }
