@@ -28,7 +28,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.*;
 
-public class ConcurrentMapsTest {
+// tests various ContainerUtil.create* and ContainerUtil.new* collections for being really weak/soft/concurrent
+public class ContainerUtilCollectionsTest {
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
   private static final TObjectHashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new TObjectHashingStrategy<String>() {
@@ -44,15 +45,57 @@ public class ConcurrentMapsTest {
   };
 
   @Test(timeout = TIMEOUT)
-  public void testConcurrentWeakKeysRemovedWhenIdentityStrategyIsUsed() {
+  public void testConcurrentWeakMapTossedEvenWithIdentityStrategy() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
-    checkKeyIsTossedAfterGCPressure(map);
+    checkKeyTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
-  public void testWeakHashMapWithIdentityStrategy() {
+  public void testConcurrentSoftMapTossedEvenWithIdentityStrategy() {
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    checkKeyTossedEventually(map);
+  }
+
+  private void checkKeyTossedEventually(Map<Object, Object> map) {
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), this));
+  }
+  private void checkValueTossedEventually(Map<Object, Object> map) {
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(this, new Object()));
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWeakKeyWeakValueTossedEvenWithIdentityStrategy() {
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(ContainerUtil.identityStrategy());
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSoftKeySoftValueTossedEvenWithIdentityStrategy() {
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftKeySoftValueMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWeakKeySoftValueTossedEvenWithIdentityStrategy() {
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testWeakMapTossedEvenWithIdentityStrategy() {
     Map<Object, Object> map = ContainerUtil.createWeakMap(10,0.5f,ContainerUtil.identityStrategy());
-    checkKeyIsTossedAfterGCPressure(map);
+    checkKeyTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testSoftMapTossedEvenWithIdentityStrategy() {
+    Map<Object, Object> map = ContainerUtil.createSoftMap(ContainerUtil.identityStrategy());
+    checkKeyTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -80,32 +123,41 @@ public class ConcurrentMapsTest {
   }
 
   @Test(timeout = TIMEOUT)
-  public void testConcurrentWeakTossedWeakKeysAreRemoved() {
+  public void testConcurrentWeakMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
-    checkKeyIsTossedAfterGCPressure(map);
+    checkKeyTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
-  public void testConcurrentSoftTossedSoftKeysAreRemoved() {
+  public void testConcurrentSoftMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
-    checkKeyIsTossedAfterGCPressure(map);
+    checkKeyTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
-  public void testConcurrentWeakTossedWeakValueIsRemoved() {
+  public void testConcurrentWeakValueMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakValueMap();
-    checkKeyIsTossedAfterGCPressure(map);
+    checkValueTossedEventually(map);
   }
 
-  private void checkKeyIsTossedAfterGCPressure(Map<Object, Object> map) {
-    assertTrue(map.isEmpty());
-    map.put(new Object(), new Object());
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSoftValueMapTossed() {
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftValueMap();
+    checkValueTossedEventually(map);
+  }
 
+  private void checkClearsEventuallyAfterGCPressure(Map<Object, Object> map, @NotNull Runnable putKey) {
+    assertTrue(map.isEmpty());
+    assertEquals(0, map.size());
+    putKey.run();
+
+    Object strong = new Object();
     //noinspection SizeReplaceableByIsEmpty
     do {
-      map.put(this, this);  // to run processQueues();
+      map.put(strong, strong);  // to run processQueues();
       assertFalse(map.isEmpty());
-      map.remove(this);
+      map.remove(strong);
+      assertNull(map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
@@ -115,12 +167,9 @@ public class ConcurrentMapsTest {
     assertEquals(0, map.size());
     map.put(this, this);
     assertEquals(1, map.size());
-  }
-
-  @Test(timeout = TIMEOUT)
-  public void testConcurrentSoftTossedSoftValueIsRemoved() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftValueMap();
-    checkKeyIsTossedAfterGCPressure(map);
+    map.clear();
+    assertEquals(0, map.size());
+    assertNull(map.get(strong));
   }
 
   @Test(timeout = TIMEOUT)
@@ -239,66 +288,6 @@ public class ConcurrentMapsTest {
   }
 
   @Test(timeout = TIMEOUT)
-  public void testSoftKeySoftValueTossedSoftKeyAndValue() {
-    Map<Object, Object> map = ContainerUtil.createSoftKeySoftValueMap();
-    map.put(new Object(), new Object());
-
-    do {
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-      map.remove(this); // to call processQueue()
-    }
-    while (!map.isEmpty());
-    assertTrue(map.isEmpty());
-  }
-
-  @Test(timeout = TIMEOUT)
-  public void testWeakKeyWeakValueTossedWeakKeyAndValue() {
-    RefKeyRefValueHashMap<Object, Object> map = (RefKeyRefValueHashMap<Object, Object>)ContainerUtil.createWeakKeyWeakValueMap();
-    checkTossedKeyAndValue(map);
-  }
-
-  private static void checkTossedKeyAndValue(@NotNull RefKeyRefValueHashMap<Object, Object> map) {
-    assertTrue(map.isEmpty());
-    map.put(new Object(), new Object());
-
-    do {
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertTrue(map.isEmpty());
-
-    Object hardKey = map;
-    map.put(hardKey, new Object());
-
-    do {
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertTrue(map.isEmpty());
-    assertSame(map, hardKey);
-
-    Object hardValue = map;
-    map.put(new Object(), hardValue);
-
-    do {
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertTrue(map.isEmpty());
-    assertSame(map, hardValue);
-  }
-
-  @Test(timeout = TIMEOUT)
-  public void testWeakKeySoftValueTossedWeakKeyAndValue() {
-    RefKeyRefValueHashMap<Object, Object> map = (RefKeyRefValueHashMap<Object, Object>)ContainerUtil.createWeakKeySoftValueMap();
-    checkTossedKeyAndValue(map);
-  }
-
-  @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = ContainerUtil.createConcurrentLongObjectMap();
     for (int i = 0; i < 1000; i++) {
@@ -343,38 +332,25 @@ public class ConcurrentMapsTest {
   }
 
   @Test(timeout = TIMEOUT)
-  public void testConcurrentWeakKeyAndValueTossed() {
+  public void testConcurrentWeakKeyWeakValueMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
-    map.put(new Object(), new Object());
 
-    do {
-      map.put(this, this);  // to run processQueues();
-      map.remove(this);
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
+  }
 
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.isEmpty());
+  @Test(timeout = TIMEOUT)
+  public void testSoftKeySoftValueMapTossed() {
+    Map<Object, Object> map = ContainerUtil.createSoftKeySoftValueMap();
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
+  }
 
-    map.put(this, new Object());
-    do {
-      map.put(this, this);  // to run processQueues();
-      map.remove(this);
-
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.isEmpty());
-
-    map.put(new Object(), this);
-    do {
-      map.put(this, this);  // to run processQueues();
-      map.remove(this);
-
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.isEmpty());
+  @Test(timeout = TIMEOUT)
+  public void testWeakKeySoftValueMapTossed() {
+    Map<Object, Object> map = ContainerUtil.createWeakKeySoftValueMap();
+    checkKeyTossedEventually(map);
+    checkValueTossedEventually(map);
   }
 
   @SuppressWarnings("FieldCanBeLocal")
@@ -473,7 +449,7 @@ public class ConcurrentMapsTest {
 
   @Test
   public void testConcurrentHashMapTreeBinifiesItself() {
-    class Meh {
+    class AwfulHashCode {
       @Override
       public int hashCode() {
         return 0;
@@ -493,8 +469,35 @@ public class ConcurrentMapsTest {
     });
     int N = 1000;
     for (int i = 0; i < N; i++) {
-      map.put(new Meh(), 0);
+      map.put(new AwfulHashCode(), 0);
     }
     assertEquals(N, map.size());
+  }
+
+
+  @Test
+  public void weakSetTossed() {
+    Set<Object> set = ContainerUtil.createWeakSet();
+    checkClearsEventuallyAfterGCPressure(set);
+  }
+
+  private void checkClearsEventuallyAfterGCPressure(Set<Object> set) {
+    assertTrue(set.isEmpty());
+    set.add(new Object());
+
+    //noinspection SizeReplaceableByIsEmpty
+    do {
+      set.add(this);  // to run processQueues();
+      assertFalse(set.isEmpty());
+      set.remove(this);
+
+      GCUtil.tryGcSoftlyReachableObjects();
+      System.gc();
+    }
+    while (set.size() != 0);
+    assertTrue(set.isEmpty());
+    assertEquals(0, set.size());
+    set.add(this);
+    assertEquals(1, set.size());
   }
 }

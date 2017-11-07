@@ -34,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
-  private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
   @NotNull
   @Contract(pure=true)
@@ -1572,6 +1571,55 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  /**
+   * @return iterator with elements from the original {@param iterator} which are valid according to {@param filter} predicate.
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Iterator<T> filterIterator(@NotNull final Iterator<T> iterator, @NotNull final Condition<T> filter) {
+    return new Iterator<T>() {
+      T next;
+      boolean hasNext;
+      {
+        findNext();
+      }
+      @Override
+      public boolean hasNext() {
+        return hasNext;
+      }
+
+      private void findNext() {
+        hasNext = false;
+        while (iterator.hasNext()) {
+          T t = iterator.next();
+          if (filter.value(t)) {
+            next = t;
+            hasNext = true;
+            break;
+          }
+        }
+      }
+
+      @Override
+      public T next() {
+        T result;
+        if (hasNext) {
+          result = next;
+          findNext();
+        }
+        else {
+          throw new NoSuchElementException();
+        }
+        return result;
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
+  }
+
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
@@ -2813,6 +2861,11 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
     //noinspection deprecation
     return new WeakHashMap<K, V>(initialCapacity, loadFactor, strategy);
+  }
+
+  @NotNull
+  public static <T> Set<T> createWeakSet() {
+    return new WeakHashSet<T>();
   }
 }
 
