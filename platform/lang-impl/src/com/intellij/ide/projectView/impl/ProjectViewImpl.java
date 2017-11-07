@@ -1325,6 +1325,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           FileEditor editor = EditorHelper.openInEditor(element, false);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            JComponent component = editor.getPreferredFocusedComponent();
+            if (component != null) {
+              component.requestFocus();
+            }
             requestFocus = false;
           }
         }
