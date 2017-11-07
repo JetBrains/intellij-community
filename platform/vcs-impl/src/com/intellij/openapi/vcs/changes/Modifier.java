@@ -27,7 +27,7 @@ import java.util.List;
  * (after update is done)
  */
 public class Modifier {
-  private ChangeListWorker myWorker;
+  private final ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
@@ -103,15 +103,13 @@ public class Modifier {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(@Nullable ChangeListWorker worker) {
+  public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
     myInsideUpdate = false;
 
-    if (worker != null) {
-      // re-apply commands to the new worker
+    if (updatedWorker != null) {
       for (ChangeListCommand command : myCommandQueue) {
-        command.apply(worker);
+        command.apply(updatedWorker);
       }
-      myWorker = worker;
     }
 
     for (ChangeListCommand command : myCommandQueue) {
