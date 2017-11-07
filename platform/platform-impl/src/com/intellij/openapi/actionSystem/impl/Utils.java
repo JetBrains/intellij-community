@@ -207,6 +207,11 @@ public class Utils{
       }
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
+
+        if (actionGroup instanceof ForceUpdateAllChildrenActionGroup && actionGroup.isPopup()) {
+          expandActionGroup(isInModalContext, actionGroup, new ArrayList<>(), presentationFactory, context, place, actionManager, transparentOnly, hideDisabled);
+        }
+
         boolean skip = hideDisabled && !hasEnabledChildren(actionGroup, presentationFactory, context, place);
         if (skip) {
           continue;
