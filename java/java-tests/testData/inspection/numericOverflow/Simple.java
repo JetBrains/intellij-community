@@ -80,4 +80,6 @@ class c {
   }
 
   int iii = <warning descr="Numeric overflow in expression">2 % 0</warning>;
+
+  double x = -Double.POSITIVE_INFINITY;
 }
