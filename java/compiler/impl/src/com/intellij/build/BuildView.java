@@ -275,8 +275,8 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     };
 
     ExecutionConsole consoleView = getConsoleView();
-    if (consoleView instanceof BuildConsoleView) {
-      final AnAction[] consoleActions = ((BuildConsoleView)consoleView).createConsoleActions();
+    if (consoleView instanceof ConsoleView) {
+      final AnAction[] consoleActions = ((ConsoleView)consoleView).createConsoleActions();
       for (AnAction anAction : consoleActions) {
         if (anAction instanceof StopAction) {
           if (stopAction == null) {
