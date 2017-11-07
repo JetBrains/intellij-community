@@ -106,10 +106,10 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
           public CachedValueProvider.Result<XmlElementDescriptor> compute(RngNsDescriptor o) {
             final XmlElementDescriptor descr = o.findRootDescriptorInner(tag);
             if (descr != null) {
-              return CachedValueProvider.Result.create(descr, tag, descr.getDependences(), o.getDependences());
+              return CachedValueProvider.Result.create(descr, descr.getDependences(), o.getDependences());
             }
             else {
-              return CachedValueProvider.Result.create(null, tag, o.getDependences());
+              return CachedValueProvider.Result.create(null, o.getDependences());
             }
           }
         }, false, this);
