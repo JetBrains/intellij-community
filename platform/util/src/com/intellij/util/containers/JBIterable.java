@@ -844,13 +844,24 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Collects all items into an {@link ArrayList} and returns them as the new {@code JBIterable}.
+   * Collects all items into an {@link ArrayList} and returns it wrapped in a new {@code JBIterable}.
    * @see JBIterable#collect(Collection)
    */
   @NotNull
   public final JBIterable<E> collect() {
-    if (content instanceof ArrayList) return this;
+    if (content instanceof Collection) return this;
     return collect(ContainerUtilRt.<E>newArrayList());
+  }
+
+  /**
+   * Collects all items into an {@link ArrayList}, sorts it and returns it wrapped in a new {@code JBIterable}.
+   * @see JBIterable#collect(Collection)
+   */
+  @NotNull
+  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+    ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
+    Collections.sort(list, comparator);
+    return from(list);
   }
 
   /**
