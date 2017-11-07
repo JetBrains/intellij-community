@@ -88,7 +88,7 @@ public class PyTypeChecker {
         return false;
       }
       else if (subst != null) {
-        if (expected.equals(actual)) {
+        if (expected.equals(actual) || subst.equals(generic)) {
           return true;
         }
         else if (recursive) {
