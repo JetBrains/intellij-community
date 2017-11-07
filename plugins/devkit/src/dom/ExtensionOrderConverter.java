@@ -151,7 +151,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("invalid.order.attribute.part", myOrderPart);
+      return DevKitBundle.message("invalid.order.attribute.part", myOrderPart.trim());
     }
 
     @Override
