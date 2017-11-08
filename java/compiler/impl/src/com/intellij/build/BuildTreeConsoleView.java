@@ -632,7 +632,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       AnAction[] consoleActions = myConsole.createConsoleActions();
       consoleComponent.setFocusable(true);
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
                                                     new SideBorder(editorBackground, SideBorder.LEFT)));
       myPanel.add(consoleComponent, BorderLayout.CENTER);
       final ActionToolbar toolbar = ActionManager.getInstance()
