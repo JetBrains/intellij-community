@@ -848,16 +848,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private boolean hasResolvableConflictedChanges() {
-      return ContainerUtil.exists(getAllChanges(), change -> change.isConflict() && canResolveChangeAutomatically(change, ThreeSide.BASE));
+      return ContainerUtil.exists(getAllChanges(), change -> canResolveChangeAutomatically(change, ThreeSide.BASE));
     }
 
     private void applyResolvableConflictedChanges() {
       executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) {
-            resolveChangeAutomatically(change, ThreeSide.BASE);
-          }
+          resolveChangeAutomatically(change, ThreeSide.BASE);
         }
       });
 
