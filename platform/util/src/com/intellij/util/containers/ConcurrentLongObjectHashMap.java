@@ -317,7 +317,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
   /**
    * Creates a new, empty map with the default initial table size (16).
    */
-  public ConcurrentLongObjectHashMap() {
+  ConcurrentLongObjectHashMap() {
   }
 
   /**
@@ -330,7 +330,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative
    */
-  public ConcurrentLongObjectHashMap(int initialCapacity) {
+  ConcurrentLongObjectHashMap(int initialCapacity) {
     if (initialCapacity < 0) {
       throw new IllegalArgumentException();
     }
