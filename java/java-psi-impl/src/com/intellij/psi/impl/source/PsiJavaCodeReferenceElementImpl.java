@@ -427,13 +427,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         if (!StringUtil.isEmptyOrSpaces(text)) {
           PsiClass aClass = JavaPsiFacade.getInstance(containingFile.getProject()).findClass(text, getResolveScope());
           if (aClass != null) {
-            if (!isQualified() && text.equals(aClass.getQualifiedName())) {
-              if (containingFile instanceof PsiJavaFile && !((PsiJavaFile)containingFile).getPackageName().isEmpty()) {
-                // classes in default (unnamed) package cannot be referenced from other packages
-                return JavaResolveResult.EMPTY_ARRAY;
-              }
-            }
-
             return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
           }
         }
