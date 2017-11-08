@@ -4,3 +4,4 @@ package com.intellij.lang.jvm.actions
 import com.intellij.psi.codeStyle.SuggestedNameInfo
 
 typealias ExpectedParameter = Pair<SuggestedNameInfo, ExpectedTypes>
+typealias ExpectedParameters = List<ExpectedParameter>
