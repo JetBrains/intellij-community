@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,34 +121,27 @@ public class GuessManagerImpl extends GuessManager {
 
   @NotNull
   @Override
-  public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
-    LinkedHashSet<PsiType> types = new LinkedHashSet<>();
-
-    ContainerUtil.addIfNotNull(types, getControlFlowExpressionType(expr));
+  public PsiType[] guessTypeToCast(PsiExpression expr) {
+    LinkedHashSet<PsiType> types = new LinkedHashSet<>(getControlFlowExpressionTypeConjuncts(expr));
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
-
     return types.toArray(PsiType.createArray(types.size()));
   }
 
   @NotNull
   @Override
-  public Map<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
-    final Map<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace);
-    if (typeMap != null) {
-      return typeMap;
-    }
-
-    return Collections.emptyMap();
+  public MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
+    MultiMap<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace);
+    return typeMap != null ? typeMap : MultiMap.empty();
   }
 
   @Nullable
-  private static Map<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
+  private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
     PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
       if (!(file instanceof PsiCodeFragment)) {
-        return Collections.emptyMap();
+        return MultiMap.empty();
       }
 
       scope = file;
@@ -378,24 +372,27 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public PsiType getControlFlowExpressionType(@NotNull PsiExpression expr) {
+  public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
     final Map<PsiExpression, PsiType> allCasts = getAllTypeCasts(expr);
     if (!allCasts.containsKey(expr)) {
-      return null; //optimization
+      return Collections.emptyList(); //optimization
     }
 
-    final Map<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr);
+    MultiMap<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr);
     if (fromDfa != null) {
-      return fromDfa.get(expr);
+      Collection<PsiType> conjuncts = fromDfa.get(expr);
+      if (!conjuncts.isEmpty()) {
+        return ContainerUtil.newArrayList(PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>()));
+      }
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {
-    private Map<PsiExpression, PsiType> myResult;
+    private MultiMap<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
 
     private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
@@ -407,7 +404,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
 
-    public Map<PsiExpression, PsiType> getResult() {
+    MultiMap<PsiExpression, PsiType> getResult() {
       return myResult;
     }
 
@@ -441,9 +438,10 @@ public class GuessManagerImpl extends GuessManager {
       return super.visitPush(instruction, runner, memState);
     }
 
-    private void addToResult(Map<PsiExpression, PsiType> map) {
+    private void addToResult(MultiMap<PsiExpression, PsiType> map) {
       if (myResult == null) {
-        myResult = new THashMap<>(map, ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        myResult = MultiMap.create(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        myResult.putAllValues(map);
       } else {
         final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
         while (iterator.hasNext()) {

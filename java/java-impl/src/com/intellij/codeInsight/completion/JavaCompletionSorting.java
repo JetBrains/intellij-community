@@ -103,9 +103,9 @@ public class JavaCompletionSorting {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
-    ExpectedTypeInfo castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
-    if (castExpectation != null) {
-      return new ExpectedTypeInfo[]{castExpectation};
+    List<ExpectedTypeInfo> castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
+    if (!castExpectation.isEmpty()) {
+      return castExpectation.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }

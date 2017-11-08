@@ -97,10 +97,12 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, args[0], argType, exactType || reportConvertibleMethodCalls, patternMethods, indices);
     if (plainMessage != null && !exactType) {
-      final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
-      if (dfaType != null && SuspiciousMethodCallUtil
-                               .getSuspiciousMethodCallMessage(methodCall, args[0], dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
-        return null;
+      List<PsiType> dfaTypes = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionTypeConjuncts(args[0]);
+      for (PsiType dfaType : dfaTypes) {
+        if (SuspiciousMethodCallUtil
+                                 .getSuspiciousMethodCallMessage(methodCall, args[0], dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
+          return null;
+        }
       }
     }
 
