@@ -115,7 +115,12 @@ public class GradleTestsExecutionConsoleManager
         public void processTerminated(@NotNull ProcessEvent event) {
           if (testsRootNode.isInProgress()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              testsRootNode.setFinished();
+              if (event.getExitCode() == 1) {
+                testsRootNode.setTestFailed("", null, false);
+              }
+              else {
+                testsRootNode.setFinished();
+              }
               resultsViewer.onTestingFinished(testsRootNode);
             });
           }
