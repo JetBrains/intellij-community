@@ -635,8 +635,7 @@ public class CodeCompletionHandlerBase {
                                                                           final int caretOffset,
                                                                           final int idEndOffset, final OffsetMap offsetMap) {
     editor.getCaretModel().moveToOffset(caretOffset);
-    final int initialStartOffset = caretOffset - item.getLookupString().length();
-    assert initialStartOffset >= 0 : "negative startOffset: " + caretOffset + "; " + item.getLookupString();
+    int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
 
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);

@@ -245,12 +245,11 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       // allow undo/redo up until 'creation stamp' back in time
       // and check it after action is completed
       if (e.getDocument() == myOrigDocument) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (myOrigCreationStamp > myOrigDocument.getModificationStamp()) {
             closeEditor();
           }
-        });
+        }, myProject.getDisposed());
       }
     }
     else if (e.getDocument() == myNewDocument) {
