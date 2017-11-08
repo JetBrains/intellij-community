@@ -17,7 +17,6 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.psi.codeStyle.SuggestedNameInfo
 
 interface CreateMethodRequest {
 
@@ -35,5 +34,3 @@ interface CreateMethodRequest {
 
   val targetSubstitutor: JvmSubstitutor
 }
-
-typealias ExpectedParameter = Pair<SuggestedNameInfo, ExpectedTypes>
