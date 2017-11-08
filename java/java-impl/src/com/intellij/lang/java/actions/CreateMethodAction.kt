@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.*
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupEditor
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.template.Template
@@ -29,14 +16,10 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -159,40 +142,18 @@ private class JavaMethodRenderer(
 
   private fun setupTemplate(method: PsiMethod): TemplateBuilderImpl {
     val builder = TemplateBuilderImpl(method)
-    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val guesser = GuessTypeParameters(project, factory, builder, substitutor)
-    setupTypeElement(guesser, method.returnTypeElement, request.returnType)
-    builder.setupParameters(guesser, method)
+    createTemplateContext(builder).run {
+      setupTypeElement(method.returnTypeElement, request.returnType)
+      setupParameters(method, request.parameters)
+    }
     builder.setEndVariableAfter(method.body ?: method)
     return builder
   }
 
-  private fun setupTypeElement(guesser: GuessTypeParameters, typeElement: PsiTypeElement?, types: ExpectedTypes) {
-    typeElement ?: return
-    val expectedTypes = extractExpectedTypes(project, types).toTypedArray()
-    guesser.setupTypeElement(typeElement, expectedTypes, javaUsage?.context, targetClass)
-  }
-
-  private fun TemplateBuilder.setupParameters(guesser: GuessTypeParameters, method: PsiMethod) {
-    val parameters = request.parameters
-    if (parameters.isEmpty()) return
-    val codeStyleManager = CodeStyleManager.getInstance(project)!!
-    val parameterList = method.parameterList
-    val isInterface = targetClass.isInterface
-    //255 is the maximum number of method parameters
-    for (i in 0 until minOf(parameters.size, 255)) {
-      val parameterInfo = parameters[i]
-      val names = extractNames(parameterInfo.first) { "p" + i }
-      val dummyParameter = factory.createParameter(names.first(), PsiType.INT)
-      if (isInterface) {
-        setModifierProperty(dummyParameter, PsiModifier.FINAL, false)
-      }
-      val parameter = codeStyleManager.performActionWithFormatterDisabled(Computable {
-        parameterList.add(dummyParameter)
-      }) as PsiParameter
-      setupTypeElement(guesser, parameter.typeElement, parameterInfo.second)
-      setupParameterName(parameter, names)
-    }
+  private fun createTemplateContext(builder: TemplateBuilder): TemplateContext {
+    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
+    val guesser = GuessTypeParameters(project, factory, builder, substitutor)
+    return TemplateContext(project, factory, targetClass, builder, guesser, javaUsage?.context)
   }
 
   private fun startTemplate(method: PsiMethod, template: Template) {
@@ -201,17 +162,6 @@ private class JavaMethodRenderer(
     val templateListener = if (withoutBody) null else MyMethodBodyListener(project, newEditor, targetFile)
     CreateFromUsageBaseFix.startTemplate(newEditor, template, project, templateListener, null)
   }
-}
-
-private inline fun extractNames(suggestedNames: SuggestedNameInfo?, defaultName: () -> String): Array<out String> {
-  val names = (suggestedNames ?: SuggestedNameInfo.NULL_INFO).names
-  return if (names.isEmpty()) arrayOf(defaultName()) else names
-}
-
-private fun TemplateBuilder.setupParameterName(parameter: PsiParameter, names: Array<out String>) {
-  val nameIdentifier = parameter.nameIdentifier ?: return
-  val expression = ParameterNameExpression(names)
-  replaceElement(nameIdentifier, expression)
 }
 
 private class MyMethodBodyListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
