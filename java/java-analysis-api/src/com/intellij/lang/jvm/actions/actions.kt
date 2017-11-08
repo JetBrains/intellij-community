@@ -26,6 +26,12 @@ fun createMethodActions(target: JvmClass, request: CreateMethodRequest): List<In
   }
 }
 
+fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+  return createActions {
+    it.createAddConstructorActions(target, request)
+  }
+}
+
 fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
