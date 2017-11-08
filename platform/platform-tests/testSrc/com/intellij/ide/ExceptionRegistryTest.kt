@@ -142,8 +142,10 @@ java.io.FileNotFoundException:
 
     ExceptionRegistry.clear()
     assertEquals(0, ExceptionRegistry.count)
+    assertEquals(0, ExceptionRegistry.getStackTraces().count())
     ExceptionRegistry.register(IOException())
     assertEquals(1, ExceptionRegistry.count)
+    assertEquals(1, ExceptionRegistry.getStackTraces().count())
   }
 
   private fun createTestExceptions(): List<Throwable> {

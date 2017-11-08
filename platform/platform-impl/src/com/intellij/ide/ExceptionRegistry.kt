@@ -134,6 +134,7 @@ object ExceptionRegistry {
       count = 0
       root.firstChild = null
       root.nextSibling = null
+      leafFrames.clear()
     }
   }
 
