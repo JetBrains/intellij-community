@@ -90,10 +90,9 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final NotNullComputable<PsiSubstitutor> substitutorComputer =
         () -> mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
 
-      PsiSubstitutor substitutor = substitutorComputer.compute();
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
-      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, true);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, partialSubstitutor, myPlace, true);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
       GroovyMethodResultImpl candidate = new GroovyMethodResultImpl(
