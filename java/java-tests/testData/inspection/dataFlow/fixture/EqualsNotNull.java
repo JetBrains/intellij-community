@@ -74,4 +74,12 @@ class Main {
     return defVal;
   }
 
+  private static void test2(@NotNull Object defVal, @Nullable final Object val) {
+    if(val == defVal) {
+      if(<warning descr="Condition 'val == null' is always 'false'">val == null</warning>) {
+        System.out.println("oops");
+      }
+    }
+  }
+
 }
