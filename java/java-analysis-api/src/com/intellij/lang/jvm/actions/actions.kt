@@ -38,12 +38,6 @@ fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modi
   }
 }
 
-fun createConstructorActions(target: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> {
-  return createActions {
-    it.createAddConstructorActions(target, request)
-  }
-}
-
 fun createPropertyActions(target: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
   return createActions {
     it.createAddPropertyActions(target, request)
