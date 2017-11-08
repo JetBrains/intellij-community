@@ -249,7 +249,8 @@ public abstract class VcsTreeModelData {
       }
     }
 
-    return ListSelection.create(entries, selection);
+    int index = ContainerUtil.indexOfIdentity(entries, selection);
+    return ListSelection.createAt(entries, index);
   }
 
 
