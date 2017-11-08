@@ -33,7 +33,7 @@ class WeakValueIntObjectHashMap<V> {
     private final int key;
     String name;
 
-    private MyReference(int key, T referent, ReferenceQueue<? super T> q) {
+    private MyReference(int key, @NotNull T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
       this.key = key;
     }
@@ -88,7 +88,7 @@ class WeakValueIntObjectHashMap<V> {
   }
 
   public final boolean containsKey(int key) {
-    return get(key) != null;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @NotNull
