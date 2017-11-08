@@ -10,6 +10,8 @@ import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -34,6 +36,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -185,6 +188,13 @@ public class ToolEditorDialog extends DialogWrapper {
       protected void offImpl() {
         myAdvancedOptionsPanel.setVisible(false);
         PropertiesComponent.getInstance().setValue(ADVANCED_OPTIONS_EXPANDED_KEY, false, ADVANCED_OPTIONS_EXPANDED_DEFAULT);
+
+        final int extraHeight = myAdvancedOptionsPanel.getHeight();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final Dimension size = ToolEditorDialog.this.getSize();
+          ToolEditorDialog.this.setSize(size.width, size.height - extraHeight);
+          ToolEditorDialog.this.repaint();
+        }, ModalityState.current(), o -> !ToolEditorDialog.this.isShowing());
       }
     };
   }
