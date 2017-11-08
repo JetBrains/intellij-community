@@ -82,7 +82,7 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
         !isReplaceableType((PsiClassType)expectedType)) {
       return;
     }
-    registerNewExpressionError(expression);
+    registerNewExpressionError(expression, expression);
   }
 
   private boolean isReplaceableType(PsiClassType classType) {
