@@ -330,6 +330,40 @@ public class JBUI {
     else if (scale < 2f) scale = 1.75f;
     else scale = 2.0f;
 
+    // Workaround for https://issuetracker.google.com/issues/68295805
+    //
+    // Some Android Studio dialogs are too big for screens with relatively
+    // small resolution (e.g. 1920x1080) and a scaling factor > 100%.
+    // If the screen height divided by the scaling factor is less than
+    // 900 (pixels), we force the scaling factor to 100%.
+    //
+    // The system property "hidpi.allow.fractional" can be set to "true"
+    // to disable this workaround.
+    if (!SystemProperties.getBooleanProperty("hidpi.allow.fractional", false)) {
+      if (SystemInfo.isWindows && scale <= 1.75f) {
+
+        // Figure out screen height (if we can)
+        int screenHeight = -1;
+        GraphicsDevice gd = null;
+        try {
+          gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        }
+        catch (HeadlessException ignore) {
+        }
+        if (gd != null) {
+          screenHeight = gd.getDefaultConfiguration().getBounds().height;
+        }
+
+        // if scaled screen height <= 900, force scale factor to 1
+        int minScreenHeight = 900;
+        if (screenHeight > 0) {
+          if ((screenHeight / scale) <= (float)minScreenHeight) {
+            scale = 1f;
+          }
+        }
+      }
+    }
+
     if (SystemInfo.isLinux && scale == 1.25f) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
