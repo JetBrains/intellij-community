@@ -38,7 +38,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.lang.UrlClassLoader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -55,6 +54,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author yole
@@ -373,6 +373,7 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
+    log.info("ForkJoinPool.commonPool: "+ForkJoinPool.commonPool());
 
     String extDirs = System.getProperty("java.ext.dirs");
     if (extDirs != null) {
