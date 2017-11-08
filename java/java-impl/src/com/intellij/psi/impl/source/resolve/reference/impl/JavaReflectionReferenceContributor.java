@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,15 +75,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
       }
     });
 
-    registrar.registerReferenceProvider(CLASS_PATTERN, new JavaReflectionReferenceProvider() {
-      @Override
-      protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
-                                                     @NotNull PsiReferenceExpression methodReference,
-                                                     @NotNull ProcessingContext context) {
-
-        return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
-      }
-    });
+    registrar.registerReferenceProvider(CLASS_PATTERN, new ReflectionClassNameReferenceProvider());
 
     registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReference.JavaLangInvokeHandleReferenceProvider());
 
@@ -100,5 +94,27 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     };
     registrar.registerReferenceProvider(ATOMIC_NUMERIC_PATTERN, atomicProvider);
     registrar.registerReferenceProvider(ATOMIC_REFERENCE_PATTERN, atomicProvider);
+  }
+
+  private static class ReflectionClassNameReferenceProvider extends JavaClassReferenceProvider {
+
+    ReflectionClassNameReferenceProvider() {
+      setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, Boolean.TRUE);
+      setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
+    }
+
+    @NotNull
+    @Override
+    public PsiReference[] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+      if (StringUtil.isEmpty(str)) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+      return new JavaClassReferenceSet(str, position, offsetInPosition, true, this) {
+        @Override
+        public boolean isAllowDollarInNames() {
+          return true;
+        }
+      }.getAllReferences();
+    }
   }
 }
