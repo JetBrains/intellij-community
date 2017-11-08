@@ -19,7 +19,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
-  private static final Logger LOG = Logger.getInstance(PresentationAnnotationInspection.class);
 
   @Nullable
   @Override
@@ -44,7 +42,6 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
 
     PsiElement iconExpressionPsi = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)iconExpression);
     if (iconExpressionPsi == null) {
-      LOG.error("Unexpected null value of @Presentation#icon expression PSI: " + annotation.asRenderString());
       return null;
     }
 
