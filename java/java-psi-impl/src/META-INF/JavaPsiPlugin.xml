@@ -1,0 +1,114 @@
+<!--
+  ~ Copyright 2000-2017 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjuster"/>
+    </extensionPoint>
+
+    <extensionPoint name="javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
+    <extensionPoint name="custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
+    <extensionPoint name="lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
+    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
+    <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
+    <extensionPoint name="psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
+    <extensionPoint name="jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider"/>
+    <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
+    <extensionPoint name="classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory"/>
+    <extensionPoint name="customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
+    <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
+    <extensionPoint name="importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
+    <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
+    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
+    </extensionPoint>
+    <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
+    </extensionPoint>
+    <extensionPoint name="constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ConstantExpressionEvaluator"/>
+    </extensionPoint>
+    <extensionPoint name="annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
+    <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
+                              implementationClass="com.intellij.psi.presentation.java.JavaModulePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
+                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
+                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
+                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiPackage"
+                              implementationClass="com.intellij.psi.presentation.java.PackagePresentationProvider"/>
+    <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
+    <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
+    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
+    <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
+    <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
+    <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
+    <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
+    <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
+                    serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
+    <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
+                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
+                        serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
+    <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
+                    serviceImplementation="com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"/>
+    <projectService serviceInterface="com.intellij.psi.javadoc.JavadocManager"
+                    serviceImplementation="com.intellij.psi.impl.source.javadoc.JavadocManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.PsiElementFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiElementFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.source.resolve.JavaResolveCache"
+                    serviceImplementation="com.intellij.psi.impl.source.resolve.JavaResolveCache"/>
+    <projectService serviceInterface="com.intellij.psi.PsiNameHelper"
+                    serviceImplementation="com.intellij.psi.impl.PsiNameHelperImpl"/>
+    <projectService serviceInterface="com.intellij.lang.jvm.facade.JvmFacade"
+                    serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
+    <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
+                    serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
+                        serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
+                        serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
+    <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
+    <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"
+                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.PsiLiteralExpression"
+                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator"/>
+    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
+    <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
+    <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
+    <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
+  </extensions>
+
+</idea-plugin>
