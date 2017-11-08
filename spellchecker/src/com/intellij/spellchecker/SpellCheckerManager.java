@@ -177,7 +177,7 @@ public class SpellCheckerManager implements Disposable {
     if (dictionaryProvider != null) {
       final Dictionary dictionary = dictionaryProvider.get(path);
       if(dictionary != null) {
-        spellChecker.addCompressedFixedDictionary(dictionary);
+        spellChecker.addDictionary(dictionary);
       }
     }
     else spellChecker.loadDictionary(new FileLoader(path));

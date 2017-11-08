@@ -27,7 +27,7 @@ public interface SpellCheckerEngine {
 
   void addModifiableDictionary(@NotNull EditableDictionary dictionary);
 
-  void addCompressedFixedDictionary(@NotNull Dictionary dictionary);
+  void addDictionary(@NotNull Dictionary dictionary);
 
   Transformation getTransformation();
 
