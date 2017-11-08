@@ -44,8 +44,7 @@ object ReturnTransfer : TransferTarget {
 
 open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
   override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
-    val transferValue = transfer ?: state.pop() as DfaControlTransferValue
-    return ControlTransferHandler(state, runner, transferValue.target).iteration(transferValue.traps).toTypedArray()
+    return visitor.visitControlTransfer(this, state, runner)
   }
 
   fun getPossibleTargetIndices() : List<Int> {
