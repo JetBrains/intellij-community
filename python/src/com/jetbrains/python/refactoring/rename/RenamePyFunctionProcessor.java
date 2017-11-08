@@ -158,7 +158,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   public boolean forcesShowPreview(@NotNull PsiElement element, @NotNull UsageInfo[] usages) {
     return ContainerUtil.exists(usages, usage -> {
       final PsiElement usageElement = usage.getElement();
-      return usage.isNonCodeUsage() || (usageElement != null && !PsiTreeUtil.isAncestor(element, usageElement, false));
+      return usageElement != null && !PsiTreeUtil.isAncestor(element, usageElement, false);
     });
   }
 
