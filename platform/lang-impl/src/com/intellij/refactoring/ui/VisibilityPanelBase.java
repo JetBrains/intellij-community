@@ -19,10 +19,10 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public abstract class VisibilityPanelBase<V> extends JPanel {
-
   protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   @Nullable
@@ -32,5 +32,9 @@ public abstract class VisibilityPanelBase<V> extends JPanel {
 
   public void addListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
+  }
+
+  protected void stateChanged(ChangeEvent e) {
+    myEventDispatcher.getMulticaster().stateChanged(e);
   }
 }
