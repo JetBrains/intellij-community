@@ -9,11 +9,42 @@ class ClassInDefaultPackageHighlightingTest : LightCodeInsightFixtureTestCase() 
   override fun setUp() {
     super.setUp()
     myFixture.addClass("""
+        public class conflict { }""".trimIndent())
+    myFixture.addClass("""
+        package conflict;
+        public class C { }""".trimIndent())
+    myFixture.addClass("""
         public class MyConstants {
           public static final int CONSTANT = 1;
           public static class Inner {
             public static final String INNER_CONSTANT = "const";
           }""".trimIndent())
+  }
+
+  fun testClassPackageConflictInImport() {
+    doTest("""
+        package conflict;
+        import conflict.C;
+        class Test {
+          C c = new C();
+        }""".trimIndent())
+  }
+
+  fun testClassPackageConflictInOnDemandImport() {
+    doTest("""
+        package conflict;
+        import conflict.*;
+        class Test {
+          C c = new C();
+        }""".trimIndent())
+  }
+
+  fun testClassPackageConflictInFQRefs() {
+    doTest("""
+        class Test {{
+          new conflict();
+          new conflict.C();
+        }}""".trimIndent())
   }
 
   fun testAccessFromDefaultPackage() {
