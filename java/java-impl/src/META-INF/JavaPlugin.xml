@@ -179,7 +179,6 @@
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
-    <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
@@ -258,7 +257,6 @@
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <printOption implementation="com.intellij.codeEditor.printing.HyperlinksToClassesOption"/>
-    <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
     <macro implementation="com.intellij.ide.macro.JavaDocPathMacro"/>
     <macro implementation="com.intellij.ide.macro.FilePackageMacro"/>
     <macro implementation="com.intellij.ide.macro.FileFQPackage"/>
