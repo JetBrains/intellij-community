@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,11 +23,11 @@ import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AbstractTitledSeparatorWithIcon;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,17 +35,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class ToolEditorDialog extends DialogWrapper {
   private static final String ADVANCED_OPTIONS_EXPANDED_KEY = "ExternalToolDialog.advanced.expanded";
   private static final boolean ADVANCED_OPTIONS_EXPANDED_DEFAULT = false;
+
+  private static final Function<String, List<String>> OUTPUT_FILTERS_SPLITTER = s -> StringUtil.split(s, MacKeymapUtil.RETURN);
+  private static final Function<List<String>, String> OUTPUT_FILTERS_JOINER = strings -> StringUtil.join(strings, MacKeymapUtil.RETURN);
 
   @Nullable private final Project myProject;
 
@@ -76,7 +78,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private JBCheckBox myUseConsoleCheckbox;
   private JBCheckBox myShowConsoleOnStdOutCheckbox;
   private JBCheckBox myShowConsoleOnStdErrCheckbox;
-  private ExpandableTextField myOutputFilterField;
+  private RawCommandLineEditor myOutputFilterField;
 
   @Override
   @NotNull
@@ -148,14 +150,7 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myOutputFilterField = new ExpandableTextField(text -> StringUtil.split(text, "\n"), strings -> StringUtil.join(strings, "\n"));
-    myOutputFilterField.getDocument().putProperty("filterNewlines", Boolean.FALSE);
-    myOutputFilterField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myAdvancedOptionsPanel.revalidate();
-      }
-    });
+    myOutputFilterField = new RawCommandLineEditor(OUTPUT_FILTERS_SPLITTER, OUTPUT_FILTERS_JOINER);
 
     myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.SplitRight,
                                                                      AllIcons.General.SplitDown,
@@ -247,12 +242,9 @@ public class ToolEditorDialog extends DialogWrapper {
       return new ValidationInfo("Specify the tool name", myNameField);
     }
 
-    final String filtersText = myOutputFilterField.getText().trim();
-    if (!filtersText.isEmpty()) {
-      for (String s : StringUtil.splitByLines(filtersText)) {
-        if (!s.contains(RegexpFilter.FILE_PATH_MACROS)) {
-          return new ValidationInfo("Each output filter must contain " + RegexpFilter.FILE_PATH_MACROS + " macro", myOutputFilterField);
-        }
+    for (String s : OUTPUT_FILTERS_SPLITTER.fun(myOutputFilterField.getText())) {
+      if (!s.contains(RegexpFilter.FILE_PATH_MACROS)) {
+        return new ValidationInfo("Each output filter must contain " + RegexpFilter.FILE_PATH_MACROS + " macro", myOutputFilterField);
       }
     }
 
@@ -280,11 +272,8 @@ public class ToolEditorDialog extends DialogWrapper {
     tool.setProgram(convertString(myProgramField.getText()));
     tool.setParameters(convertString(myArgumentsField.getText()));
 
-    final String filtersText = myOutputFilterField.getText().trim();
-    final FilterInfo[] filters = filtersText.isEmpty()
-                                 ? new FilterInfo[]{}
-                                 : Arrays.stream(StringUtil.splitByLines(filtersText)).map(s -> new FilterInfo(s, "", ""))
-                                   .toArray(FilterInfo[]::new);
+    final List<String> filterStrings = OUTPUT_FILTERS_SPLITTER.fun(myOutputFilterField.getText().trim());
+    final FilterInfo[] filters = ContainerUtil.map2Array(filterStrings, FilterInfo.class, s -> new FilterInfo(s, "", ""));
     tool.setOutputFilters(filters);
 
     return tool;
@@ -328,7 +317,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myWorkingDirField.setText(FileUtil.toSystemDependentName(StringUtil.notNullize(tool.getWorkingDirectory())));
     myProgramField.setText(tool.getProgram());
     myArgumentsField.setText(tool.getParameters());
-    myOutputFilterField.setText(Arrays.stream(tool.getOutputFilters()).map(f -> f.getRegExp()).collect(Collectors.joining("\n")));
+    myOutputFilterField.setText(OUTPUT_FILTERS_JOINER.fun(ContainerUtil.map(tool.getOutputFilters(), info -> info.getRegExp())));
   }
 
   @Override
