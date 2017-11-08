@@ -59,10 +59,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   @Override
   public void loadDictionary(@NotNull Loader loader) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      addCompressedFixedDictionary(CompressedDictionary.create(loader, transform));
+      addDictionary(CompressedDictionary.create(loader, transform));
     }
     else {
-      loadDictionaryAsync(loader, this::addCompressedFixedDictionary);
+      loadDictionaryAsync(loader, this::addDictionary);
     }
   }
 
@@ -124,7 +124,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   @Override
-  public void addCompressedFixedDictionary(@NotNull Dictionary dictionary) {
+  public void addDictionary(@NotNull Dictionary dictionary) {
     bundledDictionaries.add(dictionary);
   }
 
