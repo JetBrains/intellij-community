@@ -439,9 +439,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
+    boolean perProjectModality = Registry.is("ide.perProjectModality");
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (Registry.is("ide.perProjectModality")) {
+      if (perProjectModality) {
         LaterInvocator.enterModal(project, myDialog.getWindow());
       } else {
         LaterInvocator.enterModal(myDialog);
@@ -458,7 +459,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     finally {
       if (changeModalityState) {
         commandProcessor.leaveModal();
-        if (Registry.is("ide.perProjectModality")) {
+        if (perProjectModality) {
           LaterInvocator.leaveModal(project, myDialog.getWindow());
         } else {
           LaterInvocator.leaveModal(myDialog);
