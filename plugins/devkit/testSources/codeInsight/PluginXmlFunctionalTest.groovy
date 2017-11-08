@@ -379,8 +379,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testOrderAttributeCompletionKeywords() {
+    // no first/last because there's already 'first'
     myFixture.testCompletionVariants(getTestName(true) + ".xml",
-                                     LoadingOrder.FIRST_STR, LoadingOrder.LAST_STR,
                                      LoadingOrder.BEFORE_STR.trim(), LoadingOrder.AFTER_STR.trim())
   }
 
