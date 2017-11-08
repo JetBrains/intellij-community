@@ -9,6 +9,7 @@ import com.intellij.semantic.SemContributor
 import com.intellij.semantic.SemKey
 import com.intellij.semantic.SemRegistrar
 
+@JvmField
 val UAST_SEM_KEY = SemKey.createKey<UElement>("org.jetbrains.uast.uElement.semKey")!!
 
 class UElementSemContributor : SemContributor() {
