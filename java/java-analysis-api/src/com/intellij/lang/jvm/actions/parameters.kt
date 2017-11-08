@@ -5,3 +5,5 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo
 
 typealias ExpectedParameter = Pair<SuggestedNameInfo, ExpectedTypes>
 typealias ExpectedParameters = List<ExpectedParameter>
+
+fun nameInfo(vararg names: String): SuggestedNameInfo = object : SuggestedNameInfo(names) {}
