@@ -17,7 +17,6 @@ package com.intellij.uast;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -31,11 +30,7 @@ public class UastElementAnchorProvider extends SmartPointerAnchorProvider {
   @Override
   public PsiElement getAnchor(@NotNull PsiElement element) {
     if (element instanceof UElement) {
-      PsiElement psi = ((UElement)element).getPsi();
-      if (psi != null) {
-        psi.putUserData(UastContextKt.getCACHED_UELEMENT_KEY(), new SoftReference<>((UElement)element));
-      }
-      return psi;
+      return ((UElement)element).getPsi();
     }
     return null;
   }
