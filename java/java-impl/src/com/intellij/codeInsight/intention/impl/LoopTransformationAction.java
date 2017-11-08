@@ -33,10 +33,12 @@ public class LoopTransformationAction extends PsiElementBaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     Context context = Context.from(element);
     if(context == null) return;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (context.myConditionInTheBeginning) {
       PsiExpression whileCondition = context.myWhileStatement.getCondition();
       if(whileCondition == null) return;
-      whileCondition.replace(context.myCondition.copy());
+      String negatedText = BoolUtils.getNegatedExpressionText((PsiExpression)context.myCondition.copy());
+      whileCondition.replace(factory.createExpressionFromText(negatedText, context.myCondition));
       context.myConditionStatement.delete();
     } else {
       PsiExpression condition = (PsiExpression)context.myCondition.copy();
@@ -45,7 +47,7 @@ public class LoopTransformationAction extends PsiElementBaseIntentionAction {
       if(body == null) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock((PsiStatement)body.copy());
       String doWhileText = "do{}while(" + BoolUtils.getNegatedExpressionText(condition) + ");";
-      PsiStatement statement = JavaPsiFacade.getElementFactory(project).createStatementFromText(doWhileText, condition);
+      PsiStatement statement = factory.createStatementFromText(doWhileText, condition);
       PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)context.myWhileStatement.replace(statement);
       PsiBlockStatement blockStatement = (PsiBlockStatement)doWhileStatement.getBody();
       assert blockStatement != null;
