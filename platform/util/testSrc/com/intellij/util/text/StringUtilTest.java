@@ -629,4 +629,26 @@ public class StringUtilTest {
     assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)),
                  StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
   }
+
+  @Test
+  public void testIsLatinAlphanumeric() {
+    assertTrue(StringUtil.isLatinAlphanumeric("1234567890"));
+    assertTrue(StringUtil.isLatinAlphanumeric("123abc593"));
+    assertTrue(StringUtil.isLatinAlphanumeric("gwengioewn"));
+    assertTrue(StringUtil.isLatinAlphanumeric("FiwnFWinfs"));
+    assertTrue(StringUtil.isLatinAlphanumeric("b"));
+    assertTrue(StringUtil.isLatinAlphanumeric("1"));
+
+    assertFalse(StringUtil.isLatinAlphanumeric("йцукен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("ЙцуTYuio"));
+    assertFalse(StringUtil.isLatinAlphanumeric("йцу626кен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("12 12"));
+    assertFalse(StringUtil.isLatinAlphanumeric("."));
+    assertFalse(StringUtil.isLatinAlphanumeric("_"));
+    assertFalse(StringUtil.isLatinAlphanumeric("-"));
+    assertFalse(StringUtil.isLatinAlphanumeric("fhu384 "));
+    assertFalse(StringUtil.isLatinAlphanumeric(""));
+    assertFalse(StringUtil.isLatinAlphanumeric(null));
+    assertFalse(StringUtil.isLatinAlphanumeric("'"));
+  }
 }

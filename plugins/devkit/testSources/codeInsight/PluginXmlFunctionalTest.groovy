@@ -449,4 +449,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
     myFixture.testHighlighting()
   }
+
+  void testExtensionPointNameValidity() {
+    myFixture.testHighlighting(getTestName(true) + ".xml")
+  }
 }
