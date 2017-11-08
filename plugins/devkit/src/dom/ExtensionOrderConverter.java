@@ -5,15 +5,14 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -227,14 +226,22 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         String id = e.getId().getStringValue();
         if (StringUtil.isNotEmpty(id)) {
           DomTarget extensionTarget = DomTarget.getTarget(e);
+          PsiElement targetElement;
           if (extensionTarget != null) {
-            PsiElement extensionPsi = PomService.convertToPsi(extensionTarget);
-            idCompletionVariantsList.add(LookupElementBuilder.create(extensionPsi, id));
+            targetElement = PomService.convertToPsi(extensionTarget);
           }
           else {
             // shouldn't happen, fallback for additional safety
-            idCompletionVariantsList.add(LookupElementBuilder.create(e.getXmlTag(), id));
+            targetElement = e.getXmlTag();
           }
+
+          LookupElementBuilder element = LookupElementBuilder.create(targetElement, id);
+          Module module = e.getModule();
+          if (module != null) {
+            element = element.withTypeText(module.getName(), AllIcons.Actions.Module, false);
+          }
+
+          idCompletionVariantsList.add(element);
         }
       }
       return idCompletionVariantsList.toArray(new LookupElement[idCompletionVariantsList.size()]);
