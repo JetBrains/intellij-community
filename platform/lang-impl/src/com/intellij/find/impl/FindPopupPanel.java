@@ -1225,7 +1225,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private Map<Integer, Usage> getSelectedUsages() {
     int[] rows = myResultsPreviewTable.getSelectedRows();
     Map<Integer, Usage> result = null;
-    for (int row : rows) {
+    for (int i = rows.length - 1; i >= 0; i--) {
+      int row = rows[i];
       Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
         if (result == null) result = ContainerUtil.newLinkedHashMap();
