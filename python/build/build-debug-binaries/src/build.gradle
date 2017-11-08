@@ -14,22 +14,39 @@ envs {
   bootstrapDirectory = new File(buildDir, 'pythons')
   envsDirectory = new File(buildDir, 'envs')
 
-  conda "Miniconda3_64", "Miniconda3-latest", "64"
+  zipRepository = new URL("http://repo.labs.intellij.net/pycharm/python-archives-windows/")
+  shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
 
-  condaenv "py26_64", "2.6", "Miniconda3_64", ["cython"]
-  condaenv "py27_64", "2.7", "Miniconda3_64", ["cython"]
-  condaenv "py34_64", "3.4", "Miniconda3_64", ["cython"]
-  condaenv "py35_64", "3.5", "Miniconda3_64", ["cython"]
-  condaenv "py36_64", "3.6", "Miniconda3_64", ["cython"]
+  python "python26_64", "2.6.6", "64"
+  virtualenv "py26_64", "python26_64", ["cython"]
+
+  python "python27_64", "2.7.14", "64"
+  virtualenv "py27_64", "python27_64", ["cython"]
+
+  python "python34_64", "3.4.4", "64"
+  virtualenv "py34_64", "python34_64", ["cython"]
+
+  python "python35_64", "3.5.3", "64"
+  virtualenv "py35_64", "python35_64", ["cython"]
+
+  python "python36_64", "3.6.3", "64"
+  virtualenv "py36_64", "python36_64", ["cython"]
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    conda "Miniconda3_32", "Miniconda3-latest", "32"
+    python "python26_32", "2.6.6", "32"
+    virtualenv "py26_32", "python26_32", ["cython"]
 
-    condaenv "py26_32", "2.6", "Miniconda3_32", ["cython"]
-    condaenv "py27_32", "2.7", "Miniconda3_32", ["cython"]
-    condaenv "py34_32", "3.4", "Miniconda3_32", ["cython"]
-    condaenv "py35_32", "3.5", "Miniconda3_32", ["cython"]
-    condaenv "py36_32", "3.6", "Miniconda3_32", ["cython"]
+    python "python27_32", "2.7.14", "32"
+    virtualenv "py27_32", "python27_32", ["cython"]
+
+    python "python34_32", "3.4.4", "32"
+    virtualenv "py34_32", "python34_32", ["cython"]
+
+    python "python35_32", "3.5.3", "32"
+    virtualenv "py35_32", "python35_32", ["cython"]
+
+    python "python36_32", "3.6.3", "32"
+    virtualenv "py36_32", "python36_32", ["cython"]
   }
 }
 
@@ -41,7 +58,7 @@ task buildBinariesOnWindows(dependsOn: 'build_envs') << {
                 MINICONDA32_ENVS: envs.envsDirectory,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py27_32/python.exe", "build_tools/build_binaries_windows.py"
+    commandLine "${envs.envsDirectory}/py27_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
   }
 }
 
