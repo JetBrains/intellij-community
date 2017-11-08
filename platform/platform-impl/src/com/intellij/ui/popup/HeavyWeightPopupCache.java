@@ -41,9 +41,7 @@ final class HeavyWeightPopupCache implements ComponentListener {
         if (popup != null) return popup;
       }
     }
-    Window popup = new JWindow(owner);
-    popup.setType(Window.Type.POPUP);
-    return popup;
+    return new JWindow(owner);
   }
 
   /**
