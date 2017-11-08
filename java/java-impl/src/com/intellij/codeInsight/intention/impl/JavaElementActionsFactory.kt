@@ -10,10 +10,7 @@ import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.CreateFieldRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory
-import com.intellij.lang.jvm.actions.MemberRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
@@ -77,6 +74,11 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
       CreateMethodAction(javaClass, false, request),
       CreateMethodAction(javaClass, true, request)
     )
+  }
+
+  override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+    val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
+    return listOf(CreateConstructorAction(javaClass, request))
   }
 }
 
