@@ -53,7 +53,7 @@ class GradleRunner {
       result = runInner(tasks)
       if (!result) {
         def errorMessage = "Failed to complete `gradle ${tasks.join(' ')}`"
-        if (!force) {
+        if (force) {
           messages.warning(errorMessage)
         }
         else {
