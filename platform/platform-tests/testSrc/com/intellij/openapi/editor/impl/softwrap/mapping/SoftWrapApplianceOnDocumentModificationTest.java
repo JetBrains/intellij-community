@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+
 /**
  * @author Denis Zhdanov
  * @since 09/16/2010
@@ -1077,11 +1079,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
 
   private static void checkSoftWraps(int... startOffsets) {
-    final List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
-    assertEquals("soft wraps number", startOffsets.length, softWraps.size());
-    for (int i = 0; i < startOffsets.length; i++) {
-      assertEquals(startOffsets[i], softWraps.get(i).getStart());
-    }
+    assertArrayEquals(getSoftWrapModel().getRegisteredSoftWraps().stream().mapToInt(s -> s.getStart()).toArray(), startOffsets);
   }
   
   private static SoftWrapModelImpl getSoftWrapModel() {
