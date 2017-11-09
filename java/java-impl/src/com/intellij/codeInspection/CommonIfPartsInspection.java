@@ -53,21 +53,19 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         }
         else {
           ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, isOnTheFly);
-          if (thenElse != null) {
-            if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
-              forceInfo = true;
-              if(!isOnTheFly) return;
-            }
-            type = thenElse.myCommonPartType;
-            mayChangeSemantics = thenElse.myMayChangeSemantics;
-          }
-          else {
+          if (thenElse == null) {
             ElseIf elseIf = ElseIf.from(ifStatement, thenStatements);
             if (elseIf == null) return;
             String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if");
-            holder.registerProblem(ifStatement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new MergeElseIfsFix());
+            holder.registerProblem(ifStatement.getChildren()[0], message, ProblemHighlightType.WEAK_WARNING, new MergeElseIfsFix());
             return;
           }
+          if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
+            forceInfo = true;
+            if(!isOnTheFly) return;
+          }
+          type = thenElse.myCommonPartType;
+          mayChangeSemantics = thenElse.myMayChangeSemantics;
         }
         boolean warning = !forceInfo
                           && type != CommonPartType.WITH_VARIABLES_EXTRACT
@@ -99,7 +97,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement(), PsiIfStatement.class);
+      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement().getParent(), PsiIfStatement.class);
       if (ifStatement == null) return;
       ElseIf elseIf = ElseIf.from(ifStatement, unwrap(ifStatement.getThenBranch()));
       if (elseIf == null) return;
