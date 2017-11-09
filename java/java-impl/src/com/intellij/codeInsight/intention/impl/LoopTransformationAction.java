@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -99,6 +100,12 @@ public class LoopTransformationAction extends PsiElementBaseIntentionAction {
         if(StreamEx.of(statements)
           .flatMap(statement -> StreamEx.ofTree((PsiElement)statement, el -> StreamEx.of(el.getChildren())))
           .anyMatch(e -> e instanceof PsiContinueStatement)) return null;
+        boolean variablesInLoop = StreamEx.ofTree((PsiElement)lastBreakCondition, e -> StreamEx.of(e.getChildren()))
+          .select(PsiReferenceExpression.class)
+          .map(ref -> ref.resolve())
+          .select(PsiLocalVariable.class)
+          .anyMatch(var -> PsiTreeUtil.isAncestor(whileStatement, var, false));
+        if(variablesInLoop) return null;
         return new Context(whileStatement, lastBreakCondition, last, false);
       }
       return null;
