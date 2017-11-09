@@ -40,8 +40,7 @@ public abstract class InstructionVisitor {
 
   @NotNull
   public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
-                                                    @NotNull DfaMemoryState state,
-                                                    @NotNull DataFlowRunner runner) {
+                                                    @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
     DfaControlTransferValue transferValue = controlTransferInstruction.getTransfer();
     if (transferValue == null) {
       transferValue = (DfaControlTransferValue)state.pop();

@@ -38,13 +38,12 @@ public class SideEffectVisitor extends StandardInstructionVisitor {
   @NotNull
   @Override
   public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
-                                                    @NotNull DfaMemoryState state,
-                                                    @NotNull DataFlowRunner runner) {
+                                                    @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
     if (instruction instanceof ReturnInstruction && (((ReturnInstruction)instruction).getAnchor() != null ||
                                                      ((ReturnInstruction)instruction).isViaException())) {
       runner.cancel();
     }
-    return super.visitControlTransfer(instruction, state, runner);
+    return super.visitControlTransfer(instruction, runner, state);
   }
 
   @Override
