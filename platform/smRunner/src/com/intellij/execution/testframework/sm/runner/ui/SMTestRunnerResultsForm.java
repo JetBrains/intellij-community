@@ -544,11 +544,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  public int getTotalTestCount() {
+  protected int getTotalTestCount() {
     return myTotalTestCount;
   }
 
-  public int getStartedTestCount() {
+  protected int getStartedTestCount() {
     return myStartedTestCount;
   }
 
@@ -560,7 +560,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myFailedTestCount;
   }
 
-  public int getIgnoredTestCount() {
+  protected int getIgnoredTestCount() {
     return myIgnoredTestCount;
   }
 
