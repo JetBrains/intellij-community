@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,7 +134,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (request != null) {
       requestsManager.registerRequest(breakpoint, request);
       request.enable();
-      debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+      if (!Registry.is("debugger.classes.cache.fix")) {
+        debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+      }
     }
 
     AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();

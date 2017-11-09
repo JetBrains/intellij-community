@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -113,7 +114,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   private void updateCaches(@Nullable DebugProcessImpl debugProcess) {
-    if (debugProcess != null && debugProcess.isAttached()) {
+    if (!Registry.is("debugger.classes.cache.fix") && debugProcess != null && debugProcess.isAttached()) {
       debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
     myIcon = calcIcon(debugProcess);
