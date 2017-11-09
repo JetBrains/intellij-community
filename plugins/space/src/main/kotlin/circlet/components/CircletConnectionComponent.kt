@@ -2,7 +2,6 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.api.*
-import runtime.async.*
 import circlet.utils.*
 import com.intellij.concurrency.*
 import com.intellij.notification.*
@@ -10,12 +9,12 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
-import org.jetbrains.ktor.application.*
 import org.jetbrains.ktor.host.*
 import org.jetbrains.ktor.http.*
 import org.jetbrains.ktor.jetty.*
 import org.jetbrains.ktor.response.*
 import org.jetbrains.ktor.routing.*
+import runtime.async.*
 import runtime.net.*
 import runtime.reactive.*
 import java.awt.*
@@ -130,7 +129,7 @@ class CircletConnectionComponent(val project: Project) :
             routing {
                 get("auth") {
                     val jwt = call.parameters["jwt"]!!
-                    loginModel.signIn(jwt)
+                    loginModel.signIn(jwt, "jwt")
                     call.respondText("Hello, world!", ContentType.Text.Html)
                     lt.terminate()
                 }
