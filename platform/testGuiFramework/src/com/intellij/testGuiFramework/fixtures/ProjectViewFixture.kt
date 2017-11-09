@@ -130,7 +130,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
           nodeFixtureRef.set(getNodeFixtureByPath(pathTo as Array<String>))
           true
         }
-        catch (e: ComponentLookupException) {
+        catch (e: java.lang.Exception) {
           false
         }
       }
