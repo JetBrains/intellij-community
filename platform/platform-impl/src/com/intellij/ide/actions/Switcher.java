@@ -1117,10 +1117,13 @@ public class Switcher extends AnAction implements DumbAware {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
           files.clearSelection();
           files.setSelectedValue(element, true);
+          files.requestFocusInWindow();
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
+          toolWindows.clearSelection();
           toolWindows.setSelectedValue(element, true);
+          toolWindows.requestFocusInWindow();
         }
       }
 
