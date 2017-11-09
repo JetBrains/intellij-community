@@ -82,4 +82,10 @@ class Main {
     }
   }
 
+  private void test3(@Nullable Object val) {
+    if(<warning descr="Condition 'val != this || val != null' is always 'true'">val != this || <warning descr="Condition 'val != null' is always 'true' when reached">val != null</warning></warning>) {
+      System.out.println("never happens");
+    }
+  }
+
 }
