@@ -29,6 +29,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -60,7 +62,7 @@ public class EditorSearchSession implements SearchSession,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
-  public static DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
+  public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
 
   private final Editor myEditor;
   private final LivePreviewController myLivePreviewController;
@@ -68,6 +70,8 @@ public class EditorSearchSession implements SearchSession,
   @NotNull
   private final FindModel myFindModel;
   private final SearchReplaceComponent myComponent;
+  private final RangeMarker myStartSessionSelectionMarker;
+  private final RangeMarker myStartSessionCaretMarker;
 
   private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<>("Click to highlight", null, (__, ___) -> {
     setMatchesLimit(Integer.MAX_VALUE);
@@ -87,6 +91,14 @@ public class EditorSearchSession implements SearchSession,
     myFindModel = findModel;
 
     myEditor = editor;
+    myStartSessionSelectionMarker = myEditor.getDocument().createRangeMarker(
+      myEditor.getSelectionModel().getSelectionStart(),
+      myEditor.getSelectionModel().getSelectionEnd()
+    );
+    myStartSessionCaretMarker = myEditor.getDocument().createRangeMarker(
+      myEditor.getCaretModel().getOffset(),
+      myEditor.getCaretModel().getOffset()
+    );
 
     mySearchResults = new SearchResults(myEditor, project);
     myLivePreviewController = new LivePreviewController(mySearchResults, this, myDisposable);
@@ -167,6 +179,8 @@ public class EditorSearchSession implements SearchSession,
         if (event.getEditor() == myEditor) {
           Disposer.dispose(myDisposable);
           myLivePreviewController.dispose();
+          myStartSessionSelectionMarker.dispose();
+          myStartSessionCaretMarker.dispose();
         }
       }
     }, myDisposable);
@@ -273,7 +287,7 @@ public class EditorSearchSession implements SearchSession,
       updateResults(true);
     }
     else {
-      nothingToSearchFor();
+      nothingToSearchFor(true);
     }
     updateMultiLineStateIfNeed();
   }
@@ -379,7 +393,7 @@ public class EditorSearchSession implements SearchSession,
   private void updateResults(final boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.isEmpty()) {
-      nothingToSearchFor();
+      nothingToSearchFor(allowedToChangedEditorSelection);
     }
     else {
 
@@ -412,11 +426,23 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private void nothingToSearchFor() {
+  private void nothingToSearchFor(boolean allowedToChangedEditorSelection) {
     updateUIWithEmptyResults();
     if (mySearchResults != null) {
       mySearchResults.clear();
     }
+    if (allowedToChangedEditorSelection) {
+      restoreInitialCaretPositionAndSelection();
+    }
+  }
+
+  private void restoreInitialCaretPositionAndSelection() {
+    int originalSelectionStart = Math.min(myStartSessionSelectionMarker.getStartOffset(), myEditor.getDocument().getTextLength());
+    int originalSelectionEnd = Math.min(myStartSessionSelectionMarker.getEndOffset(), myEditor.getDocument().getTextLength());
+
+    myEditor.getSelectionModel().setSelection(originalSelectionStart, originalSelectionEnd);
+    myEditor.getCaretModel().moveToOffset(Math.min(myStartSessionCaretMarker.getEndOffset(), myEditor.getDocument().getTextLength()));
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   private void updateUIWithEmptyResults() {
