@@ -61,7 +61,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String USED_LEVELS = "used_levels";
   @TestOnly
-  public static boolean INIT_INSPECTIONS;
+  public static boolean INIT_INSPECTIONS = false;
   @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
   protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
@@ -153,7 +153,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     String version = element.getAttributeValue(VERSION_TAG);
-    if (!VALID_VERSION.equals(version)) {
+    if (version == null || !version.equals(VALID_VERSION)) {
       InspectionToolWrapper[] tools = getInspectionTools(null);
       for (Element toolElement : element.getChildren("inspection_tool")) {
         String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
@@ -162,13 +162,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           continue;
         }
         toolElement.setAttribute(CLASS_TAG, shortName);
-        myUninitializedSettings.put(shortName, JDOMUtil.internElement(toolElement));
+        myUninitializedSettings.put(shortName, toolElement.clone());
       }
     }
     else {
-      List<Element> children = element.getChildren(INSPECTION_TOOL_TAG);
-      for (Element toolElement : children) {
-        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), JDOMUtil.internElement(toolElement));
+      for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
+        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
       }
     }
   }
@@ -555,10 +554,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
     boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
-    Element element = myUninitializedSettings.remove(shortName);
+    final Element element = myUninitializedSettings.remove(shortName);
     try {
       if (element != null) {
-        element = element.clone();
         getPathMacroManager().expandPaths(element);
         toolsList.readExternal(element, getProfileManager(), dependencies);
       }

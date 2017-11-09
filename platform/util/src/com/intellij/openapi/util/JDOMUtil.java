@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * @author mike
  */
-@SuppressWarnings("HardCodedStringLiteral")
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
   private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
   private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
@@ -63,7 +63,12 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent) {
-    return parent == null ? Collections.<Element>emptyList() : parent.getChildren();
+    if (parent == null) {
+      return Collections.emptyList();
+    }
+    else {
+      return parent.getChildren();
+    }
   }
 
   @NotNull
@@ -143,11 +148,7 @@ public class JDOMUtil {
     return list.toArray(new Element[list.size()]);
   }
 
-  /**
-   * Replace all strings in JDOM {@code element} with their interned variants with the help of {@code interner} to reduce memory.
-   * It's better to use {@link #internElement(Element)} though because the latter will intern the Element instances too.
-   */
-  public static void internStringsInElement(@NotNull Element element, @NotNull StringInterner interner) {
+  public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
     element.setName(interner.intern(element.getName()));
 
     for (Attribute attr : element.getAttributes()) {
@@ -157,7 +158,7 @@ public class JDOMUtil {
 
     for (Content o : element.getContent()) {
       if (o instanceof Element) {
-        internStringsInElement((Element)o, interner);
+        internElement((Element)o, interner);
       }
       else if (o instanceof Text) {
         ((Text)o).setText(interner.intern(o.getValue()));
@@ -609,7 +610,7 @@ public class JDOMUtil {
 
   @NotNull
   private static ElementInfo getElementInfo(@NotNull Element element) {
-    boolean hasNullAttributes = false;
+    ElementInfo info = new ElementInfo();
     StringBuilder buf = new StringBuilder(element.getName());
     List attributes = element.getAttributes();
     if (attributes != null) {
@@ -625,18 +626,21 @@ public class JDOMUtil {
           buf.append("=");
           buf.append(attr.getValue());
           if (attr.getValue() == null) {
-            hasNullAttributes = true;
+            info.hasNullAttributes = true;
           }
         }
         buf.append("]");
       }
     }
-    return new ElementInfo(buf, hasNullAttributes);
+    info.name = buf.toString();
+    return info;
   }
 
   public static void updateFileSet(@NotNull File[] oldFiles, @NotNull String[] newFilePaths, @NotNull Document[] newFileDocuments, String lineSeparator)
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);
+
+    ArrayList<String> writtenFilesPaths = new ArrayList<String>();
 
     // check if files are writable
     for (String newFilePath : newFilePaths) {
@@ -651,7 +655,6 @@ public class JDOMUtil {
       }
     }
 
-    List<String> writtenFilesPaths = new ArrayList<String>();
     for (int i = 0; i < newFilePaths.length; i++) {
       String newFilePath = newFilePaths[i];
 
@@ -677,13 +680,8 @@ public class JDOMUtil {
   }
 
   private static class ElementInfo {
-    @NotNull final CharSequence name;
-    final boolean hasNullAttributes;
-
-    private ElementInfo(@NotNull CharSequence name, boolean attributes) {
-      this.name = name;
-      hasNullAttributes = attributes;
-    }
+    @NotNull public String name = "";
+    public boolean hasNullAttributes = false;
   }
 
   public static String getValue(Object node) {
@@ -701,11 +699,11 @@ public class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element == null || element.getAttributes().isEmpty() && element.getContent().isEmpty();
+    return element == null || (element.getAttributes().isEmpty() && element.getContent().isEmpty());
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
-    return element == null || element.getAttributes().size() == attributeCount && element.getContent().isEmpty();
+    return element == null || (element.getAttributes().size() == attributeCount && element.getContent().isEmpty());
   }
 
   public static void merge(@NotNull Element to, @NotNull Element from) {
@@ -742,51 +740,5 @@ public class JDOMUtil {
       to.setAttribute(attribute);
     }
     return to;
-  }
-
-  private static final JDOMInterner ourJDOMInterner = new JDOMInterner();
-  /**
-   * Interns {@code element} to reduce instance count of many identical Elements created after loading JDOM document to memory.
-   * For example, after interning <pre>{@code
-   * <app>
-   *   <component load="true" isDefault="true" name="comp1"/>
-   *   <component load="true" isDefault="true" name="comp2"/>
-   * </app>}</pre>
-   *
-   * there will be created just one XmlText("\n  ") instead of three for whitespaces between tags,
-   * one Attribute("load=true") instead of two equivalent for each component tag etc.
-   *
-   * <p><h3>Intended usage:</h3>
-   * - When you need to keep some part of JDOM tree in memory, use this method before save the element to some collection,
-   *   E.g.: <pre>{@code
-   *   public void readExternal(final Element element) {
-   *     myStoredElement = JDOMUtil.internElement(element);
-   *   }
-   *   }</pre>
-   * - When you need to save interned element back to JDOM and/or modify/add it, use {@link ImmutableElement#clone()}
-   *   to obtain mutable modifiable Element.
-   *   E.g.: <pre>{@code
-   *   void writeExternal(Element element) {
-   *     for (Attribute a : myStoredElement.getAttributes()) {
-   *       element.setAttribute(a.getName(), a.getValue()); // String getters work as before
-   *     }
-   *     for (Element child : myStoredElement.getChildren()) {
-   *       element.addContent(child.clone()); // need to call clone() before modifying/adding
-   *     }
-   *   }
-   *   }</pre>
-   *
-   * @return interned Element, i.e Element which<br/>
-   * - is the same for equivalent parameters. E.g. two calls of internElement() with {@code <xxx/>} and the other {@code <xxx/>}
-   * will return the same element {@code <xxx/>}<br/>
-   * - getParent() method is not implemented (and will throw exception; interning would not make sense otherwise)<br/>
-   * - is immutable (all modifications methods like setName(), setParent() etc will throw)<br/>
-   * - has {@code clone()} method which will return modifiable org.jdom.Element copy.<br/>
-   *
-   *
-   */
-  @NotNull
-  public static Element internElement(@NotNull Element element) {
-    return ourJDOMInterner.internElement(element);
   }
 }

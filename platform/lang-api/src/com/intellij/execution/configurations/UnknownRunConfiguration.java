@@ -22,7 +22,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -119,7 +118,7 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
 
   @Override
   public void readExternal(final Element element) throws InvalidDataException {
-    myStoredElement = JDOMUtil.internElement(element);
+    myStoredElement = element.clone();
   }
 
   @Override

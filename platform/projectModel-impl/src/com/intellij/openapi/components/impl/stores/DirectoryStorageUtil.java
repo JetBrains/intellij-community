@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ public class DirectoryStorageUtil {
       return Collections.emptyMap();
     }
 
+    StringInterner interner = new StringInterner();
     Map<String, Element> fileToState = new THashMap<>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
@@ -77,6 +79,7 @@ public class DirectoryStorageUtil {
           continue;
         }
 
+        JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(state);
           if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
@@ -84,8 +87,7 @@ public class DirectoryStorageUtil {
           }
         }
 
-        Element newState = JDOMUtil.internElement(state);
-        fileToState.put(file.getName(), newState);
+        fileToState.put(file.getName(), state);
       }
       catch (Throwable e) {
         LOG.warn("Unable to load state", e);

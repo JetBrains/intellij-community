@@ -18,7 +18,6 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -153,8 +152,10 @@ public class CommonCodeStyleSettingsManager {
           CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
           settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
         }
-        // no need to clone, myUnknownSettingsMap contains immutable elements
-        settingsManager.myUnknownSettingsMap.putAll(myUnknownSettingsMap);
+        for (Map.Entry<String,Content> contentEntry : myUnknownSettingsMap.entrySet()) {
+          Content contentCopy = contentEntry.getValue().clone();
+          settingsManager.myUnknownSettingsMap.put(contentEntry.getKey(), contentCopy);
+        }
       }
       return settingsManager;
     }
@@ -182,7 +183,7 @@ public class CommonCodeStyleSettingsManager {
             }
           }
           if (!isKnownLanguage) {
-            myUnknownSettingsMap.put(languageId, JDOMUtil.internElement(commonSettingsElement));
+            myUnknownSettingsMap.put(languageId, commonSettingsElement.clone());
           }
         }
       }
@@ -217,7 +218,7 @@ public class CommonCodeStyleSettingsManager {
         else {
           final Content unknown = myUnknownSettingsMap.get(id);
           if (unknown != null) {
-            element.addContent(unknown.clone());
+            element.addContent(unknown.detach());
           }
         }
       }
