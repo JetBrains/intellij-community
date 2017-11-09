@@ -581,6 +581,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
+      if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
+        return;
+      }
+    }
+
     actionPerformed(e, null);
   }
 
