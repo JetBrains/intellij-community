@@ -17,6 +17,16 @@ class bugcheck {
     }
   }
 
+  private static boolean nullCheck1() {
+    Long size = null;
+    try (MyAutoCloseable autoCloseable = new MyAutoCloseable()) {
+      size = autoCloseable.count()+1;
+    } catch (MyAutoCloseable.MyClosingException e) {
+      return <warning descr="Condition 'size == null' is always 'false'">size == null</warning>;
+    }
+    return <warning descr="Condition 'size == null' is always 'false'">size == null</warning>;
+  }
+
   private static Object nullCheck2() {
     Long size = null;
     try (MyAutoCloseable autoCloseable = new MyAutoCloseable()) {
