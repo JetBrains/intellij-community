@@ -26,7 +26,7 @@ public interface Extension extends DomElement {
   @Required(value = false)
   GenericAttributeValue<String> getId();
 
-  @Referencing(ExtensionOrderConverter.class)
+  @Referencing(value = ExtensionOrderConverter.class, soft = true)
   @Required(value = false)
   GenericAttributeValue<String> getOrder();
 
