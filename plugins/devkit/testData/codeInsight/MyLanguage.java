@@ -19,4 +19,12 @@ public class MyLanguage extends com.intellij.lang.Language {
       return myName;
     }
   }
+
+
+  public static class AbstractLanguage extends Language {
+    protected AbstractLanguage() {
+      super("AbstractLanguageIDMustNotBeVisible");
+    }
+  }
+
 }
