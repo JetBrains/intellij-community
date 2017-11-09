@@ -169,7 +169,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       //withProjectLibrary("builder-model") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("android","lib/antlr4-runtime-4.5.3.jar", "lib")

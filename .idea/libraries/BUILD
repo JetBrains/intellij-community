@@ -549,14 +549,6 @@ java_library(
 )
 
 java_library(
-    name = "lombok-ast",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/external/lombok/lombok-ast/0.2.3:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/external/lombok/lombok-ast/0.2.3:jar"],
-)
-
-java_library(
     name = "layoutlib",
     tags = ["managed"],
     visibility = ["//visibility:public"],
