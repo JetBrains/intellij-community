@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +131,28 @@ public class WeakestTypeFinder {
         if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression || 
             !findWeakestType(methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
+        }
+        // consider method can have super methods with weaker return type
+        PsiType expectedType = ExpectedTypeUtils.findExpectedType(methodCallExpression, false);
+        if (expectedType != null) {
+          PsiMethod method = methodCallExpression.resolveMethod();
+          if (method == null) return Collections.emptyList();
+          PsiType returnType = method.getReturnType();
+          if (returnType == null) return Collections.emptyList();
+          PsiMethod[] superMethods = method.findSuperMethods();
+          boolean supersHaveDifferentReturnType = StreamEx.of(superMethods).anyMatch(m -> !m.getReturnType().equals(returnType));
+          if (supersHaveDifferentReturnType) {
+            boolean assigned = false;
+            for (PsiMethod superMethod : superMethods) {
+              if (expectedType.isAssignableFrom(superMethod.getReturnType())) {
+                checkClass(superMethod.getContainingClass(), weakestTypeClasses);
+                assigned = true;
+              }
+            }
+            if(!assigned) {
+              return Collections.emptyList();
+            }
+          }
         }
       }
       else if (referenceParent instanceof PsiAssignmentExpression) {
@@ -246,8 +269,7 @@ public class WeakestTypeFinder {
     if (!hasUsages) {
       return Collections.emptyList();
     }
-    weakestTypeClasses = filterAccessibleClasses(weakestTypeClasses, variableOrMethodClass, variableOrMethod);
-    return weakestTypeClasses;
+    return filterAccessibleClasses(weakestTypeClasses, variableOrMethodClass, variableOrMethod);
   }
 
   private static boolean findWeakestType(PsiElement referenceElement,

@@ -15,21 +15,18 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
-import com.intellij.util.xml.Required;
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
+@Presentation(typeName = "Extension")
 public interface Extension extends DomElement {
 
   @NameValue
   @Required(value = false)
   GenericAttributeValue<String> getId();
 
+  @Referencing(value = ExtensionOrderConverter.class, soft = true)
   @Required(value = false)
   GenericAttributeValue<String> getOrder();
 

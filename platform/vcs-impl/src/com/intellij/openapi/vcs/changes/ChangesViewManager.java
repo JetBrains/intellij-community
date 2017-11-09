@@ -85,6 +85,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
   private final Alarm myRepaintAlarm;
@@ -110,6 +111,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public ChangesViewManager(@NotNull Project project, @NotNull ChangesViewContentManager contentManager) {
     myProject = project;
     myContentManager = contentManager;
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myView = new ChangesListView(project);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myTsl = new TreeSelectionListener() {
@@ -216,7 +218,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
     mySplitterComponent =
       new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                       VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+                                       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     content.add(mySplitterComponent, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
@@ -493,12 +495,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
-      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
+      myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
+      return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }
 

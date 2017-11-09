@@ -44,4 +44,13 @@ public class TraceUtil {
       .map(x -> StringUtil.shortenTextWithEllipsis(x.getText().replaceAll("\\s", ""), 30, 5, THREE_DOTS))
       .joining(", ", "(", ")");
   }
+
+  @NotNull
+  public static String formatQualifierExpression(@NotNull String expression, int maxLength) {
+    expression = expression.replaceAll("\\s", "").replaceAll(",", ", ");
+    if (expression.length() < maxLength) return expression;
+    if (expression.isEmpty()) return "qualifier";
+
+    return StringUtil.shortenTextWithEllipsis(expression, maxLength - 8, 5, THREE_DOTS);
+  }
 }

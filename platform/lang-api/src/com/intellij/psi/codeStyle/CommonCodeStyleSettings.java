@@ -919,11 +919,11 @@ public class CommonCodeStyleSettings {
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
     // region More continuations (reserved for versions 2018.x)
-    @SuppressWarnings("unused") public int DECLARATION_PARAMETER_INDENT = - 1;
-    @SuppressWarnings("unused") public int GENERIC_TYPE_PARAMETER_INDENT = -1;
-    @SuppressWarnings("unused") public int CALL_PARAMETER_INDENT = -1;
-    @SuppressWarnings("unused") public int CHAINED_CALL_INDENT = -1;
-    @SuppressWarnings("unused") public int ARRAY_ELEMENT_INDENT = -1; // array declarations
+    public int DECLARATION_PARAMETER_INDENT = - 1;
+    public int GENERIC_TYPE_PARAMETER_INDENT = -1;
+    public int CALL_PARAMETER_INDENT = -1;
+    public int CHAINED_CALL_INDENT = -1;
+    public int ARRAY_ELEMENT_INDENT = -1; // array declarations
     // endregion
 
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
@@ -981,6 +981,12 @@ public class CommonCodeStyleSettings {
       if (SMART_TABS != that.SMART_TABS) return false;
       if (TAB_SIZE != that.TAB_SIZE) return false;
       if (USE_TAB_CHARACTER != that.USE_TAB_CHARACTER) return false;
+
+      if (DECLARATION_PARAMETER_INDENT != that.DECLARATION_PARAMETER_INDENT) return false;
+      if (GENERIC_TYPE_PARAMETER_INDENT != that.GENERIC_TYPE_PARAMETER_INDENT) return false;
+      if (CALL_PARAMETER_INDENT != that.CALL_PARAMETER_INDENT) return false;
+      if (CHAINED_CALL_INDENT != that.CHAINED_CALL_INDENT) return false;
+      if (ARRAY_ELEMENT_INDENT != that.ARRAY_ELEMENT_INDENT) return false;
 
       return true;
     }

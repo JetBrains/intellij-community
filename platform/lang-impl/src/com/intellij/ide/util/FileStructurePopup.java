@@ -371,7 +371,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     rebuildAndSelect(false, myInitialElement).processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      FilteringTreeBuilder.revalidateTree(myTree);
       myTreeHasBuilt.setDone();
       installUpdater();
     }));
@@ -474,7 +473,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
       TreeUtil.ensureSelection(myTree);
-      FilteringTreeBuilder.revalidateTree(myTree);
       Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
       if (userObject != null && Comparing.equal(element, unwrapValue(userObject))) {
         myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
@@ -835,8 +833,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
-        myStructureTreeModel.invalidate().rejected(ignore -> result.setError("rejected")).done(
-          ignore ->
+        myStructureTreeModel.invalidate(
+          () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
               .rejected(ignore2 -> result.setError("rejected"))
               .done(p -> UIUtil.invokeLaterIfNeeded(
@@ -844,15 +842,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
                   TreeUtil.expand(getTree(), 2);
                   TreeUtil.ensureSelection(myTree);
                   mySpeedSearch.refreshSelection();
-                  FilteringTreeBuilder.revalidateTree(myTree);
                   result.setResult(p);
                 })));
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate()
-          .rejected(ignore -> result.setError("rejected"))
-          .done(ignore -> rebuildAndSelect(true, selection).notify(result));
+        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).notify(result));
       }
     });
     return result;
@@ -1162,5 +1157,4 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
     return parents;
   }
-
 }

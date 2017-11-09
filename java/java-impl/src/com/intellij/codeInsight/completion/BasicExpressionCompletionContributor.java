@@ -31,10 +31,9 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author peter
@@ -96,7 +95,7 @@ public class BasicExpressionCompletionContributor {
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 
-    final Map<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
+    MultiMap<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
     if (map.isEmpty()) {
       return;
     }
@@ -114,8 +113,7 @@ public class BasicExpressionCompletionContributor {
             PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
             final PsiExpression operand = typeCastExpression.getOperand();
             if (operand != null) {
-              final PsiType dfaCasted = map.get(operand);
-              if (dfaCasted != null && dfaCasted.equals(typeCastExpression.getType())) {
+              if (map.get(operand).contains(typeCastExpression.getType())) {
                 map.remove(operand);
               }
             }
@@ -125,11 +123,12 @@ public class BasicExpressionCompletionContributor {
       }
     }, context, context.getContainingFile());
 
-    for (final PsiExpression expression : map.keySet()) {
-      final PsiType castType = map.get(expression);
-      final PsiType baseType = expression.getType();
-      if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
-        consumer.consume(CastingLookupElementDecorator.createCastingElement(expressionToLookupElement(expression), castType));
+    for (PsiExpression expression : map.keySet()) {
+      for (PsiType castType : map.get(expression)) {
+        PsiType baseType = expression.getType();
+        if (expectedType == null || (expectedType.isAssignableFrom(castType) && (baseType == null || !expectedType.isAssignableFrom(baseType)))) {
+          consumer.consume(CastingLookupElementDecorator.createCastingElement(expressionToLookupElement(expression), castType));
+        }
       }
     }
   }

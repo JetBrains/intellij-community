@@ -79,7 +79,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
       on_master
 
       (cherry picked from commit ${shortHash(commit)})""".trimIndent())
-    myRepo.assertCommitted {
+    repo.assertCommitted {
       modified("c.txt")
     }
     assertSuccessfulNotification("Cherry-pick successful",
@@ -89,7 +89,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun cherryPick(hashes: List<String>) {
     val details = readDetails(hashes)
-    GitCherryPicker(myProject, myGit).cherryPick(details)
+    GitCherryPicker(project, git).cherryPick(details)
   }
 
   protected fun cherryPick(vararg hashes: String) {
@@ -100,13 +100,4 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     return HashImpl.build(hash).toShortString()
   }
 
-  protected fun prepareConflict(): String {
-    val file = file("c.txt")
-    file.create("initial\n").addCommit("initial")
-    branch("feature")
-    val commit = file.append("master\n").addCommit("on_master").hash()
-    checkout("feature")
-    file.append("feature\n").addCommit("on_feature")
-    return commit
-  }
 }

@@ -29,7 +29,7 @@ class GitHistoryTest : GitSingleRepoTest() {
     val MESSAGE = "Before \u001B[30;47mescaped\u001B[0m after"
     commit(MESSAGE)
 
-    val history = GitFileHistory.collectHistory(project, VcsUtil.getFilePath(myProjectRoot, "a.txt"), "-1")
+    val history = GitFileHistory.collectHistory(project, VcsUtil.getFilePath(projectRoot, "a.txt"), "-1")
     assertEquals("Commit message is incorrect", MESSAGE, history[0].commitMessage)
   }
 }

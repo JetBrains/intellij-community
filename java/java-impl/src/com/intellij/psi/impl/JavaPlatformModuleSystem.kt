@@ -97,7 +97,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
             JavaModuleGraphUtil.exports(targetModule, packageName, useModule) ||
             module != null && inAddedExports(module, targetName, packageName, useName))) {
         if (quick) return ERR
-        val fixes = if (module == null) emptyList() else listOf(AddExportsOptionFix(module, targetName, packageName, useName))
+        val fixes = when {
+          packageName.isEmpty() -> emptyList()
+          module != null && targetModule is PsiCompiledElement -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
+          else -> emptyList()
+        }
         return when (useModule) {
           null -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetName), fixes)
           else -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetName, useName), fixes)

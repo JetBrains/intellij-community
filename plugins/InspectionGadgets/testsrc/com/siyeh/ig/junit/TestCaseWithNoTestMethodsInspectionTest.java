@@ -46,7 +46,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
       "public interface Test {\n" +
       "    public abstract int countTestCases();\n" +
       "    public abstract void run(TestResult result);\n" +
-      "}"
+      "}",
+      "package org.junit.jupiter.api;" +
+      "public @interface Test {}"
     };
   }
 }

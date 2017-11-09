@@ -32,7 +32,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -261,9 +260,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
-      final Project finalProject = project;
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(finalProject));
-      return project;
+      return null;
     }
 
     if (callback != null) {

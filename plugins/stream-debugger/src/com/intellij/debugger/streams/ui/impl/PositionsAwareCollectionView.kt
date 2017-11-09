@@ -4,20 +4,17 @@ package com.intellij.debugger.streams.ui.impl
 import com.intellij.debugger.streams.ui.PaintingListener
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class PositionsAwareCollectionView(header: String,
-                                        tree: CollectionTree,
+open class PositionsAwareCollectionView(tree: CollectionTree,
                                         private val values: List<ValueWithPositionImpl>)
-  : CollectionView(header, tree) {
+  : CollectionView(tree) {
   private val myDispatcher: EventDispatcher<ValuesPositionsListener> = EventDispatcher.create(ValuesPositionsListener::class.java)
 
   init {
-    Disposer.register(this, instancesTree)
     instancesTree.addPaintingListener(object : PaintingListener {
       override fun componentPainted() {
         updateValues()
@@ -66,6 +63,3 @@ open class PositionsAwareCollectionView(header: String,
     }
   }
 }
-
-class SourceView(tree: CollectionTree)
-  : CollectionView("Source", tree)

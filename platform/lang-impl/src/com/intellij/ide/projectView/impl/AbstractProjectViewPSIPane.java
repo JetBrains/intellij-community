@@ -218,7 +218,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       builder.addSubtreeToUpdate(builder.getRootNode(), afterUpdate);
     }
     else if (myAsyncSupport != null) {
-      myAsyncSupport.updateAll();
+      myAsyncSupport.updateAll(afterUpdate);
     }
     return cb;
   }

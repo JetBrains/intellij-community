@@ -189,7 +189,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
               PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
               if (chosenMethod != null) {
                 int parametersCount = chosenMethod.getParameterList().getParametersCount();
-                if ((parametersCount == 1 || parametersCount == 2 && chosenMethod.isVarArgs()) && 
+                if ((parametersCount == 1 && !chosenMethod.isVarArgs() || parametersCount == 2 && chosenMethod.isVarArgs()) && 
                                             !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) return false;
               }
             }
@@ -203,7 +203,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static boolean overloadWithNoParametersExists(PsiMethod method, Object[] candidates) {
     String methodName = method.getName();
     return ContainerUtil.find(candidates, c -> {
-      PsiMethod m = (PsiMethod)((CandidateInfo)c).getElement();
+      if (!(c instanceof CandidateInfo)) return false;
+      PsiElement e = ((CandidateInfo)c).getElement();
+      if (!(e instanceof PsiMethod)) return false;
+      PsiMethod m = (PsiMethod)e;
       return m.getParameterList().getParametersCount() == 0 && m.getName().equals(methodName);
     }) != null;
   }
@@ -598,6 +601,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (context.isSingleParameterInfo()) {
           String javaDoc = new JavaDocInfoGenerator(param.getProject(), param).generateMethodParameterJavaDoc();
           if (javaDoc != null) {
+            javaDoc = removeHyperlinks(javaDoc);
             if (javaDoc.length() < 100) {
               buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
             }
@@ -646,6 +650,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.getDefaultParameterColor()
       );
     }
+  }
+
+  private static String removeHyperlinks(String html) {
+    return html.replaceAll("<a.*?>", "").replaceAll("</a>", "");
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {

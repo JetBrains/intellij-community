@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
@@ -45,6 +46,7 @@ public class DataFlowRunner {
   @NotNull
   private final DfaValueFactory myValueFactory;
   private boolean myInlining = true;
+  private boolean myCancelled = false;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
@@ -60,6 +62,14 @@ public class DataFlowRunner {
   @NotNull
   public DfaValueFactory getFactory() {
     return myValueFactory;
+  }
+
+  /**
+   * Call this method from the visitor to cancel analysis (e.g. if wanted fact is already established and subsequent analysis
+   * is useless). In this case {@link RunnerResult#CANCELLED} will be returned.
+   */
+  public void cancel() {
+    myCancelled = true;
   }
 
   @Nullable
@@ -95,11 +105,19 @@ public class DataFlowRunner {
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
   }
 
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
+                                             @NotNull InstructionVisitor visitor,
+                                             Consumer<DfaMemoryState> initialStateAdjuster) {
+    final DfaMemoryState state = createMemoryState();
+    initialStateAdjuster.accept(state);
+    return analyzeMethod(block, visitor, false, Collections.singleton(state));
+  }
+
   @NotNull
   final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
                                    @NotNull InstructionVisitor visitor,
                                    boolean ignoreAssertions,
-                                   @NotNull Collection<DfaMemoryState> initialStates) {
+                                   @NotNull Collection<? extends DfaMemoryState> initialStates) {
     try {
       final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
@@ -210,6 +228,9 @@ public class DataFlowRunner {
             }
             queue.offer(state);
           }
+        }
+        if (myCancelled) {
+          return RunnerResult.CANCELLED;
         }
       }
 

@@ -53,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
             if (userObject instanceof ExecutionNode) {
               String duration = ((ExecutionNode)userObject).getDuration();
-              updateTimeColumnWidth("_" + duration, false);
+              updateTimeColumnWidth("___" + duration, false);
               return duration;
             }
           }
@@ -150,8 +151,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     };
 
-    final TreeCellRenderer treeCellRenderer = treeTable.getTree().getCellRenderer();
-    treeTable.getTree().setCellRenderer(new TreeCellRenderer() {
+    TreeTableTree tree = treeTable.getTree();
+    final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
+    tree.setCellRenderer(new TreeCellRenderer() {
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,
@@ -189,7 +191,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myTimeColumn.setResizable(false);
     updateTimeColumnWidth("Running for " + StringUtil.formatDuration(11111L), true);
 
-    TreeTableTree tree = treeTable.getTree();
+    TreeUtil.installActions(tree);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
     myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
@@ -630,7 +632,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       AnAction[] consoleActions = myConsole.createConsoleActions();
       consoleComponent.setFocusable(true);
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
                                                     new SideBorder(editorBackground, SideBorder.LEFT)));
       myPanel.add(consoleComponent, BorderLayout.CENTER);
       final ActionToolbar toolbar = ActionManager.getInstance()

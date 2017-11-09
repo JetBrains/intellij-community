@@ -109,14 +109,18 @@ public class GradleTestsExecutionConsoleManager
     }
     SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
     testsRootNode.setSuiteStarted();
-    resultsViewer.onTestingStarted(testsRootNode);
     if (processHandler != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (testsRootNode.isInProgress()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              testsRootNode.setFinished();
+              if (event.getExitCode() == 1) {
+                testsRootNode.setTestFailed("", null, false);
+              }
+              else {
+                testsRootNode.setFinished();
+              }
               resultsViewer.onTestingFinished(testsRootNode);
             });
           }

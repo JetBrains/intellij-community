@@ -54,7 +54,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   public void testDeleteDirRecursively() throws Exception {
     GuiUtils.runOrInvokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final VirtualFile dir = myProjectRoot.findChild("dir");
+      final VirtualFile dir = projectRoot.findChild("dir");
       myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
       FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
     }));
@@ -69,7 +69,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
     // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
     // This is not consistent though.
-    final VirtualFile dir= myProjectRoot.findChild("dir");
+    final VirtualFile dir= projectRoot.findChild("dir");
     final VirtualFile file = create(dir, "new.txt");
     moveFile(file, myRootDir);
     assertChanges(file, ADDED);

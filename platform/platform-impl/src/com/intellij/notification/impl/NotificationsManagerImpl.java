@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -411,10 +397,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setEditable(false);
     text.setOpaque(false);
 
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      text.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
-
     text.setBorder(null);
 
     final JPanel content = new NonOpaquePanel(new BorderLayout());
@@ -568,9 +550,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       JLabel title = new JLabel();
       lafHandler.setTitle(title, titleR, titleD);
       title.setOpaque(false);
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
-        title.setBackground(UIUtil.TRANSPARENT_COLOR);
-      }
       title.setForeground(foreground);
       centerPanel.add(title, BorderLayout.NORTH);
     }

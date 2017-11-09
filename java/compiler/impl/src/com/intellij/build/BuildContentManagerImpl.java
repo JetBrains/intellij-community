@@ -263,8 +263,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
     return content;
   }
 
-  public void startBuildNotified(@NotNull Content content, @NotNull BuildProcessHandler processHandler) {
-    new CloseListener(content, processHandler);
+  public void startBuildNotified(@NotNull Content content, @Nullable BuildProcessHandler processHandler) {
+    if (processHandler != null) {
+      new CloseListener(content, processHandler);
+    }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
@@ -311,7 +313,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
     private CloseListener(@NotNull final Content content, @NotNull BuildProcessHandler processHandler) {
       myContent = content;
-      content.getManager().addContentManagerListener(this);
+      ContentManager contentManager = content.getManager();
+      if (contentManager != null) {
+        contentManager.addContentManagerListener(this);
+      }
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
       myProcessHandler = processHandler;
     }
@@ -368,7 +373,8 @@ public class BuildContentManagerImpl implements BuildContentManager {
       final boolean canClose = closeQuery(true);
       // Content could be removed during close query
       if (canClose && myContent != null) {
-        myContent.getManager().removeContent(myContent, true);
+        ContentManager contentManager = myContent.getManager();
+        if (contentManager != null) contentManager.removeContent(myContent, true);
         myContent = null;
       }
       return canClose;

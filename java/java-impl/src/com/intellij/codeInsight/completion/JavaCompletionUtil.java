@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -285,30 +286,28 @@ public class JavaCompletionUtil {
 
     final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options, nameCondition);
     final PsiType plainQualifier = processor.getQualifierType();
-    PsiType qualifierType = plainQualifier;
 
-    PsiType runtimeQualifier = getQualifierCastType(javaReference, parameters);
-    if (runtimeQualifier != null) {
-      PsiType composite = qualifierType == null ? runtimeQualifier : PsiIntersectionType.createIntersection(qualifierType, runtimeQualifier);
+    List<PsiType> runtimeQualifiers = getQualifierCastTypes(javaReference, parameters);
+    if (!runtimeQualifiers.isEmpty()) {
+      PsiType composite = PsiIntersectionType.createIntersection(JBIterable.of(plainQualifier).append(runtimeQualifiers).toList());
       PsiElement ctx = createContextWithXxxVariable(element, composite);
       javaReference = createReference("xxx.xxx", ctx);
-      qualifierType = runtimeQualifier;
-      processor.setQualifierType(qualifierType);
+      processor.setQualifierType(composite);
     }
 
     javaReference.processVariants(processor);
 
-    final PsiTypeLookupItem castItem = runtimeQualifier == null ? null : PsiTypeLookupItem.createLookupItem(runtimeQualifier, (PsiReferenceExpression)javaReference);
+    List<PsiTypeLookupItem> castItems = ContainerUtil.map(runtimeQualifiers, q -> PsiTypeLookupItem.createLookupItem(q, element));
 
     final boolean pkgContext = inSomePackage(element);
 
-    PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
+    PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(plainQualifier);
     final boolean honorExcludes = qualifierClass == null || !isInExcludedPackage(qualifierClass, false);
 
     final Set<PsiMember> mentioned = new THashSet<>();
     for (CompletionElement completionElement : processor.getResults()) {
       for (LookupElement item : createLookupElements(completionElement, javaReference)) {
-        item.putUserData(QUALIFIER_TYPE_ATTR, qualifierType);
+        item.putUserData(QUALIFIER_TYPE_ATTR, plainQualifier);
         final Object o = item.getObject();
         if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
           continue;
@@ -319,7 +318,9 @@ public class JavaCompletionUtil {
           }
           mentioned.add(CompletionUtil.getOriginalOrSelf((PsiMember)o));
         }
-        set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier, processor), o, element));
+        PsiTypeLookupItem qualifierCast = findQualifierCast(item, castItems, plainQualifier, processor);
+        if (qualifierCast != null) item = castQualifier(item, qualifierCast);
+        set.add(highlightIfNeeded(qualifierCast != null ? qualifierCast.getType() : plainQualifier, item, o, element));
       }
     }
 
@@ -346,38 +347,34 @@ public class JavaCompletionUtil {
     return (PsiReferenceExpression) JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
   }
 
-  @Nullable
-  private static PsiType getQualifierCastType(PsiJavaReference javaReference, CompletionParameters parameters) {
+  @NotNull
+  private static List<PsiType> getQualifierCastTypes(PsiJavaReference javaReference, CompletionParameters parameters) {
     if (javaReference instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)javaReference;
       final PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         final Project project = qualifier.getProject();
-        PsiType type = null;
-        final PairFunction<PsiExpression, CompletionParameters, PsiType> evaluator = refExpr.getContainingFile().getCopyableUserData(DYNAMIC_TYPE_EVALUATOR);
+        PairFunction<PsiExpression, CompletionParameters, PsiType> evaluator = refExpr.getContainingFile().getCopyableUserData(DYNAMIC_TYPE_EVALUATOR);
         if (evaluator != null) {
-          type = evaluator.fun(qualifier, parameters);
+          PsiType type = evaluator.fun(qualifier, parameters);
+          if (type != null) {
+            return Collections.singletonList(type);
+          }
         }
-        if (type == null) {
-          type = GuessManager.getInstance(project).getControlFlowExpressionType(qualifier);
-        }
-        return type;
+        
+        return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier);
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
-  @NotNull
-  private static LookupElement castQualifier(@NotNull LookupElement item,
-                                             @Nullable final PsiTypeLookupItem castTypeItem,
-                                             @Nullable PsiType plainQualifier, JavaCompletionProcessor processor) {
-    if (castTypeItem == null) {
-      return item;
-    }
+  private static boolean shouldCast(@NotNull LookupElement item,
+                                    @NotNull PsiTypeLookupItem castTypeItem,
+                                    @Nullable PsiType plainQualifier, JavaCompletionProcessor processor) {
+    PsiType castType = castTypeItem.getType();
     if (plainQualifier != null) {
       Object o = item.getObject();
       if (o instanceof PsiMethod) {
-        PsiType castType = castTypeItem.getType();
         if (plainQualifier instanceof PsiClassType && castType instanceof PsiClassType) {
           PsiMethod method = (PsiMethod)o;
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
@@ -386,7 +383,7 @@ public class JavaCompletionUtil {
             PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
 
             if (castClass == null || !castClass.isInheritor(plainClass, true)) {
-              return item;
+              return false;
             }
 
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
@@ -395,20 +392,25 @@ public class JavaCompletionUtil {
             if (method.getSignature(plainSub).equals(method.getSignature(castSub))) {
               PsiType typeAfterCast = toRaw(castSub.substitute(returnType));
               PsiType typeDeclared = toRaw(plainSub.substitute(returnType));
-              if (typeAfterCast != null && typeDeclared != null && 
+              if (typeAfterCast != null && typeDeclared != null &&
                   typeAfterCast.isAssignableFrom(typeDeclared) &&
                   processor.isAccessible(plainClass.findMethodBySignature(method, true))
                 ) {
-                return item;
+                return false;
               }
             }
+            return true;
           }
         }
-      } else if (containsMember(plainQualifier, o)) {
-        return item;
       }
+      
+      return containsMember(castType, o) && !containsMember(plainQualifier, o);
     }
+    return false;
+  }
 
+  @NotNull
+  private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
     return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
@@ -441,7 +443,13 @@ public class JavaCompletionUtil {
       }
     });
   }
-  
+
+  private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
+                                                     @NotNull List<PsiTypeLookupItem> castTypeItems,
+                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor) {
+    return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor));
+  }
+
   @Nullable 
   private static PsiType toRaw(@Nullable PsiType type) {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
@@ -461,7 +469,7 @@ public class JavaCompletionUtil {
         }
       }), -1);
     }
-    if (containsMember(qualifierType, object)) {
+    if (containsMember(qualifierType, object) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
@@ -487,6 +495,7 @@ public class JavaCompletionUtil {
     return false;
   }
 
+  @Contract("null, _ -> false")
   public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
     if (qualifierType instanceof PsiArrayType && object instanceof PsiMember) { //length and clone()
       PsiFile file = ((PsiMember)object).getContainingFile();

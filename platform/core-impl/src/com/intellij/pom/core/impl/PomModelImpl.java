@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -66,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
   private final Project myProject;
   private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<>();
   private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<>();
@@ -230,9 +228,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       while (blocksIterator.hasPrevious()) {
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
         if (pomModelAspect == pair.getFirst() && // aspect dependence
-            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) &&
-            // target scope contain current
-            getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
+            PsiTreeUtil.isAncestor(getContainingFileByTree(pair.getSecond().getChangeScope()), transaction.getChangeScope(), false) // same file
           ) {
           return pair;
         }

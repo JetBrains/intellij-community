@@ -273,7 +273,7 @@ public class ResolveImportUtil {
     final List<RatedResolveResult> results = Lists.newArrayList();
     for (RatedResolveResult member : moduleMembers) {
       final PsiElement moduleMember = member.getElement();
-      if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
+      if (!fileOnly || PsiTreeUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
         results.add(member);
         if (moduleMember != null && !preferResolveInDirectoryOverModule(moduleMember)) {
           resolvedInModule.add(member);
@@ -295,7 +295,7 @@ public class ResolveImportUtil {
 
   private static boolean preferResolveInDirectoryOverModule(@NotNull PsiElement resolved) {
     return PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyExceptPart.class) != null ||
-           PyUtil.instanceOf(resolved, PsiFile.class, PsiDirectory.class) ||  // XXX: Workaround for PY-9439
+           PsiTreeUtil.instanceOf(resolved, PsiFile.class, PsiDirectory.class) ||  // XXX: Workaround for PY-9439
            isDunderAll(resolved);
   }
 

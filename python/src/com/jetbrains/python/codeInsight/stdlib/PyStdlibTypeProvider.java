@@ -324,8 +324,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           return null;
         }
 
-        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(context),
-                                                                  rightTupleType.getElementTypes(context));
+        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(),
+                                                                  rightTupleType.getElementTypes());
         return Ref.create(PyTupleType.create(addition, newElementTypes));
       }
     }

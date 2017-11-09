@@ -34,11 +34,17 @@ import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
-  private VisibilityInspection myVisibilityInspection = createTool();
+  private VisibilityInspection myVisibilityInspection;
 
   @Override
   protected LocalInspectionTool getInspection() {
     return myVisibilityInspection.getSharedLocalInspectionTool();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    myVisibilityInspection = createTool();
+    super.setUp();
   }
 
   @Override
@@ -368,5 +374,21 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     }, getTestRootDisposable());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
+  }
+
+  public void testSuggestForConstants() {
+    myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
+    doTest("class SuggestForConstants {\n" +
+           "    <warning descr=\"Access can be private\">public</warning> static final String MY_CONSTANT = \"a\";\n" +
+           "    private final String myField = MY_CONSTANT;" +
+           "}");
+  }
+
+  public void testDoNotSuggestForConstants() {
+    myVisibilityInspection.SUGGEST_FOR_CONSTANTS = false;
+    doTest("class DoNotSuggestForConstants {\n" +
+           "    public static final String MY_CONSTANT = \"a\";\n" +
+           "    private final String myField = MY_CONSTANT;" +
+           "}");
   }
 }

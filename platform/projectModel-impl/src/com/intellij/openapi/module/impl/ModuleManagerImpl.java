@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
@@ -68,6 +54,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.module.impl.ExternalModuleListStorageKt.getFilteredModuleList;
 
 /**
  * @author max
@@ -132,7 +120,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public Element getState() {
     final Element e = new Element("state");
-    writeExternal(e);
+    writeExternal(e, getFilteredModuleList(myProject, getModules(), false));
     return e;
   }
 
@@ -165,8 +153,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   @Override
-  public void loadState(Element state) {
-    loadState(getPathsToModuleFiles(state));
+  public void loadState(@NotNull Element state) {
+    Set<ModulePath> files = getPathsToModuleFiles(state);
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    if (externalModules != null) {
+      files.addAll(externalModules);
+    }
+    loadState(files);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    // if there are only external modules, loadState will be not called
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    if (externalModules != null) {
+      loadState(new LinkedHashSet<>(externalModules));
+    }
   }
 
   @TestOnly
@@ -458,10 +460,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  public void writeExternal(@NotNull Element element) {
-    final Module[] collection = getModules();
-
-    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size() + myUnloadedModules.size());
+  public void writeExternal(@NotNull Element element, @NotNull List<Module> collection) {
+    List<SaveItem> sorted = new ArrayList<>(collection.size() + myFailedModulePaths.size() + myUnloadedModules.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }

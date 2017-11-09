@@ -25,8 +25,6 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -58,18 +56,18 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     if (disposed) return;
     if (comparator != null) {
       this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
-      invalidate();
+      invalidate(null);
     }
     else if (this.comparator != null) {
       this.comparator = null;
-      invalidate();
+      invalidate(null);
     }
   }
 
   public void setStructure(AbstractTreeStructure structure) {
     if (disposed) return;
     this.structure = structure;
-    invalidate();
+    invalidate(null);
   }
 
   @Override
@@ -93,22 +91,16 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return false;
   }
 
-  @NotNull
-  public final Promise<?> invalidate() {
-    AsyncPromise<Object> promise = new AsyncPromise<>();
+  public final void invalidate(Runnable onDone) {
     invoker.invokeLaterIfNeeded(() -> {
-      if (disposed) {
-        promise.setError("rejected");
-        return;
-      }
+      if (disposed) return;
       root.invalidate();
       Node node = root.get();
       LOG.debug("root invalidated: ", node);
       if (node != null) node.invalidate();
       treeStructureChanged(null, null, null);
-      promise.setResult(null);
+      if (onDone != null) onDone.run();
     });
-    return promise;
   }
 
   public final void invalidate(@NotNull TreePath path, boolean structure) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   @Nullable
-  public static ApplyIntentionAction[] getAvailableIntentions(final Editor editor, final PsiFile file) {
+  public static ApplyIntentionAction[] getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, info, -1);
     if (info.isEmpty()) return null;

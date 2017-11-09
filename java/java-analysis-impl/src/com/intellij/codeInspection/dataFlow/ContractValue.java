@@ -36,7 +36,7 @@ public abstract class ContractValue {
   /**
    * @return true if this contract value represents a bounds-checking condition
    */
-  boolean isBoundCheckingCondition() {
+  public boolean isBoundCheckingCondition() {
     return false;
   }
 
@@ -168,7 +168,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    boolean isBoundCheckingCondition() {
+    public boolean isBoundCheckingCondition() {
       switch (myRelationType) {
         case LE:
         case LT:

@@ -51,7 +51,7 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
 /**
  * @author Sergey.Malenkov
  */
-public final class AsyncTreeModel extends AbstractTreeModel implements Disposable, Identifiable, Searchable, Navigatable {
+public final class AsyncTreeModel extends AbstractTreeModel implements Identifiable, Searchable, Navigatable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Command.Processor processor;
   private final Tree tree = new Tree();
@@ -238,6 +238,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
    * @param visitor an object that controls visiting a tree structure
    * @return a promise that will be resolved when visiting is finished
    */
+  @NotNull
   public Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
     return accept(visitor, true);
   }
@@ -249,6 +250,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
    * @param allowLoading load all needed children if {@code true}
    * @return a promise that will be resolved when visiting is finished
    */
+  @NotNull
   public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
     AbstractTreeWalker<Node> walker = new AbstractTreeWalker<Node>(visitor, node -> node.object) {
       @Override
@@ -282,7 +284,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return false;
   }
 
-  private void onValidThread(Runnable runnable) {
+  public void onValidThread(Runnable runnable) {
     processor.foreground.invokeLaterIfNeeded(runnable);
   }
 

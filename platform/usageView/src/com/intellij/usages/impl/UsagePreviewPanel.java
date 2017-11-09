@@ -49,6 +49,7 @@ import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -344,13 +345,21 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (cannotPreviewMessage != null) {
       releaseEditor();
       removeAll();
-      getEmptyText().setText(cannotPreviewMessage);
+      int newLineIndex = cannotPreviewMessage.indexOf("\n");
+      if (newLineIndex == -1) {
+        getEmptyText().setText(cannotPreviewMessage);
+      } else {
+        getEmptyText()
+          .setText(cannotPreviewMessage.substring(0, newLineIndex))
+          .appendSecondaryText(cannotPreviewMessage.substring(newLineIndex+1), StatusText.DEFAULT_ATTRIBUTES, null);
+      }
       revalidate();
     }
     else {
       resetEditor(infos);
     }
   }
+
   private static class ReplacementView extends JPanel {
     private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
 

@@ -243,6 +243,7 @@ public class VfsImplUtil {
     if (ourSubscribed.getAndSet(true)) return;
 
     Application app = ApplicationManager.getApplication();
+    if (app.isDisposeInProgress()) return; // IDEA-181620 we might perform shutdown activity that includes visiting zip files
     app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {

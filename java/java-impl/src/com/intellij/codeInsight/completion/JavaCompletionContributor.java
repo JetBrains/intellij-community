@@ -594,7 +594,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       addAllClasses(parameters, result, new JavaCompletionSession(result));
     }
 
-    if (annoClass != null) {
+    if (annoClass != null && annoClass.isAnnotationType()) {
       final PsiNameValuePair[] existingPairs = parameterList.getAttributes();
 
       methods: for (PsiMethod method : annoClass.getMethods()) {

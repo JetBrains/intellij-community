@@ -377,34 +377,12 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
 
     @Override
     public void updateDocument(ArtifactInfo ai, Document doc) {
-      super.updateDocument(ai, doc);
-
-      doc.removeField(ArtifactInfo.INFO);
-
-      doc.removeField(ArtifactInfo.GROUP_ID);
-      doc.removeField(ArtifactInfo.ARTIFACT_ID);
-      doc.removeField(ArtifactInfo.VERSION);
-
-      doc.removeField(ArtifactInfo.NAME);
-      doc.removeField(ArtifactInfo.CLASSIFIER);
-      doc.removeField(ArtifactInfo.SHA1);
-
-      String packaging = doc.get(ArtifactInfo.PACKAGING);
-      if (packaging != null) {
-        doc.removeField(ArtifactInfo.PACKAGING);
-        doc.add(new Field(ArtifactInfo.PACKAGING, packaging, Field.Store.YES, Field.Index.NO));
+      if (ai.packaging != null) {
+        doc.add(new Field(ArtifactInfo.PACKAGING, ai.packaging, Field.Store.YES, Field.Index.NO));
       }
 
-      if ("maven-archetype".equals(packaging)) {
-        String description = doc.get(ArtifactInfo.DESCRIPTION);
-
-        doc.removeField(ArtifactInfo.DESCRIPTION);
-        if (description != null) {
-          doc.add(new Field(ArtifactInfo.DESCRIPTION, description, Field.Store.YES, Field.Index.NO));
-        }
-      }
-      else {
-        doc.removeField(ArtifactInfo.DESCRIPTION);
+      if ("maven-archetype".equals(ai.packaging) && ai.description != null) {
+        doc.add(new Field(ArtifactInfo.DESCRIPTION, ai.description, Field.Store.YES, Field.Index.NO));
       }
     }
   }

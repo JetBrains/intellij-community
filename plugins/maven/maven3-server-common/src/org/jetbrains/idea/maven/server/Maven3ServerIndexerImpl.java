@@ -410,44 +410,18 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
     @Override
     public void updateDocument(ArtifactInfo ai, Document doc) {
-      super.updateDocument(ai, doc);
-
-      doc.removeField(ArtifactInfo.INFO);
-
-      doc.removeField(ArtifactInfo.GROUP_ID);
-      doc.removeField(ArtifactInfo.ARTIFACT_ID);
-      doc.removeField(ArtifactInfo.VERSION);
-
-      doc.removeField(FLD_GROUP_ID.getKey());
-      doc.removeField(FLD_ARTIFACT_ID.getKey());
-      doc.removeField(FLD_VERSION.getKey());
-
-      doc.removeField(ArtifactInfo.NAME);
-      doc.removeField(ArtifactInfo.CLASSIFIER);
-      doc.removeField(ArtifactInfo.SHA1);
-
-      String packaging = doc.get(ArtifactInfo.PACKAGING);
-      if (packaging != null) {
-        doc.removeField(ArtifactInfo.PACKAGING);
-        doc.add(FLD_PACKAGING_NOT_INDEXED.toField(packaging));
+      if (ai.packaging != null) {
+        doc.add(FLD_PACKAGING_NOT_INDEXED.toField(ai.packaging));
       }
 
-      if ("maven-archetype".equals(packaging)) {
-        String description = doc.get(ArtifactInfo.DESCRIPTION);
-
-        doc.removeField(ArtifactInfo.DESCRIPTION);
-        if (description != null) {
-          doc.add(FLD_DESCRIPTION_NOT_INDEXED.toField(description));
-        }
-      }
-      else {
-        doc.removeField(ArtifactInfo.DESCRIPTION);
+      if ("maven-archetype".equals(ai.packaging) && ai.description != null) {
+        doc.add(FLD_DESCRIPTION_NOT_INDEXED.toField(ai.description));
       }
     }
 
     @Override
     public Collection<IndexerField> getIndexerFields() {
-      return Arrays.asList(ArtifactInfoRecord.FLD_UINFO, FLD_PACKAGING_NOT_INDEXED, FLD_DESCRIPTION_NOT_INDEXED);
+      return Arrays.asList(FLD_PACKAGING_NOT_INDEXED, FLD_DESCRIPTION_NOT_INDEXED);
     }
   }
 }

@@ -34,6 +34,18 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/LICENSE.txt")
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
+
+    def resourcesDir = new File("$pythonCommunityPath/educational-python/resources/")
+    def files = resourcesDir.listFiles(new FilenameFilter() {
+      @Override
+      boolean accept(File dir, String name) {
+        return name.matches("EduTools-[0-9.]+-[0-9.]+-[0-9.]+.zip")
+      }
+    })
+    if (files.length == 0) {
+      throw new IllegalStateException("EduTools bundled plugin is not found in $resourcesDir")
+    }
+    context.ant.unzip(src: files[0], dest: "$targetDirectory/plugins/")
   }
 
   @Override

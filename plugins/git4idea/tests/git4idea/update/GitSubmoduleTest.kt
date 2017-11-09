@@ -61,7 +61,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     super.setUp()
     
     setUpRepositoryStructure()
-    myGitRepositoryManager.updateAllRepositories()
+    repositoryManager.updateAllRepositories()
   }
 
   fun `test submodules are properly detected`() {
@@ -77,11 +77,11 @@ class GitSubmoduleTest : GitPlatformTest() {
 
     // hook the merge to watch the order
     val reposInActualOrder = mutableListOf<GitRepository>()
-    myGit.mergeListener = {
+    git.mergeListener = {
       reposInActualOrder.add(it)
     }
 
-    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
     assertOrder(reposInActualOrder)
@@ -115,11 +115,11 @@ class GitSubmoduleTest : GitPlatformTest() {
     }.toMap()
 
     val reposInActualOrder = mutableListOf<GitRepository>()
-    myGit.pushListener = {
+    git.pushListener = {
       reposInActualOrder.add(it)
     }
 
-    GitPushOperation(myProject, getPushSupport(myVcs) as GitPushSupport, pushSpecs, null, false, false).execute()
+    GitPushOperation(project, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
     assertOrder(reposInActualOrder)
   }
 
@@ -130,15 +130,15 @@ class GitSubmoduleTest : GitPlatformTest() {
     addSubmodule(elder.local, grandchild.remote)
 
     // setup project
-    mainRepo = createRepository(myProjectPath)
+    mainRepo = createRepository(projectPath)
     val parent = prepareRemoteRepo(mainRepo)
     git("push -u origin master")
-    main = Repos("parent", File(myProjectPath), parent)
+    main = Repos("parent", File(projectPath), parent)
 
     elderRepo = addSubmoduleInProject(elder.remote, elder.name)
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     git(mainRepo, "submodule update --init --recursive") // this initializes the grandchild submodule
-    grandchildRepo = registerRepo(myProject, "${myProjectPath}/elder/grandchild")
+    grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
     git(grandchildRepo, "checkout master") // git submodule is initialized in detached HEAD state by default
   }
 
@@ -154,32 +154,32 @@ class GitSubmoduleTest : GitPlatformTest() {
    * and registers the repository as a VCS mapping.
    */
   private fun addSubmoduleInProject(submoduleUrl: File, moduleName: String, relativePath: String? = null): GitRepository {
-    addSubmodule(File(myProjectPath), submoduleUrl, relativePath)
-    val rootPath = "${myProjectPath}/${relativePath ?: moduleName}"
-    return registerRepo(myProject, rootPath)
+    addSubmodule(File(projectPath), submoduleUrl, relativePath)
+    val rootPath = "${projectPath}/${relativePath ?: moduleName}"
+    return registerRepo(project, rootPath)
   }
 
   private fun createPlainRepo(moduleName: String): Repos {
-    cd(myTestRoot)
+    cd(testRoot)
     git("init $moduleName")
-    val child = File(myTestRoot, moduleName)
+    val child = File(testRoot, moduleName)
     cd(child)
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
-    git("remote add origin ${myTestRoot}/$parent")
+    git("remote add origin ${testRoot}/$parent")
 
-    cd(myTestRoot)
+    cd(testRoot)
     git("init --bare $parent")
     cd(child)
     git("push -u origin master")
-    return Repos(moduleName, child, File(myTestRoot, parent))
+    return Repos(moduleName, child, File(testRoot, parent))
   }
 
   // second clone of the whole project with submodules
   private fun prepareSecondClone(): File {
-    cd(myTestRoot)
+    cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    val bro = File(myTestRoot, "bro")
+    val bro = File(testRoot, "bro")
     return bro
   }
 
@@ -193,7 +193,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun assertSubmodules(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
     assertSubmodulesInfo(repo, expectedSubmodules)
     assertSameElements("Submodules identified incorrectly for ${getShortRepositoryName(repo)}",
-                       myGitRepositoryManager.getDirectSubmodules(repo), expectedSubmodules)
+                       repositoryManager.getDirectSubmodules(repo), expectedSubmodules)
   }
 
   private fun assertSubmodulesInfo(repo: GitRepository, expectedSubmodules: List<GitRepository>) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.getAttributeBooleanValue
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
@@ -117,7 +118,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
-      result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+      result = getUniqueIDFor(configuration)
       uniqueId = result
     }
     return result
@@ -148,16 +149,16 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getFolderName() = folderName
 
   fun readExternal(element: Element, isShared: Boolean) {
-    isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
+    isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
     if (isShared) {
       level = RunConfigurationLevel.PROJECT
     }
     else {
-      level = if (element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
+      level = if (element.getAttributeBooleanValue(TEMPORARY_ATTRIBUTE) || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
-    isEditBeforeRun = (element.getAttributeValue(EDIT_BEFORE_RUN)).toBoolean()
+    isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
@@ -501,6 +502,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         return null
       }
     }
+  }
+  companion object {
+    @JvmStatic
+    fun getUniqueIDFor(configuration: RunConfiguration) =
+      "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 }
 

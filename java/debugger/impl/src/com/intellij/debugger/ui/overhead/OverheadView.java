@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Function;
@@ -114,19 +115,29 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
         myTable.repaint();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myTable);
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
+        return true;
+      }
+    }.installOn(myTable);
+  }
+
+
+  private StreamEx<Navigatable> getSelectedNavigatables() {
+    return StreamEx.of(myTable.getSelection())
+      .select(Breakpoint.class)
+      .map(Breakpoint::getXBreakpoint).nonNull()
+      .map(XBreakpoint::getNavigatable).nonNull();
   }
 
   @Nullable
   @Override
   public Object getData(String dataId) {
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      Navigatable[] navigatables = StreamEx.of(myTable.getSelection())
-        .select(Breakpoint.class)
-        .map(Breakpoint::getXBreakpoint)
-        .nonNull()
-        .map(XBreakpoint::getNavigatable)
-        .nonNull()
-        .toArray(Navigatable.class);
+      Navigatable[] navigatables = getSelectedNavigatables().toArray(Navigatable.class);
       if (navigatables.length > 0) {
         return navigatables;
       }

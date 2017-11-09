@@ -32,7 +32,7 @@ public interface Dictionary {
 
   void traverse(@NotNull Consumer<String> action);
 
-  @Nullable
+  @NotNull
   Set<String> getWords();
 
   int size();

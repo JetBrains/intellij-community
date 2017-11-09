@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -168,7 +169,7 @@ public abstract class FileBasedIndex {
         if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false;
         }
-        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
+        if (projectFileIndex != null && ReadAction.compute(() -> projectFileIndex.isExcluded(file))) {
           return false;
         }
         return true;

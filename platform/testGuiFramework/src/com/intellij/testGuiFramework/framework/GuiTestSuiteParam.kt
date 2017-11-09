@@ -27,19 +27,19 @@ class GuiTestSuiteParam(val klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
   val myIde = getIdeFromAnnotation(klass)
-  var myFirstStart = true
+  var isFirstStart = true
   val UNDEFINED_FIRST_CLASS = "undefined"
   val myFirstStartClassName: String by lazy {
     val annotation = klass.getAnnotation(FirstStartWith::class.java)
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
   }
-  val LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuite")!!
+  val LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteParam")!!
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
-      if (myFirstStart) firstStart()
+      if (isFirstStart) firstStart()
       val runnerWithParameters = runner as BlockJUnit4ClassRunnerWithParameters
 
       val testNameField = BlockJUnit4ClassRunnerWithParameters::class.java.getDeclaredField("name")
@@ -64,6 +64,6 @@ class GuiTestSuiteParam(val klass: Class<*>) : Parameterized(klass) {
     if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
     LOG.info("IDE is configuring for the first time...")
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
-    myFirstStart = false
+    isFirstStart = false
   }
 }

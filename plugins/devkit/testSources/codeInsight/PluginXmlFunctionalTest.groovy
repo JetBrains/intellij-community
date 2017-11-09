@@ -23,6 +23,7 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -361,6 +362,40 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  void testOrderAttributeHighlighting() {
+    myFixture.testHighlighting("orderAttributeHighlighting.xml")
+  }
+
+  // separate tests for 'order' attribute completion because cannot test all cases with completeBasicAllCarets
+
+  void testOrderAttributeCompletionKeywordsInEmptyValue() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml",
+                                     LoadingOrder.FIRST_STR, LoadingOrder.LAST_STR,
+                                     LoadingOrder.BEFORE_STR.trim(), LoadingOrder.AFTER_STR.trim())
+  }
+
+  void testOrderAttributeCompletionBeforeKeyword() {
+    myFixture.testCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml")
+  }
+
+  void testOrderAttributeCompletionKeywords() {
+    // no first/last because there's already 'first'
+    myFixture.testCompletionVariants(getTestName(true) + ".xml",
+                                     LoadingOrder.BEFORE_STR.trim(), LoadingOrder.AFTER_STR.trim())
+  }
+
+  void testOrderAttributeCompletionIds() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+  }
+
+  void testOrderAttributeCompletionIdsWithFirst() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+  }
+
+  void testOrderAttributeCompletionFirstKeywordWithId() {
+    myFixture.testCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml")
+  }
+
   private void testHighlightingInIdeaProject(String path) {
     myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
@@ -413,5 +448,9 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class ActionGroup { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
     myFixture.testHighlighting()
+  }
+
+  void testExtensionPointNameValidity() {
+    myFixture.testHighlighting(getTestName(true) + ".xml")
   }
 }

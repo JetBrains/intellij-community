@@ -5,6 +5,10 @@ class Test {
     assert foo != null;
   }
 
+  private static void testParens(@NotNull Object foo) {
+    assert (foo != null);
+  }
+
   private static void test2(@NotNull Object foo) {
     if (foo == null) {
       throw new IllegalArgumentException();

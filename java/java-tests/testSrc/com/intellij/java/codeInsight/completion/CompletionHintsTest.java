@@ -771,6 +771,23 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                                                           // Later we might make it work correctly for code fragments.
   }
 
+  public void testVarargWithNoMandatoryArgumentsDoesNotKeepHintOnCaretOut() throws Exception {
+    configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/><caret>) } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { int vararg(int... args){ return 0; } void m() { vararg() } }");
+  }
+
+  public void testNoLinksInParameterJavadoc() throws Exception {
+    configureJava("class C { void m() { String.for<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><hint text=\", args:\"/>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }

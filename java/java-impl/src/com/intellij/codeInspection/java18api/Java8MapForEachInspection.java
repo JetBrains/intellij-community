@@ -100,8 +100,8 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
           else {
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(new ProblemDescriptorBase(firstChild, firstChild, InspectionsBundle.message("inspection.map.foreach.message"),
-                                 new LocalQuickFix[]{new ReplaceWithMapForEachFix()}, type, false, range, type != ProblemHighlightType.INFORMATION, holder.isOnTheFly()));
+          holder.registerProblem(loop.getFirstChild(), InspectionsBundle.message("inspection.map.foreach.message"),
+                                 type, range, new ReplaceWithMapForEachFix());
         }
       }
     };

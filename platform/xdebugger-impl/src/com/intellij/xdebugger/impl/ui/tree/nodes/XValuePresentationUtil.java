@@ -87,7 +87,14 @@ public class XValuePresentationUtil {
 
   @NotNull
   public static String computeValueText(@NotNull XValuePresentation presentation) {
-    XValuePresentationTextExtractor extractor = new XValuePresentationTextExtractor();
+    return computeValueText(presentation, false);
+  }
+
+  @NotNull
+  public static String computeValueText(@NotNull XValuePresentation presentation, boolean quoteStrings) {
+    final XValuePresentationTextExtractor extractor = quoteStrings ?
+                                                      new XValuePresentationTextExtractor.WithQuotes() :
+                                                      new XValuePresentationTextExtractor();
     presentation.renderValue(extractor);
     return extractor.getText();
   }
@@ -131,6 +138,13 @@ public class XValuePresentationUtil {
 
     public String getText() {
       return myBuilder.toString();
+    }
+
+    static class WithQuotes extends XValuePresentationTextExtractor {
+      @Override
+      public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
+        super.renderStringValue("\"" + value + '\"', additionalSpecialCharsToHighlight, maxLength);
+      }
     }
   }
 }

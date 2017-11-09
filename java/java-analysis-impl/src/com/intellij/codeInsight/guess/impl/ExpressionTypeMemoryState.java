@@ -23,12 +23,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.HashMap;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author peter
@@ -53,7 +50,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       return false;
     }
   };
-  private final Map<PsiExpression, PsiType> myStates = new THashMap<>(EXPRESSION_HASHING_STRATEGY);
+  private final MultiMap<PsiExpression, PsiType> myStates = MultiMap.create(EXPRESSION_HASHING_STRATEGY);
 
   public ExpressionTypeMemoryState(final DfaValueFactory factory) {
     super(factory);
@@ -67,7 +64,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   @Override
   public DfaMemoryStateImpl createCopy() {
     final ExpressionTypeMemoryState copy = new ExpressionTypeMemoryState(this);
-    copy.myStates.putAll(myStates);
+    copy.myStates.putAllValues(myStates);
     return copy;
   }
 
@@ -83,7 +80,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     return super.applyCondition(dfaCond);
   }
 
-  public Map<PsiExpression, PsiType> getStates() {
+  MultiMap<PsiExpression, PsiType> getStates() {
     return myStates;
   }
 
@@ -109,13 +106,10 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
 
   @Override
   public String toString() {
-    return super.toString() + " states=[" + new HashMap<>(myStates) + "]";
+    return super.toString() + " states=[" + myStates + "]";
   }
 
-  public void setExpressionType(PsiExpression expression, @NotNull PsiType type) {
-    PsiType prev = myStates.get(expression);
-    if (prev == null || !type.isAssignableFrom(prev)) {
-      myStates.put(expression, type);
-    }
+  void setExpressionType(@NotNull PsiExpression expression, @NotNull PsiType type) {
+    myStates.putValue(expression, type);
   }
 }

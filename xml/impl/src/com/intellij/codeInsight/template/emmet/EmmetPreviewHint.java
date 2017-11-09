@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -53,12 +55,14 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @NotNull private final Editor myParentEditor;
   @NotNull private final Editor myEditor;
   @NotNull private final Alarm myAlarm = new Alarm(this);
-  private boolean isDisposed = false;
+  private volatile boolean isDisposed = false;
 
   private EmmetPreviewHint(@NotNull JBPanel panel, @NotNull Editor editor, @NotNull Editor parentEditor) {
     super(panel);
     myParentEditor = parentEditor;
     myEditor = editor;
+
+    registerForDispose(parentEditor);
 
     final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myParentEditor);
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -80,6 +84,18 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         }
       }
     }, this);
+  }
+
+  private void registerForDispose(@NotNull Editor editor) {
+    final Disposable parentDisposable;
+    if (editor instanceof EditorImpl) {
+      parentDisposable = ((EditorImpl)editor).getDisposable();
+    } else {
+      parentDisposable = editor.getProject();
+    }
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   public void showHint() {
@@ -192,13 +208,19 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(this));
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      Disposer.dispose(this);
+    } else {
+      application.invokeLater(() -> Disposer.dispose(this));
+    }
   }
 
   @Override
   public void dispose() {
     isDisposed = true;
     myAlarm.cancelAllRequests();
+    super.hide();
     EmmetPreviewHint existingBalloon = myParentEditor.getUserData(KEY);
     if (existingBalloon == this) {
       myParentEditor.putUserData(KEY, null);

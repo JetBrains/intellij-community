@@ -2,6 +2,7 @@ package com.jetbrains.env.python;
 
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -13,6 +14,7 @@ import org.junit.Test;
  */
 public class PythonGeneratorTest extends PyEnvTestCase {
   @Test
+  @Staging
   public void testGenerator() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers", SdkCreationType.EMPTY_SDK) {
       @NotNull

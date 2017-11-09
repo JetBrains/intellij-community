@@ -2,6 +2,7 @@ package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EditorSettingsManager;
@@ -37,6 +39,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, documentSettingsManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
     editorFactory.addEditorFactoryListener(editorSettingsManager, project);
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -58,12 +61,14 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
         if (".editorconfig".equals(file.getName())) {
           if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
               !Registry.is("editor.config.stop.at.project.root")) {
-            SettingsProviderComponent.getInstance().incModificationCount();
-            for (Editor editor : editorFactory.getAllEditors()) {
-              if (editor.isDisposed()) continue;
-              editorSettingsManager.applyEditorSettings(editor);
-              ((EditorEx)editor).reinitSettings();
-            }
+            alarm.addRequest(() -> {
+              SettingsProviderComponent.getInstance().incModificationCount();
+              for (Editor editor : editorFactory.getAllEditors()) {
+                if (editor.isDisposed()) continue;
+                editorSettingsManager.applyEditorSettings(editor);
+                ((EditorEx)editor).reinitSettings();
+              }
+            }, 0, ModalityState.any());
           }
         }
       }

@@ -41,6 +41,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -52,8 +54,6 @@ import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
-import com.sun.jdi.request.ThreadDeathRequest;
-import com.sun.jdi.request.ThreadStartRequest;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +66,7 @@ import java.util.stream.Stream;
  */
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
+  private static final String REQUEST_HANDLER = "REQUEST_HANDLER";
 
   private DebuggerEventThread myEventThread;
 
@@ -165,17 +166,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       continue;
                     }
                   }
-                  if (event instanceof ThreadStartEvent) {
+                  Consumer<Event> handler = getEventRequestHandler(event);
+                  if (handler != null) {
+                    handler.consume(event);
                     processed++;
-                    ThreadReference thread = ((ThreadStartEvent)event).thread();
-                    getVirtualMachineProxy().threadStarted(thread);
-                    myDebugProcessDispatcher.getMulticaster().threadStarted(DebugProcessEvents.this, thread);
-                  }
-                  else if (event instanceof ThreadDeathEvent) {
-                    processed++;
-                    ThreadReference thread = ((ThreadDeathEvent)event).thread();
-                    getVirtualMachineProxy().threadStopped(thread);
-                    myDebugProcessDispatcher.getMulticaster().threadStopped(DebugProcessEvents.this, thread);
                   }
                 }
 
@@ -224,6 +218,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
 
                 for (Event event : eventSet) {
+                  if (getEventRequestHandler(event) != null) { // handled before
+                    getSuspendManager().voteResume(suspendContext);
+                    continue;
+                  }
+
                   //if (LOG.isDebugEnabled()) {
                   //  LOG.debug("EVENT : " + event);
                   //}
@@ -304,6 +303,22 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
+  private static Consumer<Event> getEventRequestHandler(Event event) {
+    EventRequest request = event.request();
+    Object property = request != null ? request.getProperty(REQUEST_HANDLER) : null;
+    if (property instanceof Consumer) {
+      //noinspection unchecked
+      return ((Consumer<Event>)property);
+    }
+    return null;
+  }
+
+  private static void enableNonSuspendingRequest(EventRequest request, Consumer<Event> handler) {
+    request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+    request.putProperty(REQUEST_HANDLER, handler);
+    request.enable();
+  }
+
   private void processVMStartEvent(final SuspendContextImpl suspendContext, VMStartEvent event) {
     preprocessEvent(suspendContext, event.thread());
 
@@ -325,12 +340,24 @@ public class DebugProcessEvents extends DebugProcessImpl {
         myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
       }
 
-      final ThreadStartRequest threadStartRequest = requestManager.createThreadStartRequest();
-      threadStartRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
-      threadStartRequest.enable();
-      final ThreadDeathRequest threadDeathRequest = requestManager.createThreadDeathRequest();
-      threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
-      threadDeathRequest.enable();
+      enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
+                                 event -> {
+                                   ThreadReference thread = ((ThreadStartEvent)event).thread();
+                                   getVirtualMachineProxy().threadStarted(thread);
+                                   myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
+                                 });
+
+      enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
+                                 event -> {
+                                   ThreadReference thread = ((ThreadDeathEvent)event).thread();
+                                   getVirtualMachineProxy().threadStopped(thread);
+                                   myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
+                                 });
+
+      if (Registry.is("debugger.classes.cache.fix")) {
+        enableNonSuspendingRequest(requestManager.createClassPrepareRequest(), e -> machineProxy.clearClassesCache());
+        enableNonSuspendingRequest(requestManager.createClassUnloadRequest(), e -> machineProxy.clearClassesCache());
+      }
 
       // fill position managers
       ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
@@ -376,9 +403,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private void processVMDeathEvent(SuspendContextImpl suspendContext, Event event) {
+  private void processVMDeathEvent(SuspendContextImpl suspendContext, @Nullable Event event) {
     // do not destroy another process on reattach
-    if (isAttached() && getVirtualMachineProxy().getVirtualMachine() == event.virtualMachine()) {
+    if (isAttached() && (event == null || getVirtualMachineProxy().getVirtualMachine() == event.virtualMachine())) {
       try {
         preprocessEvent(suspendContext, null);
         cancelRunToCursorBreakpoint();

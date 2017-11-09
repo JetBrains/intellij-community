@@ -258,13 +258,12 @@ public class FileReferenceSet {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
       int start = curSep + sepLen;
       int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
-      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
       // todo move ${placeholder} support (the str usage below) to a reference implementation
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
                                 decoded.subSequence(start, endTrimmed).toString();
       TextRange r = new TextRange(offset(start, escaper, valueRange),
-                                  offset(endInclusive, escaper, valueRange) + (nextSep < 0 && refText.length() > 0 ? 1 : 0));
+                                  offset(endTrimmed, escaper, valueRange));
       referencesList.add(createFileReference(r, index++, refText));
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;

@@ -29,6 +29,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -318,7 +319,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         prepareRequest.enable();
       }
     }
-    myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+    if (!Registry.is("debugger.classes.cache.fix")) {
+      myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+    }
   }
 
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
@@ -331,7 +334,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       if (LOG.isDebugEnabled()) {
         LOG.debug("classOrPatternToBeLoaded = " + classOrPatternToBeLoaded);
       }
-      myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+      if (!Registry.is("debugger.classes.cache.fix")) {
+        myDebugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
+      }
     }
   }
 

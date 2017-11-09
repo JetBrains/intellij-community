@@ -544,13 +544,13 @@ public class PyCallExpressionHelper {
       if (cls != null && cls != init.getContainingClass()) {
         if (t instanceof PyTupleType) {
           final PyTupleType tupleType = (PyTupleType)t;
-          final PyTupleType newTupleType = new PyTupleType(cls, tupleType.getElementTypes(context), tupleType.isHomogeneous());
+          final PyTupleType newTupleType = new PyTupleType(cls, tupleType.getElementTypes(), tupleType.isHomogeneous());
 
           return Ref.create(newTupleType);
         }
 
         if (t instanceof PyCollectionType) {
-          final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes(context);
+          final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes();
           return Ref.create(new PyCollectionTypeImpl(cls, false, elementTypes));
         }
 

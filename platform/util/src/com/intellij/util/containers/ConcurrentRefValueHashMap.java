@@ -149,12 +149,12 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   @Override
   public boolean containsKey(@NotNull Object key) {
-    return get(key) != null;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(@NotNull Object value) {
-    throw new UnsupportedOperationException();
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @NotNull

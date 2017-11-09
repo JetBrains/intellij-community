@@ -141,7 +141,7 @@ public class JavacMain {
         }
       }
 
-      if (javacBefore9 || !sourcePath.isEmpty()) {
+      if (javacBefore9 || !sourcePath.isEmpty() || modulePath.isEmpty()) {
         try {
           // ensure the source path is set;
           // otherwise, if not set, javac attempts to search both classes and sources in classpath;

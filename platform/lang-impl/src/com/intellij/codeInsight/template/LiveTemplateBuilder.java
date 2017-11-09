@@ -19,13 +19,17 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene.Kudelevsky
@@ -61,6 +65,23 @@ public class LiveTemplateBuilder {
 
   public CharSequence getText() {
     return myText;
+  }
+
+  @NotNull
+  public String getTextForPreview() {
+    if (myVariables.isEmpty()) return myText.toString();
+    final StringBuilder sb = new StringBuilder(myText);
+    final Ref<Integer> offset = new Ref<>(0);
+    final Map<String, Variable> map = myVariables.stream().collect(Collectors.toMap(Variable::getName, Function.identity()));
+    myVariableOccurrences.forEach(vo -> {
+      final Variable variable = map.get(vo.myName);
+      if (variable == null) return;
+      String varReplacement = StringUtil.unquoteString(variable.getDefaultValueString());
+      varReplacement = StringUtil.isEmptyOrSpaces(varReplacement) ? vo.myName : varReplacement;
+      sb.replace(vo.myOffset + offset.get(), vo.myOffset + offset.get(), varReplacement);
+      offset.set(offset.get() + varReplacement.length());
+    });
+    return sb.toString();
   }
 
   public static boolean isEndVariable(@NotNull String name) {

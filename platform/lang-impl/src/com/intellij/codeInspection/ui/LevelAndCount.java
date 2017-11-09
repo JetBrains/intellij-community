@@ -22,7 +22,7 @@ class LevelAndCount {
   private final HighlightDisplayLevel myLevel;
   private final int myCount;
 
-  LevelAndCount(@NotNull HighlightDisplayLevel level, @NotNull int count) {
+  LevelAndCount(@NotNull HighlightDisplayLevel level, int count) {
     myLevel = level;
     myCount = count;
   }
@@ -32,7 +32,6 @@ class LevelAndCount {
     return myLevel;
   }
 
-  @NotNull
   public int getCount() {
     return myCount;
   }

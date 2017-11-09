@@ -65,6 +65,15 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       return new SubstitutorComputer(myThisType, myArgumentTypesNonErased.getValue(), myTypeArguments, myRef, myRef.getParent());
     }
   };
+
+  private final NotNullLazyValue<SubstitutorComputer> myMethodErasedSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+    @NotNull
+    @Override
+    protected SubstitutorComputer compute() {
+      return new SubstitutorComputer(myThisType, myArgumentTypes.getValue(), myTypeArguments, myRef, myRef.getParent());
+    }
+  };
+
   private final List<PsiScopeProcessor> myAccessorProcessors;
 
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
@@ -159,14 +168,16 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (kind == GroovyResolveKind.METHOD || kind == GroovyResolveKind.PROPERTY) {
         final PsiMethod method = (PsiMethod)namedElement;
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
+        PsiSubstitutor erasedSubstitutor;
         if (kind == GroovyResolveKind.METHOD) {
           substitutorComputer = () -> myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
-        }
-        else {
+          erasedSubstitutor = myMethodErasedSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
+        } else {
           substitutorComputer = () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
+          erasedSubstitutor = substitutorComputer.compute();
         }
         final boolean isApplicable = kind == GroovyResolveKind.PROPERTY && !myIsLValue
-                                     || isApplicable(myArgumentTypes.getValue(), method, substitutorComputer.compute(), myRef, true);
+                                     || isApplicable(myArgumentTypes.getValue(), method, erasedSubstitutor, myRef, true);
 
         candidate = new GroovyMethodResultImpl(
           method, resolveContext, spreadState,
@@ -358,4 +369,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
     return erasedTypes;
   }
+
+
 }

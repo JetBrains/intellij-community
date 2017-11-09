@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.BuildView;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -22,6 +23,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -57,6 +59,11 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
         if (runContentDescriptor == null) return null;
 
         ((ExternalSystemRunConfiguration.MyRunnableState)state).setContentDescriptor(runContentDescriptor);
+
+        ExecutionConsole executionConsole = runContentDescriptor.getExecutionConsole();
+        if(executionConsole instanceof BuildView) {
+          return runContentDescriptor;
+        }
         RunContentDescriptor descriptor =
           new RunContentDescriptor(runContentDescriptor.getExecutionConsole(), runContentDescriptor.getProcessHandler(),
                                    runContentDescriptor.getComponent(), runContentDescriptor.getDisplayName(),

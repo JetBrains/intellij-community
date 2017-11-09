@@ -1,8 +1,8 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.MultiRowFlowPanel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,7 +201,7 @@ public class RichTextControlBuilder {
   }
   
   private void addRow(@NotNull Collection<JComponent> rowComponents) {
-    JPanel row = new MultiRowFlowPanel(FlowLayout.CENTER, getGapToUse(0), getGapToUse(3));
+    JPanel row = new MultiRowFlowPanel(FlowLayout.CENTER, 0, 3);
     row.setBackground(myBackgroundColor);
     myComponents.add(row);
     if (rowComponents.isEmpty()) {
@@ -218,12 +218,6 @@ public class RichTextControlBuilder {
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets.top = 3;
     myResult.add(row, constraints);
-  }
-
-  private static int getGapToUse(int gap) {
-    // There is a problem with flow layout controls paint under Alloy LAF - it looks like it doesn't take given gaps into consideration.
-    // Alloy LAF sources are closed, so we use this dirty hack here.
-    return UIUtil.isUnderAlloyLookAndFeel() ? gap - 4 : gap;
   }
 
   /**

@@ -778,12 +778,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return null;
   }
 
-  protected static PsiElement chooseAnchor(boolean allOccurences,
+  protected static PsiElement chooseAnchor(boolean allOccurrences,
                                            boolean hasWriteAccess,
                                            List<PsiExpression> nonWrite,
                                            PsiElement anchorStatementIfAll,
                                            PsiElement anchorStatement) {
-    if (allOccurences) {
+    if (allOccurrences) {
       if (hasWriteAccess) {
         return RefactoringUtil.getAnchorElementForMultipleExpressions(nonWrite.toArray(new PsiExpression[nonWrite.size()]), null);
       }
@@ -965,8 +965,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             }
 
             if (editor != null) {
-              final PsiElement[] replacedOccurences = PsiUtilCore.toPsiElementArray(array);
-              highlightReplacedOccurences(project, editor, replacedOccurences);
+              final PsiElement[] replacedOccurrences = PsiUtilCore.toPsiElementArray(array);
+              highlightReplacedOccurrences(project, editor, replacedOccurrences);
             }
           } else {
             if (!deleteSelf && replaceSelf) {
@@ -1116,10 +1116,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       LOG.assertTrue(parentRange.getStartOffset() <= rangeMarker.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
+      //noinspection SSBasedInspection (suggested replacement breaks behavior)
       if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
 
       LOG.assertTrue(rangeMarker.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
+      //noinspection SSBasedInspection (suggested replacement breaks behavior)
       if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
       final String start = beg + (prefix != null ? prefix : "");
@@ -1150,13 +1152,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return child;
   }
 
-  protected static void highlightReplacedOccurences(Project project, Editor editor, PsiElement[] replacedOccurences){
+  protected static void highlightReplacedOccurrences(Project project, Editor editor, PsiElement[] replacedOccurrences){
     if (editor == null) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
+    highlightManager.addOccurrenceHighlights(editor, replacedOccurrences, attributes, true, null);
     WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
@@ -1231,7 +1233,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (enclosingExpr instanceof PsiMethodCallExpression) {
         PsiMethod method = ((PsiMethodCallExpression)enclosingExpr).resolveMethod();
         if (method != null && method.isConstructor()) {
-          //This is either 'this' or 'super', both must be the first in the respective contructor
+          //This is either 'this' or 'super', both must be the first in the respective constructor
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpID);
           return true;

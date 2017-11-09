@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
@@ -56,7 +55,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
@@ -411,8 +409,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixGtkPopupStyle();
 
-    fixTreeWideSelection(uiDefaults);
-
     fixMenuIssues(uiDefaults);
 
     if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -502,7 +498,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
-    else if (UIUtil.isUnderJGoodiesLookAndFeel()) {
+    else if (false) {
       uiDefaults.put("Menu.opaque", true);
       uiDefaults.put("MenuItem.opaque", true);
     }
@@ -514,19 +510,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
-  }
-
-  private static void fixTreeWideSelection(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
-      final Color bg = new ColorUIResource(56, 117, 215);
-      final Color fg = new ColorUIResource(255, 255, 255);
-      uiDefaults.put("info", bg);
-      uiDefaults.put("textHighlight", bg);
-      for (String key : ourAlloyComponentsToPatchSelection) {
-        uiDefaults.put(key + ".selectionBackground", bg);
-        uiDefaults.put(key + ".selectionForeground", fg);
-      }
-    }
   }
 
   private static void fixSeparatorColor(UIDefaults uiDefaults) {

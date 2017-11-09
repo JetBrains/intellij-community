@@ -44,7 +44,6 @@ public class PyPackagingTest extends PyEnvTestCase {
     super.runPythonTest(testTask);
   }
 
-  @Staging
   @Test
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {

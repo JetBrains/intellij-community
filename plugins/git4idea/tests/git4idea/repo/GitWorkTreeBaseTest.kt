@@ -33,17 +33,17 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    cd(myTestRoot)
+    cd(testRoot)
     assumeTrue(GitVersion.parse(git("version")).isLaterOrEqual(GitVersion(2, 5, 0, 0)))
 
     myMainRoot = initMainRepo()
     cd(myMainRoot)
-    git("worktree add $myProjectPath")
-    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myProjectPath, GitUtil.DOT_GIT))
+    git("worktree add $projectPath")
+    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath, GitUtil.DOT_GIT))
     assertNotNull(gitDir)
-    myRepo = registerRepo(project, myProjectPath)
-    assertEquals(1, myGitRepositoryManager.repositories.size)
-    assertNotNull(myGitRepositoryManager.getRepositoryForRoot(myProjectRoot))
+    myRepo = registerRepo(project, projectPath)
+    assertEquals(1, repositoryManager.repositories.size)
+    assertNotNull(repositoryManager.getRepositoryForRoot(projectRoot))
   }
 
   protected abstract fun initMainRepo(): String

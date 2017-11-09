@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -30,7 +31,7 @@ import java.io.File;
  */
 public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
-  public String getEditorTabTitle(Project project, VirtualFile file) {
+  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     UISettings uiSettings = UISettings.getInstanceOrNull();
     if (uiSettings == null || !uiSettings.getShowDirectoryForNonUniqueFilenames() || DumbService.isDumb(project)) {
       return null;

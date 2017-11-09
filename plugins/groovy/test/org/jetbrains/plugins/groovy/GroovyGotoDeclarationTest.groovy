@@ -13,13 +13,17 @@ class GroovyGotoDeclarationTest extends LightGroovyTestCase {
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   private void doTest() {
-    def name = (getTestName(false) - 'test').trim().split(' ')*.capitalize().join('').uncapitalize()
+    def name = getTestName()
     fixture.configureByFile "${name}.groovy"
     fixture.performEditorAction "GotoDeclaration"
     fixture.checkResultByFile("${name}_after.groovy")
   }
 
   void 'test default constructor'() {
+    doTest()
+  }
+
+  void 'test qualifier in new'() {
     doTest()
   }
 }

@@ -74,7 +74,7 @@ public class FileManagerImpl implements FileManager {
     myFileDocumentManager = fileDocumentManager;
 
     Disposer.register(manager.getProject(), this);
-    LowMemoryWatcher.register(() -> processQueue(), this);
+    LowMemoryWatcher.register(this::processQueue, this);
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();
@@ -155,7 +155,7 @@ public class FileManagerImpl implements FileManager {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders());
+    ApplicationManager.getApplication().runWriteAction(this::clearViewProviders);
 
     myVFileToPsiDirMap.clear();
     ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
@@ -304,9 +304,9 @@ public class FileManagerImpl implements FileManager {
   public void checkConsistency() {
     Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
-    for (VirtualFile vFile : fileToViewProvider.keySet()) {
-      final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
-
+    for (Map.Entry<VirtualFile, FileViewProvider> entry : fileToViewProvider.entrySet()) {
+      final FileViewProvider fileViewProvider = entry.getValue();
+      VirtualFile vFile = entry.getKey();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
       if (psiFile1 != null && fileViewProvider != null && fileViewProvider.isPhysical()) { // might get collected
@@ -316,7 +316,7 @@ public class FileManagerImpl implements FileManager {
       }
     }
 
-    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new HashMap<>(myVFileToPsiDirMap);
+    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new HashMap<>(myVFileToPsiDirMap);
     myVFileToPsiDirMap.clear();
 
     for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
@@ -326,7 +326,7 @@ public class FileManagerImpl implements FileManager {
 
       VirtualFile parent = vFile.getParent();
       if (parent != null) {
-        LOG.assertTrue(myVFileToPsiDirMap.containsKey(parent));
+        LOG.assertTrue(myVFileToPsiDirMap.get(parent) != null);
       }
     }
   }

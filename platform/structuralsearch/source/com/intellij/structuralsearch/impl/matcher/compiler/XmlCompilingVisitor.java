@@ -1,27 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlRecursiveElementVisitor;
+import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Eugene.Kudelevsky
@@ -34,10 +27,57 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   }
 
   public void compile(PsiElement[] topLevelElements) {
+    final WordOptimizer optimizer = new WordOptimizer();
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     for (PsiElement element : topLevelElements) {
       element.accept(this);
-      final MatchingHandler matchingHandler = myCompilingVisitor.getContext().getPattern().getHandler(element);
-      myCompilingVisitor.getContext().getPattern().setHandler(element, new TopLevelMatchingHandler(matchingHandler));
+      element.accept(optimizer);
+      pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
+    }
+  }
+
+  private class WordOptimizer extends XmlRecursiveElementWalkingVisitor {
+
+    @Override
+    public void visitXmlTag(XmlTag tag) {
+      if (!handleWord(tag.getName())) return;
+      super.visitXmlTag(tag);
+    }
+
+    @Override
+    public void visitXmlAttribute(XmlAttribute attribute) {
+      if (!handleWord(attribute.getName())) return;
+      handleWord(attribute.getValue());
+      super.visitXmlAttribute(attribute);
+    }
+
+    /**
+     * @param word  word to check index with
+     * @return true, if psi tree should be processed deeper, false otherwise.
+     */
+    private boolean handleWord(@Nullable String word) {
+      if (word == null) {
+        return true;
+      }
+      final CompileContext compileContext = myCompilingVisitor.getContext();
+      final CompiledPattern pattern = compileContext.getPattern();
+      if (pattern.isTypedVar(word)) {
+        final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(word);
+        if (handler == null || handler.getMinOccurs() == 0) {
+          // don't call super
+          return false;
+        }
+
+        final RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+        if (predicate != null && predicate.couldBeOptimized()) {
+          GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.CODE,
+                                                              compileContext);
+        }
+      }
+      else {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, GlobalCompilingVisitor.OccurenceKind.CODE, compileContext);
+      }
+      return true;
     }
   }
 

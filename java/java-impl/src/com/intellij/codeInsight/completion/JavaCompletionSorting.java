@@ -103,9 +103,9 @@ public class JavaCompletionSorting {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
-    ExpectedTypeInfo castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
-    if (castExpectation != null) {
-      return new ExpectedTypeInfo[]{castExpectation};
+    List<ExpectedTypeInfo> castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
+    if (!castExpectation.isEmpty()) {
+      return castExpectation.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
@@ -457,7 +457,7 @@ public class JavaCompletionSorting {
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod) {
+      if (object instanceof PsiMethod && FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM.get(element) == null) {
         PsiType type = ((PsiMethod)object).getReturnType();
         final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (callItem != null) {

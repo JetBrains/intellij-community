@@ -161,7 +161,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
       myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
       myTree = new MyTree(myAsyncTreeModel);
-      TreeUtil.setTreeAcceptor(myTree, myAsyncTreeModel::accept);
 
       Disposer.register(this, () -> myTreeModelWrapper.dispose());
       Disposer.register(this, myAsyncTreeModel);
@@ -285,7 +284,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (myUseATM) {
       myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate();
+        myStructureTreeModel.invalidate(null);
       });
     }
     else {

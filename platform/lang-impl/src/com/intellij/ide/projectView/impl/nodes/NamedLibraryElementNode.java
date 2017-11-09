@@ -104,7 +104,9 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
       if (projectJdk != null) { //jdk not specified
         String path = projectJdk.getHomePath();
         if (path != null) {
-          path = FileUtil.toSystemDependentName(path);
+          path = projectJdk.getSdkType().isLocalSdk(projectJdk) ?
+                 FileUtil.toSystemDependentName(path) :
+                 FileUtil.toSystemIndependentName(path);
           if (getSettings().isShowURL()) {
             location = path;
           }

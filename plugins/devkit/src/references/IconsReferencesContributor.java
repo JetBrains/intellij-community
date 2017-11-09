@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -50,11 +51,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -122,8 +124,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isPluginProject(element.getProject()) ||
-            !DescriptorUtil.isPluginXml(element.getContainingFile())) {
+        if (!PsiUtil.isPluginXmlPsiElement(element)) {
           return PsiReference.EMPTY_ARRAY;
         }
 
@@ -253,20 +254,41 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
-    PsiJavaElementPattern.Capture<PsiLiteralExpression> presentationAnnotation
-      = literalExpression().annotationParam("com.intellij.ide.presentation.Presentation", "icon");
+    UastReferenceRegistrar.registerUastReferenceProvider(registrar, new Function2<UElement, ProcessingContext, Boolean>() {
+      @Override
+      public Boolean invoke(UElement element, ProcessingContext context) {
+        if (!UastLiteralUtils.isStringLiteral(element)) return false;
 
-    registrar.registerReferenceProvider(presentationAnnotation, new PsiReferenceProvider() {
+        final UNamedExpression namedExpression = UastUtils.getParentOfType(element, UNamedExpression.class);
+        if (namedExpression == null || !"icon".equals(namedExpression.getName())) return false;
+
+        final UAnnotation annotation = UastUtils.getParentOfType(namedExpression, UAnnotation.class);
+        return annotation != null && Presentation.class.getName().equals(annotation.getQualifiedName());
+      }
+    }, new UastReferenceProvider() {
       @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+      public PsiReference[] getReferencesByElement(@NotNull final UElement uElement, @NotNull ProcessingContext context) {
+        final PsiElement psi = uElement.getPsi();
+        if (psi == null || !PsiUtil.isPluginProject(psi.getProject())) return PsiReference.EMPTY_ARRAY;
+
+        PsiElement referencePsiElement = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)uElement);
+        if (referencePsiElement == null) return PsiReference.EMPTY_ARRAY;
+
         return new PsiReference[]{
-          new IconPsiReferenceBase(element) {
+          new IconPsiReferenceBase(referencePsiElement) {
+
+            private UElement getUElement() {
+              return UastContextKt.toUElement(getElement());
+            }
+
             @Override
             public PsiElement resolve() {
-              String value = (String)((PsiLiteralExpression)element).getValue();
-              return resolveIconPath(value, element);
+              final UElement uElement = getUElement();
+              if (uElement == null) return null;
+
+              String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
+              return resolveIconPath(value, getElement());
             }
 
             @Override
@@ -277,15 +299,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
                 return result;
               }
               return super.handleElementRename(newElementName);
-            }
-
-            @Override
-            public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-              PsiElement result = handleElement(element, null);
-              if (result != null) {
-                return result;
-              }
-              return super.bindToElement(element);
             }
 
             @Nullable
@@ -299,10 +312,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor
                       newElementName = ((PsiField)element).getName();
                     }
                     if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                      return replace(newElementName, classQualifiedName, "com.intellij.icons.", element);
+                      return replace(newElementName, classQualifiedName, "com.intellij.icons.");
                     }
                     if (classQualifiedName.startsWith("icons.")) {
-                      return replace(newElementName, classQualifiedName, "icons.", element);
+                      return replace(newElementName, classQualifiedName, "icons.");
                     }
                   }
                 }
@@ -310,10 +323,9 @@ public class IconsReferencesContributor extends PsiReferenceContributor
               return null;
             }
 
-            private PsiElement replace(String newElementName, String fqn, String pckg, PsiElement container) {
-              String newValue = "\"" + fqn.substring(pckg.length()) + "." + newElementName + "\"";
-              return getElement().replace(
-                JavaPsiFacade.getElementFactory(container.getProject()).createExpressionFromText(newValue, container.getParent()));
+            private PsiElement replace(String newElementName, String fqn, String packageName) {
+              String newValue = fqn.substring(packageName.length()) + "." + newElementName;
+              return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
             }
 
             @NotNull
@@ -380,7 +392,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    public IconPsiReferenceBase(PsiElement element) {
+    public IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
     }
 

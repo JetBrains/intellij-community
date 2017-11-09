@@ -105,7 +105,12 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   @Override
   public boolean containsKey(int key) {
-    return myMap.containsKey(key);
+    throw RefValueHashMap.pointlessContainsKey();
+  }
+
+  @Override
+  public boolean containsValue(@NotNull V value) {
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @Override
@@ -243,15 +248,5 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     Set<V> result = new THashSet<V>();
     ContainerUtil.addAll(result, elements());
     return result;
-  }
-
-  @Override
-  public boolean containsValue(@NotNull V value) {
-    for (IntEntry<IntReference<V>> entry : myMap.entries()) {
-      if (value.equals(entry.getValue().get())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

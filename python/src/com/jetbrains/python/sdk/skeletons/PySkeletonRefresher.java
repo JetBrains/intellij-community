@@ -270,7 +270,7 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker) throws InvalidSdkException {
+  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker checker) throws InvalidSdkException {
     final List<String> errorList = new SmartList<>();
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
@@ -280,6 +280,10 @@ public class PySkeletonRefresher {
       skeletonsDir.mkdirs();
     }
     final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
+
+    if (checker != null && checker.isPregenerated()) {
+      mySkeletonsGenerator.setPrebuilt(true);
+    }
 
     mySkeletonsGenerator.prepare();
     myBlacklist = loadBlacklist();
@@ -304,8 +308,9 @@ public class PySkeletonRefresher {
     myPregeneratedSkeletons = PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
     indicate(PyBundle.message("sdk.gen.reading.versions.file"));
-    if (cachedChecker != null) {
-      myVersionChecker = cachedChecker.withDefaultVersionIfUnknown(myGeneratorVersion);
+
+    if (checker != null) {
+      myVersionChecker = checker.withDefaultVersionIfUnknown(myGeneratorVersion);
     }
     else {
       myVersionChecker = new SkeletonVersionChecker(myGeneratorVersion);
@@ -585,7 +590,9 @@ public class PySkeletonRefresher {
         boolean canLive = header != null;
         if (canLive) {
           final String binaryFile = header.getBinaryFile();
-          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || mySkeletonsGenerator.exists(binaryFile);
+          canLive = SkeletonVersionChecker.PREGENERATED.equals(binaryFile) ||
+                    SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) ||
+                    mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
           mySkeletonsGenerator.deleteOrLog(item);

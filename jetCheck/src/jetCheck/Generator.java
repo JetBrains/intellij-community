@@ -3,6 +3,7 @@ package jetCheck;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -140,6 +141,23 @@ public class Generator<T> {
   /** Gets the data from two generators and invokes the given function to produce a result based on the two generated values. */
   public static <A,B,C> Generator<C> zipWith(Generator<A> gen1, Generator<B> gen2, BiFunction<A,B,C> zip) {
     return from(data -> zip.apply(gen1.generateValue(data), gen2.generateValue(data)));
+  }
+
+  /**
+   * A fixed-point combinator to easily create recursive generators by giving a name to the whole generator and allowing to reuse it inside itself. For example, a recursive tree generator could be defined as follows by binding itself to the name {@code nodes}:
+   * <pre>
+   * Generator<Node> gen = Generator.recursive(<b>nodes</b> -> Generator.anyOf(
+   *   Generator.constant(new Leaf()),
+   *   Generator.listsOf(<b>nodes</b>).map(children -> new Composite(children))))  
+   * </pre>
+   * @return the generator returned from the passed function
+   */
+  @NotNull
+  public static <T> Generator<T> recursive(@NotNull Function<Generator<T>, Generator<T>> createGenerator) {
+    AtomicReference<Generator<T>> ref = new AtomicReference<>();
+    Generator<T> result = createGenerator.apply(from(data -> ref.get().getGeneratorFunction().apply(data)));
+    ref.set(result);
+    return result;
   }
 
   /** A generator that returns 'true' or 'false' */

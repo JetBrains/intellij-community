@@ -110,6 +110,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private MyShelfContent myContent = null;
   private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
+  private final VcsConfiguration myVcsConfiguration;
 
   public static final DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static final DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
@@ -130,6 +131,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -274,7 +276,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject);
     mySplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
-                                                           VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
+                                                           myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
@@ -787,12 +789,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
-      VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
+      myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN;
+      return myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
   }
 

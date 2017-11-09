@@ -121,7 +121,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   @NotNull
   private static List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
     List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
-    titles.set(ThreeSide.BASE.getIndex(), "Result");
+    titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
     return titles;
   }
 
@@ -848,16 +848,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private boolean hasResolvableConflictedChanges() {
-      return ContainerUtil.exists(getAllChanges(), change -> change.isConflict() && canResolveChangeAutomatically(change, ThreeSide.BASE));
+      return ContainerUtil.exists(getAllChanges(), change -> canResolveChangeAutomatically(change, ThreeSide.BASE));
     }
 
     private void applyResolvableConflictedChanges() {
       executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) {
-            resolveChangeAutomatically(change, ThreeSide.BASE);
-          }
+          resolveChangeAutomatically(change, ThreeSide.BASE);
         }
       });
 

@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
-    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   private final PsiMethod myAppMainPattern;
@@ -295,6 +295,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
     }
+    if (JAVA_MODULE.equals(type)) {
+      return RefJavaModuleImpl.moduleFromExternalName(myRefManager, fqName);
+    }
     return null;
   }
 
@@ -346,7 +349,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   @Nullable
   public String getGroupName(final RefEntity entity) {
-    if (entity instanceof RefFile && (!(entity instanceof RefJavaFileImpl) || ((RefJavaFileImpl)entity).isModuleFile())) return null;
+    if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 

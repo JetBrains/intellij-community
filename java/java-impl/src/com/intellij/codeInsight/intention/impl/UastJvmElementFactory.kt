@@ -31,21 +31,6 @@ class UastJvmElementFactory(val renderer: JavaElementRenderer) : JvmElementActio
         getUastFactory(target)?.createChangeModifierAction(target.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
     }
 
-  override fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> {
-    val project = (targetClass as? PsiElement)?.project ?: return emptyList()
-    val helper = JvmPsiConversionHelper.getInstance(project)
-    return with(request) {
-      getUastFactory(targetClass)?.createAddCallableMemberActions(
-        UastMethodInsertionInfo.Constructor(
-          targetClass.asUast(),
-          modifiers.map { renderer.render(it) },
-          typeParameters.map(helper::convertTypeParameter),
-          parameters.map { it.asUast<UParameter>() }
-        )
-      ) ?: emptyList()
-    }
-  }
-
   override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
     val project = (targetClass as? PsiElement)?.project ?: return emptyList()
     val helper = JvmPsiConversionHelper.getInstance(project)
