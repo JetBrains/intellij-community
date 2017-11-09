@@ -113,7 +113,7 @@ public class UrlClassLoaderTest {
       UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
         // fails also without cache pool (but with cache enabled), but takes much longer
-        UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).useCache(pool, (url) -> true).get();
+        UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).allowLock(true).useCache(pool, (url) -> true).get();
         List<String> namesToLoad = ContainerUtil.newArrayList();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
