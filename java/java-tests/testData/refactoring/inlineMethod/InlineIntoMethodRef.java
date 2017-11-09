@@ -6,6 +6,7 @@ class Test {
   }
 
   private String get() {
+    if (true) return null;
     return null;
   }
 }
