@@ -373,7 +373,8 @@ public class BuildContentManagerImpl implements BuildContentManager {
       final boolean canClose = closeQuery(true);
       // Content could be removed during close query
       if (canClose && myContent != null) {
-        myContent.getManager().removeContent(myContent, true);
+        ContentManager contentManager = myContent.getManager();
+        if (contentManager != null) contentManager.removeContent(myContent, true);
         myContent = null;
       }
       return canClose;
