@@ -16,10 +16,12 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
-import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,20 +146,8 @@ public final class TypeConstraint {
 
   @Nullable
   public PsiType getPsiType() {
-    if (myInstanceofValues.isEmpty()) {
-      return null;
-    }
-    if (myInstanceofValues.size() == 1) {
-      return myInstanceofValues.iterator().next().getPsiType();
-    }
-    return StreamEx.of(myInstanceofValues).map(DfaPsiType::getPsiType)
-      .select(PsiClassType.class)
-      .filter(type -> {
-        PsiClass psiClass = type.resolve();
-        return psiClass != null && !psiClass.isInterface();
-      })
-      .collect(MoreCollectors.onlyOne())
-      .orElse(null);
+    PsiType[] conjuncts = StreamEx.of(myInstanceofValues).map(DfaPsiType::getPsiType).toArray(PsiType.EMPTY_ARRAY);
+    return conjuncts.length == 0 ? null : PsiIntersectionType.createIntersection(true, conjuncts);
   }
 
   boolean isSuperStateOf(@NotNull TypeConstraint that) {
