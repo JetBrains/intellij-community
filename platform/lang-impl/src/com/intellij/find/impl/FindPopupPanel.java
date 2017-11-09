@@ -93,6 +93,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final Disposable myDisposable;
+  private final Alarm myPreviewUpdater;
   @NotNull private final FindPopupScopeUI myScopeUI;
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
@@ -137,6 +138,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myHelper = helper;
     myProject = myHelper.getProject();
     myDisposable = Disposer.newDisposable();
+    myPreviewUpdater = new Alarm(myDisposable);
     myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
 
     Disposer.register(myDisposable, () -> {
@@ -520,6 +522,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     };
     mySearchComponent.getDocument().addDocumentListener(documentAdapter);
     myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
+    myReplaceComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myHelper.getModel().setStringToReplace(myReplaceComponent.getText());
+      }
+    });
     mySearchTextArea.setMultilineEnabled(false);
     myReplaceTextArea.setMultilineEnabled(false);
 
@@ -605,7 +613,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting()) return;
-      ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
+      myPreviewUpdater.addRequest(updatePreviewRunnable, 50); //todo[vasya]: remove this dirty hack of updating preview panel after clicking on Replace button
     });
     mySearchRescheduleOnCancellationsAlarm = new Alarm();
 
