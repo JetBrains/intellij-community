@@ -9,11 +9,12 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
-import org.jetbrains.ktor.host.*
-import org.jetbrains.ktor.http.*
-import org.jetbrains.ktor.jetty.*
-import org.jetbrains.ktor.response.*
-import org.jetbrains.ktor.routing.*
+import io.ktor.application.*
+import io.ktor.server.jetty.*
+import io.ktor.http.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.server.engine.*
 import runtime.async.*
 import runtime.net.*
 import runtime.reactive.*
