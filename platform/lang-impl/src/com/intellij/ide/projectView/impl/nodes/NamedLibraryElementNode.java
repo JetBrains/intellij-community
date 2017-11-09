@@ -102,7 +102,9 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
       if (projectJdk != null) { //jdk not specified
         final String path = projectJdk.getHomePath();
         if (path != null) {
-          presentation.setLocationString(FileUtil.toSystemDependentName(path));
+          presentation.setLocationString(projectJdk.getSdkType().isLocalSdk(projectJdk) ?
+                                         FileUtil.toSystemDependentName(path) :
+                                         FileUtil.toSystemIndependentName(path));
         }
       }
       presentation.setTooltip(null);
