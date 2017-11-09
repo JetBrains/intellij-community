@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,15 +88,18 @@ public class LoopTransformationAction extends PsiElementBaseIntentionAction {
       if(!BoolUtils.isTrue(condition)) return null;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(whileStatement.getBody());
       if(statements.length < 2) return null;
-      PsiStatement last = statements[statements.length - 1];
-      PsiExpression lastBreakCondition = extractBreakCondition(last);
-      if(lastBreakCondition != null) {
-        return new Context(whileStatement, lastBreakCondition, last, false);
-      }
       PsiStatement first = statements[0];
       PsiExpression firstBreakCondition = extractBreakCondition(first);
       if(firstBreakCondition != null) {
         return new Context(whileStatement, firstBreakCondition, first, true);
+      }
+      PsiStatement last = statements[statements.length - 1];
+      PsiExpression lastBreakCondition = extractBreakCondition(last);
+      if(lastBreakCondition != null) {
+        if(StreamEx.of(statements)
+          .flatMap(statement -> StreamEx.ofTree((PsiElement)statement, el -> StreamEx.of(el.getChildren())))
+          .anyMatch(e -> e instanceof PsiContinueStatement)) return null;
+        return new Context(whileStatement, lastBreakCondition, last, false);
       }
       return null;
     }
