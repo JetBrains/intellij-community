@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -27,8 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -95,8 +94,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                   paramName = "";
                 }
                 // TODO: only print the ")" if Settings require it
-                final CodeStyleSettings settingsManager = CodeStyleSettingsManager.getSettings(project);
-                final CommonCodeStyleSettings settings = settingsManager.getCommonSettings(PythonLanguage.getInstance());
+                final CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file, PythonLanguage.getInstance());
                 final StringBuilder textToType = new StringBuilder();
                 textToType.append("(");
                 if (!paramName.isEmpty()) {

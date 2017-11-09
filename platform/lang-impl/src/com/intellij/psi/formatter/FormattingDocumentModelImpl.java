@@ -16,6 +16,7 @@
 
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
@@ -50,7 +50,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     myFile = file;
     Language language = file.getLanguage();
     myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(language);
-    mySettings = CodeStyleSettingsManager.getSettings(file.getProject());
+    mySettings = CodeStyle.getSettings(file);
   }
 
   public static FormattingDocumentModelImpl createOn(@NotNull PsiFile file) {
