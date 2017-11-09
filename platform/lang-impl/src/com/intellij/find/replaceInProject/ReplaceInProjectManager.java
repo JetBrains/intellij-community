@@ -388,7 +388,7 @@ public class ReplaceInProjectManager {
       @Override
       public Object getValue(String key) {
         return Action.NAME.equals(key)
-               ? FindBundle.message("find.popup.replace.selected.button", replaceContext.getUsageView().getSelectedUsages().size())
+               ? FindBundle.message("find.replace.selected.action", replaceContext.getUsageView().getSelectedUsages().size())
                : super.getValue(key);
       }
 
