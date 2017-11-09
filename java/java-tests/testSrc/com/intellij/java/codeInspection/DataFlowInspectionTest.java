@@ -233,6 +233,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
+  public void testTryWithResourcesCloseException() { doTest(); }
+  public void testTryWithResourceExpressions() { doTest(); }
+
   public void testOmnipresentExceptions() { doTest(); }
 
   public void testEqualsHasNoSideEffects() { doTest(); }
@@ -547,5 +550,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
 
-  public void testTryWithResourceExpressions() { doTest(); }
+  public void testArrayStoreProblems() { doTest(); }
+
+  public void testNestedScopeComplexity() { doTest(); }
 }
