@@ -11,7 +11,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 
-class CreateMethodFromJavaUsageRequest(
+internal class CreateMethodFromJavaUsageRequest(
   methodCall: PsiMethodCallExpression,
   override val modifiers: Collection<JvmModifier>
 ) : CreateExecutableFromJavaUsageRequest<PsiMethodCallExpression>(methodCall), CreateMethodRequest {
