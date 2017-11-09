@@ -65,12 +65,14 @@ open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : 
 sealed class Trap(val anchor: PsiElement) {
   class TryCatch(tryStatement : PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>): Trap(tryStatement)
   class TryFinally(val finallyBlock: PsiCodeBlock, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(finallyBlock)
+  class TwrFinally(resourceList: PsiResourceList, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(resourceList)
   class InsideFinally(val finallyBlock: PsiCodeBlock): Trap(finallyBlock)
 
   internal fun getPossibleTargets(): Collection<Int> {
     return when (this) {
       is TryCatch -> clauses.values.map { it.instructionOffset }
       is TryFinally -> listOf(jumpOffset.instructionOffset)
+      is TwrFinally -> listOf(jumpOffset.instructionOffset)
       else -> emptyList()
     }
   }
@@ -85,6 +87,7 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
       null -> transferToTarget()
       is Trap.TryCatch -> if (target is ExceptionTransfer) processCatches(head, target.throwable, tail) else iteration(tail)
       is Trap.TryFinally -> goToFinally(head.jumpOffset.instructionOffset, tail)
+      is Trap.TwrFinally -> if (target is ExceptionTransfer) iteration(tail) else goToFinally(head.jumpOffset.instructionOffset, tail)
       is Trap.InsideFinally -> leaveFinally(tail)
     }
   }

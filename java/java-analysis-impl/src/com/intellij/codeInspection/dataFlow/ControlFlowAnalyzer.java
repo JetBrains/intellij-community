@@ -38,6 +38,7 @@ import com.siyeh.ig.psiutils.CountingLoop;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -921,12 +922,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myTrapStack = myTrapStack.prepend(new Trap.TryCatch(statement, clauses));
     }
 
+    Set<PsiClassType> closerExceptions = Collections.emptySet();
+    Trap.TwrFinally twrFinallyDescriptor = null;
     if (resourceList != null) {
       resourceList.accept(this);
+
+      closerExceptions = StreamEx.of(resourceList.iterator()).flatCollection(ExceptionUtil::getCloserExceptions).toSet();
+      if (!closerExceptions.isEmpty()) {
+        twrFinallyDescriptor = new Trap.TwrFinally(resourceList, getStartOffset(resourceList));
+        myTrapStack = myTrapStack.prepend(twrFinallyDescriptor);
+      }
     }
 
     if (tryBlock != null) {
       tryBlock.accept(this);
+    }
+
+    if (twrFinallyDescriptor != null) {
+      assert myTrapStack.getHead() instanceof Trap.TwrFinally;
+      myTrapStack = myTrapStack.getTail();
+      startElement(resourceList);
+      addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
+      finishElement(resourceList);
     }
 
     InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), getVariablesInside(tryBlock));
@@ -973,11 +990,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       else if (resource instanceof PsiResourceExpression) {
         ((PsiResourceExpression)resource).getExpression().accept(this);
         addInstruction(new PopInstruction());
-      }
-
-      final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
-      if (!closerExceptions.isEmpty()) {
-        addThrows(null, closerExceptions.toArray(new PsiClassType[closerExceptions.size()]));
       }
     }
   }
