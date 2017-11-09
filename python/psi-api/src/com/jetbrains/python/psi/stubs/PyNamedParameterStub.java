@@ -6,7 +6,6 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,15 +20,6 @@ public interface PyNamedParameterStub extends NamedStub<PyNamedParameter>, PyAnn
   @Deprecated
   default boolean hasDefaultValue() {
     return getDefaultValueText() != null;
-  }
-
-  /**
-   * @deprecated Use {@link PyNamedParameterStub#getDefaultValueText()} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  default boolean hasDefaultNoneValue() {
-    return PyNames.NONE.equals(getDefaultValueText());
   }
 
   @Nullable
