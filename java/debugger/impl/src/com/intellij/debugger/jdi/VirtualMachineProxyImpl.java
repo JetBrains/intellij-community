@@ -670,16 +670,21 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.hashCode();
   }
 
-  public void clearCaches() {
-    LOG.debug("VM cleared");
-
+  public void clearClassesCache() {
     myAllClasses = null;
     myAllClassesByName = null;
 
     if (!myNestedClassesCache.isEmpty()) {
       myNestedClassesCache = new HashMap<>(myNestedClassesCache.size());
     }
+  }
+
+  public void clearCaches() {
+    LOG.debug("VM cleared");
+
+    clearClassesCache();
     //myAllThreadsDirty = true;
+
     myTimeStamp++;
   }
 
