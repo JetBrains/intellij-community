@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -61,10 +60,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
-    }
-    if (WelcomeWizardUtil.getCompletionCaseSensitive() != null) {
-      //noinspection MagicConstant
-      COMPLETION_CASE_SENSITIVE =  WelcomeWizardUtil.getCompletionCaseSensitive();
     }
   }
 

@@ -94,7 +94,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.commons.lang.BooleanUtils;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -125,7 +124,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Boolean> myShowMembers = new THashMap<>();
   private static final boolean ourShowMembersDefaults = false;
   private final Map<String, Boolean> myManualOrder = new THashMap<>();
-  private static final boolean ourManualOrderDefaults = BooleanUtils.toBooleanDefaultIfNull(WelcomeWizardUtil.getManualOrder(), false);
+  private static final boolean ourManualOrderDefaults = false;
   private final Map<String, Boolean> mySortByType = new THashMap<>();
   private static final boolean ourSortByTypeDefaults = false;
   private final Map<String, Boolean> myShowModules = new THashMap<>();
@@ -1913,11 +1912,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isManualOrder(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getManualOrder();
+    }
     return getPaneOptionValue(myManualOrder, paneId, ourManualOrderDefaults);
   }
 
   @Override
   public void setManualOrder(@NotNull String paneId, final boolean enabled) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setAutoscrollToSource(enabled);
+    }
     setPaneOption(myManualOrder, enabled, paneId, false);
     final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
     pane.installComparator();

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectView.impl
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
@@ -37,8 +36,9 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var hideEmptyPackages = true
   var abbreviatePackages = false
   var autoscrollFromSource = false
-  var autoscrollToSource = UISettings.instance.defaultAutoScrollToSource
+  var autoscrollToSource = false
   var foldersAlwaysOnTop = true
+  var manualOrder = false
 
   override fun getState(): ProjectViewSharedSettings? {
     return this

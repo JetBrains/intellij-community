@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui
 
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -126,23 +125,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("PIN_FIND_IN_PATH_POPUP") var pinFindInPath by storedProperty(false)
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
-
-  init {
-    WelcomeWizardUtil.getAutoScrollToSource()?.let {
-      defaultAutoScrollToSource = it
-    }
-    WelcomeWizardUtil.getTabsPlacement()?.let {
-      editorTabPlacement = it
-    }
-    WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      overrideLafFonts = true
-      fontSize = it
-    }
-    WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      overrideLafFonts = true
-      fontFace = it
-    }
-  }
 
   private fun withDefFont(): UISettings {
     initDefFont()
