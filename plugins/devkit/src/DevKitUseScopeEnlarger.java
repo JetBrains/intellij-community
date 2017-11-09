@@ -29,15 +29,13 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
 
   @Override
@@ -46,7 +44,7 @@ public class DevKitUseScopeEnlarger extends UseScopeEnlarger {
       PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
-        if (domElement instanceof ExtensionPoint) {
+        if (domElement instanceof ExtensionPoint || domElement instanceof Extension) {
           return createAllPluginDescriptorFilesSearchScope(element);
         }
       }
