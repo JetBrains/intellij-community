@@ -42,7 +42,11 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     get() = UastLanguagePlugin.getInstances()
 
   fun findPlugin(element: PsiElement): UastLanguagePlugin? {
-    val language = (element.containingFile ?: element).language // because sometimes java elements are used in another files (see Drools)
+    // we searching for plugin for file because sometimes java elements are used in another languages (see Drools)
+    val containingFile = element.containingFile?.takeIf {
+      it !is PsiCompiledFile // Dont trust compiled files because of KT-18054
+    }
+    val language = (containingFile ?: element).language
     return languagePlugins.firstOrNull { it.language == language }
   }
 
