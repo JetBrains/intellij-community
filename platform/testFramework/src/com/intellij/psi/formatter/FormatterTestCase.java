@@ -279,26 +279,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   protected abstract String getFileExtension();
 
-  protected void defaultSettings() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-
-    settings.ALIGN_MULTILINE_PARAMETERS = true;
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
-    settings.ALIGN_MULTILINE_FOR = true;
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = false;
-    settings.ALIGN_MULTILINE_THROWS_LIST = false;
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = false;
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
-    settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
-
-    getSettings().SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-    getSettings().SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-  }
-
   /**
    * Returns common (spacing, blank lines etc.) settings for the given language.
    * @param language The language to search settings for.
