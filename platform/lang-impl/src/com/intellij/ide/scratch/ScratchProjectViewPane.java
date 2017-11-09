@@ -44,7 +44,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -197,7 +196,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyProjectNode extends ProjectViewNode<String> {
     MyProjectNode(Project project, ViewSettings settings) {
-      super(project, "Scratches and Consoles", settings);
+      super(project, ScratchesNamedScope.NAME, settings);
     }
 
     @Override
@@ -221,7 +220,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected void update(PresentationData presentation) {
       presentation.setPresentableText(getValue());
-      presentation.setIcon(AllIcons.Nodes.Folder);
+      presentation.setIcon(AllIcons.General.ProjectTab);
     }
 
     @Override
@@ -259,7 +258,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected void update(PresentationData presentation) {
-      presentation.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
+      presentation.setIcon(AllIcons.Nodes.Folder);
       presentation.setPresentableText(getValue().getDisplayName());
     }
 
@@ -271,7 +270,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     public boolean isEmpty() {
       PsiDirectory directory = getDirectory();
       if (directory == null) return true;
-      return directory.processChildren(element -> false);
+      RootType rootType = ObjectUtils.notNull(getValue());
+      Project project = directory.getProject();
+      return directory.processChildren(element -> rootType.isIgnored(project, element.getVirtualFile()));
     }
   }
 
