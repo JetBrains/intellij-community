@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -322,7 +308,7 @@ public class EditorActionUtil {
     if (currentVisCaret.line > caretLogLineStartVis.line) {
       // Caret is located not at the first visual line of soft-wrapped logical line.
       if (editorSettings.isSmartHome()) {
-        moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret, currentVisCaret.line - caretLogLineStartVis.line);
+        moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret);
       }
       else {
         caretModel.moveToVisualPosition(new VisualPosition(currentVisCaret.line, 0));
@@ -361,7 +347,7 @@ public class EditorActionUtil {
       VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
       int softWrapCount = EditorUtil.getSoftWrapCountAfterLineStart(editor, logLineEndLog);
       if (softWrapCount > 0) {
-        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis, softWrapCount);
+        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis);
       }
       else {
         int line = logLineEndVis.line;
@@ -380,7 +366,7 @@ public class EditorActionUtil {
     EditorModificationUtil.scrollToCaret(editor);
   }
 
-  private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual, int softWrappedLines) {
+  private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual) {
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition startLineLogical = editor.visualToLogicalPosition(new VisualPosition(currentVisual.line, 0));
     int startLineOffset = editor.logicalPositionToOffset(startLineLogical);
@@ -405,19 +391,9 @@ public class EditorActionUtil {
     }
     else {
       // We assume that caret is already located at zero visual column of soft-wrapped line if control flow reaches this place.
-      int newVisualCaretLine = currentVisual.line - 1;
-      int newVisualCaretColumn = -1;
-      if (softWrappedLines > 1) {
-        int offset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(newVisualCaretLine, 0)));
-        SoftWrap prevLineSoftWrap = softWrapModel.getSoftWrap(offset);
-        if (prevLineSoftWrap != null) {
-          newVisualCaretColumn = prevLineSoftWrap.getIndentInColumns();
-        }
-      }
-      if (newVisualCaretColumn < 0) {
-        newVisualCaretColumn = findFirstNonSpaceColumnOnTheLine(editor, newVisualCaretLine);
-      }
-      caretModel.moveToVisualPosition(new VisualPosition(newVisualCaretLine, newVisualCaretColumn));
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, startLineOffset);
+      int visualLine = editor.offsetToVisualPosition(lineStartOffset).line;
+      caretModel.moveToVisualPosition(new VisualPosition(visualLine, findFirstNonSpaceColumnOnTheLine(editor, visualLine)));
     }
   }
 
@@ -575,26 +551,13 @@ public class EditorActionUtil {
       = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line), true);
 
     // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
-    // We want to move the caret to the end of the next visual line then.
+    // We want to move the caret to the end of the logical line then.
     if (currentVisualCaret.equals(visualEndOfLineWithCaret)) {
       LogicalPosition logical = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
       int offset = editor.logicalPositionToOffset(logical);
       if (offset < editor.getDocument().getTextLength()) {
-
-        SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
-        if (softWrap == null) {
-          // Same offset may correspond to positions on different visual lines in case of soft wraps presence
-          // (all soft-wrap introduced virtual text is mapped to the same offset as the first document symbol after soft wrap).
-          // Hence, we check for soft wraps presence at two offsets.
-          softWrap = softWrapModel.getSoftWrap(offset + 1);
-        }
-        int line = currentVisualCaret.line;
-        int column = currentVisualCaret.column;
-        if (softWrap != null) {
-          line++;
-          column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
-        }
-        visualEndOfLineWithCaret = new VisualPosition(line, column, true);
+        int logicalLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, offset);
+        visualEndOfLineWithCaret = editor.offsetToVisualPosition(logicalLineEndOffset, true, false);
       }
     }
 

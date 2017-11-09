@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
@@ -478,36 +464,20 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(30, text);
     myEditor.getCaretModel().moveToOffset(text.indexOf("}") - 1);
 
-    List<? extends SoftWrap> softWraps = new ArrayList<>(getSoftWrapModel().getRegisteredSoftWraps());
-    assertTrue(!softWraps.isEmpty());
+    checkSoftWraps(41, 66, 89, 116);
 
     CaretModel caretModel = myEditor.getCaretModel();
-    int expectedVisualLine = caretModel.getVisualPosition().line;
-    while (!softWraps.isEmpty()) {
-      SoftWrap softWrap = softWraps.get(softWraps.size() - 1);
-      int caretOffsetBefore = caretModel.getOffset();
-      
-      home();
-      
-      // Expecting the caret to be moved at the nearest soft wrap start offset.
-      int caretOffset = caretModel.getOffset();
-      assertTrue(caretOffset < caretOffsetBefore);
-      assertEquals(softWrap.getStart(), caretOffset);
-      assertEquals(new VisualPosition(expectedVisualLine, softWrap.getIndentInColumns()), caretModel.getVisualPosition());
-      
-      // Expected that caret is moved to visual line start when it's located on soft wrap start offset at the moment.
-      home();
-      assertEquals(softWrap.getStart(), caretModel.getOffset());
-      assertEquals(new VisualPosition(expectedVisualLine, 0), caretModel.getVisualPosition());
-      
-      softWraps.remove(softWraps.size() - 1);
-      expectedVisualLine--;
-    }
+    home();
+    assertEquals(116, caretModel.getOffset());
+    assertEquals(new VisualPosition(5, 1), caretModel.getVisualPosition());
+    home();
+    assertEquals(116, caretModel.getOffset());
+    assertEquals(new VisualPosition(5, 0), caretModel.getVisualPosition());
     
     // Expecting caret to be located on the first non-white space symbol of non-soft wrapped line.
     home();
     assertEquals(text.indexOf("public"), caretModel.getOffset());
-    assertEquals(new VisualPosition(expectedVisualLine, text.indexOf("public") - text.indexOf("{\n") - 2), caretModel.getVisualPosition());
+    assertEquals(new VisualPosition(1, 4), caretModel.getVisualPosition());
   }
 
   public void testEndProcessing() throws IOException {
@@ -519,57 +489,27 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(30, text);
     myEditor.getCaretModel().moveToOffset(text.indexOf("\n") + 1);
 
-    List<? extends SoftWrap> softWraps = new ArrayList<>(getSoftWrapModel().getRegisteredSoftWraps());
-    assertTrue(!softWraps.isEmpty());
+    checkSoftWraps(41, 66, 89, 116);
 
     CaretModel caretModel = myEditor.getCaretModel();
-    int expectedVisualLine = caretModel.getVisualPosition().line;
-    while (!softWraps.isEmpty()) {
-      SoftWrap softWrap = softWraps.get(0);
-      int caretOffsetBefore = caretModel.getOffset();
-
-      end();
-
-      // Expecting the caret to be moved at the last non-white space symbol on the current visual line.
-      int caretOffset = caretModel.getOffset();
-      assertTrue(caretOffset > caretOffsetBefore);
-      assertFalse(caretOffset > softWrap.getStart());
-      if (caretOffset < softWrap.getStart()) {
-        // There is a possible case that there are white space symbols between caret position applied on 'end' processing and
-        // soft wrap. Let's check that and emulate one more 'end' typing in order to move caret right before soft wrap.
-        for (int i = caretOffset; i < softWrap.getStart(); i++) {
-          char c = text.charAt(i);
-          assertTrue(c == ' ' || c == '\t');
-        }
-        caretOffsetBefore = caretOffset;
-        end();
-        caretOffset = caretModel.getOffset();
-        assertTrue(caretOffset > caretOffsetBefore);
-      }
-      
-      assertEquals(softWrap.getStart(), caretOffset);
-      assertEquals(
-        new VisualPosition(expectedVisualLine, myEditor.offsetToVisualPosition(softWrap.getStart() - 1).column + 1),
-        caretModel.getVisualPosition()
-      );
-      
-      softWraps.remove(0);
-      expectedVisualLine++;
-    }
+    end();
+    assertEquals(40, caretModel.getOffset());
+    assertEquals(new VisualPosition(1, 27), caretModel.getVisualPosition());
+    end();
+    assertEquals(41, caretModel.getOffset());
+    assertEquals(new VisualPosition(1, 28), caretModel.getVisualPosition());
     
     // Check that caret is placed on a last non-white space symbol on current logical line.
     end();
     int lastNonWhiteSpaceSymbolOffset = text.indexOf("\";") + 2;
     assertEquals(lastNonWhiteSpaceSymbolOffset, caretModel.getOffset());
     assertEquals(myEditor.offsetToVisualPosition(lastNonWhiteSpaceSymbolOffset), caretModel.getVisualPosition());
-    assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
     
     // Check that caret is place to the very end of the logical line.
     end();
     int lastSymbolOffset = myEditor.getDocument().getLineEndOffset(caretModel.getLogicalPosition().line);
     assertEquals(lastSymbolOffset, caretModel.getOffset());
     assertEquals(myEditor.offsetToVisualPosition(lastSymbolOffset), caretModel.getVisualPosition());
-    assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
   }
   
   public void testSoftWrapToHardWrapConversion() {
