@@ -278,13 +278,22 @@ internal object JavaConverter {
       }
     }
 
+    fun forceUnwrappedParentAsUElement(el: PsiElement): UElement {
+      val parent = el.parent ?: error("no parent found for ${el.javaClass} '${el.text.lineSequence().firstOrNull()}'")
+      val unwrappedParent = JavaConverter.unwrapElements(parent)
+                            ?: error("no unwrapped parent found for ${parent.javaClass} '${parent.text.lineSequence().firstOrNull()}'")
+      return unwrappedParent.toUElement()
+             ?: error("${unwrappedParent.javaClass} '${unwrappedParent.text.lineSequence().firstOrNull()}' was not converted to UAST " +
+                      " original element ${el.javaClass} '${el.text.lineSequence().firstOrNull()}'")
+    }
+
     return with(requiredType) {
       when (el) {
         is PsiDeclarationStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.declaredElements, givenParent ?: forceUnwrappedParentAsUElement(el))
         }
         is PsiExpressionListStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.expressionList.expressions, givenParent ?: forceUnwrappedParentAsUElement(el))
         }
         is PsiBlockStatement -> expr<UBlockExpression>(build(::JavaUBlockExpression))
         is PsiLabeledStatement -> expr<ULabeledExpression>(build(::JavaULabeledExpression))
