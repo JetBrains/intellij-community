@@ -121,7 +121,7 @@ public interface JavaDocElementType {
     }
 
     @Override
-    public boolean isParsable(final CharSequence buffer, Language fileLanguage, final Project project) {
+    public boolean isParsable(@NotNull final CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
       if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
 
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
