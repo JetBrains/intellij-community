@@ -11,8 +11,13 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface EditorTabTitleProvider {
-  ExtensionPointName<EditorTabTitleProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorTabTitleProvider"); 
+  ExtensionPointName<EditorTabTitleProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorTabTitleProvider");
 
   @Nullable
-  String getEditorTabTitle(@NotNull final Project project, @NotNull VirtualFile file);
+  String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file);
+
+  @Nullable
+  default String getEditorTabTooltipText(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return null;
+  }
 }
