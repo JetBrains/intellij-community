@@ -46,6 +46,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         final boolean mayChangeSemantics;
         final CommonPartType type;
+        boolean forceInfo = false;
         if (ImplicitElse.from(thenStatements, elseStatements, ifStatement) != null) {
           mayChangeSemantics = false;
           type = CommonPartType.COMPLETE_DUPLICATE;
@@ -53,6 +54,10 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         else {
           ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, isOnTheFly);
           if (thenElse != null) {
+            if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
+              forceInfo = true;
+              if(!isOnTheFly) return;
+            }
             type = thenElse.myCommonPartType;
             mayChangeSemantics = thenElse.myMayChangeSemantics;
           }
@@ -64,7 +69,10 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
             return;
           }
         }
-        boolean warning = type != CommonPartType.WITH_VARIABLES_EXTRACT && type != CommonPartType.VARIABLES_ONLY && !mayChangeSemantics;
+        boolean warning = !forceInfo
+                          && type != CommonPartType.WITH_VARIABLES_EXTRACT
+                          && !mayChangeSemantics;
+        if(!isOnTheFly && !warning) return;
         ProblemHighlightType highlightType = warning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
         String message = type.getMessage(mayChangeSemantics);
         PsiElement element = warning ? ifStatement.getChildren()[0] : ifStatement;
@@ -735,7 +743,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, thenLen, elseLen, notEquivalentVariableDeclarations.isEmpty());
-
+      if (type == CommonPartType.VARIABLES_ONLY && !notEquivalentVariableDeclarations.isEmpty()) return null;
       boolean mayChangeSemantics =
         mayChangeSemantics(conditionHasSideEffects, conditionVariablesCantBeChangedTransitively, headCommonParts);
       return new ThenElse(headCommonParts, tailCommonParts, mayChangeSemantics, type, substitutionTable);
