@@ -17,6 +17,8 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +29,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
@@ -145,6 +148,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     });
 
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
+
+    myComponent.myBackgroundImageButton.setEnabled(ProjectManager.getInstance().getOpenProjects().length > 0);
+    myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
+      "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
     return myComponent.myPanel;
   }
@@ -505,6 +512,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
+    private JButton myBackgroundImageButton;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
