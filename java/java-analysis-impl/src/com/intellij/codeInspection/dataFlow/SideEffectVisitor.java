@@ -61,9 +61,8 @@ public class SideEffectVisitor extends StandardInstructionVisitor {
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dest = memState.pop();
     DfaValue src = memState.peek();
-    if (src instanceof DfaVariableValue && isModificationAllowed((DfaVariableValue)src)) {
-      memState.push(dest);
-    } else {
+    memState.push(dest);
+    if (!(src instanceof DfaVariableValue) || !isModificationAllowed((DfaVariableValue)src)) {
       runner.cancel();
     }
     return super.visitAssign(instruction, runner, memState);
