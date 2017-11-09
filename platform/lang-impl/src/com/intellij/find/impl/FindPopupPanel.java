@@ -945,6 +945,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.setEnabled(false);
     myReplaceSelectedButton.setEnabled(false);
     myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", 0));
+    myReplaceSelectedButton.setMnemonic('r');
     myCodePreviewComponent.setVisible(false);
 
     mySearchTextArea.setInfoText(null);
