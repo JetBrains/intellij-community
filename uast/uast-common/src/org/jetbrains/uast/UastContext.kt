@@ -68,13 +68,16 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
+    // check if plugin exist first, using containingFile because sometime java elements are used in another files (see Drools)
+    val plugin = findPlugin(element.containingFile ?: element) ?: return null
+
     val defaultUElement = mySemService.getSemElement(UAST_SEM_KEY, element)
 
     if (defaultUElement == null || requiredType == null || requiredType.isAssignableFrom(defaultUElement.javaClass)) {
       return defaultUElement
     }
 
-    return findPlugin(element)?.convertElementWithParent(element, requiredType)
+    return plugin.convertElementWithParent(element, requiredType)
   }
 
   override fun getMethodCallExpression(
