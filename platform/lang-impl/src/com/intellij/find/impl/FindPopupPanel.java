@@ -190,6 +190,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
           ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());
+          applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
           return true;
         })
         .createPopup();
@@ -1200,7 +1201,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void navigateToSelectedUsage() {
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
-      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
       myBalloon.cancel();
       boolean first = true;
       for (Usage usage : usages.values()) {
