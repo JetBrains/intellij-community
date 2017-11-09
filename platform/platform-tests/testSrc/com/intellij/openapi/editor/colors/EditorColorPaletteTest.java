@@ -101,7 +101,8 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
         break;
       } 
       else {
-        assertTrue(i++ + ": " + testColor + " vs " + color,
+        int index = i++;
+        assertTrue(index + ": " + testColor + " vs " + color,
                    RainbowHighlighter.colorDistance01(testColor, color) >= minimalColorDistance);
       }
     }

@@ -253,7 +253,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     String name = prefix + suffix;
     int i = 2;
     while (findArchiveOrDirectoryByName(parent, name) != null) {
-      name = prefix + i++ + suffix;
+      int index = i++;
+      name = prefix + index + suffix;
     }
     return name;
   }

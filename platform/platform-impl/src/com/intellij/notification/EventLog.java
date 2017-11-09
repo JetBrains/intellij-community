@@ -167,7 +167,8 @@ public class EventLog {
 
         @Override
         public String fun(AnAction action) {
-          return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText() + "</a>";
+          int incrementedIndex = index++;
+          return "<a href=\"" + incrementedIndex + "\">" + action.getTemplatePresentation().getText() + "</a>";
         }
       }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {

@@ -93,7 +93,8 @@ public class LibraryUtil {
     String name = baseName;
     int count = 2;
     while (libraryTable.getLibraryByName(name) != null) {
-      name = baseName + " (" + count++ + ")";
+      int index = count++;
+      name = baseName + " (" + index + ")";
     }
     return libraryTable.createLibrary(name);
   }
