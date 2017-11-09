@@ -274,6 +274,7 @@ public class MethodCallUtils {
       final PsiExpression expression = expressions[i];
       if (expression == target) {
         index = i;
+        break;
       }
     }
     if (index < 0) {
