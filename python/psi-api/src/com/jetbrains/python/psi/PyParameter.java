@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
-import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,15 +27,6 @@ public interface PyParameter extends PyElement {
   PyExpression getDefaultValue();
 
   boolean hasDefaultValue();
-
-  /**
-   * @deprecated Use {@link PyParameter#getDefaultValueText()} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  default boolean hasDefaultNoneValue() {
-    return PyNames.NONE.equals(getDefaultValueText());
-  }
 
   /**
    * @apiNote This method will be marked as abstract in 2018.2.
