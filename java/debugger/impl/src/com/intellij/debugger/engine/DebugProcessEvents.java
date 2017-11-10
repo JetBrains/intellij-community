@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -59,6 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
@@ -569,8 +572,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private void notifySkippedBreakpoints(LocatableEvent event) {
-    if (event != null) {
+  private AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
+
+  private void notifySkippedBreakpoints(@Nullable LocatableEvent event) {
+    if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
       XDebuggerManagerImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
         .notify(getProject());
