@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 
 public class WordSelectioner extends AbstractWordSelectioner {
-  private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.basicWordSelectionFilter");
+  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.basicWordSelectionFilter");
 
   @Override
   public boolean canSelect(PsiElement e) {
