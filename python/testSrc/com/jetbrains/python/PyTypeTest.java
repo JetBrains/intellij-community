@@ -764,34 +764,34 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo')\n");
   }
 
   public void testIoOpenText() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo', 'r')\n");
   }
 
   public void testIoOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("BinaryIO",
            "import io\n" +
            "expr = io.open('foo', 'rb')\n");
   }
