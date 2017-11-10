@@ -51,7 +51,7 @@
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
 
-    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.DevKitEditorTabTitleProvider"/>
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
