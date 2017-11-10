@@ -227,18 +227,36 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[bytes]",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
+  }
+
+  public void testIoOpenDefault() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo')\n");
+  }
+
+  public void testIoOpenText() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo', 'r')\n");
+  }
+
+  public void testIoOpenBinary() {
+    doTest("BinaryIO",
+           "import io\n" +
+           "expr = io.open('foo', 'rb')\n");
   }
 
   // PY-1427
