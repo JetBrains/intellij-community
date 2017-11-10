@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
@@ -902,7 +903,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder == null) return null;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
     return builder.createModel(file, settings);
   }
 
