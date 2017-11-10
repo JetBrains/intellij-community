@@ -19,9 +19,12 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
-import git4idea.test.*
 import git4idea.test.GitScenarios.commit
 import git4idea.test.GitScenarios.conflict
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.last
+import git4idea.test.makeCommit
+import git4idea.test.tac
 import org.junit.Assume.assumeTrue
 import java.io.File
 import kotlin.test.assertNotEquals
@@ -32,9 +35,7 @@ import kotlin.test.assertNotEquals
  */
 class GitRepositoryReaderNewTest : GitSingleRepoTest() {
 
-  override fun makeInitialCommit(): Boolean {
-    return false
-  }
+  override fun makeInitialCommit() = false
 
   // IDEA-152632
   fun `test current branch is known during rebase`() {
