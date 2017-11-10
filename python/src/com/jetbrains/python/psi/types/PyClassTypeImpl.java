@@ -657,6 +657,26 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type.visitMembers(processor, false, context);
       }
     }
+
+    visitMetaClassMembers(processor, context);
+  }
+
+  private void visitMetaClassMembers(@NotNull Processor<PsiElement> processor, @NotNull TypeEvalContext context) {
+    if (!myClass.isNewStyleClass(context)) {
+      return;
+    }
+
+    final PyClassLikeType typeType = getMetaClassType(context, true);
+    if (typeType == null) {
+      return;
+    }
+
+    if (isDefinition()) {
+      typeType.visitMembers(processor, true, context);
+    }
+    else if (typeType instanceof PyClassType) {
+      ((PyClassType)typeType).getPyClass().getInstanceAttributes().forEach(processor::process);
+    }
   }
 
   @NotNull
