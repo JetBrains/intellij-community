@@ -29,6 +29,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("cli-parser")
   buildScriptsDeps loadLibraryMavenId("protobuf")
   buildScriptsDeps loadLibraryMavenId("commons-compress")
+  buildScriptsDeps loadLibraryMavenId("OroMatcher")
 }
 
 /**
