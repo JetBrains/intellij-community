@@ -15,6 +15,7 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
@@ -67,6 +69,25 @@ public class CodeStyle {
   }
 
   /**
+   * Returns language code style settings for the specified editor. If the editor has an associated document and PSI file, returns
+   * settings for the PSI file or {@code null} otherwise.
+   *
+   * @param editor The editor to get settings for.
+   * @return The language code style settings for the editor or {@code null}.
+   */
+  @Nullable
+  public static CommonCodeStyleSettings getLanguageSettings(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file != null) {
+        return getLanguageSettings(file);
+      }
+    }
+    return null;
+  }
+
+  /**
    * Returns custom settings for the given PSI file.
    * @param file The file.
    * @param customSettingsClass The class of a settings object to be returned.
@@ -96,6 +117,7 @@ public class CodeStyle {
    * @param file The file to retrieve language settings for.
    * @return The associated language settings.
    */
+  @NotNull
   public static CommonCodeStyleSettings getLanguageSettings(@NotNull PsiFile file, @NotNull Language language) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getCommonSettings(language);
