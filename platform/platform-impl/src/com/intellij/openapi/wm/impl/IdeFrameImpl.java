@@ -31,10 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -183,8 +180,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
       if (focusOwner instanceof EditorComponentImpl) {
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-        toolWindowManagerEx.getToolWindow(toolWindowId).activate(() -> {
-        });
+        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          toolWindow.activate(() -> {});
+        }
       }
       else {
         EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
