@@ -18,12 +18,13 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.SmartSelectProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.ArrayList;
+import java.awt.Component;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,116 +32,50 @@ import java.util.ArrayList;
 public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Override
   public void increaseSelection(JTree tree) {
-    TreePath path = tree.getLeadSelectionPath();
-    if (path == null) return;
-    increaseSelection(path, tree);
-  }
+    TreePath anchor = getAnchor(tree);
+    if (anchor == null) return; // not found
 
-  private static void increaseSelection(TreePath path, JTree tree) {
-    TreePath parentPath = path.getParentPath();
-
-    if (parentPath == null) {
-      return;
-    }
-
-    boolean madeSelection = false;
-
-    for (int i = 0; i < getNumberOfNodes(tree); i++) {
-      TreePath row = tree.getPathForRow(i);
-      if (parentPath.isDescendant(row) && !row.equals(parentPath)) {
-        if (!tree.isRowSelected(i)) {
-          madeSelection = true;
-          addSelection(tree, row);
-        }
+    for (TreePath parent = anchor; parent != null; parent = parent.getParentPath()) {
+      if (processDescendants(tree, parent, child -> addSelectionPath(tree, child))) {
+        setAnchor(tree, anchor);
+        return; // interrupt if some children were selected
+      }
+      if (!tree.isPathSelected(parent)) {
+        if (!tree.isRootVisible() && parent.getParentPath() == null) return; // cannot select hidden root
+        tree.addSelectionPath(parent);
+        setAnchor(tree, anchor);
+        return; // interrupt if parent was selected
       }
     }
-
-    if (!madeSelection) {
-      if (tree.isRowSelected(tree.getRowForPath(parentPath))) {
-        increaseSelection(parentPath, tree);
-      } else {
-        addSelection(tree, parentPath);
-      }
-    }
-  }
-
-  public static int getNumberOfNodes(JTree tree) {
-    return getNumberOfNodes(tree, tree.getModel().getRoot());
-  }
-
-  private static int getNumberOfNodes(JTree tree, Object node) {
-    int count = 1;
-    int nChildren = tree.getModel().getChildCount(node);
-    for (int i = 0; i < nChildren; i++) {
-      count += getNumberOfNodes(tree, tree.getModel().getChild(node, i));
-    }
-    return count;
-  }
-
-  private static void addSelection(JTree tree, TreePath path) {
-    TreePath leadPath = tree.getLeadSelectionPath();
-    tree.getSelectionModel().addSelectionPath(path);
-    tree.setLeadSelectionPath(leadPath);
   }
 
   @Override
   public void decreaseSelection(JTree tree) {
-    TreePath[] paths = tree.getSelectionPaths();
-    TreePath leadSelection = tree.getLeadSelectionPath();
+    TreePath anchor = getAnchor(tree);
+    if (anchor == null) return; // not found
+    if (!tree.isPathSelected(anchor)) return; // not selected
 
-    if (paths == null || paths.length < 2) return;
-    Object[] selected = leadSelection.getPath();
-    if (selected.length < 2) return;
+    TreePath lower = anchor;
+    for (TreePath upper = anchor.getParentPath(); upper != null; lower = upper, upper = upper.getParentPath()) {
+      if (processDescendants(tree, upper, child -> tree.isPathSelected(child) ? Command.ACCEPT : Command.INTERRUPT)) {
+        if (tree.isPathSelected(upper)) continue; // search for upper bounds if all descendants are selected
 
-    int i = 0;
-    ArrayList<TreePath> toRemove = new ArrayList<>();
-    while (i < selected.length) {
-      for (TreePath path : paths) {
-        if (!hasCommonStart(path, leadSelection, i + 1)) {
-          toRemove.add(path);
+        TreePath except = lower; // to be effective final
+        if (processDescendants(tree, upper, child -> removeSelectionPath(tree, child, except))) {
+          setAnchor(tree, anchor);
+          return; // interrupt if siblings were unselected
         }
       }
-
-      if (!toRemove.isEmpty()) {
-        if (toRemove.size() == paths.length - 1 && tree.isPathSelected(leadSelection.getParentPath())) {
-          tree.removeSelectionPath(leadSelection.getParentPath());
-        } else {
-          for (TreePath path : toRemove) {
-            tree.removeSelectionPath(path);
-          }
-        }
-
-        tree.setLeadSelectionPath(leadSelection);
-        return;
-      } else {
-        i++;
+      if (lower != anchor) {
+        tree.removeSelectionPath(lower);
+        setAnchor(tree, anchor);
+        return; // interrupt if an anchored child is unselected
       }
+      if (processDescendants(tree, lower, child -> removeSelectionPath(tree, child))) {
+        setAnchor(tree, anchor); // store an anchor only if selection is changed
+      }
+      return;
     }
-
-    //in case lead selection is not leaf
-    if (paths.length == tree.getSelectionCount()) {
-      for (TreePath path : paths) {
-        tree.removeSelectionPath(path);
-      }
-      tree.addSelectionPath(leadSelection);
-      tree.setLeadSelectionPath(leadSelection);
-    }
-  }
-
-  private static boolean hasCommonStart(TreePath path, TreePath leadSelection, int commonStartLength) {
-    Object[] pathObjects = path.getPath();
-    if (pathObjects.length < commonStartLength) return false;
-    Object[] leadSelectionObjects = leadSelection.getPath();
-    for (int i = 0; i < pathObjects.length && i < leadSelectionObjects.length && i < commonStartLength; i++) {
-      if (pathObjects[i] == leadSelectionObjects[i]) {
-        continue;
-      }
-
-      if (pathObjects[i] == null || !pathObjects[i].equals(leadSelectionObjects[i])) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Nullable
@@ -148,5 +83,49 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   public JTree getSource(DataContext context) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
     return component instanceof JTree ? (JTree)component : null;
+  }
+
+  @Nullable
+  private static TreePath getAnchor(@Nullable JTree tree) {
+    if (tree == null) return null; // unexpected usage
+    TreePath anchor = tree.getAnchorSelectionPath(); // search for visible path
+    while (anchor != null && tree.getRowForPath(anchor) < 0) anchor = anchor.getParentPath();
+    return anchor;
+  }
+
+  private static void setAnchor(@NotNull JTree tree, @NotNull TreePath path) {
+    tree.setAnchorSelectionPath(path);
+  }
+
+  private enum Command {ACCEPT, IGNORE, INTERRUPT}
+
+  private static Command addSelectionPath(@NotNull JTree tree, @NotNull TreePath path) {
+    if (tree.isPathSelected(path)) return Command.IGNORE;
+    tree.addSelectionPath(path);
+    return Command.ACCEPT;
+  }
+
+  private static Command removeSelectionPath(@NotNull JTree tree, @NotNull TreePath path) {
+    if (!tree.isPathSelected(path)) return Command.IGNORE;
+    tree.removeSelectionPath(path);
+    return Command.ACCEPT;
+  }
+
+  private static Command removeSelectionPath(@NotNull JTree tree, @NotNull TreePath path, @NotNull TreePath except) {
+    if (!tree.isPathSelected(path) || except.isDescendant(path)) return Command.IGNORE;
+    tree.removeSelectionPath(path);
+    return Command.ACCEPT;
+  }
+
+  private static boolean processDescendants(@NotNull JTree tree, @NotNull TreePath parent, @NotNull Function<TreePath, Command> function) {
+    boolean processed = false;
+    for (int row = Math.max(0, 1 + tree.getRowForPath(parent)); row < tree.getRowCount(); row++) {
+      TreePath path = tree.getPathForRow(row);
+      if (!parent.isDescendant(path)) break;
+      Command command = function.apply(path);
+      if (command == Command.INTERRUPT) return false;
+      if (command == Command.ACCEPT) processed = true;
+    }
+    return processed;
   }
 }
