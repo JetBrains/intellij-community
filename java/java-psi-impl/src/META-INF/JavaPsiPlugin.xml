@@ -20,6 +20,7 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
+    <extensionPoint qualifiedName="com.intellij.javaCompilerConfigurationProxy" interface="com.intellij.psi.JavaCompilerConfigurationProxy"/>
     <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>

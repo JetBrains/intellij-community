@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -131,7 +130,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
     return optionValues(options, "--add-exports")
@@ -142,7 +141,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     return optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" }
@@ -172,10 +171,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
       if (isAvailable(project, editor, file)) {
-        val configuration = CompilerConfiguration.getInstance(project)
-        val options = configuration.getAdditionalOptions(module).toMutableList()
+        val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module).toMutableList()
         update(options)
-        configuration.setAdditionalOptions(module, options)
+        JavaCompilerConfigurationProxy.setAdditionalOptions(module.project, module, options)
         PsiManager.getInstance(project).dropPsiCaches()
         DaemonCodeAnalyzer.getInstance(project).restart()
       }
