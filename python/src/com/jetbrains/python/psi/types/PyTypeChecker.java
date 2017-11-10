@@ -246,14 +246,13 @@ public class PyTypeChecker {
       final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
-    if (expected instanceof PyStructuralType && actual instanceof PyModuleType) {
+    if (expected instanceof PyStructuralType) {
       final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
-      final PyModuleType moduleType = (PyModuleType)actual;
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
       return expectedAttributes
         .stream()
-        .noneMatch(attribute -> ContainerUtil.isEmpty(moduleType.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
+        .noneMatch(attribute -> ContainerUtil.isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
     }
     if (actual instanceof PyStructuralType && expectedClassType != null) {
       final Set<String> expectedAttributes = expectedClassType.getMemberNames(true, context);
