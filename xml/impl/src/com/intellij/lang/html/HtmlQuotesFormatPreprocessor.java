@@ -48,7 +48,8 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       HtmlCodeStyleSettings htmlSettings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
       CodeStyleSettings.QuoteStyle quoteStyle = htmlSettings.HTML_QUOTE_STYLE;
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None && htmlSettings.HTML_ENFORCE_QUOTES) {
-        PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(rootSettings);
+        PostFormatProcessorHelper postFormatProcessorHelper =
+          new PostFormatProcessorHelper(rootSettings.getCommonSettings(HTMLLanguage.INSTANCE));
         postFormatProcessorHelper.setResultTextRange(range);
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
