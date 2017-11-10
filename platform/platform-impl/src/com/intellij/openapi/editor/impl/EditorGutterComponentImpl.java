@@ -1073,13 +1073,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
-    if (!isFoldingOutlineShown()) return;
+    boolean shown = isFoldingOutlineShown();
 
-    if (myPaintBackground) {
+    if ((shown || (myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator"))) && myPaintBackground) {
       g.setColor(getOutlineColor(false));
       int x = getWhitespaceSeparatorOffset();
       UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
     }
+
+    if (!shown) return;
 
     final int anchorX = getFoldingAreaOffset();
     final int width = getFoldingAnchorWidth();
