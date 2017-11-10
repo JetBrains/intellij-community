@@ -17,7 +17,6 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -129,10 +128,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
-
-  static {
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
-  }
 
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,

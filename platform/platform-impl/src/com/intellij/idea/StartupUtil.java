@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -373,6 +374,7 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
     log.info("ForkJoinPool.commonPool: "+ForkJoinPool.commonPool());
 
     String extDirs = System.getProperty("java.ext.dirs");
