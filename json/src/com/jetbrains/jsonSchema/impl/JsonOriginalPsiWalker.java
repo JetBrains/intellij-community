@@ -73,6 +73,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     return null;
   }
 
+  @Nullable
   @Override
   public List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull PsiElement element, boolean isName, boolean forceLastTransition) {
     final List<JsonSchemaVariantsTreeBuilder.Step> steps = new ArrayList<>();
