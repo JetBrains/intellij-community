@@ -270,18 +270,16 @@ public class StackFrameItem {
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
+      XValueChildrenList children = XValueChildrenList.EMPTY;
       if (myVariables == VARS_CAPTURE_DISABLED) {
         node.setMessage(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null,
                         SimpleTextAttributes.REGULAR_ATTRIBUTES, CAPTURE_SETTINGS_OPENER);
       }
       else if (myVariables != null) {
-        XValueChildrenList children = new XValueChildrenList();
+        children = new XValueChildrenList();
         myVariables.forEach(children::add);
-        node.addChildren(children, true);
       }
-      else {
-        node.addChildren(XValueChildrenList.EMPTY, true);
-      }
+      node.addChildren(children, true);
     }
 
     private SimpleTextAttributes getAttributes() {
