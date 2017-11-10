@@ -130,7 +130,7 @@ class CircletConnectionComponent(val project: Project) :
             routing {
                 get("auth") {
                     val jwt = call.parameters["jwt"]!!
-                    loginModel.signIn(jwt, "jwt")
+                    loginModel.signIn(jwt, "jwt", "")
                     call.respondText("Hello, world!", ContentType.Text.Html)
                     lt.terminate()
                 }
