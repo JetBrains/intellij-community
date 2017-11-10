@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -731,7 +732,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     private void checkRunningTooLong(@NotNull ProgressIndicator indicator) {
       long time = myIndexingTime.get(myRoot).get() + (System.currentTimeMillis() - myStartTime);
-      if (time >= 20 * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
+      int limit = Registry.intValue("vcs.log.index.limit.minutes");
+      if (time >= Math.max(limit, 1) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
         LOG.warn("Indexing commits in " + myRoot.getName() + " is taking too long (" + StopWatch.formatTime(time) + "), cancelling.");
         myBigRepositoriesList.addRepository(myRoot);
         indicator.cancel();
