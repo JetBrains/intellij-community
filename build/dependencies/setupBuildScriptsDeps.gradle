@@ -25,6 +25,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("Groovy")
   buildScriptsDeps loadLibraryMavenId("cli-parser")
   buildScriptsDeps loadLibraryMavenId("protobuf")
+  buildScriptsDeps loadLibraryMavenId("OroMatcher")
 }
 
 /**
