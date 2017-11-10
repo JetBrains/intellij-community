@@ -56,7 +56,6 @@ import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Value;
@@ -343,8 +342,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
-      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() &&
-                                    StringUtil.isEmpty(XValuePresentationUtil.computeValueText(this, true));
+      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && StringUtil.isEmpty(myValue);
       String declaredType = myValueDescriptor.getDeclaredTypeLabel();
       if (!StringUtil.isEmpty(declaredType)) {
         return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
