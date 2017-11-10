@@ -25,9 +25,9 @@ import javax.swing.*;
 /**
  * @author mike
  */
-public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> {
+public class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
 
-  public PluginXmlDomFileDescription() {
+  public PluginDescriptorDomFileDescription() {
     super(IdeaPlugin.class, "idea-plugin");
   }
 
