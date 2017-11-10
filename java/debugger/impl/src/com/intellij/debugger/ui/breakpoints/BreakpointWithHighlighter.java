@@ -114,9 +114,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   private void updateCaches(@Nullable DebugProcessImpl debugProcess) {
-    if (!Registry.is("debugger.classes.cache.fix") && debugProcess != null && debugProcess.isAttached()) {
-      debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
-    }
     myIcon = calcIcon(debugProcess);
     myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
     myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
