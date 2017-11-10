@@ -120,7 +120,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       if(ifStatement.getElseBranch() != null) return null;
       PsiStatement thenBranch = ifStatement.getThenBranch();
       PsiBreakStatement breakStatement = tryCast(ControlFlowUtils.stripBraces(thenBranch), PsiBreakStatement.class);
-      if(breakStatement != null && breakStatement.findExitedStatement() != loopStatement) return null;
+      if(breakStatement == null || breakStatement.findExitedStatement() != loopStatement) return null;
       return ifStatement.getCondition();
     }
   }
