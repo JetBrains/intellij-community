@@ -137,7 +137,8 @@ public class ControlFlowUtils {
       return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
     }
     if (loopStatement instanceof PsiForStatement) {
-      return BoolUtils.isTrue(((PsiForStatement)loopStatement).getCondition());
+      PsiExpression condition = ((PsiForStatement)loopStatement).getCondition();
+      return condition == null || BoolUtils.isTrue(condition);
     }
     return false;
   }

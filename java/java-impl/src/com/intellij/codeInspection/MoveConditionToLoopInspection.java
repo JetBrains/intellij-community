@@ -109,7 +109,8 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       if(!ControlFlowUtils.loopConditionNotSpecified(loopStatement)) return false;
       PsiForStatement forStatement = tryCast(loopStatement, PsiForStatement.class);
       if(forStatement == null) return true;
-      return forStatement.getInitialization() == null && forStatement.getUpdate() == null;
+      return (forStatement.getInitialization() == null || forStatement.getInitialization() instanceof PsiEmptyStatement)
+             && (forStatement.getUpdate() == null || forStatement.getUpdate() instanceof PsiEmptyStatement);
     }
 
     @Nullable
