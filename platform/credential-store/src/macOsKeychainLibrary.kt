@@ -35,7 +35,7 @@ private const val errUserNameNotCorrect = -25293
 private const val kSecFormatUnknown = 0
 private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
 
-internal class KeyChainCredentialStore() : CredentialStore {
+internal class KeyChainCredentialStore : CredentialStore {
   override fun get(attributes: CredentialAttributes): Credentials? {
     return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName)
   }
@@ -73,7 +73,7 @@ internal class KeyChainCredentialStore() : CredentialStore {
       val attribute = SecKeychainAttribute()
       attribute.tag = kSecAccountItemAttr
       attribute.length = userName?.size ?: 0
-      if (userName != null) {
+      if (userName != null && userName.isNotEmpty()) {
         val userNamePointer = Memory(userName.size.toLong())
         userNamePointer.write(0, userName, 0, userName.size)
         attribute.data = userNamePointer
@@ -120,6 +120,7 @@ fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentia
 
 // https://developer.apple.com/library/mac/documentation/Security/Reference/keychainservices/index.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
+@Suppress("FunctionName")
 private interface MacOsKeychainLibrary : Library {
   fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray?, passwordLength: Int, passwordData: ByteArray?, itemRef: Pointer? = null): Int
 
@@ -181,7 +182,7 @@ private fun checkForError(message: String, code: Int) {
   }
   else {
     val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-    for (i in 0..buf.size - 1) {
+    for (i in 0 until buf.size) {
       buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
     }
     LIBRARY.CFRelease(translated)
@@ -196,6 +197,7 @@ private fun checkForError(message: String, code: Int) {
   }
 }
 
+@Suppress("FunctionName")
 internal fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo {
   val info = SecKeychainAttributeInfo()
   val length = ids.size
@@ -220,11 +222,9 @@ internal class SecKeychainAttributeList : Structure {
   @JvmField
   var attr: Pointer? = null
 
-  constructor(p: Pointer) : super(p) {
-  }
+  constructor(p: Pointer) : super(p)
 
-  constructor() : super() {
-  }
+  constructor() : super()
 
   override fun getFieldOrder() = listOf("count", "attr")
 }
@@ -237,11 +237,9 @@ internal class SecKeychainAttribute : Structure, Structure.ByReference {
   @JvmField
   var data: Pointer? = null
 
-  internal constructor(p: Pointer) : super(p) {
-  }
+  internal constructor(p: Pointer) : super(p)
 
-  internal constructor() : super() {
-  }
+  internal constructor() : super()
 
   override fun getFieldOrder() = listOf("tag", "length", "data")
 }
