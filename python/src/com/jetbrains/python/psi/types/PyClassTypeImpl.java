@@ -662,6 +662,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    // PyNamedTupleType.getMemberNames provide names that we are not able to visit,
+    // so this method could not be replaced with PyClassLikeType.visitMembers
+
     final Set<String> result = new LinkedHashSet<>();
 
     for (PyFunction function : myClass.getMethods()) {
@@ -692,9 +695,33 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           result.addAll(ancestorType.getMemberNames(false, context));
         }
       }
+
+      result.addAll(getMetaClassMemberNames(context));
     }
 
     return result;
+  }
+
+  @NotNull
+  private Set<String> getMetaClassMemberNames(@NotNull TypeEvalContext context) {
+    if (!myClass.isNewStyleClass(context)) {
+      return Collections.emptySet();
+    }
+
+    final PyClassLikeType typeType = getMetaClassType(context, true);
+    if (typeType == null) {
+      return Collections.emptySet();
+    }
+
+    if (isDefinition()) {
+      return typeType.getMemberNames(true, context);
+    }
+    else if (typeType instanceof PyClassType) {
+      final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
+      return ContainerUtil.map2SetNotNull(typeInstanceAttributes, PyTargetExpression::getName);
+    }
+
+    return Collections.emptySet();
   }
 
   private void addOwnClassMembers(PsiElement expressionHook,
