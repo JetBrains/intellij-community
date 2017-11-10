@@ -68,22 +68,23 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        withModule("java-analysis-api", JAVA_API_JAR, false)
-        withModule("java-indexing-api", JAVA_API_JAR, false)
-        withModule("java-psi-api", JAVA_API_JAR, false)
-        withModule("openapi", JAVA_API_JAR, false)
-        withModule("jsp-base-openapi", JAVA_API_JAR, false)
-        withModule("jsp-openapi", JAVA_API_JAR, false)
-        withModule("uast-common", JAVA_API_JAR, false)
+        def JAVA_RESOURCES_JAR = "java_resources_en.jar"
+        withModule("java-analysis-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-indexing-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-psi-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-base-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("uast-common", JAVA_API_JAR, JAVA_RESOURCES_JAR)
 
-        withModule("java-analysis-impl", JAVA_IMPL_JAR, false)
-        withModule("java-indexing-impl", JAVA_IMPL_JAR, false)
-        withModule("java-psi-impl", JAVA_IMPL_JAR, false)
-        withModule("java-impl", JAVA_IMPL_JAR, false)
-        withModule("jsp-spi", JAVA_IMPL_JAR, false)
-        withModule("uast-java", JAVA_IMPL_JAR, false)
+        withModule("java-analysis-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-indexing-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-psi-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("uast-java", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
 
-        withModule("java-runtime", "idea_rt.jar", false)
+        withModule("java-runtime", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
         withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")

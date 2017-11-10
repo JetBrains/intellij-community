@@ -59,9 +59,9 @@ class PythonCommunityPluginModules {
       directoryName = name
       mainJarName = "${name}.jar"
       modules.each { module ->
-        withModule(module, mainJarName, false)
+        withModule(module, mainJarName, null)
       }
-      withModule(buildPatchesModule, mainJarName, false)
+      withModule(buildPatchesModule, mainJarName, null)
       withResourceFromModule("python-helpers", "", "helpers")
       withCustomVersion { BuildContext context ->
         // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE

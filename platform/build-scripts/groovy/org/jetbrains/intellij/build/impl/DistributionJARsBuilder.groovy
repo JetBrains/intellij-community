@@ -359,12 +359,12 @@ class DistributionJARsBuilder {
           jar(jarPath, true) {
             modules.each { moduleName ->
               modulePatches([moduleName]) {
-                if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                if (layout.localizableResourcesJarName(moduleName) != null) {
                   ant.patternset(refid: resourceExcluded)
                 }
               }
               module(moduleName) {
-                if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                if (layout.localizableResourcesJarName(moduleName) != null) {
                   ant.patternset(refid: resourceExcluded)
                 }
                 layout.moduleExcludes.get(moduleName)?.each {
@@ -380,19 +380,27 @@ class DistributionJARsBuilder {
             }
           }
         }
-        def modulesWithResources = moduleJars.values().findAll { layout.packLocalizableResourcesInCommonJar(it) }
-        if (!modulesWithResources.empty) {
-          jar("resources_en.jar", true) {
-            modulesWithResources.each { moduleName ->
-              modulePatches([moduleName]) {
-                ant.patternset(refid: resourcesIncluded)
-              }
-              module(moduleName) {
-                layout.moduleExcludes.get(moduleName)?.each {
-                  //noinspection GrUnresolvedAccess
-                  ant.exclude(name: "$it/**")
+        def outputResourceJars = new MultiValuesMap<String, String>()
+        moduleJars.values().forEach {
+          def resourcesJarName = layout.localizableResourcesJarName(it)
+          if (resourcesJarName != null) {
+            outputResourceJars.put(resourcesJarName, it)
+          }
+        }
+        if (!outputResourceJars.empty) {
+          outputResourceJars.keySet().forEach { resourceJarName ->
+            jar(resourceJarName, true) {
+              outputResourceJars.get(resourceJarName).each { moduleName ->
+                modulePatches([moduleName]) {
+                  ant.patternset(refid: resourcesIncluded)
                 }
-                ant.patternset(refid: resourcesIncluded)
+                module(moduleName) {
+                  layout.moduleExcludes.get(moduleName)?.each {
+                    //noinspection GrUnresolvedAccess
+                    ant.exclude(name: "$it/**")
+                  }
+                  ant.patternset(refid: resourcesIncluded)
+                }
               }
             }
           }
