@@ -48,7 +48,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   static boolean canSelectElement(final PsiElement e) {
-    if (e instanceof XmlToken) {
+    if (e instanceof XmlToken || PsiTreeUtil.getParentOfType(e, XmlTag.class, true) != null) {
       return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
     }
     return false;
