@@ -438,6 +438,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-21408
+  public void testCallableAgainstStructural() {
+    doTest();
+  }
+
   public void testMatchingOpenFunctionCallTypesPy2() {
     doMultiFileTest();
   }
