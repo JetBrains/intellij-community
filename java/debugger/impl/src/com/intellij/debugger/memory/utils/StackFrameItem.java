@@ -276,7 +276,7 @@ public class StackFrameItem {
                         SimpleTextAttributes.REGULAR_ATTRIBUTES, CAPTURE_SETTINGS_OPENER);
       }
       else if (myVariables != null) {
-        children = new XValueChildrenList();
+        children = new XValueChildrenList(myVariables.size());
         myVariables.forEach(children::add);
       }
       node.addChildren(children, true);
