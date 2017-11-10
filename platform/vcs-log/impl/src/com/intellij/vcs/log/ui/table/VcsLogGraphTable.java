@@ -431,7 +431,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
-      scrollRectToVisible(getCellRect(rowIndex, 0, false));
     }
   }
 
