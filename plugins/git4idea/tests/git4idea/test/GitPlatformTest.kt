@@ -52,9 +52,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    settings = GitVcsSettings.getInstance(project)
-    settings.appSettings.setPathToGit(gitExecutable())
-
     dialogManager = service<DialogManager>() as TestDialogManager
     vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(project)
 
@@ -62,6 +59,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     git = overrideService<Git, TestGitImpl>()
     vcs = GitVcs.getInstance(project)
     vcs.doActivate()
+
+    settings = GitVcsSettings.getInstance(project)
+    settings.appSettings.setPathToGit(gitExecutable())
+    vcs.checkVersion()
 
     logProvider = findGitLogProvider(project)
 
