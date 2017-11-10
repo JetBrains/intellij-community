@@ -74,11 +74,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   }
 
   public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
-    boolean isEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled();
-    envs.put(PythonEnvUtil.IPYTHONENABLE, isEnabled ? "True" : "False");
-    if (isEnabled) {
-      envs.put(PythonEnvUtil.IPYTHONNOJEDI, "True");
-    }
+    String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
+    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
   public static String getWorkingDir(Project project,
