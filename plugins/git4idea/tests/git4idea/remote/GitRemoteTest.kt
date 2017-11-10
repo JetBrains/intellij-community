@@ -84,7 +84,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private fun makeUrl(username: String?) : String {
     val login = if (username == null) "" else "$username@"
-    return "http://${login}deb6-vm7-git/$projectName.git"
+    return "http://${login}deb6-vm7-git.labs.intellij.net/$projectName.git"
   }
 
   private fun cloneOnPooledThread(url: String): CountDownLatch {
