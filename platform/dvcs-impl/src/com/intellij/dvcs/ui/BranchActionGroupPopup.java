@@ -42,7 +42,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.FontUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,6 +57,7 @@ import java.util.List;
 
 import static com.intellij.icons.AllIcons.General.CollapseComponent;
 import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
@@ -72,8 +72,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private int myMeanRowHeight;
   @Nullable private final String myKey;
   @NotNull private Dimension myPrevSize = JBUI.emptySize();
-  private MyToolbarButton myRestoreSizeButton;
-  private MyToolbarButton mySettingsButton;
+  //these toolbar buttons can be null for child popup components
+  @Nullable private MyToolbarButton myRestoreSizeButton;
+  @Nullable private MyToolbarButton mySettingsButton;
+
   private final List<AnAction> mySettingsActions = ContainerUtil.newArrayList();
 
   public BranchActionGroupPopup(@NotNull String title,
@@ -116,7 +118,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, AllIcons.General.GearHover, e -> {
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
-      popupMenu.getComponent().show(mySettingsButton, 0, mySettingsButton.getHeight());
+      popupMenu.getComponent().show(mySettingsButton, 0, assertNotNull(mySettingsButton).getHeight());
     }) {
       @Override
       protected boolean isButtonEnabled() {
@@ -179,7 +181,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private void processOnSizeChanged() {
-    Dimension newSize = ObjectUtils.assertNotNull(getSize());
+    Dimension newSize = assertNotNull(getSize());
     int preferredHeight = getComponent().getPreferredSize().height;
     int realHeight = getComponent().getHeight();
     boolean shouldExpand = preferredHeight + myMeanRowHeight < realHeight;
@@ -198,7 +200,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     //ugly properties to distinguish user size changed from pack method call after Restore Size action performed
     myUserSizeChanged = !myInternalSizeChanged;
     myInternalSizeChanged = false;
-    myRestoreSizeButton.update();
+    if (myRestoreSizeButton != null) {
+      myRestoreSizeButton.update();
+    }
   }
 
   @NotNull
@@ -215,8 +219,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   public void addSettingAction(@NotNull AnAction action) {
-    mySettingsActions.add(action);
-    mySettingsButton.update();
+    if (mySettingsButton != null) {
+      mySettingsActions.add(action);
+      mySettingsButton.update();
+    }
   }
 
   @NotNull
@@ -486,7 +492,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
         if (dataProvider != null) {
-          ObjectUtils.assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
+          assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
         }
       }
     }
