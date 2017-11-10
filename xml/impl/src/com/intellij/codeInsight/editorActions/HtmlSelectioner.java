@@ -18,11 +18,14 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
+import com.intellij.codeInsight.editorActions.wordSelection.WordSelectioner;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
@@ -48,6 +51,12 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   static boolean canSelectElement(final PsiElement e) {
+    for (Condition<PsiElement> filter : Extensions.getExtensions(WordSelectioner.EP_NAME)) {
+      if (!filter.value(e)) {
+        return false;
+      }
+    }
+
     if (e instanceof XmlToken || PsiTreeUtil.getParentOfType(e, XmlTag.class, true) != null) {
       return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
     }
