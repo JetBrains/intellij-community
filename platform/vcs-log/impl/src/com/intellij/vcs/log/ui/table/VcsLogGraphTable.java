@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
@@ -443,6 +444,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
+      if (!hasFocus()) {
+        IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
+      }
     }
   }
 
