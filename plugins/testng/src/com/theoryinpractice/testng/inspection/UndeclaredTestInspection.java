@@ -132,7 +132,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       LOG.assertTrue(psiFile instanceof XmlFile);
       final XmlFile testngXML = (XmlFile)psiFile;
       new WriteCommandAction(project, getName(), testngXML) {
-        protected void run(@NotNull final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) {
           patchTestngXml(testngXML, psiClass);
         }
       }.execute();
@@ -182,8 +182,8 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
         final PsiManager psiManager = PsiManager.getInstance(project);
         final PsiDirectory directory = psiManager.findDirectory(file);
         LOG.assertTrue(directory != null);
-        new WriteCommandAction(project, getName(), null) {
-          protected void run(@NotNull final Result result) throws Throwable {
+        new WriteCommandAction(project, getName(), PsiFile.EMPTY_ARRAY) {
+          protected void run(@NotNull final Result result) {
             XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
               .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
             try {

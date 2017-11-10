@@ -967,7 +967,7 @@ public class EditorFixture {
     for (HighlightInfo info : getCurrentFileFixture().getHighlightInfos(severity)) {
       infos.add(info.getDescription());
     }
-    assertThat(infos).containsOnly(highlights);
+    assertThat(infos).containsOnly((Object[])highlights);
     return this;
   }
 

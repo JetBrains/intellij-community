@@ -158,8 +158,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           if (grandParent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
             if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) ||
-                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResource", null) ||
-                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResourceAsStream", null)) {
+                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResource", (PsiType[])null) ||
+                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResourceAsStream", (PsiType[])null)) {
               return;
             }
           }
