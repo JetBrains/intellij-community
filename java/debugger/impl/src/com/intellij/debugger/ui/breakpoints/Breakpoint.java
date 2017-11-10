@@ -74,6 +74,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
   public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
@@ -108,7 +109,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract PsiClass getPsiClass();
   /**
    * Request for creating all needed JPDA requests in the specified VM
-   * @param debuggerProcess the requesting process
+   * @param debugProcess the requesting process
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
 
@@ -209,18 +210,16 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
-
-    debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded).stream()
-      .filter(ReferenceType::isPrepared)
-      .forEach(aList -> processClassPrepare(debugProcess, aList));
+    processClassesPrepare(debugProcess, debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded).stream());
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
+    processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream());
+  }
 
-    debugProcess.getPositionManager().getAllClasses(classPosition).stream()
-      .filter(ReferenceType::isPrepared)
-      .forEach(refType -> processClassPrepare(debugProcess, refType));
+  private void processClassesPrepare(DebugProcessImpl debugProcess, Stream<ReferenceType> classes) {
+    classes.filter(ReferenceType::isPrepared).forEach(refType -> processClassPrepare(debugProcess, refType));
   }
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
