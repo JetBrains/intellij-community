@@ -28,21 +28,33 @@ import java.util.function.Consumer
 @CompileStatic
 class ProductModulesLayout {
   /**
-   * Name of the main product JAR file. Outputs of {@link #platformImplementationModules} will be packed into it.
+   * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
   String mainJarName
 
   /**
-   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   * Names of the modules which need to be packed into platform-api.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
    */
   List<String> platformApiModules = []
 
   /**
-   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   * Names of the modules which need to be included into platform-impl in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
    */
   List<String> platformImplementationModules = []
+
+  /**
+   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   * @see CommunityRepositoryModules#PLATFORM_API_MODULES
+   */
+  List<String> productApiModules = []
+
+  /**
+   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
+   */
+  List<String> productImplementationModules = []
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
@@ -144,6 +156,6 @@ class ProductModulesLayout {
   }
 
   List<String> getIncludedPlatformModules() {
-    platformApiModules + platformImplementationModules + additionalPlatformJars.values()
+    productApiModules + productImplementationModules + additionalPlatformJars.values()
   }
 }
