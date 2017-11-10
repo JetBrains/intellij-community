@@ -97,7 +97,6 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
 
     //busy loop waiting for the answer (or having the console die).
     while (result[0] == null && System.currentTimeMillis() - started < timeoutMillis) {
-
       progress.checkCanceled()
       val exitValue = process.waitFor(10, TimeUnit.MILLISECONDS)
       if (exitValue) {
@@ -105,7 +104,6 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
         break
       }
     }
-
     return result[0] ?: throw XmlRpcException(-1, "Timeout while connecting to server")
   }
 
@@ -116,7 +114,6 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
   private fun Semaphore.tryAcquireWithIndicator(indicator: ProgressIndicator,
                                                 timeoutMillis: Long = TIME_LIMIT,
                                                 pollIntervalMillis: Long = 50): Boolean {
-
     indicator.checkCanceled()
     val started = System.currentTimeMillis()
     while (!this.tryAcquire(1, pollIntervalMillis, java.util.concurrent.TimeUnit.MILLISECONDS)) {
@@ -125,9 +122,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
         return false
       }
     }
-
     return true
-
   }
 
   companion object {
