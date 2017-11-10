@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.search;
 
 import com.intellij.psi.PsiElement;
@@ -52,7 +38,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
             continue;
           }
         }
-        PyFunction superMethod = superClass.findMethodByName(name, false, null);
+        PyFunction superMethod = superClass.findMethodByName(name, false, context);
         if (superMethod != null) {
           final Property property = func.getProperty();
           final Property superProperty = superMethod.getProperty();
@@ -68,7 +54,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
           // If super method still not found and we have context, we may use it to find method
           final PyClassLikeType classLikeType = PyUtil.as(context.getType(superClass), PyClassLikeType.class);
           if (classLikeType != null) {
-            for (final PyFunction function : PyTypeUtil.getMembersOfType(classLikeType, PyFunction.class, true, context)) {
+            for (final PyFunction function : PyTypeUtil.getMembersOfType(classLikeType.toInstance(), PyFunction.class, true, context)) {
               final String elemName = function.getName();
               if (elemName != null && elemName.equals(func.getName())) {
                 consumer.process(function);
