@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -45,7 +45,7 @@ class JarLoader extends Loader {
     pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
     pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
-  private final File myCanonicalFile;
+  private final String myFilePath;
   private final boolean myCanLockJar; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
@@ -54,7 +54,7 @@ class JarLoader extends Loader {
   JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
-    myCanonicalFile = new File(FileUtil.unquote(url.getFile())).getCanonicalFile();
+    myFilePath = urlToFilePath(url);
     myCanLockJar = canLockJar;
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
@@ -69,6 +69,14 @@ class JarLoader extends Loader {
     }
     finally {
       releaseZipFile(zipFile);
+    }
+  }
+
+  private static String urlToFilePath(URL url) {
+    try {
+      return url.toURI().getPath();
+    } catch (URISyntaxException ex) {
+      return url.getPath();
     }
   }
 
@@ -140,7 +148,7 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
-      error("file: " + myCanonicalFile, e);
+      error("url: " + myFilePath, e);
     }
 
     return null;
@@ -200,13 +208,13 @@ class JarLoader extends Loader {
         if (zipFile != null) return zipFile;
 
         // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-        zipFile = new ZipFile(myCanonicalFile);
+        zipFile = new ZipFile(myFilePath);
         myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
         return zipFile;
       }
     }
     else {
-      return new ZipFile(myCanonicalFile);
+      return new ZipFile(myFilePath);
     }
   }
 
@@ -219,6 +227,6 @@ class JarLoader extends Loader {
 
   @Override
   public String toString() {
-    return "JarLoader [" + myCanonicalFile + "]";
+    return "JarLoader [" + myFilePath + "]";
   }
 }
