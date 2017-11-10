@@ -267,8 +267,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportConstantPushes(runner, holder, reportedAnchors);
 
-    reportNullableReturns(visitor, holder, reportedAnchors, scope);
     reportNullabilityProblems(holder, visitor, reportedAnchors);
+    reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
@@ -868,7 +868,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
-    private final Map<NullabilityProblem<?>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
+    private final Map<NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
