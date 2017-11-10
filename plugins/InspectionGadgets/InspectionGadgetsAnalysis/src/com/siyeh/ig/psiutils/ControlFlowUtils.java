@@ -127,6 +127,21 @@ public class ControlFlowUtils {
     }
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean loopConditionNotSpecified(@Nullable PsiLoopStatement loopStatement) {
+    if(loopStatement == null) return false;
+    if (loopStatement instanceof PsiWhileStatement) {
+      return BoolUtils.isTrue(((PsiWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiDoWhileStatement) {
+      return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiForStatement) {
+      return BoolUtils.isTrue(((PsiForStatement)loopStatement).getCondition());
+    }
+    return false;
+  }
+
   private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
     final Object value = ExpressionUtils.computeConstantExpression(condition);

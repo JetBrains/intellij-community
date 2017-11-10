@@ -1,11 +1,11 @@
-// "Specify loop bounds explicitly" "false"
+// "Move condition to loop" "false"
 class Main {
   public static void main(String[] args) {
     int i = 0;
-    whi<caret>le(true) {
+    while(true) {
       i++;
       int j = i;
-      if(j >= 12) break;
+      if<caret>(j >= 12) break;
     }
   }
 }
