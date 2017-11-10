@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -34,6 +33,7 @@ public class WelcomeWizardUtil {
   private static volatile Integer ourContinuationIndent;
   private static volatile Integer ourAppearanceFontSize;
   private static volatile String ourAppearanceFontFace;
+  private static volatile Boolean ourDisableBreakpointsOnClick;
   private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<>();
 
   public static void setDefaultLAF(String laf) {
@@ -88,8 +88,12 @@ public class WelcomeWizardUtil {
     ourFeaturedPluginsToInstall.addAll(pluginsToInstall);
   }
 
-  public static void setDisableBreakpointsOnClick(boolean xcodeLikeBreakpoints) {
-    Registry.get("debugger.click.disable.breakpoints").setValue(xcodeLikeBreakpoints);
+  public static Boolean getDisableBreakpointsOnClick() {
+    return ourDisableBreakpointsOnClick;
+  }
+
+  public static void setDisableBreakpointsOnClick(Boolean disableBreakpointsOnClick) {
+    ourDisableBreakpointsOnClick = disableBreakpointsOnClick;
   }
 
   public static void setCompletionCaseSensitive(Integer completionCaseSensitive) {

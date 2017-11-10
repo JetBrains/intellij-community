@@ -23,6 +23,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.*
 
 class WelcomeWizardHelper : ApplicationComponent {
@@ -34,6 +35,12 @@ class WelcomeWizardHelper : ApplicationComponent {
     WelcomeWizardUtil.getManualOrder()?.let {
       ProjectViewSharedSettings.instance.manualOrder = it
     }
+
+    //Debugger settings
+    WelcomeWizardUtil.getDisableBreakpointsOnClick()?.let{
+      Registry.get("debugger.click.disable.breakpoints").setValue(it)
+    }
+
     //Code insight settings
     WelcomeWizardUtil.getCompletionCaseSensitive()?.let {
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = it
