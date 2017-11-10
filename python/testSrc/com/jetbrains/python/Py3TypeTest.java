@@ -625,6 +625,20 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-24067
+  public void testAsyncFunctionReturnTypeInDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Coroutine[Any, Any, int]",
+                   "async def f():\n" +
+                   "    \"\"\"\n" +
+                   "    :rtype: int\n" +
+                   "    \"\"\"\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
   // PY-26847
   public void testAwaitOnImportedCoroutine() {
     runWithLanguageLevel(
