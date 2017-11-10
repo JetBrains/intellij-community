@@ -1,3 +1,5 @@
+import java.io.*;
+
 // IDEA-181860
 class bugcheck {
   private static class MyAutoCloseable implements AutoCloseable {
@@ -35,5 +37,15 @@ class bugcheck {
     } catch (MyAutoCloseable.MyClosingException e) {
       return <warning descr="Expression 'size' might evaluate to null but is returned by the method which is not declared as @Nullable">size</warning>;
     }
+  }
+
+  private static String flowAfterTwr(String s) throws IOException {
+    if(s == null) {
+      try(BufferedReader br = new BufferedReader(new FileReader("foo"))) {
+        return br.readLine();
+      }
+    }
+    // s is never null here
+    return s.trim();
   }
 }

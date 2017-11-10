@@ -940,9 +940,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (twrFinallyDescriptor != null) {
       assert myTrapStack.getHead() instanceof Trap.TwrFinally;
+      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), getVariablesInside(tryBlock));
+      controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
       myTrapStack = myTrapStack.getTail();
       startElement(resourceList);
       addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
+      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
       finishElement(resourceList);
     }
 
