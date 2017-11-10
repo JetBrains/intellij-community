@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
@@ -841,9 +842,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     selectItem(element);
   }
 
-  private void waitTillAnimationCompletes() {
+  public static void waitTillAnimationCompletes(Editor editor) {
     long deadline = System.currentTimeMillis() + 60_000;
-    while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(getEditor())) {
+    while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(editor)) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for animation to finish");
       LockSupport.parkNanos(10_000_000);
       UIUtil.dispatchAllInvocationEvents();
@@ -857,7 +858,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   private void waitForAllAsyncStuff() throws TimeoutException {
     waitForParameterInfoUpdate();
     myFixture.doHighlighting();
-    waitTillAnimationCompletes();
+    waitTillAnimationCompletes(getEditor());
     waitForAutoPopup();
   }
 }
