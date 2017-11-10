@@ -263,10 +263,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (value != null) {
         final Ref<PyType> typeRef = getType(value, new Context(context));
         if (typeRef != null) {
-          if (function.isAsync() && function.isAsyncAllowed() && !function.isGenerator()) {
-            return Ref.create(wrapInCoroutineType(typeRef.get(), callable));
-          }
-          return typeRef;
+          return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
         }
       }
     }
@@ -935,7 +932,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  public static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
+  public static PyType toAsyncIfNeeded(@NotNull PyFunction function, @Nullable PyType returnType) {
+    if (function.isAsync() && function.isAsyncAllowed()) {
+      if (!function.isGenerator()) {
+        return wrapInCoroutineType(returnType, function);
+      }
+      else if (returnType instanceof PyClassLikeType &&
+               returnType instanceof PyCollectionType &&
+               GENERATOR.equals(((PyClassLikeType)returnType).getClassQName())) {
+        return wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), function);
+      }
+    }
+
+    return returnType;
+  }
+
+  @Nullable
+  private static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
     final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(COROUTINE),
                                                                            PyResolveImportUtil.fromFoothold(resolveAnchor)), PyClass.class);
     return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
@@ -949,7 +962,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  public static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
+  private static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
     final PyClass asyncGenerator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(ASYNC_GENERATOR),
                                                                                 PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
     return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
