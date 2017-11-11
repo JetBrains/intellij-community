@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 import static com.intellij.openapi.vcs.Executor.touch;
+import static git4idea.test.GitExecutor.cd;
 import static git4idea.test.GitExecutor.git;
 
 public class GitTaskBranchesTest extends TaskBranchesTest {
@@ -60,6 +61,7 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
 
   @Override
   protected void createAndCommitChanges(@NotNull Repository repository) {
+    cd((GitRepository)repository);
     touch("foo.txt");
     git((GitRepository)repository, "add foo.txt");
     git((GitRepository)repository, "commit -m commit");
