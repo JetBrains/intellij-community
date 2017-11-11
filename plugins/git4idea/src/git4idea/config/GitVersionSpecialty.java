@@ -160,6 +160,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  KNOWS_CORE_COMMENT_CHAR {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
+    }
+  },
+
   /**
    * Git pre-push hook is supported since version 1.8.2.
    */
