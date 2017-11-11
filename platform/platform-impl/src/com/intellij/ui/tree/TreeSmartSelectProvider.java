@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 import java.awt.Component;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,7 +38,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
     if (anchor == null) return; // not found
 
     for (TreePath parent = anchor; parent != null; parent = parent.getParentPath()) {
-      if (processDescendants(tree, parent, child -> addSelectionPath(tree, child))) {
+      if (acceptDescendants(tree, parent, path -> !tree.isPathSelected(path), tree::addSelectionPaths)) {
         setAnchor(tree, anchor);
         return; // interrupt if some children were selected
       }
@@ -57,11 +59,11 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
 
     TreePath lower = anchor;
     for (TreePath upper = anchor.getParentPath(); upper != null; lower = upper, upper = upper.getParentPath()) {
-      if (processDescendants(tree, upper, child -> tree.isPathSelected(child) ? Command.ACCEPT : Command.INTERRUPT)) {
+      if (testDescendants(tree, upper, tree::isPathSelected)) {
         if (tree.isPathSelected(upper)) continue; // search for upper bounds if all descendants are selected
 
         TreePath except = lower; // to be effective final
-        if (processDescendants(tree, upper, child -> removeSelectionPath(tree, child, except))) {
+        if (acceptDescendants(tree, upper, path -> tree.isPathSelected(path) && !except.isDescendant(path), tree::removeSelectionPaths)) {
           setAnchor(tree, anchor);
           return; // interrupt if siblings were unselected
         }
@@ -71,7 +73,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
         setAnchor(tree, anchor);
         return; // interrupt if an anchored child is unselected
       }
-      if (processDescendants(tree, lower, child -> removeSelectionPath(tree, child))) {
+      if (acceptDescendants(tree, lower, tree::isPathSelected, tree::removeSelectionPaths)) {
         setAnchor(tree, anchor); // store an anchor only if selection is changed
       }
       return;
@@ -97,35 +99,28 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
     tree.setAnchorSelectionPath(path);
   }
 
-  private enum Command {ACCEPT, IGNORE, INTERRUPT}
-
-  private static Command addSelectionPath(@NotNull JTree tree, @NotNull TreePath path) {
-    if (tree.isPathSelected(path)) return Command.IGNORE;
-    tree.addSelectionPath(path);
-    return Command.ACCEPT;
-  }
-
-  private static Command removeSelectionPath(@NotNull JTree tree, @NotNull TreePath path) {
-    if (!tree.isPathSelected(path)) return Command.IGNORE;
-    tree.removeSelectionPath(path);
-    return Command.ACCEPT;
-  }
-
-  private static Command removeSelectionPath(@NotNull JTree tree, @NotNull TreePath path, @NotNull TreePath except) {
-    if (!tree.isPathSelected(path) || except.isDescendant(path)) return Command.IGNORE;
-    tree.removeSelectionPath(path);
-    return Command.ACCEPT;
-  }
-
-  private static boolean processDescendants(@NotNull JTree tree, @NotNull TreePath parent, @NotNull Function<TreePath, Command> function) {
-    boolean processed = false;
+  private static boolean testDescendants(@NotNull JTree tree, @NotNull TreePath parent, @NotNull Predicate<TreePath> predicate) {
+    boolean tested = false;
     for (int row = Math.max(0, 1 + tree.getRowForPath(parent)); row < tree.getRowCount(); row++) {
       TreePath path = tree.getPathForRow(row);
       if (!parent.isDescendant(path)) break;
-      Command command = function.apply(path);
-      if (command == Command.INTERRUPT) return false;
-      if (command == Command.ACCEPT) processed = true;
+      if (!predicate.test(path)) return false;
+      tested = true; // at least one descendant tested
     }
-    return processed;
+    return tested;
+  }
+
+  private static boolean acceptDescendants(@NotNull JTree tree,
+                                           @NotNull TreePath parent,
+                                           @NotNull Predicate<TreePath> predicate,
+                                           @NotNull Consumer<TreePath[]> consumer) {
+    ArrayList<TreePath> list = new ArrayList<>();
+    testDescendants(tree, parent, child -> {
+      if (predicate.test(child)) list.add(child);
+      return true; // visit all descendants
+    });
+    if (list.isEmpty()) return false; // selection is not changed
+    consumer.accept(list.toArray(new TreePath[list.size()]));
+    return true;
   }
 }

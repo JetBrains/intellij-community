@@ -622,7 +622,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   private static void test(boolean rootVisible, Consumer<JTree> consumer) {
-    //TODO: test(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
+    test(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
   }
 
