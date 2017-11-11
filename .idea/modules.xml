@@ -330,6 +330,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" filepath="$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" filepath="$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/testSrc/util-tests.iml" filepath="$PROJECT_DIR$/platform/util/testSrc/util-tests.iml" group="platform" />
