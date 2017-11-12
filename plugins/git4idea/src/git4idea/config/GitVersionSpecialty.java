@@ -96,7 +96,7 @@ public enum GitVersionSpecialty {
   OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 1, 0));
+      return version.isOlderOrEqual(new GitVersion(1, 7, 3, 0));
     }
   },
 
