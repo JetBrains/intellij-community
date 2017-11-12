@@ -541,6 +541,8 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
+      <reference ref="RevealIn"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
       <separator/>
