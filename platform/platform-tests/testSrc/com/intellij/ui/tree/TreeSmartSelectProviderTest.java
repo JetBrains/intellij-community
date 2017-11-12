@@ -5,6 +5,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.JTree;
@@ -613,6 +614,67 @@ public class TreeSmartSelectProviderTest {
                            "   Delta\n" +
                            "   Epsilon\n");
     });
+  }
+
+  @Test // copied from TreeSmartSelectTest.testSelectionDoesntJumpTooQuickly
+  public void testSelectionDoesntJumpTooQuickly() {
+    @SuppressWarnings("UndesirableClassUsage")
+    JTree tree = new JTree(new DefaultTreeModel(
+      node("/",
+           node("ktor",
+                node("ktor-core"),
+                node("ktor-features",
+                     node("jetty-http-client"),
+                     node("ktor-locations",
+                          node("src",
+                               node("asdsd.asdas.asdas",
+                                    node("a"),
+                                    node("b"),
+                                    node("c"))),
+                          node("tests",
+                               node("fooo")),
+                          node("zar.txt"),
+                          node("zoo.txt")))))));
+    TreeUtil.expandAll(tree);
+    tree.setSelectionRow(10);
+    Assert.assertEquals(15, tree.getRowCount());
+    assertTree(tree, "-/\n" +
+                     " -ktor\n" +
+                     "  ktor-core\n" +
+                     "  -ktor-features\n" +
+                     "   jetty-http-client\n" +
+                     "   -ktor-locations\n" +
+                     "    -src\n" +
+                     "     -asdsd.asdas.asdas\n" +
+                     "      a\n" +
+                     "      b\n" +
+                     "      [c]\n" +
+                     "    -tests\n" +
+                     "     fooo\n" +
+                     "    zar.txt\n" +
+                     "    zoo.txt\n");
+
+    TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
+    provider.increaseSelection(tree);
+    provider.increaseSelection(tree);
+    provider.increaseSelection(tree);
+    provider.increaseSelection(tree);
+    provider.increaseSelection(tree);
+    assertTree(tree, "-/\n" +
+                     " -ktor\n" +
+                     "  ktor-core\n" +
+                     "  -ktor-features\n" +
+                     "   jetty-http-client\n" +
+                     "   -[ktor-locations]\n" +
+                     "    -[src]\n" +
+                     "     -[asdsd.asdas.asdas]\n" +
+                     "      [a]\n" +
+                     "      [b]\n" +
+                     "      [c]\n" +
+                     "    -[tests]\n" +
+                     "     [fooo]\n" +
+                     "    [zar.txt]\n" +
+                     "    [zoo.txt]\n");
   }
 
   private static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
