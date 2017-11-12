@@ -566,6 +566,55 @@ public class TreeSmartSelectProviderTest {
     });
   }
 
+  @Test
+  public void testSingleTreeSelection() {
+    test(TreeSelectionModel.SINGLE_TREE_SELECTION, tree -> {
+      select(tree, 10);
+      testIncreaseDecrease(tree,
+                           "-Root\n" +
+                           " -Color\n" +
+                           "  Red\n" +
+                           "  Green\n" +
+                           "  Blue\n" +
+                           " +Digit\n" +
+                           " -Letter\n" +
+                           "  -Greek\n" +
+                           "   Alpha\n" +
+                           "   Beta\n" +
+                           "   [Gamma]\n" +
+                           "   Delta\n" +
+                           "   Epsilon\n",
+                           // 1 // 1 // 1 // do nothing
+                           "-Root\n" +
+                           " -Color\n" +
+                           "  Red\n" +
+                           "  Green\n" +
+                           "  Blue\n" +
+                           " +Digit\n" +
+                           " -Letter\n" +
+                           "  -Greek\n" +
+                           "   Alpha\n" +
+                           "   Beta\n" +
+                           "   [Gamma]\n" +
+                           "   Delta\n" +
+                           "   Epsilon\n",
+                           // 2 // 2 // 2 // do nothing
+                           "-Root\n" +
+                           " -Color\n" +
+                           "  Red\n" +
+                           "  Green\n" +
+                           "  Blue\n" +
+                           " +Digit\n" +
+                           " -Letter\n" +
+                           "  -Greek\n" +
+                           "   Alpha\n" +
+                           "   Beta\n" +
+                           "   [Gamma]\n" +
+                           "   Delta\n" +
+                           "   Epsilon\n");
+    });
+  }
+
   private static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
     if (object instanceof DefaultMutableTreeNode && ArrayUtil.isEmpty(children)) return (DefaultMutableTreeNode)object;
     if (object instanceof TreeNode) throw new IllegalArgumentException("do not use a tree node as a node content");

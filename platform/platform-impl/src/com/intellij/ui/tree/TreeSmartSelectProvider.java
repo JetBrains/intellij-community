@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -84,12 +86,13 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Override
   public JTree getSource(DataContext context) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-    return component instanceof JTree ? (JTree)component : null;
+    JTree tree = component instanceof JTree ? (JTree)component : null;
+    return tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode() ? null : tree;
   }
 
   @Nullable
   private static TreePath getAnchor(@Nullable JTree tree) {
-    if (tree == null) return null; // unexpected usage
+    if (tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode()) return null; // unexpected usage
     TreePath anchor = tree.getAnchorSelectionPath(); // search for visible path
     while (anchor != null && tree.getRowForPath(anchor) < 0) anchor = anchor.getParentPath();
     return anchor;
