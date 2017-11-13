@@ -7,7 +7,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
@@ -27,7 +27,7 @@ import java.util.Enumeration;
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
-  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new Interner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+  private static final WeakInterner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
     @Override
     public int computeHashCode(LevelAndCount[] object) {
       return Arrays.hashCode(object);
