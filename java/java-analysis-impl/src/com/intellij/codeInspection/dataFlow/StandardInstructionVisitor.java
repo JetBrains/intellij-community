@@ -23,12 +23,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.MethodUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -506,21 +509,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
-    if (qualifier == null || !PsiUtil.canBeOverridden(method)) {
-      return method;
-    }
+    if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
     TypeConstraint constraint = state.getValueFact(DfaFactType.TYPE_CONSTRAINT, qualifier);
-    PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint == null ? null : constraint.getPsiType());
-    PsiClass qualifierClass = method.getContainingClass();
-    if (specificQualifierClass != null && qualifierClass != null &&
-        !specificQualifierClass.equals(qualifierClass) &&
-        InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-      PsiMethod realMethod = MethodSignatureUtil.findMethodBySuperMethod(specificQualifierClass, method, true);
-      if (realMethod != null) {
-        return realMethod;
-      }
-    }
-    return method;
+    PsiType type = constraint == null ? null : constraint.getPsiType();
+    return MethodUtils.findSpecificMethod(method, type);
   }
 
   @NotNull

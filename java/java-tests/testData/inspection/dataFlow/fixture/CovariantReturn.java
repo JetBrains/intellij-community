@@ -17,6 +17,9 @@ class CovariantReturn {
     String baz();
   }
 
+  public interface Derived2 extends Base {
+  }
+
   public interface BaseGeneric<T> {
     T get(@Nullable T t);
   }
@@ -47,6 +50,11 @@ class CovariantReturn {
 
   boolean testType(Base base) {
     return base instanceof Derived && <warning descr="Condition 'base.baz() instanceof String' is redundant and can be replaced with '!= null'">base.baz() instanceof String</warning>;
+  }
+
+  boolean testType2(Base base) {
+    return base instanceof Derived && base instanceof Derived2 &&
+      <warning descr="Condition 'base.baz() instanceof String' is redundant and can be replaced with '!= null'">base.baz() instanceof String</warning>;
   }
 
   boolean testTypeGeneric(BaseGeneric<?> base) {
