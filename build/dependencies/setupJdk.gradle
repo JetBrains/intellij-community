@@ -137,8 +137,10 @@ task setupJdk16(dependsOn: configurations.jdk16) {
 private void deleteBrokenSymlink(def outputDir) {
   if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
     def pluginJar = file("$outputDir/Home/lib/plugin.jar")
-    if (pluginJar.exists()) {
-      pluginJar.delete()
+    if (!pluginJar.exists()) {
+      if (!pluginJar.delete()) {
+        logger.info("Couldn't remove plugin.jar from JDK 1.6")
+      }
     }
   }
 }
