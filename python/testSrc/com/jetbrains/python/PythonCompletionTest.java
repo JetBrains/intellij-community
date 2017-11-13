@@ -1187,6 +1187,13 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(suggested, "m1", "m2", "m3", "m4");
   }
 
+  // PY-26978
+  public void testTupleParameterNamesNotSuggested() {
+    final List<String> variants = doTestByFile();
+    assertContainsElements(variants, "baz=");
+    assertDoesntContain(variants, "bar=");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
