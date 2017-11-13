@@ -123,8 +123,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     return CHANGE_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    assert o2 instanceof Change;
-    return ChangesComparator.getInstance(true).compare(getUserObject(), (Change)o2);
+  public int compareUserObjects(final Change o2) {
+    return ChangesComparator.getInstance(true).compare(getUserObject(), o2);
   }
 }
