@@ -201,7 +201,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       RelativePoint showPoint = null;
       Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY);
       if (screenPoint != null) {
-        showPoint = new RelativePoint(screenPoint);
+        if (parent != null) {
+          SwingUtilities.convertPointFromScreen(screenPoint, parent);
+          showPoint = new RelativePoint(parent, screenPoint);
+        } else {
+          showPoint = new RelativePoint(screenPoint);
+        }
       }
       if (parent != null && showPoint == null) {
         int height = UISettings.getInstance().getShowNavigationBar() ? 135 : 115;
