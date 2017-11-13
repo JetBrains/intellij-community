@@ -782,6 +782,7 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
+  CreateDirectory $INSTDIR
 
 ; set up a launcher for associations
   ${If} ${RunningX64}
