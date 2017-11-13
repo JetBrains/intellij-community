@@ -7,7 +7,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,18 @@ import java.util.Enumeration;
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
+  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new Interner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+    @Override
+    public int computeHashCode(LevelAndCount[] object) {
+      return Arrays.hashCode(object);
+    }
+
+    @Override
+    public boolean equals(LevelAndCount[] o1, LevelAndCount[] o2) {
+      return Arrays.equals(o1, o2);
+    }
+  });
+
   protected final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
     @NotNull
     @Override
@@ -40,13 +54,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
           return true;
         }
       });
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity()).reversed());
-      return arr;
+      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
+        .reversed());
+      return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
   };
   protected volatile InspectionTreeUpdater myUpdater;
-  protected InspectionTreeNode  (Object userObject) {
+
+  protected InspectionTreeNode(Object userObject) {
     super(userObject);
+  }
+
+  protected boolean doesNeedInternProblemLevels() {
+    return false;
   }
 
   @Nullable
@@ -145,7 +165,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
         }
       }
       int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-      if (!allowDuplication && index >= 0){
+      if (!allowDuplication && index >= 0) {
         return (InspectionTreeNode)getChildAt(index);
       }
       insert(child, Math.abs(index + 1));

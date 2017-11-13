@@ -34,6 +34,11 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myPresentation = presentation;
   }
 
+  @Override
+  protected boolean doesNeedInternProblemLevels() {
+    return true;
+  }
+
   @NotNull
   public InspectionToolPresentation getPresentation() {
     return myPresentation;
