@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -1922,10 +1908,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
-  protected String getManualOrderOptionText() {
-    return IdeBundle.message("action.manual.order");
-  }
-
   @Override
   public boolean isSortByType(String paneId) {
     return getPaneOptionValue(mySortByType, paneId, ourSortByTypeDefaults);
@@ -1940,7 +1922,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ManualOrderAction extends ToggleAction implements DumbAware {
     private ManualOrderAction() {
-      super(getManualOrderOptionText(), getManualOrderOptionText(), AllIcons.ObjectBrowser.Sorted);
+      super(IdeBundle.message("action.manual.order"), null, AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
@@ -1958,7 +1940,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       super.update(e);
       final Presentation presentation = e.getPresentation();
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      presentation.setEnabledAndVisible(pane != null && pane.supportsManualOrder());
+      if (pane == null) {
+        presentation.setEnabledAndVisible(false);
+      }
+      else {
+        presentation.setEnabledAndVisible(pane.supportsManualOrder());
+        presentation.setText(pane.getManualOrderOptionText());
+      }
     }
   }
   
