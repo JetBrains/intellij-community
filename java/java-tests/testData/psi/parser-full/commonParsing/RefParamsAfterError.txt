@@ -19,16 +19,13 @@ PsiJavaFile:RefParamsAfterError.java
     PsiModifierList:
       <empty list>
     PsiTypeElement:BCSSChild.
-      PsiJavaCodeReferenceElement:BCSSChild.
-        PsiJavaCodeReferenceElement:BCSSChild
-          PsiIdentifier:BCSSChild('BCSSChild')
-          PsiReferenceParameterList
-            <empty list>
-        PsiJavaToken:DOT('.')
-        PsiErrorElement:Identifier expected
-          <empty list>
+      PsiJavaCodeReferenceElement:BCSSChild
+        PsiIdentifier:BCSSChild('BCSSChild')
         PsiReferenceParameterList
           <empty list>
+      PsiJavaToken:DOT('.')
+      PsiErrorElement:Identifier expected
+        <empty list>
     PsiErrorElement:Identifier expected
       <empty list>
     PsiModifierList:
