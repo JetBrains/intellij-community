@@ -254,6 +254,10 @@ public class LexerAndelHighlighter {
       }
     }
 
+    if (oldEndIndex < 0) {
+      oldEndIndex = tokensContainer.mySegments.getSegmentCount();
+    }
+
     final SegmentArrayWithData newSegments = tokensContainer.mySegments.copy();
     newSegments.shiftSegments(oldEndIndex, shift);
     newSegments.replace(startIndex, oldEndIndex, insertSegments);
