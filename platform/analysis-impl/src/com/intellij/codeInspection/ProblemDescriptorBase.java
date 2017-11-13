@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,8 +66,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     final TextRange endElementRange = endElement.getTextRange();
     LOG.assertTrue(endElementRange != null, endElement);
     if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
-      if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)
-          && !(startElement instanceof ForeignLeafPsiElement && endElement instanceof ForeignLeafPsiElement)) {
+      if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
         LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
       }
     }
