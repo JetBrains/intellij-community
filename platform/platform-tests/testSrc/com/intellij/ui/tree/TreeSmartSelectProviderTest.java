@@ -49,6 +49,85 @@ public class TreeSmartSelectProviderTest {
     }
   }
 
+  private void testDecreaseDoNotClearSelection(int row, String expected) {
+    test(tree -> {
+      select(tree, row);
+      testDecrease(tree, expected, expected);
+    });
+    test(TreeSelectionModel.SINGLE_TREE_SELECTION, tree -> {
+      select(tree, row);
+      testDecrease(tree, expected, expected);
+    });
+  }
+
+  @Test
+  public void testDecreaseFromLeafNode() {
+    testDecreaseDoNotClearSelection(10, "-Root\n" +
+                                        " -Color\n" +
+                                        "  Red\n" +
+                                        "  Green\n" +
+                                        "  Blue\n" +
+                                        " +Digit\n" +
+                                        " -Letter\n" +
+                                        "  -Greek\n" +
+                                        "   Alpha\n" +
+                                        "   Beta\n" +
+                                        "   [Gamma]\n" +
+                                        "   Delta\n" +
+                                        "   Epsilon\n");
+  }
+
+  @Test
+  public void testDecreaseFromCollapsedNode() {
+    testDecreaseDoNotClearSelection(5, "-Root\n" +
+                                       " -Color\n" +
+                                       "  Red\n" +
+                                       "  Green\n" +
+                                       "  Blue\n" +
+                                       " +[Digit]\n" +
+                                       " -Letter\n" +
+                                       "  -Greek\n" +
+                                       "   Alpha\n" +
+                                       "   Beta\n" +
+                                       "   Gamma\n" +
+                                       "   Delta\n" +
+                                       "   Epsilon\n");
+  }
+
+  @Test
+  public void testDecreaseFromExpandedNode() {
+    testDecreaseDoNotClearSelection(7, "-Root\n" +
+                                       " -Color\n" +
+                                       "  Red\n" +
+                                       "  Green\n" +
+                                       "  Blue\n" +
+                                       " +Digit\n" +
+                                       " -Letter\n" +
+                                       "  -[Greek]\n" +
+                                       "   Alpha\n" +
+                                       "   Beta\n" +
+                                       "   Gamma\n" +
+                                       "   Delta\n" +
+                                       "   Epsilon\n");
+  }
+
+  @Test
+  public void testDecreaseFromExpandedParentNode() {
+    testDecreaseDoNotClearSelection(6, "-Root\n" +
+                                       " -Color\n" +
+                                       "  Red\n" +
+                                       "  Green\n" +
+                                       "  Blue\n" +
+                                       " +Digit\n" +
+                                       " -[Letter]\n" +
+                                       "  -Greek\n" +
+                                       "   Alpha\n" +
+                                       "   Beta\n" +
+                                       "   Gamma\n" +
+                                       "   Delta\n" +
+                                       "   Epsilon\n");
+  }
+
   @Test
   public void testIcreaseToVisibleRoot() {
     test(true, tree -> {
