@@ -5,18 +5,19 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -246,12 +247,10 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       GlobalSearchScope resolveScope = getElement().getResolveScope();
       PsiClass languageEpClass = javaPsiFacade.findClass(LanguageExtensionPoint.class.getCanonicalName(), resolveScope);
       if (languageEpClass == null) {
-        LOG.error("Cannot find LanguageExtensionPoint class; extension: " + myExtension);
         return Collections.emptyMap();
       }
       PsiClass fileTypeEpClass = javaPsiFacade.findClass(FileTypeExtensionPoint.class.getCanonicalName(), resolveScope);
       if (fileTypeEpClass == null) {
-        LOG.error("Cannot find FileTypeExtensionPoint class; extension: " + myExtension);
         return Collections.emptyMap();
       }
 
@@ -270,7 +269,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         if (currentExtensionLanguage != null) {
           String language = getSpecificExtensionAttribute(extension, languageEpClass, "language");
           if (language != null) {
-            if (!language.equalsIgnoreCase("ANY") && !language.equalsIgnoreCase(currentExtensionLanguage)) {
+            if (!language.equals("any") && !language.isEmpty() && !language.equals(currentExtensionLanguage)) {
               continue;
             }
             extensionMark = language;
@@ -279,7 +278,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         if (currentExtensionFileType != null) {
           String fileType = getSpecificExtensionAttribute(extension, fileTypeEpClass, "filetype");
           if (fileType != null) {
-            if (!currentExtensionFileType.equalsIgnoreCase(fileType)) {
+            if (!currentExtensionFileType.equals(fileType)) {
               continue;
             }
             extensionMark = extensionMark != null ? null : fileType; // null if _somehow_ both filetype and language are present
@@ -323,7 +322,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       if (beanClass == null) {
         return null;
       }
-      if (!beanClass.equals(parentBeanClass) && !beanClass.isInheritor(parentBeanClass, true)) {
+      if (!InheritanceUtil.isInheritorOrSelf(beanClass, parentBeanClass, true)) {
         return null;
       }
 
@@ -340,10 +339,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       if (extensionTarget != null) {
         return PomService.convertToPsi(extensionTarget);
       }
-      else {
-        // shouldn't happen, fallback for additional safety
-        return e.getXmlTag();
-      }
+      // shouldn't happen, fallback for additional safety
+      return e.getXmlTag();
     }
 
     @NotNull
@@ -353,7 +350,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
                                                      @Nullable String mark) {
       LookupElementBuilder element = LookupElementBuilder.create(targetElement, id);
       if (module != null) {
-        element = element.withTypeText(module.getName(), AllIcons.Actions.Module, false);
+        element = element.withTypeText(module.getName(), ModuleType.get(module).getIcon(), false);
       }
       if (mark != null) {
         element = element.withTailText(" {" + mark + "}", true);

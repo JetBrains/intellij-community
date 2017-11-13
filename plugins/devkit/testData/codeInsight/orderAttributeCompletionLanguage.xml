@@ -10,7 +10,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <myEp7 id="id1" language="JAVA"/>
     <!--suppress PluginXmlValidity -->
-    <myEp7 id="id2" language="ANY"/>
+    <myEp7 id="id2" language="any"/>
     <myEp7 id="id3"/>
     <myEp7 id="id4" language="XML"/>
     <myEp7 id="id5" language="JAVA" order="before <caret>"/>
