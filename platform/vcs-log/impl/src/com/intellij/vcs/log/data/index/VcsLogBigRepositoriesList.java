@@ -45,6 +45,12 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
     }
   }
 
+  public void removeRepository(@NotNull VirtualFile root) {
+    synchronized (myLock) {
+      myState.REPOSITORIES.remove(root.getPath());
+    }
+  }
+
   public boolean isBig(@NotNull VirtualFile root) {
     synchronized (myLock) {
       return myState.REPOSITORIES.contains(root.getPath());
