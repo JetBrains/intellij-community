@@ -649,8 +649,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new DefaultDocumentationCollector(element, originalElement);
   }
 
-  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement, String ref) {
-    return new DefaultDocumentationCollector(element, originalElement, ref);
+  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, String ref) {
+    return new DefaultDocumentationCollector(element, null, ref);
   }
 
   @Nullable
@@ -673,17 +673,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void fetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    doFetchDocInfo(component, getDefaultCollector(element, null), true, false);
+    doFetchDocInfo(component, getDefaultCollector(element, (PsiElement)null), true, false);
   }
 
   private ActionCallback queueFetchDocInfo(final DocumentationCollector provider,
-                                           final DocumentationComponent component,
-                                           final boolean clearHistory) {
-    return doFetchDocInfo(component, provider, false, clearHistory);
+                                           final DocumentationComponent component) {
+    return doFetchDocInfo(component, provider, false, false);
   }
 
   public ActionCallback queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    return queueFetchDocInfo(getDefaultCollector(element, null), component, false);
+    return queueFetchDocInfo(getDefaultCollector(element, (PsiElement)null), component);
   }
 
   private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
@@ -887,7 +886,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
       if (targetElement != null) {
-        fetchDocInfo(getDefaultCollector(targetElement, null, ref), component);
+        fetchDocInfo(getDefaultCollector(targetElement, ref), component);
       }
     }
     else {
@@ -901,7 +900,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (externalHandler.canFetchDocumentationLink(url)) {
             fetchDocInfo(new DocumentationCollector() {
               @Override
-              public String getDocumentation() throws Exception {
+              public String getDocumentation() {
                 return externalHandler.fetchExternalDocumentation(url, psiElement);
               }
 
@@ -910,7 +909,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 return psiElement;
               }
 
-              @Nullable
               @Override
               public String getEffectiveExternalUrl() {
                 return url;
@@ -936,7 +934,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         fetchDocInfo
           (new DocumentationCollector() {
             @Override
-            public String getDocumentation() throws Exception {
+            public String getDocumentation() {
               if (BrowserUtil.isAbsoluteURL(url)) {
                 BrowserUtil.browse(url);
                 return "";
@@ -958,7 +956,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               return psiElement;
             }
 
-            @Nullable
             @Override
             public String getEffectiveExternalUrl() {
               return url;
@@ -984,9 +981,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public void requestFocus() {
     if (fromQuickSearch()) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(myPreviouslyFocused.getParent(), true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myPreviouslyFocused.getParent(), true));
     }
   }
 
@@ -1095,7 +1090,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     @Override
     @Nullable
-    public String getDocumentation() throws Exception {
+    public String getDocumentation() {
       final DocumentationProvider provider =
         ReadAction.compute(() -> getProviderFromElement(myElement, myOriginalElement));
       LOG.debug("Using provider ", provider);

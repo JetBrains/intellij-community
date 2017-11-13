@@ -408,9 +408,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       for (final AnAction action : additionalActions) {
         actions.add(action);
         ShortcutSet shortcutSet = action.getShortcutSet();
-        if (shortcutSet != null) {
-          action.registerCustomShortcutSet(shortcutSet, this);
-        }
+        action.registerCustomShortcutSet(shortcutSet, this);
       }
     }
 
@@ -543,15 +541,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = true;
   }
 
-  private void setControlPanelVisible(boolean visible) {
-    if (visible == myControlPanelVisible) return;
-    if (visible) {
-      add(myControlPanel, BorderLayout.NORTH);
-    }
-    else {
-      remove(myControlPanel);
-    }
-    myControlPanelVisible = visible;
+  private void setControlPanelVisible() {
+    if (myControlPanelVisible) return;
+    add(myControlPanel, BorderLayout.NORTH);
+    myControlPanelVisible = true;
   }
 
   public void setHint(JBPopup hint) {
@@ -716,7 +709,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void updateControlState() {
     ElementLocationUtil.customizeElementLabel(myElement != null ? myElement.getElement() : null, myElementLabel);
     myToolBar.updateActionsImmediately(); // update faster
-    setControlPanelVisible(true);//(!myBackStack.isEmpty() || !myForwardStack.isEmpty());
+    setControlPanelVisible();
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
