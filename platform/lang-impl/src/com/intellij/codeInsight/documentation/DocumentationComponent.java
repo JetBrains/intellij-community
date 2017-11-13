@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -56,7 +42,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Consumer;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.HashMap;
@@ -64,6 +50,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +152,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final JPanel myControlPanel;
   private boolean myControlPanelVisible;
   private final ExternalDocAction myExternalDocAction;
-  private Consumer<PsiElement> myNavigateCallback;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
 
@@ -598,10 +584,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
   }
 
-  public void setNavigateCallback(Consumer<PsiElement> navigateCallback) {
-    myNavigateCallback = navigateCallback;
-  }
-
   public void setText(String text, @Nullable PsiElement element, boolean clearHistory) {
     setText(text, element, false, clearHistory);
   }
@@ -673,6 +655,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myText = text;
 
+    PsiElement e = element == null ? null : element.getElement();
+    if (e != null) {
+      String title = DocumentationManager.getTitle(e, false);
+      if (myHint instanceof AbstractPopup) ((AbstractPopup)myHint).setCaption(title);
+      // Set panel name so that it is announced by readers when it gets the focus
+      AccessibleContextUtil.setName(this, title);
+    }
+
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
@@ -720,12 +710,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void restoreContext(Context context) {
     setDataInternal(context.element, context.text, context.viewRect, null);
     myEffectiveExternalUrl = context.externalUrl;
-    if (myNavigateCallback != null) {
-      final PsiElement element = context.element.getElement();
-      if (element != null) {
-        myNavigateCallback.consume(element);
-      }
-    }
     highlightLink(context.highlightedLink);
   }
 
@@ -949,7 +933,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myElement = null;
     myManager = null;
     myHint = null;
-    myNavigateCallback = null;
   }
 
   private int getLinkCount() {
