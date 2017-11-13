@@ -155,16 +155,17 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   protected abstract boolean calculateIsValid();
 
-  protected void dropCache(Project project) {
+  protected void dropCache() {
+    myProblemLevels.drop();
+    if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
     myValid = calculateIsValid();
     myPresentableName = calculatePresentableName();
     for (int i = 0; i < getChildCount(); i++) {
       TreeNode child = getChildAt(i);
       if (child instanceof SuppressableInspectionTreeNode) {
-        ((SuppressableInspectionTreeNode)child).dropCache(project);
+        ((SuppressableInspectionTreeNode)child).dropCache();
       }
     }
-    myProblemLevels.drop();
   }
 
   private static class NodeState {

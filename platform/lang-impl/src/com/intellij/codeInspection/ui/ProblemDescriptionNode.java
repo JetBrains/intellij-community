@@ -120,13 +120,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  protected void dropCache(Project project) {
-    if (!isQuickFixAppliedFromView()) {
-      super.dropCache(project);
-    }
-  }
-
-  @Override
   public boolean isExcluded() {
     return getPresentation().isExcluded(getDescriptor());
   }
