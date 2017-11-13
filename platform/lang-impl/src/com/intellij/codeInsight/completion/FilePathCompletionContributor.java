@@ -99,8 +99,11 @@ public class FilePathCompletionContributor extends CompletionContributor {
           if (first == null) return;
 
           final FileReferenceSet set = first.getFileReferenceSet();
-          String prefix = set.getPathString()
-            .substring(0, parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement());
+          int end = parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement();
+          String pathString = set.getPathString();
+          if (pathString.length() < end) return;
+
+          String prefix = pathString.substring(0, end);
 
           List<String> pathPrefixParts = null;
           int lastSlashIndex;
