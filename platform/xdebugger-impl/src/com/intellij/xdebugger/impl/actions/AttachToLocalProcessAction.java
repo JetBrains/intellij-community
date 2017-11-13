@@ -113,6 +113,9 @@ public class AttachToLocalProcessAction extends AnAction {
               if (!debuggerName.equalsIgnoreCase(description)) {
                 ((ListPopupImpl)popup).setAdText(description);
               }
+              else {
+                ((ListPopupImpl)popup).removeAd();
+              }
             }
           };
           popup.addListSelectionListener(listener);
