@@ -168,13 +168,6 @@ public class KeywordArgumentCompletionUtil {
           kwArgsParam = namedParam;
         }
       }
-      else {
-        PyTupleParameter nestedTParam = par.getAsTuple();
-        if (nestedTParam != null) {
-          for (PyParameter inner_par : nestedTParam.getContents()) inner_par.accept(this);
-        }
-        // else it's a lone star that can't contribute
-      }
     }
 
     public PyParameter getKwArgs() {
