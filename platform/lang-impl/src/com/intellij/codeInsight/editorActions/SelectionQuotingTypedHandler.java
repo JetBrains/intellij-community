@@ -38,8 +38,9 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   public static final ExtensionPointName<DequotingFilter> EP_NAME =
     ExtensionPointName.create("com.intellij.selectionDequotingFilter");
 
+  @NotNull
   @Override
-  public Result beforeSelectionRemoved(char c, Project project, Editor editor, PsiFile file) {
+  public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED && selectionModel.hasSelection() && isDelimiter(c)) {
       String selectedText = selectionModel.getSelectedText();

@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,12 +30,12 @@ import java.util.List;
  */
 public class XmlLineSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(final PsiElement e) {
+  public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof XmlToken && ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
   @Override
-  public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
+  public List<TextRange> select(@NotNull final PsiElement e, @NotNull final CharSequence editorText, final int cursorOffset, @NotNull final Editor editor) {
     return PlainTextLineSelectioner.selectPlainTextLine(e, editorText, cursorOffset);
   }
 }

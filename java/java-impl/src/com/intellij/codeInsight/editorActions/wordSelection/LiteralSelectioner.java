@@ -23,6 +23,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class LiteralSelectioner extends BasicSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();
     return
       isStringLiteral(e) || isStringLiteral(parent);
@@ -44,7 +45,7 @@ public class LiteralSelectioner extends BasicSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
     TextRange range = e.getTextRange();

@@ -36,6 +36,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
@@ -48,8 +49,9 @@ import java.util.regex.Pattern;
 public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
   private static final Pattern DEF_THEN_IDENTIFIER = Pattern.compile(".*\\bdef\\s+" + PyNames.IDENTIFIER_RE);
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
+  public Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (DumbService.isDumb(project) || !(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == '(') {
       if (!PyCodeInsightSettings.getInstance().INSERT_SELF_FOR_METHODS) {

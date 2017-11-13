@@ -22,18 +22,19 @@ import com.intellij.psi.xml.XmlAttlistDecl;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     PsiElement[] children = e.getChildren();
 
     PsiElement first = null;

@@ -21,18 +21,19 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class StatementGroupSelectioner extends BasicSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiStatement || e instanceof PsiComment && !(e instanceof PsiDocComment);
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = new ArrayList<>();
 
     PsiElement parent = e.getParent();

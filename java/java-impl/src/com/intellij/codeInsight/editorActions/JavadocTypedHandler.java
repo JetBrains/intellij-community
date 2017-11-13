@@ -46,11 +46,9 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   private static final char SLASH = '/';
   private static final String COMMENT_PREFIX = "!--";
   
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (project == null) {
-      return Result.CONTINUE;
-    }
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     insertClosingTagIfNecessary(c, project, editor, file);
     return Result.CONTINUE;
   }
