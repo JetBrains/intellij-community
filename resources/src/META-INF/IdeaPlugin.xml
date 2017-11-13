@@ -1556,6 +1556,7 @@
 
 
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
 
 
