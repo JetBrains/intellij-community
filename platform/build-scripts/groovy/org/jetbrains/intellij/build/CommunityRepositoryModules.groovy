@@ -155,10 +155,6 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
-    plugin("Edu-Python") {
-      withResource("resources/courses", "lib/courses")
-      excludeFromModule("Edu-Python", "courses/**")
-    },
     plugin("maven") {
       withModule("maven-jps-plugin")
       withModule("maven-server-api")

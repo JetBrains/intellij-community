@@ -120,13 +120,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  protected void dropCache(Project project) {
-    if (!isQuickFixAppliedFromView()) {
-      super.dropCache(project);
-    }
-  }
-
-  @Override
   public boolean isExcluded() {
     return getPresentation().isExcluded(getDescriptor());
   }
@@ -151,12 +144,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   @Nullable
   @Override
   public String getTailText() {
-    if (isQuickFixAppliedFromView()) {
-      return "";
-    }
-    else {
-      final String text = super.getTailText();
-      return text == null ? "" : text;
-    }
+    final String text = super.getTailText();
+    return text == null ? "" : text;
   }
 }

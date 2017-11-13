@@ -722,7 +722,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     doPaintTextBackground(g, offset);
-    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null) + myIconTextGap;
     if (icon != null && myIconOnTheRight) {
       doPaintIcon(g, icon, offset);
     }

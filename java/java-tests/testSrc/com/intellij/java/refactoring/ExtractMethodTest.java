@@ -36,6 +36,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1210,7 +1211,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project,
                                              final boolean extractChainedConstructor)
     throws PrepareFailedException, IncorrectOperationException {
-    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null);
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, ArrayUtil.EMPTY_INT_ARRAY);
   }
 
   public static boolean performExtractMethod(boolean doRefactor,

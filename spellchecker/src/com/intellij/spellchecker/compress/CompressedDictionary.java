@@ -108,9 +108,7 @@ public final class CompressedDictionary implements Dictionary {
       if (length < minLength || length > maxLength) continue;
       for (int x = 0; x < data.length; x += length) {
         if (encoder.getFirstLetterIndex(data[x]) == index) {
-          byte[] toTest = new byte[length];
-          System.arraycopy(data, x, toTest, 0, length);
-          String decoded = encoder.decode(toTest);
+          String decoded = encoder.decode(data, x, x + length);
           result.add(decoded);
         }
       }
@@ -147,6 +145,7 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   @Override
+  @NotNull
   public Set<String> getWords() {
     Set<String> words = new THashSet<>();
     for (int i = 0; i <= alphabet.getLastIndexUsed(); i++) {

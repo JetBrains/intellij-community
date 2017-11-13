@@ -38,6 +38,7 @@ import com.siyeh.ig.psiutils.CountingLoop;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -389,22 +390,25 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiStatement exitedStatement = statement.findExitedStatement();
 
-    if (exitedStatement != null) {
+    if (exitedStatement != null && PsiTreeUtil.isAncestor(myCodeFragment, exitedStatement, false)) {
       controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), getVariablesInside(exitedStatement)),
-                      getTrapsInsideStatement(exitedStatement));
+                      getTrapsInsideElement(exitedStatement));
+    } else {
+      // Jumping out of analyzed code fragment
+      controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
     }
 
     finishElement(statement);
   }
 
-  private void controlTransfer(@NotNull InstructionTransfer target, FList<Trap> traps) {
+  private void controlTransfer(@NotNull TransferTarget target, FList<Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
   @NotNull
-  private FList<Trap> getTrapsInsideStatement(PsiStatement statement) {
+  private FList<Trap> getTrapsInsideElement(PsiElement element) {
     return FList.createFromReversed(ContainerUtil.reverse(
-      ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(statement, cd.getAnchor(), true))));
+      ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
   }
 
   @NotNull
@@ -416,12 +420,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
-    if (continuedStatement instanceof PsiLoopStatement) {
+    if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, false)) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
-      controlTransfer(new InstructionTransfer(getEndOffset(body), getVariablesInside(body)), getTrapsInsideStatement(body));
-
+      controlTransfer(new InstructionTransfer(getEndOffset(body), getVariablesInside(body)), getTrapsInsideElement(body));
     } else {
-      addInstruction(new EmptyInstruction(null));
+      // Jumping out of analyzed code fragment
+      controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
     }
     finishElement(statement);
   }
@@ -918,13 +922,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myTrapStack = myTrapStack.prepend(new Trap.TryCatch(statement, clauses));
     }
 
-    if (resourceList != null) {
-      resourceList.accept(this);
-    }
-
-    if (tryBlock != null) {
-      tryBlock.accept(this);
-    }
+    processTryWithResources(resourceList, tryBlock);
 
     InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), getVariablesInside(tryBlock));
     FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
@@ -957,6 +955,37 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  private void processTryWithResources(@Nullable PsiResourceList resourceList, @Nullable PsiCodeBlock tryBlock) {
+    Set<PsiClassType> closerExceptions = Collections.emptySet();
+    Trap.TwrFinally twrFinallyDescriptor = null;
+    if (resourceList != null) {
+      resourceList.accept(this);
+
+      closerExceptions = StreamEx.of(resourceList.iterator()).flatCollection(ExceptionUtil::getCloserExceptions).toSet();
+      if (!closerExceptions.isEmpty()) {
+        twrFinallyDescriptor = new Trap.TwrFinally(resourceList, getStartOffset(resourceList));
+        myTrapStack = myTrapStack.prepend(twrFinallyDescriptor);
+      }
+    }
+
+    if (tryBlock != null) {
+      tryBlock.accept(this);
+    }
+
+    if (twrFinallyDescriptor != null) {
+      assert myTrapStack.getHead() instanceof Trap.TwrFinally;
+      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), getVariablesInside(tryBlock));
+      controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
+      myTrapStack = myTrapStack.getTail().prepend(new Trap.InsideFinally(resourceList));
+      startElement(resourceList);
+      addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
+      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
+      finishElement(resourceList);
+      assert myTrapStack.getHead() instanceof Trap.InsideFinally;
+      myTrapStack = myTrapStack.getTail();
+    }
+  }
+
   @Override
   public void visitResourceList(PsiResourceList resourceList) {
     for (PsiResourceListElement resource : resourceList) {
@@ -970,11 +999,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       else if (resource instanceof PsiResourceExpression) {
         ((PsiResourceExpression)resource).getExpression().accept(this);
         addInstruction(new PopInstruction());
-      }
-
-      final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
-      if (!closerExceptions.isEmpty()) {
-        addThrows(null, closerExceptions.toArray(new PsiClassType[closerExceptions.size()]));
       }
     }
   }
@@ -1807,7 +1831,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null && operand.getType() != null) {
       if (typeElement.getType() instanceof PsiPrimitiveType &&
-          UnnecessaryExplicitNumericCastInspection.isPrimitiveNumericCastNecessary(castExpression)) {
+          !UnnecessaryExplicitNumericCastInspection.isUnnecessaryPrimitiveNumericCast(castExpression)) {
         addInstruction(new PopInstruction());
         pushUnknown();
       } else {

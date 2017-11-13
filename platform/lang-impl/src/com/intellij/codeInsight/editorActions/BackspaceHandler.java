@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
@@ -39,7 +40,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -184,7 +184,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     // Decrease column down to indentation * n
-    final int indent = CodeStyleSettingsManager.getIndentOptions(file).INDENT_SIZE;
+    final int indent = CodeStyle.getIndentOptions(file).INDENT_SIZE;
     int column = (caretPos.column - 1) / indent * indent;
     if (column < 0) {
       column = 0;

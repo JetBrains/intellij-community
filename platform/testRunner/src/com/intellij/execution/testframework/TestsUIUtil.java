@@ -180,13 +180,19 @@ public class TestsUIUtil {
   }
 
   public static class TestResultPresentation {
-    private AbstractTestProxy myRoot;
-    private boolean myStarted;
-    private String myComment;
+    private final AbstractTestProxy myRoot;
+    private final boolean myStarted;
+    private final String myComment;
+
     private String myTitle;
     private String myText;
     private String myBalloonText;
     private MessageType myType;
+
+    private int myFailedCount;
+    private int myPassedCount;
+    private int myNotStartedCount;
+    private int myIgnoredCount;
 
     public TestResultPresentation(AbstractTestProxy root, boolean started, String comment) {
       myRoot = root;
@@ -214,6 +220,38 @@ public class TestsUIUtil {
       return myType;
     }
 
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getFailedCount() {
+      return myFailedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getPassedCount() {
+      return myPassedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getNotStartedCount() {
+      return myNotStartedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getIgnoredCount() {
+      return myIgnoredCount;
+    }
+
     public TestResultPresentation getPresentation() {
       List allTests = Filter.LEAF.select(myRoot.getAllTests());
       final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
@@ -233,7 +271,13 @@ public class TestsUIUtil {
         myBalloonText = myTitle = myStarted ? "Tests were interrupted" : ExecutionBundle.message("test.not.started.progress.text");
         myText = "";
         myType = MessageType.WARNING;
-      } else{
+      }
+      else {
+        myFailedCount = failedCount;
+        myPassedCount = passedCount;
+        myNotStartedCount = notStartedCount;
+        myIgnoredCount = ignoredCount;
+
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +

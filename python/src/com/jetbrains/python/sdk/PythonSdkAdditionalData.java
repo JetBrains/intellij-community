@@ -23,7 +23,9 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -152,7 +154,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {
     for (String path : paths) {
       if (StringUtil.isEmpty(path)) continue;
-      container.add(path);
+      final String protocol = VirtualFileManager.extractProtocol(path);
+      final String url = protocol != null ? path : VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
+      container.add(url);
     }
   }
 

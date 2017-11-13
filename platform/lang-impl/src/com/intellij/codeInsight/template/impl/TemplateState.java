@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -575,7 +573,7 @@ public class TemplateState implements Disposable {
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
     if (end >= 0) {
-      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(end).leanForward(true)); // to the right of parameter hint, if any
+      myEditor.getCaretModel().moveToOffset(end);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
       myEditor.getSelectionModel().setSelection(start, end);

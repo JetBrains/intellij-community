@@ -377,6 +377,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
+      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+
       for (PsiElement element : myElements) {
         for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
           if (delegate.handlesElement(element)) {
@@ -384,8 +387,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+
       for (SmartPsiElementPointer<PsiElement> pointer : pointers) {
         PsiElement element = pointer.getElement();
         if (element != null) {

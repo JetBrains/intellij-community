@@ -124,7 +124,10 @@ public class ExpectedTypeUtils {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      expectedType = variable.getType();
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && !typeElement.isInferredType()) {
+        expectedType = variable.getType();
+      }
     }
 
     @Override

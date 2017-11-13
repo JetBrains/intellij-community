@@ -41,7 +41,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
                                                            new Color(0x0075da) :
                                                            new JBColor(Gray.x80, Gray.x83));
 
-  private static final Color RED = new JBColor(0xd80000, 0xff4053);
+  private static final Color RED = new JBColor(0xd64f4f, 0xe74848);
   private static final Color RED_LIGHT = new JBColor(0xfb8f89, 0xf4a2a0);
 
   private static final Color GREEN = new JBColor(0x34b171, 0x008f50);

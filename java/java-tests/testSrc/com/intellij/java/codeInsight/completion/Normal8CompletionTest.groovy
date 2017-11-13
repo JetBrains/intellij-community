@@ -306,6 +306,11 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
   }
 
+  void testPreferLambdaToConstructorReference() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '() -> ', 'AbstractMethodError::new'
+  }
+
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }

@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports <b>catch</b> blocks which are empty or may ignore exception.
+While occasionally intended, empty <b>catch</b> blocks can make debugging extremely difficult.
+Also ignoring catch parameter could be wrong. Finally it will be reported if it's statically detected
+that catch block may silently ignore important VM exceptions like <b>NullPointerException</b>. Ignoring such exception
+(without logging or rethrowing it) may hide a bug.
+<p>
+  This inspection will not report any <b>catch</b> parameters named "ignore" or "ignored".
+  Conversely this inspection will warn on any<b>catch</b> parameters named "ignore" or "ignored" that are actually used.
+  Also <b>catch</b> parameters named "expected" or "ok" are not reported inside test sources.
+</p>
+  <!-- tooltip end -->
+<small>New in 2018.1</small>
+</body>
+</html>

@@ -3293,4 +3293,23 @@ public class StringUtil extends StringUtilRt {
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
+
+  /**
+   * @return <code>true</code> if the passed string is not <code>null</code> and not empty
+   * and contains only latin upper- or lower-case characters and digits; <code>false</code> otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isLatinAlphanumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
+      return false;
+    }
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || Character.isDigit(c)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
+  }
 }

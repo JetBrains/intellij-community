@@ -15,9 +15,12 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SmartBackspaceDisabler extends BackspaceModeOverride {
+  @NotNull
   @Override
-  public SmartBackspaceMode getBackspaceMode(SmartBackspaceMode modeFromSettings) {
+  public SmartBackspaceMode getBackspaceMode(@NotNull SmartBackspaceMode modeFromSettings) {
     return modeFromSettings == SmartBackspaceMode.AUTOINDENT ? SmartBackspaceMode.INDENT : modeFromSettings;
   }
 }

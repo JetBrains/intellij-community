@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -53,6 +55,34 @@ public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
+
+  private static final ImmutableList<String> STDLIB_SKELETONS = ImmutableList.of(
+    "asyncio",
+    "multiprocessing",
+    "os",
+    "__builtin__.py",
+    "_csv.py",
+    "builtins.py",
+    "collections.py",
+    "copy.py",
+    "cStringIO.py",
+    "datetime.py",
+    "decimal.py",
+    "functools.py",
+    "io.py",
+    "itertools.py",
+    "logging.py",
+    "math.py",
+    "pathlib.py",
+    "pickle.py",
+    "re.py",
+    "shutil.py",
+    "sqlite3.py",
+    "StringIO.py",
+    "struct.py",
+    "subprocess.py",
+    "sys.py"
+  );
 
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
   private static boolean ourNoSkeletonsErrorReported = false;
@@ -93,6 +123,19 @@ public class PyUserSkeletonsUtil {
   public static boolean isUnderUserSkeletonsDirectory(@NotNull final VirtualFile virtualFile) {
     final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
+  }
+
+  public static boolean isStandardLibrarySkeleton(@NotNull VirtualFile virtualFile) {
+    final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
+    if (skeletonsDir == null) {
+      return false;
+    }
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir);
+    // not under skeletons directory
+    if (relativePath == null) {
+      return false;
+    }
+    return ContainerUtil.exists(STDLIB_SKELETONS, relativePath::startsWith);
   }
 
   @Nullable

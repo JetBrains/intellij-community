@@ -3,6 +3,7 @@ package com.intellij.tasks.context;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -38,6 +39,10 @@ public class BranchContextTracker implements BranchChangeListener {
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;
 
+    TransactionGuard.submitTransaction(myProject, () -> switchContext(branchName, contextName));
+  }
+
+  private void switchContext(@NotNull String branchName, String contextName) {
     myContextManager.clearContext();
     myContextManager.loadContext(contextName);
 

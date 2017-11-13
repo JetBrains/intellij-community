@@ -444,7 +444,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private fun generateUnpushedMergedCommitProblem() {
     pushCommitFromBro()
     cd(repository)
-    prepareConflict("master", "feature", "branch1.txt")
+    repository.prepareConflict("master", "feature", "branch1.txt")
     git("checkout master")
     git("merge feature", true)
     git("add -u .")

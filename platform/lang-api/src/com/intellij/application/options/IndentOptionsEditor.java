@@ -77,6 +77,7 @@ public class IndentOptionsEditor extends OptionGroup {
     IntegerField field = new IntegerField(valueName, minSize, maxSize);
     field.setDefaultValue(defaultValue);
     field.setColumns(4);
+    if (defaultValue < 0) field.setCanBeEmpty(true);
     field.setMinimumSize(field.getPreferredSize());
     return field;
   }

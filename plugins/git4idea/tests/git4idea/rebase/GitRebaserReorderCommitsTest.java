@@ -88,7 +88,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
     assertCommits(myFirstCommit, hashes[2], hashes[1], hashes[0]);
   }
 
-  private static String[] makeCommits(int number) {
+  private String[] makeCommits(int number) {
     String[] hashes = new String[number];
     for (int i = 0; i < hashes.length; i++) {
       hashes[i] = makeCommit();
@@ -97,13 +97,13 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
   }
 
   @NotNull
-  private static String makeCommit() {
+  private String makeCommit() {
     touch(Math.random() + ".txt", "initial" + Math.random());
-    addCommit("some commit");
-    return last();
+    addCommit(repo, "some commit");
+    return last(repo);
   }
 
-  private static void assertCommits(String... commits) {
+  private void assertCommits(String... commits) {
     final String[] hashes = git("rev-list --reverse HEAD").split("\n");
     assertEquals(commits.length, hashes.length);
     for (int i = 0; i < commits.length; i++) {

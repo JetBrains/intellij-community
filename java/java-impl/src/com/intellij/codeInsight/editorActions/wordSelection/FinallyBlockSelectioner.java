@@ -21,19 +21,20 @@ import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
 
 public class FinallyBlockSelectioner extends BasicSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiKeyword && PsiKeyword.FINALLY.equals(e.getText());
   }
 
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = new ArrayList<>();
 
     final PsiElement parent = e.getParent();

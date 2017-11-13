@@ -111,11 +111,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return FILE_PATH_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof FilePath) {
-      return getUserObject().getPath().compareToIgnoreCase(((FilePath)o2).getPath());
-    }
-
-    return 0;
+  public int compareUserObjects(final FilePath o2) {
+    return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
   }
 }

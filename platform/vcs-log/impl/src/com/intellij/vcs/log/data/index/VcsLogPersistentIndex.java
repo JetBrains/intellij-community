@@ -700,7 +700,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
-        indicator.checkCanceled();
         displayProgress(indicator);
       });
     }

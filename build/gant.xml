@@ -47,7 +47,6 @@
         <include name="picocontainer.jar"/>
         <include name="jna.jar"/>
         <include name="jna-platform.jar"/>
-        <include name="oromatcher.jar"/>
         <include name="snappy-in-java-*.jar"/>
         <include name="nanoxml-*.jar"/>
         <include name="aether-*-all.jar"/>
@@ -55,8 +54,6 @@
         <include name="httpclient-*.jar"/>
         <include name="httpcore-*.jar"/>
         <include name="httpmime-*.jar"/>
-        <include name="commons-codec-*.jar"/>
-        <include name="commons-logging-*.jar"/>
         <include name="slf4j-api-*.jar"/>
         <include name="slf4j-log4j12-*.jar"/>
       </fileset>

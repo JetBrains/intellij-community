@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A delegate which is called when "Join lines" is selected.
@@ -37,5 +38,5 @@ public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
    * @return the position to place the caret after the operation, or -1 if this handler was not able
    *         to perform the operation.
    */
-  int tryJoinRawLines(Document document, PsiFile file, int start, final int end);
+  int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile file, int start, final int end);
 }

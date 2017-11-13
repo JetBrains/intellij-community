@@ -109,4 +109,21 @@ class S {
     System.out.println((<warning descr="'a' unnecessarily cast to 'double'">double</warning>)a / c / 10.0);
     System.out.println(19/ (double)a / c / 10.0);
   }
+
+  private static void foo(int i) {
+  }
+
+  void bar(int i) {
+    foo((<warning descr="'0' unnecessarily cast to 'short'">short</warning>) 0);
+    foo((short)i);
+    int bar = (<warning descr="'123' unnecessarily cast to 'short'">short</warning>) 123;
+    boolean[] booleans = new boolean[(<warning descr="'6' unnecessarily cast to 'short'">short</warning>) 6];
+    byte[] bytes = new byte[(<warning descr="'(short) 2' unnecessarily cast to 'int'">int</warning>) (<warning descr="'2' unnecessarily cast to 'short'">short</warning>) 2];
+    var v = (short) 666;
+  }
+
+  void noWarnOnRedCode() {
+    foo<error descr="'foo(int)' in 'com.siyeh.igtest.numeric.unnecessary_explicit_numeric_cast.S' cannot be applied to '(long)'">((long)0)</error>;
+    <error descr="Incompatible types. Found: 'long', required: 'int'">int x = (long)0;</error>
+  }
 }

@@ -340,7 +340,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * Creates a new, empty map with the default initial table size (16).
    */
-  public ConcurrentIntObjectHashMap() {
+  ConcurrentIntObjectHashMap() {
   }
 
   /**
@@ -400,7 +400,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                                  negative or the load factor or concurrencyLevel are
    *                                  nonpositive
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity,
+  ConcurrentIntObjectHashMap(int initialCapacity,
                                      float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();

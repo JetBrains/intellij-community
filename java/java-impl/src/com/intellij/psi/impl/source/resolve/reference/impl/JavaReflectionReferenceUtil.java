@@ -35,10 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +90,12 @@ public class JavaReflectionReferenceUtil {
   public static final String GET_CLASS = "getClass";
   public static final String NEW_INSTANCE = "newInstance";
   public static final String TYPE = "TYPE";
+
+  // Atomic field updaters
+  public static final String NEW_UPDATER = "newUpdater";
+  public static final String ATOMIC_LONG_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicLongFieldUpdater";
+  public static final String ATOMIC_INTEGER_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicIntegerFieldUpdater";
+  public static final String ATOMIC_REFERENCE_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicReferenceFieldUpdater";
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
@@ -338,6 +341,14 @@ public class JavaReflectionReferenceUtil {
     return member.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
+  static boolean isAtomicallyUpdateable(@NotNull PsiField field) {
+    if (field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
+      return false;
+    }
+    final PsiType type = field.getType();
+    return !(type instanceof PsiPrimitiveType) || PsiType.INT.equals(type) || PsiType.LONG.equals(type);
+  }
+
   @Nullable
   static String getParameterTypesText(@NotNull PsiMethod method) {
     final StringJoiner joiner = new StringJoiner(", ");
@@ -444,6 +455,9 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
+    if (ExpressionUtils.isNullLiteral(maybeArray)) {
+      return PsiExpression.EMPTY_ARRAY;
+    }
     if (isVarargAsArray(maybeArray)) {
       final PsiExpression argumentsDefinition = findDefinition(maybeArray);
       if (argumentsDefinition instanceof PsiArrayInitializerExpression) {

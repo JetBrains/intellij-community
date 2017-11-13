@@ -763,8 +763,7 @@ public final class PythonSdkType extends SdkType {
           Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
         return true;
       }
-      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-      if (userSkeletonsDir != null && userSkeletonsDir.equals(vFile.getParent())) {
+      if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
         return true;
       }
       if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {

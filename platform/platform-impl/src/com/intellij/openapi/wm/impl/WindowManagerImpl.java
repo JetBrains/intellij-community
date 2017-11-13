@@ -516,10 +516,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       myDefaultFrameInfo.setBounds(FrameBoundsConverter.convertFromDeviceSpace(rawBounds));
     }
 
-    Rectangle bounds = myDefaultFrameInfo.getBounds();
-    if (bounds != null) {
-      frame.setBounds(bounds);
-    }
+    updateFrameBounds(frame);
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);

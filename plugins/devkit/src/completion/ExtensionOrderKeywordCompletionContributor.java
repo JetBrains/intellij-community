@@ -2,33 +2,32 @@
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.*;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 
-import java.util.List;
-
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class ExtensionOrderKeywordCompletionContributor extends CompletionContributor {
-  private static final List<LookupElement> KEYWORD_COMPLETION_VARIANTS = ContainerUtil.list(
-    LookupElementBuilder.create(LoadingOrder.FIRST_STR), LookupElementBuilder.create(LoadingOrder.LAST_STR),
-    LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true)),
-    LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true))
-  );
+  private static final LookupElementBuilder KEYWORD_VARIANT_FIRST = LookupElementBuilder.create(LoadingOrder.FIRST_STR);
+  private static final LookupElementBuilder KEYWORD_VARIANT_LAST = LookupElementBuilder.create(LoadingOrder.LAST_STR);
+  private static final LookupElementBuilder KEYWORD_VARIANT_BEFORE = LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim())
+    .withInsertHandler(new AddSpaceInsertHandler(true));
+  private static final LookupElementBuilder KEYWORD_VARIANT_AFTER = LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim())
+    .withInsertHandler(new AddSpaceInsertHandler(true));
 
   public ExtensionOrderKeywordCompletionContributor() {
     extend(CompletionType.BASIC, getCapture(), new CompletionProvider<CompletionParameters>() {
@@ -37,9 +36,15 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         String prefix = getCompletionPrefix(parameters);
-        if (shouldProposeKeywordsAfterPrefix(prefix)) {
-          result.addAllElements(KEYWORD_COMPLETION_VARIANTS);
+        if (!shouldProposeKeywordsAfterPrefix(prefix)) {
+          return;
         }
+        if (shouldProposeFirstLastKeywordsAfterPrefix(prefix)) {
+          result.addElement(KEYWORD_VARIANT_FIRST);
+          result.addElement(KEYWORD_VARIANT_LAST);
+        }
+        result.addElement(KEYWORD_VARIANT_BEFORE);
+        result.addElement(KEYWORD_VARIANT_AFTER);
       }
     });
   }
@@ -69,7 +74,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   }
 
   @NotNull
-  private static String getPrefixLastPart(String prefix) {
+  private static String getPrefixLastPart(@NotNull String prefix) {
     String lastPart = StringUtil.substringAfterLast(prefix, LoadingOrder.ORDER_RULE_SEPARATOR);
     if (lastPart == null) {
       lastPart = prefix;
@@ -78,8 +83,18 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     return lastPart;
   }
 
-  private static boolean shouldProposeKeywordsAfterPrefix(String prefix) {
+  private static boolean shouldProposeKeywordsAfterPrefix(@NotNull String prefix) {
     return !getPrefixLastPart(prefix).contains(" "); // propose keywords if there's only a single word (or empty prefix)
+  }
+
+  private static boolean shouldProposeFirstLastKeywordsAfterPrefix(@NotNull String prefix) {
+    String[] parts = prefix.split(LoadingOrder.ORDER_RULE_SEPARATOR);
+    for (String part : parts) {
+      if (part.trim().equalsIgnoreCase(LoadingOrder.FIRST_STR) || part.trim().equalsIgnoreCase(LoadingOrder.LAST_STR)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

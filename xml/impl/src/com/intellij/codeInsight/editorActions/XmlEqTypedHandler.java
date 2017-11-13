@@ -33,8 +33,9 @@ import org.jetbrains.annotations.Nullable;
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
   private boolean needToInsertQuotes = false;
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
+  public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -58,8 +59,9 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
     return at != null ? at.getParent() : null;
   }
 
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (needToInsertQuotes) {
       int offset = editor.getCaretModel().getOffset();
       PsiElement fileContext = file.getContext();

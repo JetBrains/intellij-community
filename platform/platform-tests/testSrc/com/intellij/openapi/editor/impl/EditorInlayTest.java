@@ -324,6 +324,13 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(2, 2, 2);
   }
 
+  public void testCaretMovingToInlayOffset() {
+    initText("<caret>abc");
+    addInlay(2);
+    myEditor.getCaretModel().moveToOffset(2);
+    checkCaretPosition(2, 2, 3);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

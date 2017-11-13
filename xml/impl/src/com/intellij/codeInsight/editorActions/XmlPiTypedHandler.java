@@ -30,8 +30,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlPiTypedHandler extends TypedHandlerDelegate {
 
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c == '?' && file.getLanguage() == XMLLanguage.INSTANCE) {
       int offset = editor.getCaretModel().getOffset();
       if (offset >= 2 && editor.getDocument().getCharsSequence().charAt(offset - 2) == '<') {

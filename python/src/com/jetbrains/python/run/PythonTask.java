@@ -23,9 +23,15 @@ import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -240,6 +246,7 @@ public class PythonTask {
    */
   public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
+    stopProcessWhenAppClosed(process);
     final Project project = myModule.getProject();
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
@@ -264,6 +271,31 @@ public class PythonTask {
       .withAfterCompletion(myAfterCompletion)
       .withHelpId(myHelpId)
       .run();
+  }
+
+  /**
+   * Adds process listener that kills process on application shutdown.
+   * Listener is removed from process stopped to prevent leak
+   */
+  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process) {
+
+    final ApplicationListener processStopper = new ApplicationAdapter() {
+      @Override
+      public void applicationExiting() {
+        super.applicationExiting();
+        process.destroyProcess();
+      }
+    };
+
+    final Application app = ApplicationManager.getApplication();
+    process.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(@NotNull final ProcessEvent event) {
+        super.processTerminated(event);
+        app.removeApplicationListener(processStopper);
+      }
+    }, myModule);
+    app.addApplicationListener(processStopper);
   }
 
 

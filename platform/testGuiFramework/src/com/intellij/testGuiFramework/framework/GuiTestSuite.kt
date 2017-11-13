@@ -26,7 +26,7 @@ class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite
 
   //IDE type to run suite tests with
   val myIde = getIdeFromAnnotation(suiteClass)
-  var myFirstStart = true
+  var isFirstStart = true
   val UNDEFINED_FIRST_CLASS = "undefined"
   val myFirstStartClassName: String by lazy {
     val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
@@ -38,7 +38,7 @@ class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
-      if (myFirstStart) firstStart()
+      if (isFirstStart) firstStart()
       val testClass = runner.description.testClass
       val guiTestLocalRunner = GuiTestLocalRunner(testClass, suiteClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
@@ -53,7 +53,7 @@ class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite
     if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
     LOG.info("IDE is configuring for the first time...")
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
-    myFirstStart = false
+    isFirstStart = false
   }
 
 }

@@ -88,7 +88,7 @@ public class PyTypeChecker {
         return false;
       }
       else if (subst != null) {
-        if (expected.equals(actual)) {
+        if (expected.equals(actual) || subst.equals(generic)) {
           return true;
         }
         else if (recursive) {
@@ -197,10 +197,10 @@ public class PyTypeChecker {
           return false;
         }
         // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
-        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
+        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes();
         final PyCollectionType actualCollectionType = as(actual, PyCollectionType.class);
         final List<PyType> subElementTypes = actualCollectionType != null ?
-                                             actualCollectionType.getElementTypes(context) :
+                                             actualCollectionType.getElementTypes() :
                                              Collections.emptyList();
         for (int i = 0; i < superElementTypes.size(); i++) {
           final PyType subElementType = i < subElementTypes.size() ? subElementTypes.get(i) : null;
@@ -427,7 +427,7 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyCollectionType) {
       final PyCollectionType collection = (PyCollectionType)type;
-      for (PyType elementType : collection.getElementTypes(context)) {
+      for (PyType elementType : collection.getElementTypes()) {
         collectGenerics(elementType, context, collected, visited);
       }
     }
@@ -482,7 +482,7 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
-        final List<PyType> elementTypes = collection.getElementTypes(context);
+        final List<PyType> elementTypes = collection.getElementTypes();
         final List<PyType> substitutes = new ArrayList<>();
         for (PyType elementType : elementTypes) {
           substitutes.add(substitute(elementType, substitutions, context));
@@ -495,7 +495,7 @@ public class PyTypeChecker {
 
         final List<PyType> oldElementTypes = tupleType.isHomogeneous()
                                              ? Collections.singletonList(tupleType.getIteratedItemType())
-                                             : tupleType.getElementTypes(context);
+                                             : tupleType.getElementTypes();
 
         final List<PyType> newElementTypes =
           ContainerUtil.map(oldElementTypes, elementType -> substitute(elementType, substitutions, context));

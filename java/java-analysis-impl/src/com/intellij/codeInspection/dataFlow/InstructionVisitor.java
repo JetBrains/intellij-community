@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -35,6 +36,17 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @NotNull
+  public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
+                                                    @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
+    DfaControlTransferValue transferValue = controlTransferInstruction.getTransfer();
+    if (transferValue == null) {
+      transferValue = (DfaControlTransferValue)state.pop();
+    }
+    return new ControlTransferHandler(state, runner, transferValue.getTarget()).iteration(transferValue.getTraps())
+      .toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

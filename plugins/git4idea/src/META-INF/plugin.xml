@@ -210,6 +210,7 @@
                         serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
+    <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
     <applicationService serviceInterface="git4idea.DialogManager"

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler;
 import com.intellij.codeInsight.editorActions.QuoteHandler;
@@ -37,8 +38,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
@@ -86,9 +85,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
         document.insertString(caretOffset, insertedFragment + " " + literalStart);
         caretOffset += insertedFragment.length();
         caretAdvance = 1;
-        CommonCodeStyleSettings langSettings =
-          CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(file.getLanguage());
-        if (langSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) {
+        if (CodeStyle.getLanguageSettings(file).BINARY_OPERATION_SIGN_ON_NEXT_LINE) {
           caretOffset -= 1;
           caretAdvance = 3;
         }

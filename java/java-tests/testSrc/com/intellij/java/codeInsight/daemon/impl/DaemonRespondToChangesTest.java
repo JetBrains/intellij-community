@@ -1325,7 +1325,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       StoreUtil.saveDocumentsAndProjectsAndApp();
 
-      checkDaemonReaction(false, () -> StoreUtil.saveDocumentsAndProjectsAndApp());
+      checkDaemonReaction(false, StoreUtil::saveDocumentsAndProjectsAndApp);
     }
     finally {
       application.doNotSave(appSave);
@@ -2486,7 +2486,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDumbQuickFixIsNoLongerVisibleAfterApplied() {
-    MyInspection tool = registerInspection(new MyInspection());
+    registerInspection(new MyInspection());
 
     @Language("JAVA")
     String text = "class X { void f() { if (this == null) {} else return; } }";

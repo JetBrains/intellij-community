@@ -35,6 +35,13 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
 
   private final boolean myNegated;
 
+  /**
+   * @deprecated use {@link #buildFix(PsiBinaryExpression)} instead
+   */
+  public EqualityToEqualsFix() {
+    this(true);
+  }
+
   private EqualityToEqualsFix(boolean negated) {
     myNegated = negated;
   }

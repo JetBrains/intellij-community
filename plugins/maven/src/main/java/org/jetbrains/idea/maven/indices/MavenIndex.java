@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -473,7 +474,7 @@ public class MavenIndex {
 
           if ("maven-archetype".equals(id.packaging)) {
             builder.setLength(0);
-            builder.append(id.version).append(":").append(id.description);
+            builder.append(id.version).append(":").append(StringUtil.notNullize(id.description));
             getOrCreate(archetypeIdToDescriptionMap, ga).add(builder.toString());
           }
         }
@@ -547,7 +548,7 @@ public class MavenIndex {
       addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
       addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
       if ("maven-archetype".equals(id.packaging)) {
-        addToCache(myData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + id.description);
+        addToCache(myData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
       }
       myData.flush();
 

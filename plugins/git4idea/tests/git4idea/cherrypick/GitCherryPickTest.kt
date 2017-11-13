@@ -65,7 +65,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
   }
 
   protected fun `check resolve conflicts and commit`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `mark as resolved on merge`()
     vcsHelper.onCommit { msg ->
       git("commit -am '$msg'")
@@ -96,8 +96,5 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     cherryPick(hashes.asList())
   }
 
-  protected fun shortHash(hash: String): String {
-    return HashImpl.build(hash).toShortString()
-  }
-
+  protected fun shortHash(hash: String) = HashImpl.build(hash).toShortString()
 }

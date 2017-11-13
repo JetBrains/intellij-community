@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.util.ui.tree.TreeUtil.setTreeAcceptor;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
@@ -288,18 +287,14 @@ class AsyncProjectViewSupport {
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    if (element != null) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
-    LOG.warn("cannot create visitor without element and/or file");
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
     tree.setModel(model);
-    setTreeAcceptor(tree, model::accept);
-    Disposer.register(model, () -> {
-      setTreeAcceptor(tree, null);
-      tree.setModel(null);
-    });
+    Disposer.register(model, () -> tree.setModel(null));
   }
 }

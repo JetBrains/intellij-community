@@ -389,7 +389,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @Override
   public String toString() {
-    return myMap.toString();
+    return new java.util.HashMap<K, Collection<V>>(myMap).toString();
   }
 
   /**

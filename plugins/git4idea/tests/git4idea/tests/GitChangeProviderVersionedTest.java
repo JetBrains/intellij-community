@@ -30,7 +30,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   public void testCreateFile() throws Exception {
     VirtualFile file = create(myRootDir, "new.txt");
-    add(file.getPath());
+    add(repo, file.getPath());
     assertChanges(file, ADDED);
   }
 
@@ -38,7 +38,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     VirtualFile dir = createDir(myRootDir, "newdir");
     dirty(dir);
     VirtualFile bfile = create(dir, "new.txt");
-    add(bfile.getPath());
+    add(repo, bfile.getPath());
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
   }
 
@@ -80,7 +80,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     edit(dir_ctxt, "new cfile content");
     deleteFile(subdir_dtxt);
     VirtualFile newfile = create(myRootDir, "newfile.txt");
-    add();
+    add(repo);
 
     assertChanges(new VirtualFile[] {atxt, dir_ctxt, subdir_dtxt, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
   }

@@ -60,6 +60,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public static class State {
+    public String PATH_TO_GIT = null;
+
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
     public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
@@ -144,6 +146,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void loadState(State state) {
     myState = state;
+  }
+
+  @Nullable
+  public String getPathToGit() {
+    return myState.PATH_TO_GIT;
+  }
+
+  public void setPathToGit(@Nullable String pathToGit) {
+    myState.PATH_TO_GIT = pathToGit;
   }
 
   public boolean autoUpdateIfPushRejected() {

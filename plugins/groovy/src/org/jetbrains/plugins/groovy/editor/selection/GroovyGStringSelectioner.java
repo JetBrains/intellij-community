@@ -39,13 +39,13 @@ import java.util.List;
  */
 public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();
     return parent instanceof GrStringInjection || parent instanceof GrString || parent instanceof GrStringContent;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     final List<TextRange> ranges = ContainerUtil.newArrayList();
     final PsiElement parent = e.getParent();
 

@@ -84,7 +84,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
     GitTestUtil.createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
-    addCommit("initial");
+    addCommit(this, "initial");
 
     atxt = getVirtualFile("a.txt");
     btxt = getVirtualFile("b.txt");
@@ -112,11 +112,11 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
     git("checkout -b feature");
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
-    commit("commit to feature");
-    checkout("master");
+    commit(repo, "commit to feature");
+    checkout(repo, "master");
     refresh();
     performActionOnFileAndRecordToIndex(filename, "master", masterAction);
-    commit("commit to master");
+    commit(repo, "commit to master");
     git("merge feature", true);
     refresh();
   }
@@ -135,13 +135,13 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
         File f = touch(filename, "initial content in branch " + branchName);
         final VirtualFile createdFile = VfsUtil.findFileByIoFile(f, true);
         dirty(createdFile);
-        add(filename);
+        add(repo, filename);
         break;
       case MODIFY:
         //noinspection ConstantConditions
         overwrite(VfsUtilCore.virtualToIoFile(file), "new content in branch " + branchName);
         dirty(file);
-        add(filename);
+        add(repo, filename);
         break;
       case DELETE:
         dirty(file);
@@ -150,7 +150,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
       case RENAME:
         String newName = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
         dirty(file);
-        mv(filename, newName);
+        mv(repo, filename, newName);
         myRootDir.refresh(false, true);
         dirty(myRootDir.findChild(newName));
         break;

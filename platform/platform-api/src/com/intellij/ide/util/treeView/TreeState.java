@@ -51,9 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-import static com.intellij.util.ui.tree.TreeUtil.getTreeAcceptor;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
 
@@ -247,7 +245,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
-    if (visit(tree)) return; // AsyncTreeModel#visit
+    if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
@@ -472,17 +470,22 @@ public class TreeState implements JDOMExternalizable {
     return false;
   }
 
-  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor, @NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(acceptor).collect(toList()));
+  private Promise<List<TreePath>> expand(@NotNull TreeVisitor.Acceptor acceptor, @NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream()
+                            .map(elements -> new Visitor(elements, tree::expandPath))
+                            .map(acceptor::accept).collect(toList()));
   }
 
-  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor) {
-    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(acceptor).collect(toList()));
+  private Promise<List<TreePath>> select(@NotNull TreeVisitor.Acceptor acceptor) {
+    return collectResults(mySelectedPaths.stream()
+                            .map(elements -> new Visitor(elements, null))
+                            .map(acceptor::accept).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {
-    Function<TreeVisitor, Promise<TreePath>> acceptor = getTreeAcceptor(tree);
-    if (acceptor == null) return false;
+    TreeModel model = tree.getModel();
+    if (!(model instanceof TreeVisitor.Acceptor)) return false;
+    TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
 
     expand(tree, promise -> expand(acceptor, tree).processed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {

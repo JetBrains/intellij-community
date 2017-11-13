@@ -66,7 +66,7 @@ public class BreakpointChooser {
     }
   }
 
-  public void setSelectesBreakpoint(Object breakpoint) {
+  public void setSelectedBreakpoint(Object breakpoint) {
     myComboBox.setSelectedItem(findItem(breakpoint, myBreakpointItems));
   }
 

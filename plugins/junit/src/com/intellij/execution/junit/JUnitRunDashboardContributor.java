@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.*;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -49,7 +50,7 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
 
       SMTestProxy.SMRootTestProxy rootNode = resultsViewer.getTestsRootNode();
       TestTreeRenderer renderer = new TestTreeRenderer(resultsViewer.getProperties());
-      if (rootNode.getChildren().isEmpty()) {
+      if (rootNode.isLeaf()) {
         TestsPresentationUtil.formatRootNodeWithoutChildren(rootNode, renderer);
       } else {
         TestsPresentationUtil.formatRootNodeWithChildren(rootNode, renderer);
@@ -58,7 +59,7 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
         presentation.setIcon(renderer.getIcon());
       }
 
-      addTestSummary(presentation, resultsViewer);
+      addTestSummary(presentation, rootNode);
     }
     finally {
       RunDashboardAnimator animator = RunDashboardManager.getInstance(node.getProject()).getAnimator();
@@ -73,18 +74,18 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
     }
   }
 
-  private static void addTestSummary(@NotNull PresentationData presentation, @NotNull SMTestRunnerResultsForm resultsViewer) {
-    int total = resultsViewer.getTotalTestCount();
-    int finished = resultsViewer.getFinishedTestCount();
-    int failed = resultsViewer.getFailedTestCount();
-    int ignored = resultsViewer.getIgnoredTestCount();
+  private static void addTestSummary(@NotNull PresentationData presentation, @NotNull SMTestProxy.SMRootTestProxy rootNode) {
+    // Do not add any summary if test tree is not constructed.
+    if (rootNode.isLeaf()) return;
 
-    if (total == 0) {
-      total = finished + failed + ignored;
-      if (total == 0) return;
-    }
+    TestsUIUtil.TestResultPresentation testResultPresentation = new TestsUIUtil.TestResultPresentation(rootNode).getPresentation();
 
-    int passed = Math.max(0, finished - failed - ignored);
+    int failed = testResultPresentation.getFailedCount();
+    int ignored = testResultPresentation.getIgnoredCount();
+    int passed = testResultPresentation.getPassedCount();
+    int total = passed + failed + testResultPresentation.getNotStartedCount();
+
+    if (total == 0) return;
 
     presentation.addText(" [", SimpleTextAttributes.GRAY_ATTRIBUTES);
     boolean addSeparator = false;

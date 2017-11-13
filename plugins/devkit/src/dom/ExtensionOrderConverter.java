@@ -5,20 +5,26 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -28,7 +34,7 @@ import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
@@ -207,7 +213,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
       ExtensionLocator epLocator = ExtensionLocator.byExtensionPoint(extensionPoint);
       List<ExtensionCandidate> candidates = epLocator.findCandidates();
-      DomManager domManager = DomManager.getDomManager(getElement().getProject());
+      Project project = getElement().getProject();
+      DomManager domManager = DomManager.getDomManager(project);
 
       List<Extension> extensionsForThisEp = new ArrayList<>();
       for (ExtensionCandidate candidate : candidates) {
@@ -218,26 +225,9 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         }
       }
 
-      String currentExtensionId = myExtension.getId().getStringValue();
-      List<LookupElement> idCompletionVariantsList = new ArrayList<>();
-      for (Extension e : extensionsForThisEp) {
-        if (Objects.equals(currentExtensionId, e.getId().getStringValue())) {
-          continue; // do not suggest the same extension id
-        }
-        String id = e.getId().getStringValue();
-        if (StringUtil.isNotEmpty(id)) {
-          DomTarget extensionTarget = DomTarget.getTarget(e);
-          if (extensionTarget != null) {
-            PsiElement extensionPsi = PomService.convertToPsi(extensionTarget);
-            idCompletionVariantsList.add(LookupElementBuilder.create(extensionPsi, id));
-          }
-          else {
-            // shouldn't happen, fallback for additional safety
-            idCompletionVariantsList.add(LookupElementBuilder.create(e.getXmlTag(), id));
-          }
-        }
-      }
-      return idCompletionVariantsList.toArray(new LookupElement[idCompletionVariantsList.size()]);
+      Map<Extension, String> targetExtensionsWithMarks = filterAndMarkExtensions(extensionsForThisEp, project);
+      List<LookupElement> idCompletionVariants = getLookupElements(targetExtensionsWithMarks);
+      return idCompletionVariants.toArray(new LookupElement[idCompletionVariants.size()]);
     }
 
     @NotNull
@@ -250,6 +240,122 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public boolean isSoft() {
       return true;
+    }
+
+    private Map<Extension, String> filterAndMarkExtensions(List<Extension> extensionsForThisEp, Project project) {
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+      GlobalSearchScope resolveScope = getElement().getResolveScope();
+      PsiClass languageEpClass = javaPsiFacade.findClass(LanguageExtensionPoint.class.getCanonicalName(), resolveScope);
+      if (languageEpClass == null) {
+        return Collections.emptyMap();
+      }
+      PsiClass fileTypeEpClass = javaPsiFacade.findClass(FileTypeExtensionPoint.class.getCanonicalName(), resolveScope);
+      if (fileTypeEpClass == null) {
+        return Collections.emptyMap();
+      }
+
+      String currentExtensionId = myExtension.getId().getStringValue();
+      String currentExtensionLanguage = getSpecificExtensionAttribute(myExtension, languageEpClass, "language");
+      String currentExtensionFileType = getSpecificExtensionAttribute(myExtension, fileTypeEpClass, "filetype");
+
+      Map<Extension, String> result = new HashMap<>();
+      for (Extension extension : extensionsForThisEp) {
+        String id = extension.getId().getStringValue();
+        if (StringUtil.isEmpty(id) || id.equals(currentExtensionId)) {
+          continue;
+        }
+
+        String extensionMark = null; // to display {language} or {file type}
+        if (currentExtensionLanguage != null) {
+          String language = getSpecificExtensionAttribute(extension, languageEpClass, "language");
+          if (language != null) {
+            if (!language.equals("any") && !language.isEmpty() && !language.equals(currentExtensionLanguage)) {
+              continue;
+            }
+            extensionMark = language;
+          }
+        }
+        if (currentExtensionFileType != null) {
+          String fileType = getSpecificExtensionAttribute(extension, fileTypeEpClass, "filetype");
+          if (fileType != null) {
+            if (!currentExtensionFileType.equals(fileType)) {
+              continue;
+            }
+            extensionMark = extensionMark != null ? null : fileType; // null if _somehow_ both filetype and language are present
+          }
+        }
+
+        result.put(extension, extensionMark);
+      }
+
+      return result;
+    }
+
+    @NotNull
+    private static List<LookupElement> getLookupElements(@NotNull Map<Extension, String> targetExtensionsWithMarks) {
+      List<LookupElement> result = new ArrayList<>(targetExtensionsWithMarks.size());
+      for (Map.Entry<Extension, String> entry : targetExtensionsWithMarks.entrySet()) {
+        Extension extension = entry.getKey();
+        String mark = entry.getValue();
+
+        PsiElement targetElement = getTargetElement(extension);
+        String id = extension.getId().getStringValue();
+        if (StringUtil.isEmpty(id)) {
+          LOG.error("Unexpected empty id in target extension: " + extension);
+          continue;
+        }
+
+        result.add(createLookupElement(targetElement, id, extension.getModule(), mark));
+      }
+      return result;
+    }
+
+    @Nullable
+    private static String getSpecificExtensionAttribute(@NotNull Extension e,
+                                                        @NotNull PsiClass parentBeanClass,
+                                                        @NotNull String attribute) {
+      ExtensionPoint ep = e.getExtensionPoint();
+      if (ep == null) {
+        return null;
+      }
+      PsiClass beanClass = ep.getBeanClass().getValue();
+      if (beanClass == null) {
+        return null;
+      }
+      if (!InheritanceUtil.isInheritorOrSelf(beanClass, parentBeanClass, true)) {
+        return null;
+      }
+
+      DomAttributeChildDescription attributeDescription = e.getGenericInfo().getAttributeChildDescription(attribute);
+      if (attributeDescription == null) {
+        return null;
+      }
+      return attributeDescription.getDomAttributeValue(e).getStringValue();
+    }
+
+    @NotNull
+    private static PsiElement getTargetElement(Extension e) {
+      DomTarget extensionTarget = DomTarget.getTarget(e);
+      if (extensionTarget != null) {
+        return PomService.convertToPsi(extensionTarget);
+      }
+      // shouldn't happen, fallback for additional safety
+      return e.getXmlTag();
+    }
+
+    @NotNull
+    private static LookupElement createLookupElement(@NotNull PsiElement targetElement,
+                                                     @NotNull String id,
+                                                     @Nullable Module module,
+                                                     @Nullable String mark) {
+      LookupElementBuilder element = LookupElementBuilder.create(targetElement, id);
+      if (module != null) {
+        element = element.withTypeText(module.getName(), ModuleType.get(module).getIcon(), false);
+      }
+      if (mark != null) {
+        element = element.withTailText(" {" + mark + "}", true);
+      }
+      return element;
     }
   }
 }

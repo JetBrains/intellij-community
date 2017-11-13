@@ -1087,6 +1087,30 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiClass baseClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(superClass, psiClass.getResolveScope());
     if (baseClass == null) return null;
 
+    return substituteType(typeParamIndex, eraseTypeParameter, classResolveResult, psiClass, baseClass);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  @Nullable
+  public static PsiType substituteTypeParameter(@Nullable final PsiType psiType, @NotNull final PsiClass superClass, final int typeParamIndex,
+                                                final boolean eraseTypeParameter) {
+    if (psiType == null) return null;
+
+    if (!(psiType instanceof PsiClassType)) return null;
+
+    final PsiClassType classType = (PsiClassType)psiType;
+    final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = classResolveResult.getElement();
+    if (psiClass == null) return null;
+
+    return substituteType(typeParamIndex, eraseTypeParameter, classResolveResult, psiClass, superClass);
+  }
+
+  @Nullable
+  private static PsiType substituteType(int typeParamIndex,
+                                        boolean eraseTypeParameter,
+                                        PsiClassType.ClassResolveResult classResolveResult,
+                                        PsiClass psiClass, PsiClass baseClass) {
     if (!psiClass.isEquivalentTo(baseClass) && !psiClass.isInheritor(baseClass, true)) return null;
 
     final PsiTypeParameter[] parameters = baseClass.getTypeParameters();

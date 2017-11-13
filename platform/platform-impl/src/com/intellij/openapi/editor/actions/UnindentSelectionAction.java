@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class UnindentSelectionAction extends EditorAction {
   public UnindentSelectionAction() {
@@ -71,7 +71,7 @@ public class UnindentSelectionAction extends EditorAction {
 
     if (startIndex < 0 || endIndex < 0) return;
 
-    int blockIndent = CodeStyleSettingsManager.getIndentOptions(project, document).INDENT_SIZE;
+    int blockIndent = CodeStyle.getIndentOptions(project, document).INDENT_SIZE;
     IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);
   }
 }

@@ -180,7 +180,7 @@ public class DocPreviewUtil {
                               @NotNull String replaceTo,
                               @NotNull List<TextRange> readOnlyChanges)
   {
-    for (int i = text.indexOf(replaceFrom); i >= 0 && i < text.length() - 1; i = text.indexOf(replaceFrom, i + 1)) {
+    for (int i = text.indexOf(replaceFrom); i >= 0; i = text.indexOf(replaceFrom, i + 1)) {
       int end = i + replaceFrom.length();
       if (intersects(readOnlyChanges, i, end)) {
         continue;

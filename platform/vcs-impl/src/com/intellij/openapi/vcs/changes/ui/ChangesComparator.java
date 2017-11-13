@@ -41,7 +41,9 @@ public class ChangesComparator {
       return HierarchicalFilePathComparator.IGNORE_CASE.compare(filePath1, filePath2);
     }
     else {
-      return filePath1.getName().compareToIgnoreCase(filePath2.getName());
+      int delta = filePath1.getName().compareToIgnoreCase(filePath2.getName());
+      if (delta != 0) return delta;
+      return filePath1.getPath().compareTo(filePath2.getPath());
     }
   }
 }

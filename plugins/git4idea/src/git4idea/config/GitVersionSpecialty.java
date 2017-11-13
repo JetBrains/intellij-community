@@ -96,7 +96,7 @@ public enum GitVersionSpecialty {
   OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 1, 0));
+      return version.isOlderOrEqual(new GitVersion(1, 7, 3, 0));
     }
   },
 
@@ -115,6 +115,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 12, 1));
+    }
+  },
+
+  CAN_AMEND_WITHOUT_FILES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 3));
     }
   },
 
@@ -157,6 +164,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
+    }
+  },
+
+  KNOWS_CORE_COMMENT_CHAR {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
     }
   },
 

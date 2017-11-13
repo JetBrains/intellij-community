@@ -296,11 +296,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         restartActions = consoleManager.getRestartActions(consoleView);
       }
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
-      final BuildProgressListener progressListener = progressListenerClazz != null
-                                                     ? ServiceManager.getService(myProject, progressListenerClazz)
-                                                     : myDebugPort > 0
-                                                       ? ServiceManager.getService(myProject, DebugTasksViewManager.class)
-                                                       : ServiceManager.getService(myProject, RunTasksViewManager.class);
+      final BuildProgressListener progressListener =
+        progressListenerClazz != null ? ServiceManager.getService(myProject, progressListenerClazz)
+                                      : createBuildView(task.getId(), executionName, task.getExternalProjectPath(), consoleView);
 
       List<BuildOutputParser> buildOutputParsers = new SmartList<>();
       for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
@@ -417,7 +415,31 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         };
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
-      return new DefaultExecutionResult(consoleView, processHandler);
+      ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
+      AnAction[] actions = AnAction.EMPTY_ARRAY;
+      if (executionConsole instanceof BuildView) {
+        actions = ((BuildView)executionConsole).getSwitchActions();
+      }
+      return new DefaultExecutionResult(executionConsole, processHandler, actions);
+    }
+
+    private BuildProgressListener createBuildView(ExternalSystemTaskId id,
+                                                  String executionName,
+                                                  String workingDir,
+                                                  ExecutionConsole executionConsole) {
+      BuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, executionName, workingDir, System.currentTimeMillis());
+      return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state",
+                           new ViewManager() {
+                             @Override
+                             public boolean isConsoleEnabledByDefault() {
+                               return true;
+                             }
+
+                             @Override
+                             public boolean isBuildContentView() {
+                               return false;
+                             }
+                           });
     }
 
     public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {

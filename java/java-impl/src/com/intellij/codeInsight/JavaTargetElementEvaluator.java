@@ -32,6 +32,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,12 +100,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     if (qualifier == null) return null;
     TypeConstraint constraint = CommonDataflow.getExpressionFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
     if (constraint == null) return null;
-    PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType());
-    if (specificQualifierClass == null || specificQualifierClass.equals(qualifierClass) ||
-        !InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-      return null;
-    }
-    return MethodSignatureUtil.findMethodBySuperMethod(specificQualifierClass, method, true);
+    return MethodUtils.findSpecificMethod(method, constraint.getPsiType());
   }
 
   @Override

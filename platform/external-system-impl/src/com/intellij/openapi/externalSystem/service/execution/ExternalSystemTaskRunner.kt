@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.build.BuildView
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
@@ -25,7 +26,6 @@ import com.intellij.execution.runners.GenericProgramRunner
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import javax.swing.JComponent
 
 /**
  * @author Vladislav.Soroka
@@ -48,6 +48,10 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
     val runContentDescriptor = RunContentBuilder(executionResult, environment).showRunContent(environment.contentToReuse) ?: return null
 
     state.setContentDescriptor(runContentDescriptor)
+    if (executionResult.executionConsole is BuildView) {
+      return runContentDescriptor
+    }
+
     val descriptor = object : RunContentDescriptor(runContentDescriptor.executionConsole, runContentDescriptor.processHandler,
                                                    runContentDescriptor.component, runContentDescriptor.displayName,
                                                    runContentDescriptor.icon, null,

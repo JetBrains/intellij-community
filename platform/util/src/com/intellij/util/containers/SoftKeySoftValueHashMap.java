@@ -21,11 +21,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-/**
- * @deprecated use {@link ContainerUtil#createSoftKeySoftValueMap()} instead
- */
-@Deprecated
-public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
+final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
@@ -96,12 +92,12 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean containsKey(Object key) {
-    return get(key) != null;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @NotNull

@@ -15,9 +15,9 @@
  */
 package git4idea.repo
 
+import git4idea.test.cd
 import git4idea.test.cloneRepo
 import git4idea.test.initRepo
-import git4idea.test.cd
 import git4idea.test.tac
 import java.io.File
 
@@ -26,7 +26,7 @@ class GitBareWorkTreeTest : GitWorkTreeBaseTest() {
   override fun initMainRepo(): String {
     val sourceRepo = File(testRoot, "source")
     assertTrue(sourceRepo.mkdir())
-    initRepo(sourceRepo.path, true)
+    initRepo(project, sourceRepo.path, true)
 
     val mainDir = File(testRoot, "main.git")
     val path = mainDir.path

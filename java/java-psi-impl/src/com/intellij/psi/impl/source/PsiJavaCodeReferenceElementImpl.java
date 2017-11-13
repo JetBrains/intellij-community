@@ -382,7 +382,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
 
       if (result.length == 0 && (kind == CLASS_OR_PACKAGE_NAME_KIND || kind == CLASS_NAME_KIND)) {
-        String qualifiedName = referenceElement.getQualifiedName();
+        String qualifiedName = referenceElement.getClassNameText();
         PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
                           ? JavaPsiFacade.getInstance(referenceElement.getProject()).findClass(qualifiedName, referenceElement.getResolveScope())
                           : null;

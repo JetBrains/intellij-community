@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -341,8 +342,8 @@ public class SettingsImpl implements EditorSettings {
     if (myUseTabCharacter != null) return myUseTabCharacter.booleanValue();
     PsiFile file = getPsiFile(project);
     return file != null
-           ? CodeStyleSettingsManager.getIndentOptions(file).USE_TAB_CHARACTER
-           : CodeStyleSettingsManager.getSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
+           ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
+           : CodeStyle.getSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override
@@ -398,17 +399,17 @@ public class SettingsImpl implements EditorSettings {
     int tabSize;
     try {
       if (project == null || project.isDisposed()) {
-        tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
+        tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
       }
       else  {
         PsiFile file = getPsiFile(project);
         if (myEditor != null && myEditor.isViewer()) {
           FileType fileType = file != null ? file.getFileType() : null;
-          tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+          tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
         } else {
           tabSize = file != null ?
-                    CodeStyleSettingsManager.getIndentOptions(file).TAB_SIZE :
-                    CodeStyleSettingsManager.getSettings(project).getTabSize(null);
+                    CodeStyle.getIndentOptions(file).TAB_SIZE :
+                    CodeStyle.getSettings(project).getTabSize(null);
         }
       }
     }

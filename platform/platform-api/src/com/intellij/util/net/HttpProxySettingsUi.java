@@ -250,7 +250,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       }
 
       if (myProxyAuthCheckBox.isSelected()) {
-        if (!StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
+        if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
           return "Login is empty";
         }
         if (myProxyPasswordTextField.getPassword().length == 0) {

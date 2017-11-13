@@ -164,6 +164,28 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
     }
+
+    GenericAttributeValue<String> name = extensionPoint.getName();
+    if (!isValidEpName(name)) {
+      holder.createProblem(name, DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()));
+    }
+    GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
+    if (!isValidEpName(qualifiedName)) {
+      holder.createProblem(
+        qualifiedName, DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()));
+    }
+  }
+
+  private static boolean isValidEpName(GenericAttributeValue<String> nameAttrValue) {
+    if (!nameAttrValue.exists()) {
+      return true;
+    }
+    String name = nameAttrValue.getValue();
+    return StringUtil.isNotEmpty(name) &&
+           Character.isLowerCase(name.charAt(0)) && // also checks that name doesn't start with dot
+           !name.toUpperCase().equals(name) && // not all uppercase
+           StringUtil.isLatinAlphanumeric(name.replace(".", "")) &&
+           name.charAt(name.length() - 1) != '.';
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {

@@ -246,9 +246,6 @@ public class SpellCheckerSettingsPane implements Disposable {
         return new ArrayList<>();
       }
       Set<String> words = this.dictionary.getEditableWords();
-      if (words == null) {
-        return new ArrayList<>();
-      }
       List<String> result = new ArrayList<>();
       result.addAll(words);
       Collections.sort(result);
@@ -310,10 +307,10 @@ public class SpellCheckerSettingsPane implements Disposable {
     public boolean isModified() {
       List<String> newWords = getWords();
       Set<String> words = manager.getUserDictionary().getEditableWords();
-      if (words == null && newWords == null) {
+      if (newWords == null) {
         return false;
       }
-      if (words == null || newWords == null || newWords.size() != words.size()) {
+      if (newWords.size() != words.size()) {
         return true;
       }
       return !(words.containsAll(newWords) && newWords.containsAll(words));

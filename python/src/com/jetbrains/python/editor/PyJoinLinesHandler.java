@@ -61,12 +61,12 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
 
   @Override
-  public int tryJoinLines(Document document, PsiFile file, int start, int end) {
+  public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     return -1; // we go for raw
   }
 
   @Override
-  public int tryJoinRawLines(@NotNull Document document, PsiFile file, int start, int end) {
+  public int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     if (!(file instanceof PyFile)) return CANNOT_JOIN;
 
     // step back the probable "\" and space before it.

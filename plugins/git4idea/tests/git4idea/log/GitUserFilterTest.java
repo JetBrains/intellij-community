@@ -45,9 +45,9 @@ public class GitUserFilterTest extends GitSingleRepoTest {
             userEmail = StringUtil.escapeChar(userEmail, '"');
           }
         }
-        GitTestUtil.setupUsername(userName, userEmail);
-        String commit = modify("file.txt");
-        GitTestUtil.setupDefaultUsername();
+        GitTestUtil.setupUsername(myProject, userName, userEmail);
+        String commit = modify(GitUserFilterTest.this, "file.txt");
+        GitTestUtil.setupDefaultUsername(myProject);
         return commit;
       }
     };

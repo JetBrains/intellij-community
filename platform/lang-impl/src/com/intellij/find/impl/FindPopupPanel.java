@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -41,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
@@ -107,6 +94,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final Disposable myDisposable;
+  private final Alarm myPreviewUpdater;
   @NotNull private final FindPopupScopeUI myScopeUI;
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
@@ -152,6 +140,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myHelper = helper;
     myProject = myHelper.getProject();
     myDisposable = Disposer.newDisposable();
+    myPreviewUpdater = new Alarm(myDisposable);
     myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
 
     Disposer.register(myDisposable, () -> {
@@ -202,6 +191,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
           ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());
+          applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
           return true;
         })
         .createPopup();
@@ -212,7 +202,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       RelativePoint showPoint = null;
       Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY);
       if (screenPoint != null) {
-        showPoint = new RelativePoint(screenPoint);
+        if (parent != null) {
+          SwingUtilities.convertPointFromScreen(screenPoint, parent);
+          showPoint = new RelativePoint(parent, screenPoint);
+        } else {
+          showPoint = new RelativePoint(screenPoint);
+        }
       }
       if (parent != null && showPoint == null) {
         int height = UISettings.getInstance().getShowNavigationBar() ? 135 : 115;
@@ -356,6 +351,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
     ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+
       @Override
       public boolean isSelected(AnActionEvent e) {
         return UISettings.getInstance().getPinFindInPath();
@@ -608,7 +608,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting()) return;
-      ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
+      myPreviewUpdater.addRequest(updatePreviewRunnable, 50); //todo[vasya]: remove this dirty hack of updating preview panel after clicking on Replace button
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
@@ -825,7 +825,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myTitleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
-    if (Registry.is("ide.find.enter.as.ok", false) || isReplaceState) {
+    if (Registry.is("ide.find.enter.as.ok", false)) {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER));
     } else {
       myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
@@ -950,6 +950,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.setEnabled(false);
     myReplaceSelectedButton.setEnabled(false);
     myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", 0));
+    myReplaceSelectedButton.setMnemonic('r');
     myCodePreviewComponent.setVisible(false);
 
     mySearchTextArea.setInfoText(null);
@@ -1206,7 +1207,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void navigateToSelectedUsage() {
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
-      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
       myBalloon.cancel();
       boolean first = true;
       for (Usage usage : usages.values()) {
@@ -1225,7 +1225,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private Map<Integer, Usage> getSelectedUsages() {
     int[] rows = myResultsPreviewTable.getSelectedRows();
     Map<Integer, Usage> result = null;
-    for (int row : rows) {
+    for (int i = rows.length - 1; i >= 0; i--) {
+      int row = rows[i];
       Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
         if (result == null) result = ContainerUtil.newLinkedHashMap();
@@ -1249,7 +1250,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MySwitchContextToggleAction extends ToggleAction {
+  private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(FindModel.SearchContext context) {
       super(FindDialog.getPresentableName(context));
     }
@@ -1299,7 +1300,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MyShowFilterPopupAction extends AnAction {
+  private class MyShowFilterPopupAction extends DumbAwareAction {
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {

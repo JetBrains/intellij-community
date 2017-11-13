@@ -76,6 +76,14 @@ public class FooImpl extends Foo {
   void testCastInstanceofedQualifierInLambda2() { doTest() }
 
   void testCastInstanceofedQualifierInExpressionLambda() { doTest() }
+  
+  void testCastQualifierInstanceofedTwice() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'boo', 'foo', 'moo'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 
   void testPreferCastExpressionSuperTypes() {
     myFixture.addClass('package nonImported; public interface SzNameInTheEnd {}')

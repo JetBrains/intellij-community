@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="educational-python" />
-    <orderEntry type="module" module-name="Edu-Python" />
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="ipnb" />
   </component>

@@ -93,9 +93,6 @@
                      key="static.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.StaticVariableOfConcreteClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="TypeMayBeWeakened" bundle="com.siyeh.InspectionGadgetsBundle" key="type.may.be.weakened.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection"/>
 
     <!--group.names.assignment.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToCatchBlockParameter" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -909,9 +906,10 @@
                      key="continue.or.break.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ContinueOrBreakFromFinallyBlockInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="EmptyCatchBlock" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.catch.block.display.name"
+    <inspectionElementsMerger implementation="com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionMerger"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CatchMayIgnoreException" bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.catch.ignores.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.EmptyCatchBlockInspection"/>
+                     implementationClass="com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EmptyFinallyBlock" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.finally.block.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.EmptyFinallyBlockInspection"/>
@@ -973,9 +971,6 @@
                      key="unnecessary.initcause.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.UnnecessaryInitCauseInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnusedCatchParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.catch.parameter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.UnusedCatchParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NewExceptionWithoutArguments" bundle="com.siyeh.InspectionGadgetsBundle" key="new.exception.without.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NewExceptionWithoutArgumentsInspection"/>

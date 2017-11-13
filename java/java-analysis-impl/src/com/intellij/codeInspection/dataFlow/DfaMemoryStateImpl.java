@@ -722,9 +722,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean applyFacts(DfaValue value, DfaFactMap facts) {
     if (value instanceof DfaVariableValue && !isUnknownState(value)) {
-      DfaVariableState state = getVariableState((DfaVariableValue)value).intersectMap(facts);
-      if (state == null) return false;
-      setVariableState((DfaVariableValue)value, state);
+      DfaVariableState oldState = getVariableState((DfaVariableValue)value);
+      DfaVariableState newState = oldState.intersectMap(facts);
+      if (newState == null) {
+        newState = oldState.withoutFact(DfaFactType.TYPE_CONSTRAINT);
+        if (newState.intersectMap(facts) != null && !Boolean.FALSE.equals(facts.get(DfaFactType.CAN_BE_NULL))) {
+          setVariableState((DfaVariableValue)value, newState);
+          return applyRelation(value, getFactory().getConstFactory().getNull(), false);
+        }
+        return false;
+      }
+      setVariableState((DfaVariableValue)value, newState);
       if (Boolean.FALSE.equals(facts.get(DfaFactType.CAN_BE_NULL))) {
         return applyRelation(value, getFactory().getConstFactory().getNull(), true);
       }
@@ -817,14 +825,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (dfaRight instanceof DfaFactMapValue) {
+      DfaFactMapValue factValue = (DfaFactMapValue)dfaRight;
+      if ((relationType == RelationType.IS || relationType == RelationType.EQ) &&
+          Boolean.FALSE.equals(factValue.get(DfaFactType.CAN_BE_NULL)) &&
+          !applyRelation(dfaLeft, getFactory().getConstFactory().getNull(), true)) {
+        return false;
+      }
       if (dfaLeft instanceof DfaVariableValue) {
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         if (isUnknownState(dfaVar)) return true;
 
-        DfaFactMapValue factValue = (DfaFactMapValue)dfaRight;
         switch (relationType) {
-          case EQ:
-            return !(Boolean.FALSE.equals(factValue.get(DfaFactType.CAN_BE_NULL)) && isNull(dfaVar));
           case IS:
             return applyFacts(dfaVar, factValue.getFacts());
           case IS_NOT: {
@@ -849,7 +860,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             return true;
           }
           default:
+            return true;
         }
+      }
+      if (relationType == RelationType.IS || relationType == RelationType.EQ) {
+        return getFactMap(dfaLeft).intersect(factValue.getFacts()) != null;
       }
       return true;
     }

@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public abstract class AbstractViewManager implements BuildProgressListener, Disposable {
+public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, Disposable {
   private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
 
   protected final Project myProject;
@@ -68,6 +68,16 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       }
     };
     myPinnedViews = ContainerUtil.newConcurrentSet();
+  }
+
+  @Override
+  public boolean isConsoleEnabledByDefault() {
+    return false;
+  }
+
+  @Override
+  public boolean isBuildContentView() {
+    return true;
   }
 
   protected abstract String getViewName();
@@ -120,10 +130,6 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     if (buildInfo.result instanceof FailureResult) {
       myBuildContentManager.setSelectedContent(buildInfo.content, true, true, true, null);
     }
-  }
-
-  protected boolean isConsoleEnabledByDefault() {
-    return false;
   }
 
   @Override

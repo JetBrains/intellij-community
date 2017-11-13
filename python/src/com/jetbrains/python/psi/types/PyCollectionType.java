@@ -25,7 +25,7 @@ import java.util.List;
  */
 public interface PyCollectionType extends PyType {
   @NotNull
-  List<PyType> getElementTypes(@NotNull TypeEvalContext context);
+  List<PyType> getElementTypes();
 
   @Nullable
   PyType getIteratedItemType();

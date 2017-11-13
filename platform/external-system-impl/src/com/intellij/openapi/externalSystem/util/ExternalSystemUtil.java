@@ -467,8 +467,9 @@ public class ExternalSystemUtil {
             rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
             rerunImportAction.getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
+            String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), "syncing...")
+              new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                 .withProcessHandler(processHandler, null)
                 .withRestartAction(rerunImportAction)
                 .withContentDescriptorSupplier(() -> {
@@ -493,8 +494,9 @@ public class ExternalSystemUtil {
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             FailureResultImpl failureResult = createFailureResult(e, projectName, externalSystemId, project);
+            String message = isPreviewMode ? "project preview creation failed" : "sync failed";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "sync failed", failureResult));
+              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
             String exceptionMessage = ExceptionUtil.getMessage(e);
             String text = exceptionMessage == null ? e.toString() : exceptionMessage;
             processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
@@ -503,8 +505,9 @@ public class ExternalSystemUtil {
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
+            String message = isPreviewMode ? "project preview created" : "synced successfully";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), "synced successfully", new SuccessResultImpl()));
+              id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
             processHandler.notifyProcessTerminated(0);
           }
 

@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.RemoteStateState;
@@ -42,14 +43,13 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -60,20 +60,19 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
-  public static final int DEFAULT_ADDRESS = 3456;
+  protected static final int DEFAULT_ADDRESS = 3456;
   protected DebuggerSession myDebuggerSession;
-  protected final AtomicInteger myRestart = new AtomicInteger();
+  private final AtomicInteger myRestart = new AtomicInteger();
   private static final int MAX_RESTARTS = 3;
   private volatile TestDisposable myTestRootDisposable;
   private final List<Runnable> myTearDownRunnables = new ArrayList<>();
@@ -124,7 +123,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     myTestRootDisposable = new TestDisposable();
     super.runBareRunnable(runnable);
     while (needsRestart()) {
-      assert (myTestRootDisposable.isDisposed());
+      assert myTestRootDisposable.isDisposed();
       myTestRootDisposable = new TestDisposable();
       super.runBareRunnable(runnable);
     }
@@ -140,8 +139,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     getChecker().checkValid(getTestProjectJdk());
   }
 
-  protected void disposeSession(final DebuggerSession debuggerSession) throws InterruptedException, InvocationTargetException {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> debuggerSession.dispose());
+  protected void disposeSession(final DebuggerSession debuggerSession) {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)debuggerSession::dispose);
   }
 
   @Override
@@ -160,13 +159,13 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
   }
 
-  protected void createLocalProcess(String className) throws ExecutionException, InterruptedException, InvocationTargetException {
+  protected void createLocalProcess(String className) throws ExecutionException {
     LOG.assertTrue(myDebugProcess == null);
     myDebuggerSession = createLocalProcess(DebuggerSettings.SOCKET_TRANSPORT, createJavaParameters(className));
     myDebugProcess = myDebuggerSession.getProcess();
   }
 
-  protected DebuggerSession createLocalSession(final JavaParameters javaParameters) throws ExecutionException, InterruptedException {
+  protected DebuggerSession createLocalSession(final JavaParameters javaParameters) throws ExecutionException {
     createBreakpoints(javaParameters.getMainClass());
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
 
@@ -226,9 +225,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
 
-  protected DebuggerSession createLocalProcess(int transport, final JavaParameters javaParameters) throws ExecutionException, InterruptedException, InvocationTargetException {
+  protected DebuggerSession createLocalProcess(int transport, final JavaParameters javaParameters) throws ExecutionException {
     createBreakpoints(javaParameters.getMainClass());
-    final DebuggerSession[] debuggerSession = new DebuggerSession[]{null};
 
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = transport;
 
@@ -255,6 +253,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final RemoteConnection debugParameters =
       DebuggerManagerImpl.createDebugParameters(javaCommandLineState.getJavaParameters(), debuggerRunnerSettings, true);
 
+    final DebuggerSession[] debuggerSession = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         debuggerSession[0] = attachVirtualMachine(javaCommandLineState, javaCommandLineState.getEnvironment(), debugParameters, false);
@@ -280,7 +279,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
 
   protected DebuggerSession createRemoteProcess(final int transport, final boolean serverMode, JavaParameters javaParameters)
-          throws ExecutionException, InterruptedException, InvocationTargetException {
+          throws ExecutionException {
     boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
 
     RemoteConnection remoteConnection = new RemoteConnection(
@@ -324,8 +323,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession;
   }
 
-  protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection)
-          throws InvocationTargetException, InterruptedException {
+  protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection) {
     final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
 
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
@@ -399,7 +397,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     invokeRatherLater(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         LOG.assertTrue(false);
       }
 
@@ -408,7 +406,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         //We wait for invokeRatherLater's
         invokeRatherLater(new DebuggerCommandImpl() {
           @Override
-          protected void action() throws Exception {
+          protected void action() {
             LOG.assertTrue(false);
           }
 
@@ -420,10 +418,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     });
 
-    waitFor(() -> s.waitFor());
+    waitFor(s::waitFor);
+    ((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES);
   }
 
-  public DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
+  private DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
     final DebuggerSession[] session = new DebuggerSession[1];
 
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> session[0] = DebuggerManagerEx.getInstanceEx(myProject).getSession(suspendContext.getDebugProcess()));
@@ -462,7 +461,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }, ApplicationManager.getApplication().getDefaultModalityState());
   }
 
-  protected void createHelloWorldProcessWithBreakpoint() throws ExecutionException, InterruptedException, InvocationTargetException {
+  protected void createHelloWorldProcessWithBreakpoint() throws ExecutionException {
     createLocalProcess("HelloWorld");
 
     createBreakpointInHelloWorld();
@@ -497,12 +496,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     @Override
     @NotNull
     public Module[] getModules() {
-      if (myModule != null) {
-        return new Module[]{myModule};
-      }
-      else {
-        return Module.EMPTY_ARRAY;
-      }
+      return myModule == null ? Module.EMPTY_ARRAY : new Module[]{myModule};
     }
 
     @Override
@@ -535,7 +529,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
       return null;
     }
 
@@ -543,12 +537,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     public String getName() {
       return "";
     }
-
-    @Override
-    public void readExternal(Element element) throws InvalidDataException { }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException { }
   }
 
   protected void disableRenderer(NodeRenderer renderer) {

@@ -10,5 +10,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="java-psi-api" exported="" />
     <orderEntry type="module" module-name="java-psi-impl" />
+    <orderEntry type="module" module-name="lang-api" exported="" />
   </component>
 </module>

@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -119,15 +120,24 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (subExpression == null) return;
     if (shouldExtractSideEffect()) {
       subExpression = RefactoringUtil.ensureCodeBlock(subExpression);
-      LOG.assertTrue(subExpression != null);
+      if (subExpression == null) {
+        LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
+        return;
+      }
       PsiStatement anchor = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
-      LOG.assertTrue(anchor != null);
+      if (anchor == null) {
+        LOG.error("anchor is null", new Attachment("subExpression.txt", subExpression.getText()));
+        return;
+      }
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
       if (statements.length > 0) {
         BlockUtils.addBefore(anchor, statements);
       }
-      LOG.assertTrue(subExpression.isValid());
+      if (!subExpression.isValid()) {
+        LOG.error("subExpression became invalid", new Attachment("subExpression.txt", subExpression.getText()));
+        return;
+      }
     }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(mySubExpressionValue), subExpression);
