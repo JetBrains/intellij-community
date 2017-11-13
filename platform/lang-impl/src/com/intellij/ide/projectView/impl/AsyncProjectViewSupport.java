@@ -287,9 +287,9 @@ class AsyncProjectViewSupport {
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    if (element != null) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
-    LOG.warn("cannot create visitor without element and/or file");
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 
