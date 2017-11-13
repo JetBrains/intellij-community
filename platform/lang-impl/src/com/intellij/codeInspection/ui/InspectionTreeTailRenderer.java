@@ -38,15 +38,15 @@ public abstract class InspectionTreeTailRenderer {
   }
 
   public void appendTailText(InspectionTreeNode node) {
-    appendText("  ");
     final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
       if (!customizedTailText.isEmpty()) {
-        appendText("  ");
+        appendText("    ");
         appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else {
+      appendText("  ");
       LevelAndCount[] problemLevels = node.getProblemLevels();
       if (problemLevels.length > MAX_LEVEL_TYPES) {
         int sum = Arrays.stream(problemLevels).mapToInt(LevelAndCount::getCount).sum();
