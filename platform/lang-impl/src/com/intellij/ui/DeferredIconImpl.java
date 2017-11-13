@@ -187,6 +187,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
 
       ourLaterInvocator.offer(() -> {
         setDone(result);
+        if (equalIcons(result, myDelegateIcon)) return;
 
         Component actualTarget = target;
         if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
@@ -339,12 +340,12 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> {
         for (RepaintRequest each : myQueue) {
-          Rectangle r = each.getRectangle();
+          Rectangle r = each.rectangle;
           if (r == null) {
-            each.getComponent().repaint();
+            each.component.repaint();
           }
           else {
-            each.getComponent().repaint(r.x, r.y, r.width, r.height);
+            each.component.repaint(r.x, r.y, r.width, r.height);
           }
         }
         myQueue.clear();
@@ -355,21 +356,32 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   }
 
   private static class RepaintRequest {
-    private final Component myComponent;
-    private final Rectangle myRectangle;
+    final Component component;
+    final Rectangle rectangle;
 
-    private RepaintRequest(@NotNull Component component, Rectangle rectangle) {
-      myComponent = component;
-      myRectangle = rectangle;
+    private RepaintRequest(@NotNull Component component, @Nullable Rectangle rectangle) {
+      this.component = component;
+      this.rectangle = rectangle;
     }
 
-    @NotNull
-    public Component getComponent() {
-      return myComponent;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RepaintRequest request = (RepaintRequest)o;
+
+      if (!component.equals(request.component)) return false;
+      if (rectangle != null ? !rectangle.equals(request.rectangle) : request.rectangle != null) return false;
+
+      return true;
     }
 
-    public Rectangle getRectangle() {
-      return myRectangle;
+    @Override
+    public int hashCode() {
+      int result = component.hashCode();
+      result = 31 * result + (rectangle != null ? rectangle.hashCode() : 0);
+      return result;
     }
   }
 
