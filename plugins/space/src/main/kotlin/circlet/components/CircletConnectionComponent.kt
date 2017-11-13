@@ -2,6 +2,7 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.api.*
+import circlet.client.api.transport.*
 import circlet.utils.*
 import com.intellij.concurrency.*
 import com.intellij.notification.*
@@ -32,7 +33,7 @@ class CircletConnectionComponent(val project: Project) :
 
     val loginDataComponent = component<CircletLoginComponent>()
 
-    val loginModel = LoginModel(IdeaPersistence, endpoint, { authCheckFailedNotification() }, NotificationSettingKind.Ide) {
+    val loginModel = LoginModel(IdeaPersistence, endpoint, ApiScheme(emptyArray()) /*TODO*/, { authCheckFailedNotification() }, NotificationSettingKind.Ide) {
         // authCheckFailedNotification()
         // TODO: NOTIFY
     }
