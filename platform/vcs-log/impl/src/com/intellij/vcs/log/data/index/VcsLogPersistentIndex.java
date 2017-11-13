@@ -59,6 +59,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
@@ -622,7 +623,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      myStartTime = System.currentTimeMillis();
+      myStartTime = getCurrentTimeMillis();
 
       LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
@@ -660,7 +661,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
         else {
-          myIndexingTime.get(myRoot).updateAndGet(t -> t + (System.currentTimeMillis() - myStartTime));
+          myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
         }
 
         report();
@@ -669,8 +670,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
 
+    private long getCurrentTimeMillis() {
+      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+    }
+
     private void report() {
-      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - myStartTime);
+      String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
       if (myFull) {
         LOG.debug(formattedTime +
                   " for indexing " +
@@ -741,7 +746,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void checkRunningTooLong(@NotNull ProgressIndicator indicator) {
-      long time = myIndexingTime.get(myRoot).get() + (System.currentTimeMillis() - myStartTime);
+      long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
       if (time >= Math.max(limit, 1) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
         String message = "Indexing commits in " + myRoot.getName() + " repository is taking too long (" + StopWatch.formatTime(time) +
