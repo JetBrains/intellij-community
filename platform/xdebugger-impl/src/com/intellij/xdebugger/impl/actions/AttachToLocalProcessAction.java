@@ -92,8 +92,8 @@ public class AttachToLocalProcessAction extends AnAction {
           }
           ProcessListStep step = new ProcessListStep(items, project);
 
-          final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          final JList mainList = ((ListPopupImpl) popup).getList();
+          final ListPopupImpl popup = (ListPopupImpl) JBPopupFactory.getInstance().createListPopup(step);
+          final JList mainList = popup.getList();
 
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
@@ -106,15 +106,15 @@ public class AttachToLocalProcessAction extends AnAction {
             }
 
             if (item instanceof AttachItem) {
-              String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
+              AttachItem attachItem = (AttachItem)item;
+              String debuggerName = attachItem.getSelectedDebugger().getDebuggerDisplayName();
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
-              String description = ((AttachItem) item).getTooltipText(project);
-              if (!debuggerName.equalsIgnoreCase(description)) {
-                ((ListPopupImpl)popup).setAdText(description);
-              }
-              else {
-                ((ListPopupImpl)popup).removeAd();
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
+              String description = attachItem.getTooltipText(project);
+              if (description != null) {
+                popup.setAdText(description);
+              } else {
+                popup.removeAd();
               }
             }
           };
@@ -345,7 +345,7 @@ public class AttachToLocalProcessAction extends AnAction {
       return myProcessInfo.getPid() + " " + shortenedText;
     }
 
-    @NotNull
+    @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getProcessDescription(project, myProcessInfo, myDataHolder);
     }
@@ -437,7 +437,11 @@ public class AttachToLocalProcessAction extends AnAction {
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
-      return value.getTooltipText(myProject);
+      String tooltipText = value.getTooltipText(myProject);
+      if (tooltipText != null) {
+        return tooltipText;
+      }
+      return value.getText(myProject);
     }
 
     @Override

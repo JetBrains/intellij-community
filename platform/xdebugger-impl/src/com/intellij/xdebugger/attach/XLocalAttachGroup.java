@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -51,9 +52,9 @@ public interface XLocalAttachGroup {
    * and use it for presentation
    * @return a description of process to be shown in tooltip of your debugger item
    */
-  @NotNull
+  @Nullable
   default String getProcessDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return getProcessDisplayText(project, info, dataHolder);
+    return null;
   }
 
   /**
