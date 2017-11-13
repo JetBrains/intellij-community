@@ -151,12 +151,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   @Nullable
   @Override
   public String getTailText() {
-    if (isQuickFixAppliedFromView()) {
-      return "";
-    }
-    else {
-      final String text = super.getTailText();
-      return text == null ? "" : text;
-    }
+    final String text = super.getTailText();
+    return text == null ? "" : text;
   }
 }

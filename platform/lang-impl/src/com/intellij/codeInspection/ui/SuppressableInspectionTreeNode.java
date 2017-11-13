@@ -115,7 +115,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Override
   public String getTailText() {
     if (isQuickFixAppliedFromView()) {
-      return null;
+      return "";
     }
     if (isAlreadySuppressedFromView()) {
       return "Suppressed";
