@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
@@ -204,7 +204,7 @@ public class EditorActionUtil {
 
   private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
-    return CodeStyleSettingsManager.getIndentOptions(project, editor.getDocument()).SMART_TABS;
+    return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
   }
 
   public static boolean isWordOrLexemeStart(@NotNull Editor editor, int offset, boolean isCamel) {

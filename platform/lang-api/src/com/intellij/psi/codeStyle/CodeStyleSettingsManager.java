@@ -69,41 +69,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
 
   @NotNull
-  public static CodeStyleSettings getFileSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      Project project = file.getProject();
-      return getInstance(project).getCurrentSettings();
-    }
-    return getInstance().getCurrentSettings();
-  }
-
-  @NotNull
-  public static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull PsiFile file, Class<T> customSettingsClass) {
-    CodeStyleSettings rootSettings = getFileSettings(file);
-    return rootSettings.getCustomSettings(customSettingsClass);
-  }
-
-  @NotNull
-  public static CommonCodeStyleSettings getCommonSettings(@NotNull PsiFile file) {
-    CodeStyleSettings rootSettings = getFileSettings(file);
-    return rootSettings.getCommonSettings(file.getLanguage());
-  }
-
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
-    CodeStyleSettings rootSettings = getFileSettings(file);
-    return rootSettings.getIndentOptionsByFile(file);
-  }
-
-  @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file != null) {
-      return getIndentOptions(file);
-    }
-    return getSettings(project).getIndentOptions(null);
-  }
-
-  @NotNull
   public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
