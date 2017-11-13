@@ -124,9 +124,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   public int compareUserObjects(final Object o2) {
-    if (o2 instanceof Change) {
-      return ChangesUtil.getFilePath(getUserObject()).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-    }
-    return 0;
+    assert o2 instanceof Change;
+    return ChangesComparator.getInstance(true).compare(getUserObject(), (Change)o2);
   }
 }
