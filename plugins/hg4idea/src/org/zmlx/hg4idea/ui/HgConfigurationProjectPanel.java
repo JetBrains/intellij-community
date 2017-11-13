@@ -89,7 +89,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
 
   @Override
   public boolean isModified(@NotNull HgProjectConfigurable.HgSettingsHolder settings) {
-    boolean executableModified = !getCurrentPath().equals(settings.getProjectSettings().getHgExecutable());
+    boolean executableModified = !getCurrentPath().equals(settings.getGlobalSettings().getHgExecutable());
     return executableModified ||
            myCheckIncomingOutgoingCbx.isSelected() != settings.getProjectSettings().isCheckIncomingOutgoing() ||
            ((settings.getProjectSettings().getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected()) ||
@@ -106,7 +106,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
       BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
     settings.getProjectSettings().setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
-    settings.getProjectSettings().setHgExecutable(getCurrentPath());
+    settings.getGlobalSettings().setHgExecutable(getCurrentPath());
     settings.getProjectSettings().setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     Objects.requireNonNull(HgVcs.getInstance(myProject)).checkVersion();
   }

@@ -371,7 +371,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgExecutableValidator getExecutableValidator() {
     synchronized (myExecutableValidatorLock) {
       if (myExecutableValidator == null) {
-        myExecutableValidator = new HgExecutableValidator(myProject, this);
+        myExecutableValidator = new HgExecutableValidator(myProject);
       }
       return myExecutableValidator;
     }
@@ -419,7 +419,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    * In the case of nullable or unsupported version reports the problem.
    */
   public void checkVersion() {
-    final String executable = getGlobalSettings().getHgExecutable();
+    final String executable = HgExecutableManager.getInstance().getHgExecutable(myProject);
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
     final String SETTINGS_LINK = "settings";
     final String UPDATE_LINK = "update";
