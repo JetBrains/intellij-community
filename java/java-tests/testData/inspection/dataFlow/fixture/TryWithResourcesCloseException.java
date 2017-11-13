@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.*;
 
 // IDEA-181860
 class bugcheck {
@@ -47,5 +48,21 @@ class bugcheck {
     }
     // s is never null here
     return s.trim();
+  }
+
+  static List<String> inLoop(String[] paths) {
+    List<String> strings = new ArrayList<>();
+    for (String path : paths) {
+      try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+        String s = br.readLine();
+        if (s != null) {
+          strings.add(s);
+        }
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return strings;
   }
 }
