@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="commons-logging">
+  <library name="commons-logging" type="repository">
+    <properties maven-id="commons-logging:commons-logging:1.2" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/commons-logging-1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/commons-logging-1.2-src.zip!/commons-logging-1.2-src/src/main/java" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

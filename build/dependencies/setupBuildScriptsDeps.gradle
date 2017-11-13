@@ -31,6 +31,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("commons-compress")
   buildScriptsDeps loadLibraryMavenId("OroMatcher")
   buildScriptsDeps loadLibraryMavenId("commons-codec")
+  buildScriptsDeps loadLibraryMavenId("commons-logging")
 }
 
 /**
