@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @NotNull
   List<String> getSubscriptedSuperClasses();
 
+
   @Nullable
   QualifiedName getMetaClass();
 
@@ -51,4 +53,9 @@ public interface PyClassStub extends NamedStub<PyClass> {
 
   @Nullable
   String getDocString();
+
+  @NotNull
+  default List<String> getSuperClassesText() {
+    return Collections.emptyList();
+  }
 }

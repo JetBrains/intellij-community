@@ -30,14 +30,15 @@ import java.util.Map;
 /**
  * @author max
  */
-public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+public class
+PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @Nullable
   private final String myName;
 
   @NotNull
   private final Map<QualifiedName, QualifiedName> mySuperClasses;
-  private final List<String> mySuperClassesText;
+  private final List<String> mySubscriptedSuperClassesText;
 
   @Nullable
   private final QualifiedName myMetaClass;
@@ -48,10 +49,25 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @Nullable
   private final String myDocString;
 
+  @Nullable
+  private final List<String> mySuperClassesText;
+
   public PyClassStubImpl(@Nullable String name,
                          @Nullable StubElement parentStub,
                          @NotNull Map<QualifiedName, QualifiedName> superClasses,
-                         @NotNull List<String> superClassesText,
+                         @NotNull List<String> subscriptedSuperClassesText,
+                         @Nullable QualifiedName metaClass,
+                         @Nullable List<String> slots,
+                         @Nullable String docString,
+                         @NotNull IStubElementType stubElementType) {
+    this(name, parentStub, superClasses, subscriptedSuperClassesText, null, metaClass, slots, docString, stubElementType);
+  }
+
+  public PyClassStubImpl(@Nullable String name,
+                         @Nullable StubElement parentStub,
+                         @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @NotNull List<String> subscriptedSuperClassesText,
+                         @Nullable List<String> superClassesText,
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
                          @Nullable String docString,
@@ -59,6 +75,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
+    mySubscriptedSuperClassesText = subscriptedSuperClassesText;
     mySuperClassesText = superClassesText;
     myMetaClass = metaClass;
     mySlots = slots;
@@ -78,7 +95,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @NotNull
   @Override
   public List<String> getSubscriptedSuperClasses() {
-    return mySuperClassesText;
+    return mySubscriptedSuperClassesText;
   }
 
   @Nullable
@@ -97,6 +114,12 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @Override
   public String getDocString() {
     return myDocString;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getSuperClassesText() {
+    return mySuperClassesText;
   }
 
   @Override
