@@ -1181,3 +1181,11 @@ java_library(
     exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
     runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
 )
+
+java_library(
+    name = "javapoet-1.8.0",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
+)

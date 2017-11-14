@@ -404,6 +404,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
                        url: "https://code.google.com/archive/p/juniversalchardet"),
+    new LibraryLicense(name: "Java Poet", libraryName: "javapoet-1.8.0", version: "1.8.0", license: "Apache 2.0",
+                       url: "https://github.com/square/javapoet"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),

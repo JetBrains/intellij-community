@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="javapoet-1.8.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0/javapoet-1.8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
