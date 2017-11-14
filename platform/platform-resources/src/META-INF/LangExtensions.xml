@@ -1050,8 +1050,6 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
-
-    <semContributor implementation="org.jetbrains.uast.UElementSemContributor"/>
   </extensions>
 </idea-plugin>
 

@@ -18,9 +18,11 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.semantic.SemService
+import com.intellij.reference.SoftReference
 
+val CACHED_UELEMENT_KEY = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 /**
  * Manages the UAST to PSI conversion.
@@ -29,8 +31,6 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   private companion object {
     private val CONTEXT_LANGUAGE = object : Language("UastContextLanguage") {}
   }
-
-  private val mySemService = SemService.getSemService(project)
 
   override val language: Language
     get() = CONTEXT_LANGUAGE
@@ -59,23 +59,18 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    if (parent != null) {
-      val cachedElement = mySemService.getCachedSemElements(UAST_SEM_KEY, element)?.firstOrNull()
-        ?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
-
-      if (cachedElement != null && cachedElement.uastParent === parent) {
-        return cachedElement
-      }
+    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
+    if (cachedElement != null) {
+      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
     }
 
     return findPlugin(element)?.convertElement(element, parent, requiredType)
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-    val defaultUElement = mySemService.getSemElement(UAST_SEM_KEY, element)
-
-    if (defaultUElement == null || requiredType == null || requiredType.isAssignableFrom(defaultUElement.javaClass)) {
-      return defaultUElement
+    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
+    if (cachedElement != null) {
+      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
     }
 
     return findPlugin(element)?.convertElementWithParent(element, requiredType)

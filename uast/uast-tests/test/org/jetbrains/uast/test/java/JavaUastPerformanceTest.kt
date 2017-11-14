@@ -49,13 +49,6 @@ class JavaUastPerformanceTest : LightCodeInsightFixtureTestCase() {
       }.attempts(1).assertTiming()
     }
 
-    val cachedWalk = EachPsiToUastWalker().apply {
-      PlatformTestUtil.startPerformanceTest("convert each element to uast second time", 400) {
-        clazz.accept(this)
-        TestCase.assertEquals(expectedUElementsCount, totalCount)
-      }.attempts(1).assertTiming()
-    }
-
   }
 
 
