@@ -124,8 +124,8 @@ public class Main {
     return true;
   }
 
-  public static boolean isUITraverser(final String[] args) {
-    return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
+  public static boolean isApplicationStarterForBuilding(final String[] args) {
+    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") || Comparing.strEqual(args[0], "listBundledPlugins"));
   }
 
   public static void showMessage(String title, Throwable t) {
