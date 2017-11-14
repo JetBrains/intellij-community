@@ -74,7 +74,6 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
     catch (e: ProcessCanceledException) {
       throw e
     }
-    progress.checkCanceled()
     //make an async call so that we can keep track of not actually having an answer.
     try {
       impl.executeAsync(command, Vector(Arrays.asList(*args)), object : AsyncCallback {
