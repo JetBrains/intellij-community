@@ -2198,6 +2198,25 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-4351
+  public void testCollectionsNTInheritorField() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetField() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "User = namedtuple(\"User\", \"name age\")\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
   // PY-18791
   public void testCallOnProperty() {
     runWithLanguageLevel(
