@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
@@ -84,7 +85,7 @@ public class VfsData {
   private static final ConcurrentIntObjectMap<Segment> ourSegments = ContainerUtil.createConcurrentIntObjectMap();
   private static final ConcurrentBitSet ourInvalidatedIds = new ConcurrentBitSet();
   private static TIntHashSet ourDyingIds = new TIntHashSet();
-  private static final ConcurrentIntObjectMap<VirtualDirectoryImpl> ourChangedParents = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<VirtualDirectoryImpl> ourChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   static {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {

@@ -127,36 +127,36 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   @NotNull
   @Override
-  public Iterable<IntEntry<V>> entries() {
-    final Iterator<IntEntry<IntReference<V>>> entryIterator = myMap.entries().iterator();
-    return new Iterable<ConcurrentIntObjectMap.IntEntry<V>>() {
+  public Iterable<Entry<V>> entries() {
+    final Iterator<Entry<IntReference<V>>> entryIterator = myMap.entries().iterator();
+    return new Iterable<Entry<V>>() {
       @NotNull
       @Override
-      public Iterator<ConcurrentIntObjectMap.IntEntry<V>> iterator() {
-        return new Iterator<IntEntry<V>>() {
-          private IntEntry<V> next = nextAliveEntry();
+      public Iterator<Entry<V>> iterator() {
+        return new Iterator<Entry<V>>() {
+          private Entry<V> next = nextAliveEntry();
           @Override
           public boolean hasNext() {
             return next != null;
           }
 
           @Override
-          public IntEntry<V> next() {
+          public Entry<V> next() {
             if (!hasNext()) throw new NoSuchElementException();
-            IntEntry<V> result = next;
+            Entry<V> result = next;
             next = nextAliveEntry();
             return result;
           }
 
-          private IntEntry<V> nextAliveEntry() {
+          private Entry<V> nextAliveEntry() {
             while (entryIterator.hasNext()) {
-              IntEntry<IntReference<V>> entry = entryIterator.next();
+              Entry<IntReference<V>> entry = entryIterator.next();
               final V v = entry.getValue().get();
               if (v == null) {
                 continue;
               }
               final int key = entry.getKey();
-              return new IntEntry<V>() {
+              return new Entry<V>() {
                 @Override
                 public int getKey() {
                   return key;
@@ -193,8 +193,8 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     return myMap.isEmpty();
   }
 
-  @NotNull
   @Override
+  @NotNull
   public Enumeration<V> elements() {
     final Enumeration<IntReference<V>> elementRefs = myMap.elements();
     return new Enumeration<V>() {
