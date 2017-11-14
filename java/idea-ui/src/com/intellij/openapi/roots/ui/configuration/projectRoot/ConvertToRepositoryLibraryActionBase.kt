@@ -87,7 +87,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     if (task.cancelled) return
 
     if (!task.filesAreTheSame) {
-      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare!!, task.downloadedFileToCompare!!, mavenCoordinates, LibraryUtil.getPresentableName(library), project).showAndGet()
+      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates, LibraryUtil.getPresentableName(library), project).showAndGet()
       task.deleteTemporaryFiles()
       if (!ok) {
         return
@@ -163,8 +163,8 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
                                     private val libraryFiles: List<File>) : Task.Modal(project, "Comparing JAR Files...", true) {
   var cancelled = false
   var filesAreTheSame = false
-  var downloadedFileToCompare: VirtualFile? = null
-  var libraryFileToCompare: VirtualFile? = null
+  lateinit var downloadedFileToCompare: VirtualFile
+  lateinit var libraryFileToCompare: VirtualFile
   val filesToDelete = ArrayList<File>()
 
   override fun run(indicator: ProgressIndicator) {
@@ -208,8 +208,8 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
       val jarFilesToRefresh = ArrayList<VirtualFile>()
       object : WriteAction<Unit>() {
         override fun run(result: Result<Unit>) {
-          collectNestedJars(libraryFileToCompare!!, jarFilesToRefresh)
-          collectNestedJars(downloadedFileToCompare!!, jarFilesToRefresh)
+          collectNestedJars(libraryFileToCompare, jarFilesToRefresh)
+          collectNestedJars(downloadedFileToCompare, jarFilesToRefresh)
         }
       }.execute()
       RefreshQueue.getInstance().refresh(false, true, null, jarFilesToRefresh)
