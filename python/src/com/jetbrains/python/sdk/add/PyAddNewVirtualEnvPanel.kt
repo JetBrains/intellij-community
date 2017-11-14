@@ -35,10 +35,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.associateWithProject
-import com.jetbrains.python.sdk.createSdkByGenerateTask
-import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
@@ -67,8 +64,8 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-    items.find { it.homePath == preferredSdkPath }?.let {
-      selectedSdk = it
+    selectedSdk = items.find { it.homePath == preferredSdkPath } ?: PyDetectedSdk(preferredSdkPath).apply {
+      childComponent.insertItemAt(this, 0)
     }
   }
   private val pathField = TextFieldWithBrowseButton().apply {
