@@ -190,6 +190,13 @@ public class PyFindUsagesTest extends PyTestCase {
     assertEmpty(myFixture.testFindUsages("findUsages/FunctionUsagesWithSameNameDecorator.py"));
   }
 
+  // PY-27004
+  public void testConstImportedFromAnotherFile() {
+    assertEquals(5,
+                 myFixture.testFindUsages("findUsages/ConstImportedFromAnotherFileDefiner.py", "findUsages/ConstImportedFromAnotherFile.py")
+                   .size());
+  }
+
   private Collection<UsageInfo> findMultiFileUsages(String filename) {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject("findUsages/" + testName, "");

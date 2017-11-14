@@ -545,17 +545,22 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
 
-          final PsiElement resolveResult = resolve();
-          if (resolveResult == element) {
-            return true;
-          }
+          PsiElement[] resolveResults =
+            StreamEx.of(multiResolve(false)).filter(result -> !(result instanceof ImplicitResolveResult)).map(result -> result.getElement())
+              .nonNull().toArray(PsiElement[]::new);
 
-          if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
-            if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
-          }
+          for (PsiElement resolveResult : resolveResults) {
+            if (resolveResult == element) {
+              return true;
+            }
 
-          if (resolvesToWrapper(element, resolveResult)) {
-            return true;
+            if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
+              if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
+            }
+
+            if (resolvesToWrapper(element, resolveResult)) {
+              return true;
+            }
           }
         }
         if (element instanceof PyExpression) {
