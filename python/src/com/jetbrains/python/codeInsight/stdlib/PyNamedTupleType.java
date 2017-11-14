@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
+public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   private final PsiElement myDeclaration;
@@ -38,7 +38,11 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
                           @NotNull String name,
                           @NotNull Map<String, FieldTypeAndDefaultValue> fields,
                           @NotNull DefinitionLevel definitionLevel) {
-    super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
+    super(tupleClass,
+          Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
+          false,
+          definitionLevel != DefinitionLevel.INSTANCE);
+
     myDeclaration = declaration;
     myFields = Collections.unmodifiableMap(fields);
     myName = name;
@@ -127,10 +131,6 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return result;
   }
 
-  public int getElementCount() {
-    return myFields.size();
-  }
-
   @NotNull
   public Map<String, FieldTypeAndDefaultValue> getFields() {
     return myFields;
@@ -152,7 +152,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @NotNull
   private Map<String, FieldTypeAndDefaultValue> takeFieldsTypesFromCallSiteIfNeeded(@NotNull TypeEvalContext context,
                                                                                     @NotNull PyCallSiteExpression callSite) {
-    if (StreamEx.ofValues(myFields).allMatch(typeAndValue -> typeAndValue.getType() == null)) {
+    if (StreamEx.of(getElementTypes()).allMatch(Objects::isNull)) {
       final List<PyExpression> arguments = callSite.getArguments(null);
 
       if (arguments.size() == myFields.size()) {

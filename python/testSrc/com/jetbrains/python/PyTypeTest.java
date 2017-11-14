@@ -2217,6 +2217,44 @@ public class PyTypeTest extends PyTestCase {
            "expr = User(\"name\", 13).age");
   }
 
+  // PY-4351
+  public void testTypingNTInheritorUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "class User(NamedTuple(\"User\", [(\"name\", str), (\"age\", int)])):\n" +
+           "    pass\n" +
+           "y2, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testTypingNTTargetUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "Point2 = NamedTuple('Point', [('x', int), ('y', str)])\n" +
+           "p2 = Point2(1, \"1\")\n" +
+           "expr, y2 = p2");
+  }
+
+  // PY-4351
+  public void testCollectionsNTInheritorUnpacking() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name ags\")):\n" +
+           "    pass\n" +
+           "y1, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetUnpacking() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "Point = namedtuple('Point', ['x', 'y'])\n" +
+           "p1 = Point(1, '1')\n" +
+           "expr, y1 = p1");
+  }
+
   // PY-18791
   public void testCallOnProperty() {
     runWithLanguageLevel(
