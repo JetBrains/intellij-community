@@ -402,7 +402,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
     val rootRequest = watch(fsRoot)
-    fs.refresh(true)
+    fs.refresh(false)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
