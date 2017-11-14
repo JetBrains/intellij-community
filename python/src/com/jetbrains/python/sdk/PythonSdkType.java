@@ -770,6 +770,24 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
+  public static VirtualFile findSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+    if (libDir != null) {
+      return libDir.findChild(PyNames.SITE_PACKAGES);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile findVirtualEnvSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    final VirtualFile libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+    if (libDir != null) {
+      return libDir.findChild(PyNames.SITE_PACKAGES);
+    }
+    return null;
+  }
+
+  @Nullable
   public static Sdk findPython2Sdk(@Nullable Module module) {
     final Sdk moduleSDK = findPythonSdk(module);
     if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
