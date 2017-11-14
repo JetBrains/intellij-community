@@ -41,11 +41,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Consumer;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JComponent> myWorkingDirectoryComponent;
-  protected MacroComboBoxWithBrowseButton myWorkingDirectoryComboBox;
+  @Deprecated
+  protected TextFieldWithBrowseButton myWorkingDirectoryField;
+  private MacroComboBoxWithBrowseButton myWorkingDirectoryComboBox;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   protected JComponent myAnchor;
 
@@ -88,6 +91,10 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     //noinspection DialogTitleCapitalization
     fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
     myWorkingDirectoryComboBox = new MacroComboBoxWithBrowseButton(fileChooserDescriptor, getProject());
+
+    // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
+    myWorkingDirectoryField = new TextFieldWithBrowseButton();
+    addWorkingDirectoryListener(myWorkingDirectoryField::setText);
 
     myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryComboBox, ExecutionBundle.message("run.configuration.working.directory.label"));
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
@@ -146,6 +153,14 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void setProgramParameters(String params) {
     myProgramParametersComponent.getComponent().setText(params);
+  }
+
+  public TextAccessor getWorkingDirectoryAccessor() {
+    return myWorkingDirectoryComboBox;
+  }
+
+  public void addWorkingDirectoryListener(Consumer<String> onTextChange) {
+    myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
   }
 
   public void setWorkingDirectory(String dir) {
