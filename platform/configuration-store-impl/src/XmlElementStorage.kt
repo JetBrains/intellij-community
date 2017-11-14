@@ -250,7 +250,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 }
 
 internal fun Element.normalizeRootName(): Element {
-  if (parent != null) {
+  if (!org.jdom.JDOMInterner.isInterned(this) && parent != null) {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
     detach()
   }
