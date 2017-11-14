@@ -2,7 +2,6 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
@@ -28,14 +27,14 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
   void testPackageAccessDirectiveTargetInsertion() {
     def file = configureFile("module M { opens pkg; }")
     def statement = file.moduleDeclaration.opens.first()
-    def facade = JavaPsiFacade.getInstance(project).parserFacade
-    runCommand { statement.add(facade.createModuleFromText("module M1 { }").nameIdentifier) }
+    def facade = myFixture.javaFacade.parserFacade
+    runCommand { statement.add(facade.createModuleReferenceFromText("M1")) }
     assert statement.text == "opens pkg to M1;"
-    runCommand { statement.add(facade.createModuleFromText("module M2 { }").nameIdentifier) }
+    runCommand { statement.add(facade.createModuleReferenceFromText("M2")) }
     assert statement.text == "opens pkg to M1, M2;"
     runCommand { statement.lastChild.delete() }
     assert statement.text == "opens pkg to M1, M2"
-    runCommand { statement.add(facade.createModuleFromText("module M3 { }").nameIdentifier) }
+    runCommand { statement.add(facade.createModuleReferenceFromText("M3")) }
     assert statement.text == "opens pkg to M1, M2, M3"
   }
 

@@ -239,6 +239,14 @@ public interface PsiJavaParserFacade {
   @NotNull
   PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException;
 
+  /**
+   * Creates a Java module reference from the specified text.
+   */
+  @NotNull
+  default PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text) throws IncorrectOperationException {
+    return createModuleFromText("module " + text + " {}").getNameIdentifier();
+  }
+
   /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
   PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) throws IncorrectOperationException;
 }
