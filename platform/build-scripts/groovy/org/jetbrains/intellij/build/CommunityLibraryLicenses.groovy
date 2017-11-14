@@ -143,7 +143,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "xml-apis-ext", libraryName: "xml-apis-ext", version: "1.3", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "http://xerces.apache.org/xml-commons/components/external"),
-    new LibraryLicense(name: "ImageIO", libraryName: "com.twelvemonkeys.imageio:imageio-tiff:3.2.1", version: "3.2.1", license: "BSD",
+    new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.2.1", license: "BSD",
                        url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "platform-resources", version: "001.010", license: "OFL", url: "https://github.com/google/fonts/blob/master/ofl/inconsolata/OFL.txt"),
     new LibraryLicense(name: "ini4j", libraryName: "ini4j", version: "0.5.2 (with a patch by JetBrains)", license: "Apache 2.0",

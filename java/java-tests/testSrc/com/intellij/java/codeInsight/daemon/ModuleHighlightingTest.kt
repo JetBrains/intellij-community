@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -211,7 +212,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { exports <caret>pkg.missing; }")
     fixes("module M { exports <caret>pkg.m3; }")
 
-    fixes("module M { uses <caret>pkg.m3.C3; }", arrayOf("AddModuleDependencyFix"))
+    fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
 
     fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiredModuleFix"))
 
@@ -402,7 +403,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(path: String, text: String, fixes: Array<String> = arrayOf()) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.getAllQuickFixes().filter { it.isAvailable(project, editor, file) }.map { it::class.simpleName }
+    val available = myFixture.availableIntentions
+      .map { (if (it is IntentionActionDelegate) it.delegate else it)::class.simpleName }
+      .filter { it != "GutterIntentionAction" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

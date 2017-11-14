@@ -61,7 +61,7 @@ class MacDmgBuilder {
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
-    BuildUtils.defineFtpTask(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+    BuildUtils.defineFtpTask(buildContext)
     BuildUtils.defineSshTask(buildContext.ant, "${buildContext.paths.communityHome}/lib")
 
     String currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')

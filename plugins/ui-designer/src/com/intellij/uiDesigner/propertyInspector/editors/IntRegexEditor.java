@@ -73,6 +73,6 @@ public class IntRegexEditor<T> extends AbstractTextFieldEditor<T> {
       params [i] = value;
     }
 
-    return myValueClass.getConstructor(paramTypes).newInstance(params);
+    return myValueClass.getConstructor(paramTypes).newInstance((Object[])params);
   }
 }

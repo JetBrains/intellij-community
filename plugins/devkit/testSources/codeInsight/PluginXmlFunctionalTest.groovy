@@ -16,11 +16,13 @@
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
+import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.extensions.LoadingOrder
@@ -66,6 +68,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-api", platformApiJar)
     String platformImplJar = PathUtil.getJarPathForClass(ITNReporter.class)
     moduleBuilder.addLibrary("platform-impl", platformImplJar)
+    String langApiJar = PathUtil.getJarPathForClass(CompletionContributorEP.class)
+    moduleBuilder.addLibrary("lang-api", langApiJar)
+    String coreApiJar = PathUtil.getJarPathForClass(LanguageExtensionPoint.class) // FileTypeExtensionPoint is also there
+    moduleBuilder.addLibrary("core-api", coreApiJar)
   }
 
   void testExtensionsHighlighting() {
@@ -208,6 +214,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml")
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   void testShowPackagesInActionClass() {
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }")
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -218,6 +225,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assert myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   void testShowAnActionInheritorsOnSmartCompletion() {
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }")
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -281,6 +289,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   void testIconAttribute() {
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }")
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -396,6 +405,15 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml")
   }
 
+  void testOrderAttributeCompletionLanguage() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+  }
+
+  void testOrderAttributeCompletionFileType() {
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2")
+  }
+
+
   private void testHighlightingInIdeaProject(String path) {
     myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
@@ -440,6 +458,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.checkResultByFile(getTestName(true) + "_after.xml")
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   void testActionHighlighting() {
     configureByFile()
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }")

@@ -70,6 +70,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -975,7 +976,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   private EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull FileEditor[] editors, @NotNull FileEditorProvider[] providers) {
-    if (NullUtils.hasNull(editors) || NullUtils.hasNull(providers)) {
+    if (ArrayUtil.contains(null, editors) || ArrayUtil.contains(null, providers)) {
       List<FileEditor> editorList = new ArrayList<>(editors.length);
       List<FileEditorProvider> providerList = new ArrayList<>(providers.length);
       for (int i = 0; i < editors.length; i++) {

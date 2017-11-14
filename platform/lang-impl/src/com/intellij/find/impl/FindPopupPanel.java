@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
@@ -190,6 +191,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
           ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());
+          applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
           return true;
         })
         .createPopup();
@@ -200,7 +202,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       RelativePoint showPoint = null;
       Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY);
       if (screenPoint != null) {
-        showPoint = new RelativePoint(screenPoint);
+        if (parent != null) {
+          SwingUtilities.convertPointFromScreen(screenPoint, parent);
+          showPoint = new RelativePoint(parent, screenPoint);
+        } else {
+          showPoint = new RelativePoint(screenPoint);
+        }
       }
       if (parent != null && showPoint == null) {
         int height = UISettings.getInstance().getShowNavigationBar() ? 135 : 115;
@@ -344,6 +351,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
     ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+
       @Override
       public boolean isSelected(AnActionEvent e) {
         return UISettings.getInstance().getPinFindInPath();
@@ -938,6 +950,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.setEnabled(false);
     myReplaceSelectedButton.setEnabled(false);
     myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", 0));
+    myReplaceSelectedButton.setMnemonic('r');
     myCodePreviewComponent.setVisible(false);
 
     mySearchTextArea.setInfoText(null);
@@ -1194,7 +1207,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void navigateToSelectedUsage() {
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
-      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
       myBalloon.cancel();
       boolean first = true;
       for (Usage usage : usages.values()) {
@@ -1238,7 +1250,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MySwitchContextToggleAction extends ToggleAction {
+  private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(FindModel.SearchContext context) {
       super(FindDialog.getPresentableName(context));
     }
@@ -1288,7 +1300,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MyShowFilterPopupAction extends AnAction {
+  private class MyShowFilterPopupAction extends DumbAwareAction {
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {

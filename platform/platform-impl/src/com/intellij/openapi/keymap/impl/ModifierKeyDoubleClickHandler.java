@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
@@ -147,10 +146,6 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
 
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
-      if (Registry.is("ide.suppress.double.click.handler")) {
-        return false;
-      }
-
       if (event instanceof KeyEvent) {
         final KeyEvent keyEvent = (KeyEvent)event;
         final int keyCode = keyEvent.getKeyCode();

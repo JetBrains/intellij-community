@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -42,7 +43,6 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
@@ -643,7 +643,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
       final int oldIndent = IndentHelperImpl.getIndent(file.getProject(), file.getFileType(), oldIndentStr, true);
       final String newIndentStr = IndentHelperImpl
-        .fillIndent(CodeStyleSettingsManager.getIndentOptions(file), Math.max(oldIndent + indentAdjustment, 0));
+        .fillIndent(CodeStyle.getIndentOptions(file), Math.max(oldIndent + indentAdjustment, 0));
       document.replaceString(indent.getStartOffset() + 1, indent.getEndOffset(), newIndentStr);
     }
   }
@@ -666,7 +666,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   @NotNull
   private CodeFormatterFacade getFormatterFacade(@NotNull FileViewProvider viewProvider) {
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getFileSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
+    final CodeStyleSettings styleSettings = CodeStyle.getSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
     assert document != null;

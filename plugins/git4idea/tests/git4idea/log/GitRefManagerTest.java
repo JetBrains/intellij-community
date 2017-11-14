@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.cd;
-import static git4idea.test.GitExecutor.git;
 
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
@@ -51,7 +50,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
   protected List<VcsRef> expect(@NotNull String... refNames) {
-    final Set<VcsRef> refs = GitTestUtil.readAllRefs(projectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
+    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, projectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
     return ContainerUtil.map2List(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
       assertNotNull("Ref " + refName + " not found among " + refs, item);

@@ -39,6 +39,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -180,7 +181,8 @@ public class ExternalJavacManager {
   }
 
   // returns true if all process handlers terminated
-  public boolean waitForAllProcessHandlers(long time, TimeUnit unit) {
+  @TestOnly
+  public boolean waitForAllProcessHandlers(long time, @NotNull TimeUnit unit) {
     for (ProcessHandler handler : myRunningHandlers) {
       if (!handler.waitFor(unit.toMillis(time))) {
         return false;

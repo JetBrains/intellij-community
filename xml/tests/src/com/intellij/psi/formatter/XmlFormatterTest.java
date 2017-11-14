@@ -317,16 +317,6 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      defaultSettings();
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  @Override
   protected String getBasePath() {
     return BASE_PATH;
   }

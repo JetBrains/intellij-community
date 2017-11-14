@@ -53,12 +53,15 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
+import org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns;
 import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorProfileSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
 
 import java.io.File;
 import java.util.*;
 
+import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
+import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.optimize;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
@@ -617,17 +620,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      if (!dirPattern.startsWith("/")) {
-        dirPattern = "/" + dirPattern;
-      }
-      //now dirPattern starts and ends with '/'
-
-      dirPattern = normalizeWildcards(dirPattern);
-
-      dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
-      dirPattern = StringUtil.trimEnd(dirPattern, "/");
-
-      dirPattern = optimize(dirPattern);
+      ResourcePatterns.handleDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -636,20 +629,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
     final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
-  }
-
-  private static String optimize(String wildcardPattern) {
-    return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
-  }
-
-  private static String normalizeWildcards(String wildcardPattern) {
-    wildcardPattern = StringUtil.replace(wildcardPattern, "\\!", "!");
-    wildcardPattern = StringUtil.replace(wildcardPattern, ".", "\\.");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "*?", ".+");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "?*", ".+");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "*", ".*");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "?", ".");
-    return wildcardPattern;
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {

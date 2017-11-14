@@ -23,12 +23,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.MethodUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +131,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Nullable
   private static PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
-    TypeConstraint fact = value == null ? null : memState.getValueFact(DfaFactType.TYPE_CONSTRAINT, value);
+    TypeConstraint fact = value == null ? null : memState.getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
     PsiType type = fact == null ? null : fact.getPsiType();
     if (type != null) return type;
     return expression == null ? null : expression.getType();
@@ -499,28 +502,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return value.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false);
     }
     if (value instanceof DfaVariableValue) {
-      memState.forceNotNull((DfaVariableValue)value);
+      memState.forceVariableFact((DfaVariableValue)value, DfaFactType.CAN_BE_NULL, false);
     }
     return value;
   }
 
   @NotNull
   private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
-    if (qualifier == null || !PsiUtil.canBeOverridden(method)) {
-      return method;
-    }
-    TypeConstraint constraint = state.getValueFact(DfaFactType.TYPE_CONSTRAINT, qualifier);
-    PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint == null ? null : constraint.getPsiType());
-    PsiClass qualifierClass = method.getContainingClass();
-    if (specificQualifierClass != null && qualifierClass != null &&
-        !specificQualifierClass.equals(qualifierClass) &&
-        InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-      PsiMethod realMethod = MethodSignatureUtil.findMethodBySuperMethod(specificQualifierClass, method, true);
-      if (realMethod != null) {
-        return realMethod;
-      }
-    }
-    return method;
+    if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
+    TypeConstraint constraint = state.getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
+    PsiType type = constraint == null ? null : constraint.getPsiType();
+    return MethodUtils.findSpecificMethod(method, type);
   }
 
   @NotNull
@@ -632,8 +624,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue result = null;
     if (JavaTokenType.AND == opSign) {
-      LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
-      LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
+      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
       if(left != null && right != null) {
         result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
       }

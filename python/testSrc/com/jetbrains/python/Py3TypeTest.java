@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
@@ -22,6 +8,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
@@ -240,18 +227,36 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[bytes]",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
+  }
+
+  public void testIoOpenDefault() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo')\n");
+  }
+
+  public void testIoOpenText() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo', 'r')\n");
+  }
+
+  public void testIoOpenBinary() {
+    doTest("BinaryIO",
+           "import io\n" +
+           "expr = io.open('foo', 'rb')\n");
   }
 
   // PY-1427
@@ -620,6 +625,18 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-26847
+  public void testAwaitOnImportedCoroutine() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Any",
+                            "from mycoroutines import mycoroutine\n" +
+                            "\n" +
+                            "async def main():\n" +
+                            "    expr = await mycoroutine()")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
@@ -627,5 +644,10 @@ public class Py3TypeTest extends PyTestCase {
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
+  }
+
+  private void doMultiFileTest(@NotNull String expectedType, @NotNull String text) {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    doTest(expectedType, text);
   }
 }

@@ -1,7 +1,11 @@
 <html>
 <body>
-Reports any primitive numeric casts which would otherwise be inserted
-implicitly by the compiler.
+Reports any primitive numeric casts which would otherwise be inserted implicitly by the compiler.
+Also reports any primitive numeric casts which the compiler will remove.
+For example:
+<pre><code>
+  <b>int</b> x = (<b>short</b>)5; // cast will be removed by javac
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

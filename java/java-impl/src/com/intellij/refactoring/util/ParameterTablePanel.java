@@ -108,7 +108,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
           return myTypeLabel;
         }
         myEditorComponent.setCell(table, row, column);
-        myEditorComponent.setOptions(myCurrentSelector.getTypes());
+        myEditorComponent.setOptions((Object[])myCurrentSelector.getTypes());
         myEditorComponent.setDefaultValue(getVariableData()[row].type);
         myEditorComponent.setToString(o -> ((PsiType)o).getPresentableText());
 

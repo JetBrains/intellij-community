@@ -37,8 +37,9 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
+  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile, @NotNull final FileType fileType) {
     if (c == '/' && XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -72,8 +73,9 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
+  @NotNull
   @Override
-  public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
+  public Result charTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
     if (!WebEditorOptions.getInstance().isAutoCloseTag()) return Result.CONTINUE;
     if (c == '/' && XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();

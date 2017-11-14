@@ -272,7 +272,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return DEFAULT_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
+  public int compareUserObjects(final T o2) {
     return 0;
   }
 

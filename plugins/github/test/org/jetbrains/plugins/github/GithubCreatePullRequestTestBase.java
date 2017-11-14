@@ -22,6 +22,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitExecutor;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubFullPath;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import java.util.Random;
 
 import static com.intellij.openapi.vcs.Executor.cd;
-import static git4idea.test.GitExecutor.git;
 
 /**
  * @author Aleksey Pivovarov

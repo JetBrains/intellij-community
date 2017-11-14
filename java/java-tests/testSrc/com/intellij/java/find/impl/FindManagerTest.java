@@ -1077,14 +1077,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String dirName = directory.getPresentableUrl();
 
     FindModel model = new FindModel();
+    checkContext(model, myProject, null, null, true, null, null, false);
     model.setDirectoryName("initialDirectoryName");
     model.setModuleName("initialModuleName");
     model.setProjectScope(false);
     model.setCustomScopeName("initialScopeName");
 
-    checkContext(model, myProject, directory, module, false, null, moduleName, false);
-    checkContext(model, myProject, directory, null, false, dirName, moduleName, false);//prev module state
-    checkContext(model, myProject, null, null, true, dirName, moduleName, false);//prev module and dir state
+    checkContext(model, myProject, directory, module, false, dirName, moduleName, false);
+    checkContext(model, myProject, directory, null, false, dirName, moduleName, false);//prev directory state
+    checkContext(model, myProject, null, null, false, dirName, moduleName, false);//prev module and dir state
     model.setCustomScope(scope);
     model.setCustomScope(true);
     checkContext(model, myProject, null, null, false, dirName, moduleName, true);//prev module and dir state

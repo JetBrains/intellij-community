@@ -42,10 +42,15 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   val waitConst = 30L
   var myAwareClick: Boolean = false
 
+  fun superWaitForIdle() {
+    super.waitForIdle()
+  }
+
   override fun waitForIdle() {
     if (myAwareClick) {
       Thread.sleep(50)
-    } else {
+    }
+    else {
       Pause.pause(waitConst)
       if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
     }
@@ -56,18 +61,12 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     superWaitForIdle()
   }
 
-  fun superWaitForIdle() {
-    super.waitForIdle()
-  }
-
   //smooth mouse move
   override fun moveMouse(x: Int, y: Int) {
     val n = 20
-    val t = 80
     val start = MouseInfo.getPointerInfo().location
     val dx = (x - start.x) / n.toDouble()
     val dy = (y - start.y) / n.toDouble()
-    val dt = t / n.toDouble()
     for (step in 1..n) {
       try {
         Pause.pause(10L)
@@ -83,15 +82,9 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     super.moveMouse(x, y)
   }
 
-
   //smooth mouse move to component
   override fun moveMouse(c: Component, x: Int, y: Int) {
-    waitFor{ c.isShowing }
-    val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    moveMouse(p.x, p.y)
-    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    val mouseLocation = MouseInfo.getPointerInfo().location
-    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouse(c, x, y)
+    moveMouseWithAttempts(c, x, y)
   }
 
   //smooth mouse move for find and click actions
@@ -100,11 +93,21 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     myEdtAwareClick(button, times)
   }
 
-
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouse(where.x, where.y)
     myEdtAwareClick(button, times)
+  }
+
+
+  private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
+    if (attempts == 0) return
+    waitFor { c.isShowing }
+    val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
+    moveMouse(p.x, p.y)
+    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
+    val mouseLocation = MouseInfo.getPointerInfo().location
+    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
   }
 
   private fun myInnerClick(button: MouseButton, times: Int) {
@@ -125,11 +128,14 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   }
 
   private fun invokeWithCondition(timeStart: Long, timeout: Int, cdl: CountDownLatch, condition: () -> Boolean) {
-    EdtInvocationManager.getInstance().invokeLater{ if (condition.invoke()) {
-      cdl.countDown()
-    } else {
-      if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
-    }}
+    EdtInvocationManager.getInstance().invokeLater {
+      if (condition.invoke()) {
+        cdl.countDown()
+      }
+      else {
+        if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
+      }
+    }
   }
 
   private fun myEdtAwareClick(button: MouseButton, times: Int) {

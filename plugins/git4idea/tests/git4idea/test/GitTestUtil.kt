@@ -72,18 +72,18 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   }
 }
 
-fun initRepo(repoRoot: String, makeInitialCommit: Boolean) {
+fun initRepo(project: Project, repoRoot: String, makeInitialCommit: Boolean) {
   cd(repoRoot)
-  git("init")
-  setupDefaultUsername()
+  git(project, "init")
+  setupDefaultUsername(project)
   if (makeInitialCommit) {
     touch("initial.txt")
-    git("add initial.txt")
-    git("commit -m initial")
+    git(project, "add initial.txt")
+    git(project, "commit -m initial")
   }
 }
 
-fun cloneRepo(source: String, destination: String, bare: Boolean) {
+fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean) {
   cd(source)
   if (bare) {
     git("clone --bare -- . $destination")
@@ -93,15 +93,15 @@ fun cloneRepo(source: String, destination: String, bare: Boolean) {
   }
 }
 
-fun setupDefaultUsername() {
-  setupUsername(USER_NAME, USER_EMAIL)
+fun setupDefaultUsername(project: Project) {
+  setupUsername(project, USER_NAME, USER_EMAIL)
 }
 
-fun setupUsername(name: String, email: String) {
+fun setupUsername(project: Project, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
   assertFalse("Can not set empty user email ", email.isEmpty())
-  git("config user.name '$name'")
-  git("config user.email '$email'")
+  git(project, "config user.name '$name'")
+  git(project, "config user.email '$email'")
 }
 
 /**
@@ -109,12 +109,10 @@ fun setupUsername(name: String, email: String) {
  * registers it in the Settings;
  * return the [GitRepository] object for this newly created repository.
  */
-fun createRepository(project: Project, root: String): GitRepository {
-  return createRepository(project, root, true)
-}
+fun createRepository(project: Project, root: String) = createRepository(project, root, true)
 
 fun createRepository(project: Project, root: String, makeInitialCommit: Boolean): GitRepository {
-  initRepo(root, makeInitialCommit)
+  initRepo(project, root, makeInitialCommit)
   val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(root, GitUtil.DOT_GIT))
   assertNotNull(gitDir)
   return registerRepo(project, root)
@@ -135,7 +133,7 @@ fun assumeSupportedGitVersion(vcs: GitVcs) {
   assumeTrue("Unsupported Git version: " + version, version.isSupported)
 }
 
-fun readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> {
+fun GitPlatformTest.readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> {
   val refs = git("log --branches --tags --no-walk --format=%H%d --decorate=full").lines()
   val result = mutableSetOf<VcsRef>()
   for (ref in refs) {
@@ -144,7 +142,7 @@ fun readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<Vc
   return result
 }
 
-fun makeCommit(file: String): String {
+fun GitPlatformTest.makeCommit(file: String): String {
   append(file, "some content")
   addCommit("some message")
   return last()
@@ -175,6 +173,6 @@ fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<
 
 fun GitRepository.resolveConflicts() {
   cd(this)
-  git("add -u .")
+  this.git("add -u .")
 }
 

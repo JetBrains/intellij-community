@@ -23,7 +23,7 @@ import org.junit.runners.Parameterized
 import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters
 import org.junit.runners.parameterized.TestWithParameters
 
-class GuiTestSuiteParam(val klass: Class<*>) : Parameterized(klass) {
+class GuiTestSuiteParam(private val klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
   val myIde = getIdeFromAnnotation(klass)

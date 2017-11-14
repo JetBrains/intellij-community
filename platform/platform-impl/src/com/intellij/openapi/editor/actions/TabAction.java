@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +71,7 @@ public class TabAction extends EditorAction {
       columnNumber = editor.getCaretModel().getLogicalPosition().column;
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    CodeStyleSettings settings = project != null ? CodeStyle.getSettings(project) : CodeStyle.getDefaultSettings();
 
     final Document doc = editor.getDocument();
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByDocument(project, doc);

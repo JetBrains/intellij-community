@@ -495,14 +495,28 @@ static void main() {
   '''
   }
 
-  void testCollectMany() {
+  void testCollectManyListReturn() {
     testHighlighting ''' 
 import groovy.transform.CompileStatic
 
 @CompileStatic
 def foo() {
     def nums = [1]
+    def res = nums.collectMany { [""] }
+    res[0].toUpperCase()
+}
+  '''
+  }
+
+  void testCollectManyItReturn() {
+    testHighlighting ''' 
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def nums = [""]
     def res = nums.collectMany { [it] }
+    res[0].toUpperCase()
 }
   '''
   }

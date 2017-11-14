@@ -28,6 +28,7 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,19 +44,19 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
 
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return canSelectElement(e);
   }
 
   static boolean canSelectElement(final PsiElement e) {
-    if (e instanceof XmlToken) {
+    if (e instanceof XmlToken || PsiTreeUtil.getParentOfType(e, HtmlTagImpl.class, true) != null) {
       return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
     }
     return false;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 
     if (!(e instanceof XmlToken) ||

@@ -443,7 +443,7 @@ public class TestAll implements Test {
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
       if (suiteMethod != null && !isPerformanceTestsRun()) {
-        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_CLASS_ARRAY);
+        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {

@@ -19,6 +19,7 @@ package com.intellij.psi.tree;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class IErrorCounterReparseableElementType extends IReparseableElementType {
   public static final int NO_ERRORS = 0;
@@ -31,7 +32,7 @@ public abstract class IErrorCounterReparseableElementType extends IReparseableEl
   public abstract int getErrorsCount(CharSequence seq, Language fileLanguage, Project project);
 
   @Override
-  public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {
+  public boolean isParsable(@NotNull CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
     return getErrorsCount(buffer, fileLanguage, project) == NO_ERRORS;
   }
 }

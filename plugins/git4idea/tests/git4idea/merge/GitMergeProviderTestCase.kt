@@ -188,7 +188,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
   }
 
   private fun getConflictedFiles(): List<File> {
-    val records = git("ls-files --unmerged -z").split('\u0000')
+    val records = git("ls-files --unmerged -z").split('\u0000').filter { !it.isBlank() }
     val files = records.map { it.split('\t').last() }.toSortedSet()
     return files.map { File(projectPath, it) }.toList()
   }

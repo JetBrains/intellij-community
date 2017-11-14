@@ -230,7 +230,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     myRepositoriesLabel = new JLabel(myRepositoriesLabelText);
     top.add(myRepositoriesLabel);
-    top.add(createToolbar(true, null));
+    top.add(createToolbar(true, (AnAction[])null));
     parentPanel.add(top, BorderLayout.NORTH);
 
     JComponent panel =  createBrowserComponent(false);

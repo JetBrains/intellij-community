@@ -37,6 +37,7 @@ import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -375,8 +376,7 @@ public class GithubUtil {
   }
 
   public static boolean testGitExecutable(final Project project) {
-    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
-    final String executable = settings.getPathToGit();
+    final String executable = GitExecutableManager.getInstance().getPathToGit(project);
     final GitVersion version;
     try {
       version = GitVersion.identifyVersion(executable);

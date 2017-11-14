@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.testGuiFramework.fixtures.ActionLinkFixture
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
@@ -37,6 +38,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -128,6 +130,7 @@ class GuiTestRule : TestRule {
       errors.addAll(thrownFromRunning(Runnable { GuiTestUtilKt.waitForBackgroundTasks(robot()) }))
       errors.addAll(checkForModalDialogs())
       errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
+      errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       return errors.toList()
     }
@@ -151,6 +154,24 @@ class GuiTestRule : TestRule {
         }
       }
     }
+
+    private fun returnToTheFirstStepOfWelcomeFrame() {
+      val welcomeFrameFixture = WelcomeFrameFixture.find(robot());
+      val tenSec = org.fest.swing.timing.Timeout.timeout(10, TimeUnit.SECONDS)
+
+      fun isFirstStep(): Boolean {
+        return try {
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName("Create New Project", robot(), welcomeFrameFixture.target(), tenSec)
+          actionLinkFixture.target().isShowing
+        } catch (componentLookupException: ComponentLookupException) {
+          false
+        }
+      }
+      for (i in 0..3) {
+        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(robot(), Key.ESCAPE.name)
+      }
+    }
+
 
     private fun thrownFromRunning(r: Runnable): List<Throwable> {
       return try {
@@ -190,6 +211,7 @@ class GuiTestRule : TestRule {
     private fun assumeOnlyWelcomeFrameShowing() {
       try {
         WelcomeFrameFixture.find(robot())
+
       }
       catch (e: WaitTimedOutError) {
         throw AssumptionViolatedException("didn't find welcome frame", e) as Throwable

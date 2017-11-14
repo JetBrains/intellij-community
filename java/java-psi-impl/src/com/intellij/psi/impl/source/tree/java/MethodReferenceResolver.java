@@ -271,12 +271,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         }
       }
 
-      if (resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) {
-        return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
+      CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
+      if (candidateInfo != null) {
+        return candidateInfo;
       }
 
-      if (resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.VARARGS)) {
-        return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
+      candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
+      if (candidateInfo != null) {
+        return candidateInfo;
       }
 
       if (firstCandidates.isEmpty() && secondCandidates.isEmpty()) {
@@ -356,7 +358,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
     }
 
-    private boolean resolveConflicts(List<CandidateInfo> firstCandidates, List<CandidateInfo> secondCandidates, int applicabilityLevel) {
+    private CandidateInfo resolveConflicts(List<CandidateInfo> firstCandidates, List<CandidateInfo> secondCandidates, int applicabilityLevel) {
 
       final int firstApplicability = checkApplicability(firstCandidates);
       checkSpecifics(firstCandidates, applicabilityLevel, myLanguageLevel);
@@ -365,14 +367,18 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       checkSpecifics(secondCandidates, applicabilityLevel, myLanguageLevel);
       
       if (firstApplicability < secondApplicability) {
-        return secondCandidates.size() == 1;
+        return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
       }
       
       if (secondApplicability < firstApplicability) {
-        return firstCandidates.size() == 1;
+        return firstCandidates.size() == 1 ? firstCandidates.get(0) : null;
       }
 
-      return firstCandidates.size() + secondCandidates.size() == 1;
+      return firstCandidates.size() + secondCandidates.size() == 1
+             ? firstCandidates.isEmpty()
+               ? secondCandidates.get(0)
+               : firstCandidates.get(0)
+             : null;
     }
 
     @Override

@@ -153,11 +153,11 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.hasConflict(file: String) : Boolean {
-    return ("UU " + file).equals(git(this, "status --porcelain"));
+    return ("UU " + file).equals(gitStatus());
   }
 
   protected fun GitRepository.assertConflict(file: String) {
-    assertTrue("Conflict was expected for " + file + ", but git status doesn't show it: \n${git(this, "status --porcelain")}",
+    assertTrue("Conflict was expected for " + file + ", but git status doesn't show it: \n${gitStatus()}",
                hasConflict(file))
   }
 
@@ -217,7 +217,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   inner class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
-      file(filePath).create(content).add()
+      repository.file(filePath).create(content).add()
       return this
     }
 
@@ -247,6 +247,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 }
 
-private fun GitRepository.gitStatus() = git(this, "status --porcelain").trim()
+private fun GitRepository.gitStatus() = this.git("status --porcelain").trim()
 
 

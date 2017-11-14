@@ -32,9 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * @author Maxim.Medvedev
  */
 public class GStringTypedActionHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (c != '{' || project == null || !HandlerUtils.canBeInvoked(editor, project)) {
+  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (c != '{' || !HandlerUtils.canBeInvoked(editor, project)) {
       return Result.CONTINUE;
     }
 

@@ -206,7 +206,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   fun `test rollback if checkout with rebase fails on 2nd root`() {
     allRepositories.forEach {
       it.`diverge feature and master`()
-      git(it, "checkout master")
+      it.git("checkout master")
     }
     git.setShouldRebaseFail { it == contrib }
 

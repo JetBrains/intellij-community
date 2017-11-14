@@ -180,9 +180,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     TypeConstraint unionFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
-      if(left.isSuperStateOf(right)) return left;
-      if(right.isSuperStateOf(left)) return right;
-      return null;
+      return left.union(right);
     }
   };
 

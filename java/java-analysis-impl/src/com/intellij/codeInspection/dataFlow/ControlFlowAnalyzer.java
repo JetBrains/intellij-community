@@ -922,29 +922,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myTrapStack = myTrapStack.prepend(new Trap.TryCatch(statement, clauses));
     }
 
-    Set<PsiClassType> closerExceptions = Collections.emptySet();
-    Trap.TwrFinally twrFinallyDescriptor = null;
-    if (resourceList != null) {
-      resourceList.accept(this);
-
-      closerExceptions = StreamEx.of(resourceList.iterator()).flatCollection(ExceptionUtil::getCloserExceptions).toSet();
-      if (!closerExceptions.isEmpty()) {
-        twrFinallyDescriptor = new Trap.TwrFinally(resourceList, getStartOffset(resourceList));
-        myTrapStack = myTrapStack.prepend(twrFinallyDescriptor);
-      }
-    }
-
-    if (tryBlock != null) {
-      tryBlock.accept(this);
-    }
-
-    if (twrFinallyDescriptor != null) {
-      assert myTrapStack.getHead() instanceof Trap.TwrFinally;
-      myTrapStack = myTrapStack.getTail();
-      startElement(resourceList);
-      addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
-      finishElement(resourceList);
-    }
+    processTryWithResources(resourceList, tryBlock);
 
     InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), getVariablesInside(tryBlock));
     FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
@@ -975,6 +953,37 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(statement);
+  }
+
+  private void processTryWithResources(@Nullable PsiResourceList resourceList, @Nullable PsiCodeBlock tryBlock) {
+    Set<PsiClassType> closerExceptions = Collections.emptySet();
+    Trap.TwrFinally twrFinallyDescriptor = null;
+    if (resourceList != null) {
+      resourceList.accept(this);
+
+      closerExceptions = StreamEx.of(resourceList.iterator()).flatCollection(ExceptionUtil::getCloserExceptions).toSet();
+      if (!closerExceptions.isEmpty()) {
+        twrFinallyDescriptor = new Trap.TwrFinally(resourceList, getStartOffset(resourceList));
+        myTrapStack = myTrapStack.prepend(twrFinallyDescriptor);
+      }
+    }
+
+    if (tryBlock != null) {
+      tryBlock.accept(this);
+    }
+
+    if (twrFinallyDescriptor != null) {
+      assert myTrapStack.getHead() instanceof Trap.TwrFinally;
+      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), getVariablesInside(tryBlock));
+      controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
+      myTrapStack = myTrapStack.getTail().prepend(new Trap.InsideFinally(resourceList));
+      startElement(resourceList);
+      addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
+      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
+      finishElement(resourceList);
+      assert myTrapStack.getHead() instanceof Trap.InsideFinally;
+      myTrapStack = myTrapStack.getTail();
+    }
   }
 
   @Override
@@ -1822,7 +1831,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null && operand.getType() != null) {
       if (typeElement.getType() instanceof PsiPrimitiveType &&
-          UnnecessaryExplicitNumericCastInspection.isPrimitiveNumericCastNecessary(castExpression)) {
+          !UnnecessaryExplicitNumericCastInspection.isUnnecessaryPrimitiveNumericCast(castExpression)) {
         addInstruction(new PopInstruction());
         pushUnknown();
       } else {

@@ -24,14 +24,11 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,28 +128,6 @@ public class WeakestTypeFinder {
         if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression || 
             !findWeakestType(methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
-        }
-        // consider method can have super methods with weaker return type
-        PsiType expectedType = ExpectedTypeUtils.findExpectedType(methodCallExpression, false);
-        if (expectedType != null) {
-          PsiMethod method = methodCallExpression.resolveMethod();
-          if (method == null) return Collections.emptyList();
-          PsiType returnType = method.getReturnType();
-          if (returnType == null) return Collections.emptyList();
-          PsiMethod[] superMethods = method.findSuperMethods();
-          boolean supersHaveDifferentReturnType = StreamEx.of(superMethods).anyMatch(m -> !m.getReturnType().equals(returnType));
-          if (supersHaveDifferentReturnType) {
-            boolean assigned = false;
-            for (PsiMethod superMethod : superMethods) {
-              if (expectedType.isAssignableFrom(superMethod.getReturnType())) {
-                checkClass(superMethod.getContainingClass(), weakestTypeClasses);
-                assigned = true;
-              }
-            }
-            if(!assigned) {
-              return Collections.emptyList();
-            }
-          }
         }
       }
       else if (referenceParent instanceof PsiAssignmentExpression) {

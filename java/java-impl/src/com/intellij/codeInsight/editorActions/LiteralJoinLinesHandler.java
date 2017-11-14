@@ -20,10 +20,11 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaToken;
+import org.jetbrains.annotations.NotNull;
 
 public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
-  public int tryJoinLines(final Document doc, final PsiFile psiFile, final int offsetNear, final int end) {
+  public int tryJoinLines(@NotNull final Document doc, @NotNull final PsiFile psiFile, final int offsetNear, final int end) {
     CharSequence text = doc.getCharsSequence();
 
     int start = offsetNear;

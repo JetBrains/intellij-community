@@ -26,7 +26,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD --no-walk --pretty=%B"))
+    assertLastMessage(newMessage, "Message reworded incorrectly")
   }
 
   fun `test reword via amend doesn't touch the local changes`() {
@@ -36,7 +36,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD --no-walk --pretty=%B"))
+    assertLastMessage(newMessage, "Message reworded incorrectly")
     repo.assertStagedChanges {
       added("b")
     }
@@ -53,7 +53,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD^ --no-walk --pretty=%B"))
+    assertMessage(newMessage, git("log HEAD^ --no-walk --pretty=%B"), "Message reworded incorrectly")
   }
 
   fun `test undo reword`() {
@@ -63,7 +63,7 @@ class GitRewordTest : GitSingleRepoTest() {
     operation.execute()
     operation.undo()
 
-    assertEquals("Message reworded incorrectly", "Wrong message", git("log HEAD --no-walk --pretty=%B"))
+    assertLastMessage("Wrong message", "Message reworded incorrectly")
   }
 
   fun `test undo is not possible if HEAD moved`() {

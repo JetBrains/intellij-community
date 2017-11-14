@@ -60,6 +60,12 @@ public class ContainerUtilCollectionsTest {
     checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
     checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), this));
   }
+  private void checkKeyTossedEventually(ObjectIntMap<Object> map) {
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), 0));
+  }
+  private void checkValueTossedEventually(IntObjectMap<Object> map) {
+    checkClearsEventuallyAfterGCPressure(map, ()->map.put(0, new Object()));
+  }
   private void checkValueTossedEventually(Map<Object, Object> map) {
     checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
     checkClearsEventuallyAfterGCPressure(map, ()->map.put(this, new Object()));
@@ -170,6 +176,58 @@ public class ContainerUtilCollectionsTest {
     map.clear();
     assertEquals(0, map.size());
     assertNull(map.get(strong));
+  }
+
+  private static final int RANDOM_INT = 987654321;
+  private void checkClearsEventuallyAfterGCPressure(ObjectIntMap<Object> map, @NotNull Runnable put) {
+    assertTrue(map.isEmpty());
+    assertEquals(0, map.size());
+    put.run();
+    strong = new Object();
+    //noinspection SizeReplaceableByIsEmpty
+    do {
+      map.put(strong, RANDOM_INT);  // to run processQueues();
+      assertFalse(map.isEmpty());
+      map.remove(strong);
+      assertEquals(0, map.get(strong));
+
+      GCUtil.tryGcSoftlyReachableObjects();
+      System.gc();
+    }
+    while (map.size() != 0);
+    assertTrue(map.isEmpty());
+    assertEquals(0, map.size());
+    map.put(this, RANDOM_INT);
+    assertEquals(1, map.size());
+    map.clear();
+    assertEquals(0, map.size());
+    assertEquals(0, map.get(strong));
+  }
+
+  private void checkClearsEventuallyAfterGCPressure(IntObjectMap<Object> map, @NotNull Runnable put) {
+    assertTrue(map.isEmpty());
+    assertEquals(0, map.size());
+    put.run();
+
+    strong = new Object();
+    //noinspection SizeReplaceableByIsEmpty
+    do {
+      map.put(RANDOM_INT, strong);  // to run processQueues();
+      assertFalse(map.isEmpty());
+      map.remove(RANDOM_INT);
+      assertNull(map.get(RANDOM_INT));
+
+      GCUtil.tryGcSoftlyReachableObjects();
+      System.gc();
+    }
+    while (map.size() != 0);
+    assertTrue(map.isEmpty());
+    assertEquals(0, map.size());
+    map.put(RANDOM_INT, this);
+    assertEquals(1, map.size());
+    map.clear();
+    assertEquals(0, map.size());
+    assertNull(map.get(RANDOM_INT));
   }
 
   @Test(timeout = TIMEOUT)
@@ -312,7 +370,7 @@ public class ContainerUtilCollectionsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
-    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
+    IntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -499,5 +557,16 @@ public class ContainerUtilCollectionsTest {
     assertEquals(0, set.size());
     set.add(this);
     assertEquals(1, set.size());
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testWeakKeyIntValueMapTossed() {
+    ObjectIntMap<Object> map = ContainerUtil.createWeakKeyIntValueMap();
+    checkKeyTossedEventually(map);
+  }
+  @Test(timeout = TIMEOUT)
+  public void testIntKeyWeakValueMapTossed() {
+    IntObjectMap<Object> map = ContainerUtil.createIntKeyWeakValueMap();
+    checkValueTossedEventually(map);
   }
 }

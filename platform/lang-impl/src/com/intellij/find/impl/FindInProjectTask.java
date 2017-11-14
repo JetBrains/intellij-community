@@ -75,6 +75,7 @@ import java.util.stream.Collectors;
  * @author peter
  */
 class FindInProjectTask {
+  private static final Comparator<VirtualFile> SEARCH_RESULT_FILE_COMPARATOR = Comparator.comparing(VirtualFile::getName).thenComparing(VirtualFile::getPath);
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
@@ -254,7 +255,8 @@ class FindInProjectTask {
       }
       return true;
     };
-    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, new ArrayList<>(virtualFiles), myProgress, processor);
+    List<VirtualFile> sorted = ContainerUtil.sorted(virtualFiles, SEARCH_RESULT_FILE_COMPARATOR);
+    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, processor);
   }
 
   // must return non-binary files

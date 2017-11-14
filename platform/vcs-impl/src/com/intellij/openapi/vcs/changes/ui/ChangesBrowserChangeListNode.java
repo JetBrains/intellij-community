@@ -148,10 +148,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   }
 
   @Override
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof ChangeList) {
-      return getUserObject().getName().compareToIgnoreCase(((ChangeList)o2).getName());
-    }
-    return 0;
+  public int compareUserObjects(final ChangeList o2) {
+    return getUserObject().getName().compareToIgnoreCase(o2.getName());
   }
 }

@@ -68,12 +68,12 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
       else if (myBreakpointType instanceof XLineBreakpointType) {
         return -1;
       }
-      return indexOfType(myBreakpointType) - indexOfType(((XBreakpointTypeGroup)o).getBreakpointType());
+      return Long.compare(indexOfType(myBreakpointType), indexOfType(((XBreakpointTypeGroup)o).getBreakpointType()));
     }
     return -o.compareTo(this);
   }
 
-  private static int indexOfType(XBreakpointType type) {
-    return (int)XBreakpointUtil.breakpointTypes().indexOf(type).orElse(-1);
+  private static long indexOfType(XBreakpointType type) {
+    return XBreakpointUtil.breakpointTypes().indexOf(type).orElse(-1);
   }
 }

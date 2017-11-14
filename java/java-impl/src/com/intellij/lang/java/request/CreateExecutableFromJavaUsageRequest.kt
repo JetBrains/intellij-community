@@ -12,12 +12,12 @@ import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringUtil
 
-abstract class CreateExecutableFromJavaUsageRequest<T : PsiCall>(call: T) : CreateExecutableRequest {
+abstract internal class CreateExecutableFromJavaUsageRequest<T : PsiCall>(call: T) : CreateExecutableRequest {
 
   private val psiManager = call.manager
   protected val project = psiManager.project
-  protected val callPointer = call.createSmartPointer(project)
-  protected val call = callPointer.element ?: error("dead pointer")
+  protected val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
+  protected val call: T get() = callPointer.element ?: error("dead pointer")
 
   override val isValid: Boolean get() = callPointer.element != null
 

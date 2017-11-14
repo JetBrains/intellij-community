@@ -237,7 +237,6 @@ public class ReferenceParser {
       emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
     }
 
-    boolean hasIdentifier;
     while (builder.getTokenType() == JavaTokenType.DOT) {
       refElement.done(JavaElementType.JAVA_CODE_REFERENCE);
 
@@ -250,38 +249,29 @@ public class ReferenceParser {
 
       myParser.getDeclarationParser().parseAnnotations(builder);
 
-      if (expect(builder, JavaTokenType.IDENTIFIER)) {
-        hasIdentifier = true;
-      }
-      else if (isImport && expect(builder, JavaTokenType.ASTERISK)) {
+      if (isImport && expect(builder, JavaTokenType.ASTERISK)) {
         dotPos.drop();
         return refElement;
       }
-      else {
+      else if (!expect(builder, JavaTokenType.IDENTIFIER)) {
         if (!eatLastDot) {
           dotPos.rollbackTo();
           return refElement;
         }
-        hasIdentifier = false;
-      }
-      dotPos.drop();
 
-      final PsiBuilder.Marker prevElement = refElement;
-      refElement = refElement.precede();
-
-      if (!hasIdentifier) {
         typeInfo.hasErrors = true;
         if (isImport) {
           error(builder, JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
-          refElement.drop();
-          return prevElement;
         }
         else {
           error(builder, JavaErrorMessages.message("expected.identifier"));
-          emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
-          break;
         }
+        dotPos.drop();
+        return refElement;
       }
+      dotPos.drop();
+
+      refElement = refElement.precede();
 
       if (parameterList) {
         typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);

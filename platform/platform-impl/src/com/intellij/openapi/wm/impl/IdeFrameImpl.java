@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -73,6 +75,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private boolean myRestoreFullScreen;
+  private LafManagerListener myLafListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -80,6 +83,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     myRootPane = createRootPane(actionManager, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
+    LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
     AppUIUtil.updateWindowIcon(this);
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
@@ -410,6 +414,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
+    if (myLafListener != null) LafManager.getInstance().removeLafManagerListener(myLafListener);
 
     FocusTrackback.release(this);
 

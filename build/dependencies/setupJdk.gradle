@@ -133,12 +133,14 @@ task setupJdk16(dependsOn: configurations.jdk16) {
   }
 }
 
-// Gradle dies on tring to process broken links: https://issues.gradle.org/browse/GRADLE-1843
+// Gradle dies on trying to process broken links: https://issues.gradle.org/browse/GRADLE-1843
 private void deleteBrokenSymlink(def outputDir) {
   if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
     def pluginJar = file("$outputDir/Home/lib/plugin.jar")
     if (!pluginJar.exists()) {
-      pluginJar.delete()
+      if (!pluginJar.delete()) {
+        logger.info("Couldn't remove plugin.jar from JDK 1.6")
+      }
     }
   }
 }

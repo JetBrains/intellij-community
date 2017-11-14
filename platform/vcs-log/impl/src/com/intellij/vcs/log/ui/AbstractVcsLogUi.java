@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -232,12 +234,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     }
   }
 
-  public void invokeOnChange(@NotNull final Runnable runnable) {
+  public void invokeOnChange(@NotNull Runnable runnable) {
+    invokeOnChange(runnable, Conditions.alwaysTrue());
+  }
+
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        runnable.run();
-        removeLogListener(this);
+        if (condition.value(dataPack)) {
+          runnable.run();
+          removeLogListener(this);
+        }
       }
     });
   }

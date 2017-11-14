@@ -35,6 +35,22 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/**
+ * <p>
+ * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
+ * languages and language-independent settings. Global (default) options which may be overwritten by a specific language can be retrieved
+ * using {@code getDefault...()} methods. Use {@link #getCommonSettings(Language)} to retrieve code style options for a language. Some
+ * languages may have specific options which are stored in a class derived from {@link CustomCodeStyleSettings}.
+ * Use {@link #getCustomSettings(Class)} to access them. For indent options use one of {@code getIndentOptions(...)} methods. In most cases
+ * you need {@link #getIndentOptionsByFile(PsiFile)}.
+ * </p>
+ * <p>
+ * Consider also using an utility {@link com.intellij.application.options.CodeStyle} class which encapsulates the above methods where possible.
+ * </p>
+ *
+ * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
+ * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
+ */
 public class CodeStyleSettings extends CommonCodeStyleSettings
   implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
   public static final int CURR_VERSION = 173;

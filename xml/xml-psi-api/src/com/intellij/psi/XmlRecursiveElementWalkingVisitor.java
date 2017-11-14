@@ -21,7 +21,7 @@ package com.intellij.psi;
 
 import java.util.List;
 
-public class XmlRecursiveElementWalkingVisitor extends XmlElementVisitor {
+public class XmlRecursiveElementWalkingVisitor extends XmlElementVisitor implements PsiRecursiveVisitor {
   private final boolean myVisitAllFileRoots;
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){};
 

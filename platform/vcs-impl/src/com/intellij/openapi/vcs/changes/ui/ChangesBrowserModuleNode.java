@@ -70,12 +70,8 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   }
 
   @Override
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof Module) {
-      return getUserObject().getName().compareToIgnoreCase(((Module) o2).getName());
-    }
-
-    return 0;
+  public int compareUserObjects(final Module o2) {
+    return getUserObject().getName().compareToIgnoreCase(o2.getName());
   }
 
   @NotNull

@@ -631,6 +631,7 @@
 
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
+      <reference ref="About"/>
       <reference ref="ShowTips"/>
       <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>

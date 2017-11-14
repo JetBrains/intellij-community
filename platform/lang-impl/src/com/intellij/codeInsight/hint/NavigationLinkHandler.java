@@ -19,6 +19,7 @@ import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,10 @@ public class NavigationLinkHandler extends TooltipLinkHandler {
 
   @Override
   public boolean handleLink(@NotNull final String refSuffix, @NotNull final Editor editor) {
+    return handleLink(refSuffix, editor.getProject());
+  }
+
+  public static boolean handleLink(@NotNull final String refSuffix, @NotNull Project project) {
     final int pos = refSuffix.lastIndexOf(':');
     if (pos <= 0 || pos == refSuffix.length() - 1) {
       LOG.error("Malformed suffix: " + refSuffix);
@@ -55,7 +60,7 @@ public class NavigationLinkHandler extends TooltipLinkHandler {
       return true;
     }
 
-    new OpenFileDescriptor(editor.getProject(), vFile, offset).navigate(true);
+    new OpenFileDescriptor(project, vFile, offset).navigate(true);
     return true;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -41,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -59,6 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
@@ -354,11 +342,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                    myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
                                  });
 
-      if (Registry.is("debugger.classes.cache.fix")) {
-        enableNonSuspendingRequest(requestManager.createClassPrepareRequest(), e -> machineProxy.clearClassesCache());
-        enableNonSuspendingRequest(requestManager.createClassUnloadRequest(), e -> machineProxy.clearClassesCache());
-      }
-
       // fill position managers
       ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
         .map(factory -> factory.fun(this))
@@ -569,8 +552,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private void notifySkippedBreakpoints(LocatableEvent event) {
-    if (event != null) {
+  private AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
+
+  private void notifySkippedBreakpoints(@Nullable LocatableEvent event) {
+    if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
       XDebuggerManagerImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
         .notify(getProject());

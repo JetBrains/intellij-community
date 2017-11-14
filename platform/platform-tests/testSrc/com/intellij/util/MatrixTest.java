@@ -49,7 +49,7 @@ public class MatrixTest extends TestCase {
 
   public void testCreateNull() {
     try {
-      fail("Created " + Matrix.create(0, null));
+      fail("Created " + Matrix.create(0, (double[])null));
     }
     catch (Exception ignored) {
     }

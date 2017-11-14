@@ -24,6 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,20 +35,18 @@ import java.util.List;
  * Handler to select commas around a selection before widening the selection to few words  
  */
 public class PyCommaSelectionHandler extends ExtendWordSelectionHandlerBase {
-  public boolean canSelect(final PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof PyReferenceExpression || e instanceof PyKeyValueExpression || e instanceof PyKeywordArgument 
       || e instanceof PyNumericLiteralExpression || e instanceof PyStringLiteralExpression || e instanceof PyNamedParameter
       || e instanceof PyStarArgument;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    if (e != null) {
-      List<TextRange> textRange = addNextComma(e, cursorOffset);
-      if (textRange.equals(Collections.emptyList())) return addPreviousComma(e, cursorOffset);
-      else return textRange;
-    }
-    return Collections.emptyList();
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
+    List<TextRange> textRange = addNextComma(e, cursorOffset);
+    if (textRange.equals(Collections.emptyList())) return addPreviousComma(e, cursorOffset);
+    else return textRange;
   }
 
   /**
