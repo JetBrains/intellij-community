@@ -561,6 +561,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Nullable
   static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
@@ -570,23 +571,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final String error = e.getClass().getName() + " : " + e.getLocalizedMessage();
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error", error));
     }
-    List connectors;
-    if (SOCKET_ATTACHING_CONNECTOR_NAME.equals(connectorName) || SHMEM_ATTACHING_CONNECTOR_NAME.equals(connectorName)) {
-      connectors = virtualMachineManager.attachingConnectors();
-    }
-    else if (SOCKET_LISTENING_CONNECTOR_NAME.equals(connectorName) || SHMEM_LISTENING_CONNECTOR_NAME.equals(connectorName)) {
-      connectors = virtualMachineManager.listeningConnectors();
-    }
-    else {
-      return null;
-    }
-    for (Object connector1 : connectors) {
-      Connector connector = (Connector)connector1;
-      if (connectorName.equals(connector.name())) {
-        return connector;
-      }
-    }
-    return null;
+    return StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
