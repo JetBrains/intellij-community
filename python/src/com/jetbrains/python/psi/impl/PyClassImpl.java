@@ -357,18 +357,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       public String getPresentableText() {
         PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
-        final PyExpression[] superClassExpressions = getSuperClassExpressions();
-        if (superClassExpressions.length > 0) {
+        final List<String> superClassesText = getSuperClassesText();
+        if (superClassesText.size() > 0) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), expr -> {
-            String name = expr.getText();
-            return notNullize(name, PyNames.UNNAMED_ELEMENT);
-          }, ", "));
+          result.append(join(superClassesText, expr -> notNullize(expr, PyNames.UNNAMED_ELEMENT), ", "));
           result.append(")");
         }
         return result.toString();
       }
     };
+  }
+
+  private List<String> getSuperClassesText() {
+    PyClassStub stub = getGreenStub();
+    if (stub == null || stub.getSuperClassesText() == null) {
+      return ContainerUtil.map(getSuperClassExpressions(), exp -> exp.getText());
+    }
+    else {
+      return stub.getSuperClassesText();
+    }
   }
 
   @NotNull
