@@ -343,8 +343,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   public void testSpacesInsideMethodRef() {
     getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
 
+    //expr
     doMethodTest("Runnable r = this::foo",
                  "Runnable r = this :: foo");
+
+    //class ref
+    doMethodTest("Runnable r = Foo::foo",
+                 "Runnable r = Foo :: foo");
 
     getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = false;
     doMethodTest("Runnable r = this::foo",
