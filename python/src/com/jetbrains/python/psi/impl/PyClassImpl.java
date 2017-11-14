@@ -29,8 +29,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -356,18 +356,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       public String getPresentableText() {
         PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
-        final PyExpression[] superClassExpressions = getSuperClassExpressions();
-        if (superClassExpressions.length > 0) {
+        final List<String> superClassesText = getSuperClassesText();
+        if (superClassesText.size() > 0) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), expr -> {
-            String name = expr.getText();
-            return notNullize(name, PyNames.UNNAMED_ELEMENT);
-          }, ", "));
+          result.append(join(superClassesText, expr -> notNullize(expr, PyNames.UNNAMED_ELEMENT), ", "));
           result.append(")");
         }
         return result.toString();
       }
     };
+  }
+
+  private List<String> getSuperClassesText() {
+    PyClassStub stub = getGreenStub();
+    if (stub == null || stub.getSuperClassesText() == null) {
+      return ContainerUtil.map(getSuperClassExpressions(), exp -> exp.getText());
+    }
+    else {
+      return stub.getSuperClassesText();
+    }
   }
 
   @NotNull

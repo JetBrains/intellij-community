@@ -843,6 +843,17 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-25655
+  public void testBaseClassText() {
+    final PyFile file = getTestFile();
+    final PyClass pyClass = file.findTopLevelClass("Class");
+    final PyClassStub stub = pyClass.getStub();
+    assertNotNull(stub);
+    final List<String> genericBases = stub.getSuperClassesText();
+    assertContainsOrdered(genericBases, "Generic[T, V]", "BaseClass1", "SomeModule.SomeClass");
+    assertNotParsed(file);
+  }
+
   // PY-18816
   public void testComplexGenericType() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
