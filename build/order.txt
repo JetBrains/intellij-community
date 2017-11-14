@@ -7410,7 +7410,6 @@ com/siyeh/ig/visibility/TypeParameterHidesVisibleTypeInspection.class:/plugins/I
 com/siyeh/ig/visibility/ParameterHidingMemberVariableInspection.class:/plugins/InspectionGadgets/lib/InspectionGadgets.jar
 com/siyeh/ig/global/MethodReturnAlwaysConstantInspection.class:/plugins/InspectionGadgets/lib/InspectionGadgets.jar
 com/siyeh/ig/BaseGlobalInspection.class:/plugins/InspectionGadgets/lib/InspectionGadgets.jar
-com/intellij/codeInspection/GlobalJavaInspectionTool.class:/lib/openapi.jar
 com/intellij/codeInspection/GlobalInspectionTool.class:/lib/openapi.jar
 com/intellij/codeInspection/booleanIsAlwaysInverted/BooleanMethodIsAlwaysInvertedInspection.class:/plugins/InspectionGadgets/lib/InspectionGadgets.jar
 com/siyeh/ig/packaging/PackageInMultipleModulesInspection.class:/plugins/InspectionGadgets/lib/InspectionGadgets.jar
