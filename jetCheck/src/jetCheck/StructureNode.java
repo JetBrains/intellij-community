@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -84,13 +83,14 @@ class StructureNode extends StructureElement {
   }
 
   private static StructureNode shrinkList(ShrinkContext context, StructureNode node) {
-    int start = 1;
-    int length = 1;
     int limit = node.children.size();
     while (limit > 0) {
+      int start = 1;
+      int length = 1;
       int lastSuccessfulRemove = -1;
       while (start < limit && start < node.children.size()) {
-        if (context.tryReplacement(node.id, node.removeRange(node.children, start, length))) {
+        // remove last items from the end first to decrease the number of variants in CombinatorialIntCustomizer
+        if (context.tryReplacement(node.id, node.removeRange(node.children, node.children.size() - start - length + 1, length))) {
           node = (StructureNode)Objects.requireNonNull(context.getCurrentMinimalRoot().findChildById(node.id));
           length = Math.min(length * 2, node.children.size() - start);
           lastSuccessfulRemove = start;

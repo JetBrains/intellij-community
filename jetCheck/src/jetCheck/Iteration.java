@@ -75,7 +75,7 @@ class Iteration<T> {
     if (example != null) {
       session.notifier.counterExampleFound(this);
       PropertyFailureImpl<T> failure = new PropertyFailureImpl<>(example, this);
-      throw new PropertyFalsified(failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, sizeHint));
+      throw new PropertyFalsified(failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, sizeHint, IntCustomizer::checkValidInt));
     }
 
     if (iterationNumber >= session.iterationCount) {

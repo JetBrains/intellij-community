@@ -84,22 +84,25 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
         StructureNode node = minimized.data.replace(replacedId, replacement);
         if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
 
-        iteration.session.notifier.shrinkAttempt(PropertyFailureImpl.this, iteration);
+        CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
+        while (customizer != null) {
+          try {
+            iteration.session.notifier.shrinkAttempt(PropertyFailureImpl.this, iteration);
 
-        try {
-          T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure(node, iteration.sizeHint));
-          totalSteps++;
-          CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, node);
-          if (example != null) {
-            minimized = example;
-            successfulSteps++;
-            return true;
+            T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure(node, iteration.sizeHint, customizer));
+            totalSteps++;
+            CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, customizer.writeChanges(node));
+            if (example != null) {
+              minimized = example;
+              successfulSteps++;
+              return true;
+            }
           }
-          return false;
+          catch (CannotRestoreValue ignored) {
+          }
+          customizer = customizer.nextAttempt();
         }
-        catch (CannotRestoreValue e) {
-          return false;
-        }
+        return false;
       }
     });
   }
