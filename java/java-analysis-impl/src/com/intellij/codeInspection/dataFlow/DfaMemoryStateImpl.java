@@ -733,19 +733,32 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
       setVariableState((DfaVariableValue)value, newState);
-      if (Boolean.FALSE.equals(facts.get(DfaFactType.CAN_BE_NULL))) {
-        return applyRelation(value, getFactory().getConstFactory().getNull(), true);
-      }
+      return updateEqClassesByState((DfaVariableValue)value);
     }
     return true;
   }
 
-  <T> boolean applyFact(DfaVariableValue target, DfaFactType<T> factType, T value) {
-    if (!isUnknownState(target) && value != null) {
-      DfaVariableState state = getVariableState(target);
-      DfaVariableState newState = state.intersectFact(factType, value);
-      if (newState == null) return false;
-      setVariableState(target, newState);
+  private boolean updateEqClassesByState(DfaVariableValue value) {
+    if (Boolean.FALSE.equals(getVariableState(value).getFact(DfaFactType.CAN_BE_NULL))) {
+      return applyRelation(value, getFactory().getConstFactory().getNull(), true);
+    }
+    return true;
+  }
+
+  @Override
+  public <T> boolean applyFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
+    if (value instanceof DfaFactMapValue) {
+      return ((DfaFactMapValue)value).getFacts().intersect(factType, factValue) != null;
+    }
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue)value;
+      if (!isUnknownState(var) && factValue != null) {
+        DfaVariableState state = getVariableState(var);
+        DfaVariableState newState = state.intersectFact(factType, factValue);
+        if (newState == null) return false;
+        setVariableState(var, newState);
+        return updateEqClassesByState(var);
+      }
     }
     return true;
   }
@@ -810,16 +823,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
     RelationType relationType = dfaRelation.getRelation();
 
-    LongRangeSet left = getValueFact(DfaFactType.RANGE, dfaLeft);
-    LongRangeSet right = getValueFact(DfaFactType.RANGE, dfaRight);
+    LongRangeSet left = getValueFact(dfaLeft, DfaFactType.RANGE);
+    LongRangeSet right = getValueFact(dfaRight, DfaFactType.RANGE);
 
     if (left != null && right != null) {
-      if (dfaLeft instanceof DfaVariableValue &&
-          !applyFact((DfaVariableValue)dfaLeft, DfaFactType.RANGE, right.fromRelation(relationType))) {
-        return false;
-      }
-      if (dfaRight instanceof DfaVariableValue &&
-          !applyFact((DfaVariableValue)dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
+      if (!applyFact(dfaLeft, DfaFactType.RANGE, right.fromRelation(relationType)) ||
+          !applyFact(dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
         return false;
       }
     }
@@ -1087,7 +1096,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Nullable
   @SuppressWarnings("unchecked")
-  public <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value) {
+  public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       DfaVariableState state = findVariableState(var);
@@ -1103,12 +1112,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void forceNotNull(@NotNull DfaVariableValue var) {
+  public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     if (isUnknownState(var)) return;
     DfaVariableState state = getVariableState(var);
     flushVariable(var);
-    setVariableState(var, state.withFact(DfaFactType.CAN_BE_NULL, false));
-    applyRelation(var, getFactory().getConstFactory().getNull(), true);
+    setVariableState(var, state.withFact(factType, value));
+    updateEqClassesByState(var);
   }
 
   @NotNull

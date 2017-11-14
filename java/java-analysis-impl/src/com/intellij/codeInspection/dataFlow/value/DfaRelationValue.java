@@ -32,9 +32,9 @@ public class DfaRelationValue extends DfaValue {
     return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
   }
 
-  private DfaValue myLeftOperand;
-  private DfaValue myRightOperand;
-  private RelationType myRelation;
+  private @NotNull DfaValue myLeftOperand;
+  private @NotNull DfaValue myRightOperand;
+  private @NotNull RelationType myRelation;
 
   public enum RelationType {
     LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
@@ -134,18 +134,20 @@ public class DfaRelationValue extends DfaValue {
     }
   }
 
-  private DfaRelationValue(DfaValue leftOperand, DfaValue rightOperand, RelationType relationType,
+  private DfaRelationValue(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType,
                            DfaValueFactory factory) {
     super(factory);
-    this.myLeftOperand = leftOperand;
-    this.myRightOperand = rightOperand;
-    this.myRelation = relationType;
+    myLeftOperand = leftOperand;
+    myRightOperand = rightOperand;
+    myRelation = relationType;
   }
 
+  @NotNull
   public DfaValue getLeftOperand() {
     return myLeftOperand;
   }
 
+  @NotNull
   public DfaValue getRightOperand() {
     return myRightOperand;
   }
