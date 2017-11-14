@@ -73,6 +73,9 @@ abstract class ModuleGrouper {
   }
 }
 
+@Deprecated("Use isQualifiedModuleNamesEnabled(Project) instead")
+fun isQualifiedModuleNamesEnabled() = Registry.`is`("project.qualified.module.names")
+
 fun isQualifiedModuleNamesEnabled(project: Project) = Registry.`is`("project.qualified.module.names") &&
                                                       !ModuleManager.getInstance(project).hasModuleGroups()
 
