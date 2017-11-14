@@ -35,7 +35,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
@@ -108,34 +107,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = pluginPath;
   }
 
-  /**
-   * @deprecated
-   * use {@link StringInterner#intern(Object)} directly instead
-   */
-  @NotNull
-  @Deprecated
-  public static String intern(@NotNull String s) {
-    return s;
-  }
-
   @Nullable
-  private static List<Element> copyChildren(@Nullable Element[] elements, @NotNull StringInterner interner) {
+  private static List<Element> copyChildren(@Nullable Element[] elements) {
     if (elements == null || elements.length == 0) {
       return null;
     }
 
     List<Element> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
-      List<Element> children = extensionsRoot.getChildren();
-      for (Element child : children) {
-        JDOMUtil.internElement(child, interner);
-        result.add(child);
-      }
+      result.addAll(extensionsRoot.getChildren());
     }
     return result;
   }
   @Nullable
-  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements, @NotNull StringInterner interner) {
+  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
     if (elements == null || elements.length == 0) {
       return null;
     }
@@ -143,10 +128,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     List<Pair<String, Element>> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
       String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e-> {
-        JDOMUtil.internElement(e, interner);
-        return Pair.create(ns, e);
-      }));
+      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e->Pair.create(ns, e)));
     }
     return result;
   }
@@ -183,8 +165,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude, pathResolver);
     Element rootElement = document.getRootElement();
-    JDOMUtil.internElement(rootElement, new StringInterner());
-    readExternal(document.getRootElement());
+    Element newElement = JDOMUtil.internElement(rootElement);
+    readExternal(newElement);
   }
 
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
@@ -290,8 +272,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    StringInterner interner = new StringInterner();
-    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions, interner);
+    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions);
     if (extensions != null) {
       myExtensions = MultiMap.createSmart();
       for (Pair<String, Element> pair : extensions) {
@@ -301,7 +282,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints, interner);
+    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints);
     if (extensionPoints != null) {
       myExtensionsPoints = MultiMap.createSmart();
       for (Element extensionPoint : extensionPoints) {
@@ -309,7 +290,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myActionElements = copyChildren(pluginBean.actions, interner);
+    myActionElements = copyChildren(pluginBean.actions);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;

@@ -213,7 +213,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
   for (componentName in states.keys()) {
     val element: Element
     try {
-      element = states.getElement(componentName, newLiveStates) ?: continue
+      element = states.getElement(componentName, newLiveStates)?.clone() ?: continue
     }
     catch (e: Exception) {
       LOG.error("Cannot save \"$componentName\" data", e)
@@ -222,11 +222,11 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 
     // name attribute should be first
     val elementAttributes = element.attributes
-    if (elementAttributes.isEmpty()) {
-      element.setAttribute(FileStorageCoreUtil.NAME, componentName)
+    var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
+    if (nameAttribute != null && nameAttribute === elementAttributes.get(0) && componentName == nameAttribute.value) {
+      // all is OK
     }
     else {
-      var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
         nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)

@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -58,7 +59,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (child != null) {
       if (document == null) {
-        final Element detachedStateCopy = child.clone();
+        final Element detachedStateCopy = JDOMUtil.internElement(child);
         state.setDelayedFoldState(() -> {
           Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
           return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);

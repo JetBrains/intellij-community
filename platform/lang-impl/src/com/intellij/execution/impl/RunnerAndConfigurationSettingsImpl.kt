@@ -480,7 +480,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         if (unloadedSettings == null) {
           unloadedSettings = SmartList<Element>()
         }
-        unloadedSettings!!.add(state)
+        unloadedSettings!!.add(JDOMUtil.internElement(state))
         return
       }
 
