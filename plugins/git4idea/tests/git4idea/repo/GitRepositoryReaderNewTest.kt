@@ -138,7 +138,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   }
 
   fun `test branches are case-sensitive on case-sensitive systems`() {
-    assumeTrue(SystemInfo.isFileSystemCaseSensitive)
+    assumeTrue("Not tested: this test is for case sensitive FS only", SystemInfo.isFileSystemCaseSensitive)
 
     makeCommit("file.txt")
     git("branch uppercase")

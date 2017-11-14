@@ -2855,5 +2855,14 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Set<T> createWeakSet() {
     return new WeakHashSet<T>();
   }
+
+  @NotNull
+  public static <T> IntObjectMap<T> createIntKeyWeakValueMap() {
+    return new IntKeyWeakValueHashMap<T>();
+  }
+  @NotNull
+  public static <T> ObjectIntMap<T> createWeakKeyIntValueMap() {
+    return new WeakKeyIntValueHashMap<T>();
+  }
 }
 

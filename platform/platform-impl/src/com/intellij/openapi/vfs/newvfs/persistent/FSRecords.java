@@ -30,8 +30,8 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
@@ -1127,7 +1127,7 @@ public class FSRecords {
 
   // returns (list of id and its parent ids up to and including id of already cached parent, that already cached parent)
   @NotNull
-  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull IntObjectMap<VirtualFileSystemEntry> idCache) {
     TIntArrayList ids = new TIntArrayList(10);
     r.lock();
     VirtualFileSystemEntry cached = null;

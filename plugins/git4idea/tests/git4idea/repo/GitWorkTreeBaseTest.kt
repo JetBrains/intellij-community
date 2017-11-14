@@ -31,10 +31,12 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
   protected lateinit var myMainRoot: String
   protected lateinit var myRepo : GitRepository
 
+  private fun supportsWorktrees(version: GitVersion) = version.isLaterOrEqual(GitVersion(2, 5, 0, 0))
+
   override fun setUp() {
     super.setUp()
     cd(testRoot)
-    assumeTrue(GitVersion.parse(git("version")).isLaterOrEqual(GitVersion(2, 5, 0, 0)))
+    assumeTrue("Worktrees are not supported in " + vcs.version, supportsWorktrees(vcs.version))
 
     myMainRoot = initMainRepo()
     cd(myMainRoot)

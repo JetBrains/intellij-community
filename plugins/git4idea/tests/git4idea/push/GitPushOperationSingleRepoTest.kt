@@ -26,12 +26,14 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
+import org.junit.Assume.assumeTrue
 import java.io.File
 import java.io.IOException
 import java.util.Collections.singletonMap
@@ -332,6 +334,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun `test skip pre push hook`() {
+    assumeTrue("Not testing: pre-push hooks are not supported in ${vcs.version}", GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(vcs.version))
+
     cd(repository)
     val hash = makeCommit("file.txt")
 

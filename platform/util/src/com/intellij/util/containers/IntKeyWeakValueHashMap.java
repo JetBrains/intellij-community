@@ -15,17 +15,22 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
-class WeakValueIntObjectHashMap<V> {
+class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<MyReference<V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
@@ -47,19 +52,16 @@ class WeakValueIntObjectHashMap<V> {
       }
       int key = ref.key;
       myMap.remove(key);
-      keyExpired(key);
     }
   }
 
-  protected void keyExpired(int key) {
-
-  }
-
+  @Override
   public final V get(int key) {
     MyReference<V> ref = myMap.get(key);
     return SoftReference.dereference(ref);
   }
 
+  @Override
   public final V put(int key, @NotNull V value) {
     processQueue();
     MyReference<V> ref = new MyReference<V>(key, value, myQueue);
@@ -68,29 +70,35 @@ class WeakValueIntObjectHashMap<V> {
     return SoftReference.dereference(oldRef);
   }
 
+  @Override
   public final V remove(int key) {
     processQueue();
     MyReference<V> ref = myMap.remove(key);
     return SoftReference.dereference(ref);
   }
 
+  @Override
   public final void clear() {
     myMap.clear();
     processQueue();
   }
 
+  @Override
   public final int size() {
     return myMap.size();
   }
 
+  @Override
   public final boolean isEmpty() {
     return myMap.isEmpty();
   }
 
+  @Override
   public final boolean containsKey(int key) {
     throw RefValueHashMap.pointlessContainsKey();
   }
 
+  @Override
   @NotNull
   public final Collection<V> values() {
     List<V> result = new ArrayList<V>();
@@ -103,5 +111,64 @@ class WeakValueIntObjectHashMap<V> {
       }
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public int[] keys() {
+    throw new IncorrectOperationException("keys() makes no sense for weak/soft map because GC can clear the value any moment now");
+  }
+
+  @Override
+  public boolean containsValue(@NotNull V value) {
+    return values().contains(value);
+  }
+
+  private static final Object GCED = new Object();
+  @NotNull
+  @Override
+  public Iterable<Entry<V>> entries() {
+    return new Iterable<Entry<V>>() {
+      @NotNull
+      @Override
+      public Iterator<Entry<V>> iterator() {
+        final TIntObjectIterator<MyReference<V>> tIterator = myMap.iterator();
+        return ContainerUtil.filterIterator(new Iterator<Entry<V>>() {
+          @Override
+          public boolean hasNext() {
+            return tIterator.hasNext();
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public Entry<V> next() {
+            tIterator.advance();
+            return new Entry<V>() {
+              @Override
+              public int getKey() {
+                return tIterator.key();
+              }
+
+              @NotNull
+              @Override
+              public V getValue() {
+                V v = SoftReference.dereference(tIterator.value());
+                //noinspection unchecked
+                return ObjectUtils.notNull(v, (V)GCED);
+              }
+            };
+          }
+        }, new Condition<Entry<V>>() {
+          @Override
+          public boolean value(Entry<V> o) {
+            return o.getValue() != GCED;
+          }
+        });
+      }
+    };
   }
 }

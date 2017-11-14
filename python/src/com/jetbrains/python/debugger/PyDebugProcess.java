@@ -164,6 +164,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     else {
       myPositionConverter = new PyLocalPositionConverter();
     }
+
+    PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(getProject());
+    executionService.sessionStarted(this);
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionStopped() {
+        executionService.sessionStopped(PyDebugProcess.this);
+      }
+    });
+
     myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
       @Override
       public void closed() {
@@ -728,7 +738,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    PyDebugValueExecutionService.getInstance(getProject()).submitTask(this, () -> {
       try {
         if (isConnected()) {
           final PyStackFrame frame = currentFrame();
@@ -744,7 +754,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
       catch (PyDebuggerException e) {
         if (!isConnected()) return;
-        for (PyAsyncValue<String> asyncValue: pyAsyncValues) {
+        for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
           PyDebugValue value = asyncValue.getDebugValue();
           XValueNode node = value.getLastNode();
           if (node != null && !node.isObsolete()) {
@@ -1003,6 +1013,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private void dropFrameCaches() {
     myStackFrameCache.clear();
     myNewVariableValue.clear();
+    PyDebugValueExecutionService.getInstance(getProject()).cancelSubmittedTasks(this);
   }
 
   @NotNull

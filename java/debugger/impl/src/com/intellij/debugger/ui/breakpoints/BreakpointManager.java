@@ -30,6 +30,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -292,7 +293,7 @@ public class BreakpointManager {
     myOriginalBreakpointsNodes.clear();
     // save old breakpoints
     for (Element element : parentNode.getChildren()) {
-      myOriginalBreakpointsNodes.put(element.getName(), element.clone());
+      myOriginalBreakpointsNodes.put(element.getName(), JDOMUtil.internElement(element));
     }
     if (!myProject.isDefault()) {
       myStartupManager.runWhenProjectIsInitialized(() -> doRead(parentNode));
@@ -473,10 +474,11 @@ public class BreakpointManager {
   public void writeExternal(@NotNull final Element parentNode) {
     // restore old breakpoints
     for (Element group : myOriginalBreakpointsNodes.values()) {
-      if (group.getAttribute(CONVERTED_PARAM) == null) {
-        group.setAttribute(CONVERTED_PARAM, "true");
+      Element clone = group.clone();
+      if (clone.getAttribute(CONVERTED_PARAM) == null) {
+        clone.setAttribute(CONVERTED_PARAM, "true");
       }
-      parentNode.addContent(group.clone());
+      parentNode.addContent(clone);
     }
   }
 

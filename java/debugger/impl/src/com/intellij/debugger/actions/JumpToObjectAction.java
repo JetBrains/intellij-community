@@ -86,7 +86,7 @@ public class JumpToObjectAction extends DebuggerAction{
       if (type instanceof ClassType) {
         ClassType clsType = (ClassType)type;
 
-        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByName());
+        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());
         Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
 
         if (location == null) {
