@@ -198,18 +198,18 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     }
 
     final GroovyFileImports imports = getImports(this);
+
+    if (!processClassesInFile(this, processor, state)) return false;
     if (!processImports.fun(imports.getRegularImports())) return false;
     if (!processImports.fun(imports.getStaticImports())) return false;
-    if (!processClassesInFile(this, processor, state)) return false;
-
-    if (ResolveUtil.shouldProcessProperties(classHint)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-    }
-
     if (!processClassesInPackage(this, processor, state, place)) return false;
     if (!processImports.fun(imports.getStarImports())) return false;
     if (!processImports.fun(imports.getStaticStarImports())) return false;
     if (!processImports.fun(getDefaultImports())) return false;
+
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    }
 
     if (ResolveUtil.shouldProcessPackages(classHint)) {
 
