@@ -141,6 +141,7 @@ def protect_libraries_from_patching():
         del sys.modules[name]
 
     # import for side effects
+    import _pydev_imps._pydev_saved_modules
 
     for name in patched_modules:
         sys.modules[name] = patched_modules[name]
