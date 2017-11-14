@@ -84,9 +84,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    final PyType fieldTypeForTypingNTTarget = getFieldTypeForTypingNTTarget(referenceExpression, context);
-    if (fieldTypeForTypingNTTarget != null) {
-      return fieldTypeForTypingNTTarget;
+    final PyType fieldTypeForNamedTuple = getFieldTypeForNamedTupleAsTarget(referenceExpression, context);
+    if (fieldTypeForNamedTuple != null) {
+      return fieldTypeForNamedTuple;
     }
 
     final PyCallableType namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context);
@@ -173,8 +173,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getFieldTypeForTypingNTTarget(@NotNull PyReferenceExpression referenceExpression,
-                                                      @NotNull TypeEvalContext context) {
+  private static PyType getFieldTypeForNamedTupleAsTarget(@NotNull PyReferenceExpression referenceExpression,
+                                                          @NotNull TypeEvalContext context) {
     final PyExpression qualifier = referenceExpression.getQualifier();
     if (qualifier != null) {
       final PyType qualifierType = context.getType(qualifier);
