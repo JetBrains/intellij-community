@@ -1097,6 +1097,37 @@ public final class TreeUtil {
   }
 
   /**
+   * Expands nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be expanded
+   * @param visitor  a visitor that controls expanding of tree nodes
+   * @param consumer a path consumer called on done
+   */
+  public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    promiseExpand(tree, visitor).processed(path -> consumer.accept(path));
+  }
+
+  /**
+   * Promises to expand nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be expanded
+   * @param visitor a visitor that controls expanding of tree nodes
+   */
+  @NotNull
+  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    return promiseAccept(tree, path -> {
+      TreeVisitor.Action action = visitor.visit(path);
+      if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
+        TreePath parent = path.getParentPath();
+        if (parent != null && !tree.isExpanded(parent)) return TreeVisitor.Action.SKIP_SIBLINGS;
+        tree.expandPath(path); // expand current path only if parent path is expanded
+        LOG.debug("tree expand path: ", path);
+      }
+      return action;
+    });
+  }
+
+  /**
    * Processes nodes in the specified tree.
    *
    * @param tree     a tree, which nodes should be processed
