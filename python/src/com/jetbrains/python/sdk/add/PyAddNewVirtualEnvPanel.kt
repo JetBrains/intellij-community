@@ -16,14 +16,13 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -133,9 +132,13 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   private fun excludeDirectoryFromProject(path: String, project: Project?) {
-    val currentProject = project ?: findProjectFromFocus() ?: return
+    val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
     val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return
-    val module = ModuleUtil.findModuleForFile(rootFile, currentProject) ?: return
+    val module = possibleProjects
+                   .asSequence()
+                   .map { ModuleUtil.findModuleForFile(rootFile, it) }
+                   .filterNotNull()
+                   .firstOrNull() ?: return
     val model = ModuleRootManager.getInstance(module).modifiableModel
     val contentEntry = model.contentEntries.firstOrNull {
       val contentFile = it.file
@@ -146,9 +149,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       model.commit()
     }
   }
-
-  private fun findProjectFromFocus(): Project? =
-    CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContextFromFocus.resultSync)
 
   private val projectBasePath: @SystemIndependent String
     get() = newProjectPath ?: project?.basePath ?: userHome
