@@ -112,7 +112,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-  public ClassesByName getClassesByName() {
+  public ClassesByNameProvider getClassesByNameProvider() {
     return this::classesByName;
   }
 
