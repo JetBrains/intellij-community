@@ -89,7 +89,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = true; //todo inline & remove
+  private final boolean myUseATM = Registry.is("structure.view.async.tree.model");
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
