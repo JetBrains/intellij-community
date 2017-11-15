@@ -41,6 +41,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -379,7 +380,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
             final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
               sourceScope.getGlobalSearchScope());
             final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
-            return directories.length > 1;
+            return Arrays.stream(directories)
+                     .map(dir -> ModuleUtilCore.findModuleForFile(dir.getVirtualFile(), project))
+                     .filter(Objects::isNull)
+                     .distinct()
+                     .count() > 1;
           }
         }
       }

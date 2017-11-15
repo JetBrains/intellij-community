@@ -196,7 +196,7 @@ public class JavaResolveUtil {
   private static boolean isInClassAnnotationParameterList(@NotNull PsiElement place, @Nullable PsiClass contextClass) {
     if (contextClass != null) {
       PsiAnnotation annotation = PsiTreeUtil.getContextOfType(place, PsiAnnotation.class, true);
-      if (annotation != null && contextClass.getModifierList() == annotation.getOwner()) {
+      if (annotation != null && PsiTreeUtil.isAncestor(contextClass.getModifierList(), annotation, false)) {
         return true;
       }
     }

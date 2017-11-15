@@ -72,26 +72,38 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink() {
-    minimized.data.shrink(node -> {
-      if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
+    minimized.data.shrink(new ShrinkContext() {
+      @NotNull
+      @Override
+      StructureNode getCurrentMinimalRoot() {
+        return minimized.data;
+      }
 
-      iteration.session.notifier.shrinkAttempt(this, iteration);
+      @Override
+      boolean tryReplacement(@NotNull NodeId replacedId, @NotNull StructureElement replacement) {
+        StructureNode node = minimized.data.replace(replacedId, replacement);
+        if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
 
-      try {
-        T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure((StructureNode)node, iteration.sizeHint));
-        totalSteps++;
-        CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, (StructureNode)node);
-        if (example != null) {
-          minimized = example;
-          successfulSteps++;
-          return true;
+        CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
+        while (customizer != null) {
+          try {
+            iteration.session.notifier.shrinkAttempt(PropertyFailureImpl.this, iteration);
+
+            T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure(node, iteration.sizeHint, customizer));
+            totalSteps++;
+            CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, customizer.writeChanges(node));
+            if (example != null) {
+              minimized = example;
+              successfulSteps++;
+              return true;
+            }
+          }
+          catch (CannotRestoreValue ignored) {
+          }
+          customizer = customizer.nextAttempt();
         }
         return false;
       }
-      catch (CannotRestoreValue e) {
-        return false;
-      }
-
     });
   }
 }

@@ -57,9 +57,9 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
     final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
     final int documentLength = editor.getDocument().getTextLength();
-    final int textEndOffset = textRange.getEndOffset();
-    final int endOffset = textEndOffset <= documentLength ? textEndOffset : documentLength;
-    editor.getSelectionModel().setSelection(textRange.getStartOffset(), endOffset);
+    final int endOffset = getDocumentOffset(textRange.getEndOffset(), documentLength);
+    final int startOffset = getDocumentOffset(textRange.getStartOffset(), documentLength);
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
     final String word = editor.getSelectionModel().getSelectedText();
 
     if (word == null || StringUtil.isEmpty(word)) {
@@ -70,5 +70,9 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
       .map(LookupElementBuilder::create)
       .toArray(LookupElement[]::new);
     LookupManager.getInstance(project).showLookup(editor, items);
+  }
+
+  private static int getDocumentOffset(int offset, int documentLength) {
+    return offset >=0 && offset <= documentLength ? offset : documentLength;
   }
 }

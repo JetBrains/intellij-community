@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -63,7 +63,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
               String message = InspectionsBundle.message(
                 "module.not.in.requirements", javaModule.getName(), otherModule.getName());
-              holder.registerProblem(classNameArgument, message, new AddRequiredModuleFix(javaModule, otherModule.getName()));
+              holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()));
               return;
             }
 

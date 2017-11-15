@@ -182,7 +182,7 @@ public class LinkLabel<T> extends JLabel {
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
-      if (isFocusOwner()){
+      if (isFocusOwner()) {
         g.setColor(UIUtil.getTreeSelectionBorderColor());
         UIUtil.drawLabelDottedRectangle(this, g, getTextBounds());
       }
@@ -196,8 +196,8 @@ public class LinkLabel<T> extends JLabel {
 
   protected Color getTextColor() {
     return myIsLinkActive ? getActive() :
-            myUnderline ? getHover() :
-              isVisited() ? getVisited() : getNormal();
+           myUnderline ? getHover() :
+           isVisited() ? getVisited() : getNormal();
   }
 
   public void setPaintUnderline(boolean paintUnderline) {
@@ -206,8 +206,9 @@ public class LinkLabel<T> extends JLabel {
 
   public void removeNotify() {
     super.removeNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this))
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       disableUnderline();
+    }
   }
 
   private void setActive(boolean isActive) {
@@ -254,6 +255,7 @@ public class LinkLabel<T> extends JLabel {
 
   //for GUI tests
   public Point getTextRectangleCenter() {
+    isInClickableArea(new Point(0, 0)); //to update textR before clicking
     return new Point(textR.x + textR.width / 2, textR.y + textR.height / 2);
   }
 
@@ -388,7 +390,8 @@ public class LinkLabel<T> extends JLabel {
       if (i == 0) {
         doClick();
         return true;
-      } else {
+      }
+      else {
         return false;
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -53,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -524,7 +511,7 @@ public final class PsiUtil extends PsiUtilCore {
                                           @NotNull final LanguageLevel languageLevel,
                                           final boolean allowUncheckedConversion,
                                           final boolean checkVarargs) {
-    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, 
+    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel,
                                  allowUncheckedConversion, checkVarargs, ApplicabilityChecker.ASSIGNABILITY_CHECKER);
   }
 
@@ -564,7 +551,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
       if (!(lastParmType instanceof PsiArrayType)) return ApplicabilityLevel.NOT_APPLICABLE;
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();
-      if (lastParmType instanceof PsiCapturedWildcardType && 
+      if (lastParmType instanceof PsiCapturedWildcardType &&
           !JavaVersionService.getInstance().isAtLeast(((PsiCapturedWildcardType)lastParmType).getContext(), JavaSdkVersion.JDK_1_8)) {
         lastParmType = ((PsiCapturedWildcardType)lastParmType).getWildcard();
       }
@@ -1323,5 +1310,20 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
     PsiElement original = element.getOriginalElement();
     return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
+  }
+
+  public static PsiElement addModuleStatement(@NotNull PsiJavaModule module, @NotNull String text) {
+    PsiJavaParserFacade facade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
+    PsiStatement statement = facade.createModuleStatementFromText(text);
+
+    PsiElement anchor = psiTraverser().children(module).filter(statement.getClass()).last();
+    if (anchor == null) {
+      anchor = psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
+    }
+    if (anchor == null) {
+      throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+    }
+
+    return module.addAfter(statement, anchor);
   }
 }

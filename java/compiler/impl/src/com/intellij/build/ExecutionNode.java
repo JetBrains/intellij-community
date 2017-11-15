@@ -146,7 +146,12 @@ public class ExecutionNode extends CachingSimpleNode {
     if (startTime == endTime) return null;
     if (isRunning()) {
       final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
-      return "Running for " + StringUtil.formatDuration(duration);
+      String durationText = StringUtil.formatDuration(duration);
+      int index = durationText.indexOf("s ");
+      if(index != -1) {
+        durationText = durationText.substring(0, index + 1);
+      }
+      return "Running for " + durationText;
     }
     else {
       return isSkipped() ? null : StringUtil.formatDuration(endTime - startTime);

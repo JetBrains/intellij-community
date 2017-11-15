@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +179,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private void onDocumentChanged(DocumentEvent e) {
     Document document = e.getDocument();
     final VirtualFile file = getFileDocumentManager().getFile(document);
-    if (file != null && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+    if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
       myCurrentCommandHasChanges = true;
       myChangedFilesInCurrentCommand.add(file);
     }

@@ -96,6 +96,13 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     return this;
   }
 
+  @NotNull
+  @Override
+  public LayoutStateDefaults clearFocusContent(@NotNull String condition) {
+    getLayout().clearDefaultToFocus(condition);
+    return this;
+  }
+
   @Override
   @NotNull
   public Content addContent(@NotNull Content content) {

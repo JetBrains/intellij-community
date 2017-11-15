@@ -62,10 +62,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -124,6 +121,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   protected PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
+  private PsiBlockStatement myAddedToMethodCallLocation;
   protected boolean myNullConditionalCheck;
   protected boolean myNotNullConditionalCheck;
   protected Nullness myNullness;
@@ -1364,18 +1362,63 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected PsiElement addToMethodCallLocation(PsiStatement statement) throws IncorrectOperationException {
-    if (myEnclosingBlockStatement == null) {
-      PsiElement containingStatement = myElements[0] instanceof PsiComment ? myElements[0] : PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
-      if (containingStatement == null) {
-        containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiComment.class, false);
-      }
+  protected PsiElement addToMethodCallLocation(PsiStatement newStatement) throws IncorrectOperationException {
+    if (myAddedToMethodCallLocation != null) {
+      PsiCodeBlock block = myAddedToMethodCallLocation.getCodeBlock();
+      return block.addBefore(newStatement, block.getRBrace());
+    }
 
-      return containingStatement.getParent().addBefore(statement, containingStatement);
+    PsiElement location;
+    PsiStatement oldStatement;
+    if (myEnclosingBlockStatement != null) {
+      location = oldStatement = myEnclosingBlockStatement;
     }
     else {
-      return myEnclosingBlockStatement.getParent().addBefore(statement, myEnclosingBlockStatement);
+      PsiElement element = myExpression != null ? myExpression : myElements[0];
+      PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
+
+      if (comment == null) {
+        location = oldStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+      }
+      else {
+        location = comment;
+        oldStatement = StreamEx.of(myElements)
+          .filter(e -> !(e instanceof PsiComment) && !(e instanceof PsiWhiteSpace))
+          .map(e -> PsiTreeUtil.getParentOfType(e, PsiStatement.class, false))
+          .nonNull()
+          .findFirst()
+          .orElse(null);
+      }
     }
+
+    LOG.assertTrue(location != null, "Can't find statement/comment at the extracted location");
+
+    PsiElement parent = location.getParent();
+    if (isBranchOrBody(parent, oldStatement)) {
+      // The parent statement will be inconsistent until deleting the extracted part:
+      // the block statement is being added just before a then/else branch or loop body,
+      // but the original then/else branch or loop body will be deleted in the end so it's fine.
+      // Example: "if(..) oldStatement" -> "if(..) { newStatement } oldStatement" -> "if(..) { newStatement }"
+      myAddedToMethodCallLocation = (PsiBlockStatement)myElementFactory.createStatementFromText("{}", oldStatement);
+      myAddedToMethodCallLocation = (PsiBlockStatement)parent.addBefore(myAddedToMethodCallLocation, location);
+      PsiCodeBlock block = myAddedToMethodCallLocation.getCodeBlock();
+      return block.addBefore(newStatement, block.getRBrace());
+    }
+    return parent.addBefore(newStatement, location);
+  }
+
+  @Contract("_,null -> false; null,_ -> false")
+  private static boolean isBranchOrBody(PsiElement parent, PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    if (parent instanceof PsiIfStatement) {
+      return (((PsiIfStatement)parent).getThenBranch() == element || ((PsiIfStatement)parent).getElseBranch() == element);
+    }
+    if (parent instanceof PsiLoopStatement) {
+      return ((PsiLoopStatement)parent).getBody() == element;
+    }
+    return false;
   }
 
   private void renameInputVariables() throws IncorrectOperationException {

@@ -943,7 +943,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
             myOptionalQualifiers.add(qualifier);
           }
           else if (DfaOptionalSupport.isOptionalGetMethodName(methodName)) {
-            Boolean fact = memState.getValueFact(DfaFactType.OPTIONAL_PRESENCE, memState.peek());
+            Boolean fact = memState.getValueFact(memState.peek(), DfaFactType.OPTIONAL_PRESENCE);
             ThreeState state = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
             myOptionalCalls.merge(call, state, ThreeState::merge);
           }

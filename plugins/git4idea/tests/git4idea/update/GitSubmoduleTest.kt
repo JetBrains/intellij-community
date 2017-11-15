@@ -179,8 +179,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun prepareSecondClone(): File {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    val bro = File(testRoot, "bro")
-    return bro
+    return File(testRoot, "bro")
   }
 
   private fun commitAndPushFromSecondClone(bro: File) {

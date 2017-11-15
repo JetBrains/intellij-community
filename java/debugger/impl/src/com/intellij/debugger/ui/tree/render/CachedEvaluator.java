@@ -66,7 +66,9 @@ public abstract class CachedEvaluator {
         if (eval != null) {
           cache.myEvaluator = eval;
         }
-        throw ex;
+        else {
+          throw ex;
+        }
       }
     }
     catch (EvaluateException e) {

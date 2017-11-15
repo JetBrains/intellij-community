@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -205,6 +206,6 @@ public class PsiMultiReference implements PsiPolyVariantReference {
 
   @Override
   public String toString() {
-    return "PsiMultiReference{myReferences=" + Arrays.toString(myReferences) + '}';
+    return "PsiMultiReference{" + StringUtil.join(myReferences, r -> r.getClass().getName(), ",") + '}';
   }
 }

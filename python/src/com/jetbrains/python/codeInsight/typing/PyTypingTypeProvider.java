@@ -24,6 +24,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -67,6 +68,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String SUPPORTS_BYTES_SIMPLE = "SupportsBytes";
   public static final String SUPPORTS_ABS_SIMPLE = "SupportsAbs";
   public static final String SUPPORTS_ROUND_SIMPLE = "SupportsRound";
+
+  private static final String PY2_FILE_TYPE = "typing.BinaryIO";
+  private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
+  private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
@@ -244,10 +249,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (value != null) {
         final Ref<PyType> typeRef = getType(value, new Context(context));
         if (typeRef != null) {
-          if (function.isAsync() && function.isAsyncAllowed() && !function.isGenerator()) {
-            return Ref.create(wrapInCoroutineType(typeRef.get(), callable));
-          }
-          return typeRef;
+          return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
         }
       }
     }
@@ -281,13 +283,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if ("typing.cast".equals(function.getQualifiedName())) {
+    final String functionQName = function.getQualifiedName();
+
+    if ("typing.cast".equals(functionQName)) {
       return Optional
         .ofNullable(as(callSite, PyCallExpression.class))
         .map(PyCallExpression::getArguments)
         .filter(args -> args.length > 0)
         .map(args -> getType(args[0], new Context(context)))
         .orElse(null);
+    }
+
+    if (callSite instanceof PyCallExpression && "open".equals(functionQName)) {
+      return getOpenFunctionCallType(function, (PyCallExpression)callSite, LanguageLevel.forElement(callSite), context);
     }
 
     return null;
@@ -740,9 +748,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             final PyExpression firstArgument = arguments[0];
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-              if (name != null) {
-                return new PyGenericType(name, getGenericTypeBound(arguments, context));
-              }
+              return new PyGenericType(name, getGenericTypeBound(arguments, context));
             }
           }
         }
@@ -912,7 +918,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  public static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
+  public static PyType toAsyncIfNeeded(@NotNull PyFunction function, @Nullable PyType returnType) {
+    if (function.isAsync() && function.isAsyncAllowed()) {
+      if (!function.isGenerator()) {
+        return wrapInCoroutineType(returnType, function);
+      }
+      else if (returnType instanceof PyClassLikeType &&
+               returnType instanceof PyCollectionType &&
+               GENERATOR.equals(((PyClassLikeType)returnType).getClassQName())) {
+        return wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), function);
+      }
+    }
+
+    return returnType;
+  }
+
+  @Nullable
+  private static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
     final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(COROUTINE),
                                                                            PyResolveImportUtil.fromFoothold(resolveAnchor)), PyClass.class);
     return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
@@ -926,10 +948,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  public static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
+  private static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
     final PyClass asyncGenerator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(ASYNC_GENERATOR),
                                                                                 PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
     return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
+  }
+
+  /**
+   * @deprecated Use {@link PyTypingTypeProvider#coroutineOrGeneratorElementType(PyType)} instead.
+   * This method will be removed in 2018.2.
+   */
+  @Nullable
+  @Deprecated
+  public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType, @NotNull TypeEvalContext context) {
+    return coroutineOrGeneratorElementType(coroutineOrGeneratorType);
   }
 
   @Nullable
@@ -942,6 +974,42 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
+  }
+
+  @NotNull
+  public static Ref<PyType> getOpenFunctionCallType(@NotNull PyFunction function,
+                                                    @NotNull PyCallExpression call,
+                                                    @NotNull LanguageLevel typeLevel,
+                                                    @NotNull TypeEvalContext context) {
+    final String type =
+      typeLevel.isPython2()
+      ? PY2_FILE_TYPE
+      : getOpenMode(function, call, context).contains("b")
+        ? PY3_BINARY_FILE_TYPE
+        : PY3_TEXT_FILE_TYPE;
+
+    return Ref.create(PyTypeParser.getTypeByName(call, type, context));
+  }
+
+  @NotNull
+  private static String getOpenMode(@NotNull PyFunction function, @NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final Map<PyExpression, PyCallableParameter> arguments =
+      PyCallExpressionHelper.mapArguments(call, function, context).getMappedParameters();
+
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : arguments.entrySet()) {
+      if ("mode".equals(entry.getValue().getName())) {
+        PyExpression argument = entry.getKey();
+        if (argument instanceof PyKeywordArgument) {
+          argument = ((PyKeywordArgument)argument).getValueExpression();
+        }
+        if (argument instanceof PyStringLiteralExpression) {
+          return ((PyStringLiteralExpression)argument).getStringValue();
+        }
+        break;
+      }
+    }
+
+    return "r";
   }
 
   private static class Context {

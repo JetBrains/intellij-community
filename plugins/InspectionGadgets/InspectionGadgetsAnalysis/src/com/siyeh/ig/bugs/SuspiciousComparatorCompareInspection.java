@@ -153,7 +153,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                                          DfaMemoryState memState) {
         myContexts.add(instruction.getReturn());
         DfaValue value = memState.peek();
-        LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, value);
+        LongRangeSet range = memState.getValueFact(value, DfaFactType.RANGE);
         myRange = range == null ? LongRangeSet.all() : myRange.union(range);
         return super.visitCheckReturnValue(instruction, runner, memState);
       }

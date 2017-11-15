@@ -49,7 +49,6 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
                                   boolean isKeywordContainer,
                                   boolean hasDefaultValue,
                                   @Nullable String typeCommentAnnotation,
-                                  @Nullable String annotation,
                                   StubElement parent,
                                   IStubElementType stubElementType) {
     this(name,
@@ -57,7 +56,7 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
          isKeywordContainer,
          hasDefaultValue ? PyNames.ELLIPSIS : null,
          typeCommentAnnotation,
-         annotation,
+         null,
          parent,
          stubElementType);
   }

@@ -105,7 +105,7 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
   val separator = "\u0001"
   val actualMessages = git("log -${messages.size} --pretty=%B${separator}").split(separator)
   for ((index, message) in messages.withIndex()) {
-    PlatformTestCase.assertEquals("Incorrect message", message.trimIndent(), actualMessages[index].trim())
+    Assertions.assertThat(actualMessages[index].trim()).isEqualToIgnoringWhitespace(message.trimIndent())
   }
 }
 

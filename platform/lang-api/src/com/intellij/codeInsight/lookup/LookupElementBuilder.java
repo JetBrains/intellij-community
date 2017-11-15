@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,16 @@ public final class LookupElementBuilder extends LookupElement {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeText(typeText, typeIcon);
     presentation.setTypeGrayed(grayed);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
+                                    myAllLookupStrings, myCaseSensitive);
+  }
+
+  /**
+   * @since 2018.1
+   */
+  public LookupElementBuilder withTypeIconRightAligned(boolean typeIconRightAligned) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.setTypeIconRightAligned(typeIconRightAligned);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation,
                                     myAllLookupStrings, myCaseSensitive);
   }

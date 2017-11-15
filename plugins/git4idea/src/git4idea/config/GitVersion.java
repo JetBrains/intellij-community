@@ -247,6 +247,13 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + " (" + myType + ")";
   }
 
+  @NotNull
+  public String getSemanticPresentation() {
+    String presentation = myMajor + "." + myMinor + "." + myRevision;
+    if (myPatchLevel > 0) presentation += "." + myPatchLevel;
+    return presentation + "-" + myType;
+  }
+
   /**
    * @return true if this version is older or the same than the given one.
    */

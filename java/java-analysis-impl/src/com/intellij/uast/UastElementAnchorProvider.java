@@ -17,11 +17,10 @@ package com.intellij.uast;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
-import com.intellij.semantic.SemService;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UElementSemContributorKt;
 import org.jetbrains.uast.UastContextKt;
 
 /**
@@ -33,8 +32,9 @@ public class UastElementAnchorProvider extends SmartPointerAnchorProvider {
   public PsiElement getAnchor(@NotNull PsiElement element) {
     if (element instanceof UElement) {
       PsiElement psi = ((UElement)element).getPsi();
-      SemService.getSemService(psi.getProject())
-        .setCachedSemElement(UElementSemContributorKt.UAST_SEM_KEY, psi, (UElement)element);
+      if (psi != null) {
+        psi.putUserData(UastContextKt.getCACHED_UELEMENT_KEY(), new SoftReference<>((UElement)element));
+      }
       return psi;
     }
     return null;

@@ -1,29 +1,43 @@
 package jetCheck;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
-interface StructureElement {
-  void shrink(Predicate<StructureElement> suitable);
+abstract class StructureElement {
+  final NodeId id;
+
+  StructureElement(@NotNull NodeId id) {
+    this.id = id;
+  }
+
+  abstract void shrink(ShrinkContext suitable);
+
+  @NotNull
+  abstract StructureElement replace(NodeId id, StructureElement replacement);
+
+  @Nullable
+  abstract StructureElement findChildById(NodeId id);
 }
 
-class StructureNode implements StructureElement {
+class StructureNode extends StructureElement {
   final List<StructureElement> children;
   boolean shrinkProhibited;
 
-  StructureNode() {
-    this(new ArrayList<>());
+  StructureNode(NodeId id) {
+    this(id, new ArrayList<>());
   }
 
-  StructureNode(List<StructureElement> children) {
+  StructureNode(NodeId id, List<StructureElement> children) {
+    super(id);
     this.children = children;
   }
 
@@ -36,7 +50,7 @@ class StructureNode implements StructureElement {
   }
 
   StructureNode subStructure() {
-    StructureNode e = new StructureNode();
+    StructureNode e = new StructureNode(id.childId());
     addChild(e);
     return e;
   }
@@ -49,47 +63,36 @@ class StructureNode implements StructureElement {
   }
 
   @Override
-  public void shrink(Predicate<StructureElement> suitable) {
+  void shrink(ShrinkContext context) {
     if (shrinkProhibited) return;
 
-    List<StructureElement> children = this.children;
+    StructureNode node = this;
     boolean isList = isList();
     if (isList) {
-      children = shrinkList(suitable, children);
+      node = shrinkList(context, node);
     }
 
-    for (int i = isList ? 1 : 0; i < children.size(); i++) {
-      children = shrinkChild(suitable, children, i);
+    for (int i = isList ? 1 : 0; i < node.children.size(); i++) {
+      node.children.get(i).shrink(context);
     }
 
-    shrinkAlternativeListRecursion(suitable, children);
+    StructureElement latest = context.getCurrentMinimalRoot().findChildById(this.id);
+    if (latest instanceof StructureNode) {
+      ((StructureNode)latest).shrinkAlternativeListRecursion(context);
+    }
   }
 
-  private static List<StructureElement> shrinkChild(Predicate<StructureElement> suitable, List<StructureElement> children, int index) {
-    List<StructureElement> result = new ArrayList<>(children);
-    children.get(index).shrink(less -> {
-      List<StructureElement> copy = new ArrayList<>(result);
-      copy.set(index, less);
-      if (suitable.test(new StructureNode(copy))) {
-        result.set(index, less);
-        return true;
-      }
-      return false;
-    });
-    return result;
-  }
-
-  private static List<StructureElement> shrinkList(Predicate<StructureElement> suitable, List<StructureElement> listChildren) {
-    int start = 1;
-    int length = 1;
-    int limit = listChildren.size();
+  private static StructureNode shrinkList(ShrinkContext context, StructureNode node) {
+    int limit = node.children.size();
     while (limit > 0) {
+      int start = 1;
+      int length = 1;
       int lastSuccessfulRemove = -1;
-      while (start < limit && start < listChildren.size()) {
-        StructureNode less = removeRange(listChildren, start, length);
-        if (suitable.test(less)) {
-          listChildren = less.children;
-          length = Math.min(length * 2, listChildren.size() - start);
+      while (start < limit && start < node.children.size()) {
+        // remove last items from the end first to decrease the number of variants in CombinatorialIntCustomizer
+        if (context.tryReplacement(node.id, node.removeRange(node.children, node.children.size() - start - length + 1, length))) {
+          node = (StructureNode)Objects.requireNonNull(context.getCurrentMinimalRoot().findChildById(node.id));
+          length = Math.min(length * 2, node.children.size() - start);
           lastSuccessfulRemove = start;
         } else {
           if (length > 1) {
@@ -101,17 +104,17 @@ class StructureNode implements StructureElement {
       }
       limit = lastSuccessfulRemove;
     }
-    return listChildren;
+    return node;
   }
 
   @NotNull
-  private static StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
+  private StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
     int newSize = listChildren.size() - length - 1;
     List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
-    lessItems.add(new IntData(newSize, IntDistribution.uniform(0, newSize)));
+    lessItems.add(new IntData(id, newSize, IntDistribution.uniform(0, newSize)));
     lessItems.addAll(listChildren.subList(1, start));
     lessItems.addAll(listChildren.subList(start + length, listChildren.size()));
-    return new StructureNode(lessItems);
+    return new StructureNode(id, lessItems);
   }
 
   private boolean isList() {
@@ -125,13 +128,13 @@ class StructureNode implements StructureElement {
     return false;
   }
 
-  private static void shrinkAlternativeListRecursion(Predicate<StructureElement> suitable, List<StructureElement> children) {
+  private void shrinkAlternativeListRecursion(ShrinkContext context) {
     if (seemsAlternative(children)) {
       StructureElement child1 = deparenthesize(children.get(1));
       if (child1 instanceof StructureNode && ((StructureNode)child1).isList() && ((StructureNode)child1).children.size() == 2) {
         StructureElement singleListElement = deparenthesize(((StructureNode)child1).children.get(1));
         if (singleListElement instanceof StructureNode && seemsAlternative(((StructureNode)singleListElement).children)) {
-          suitable.test(singleListElement);
+          context.tryReplacement(id, singleListElement);
         }
       }
     }
@@ -148,6 +151,41 @@ class StructureNode implements StructureElement {
     return children.size() == 2 && deparenthesize(children.get(0)) instanceof IntData && children.get(1) instanceof StructureNode;
   }
 
+  @NotNull
+  @Override
+  StructureNode replace(NodeId id, StructureElement replacement) {
+    if (id == this.id) {
+      return (StructureNode)replacement;
+    }
+    
+    if (children.isEmpty()) return this;
+
+    int index = indexOfChildContaining(id);
+    StructureElement oldChild = children.get(index);
+    StructureElement newChild = oldChild.replace(id, replacement);
+    if (oldChild == newChild) return this;
+
+    List<StructureElement> newChildren = new ArrayList<>(this.children);
+    newChildren.set(index, newChild);
+    StructureNode copy = new StructureNode(this.id, newChildren);
+    copy.shrinkProhibited = this.shrinkProhibited;
+    return copy;
+  }
+
+  @Nullable
+  @Override
+  StructureElement findChildById(NodeId id) {
+    if (id == this.id) return this;
+    int index = indexOfChildContaining(id);
+    return index < 0 ? null : children.get(index).findChildById(id);
+  }
+
+  private int indexOfChildContaining(NodeId id) {
+    int i = 0;
+    while (i < children.size() && children.get(i).id.number <= id.number) i++;
+    return i - 1;
+  }
+
   @Override
   public int hashCode() {
     return children.hashCode();
@@ -160,32 +198,44 @@ class StructureNode implements StructureElement {
 
 }
 
-class IntData implements StructureElement {
+class IntData extends StructureElement {
   final int value;
   final IntDistribution distribution;
 
-  IntData(int value, IntDistribution distribution) {
+  IntData(NodeId id, int value, IntDistribution distribution) {
+    super(id);
     this.value = value;
     this.distribution = distribution;
   }
 
   @Override
-  public void shrink(Predicate<StructureElement> suitable) {
-    if (value == 0 || tryInt(0, suitable)) return;
+  void shrink(ShrinkContext context) {
+    if (value == 0 || tryInt(0, context)) return;
 
     int value = this.value;
-    if (value < 0 && tryInt(-value, suitable)) {
+    if (value < 0 && tryInt(-value, context)) {
       value = -value;
     }
-    while (value != 0 && tryInt(value / 2, suitable)) {
+    while (value != 0 && tryInt(value / 2, context)) {
       value /= 2;
     }
   }
 
-  private boolean tryInt(int value, Predicate<StructureElement> suitable) {
-    return distribution.isValidValue(value) && suitable.test(new IntData(value, distribution));
+  private boolean tryInt(int value, ShrinkContext context) {
+    return distribution.isValidValue(value) && context.tryReplacement(id, new IntData(id, value, distribution));
   }
 
+  @NotNull
+  @Override
+  IntData replace(NodeId id, StructureElement replacement) {
+    return this.id == id ? (IntData)replacement : this;
+  }
+
+  @Nullable
+  @Override
+  StructureElement findChildById(NodeId id) {
+    return id == this.id ? this : null;
+  }
 
   @Override
   public String toString() {

@@ -110,6 +110,10 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
   public void testRemoveRedundantCast() {
     doTest();
   }
+  
+  public void testMalformedPackageName() {
+    doTest();
+  }
 
   @Override
   protected String getRelativePath() {
