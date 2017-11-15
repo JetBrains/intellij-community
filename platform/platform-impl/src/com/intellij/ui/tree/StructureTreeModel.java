@@ -207,10 +207,8 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     Node node = root.get();
     boolean leaf = structure.isAlwaysLeaf(element);
-    if (node == null || leaf == node.getAllowsChildren() || !element.equals(node.getElement())) {
-      node = new Node(structure.createDescriptor(element, null), leaf);
-    }
-    node.update();
+    if (node == null || leaf == node.getAllowsChildren() || !element.equals(node.getElement())) node = new Node(leaf);
+    node.update(structure.createDescriptor(element, null));
     return node;
   }
 
@@ -237,10 +235,8 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       if (isValid(element)) {
         Node child = map.get(element);
         boolean leaf = structure.isAlwaysLeaf(element);
-        if (child == null || leaf == child.getAllowsChildren()) {
-          child = new Node(structure.createDescriptor(element, descriptor), leaf);
-        }
-        child.update();
+        if (child == null || leaf == child.getAllowsChildren()) child = new Node(leaf);
+        child.update(structure.createDescriptor(element, descriptor));
         list.add(child);
       }
     }
@@ -252,8 +248,8 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
 
-    private Node(@NotNull NodeDescriptor descriptor, boolean leaf) {
-      super(descriptor, !leaf);
+    private Node(boolean leaf) {
+      super(null, !leaf);
       if (leaf) children.set(null);
     }
 
@@ -261,6 +257,11 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       setParent(null);
       List<Node> list = children.set(null);
       if (list != null) list.forEach(Node::dispose);
+    }
+
+    private void update(@NotNull NodeDescriptor descriptor) {
+      descriptor.update();
+      super.userObject = descriptor;
     }
 
     private boolean update() {
