@@ -97,17 +97,10 @@ public class GlobalCompilingVisitor {
     this.myCodeBlockLevel = codeBlockLevel;
   }
 
-  static void setFilter(MatchingHandler handler, NodeFilter filter) {
-    if (handler.getFilter() != null &&
-        handler.getFilter().getClass() != filter.getClass()
-      ) {
-      // for constructor we will have the same handler for class and method and tokens itselfa
-      handler.setFilter(
-        new CompositeFilter(
-          filter,
-          handler.getFilter()
-        )
-      );
+  public static void setFilter(MatchingHandler handler, NodeFilter filter) {
+    if (handler.getFilter() != null && handler.getFilter().getClass() != filter.getClass()) {
+      // for constructor we will have the same handler for class and method and tokens itself
+      handler.setFilter(new CompositeFilter(filter, handler.getFilter()));
     }
     else {
       handler.setFilter(filter);
@@ -148,6 +141,7 @@ public class GlobalCompilingVisitor {
       content = pattern;
     }
     else {
+      assert false;
       return null;
     }
 
@@ -166,7 +160,7 @@ public class GlobalCompilingVisitor {
 
       word = content.substring(start, matcher.start());
 
-      if (word.length() > 0) {
+      if (!word.isEmpty()) {
         buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
         hasLiteralContent = true;
 
@@ -191,7 +185,7 @@ public class GlobalCompilingVisitor {
 
     word = content.substring(start, content.length());
 
-    if (word.length() > 0) {
+    if (!word.isEmpty()) {
       hasLiteralContent = true;
       buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
 
