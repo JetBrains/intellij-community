@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
@@ -25,22 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PropertiesComponentImpl.class);
 
-  private final Map<String, String> myMap = new LinkedHashMap<String, String>() {
-    @Override
-    public String put(String key, String value) {
-      String reason = Verifier.checkCharacterData(key);
-      if (reason != null) {
-        LOG.error(reason);
-      }
-      return super.put(key, value);
-    }
-  };
+  private final Map<String, String> myMap = ContainerUtil.newConcurrentMap();
 
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -52,6 +29,14 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   PropertiesComponentImpl() {
+  }
+
+  private void doPut(String key, String value) {
+    String reason = Verifier.checkCharacterData(key);
+    if (reason != null) {
+      LOG.error(reason);
+    }
+    myMap.put(key, value);
   }
 
   @TestOnly
@@ -97,7 +82,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
       myMap.remove(name);
     }
     else {
-      myMap.put(name, value);
+      doPut(name, value);
     }
   }
 
@@ -107,7 +92,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
       myMap.remove(name);
     }
     else {
-      myMap.put(name, value);
+      doPut(name, value);
     }
   }
 
@@ -117,7 +102,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
       myMap.remove(name);
     }
     else {
-      myMap.put(name, String.valueOf(value));
+      doPut(name, String.valueOf(value));
     }
   }
 
@@ -127,7 +112,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
       myMap.remove(name);
     }
     else {
-      myMap.put(name, String.valueOf(value));
+      doPut(name, String.valueOf(value));
     }
   }
 
