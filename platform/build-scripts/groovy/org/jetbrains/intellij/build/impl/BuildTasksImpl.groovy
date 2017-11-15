@@ -264,7 +264,7 @@ idea.fatal.error.notification=disabled
     def productLayout = buildContext.productProperties.productLayout
     def bundledPlugins = productLayout.bundledPluginModules as Set<String>
     def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
-                      productLayout.platformApiModules + productLayout.platformImplementationModules +
+                      productLayout.platformApiJarModules + productLayout.platformImplJarModules +
                       productLayout.additionalPlatformJars.values() +
                       DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +

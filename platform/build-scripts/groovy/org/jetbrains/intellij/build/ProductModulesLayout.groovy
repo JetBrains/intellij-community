@@ -36,13 +36,31 @@ class ProductModulesLayout {
    * Names of the modules which need to be packed into platform-api.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
    */
-  List<String> platformApiModules = []
+  List<String> platformApiJarModules = []
 
   /**
    * Names of the modules which need to be included into platform-impl in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
    */
-  List<String> platformImplementationModules = []
+  List<String> platformImplJarModules = []
+
+  /**
+   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   * @param modulesList
+   * @deprecated Use {@link #productApiModules} instead. To be removed in IDEA 2018.3.
+   */
+  def setPlatformApiModules(List<String> modulesList) {
+    productApiModules = modulesList
+  }
+
+  /**
+   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   * @param modulesList
+   * @deprecated Use {@link #productImplementationModules} instead. To be removed in IDEA 2018.3.
+   */
+  def setPlatformImplementationModules(List<String> modulesList) {
+    productImplementationModules = modulesList
+  }
 
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.

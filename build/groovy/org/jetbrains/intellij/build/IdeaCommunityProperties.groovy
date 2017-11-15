@@ -32,8 +32,8 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES
+    productLayout.platformApiJarModules = CommunityRepositoryModules.PLATFORM_API_MODULES
+    productLayout.platformImplJarModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES
     productLayout.productApiModules =  JAVA_API_MODULES
     productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -

@@ -87,10 +87,10 @@ class DistributionJARsBuilder {
           withModule(it, jarName)
         }
       }
-      productLayout.platformApiModules.each {
+      productLayout.platformApiJarModules.each {
         withModule(it, "platform-api.jar")
       }
-      productLayout.platformImplementationModules.each {
+      productLayout.platformImplJarModules.each {
         withModule(it, "platform-impl.jar")
       }
       productLayout.productApiModules.each {
