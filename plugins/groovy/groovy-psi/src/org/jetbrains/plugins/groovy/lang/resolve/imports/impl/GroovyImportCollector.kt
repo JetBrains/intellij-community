@@ -15,35 +15,58 @@ class GroovyImportCollector(private val file: GroovyFile) {
   private val statementToImport = mutableMapOf<GrImportStatement, GroovyImport>()
   private val imports = HashMap<ImportKind<*>, LinkedHashMap<String, GroovyImport>>()
 
+  val isEmpty get() = imports.values.all { it.isEmpty() }
+
+  fun clear() {
+    imports.clear()
+  }
+
+  fun setFrom(collector: GroovyImportCollector) {
+    imports.clear()
+    imports.putAll(collector.imports)
+  }
+
+  val allImports: Collection<GroovyImport> get() = imports.values.flatMap { it.values }
+
   @Suppress("UNCHECKED_CAST")
   private fun <T : GroovyImport> getMap(kind: ImportKind<T>): LinkedHashMap<String, T> {
     val map = imports.getOrPut(kind) { LinkedHashMap() }
     return map as LinkedHashMap<String, T>
   }
 
-  private fun addImport(import: RegularImport) {
+  private fun addRegularImport(import: RegularImport) {
     getMap(ImportKind.Regular)[import.name] = import
   }
 
-  private fun addImport(import: StaticImport) {
+  private fun addStaticImport(import: StaticImport) {
     getMap(ImportKind.Static)[import.name] = import
   }
 
-  private fun addImport(import: StarImport) {
+  private fun addStarImport(import: StarImport) {
     getMap(ImportKind.Star)[import.packageFqn] = import
   }
 
-  private fun addImport(import: StaticStarImport) {
+  private fun addStaticStarImport(import: StaticStarImport) {
     getMap(ImportKind.StaticStar)[import.classFqn] = import
   }
 
   private fun addImport(import: GroovyImport) = when (import) {
-    is RegularImport -> addImport(import)
-    is StaticImport -> addImport(import)
-    is StarImport -> addImport(import)
-    is StaticStarImport -> addImport(import)
+    is RegularImport -> addRegularImport(import)
+    is StaticImport -> addStaticImport(import)
+    is StarImport -> addStarImport(import)
+    is StaticStarImport -> addStaticStarImport(import)
     else -> error("Unsupported import. Class: ${import.javaClass}; toString: ${import}")
   }
+
+  fun addRegularImport(classFqn: String, name: String) = addRegularImport(RegularImport(classFqn, name))
+
+  fun addStaticImport(classFqn: String, memberName: String) = addStaticImport(classFqn, memberName, memberName)
+
+  fun addStaticImport(classFqn: String, memberName: String, name: String) = addStaticImport(StaticImport(classFqn, memberName, name))
+
+  fun addStarImport(packageFqn: String) = addStarImport(StarImport(packageFqn))
+
+  fun addStaticStarImport(classFqn: String) = addStaticStarImport(StaticStarImport(classFqn))
 
   internal fun addImportFromStatement(statement: GrImportStatement) {
     val import = statement.import ?: return
@@ -54,14 +77,14 @@ class GroovyImportCollector(private val file: GroovyFile) {
   internal fun addImportFromContributor(contributedImport: Import) {
     val name = contributedImport.name
     when (contributedImport.type) {
-      ImportType.REGULAR -> addImport(RegularImport(name, getShortName(name)))
-      ImportType.STATIC -> addImport(StaticImport(getPackageName(name), getShortName(name)))
-      ImportType.STAR -> addImport(StarImport(name))
-      ImportType.STATIC_STAR -> addImport(StaticStarImport(name))
+      ImportType.REGULAR -> addRegularImport(name, getShortName(name))
+      ImportType.STATIC -> addStaticImport(getPackageName(name), getShortName(name))
+      ImportType.STAR -> addStarImport(name)
+      ImportType.STATIC_STAR -> addStaticStarImport(name)
     }
   }
 
-  internal fun build(): GroovyFileImports = GroovyFileImportsImpl(
+  fun build(): GroovyFileImports = GroovyFileImportsImpl(
     file,
     imports.mapValues { (_, map) -> map.values.toList() }.toMap(),
     statementToImport,
