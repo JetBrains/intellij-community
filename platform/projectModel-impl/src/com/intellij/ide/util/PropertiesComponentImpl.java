@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
@@ -37,6 +39,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
       LOG.error(reason);
     }
     myMap.put(key, value);
+    incModificationCount();
   }
 
   @TestOnly
@@ -48,7 +51,9 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public Element getState() {
     Element parentNode = new Element("state");
-    for (final String key : myMap.keySet()) {
+    List<String> keys = new ArrayList<>(myMap.keySet());
+    keys.sort(null);
+    for (final String key : keys) {
       String value = myMap.get(key);
       if (value != null) {
         Element element = new Element(ELEMENT_PROPERTY);
@@ -79,7 +84,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, @Nullable String value) {
     if (value == null) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       doPut(name, value);
@@ -89,7 +94,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, @Nullable String value, @Nullable String defaultValue) {
     if (value == null || value.equals(defaultValue)) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       doPut(name, value);
@@ -99,7 +104,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, float value, float defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       doPut(name, String.valueOf(value));
@@ -109,7 +114,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, int value, int defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       doPut(name, String.valueOf(value));
@@ -119,7 +124,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, boolean value, boolean defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       setValue(name, String.valueOf(value));
@@ -129,6 +134,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void unsetValue(String name) {
     myMap.remove(name);
+    incModificationCount();
   }
 
   @Override
