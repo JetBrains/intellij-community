@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener.Adapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -24,13 +26,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
@@ -53,6 +54,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -64,7 +66,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
 import static com.intellij.vcs.log.util.PersistentUtil.*;
 
@@ -749,12 +750,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
       if (time >= Math.max(limit, 1) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
-        String message = "Indexing commits in " + myRoot.getName() + " repository is taking too long (" + StopWatch.formatTime(time) +
-                         "). Indexing was cancelled.";
-        LOG.warn(message);
+        LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         myBigRepositoriesList.addRepository(myRoot);
         indicator.cancel();
-        showIndexingNotification(message);
+        showIndexingNotification(time);
       }
     }
 
@@ -767,21 +766,27 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
 
-    private void showIndexingNotification(@NotNull String message) {
-      Runnable runnable = () -> showOverChangesView(myProject, message,
-                                                    MessageType.WARNING,
-                                                    new NamedRunnable("Resume indexing " + myRoot.getName()) {
-                                                      @Override
-                                                      public void run() {
-                                                        if (myBigRepositoriesList.isBig(myRoot)) {
-                                                          LOG.info("Resuming indexing " + myRoot.getName());
-                                                          myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
-                                                          myBigRepositoriesList.removeRepository(myRoot);
-                                                          scheduleIndex(false);
-                                                        }
-                                                      }
-                                                    });
-      ApplicationManager.getApplication().invokeLater(runnable);
+    private void showIndexingNotification(long time) {
+      Runnable notification = () -> {
+        Adapter notificationListener = new Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification,
+                                            @NotNull HyperlinkEvent e) {
+            if (myBigRepositoriesList.isBig(myRoot)) {
+              LOG.info("Resuming indexing " + myRoot.getName());
+              myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
+              myBigRepositoriesList.removeRepository(myRoot);
+              scheduleIndex(false);
+            }
+          }
+        };
+        VcsNotifier.getInstance(myProject).notifyImportantWarning("Log indexing for " + myRoot.getName() + " cancelled",
+                                                                  "Indexing was taking too long (" +
+                                                                  StopWatch.formatTime(time - time % 1000) +
+                                                                  ")<p/><a href='resume'>Resume</a>",
+                                                                  notificationListener);
+      };
+      ApplicationManager.getApplication().invokeLater(notification);
     }
   }
 }
