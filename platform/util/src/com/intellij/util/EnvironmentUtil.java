@@ -204,7 +204,7 @@ public class EnvironmentUtil {
         cl.add(batchFile.getPath());
         cl.addAll(args);
         cl.add("&&");
-        cl.addAll(gerReadEnvCommand());
+        cl.addAll(getReadEnvCommand());
         cl.add(envFile.getPath());
         cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
 
@@ -219,8 +219,8 @@ public class EnvironmentUtil {
     }
 
     @NotNull
-    private static List<String> gerReadEnvCommand() {
-      return Arrays.asList(System.getProperty("java.home") + "/bin/java",
+    private static List<String> getReadEnvCommand() {
+      return Arrays.asList(FileUtil.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
                            "-cp", PathManager.getJarPathForClass(ReadEnv.class),
                            ReadEnv.class.getCanonicalName());
     }
@@ -234,7 +234,7 @@ public class EnvironmentUtil {
     @NotNull
     protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
       throws Exception {
-      return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
+      return runProcessAndReadEnvs(command, null, null, envFile, lineSeparator);
     }
 
     @NotNull
@@ -444,7 +444,7 @@ public class EnvironmentUtil {
     }
   }
 
-  public static class StreamGobbler extends BaseOutputReader {
+  private static class StreamGobbler extends BaseOutputReader {
     private static final Options OPTIONS = new Options() {
       @Override
       public SleepingPolicy policy() {

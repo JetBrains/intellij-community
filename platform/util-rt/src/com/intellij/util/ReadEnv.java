@@ -14,8 +14,16 @@ public class ReadEnv {
     Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[0]), "UTF-8"));
     try {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
+        // on Windows Java getenv() includes variables that start from '='. 
+        // These variables are not available available in normal command environment.
+        
+        // https://stackoverflow.com/questions/30102750/java-system-getenv-environment-names-starting-with
         if (each.getKey().startsWith("=")) continue;
-        out.write(each.getKey() + "=" + each.getValue() + "\0");
+        
+        out.write(each.getKey());
+        out.write("=");
+        out.write(each.getValue());
+        out.write("\0");
       }
     }
     finally {

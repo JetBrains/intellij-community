@@ -14,7 +14,6 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -423,7 +422,7 @@ public class CommandLineUtil {
   
   @NotNull
   public static String getWinShellName() {
-    return SystemInfo.isWin2kOrNewer ? "cmd.exe" : "command.com";
+    return "cmd.exe";
   }
 
   private static boolean isWinShell(String command) {
