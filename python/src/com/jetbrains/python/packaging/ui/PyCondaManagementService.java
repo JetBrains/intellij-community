@@ -27,15 +27,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.intellij.webcore.packaging.RepoPackage;
-import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
-import com.jetbrains.python.packaging.PyCondaPackageService;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class PyCondaManagementService extends PyPackageManagementService {
   private static final Logger LOG = Logger.getInstance(PyCondaManagementService.class);
@@ -140,5 +139,16 @@ public class PyCondaManagementService extends PyPackageManagementService {
     else {
       super.fetchPackageVersions(packageName, consumer);
     }
+  }
+
+  @NotNull
+  protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
+    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
+    final List<RepoPackage> packages = new ArrayList<>();
+    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
+      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
+    }
+    return packages;
   }
 }
