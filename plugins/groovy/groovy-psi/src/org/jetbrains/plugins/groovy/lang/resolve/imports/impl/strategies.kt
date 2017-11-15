@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
 import gnu.trove.TObjectHashingStrategy
-
 import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 
@@ -22,8 +21,8 @@ internal object StarImportHashingStrategy : TObjectHashingStrategy<StarImport> {
   override fun equals(o1: StarImport?, o2: StarImport?): Boolean {
     if (o1 === o2) return true
     if (o1 == null || o2 == null) return false
-    return o1.fqn == o2.fqn
+    return o1.packageFqn == o2.packageFqn
   }
 
-  override fun computeHashCode(o: StarImport?): Int = o?.fqn?.hashCode() ?: 0
+  override fun computeHashCode(o: StarImport?): Int = o?.packageFqn?.hashCode() ?: 0
 }
