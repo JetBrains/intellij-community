@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -804,7 +805,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       int n = readSafely(inputStream, buffer, 0, buffer.length);
       if (n<=0) return UnknownFileType.INSTANCE;
 
-      fileType = detect(file, buffer, n);
+      fileType = ReadAction.compute(() -> detect(file, buffer, n));
     }
     finally {
       try {
