@@ -53,7 +53,8 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
     usages.add(getBooleanUsage("config.force.push", settings.warnAboutDetachedHead()))
 
-    usages.add(versionUsage(GitVcs.getInstance(project).version))
+    val version = GitVcs.getInstance(project)?.version
+    if (version != null) usages.add(versionUsage(version))
 
     for (repository in repositories) {
       val branches = repository.branches
