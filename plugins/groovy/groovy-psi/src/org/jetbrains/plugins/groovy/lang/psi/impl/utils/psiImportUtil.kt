@@ -12,10 +12,7 @@ internal fun GrImportStatement.createImportFromStatement(): GroovyImport? {
   val static = isStatic
   val star = isOnDemand
   return if (static && star) {
-    StaticStarImport(
-      this,
-      classFqn = reference.qualifiedReferenceName ?: return null
-    )
+    StaticStarImport(classFqn = reference.qualifiedReferenceName ?: return null)
   }
   else if (static) {
     val qualifier = reference.qualifier
@@ -23,14 +20,12 @@ internal fun GrImportStatement.createImportFromStatement(): GroovyImport? {
     val importedName = importedName ?: return null
     if (qualifier == null) {
       RegularImport(
-        this,
         classFqn = name,
         name = importedName
       )
     }
     else {
       StaticImport(
-        this,
         classFqn = qualifier.qualifiedReferenceName ?: return null,
         memberName = name,
         name = importedName
@@ -38,14 +33,10 @@ internal fun GrImportStatement.createImportFromStatement(): GroovyImport? {
     }
   }
   else if (star) {
-    StarImport(
-      this,
-      packageFqn = reference.qualifiedReferenceName ?: return null
-    )
+    StarImport(packageFqn = reference.qualifiedReferenceName ?: return null)
   }
   else {
     RegularImport(
-      this,
       classFqn = reference.qualifiedReferenceName ?: return null,
       name = importedName ?: return null
     )

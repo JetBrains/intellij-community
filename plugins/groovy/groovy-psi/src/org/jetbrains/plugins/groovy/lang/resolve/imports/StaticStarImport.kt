@@ -7,30 +7,24 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.NonFqnImport
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor
 
-class StaticStarImport internal constructor(
-  override val statement: GrImportStatement?,
-  override val classFqn: String
-) : NonFqnImport(), GroovyStarImport {
-
-  constructor(classFqn: String) : this(null, classFqn)
+data class StaticStarImport(override val classFqn: String) : NonFqnImport(), GroovyStarImport {
 
   override val fqn: String get() = classFqn
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean {
     val clazz = resolve(file) ?: return true
-    val stateWithContext = state.put(ClassHint.RESOLVE_CONTEXT, statement)
     for (each in GroovyResolverProcessor.allProcessors(processor)) {
       val filteringProcessor = StaticMembersFilteringProcessor(each, null)
-      if (!clazz.processDeclarations(filteringProcessor, stateWithContext, null, place)) return false
+      if (!clazz.processDeclarations(filteringProcessor, state, null, place)) return false
     }
     return true
   }
+
+  override fun isUnnecessary(imports: GroovyFileImports): Boolean = false
 
   override fun toString(): String = "import static $classFqn.*"
 }

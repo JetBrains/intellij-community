@@ -7,15 +7,8 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
-class StarImport internal constructor(
-  override val statement: GrImportStatement?,
-  val packageFqn: String
-) : GroovyStarImport {
-
-  constructor(packageFqn: String) : this(null, packageFqn)
+data class StarImport(val packageFqn: String) : GroovyStarImport {
 
   override val fqn: String get() = packageFqn
 
@@ -26,8 +19,10 @@ class StarImport internal constructor(
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean {
     val pckg = resolve(file) ?: return true
-    return pckg.processDeclarations(processor, state.put(ClassHint.RESOLVE_CONTEXT, statement), null, place)
+    return pckg.processDeclarations(processor, state, null, place)
   }
+
+  override fun isUnnecessary(imports: GroovyFileImports): Boolean = this in defaultStarImportsSet
 
   override fun toString(): String = "import $packageFqn.*"
 }

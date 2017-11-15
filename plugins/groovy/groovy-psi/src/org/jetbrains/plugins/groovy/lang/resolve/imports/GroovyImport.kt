@@ -5,14 +5,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 
 interface GroovyImport {
-
-  /**
-   * Returns statement from which this import was created or `null`
-   */
-  val statement: GrImportStatement?
 
   /**
    * Resolves current import using [file] as a context
@@ -20,9 +14,15 @@ interface GroovyImport {
   fun resolve(file: GroovyFile): PsiElement?
 
   /**
-   * Feeds the processor elements available via this import
+   * Feeds the processor with elements available via this import
    */
   fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean
+
+  /**
+   * Checks whether this import could be removed wihout any changes in resolve.
+   * Example: import com.foo.Bar is unnecessary when import com.foo.* is present
+   */
+  fun isUnnecessary(imports: GroovyFileImports): Boolean
 }
 
 interface GroovyNamedImport : GroovyImport {

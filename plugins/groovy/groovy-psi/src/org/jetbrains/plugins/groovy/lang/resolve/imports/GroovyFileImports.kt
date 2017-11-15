@@ -1,20 +1,33 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveState
+import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
+
 interface GroovyFileImports {
 
-  val regularImports: Collection<RegularImport>
-
-  val staticImports: Collection<StaticImport>
+  val file: GroovyFile
 
   val starImports: Collection<StarImport>
 
   val staticStarImports: Collection<StaticStarImport>
 
-
-  val allImports: Collection<GroovyImport>
-
   val allNamedImports: Collection<GroovyNamedImport>
 
-  val allStarImports: Collection<GroovyStarImport>
+
+  fun processStaticImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
+
+  fun processAllNamedImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
+
+  fun processAllStarImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
+
+  fun processDefaultImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
+
+
+  fun findUnneecessaryStatements(): Collection<GrImportStatement>
+
+  fun findUnresolvedStatements(names: Collection<String>): Collection<GrImportStatement>
 }
