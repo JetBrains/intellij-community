@@ -1708,7 +1708,10 @@ public class PyUtil {
    * @param expectedPackage package like "django"
    * @param expectedName expected name (i.e. AppConfig)
    * @return true if element in package
+   * @deprecated  use {@link com.jetbrains.python.nameResolver.FQNamesProvider#isNameMatches(PyQualifiedNameOwner)}
+   * Remove in 2018
    */
+  @Deprecated
   public static boolean isSymbolInPackage(@NotNull final PyQualifiedNameOwner symbol,
                                           @NotNull final String expectedPackage,
                                           @NotNull final String expectedName) {
