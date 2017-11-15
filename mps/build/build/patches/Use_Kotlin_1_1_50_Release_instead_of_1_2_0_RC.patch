@@ -1,0 +1,13 @@
+Index: build/dependencies/gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/build/dependencies/gradle.properties	(revision 61c0587cbfd2c65150e5c0762b2a56f6a24c0b83)
++++ community/build/dependencies/gradle.properties	(date 1510764492000)
+@@ -1,4 +1,4 @@
+ # The file might be automatically updated. Comments and empty lines will be removed.
+-kotlinPluginBuild=1.2.0-rc-39-IJ2017.3-1:EAP-1.2
++kotlinPluginBuild=1.1.50-release-IJ2017.3-1
+ jetSignBuild=42.30
+ jdkBuild=u152b1024.6
