@@ -126,6 +126,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
+  private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   protected final Disposable myDisposable = Disposer.newDisposable();
@@ -1413,6 +1414,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void stop(boolean forceTerminate) {
+    myIsStopped.set(true);
     stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), ApplicationManager.getApplication().isUnitTestMode() ? 0 : DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
@@ -1821,28 +1823,30 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) throws ExecutionException {
-    getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() throws Exception {
-        closeProcess(false);
-        doReattach();
-      }
+    if (!myIsStopped.get()) {
+      getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          closeProcess(false);
+          doReattach();
+        }
 
-      @Override
-      protected void commandCancelled() {
-        doReattach(); // if the original process is already finished
-      }
+        @Override
+        protected void commandCancelled() {
+          doReattach(); // if the original process is already finished
+        }
 
-      private void doReattach() {
-        DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
-          ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
-          myState.set(State.INITIAL);
-          myConnection = environment.getRemoteConnection();
-          getManagerThread().restartIfNeeded();
-          createVirtualMachine(environment);
-        });
-      }
-    });
+        private void doReattach() {
+          DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+            ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+            myState.set(State.INITIAL);
+            myConnection = environment.getRemoteConnection();
+            getManagerThread().restartIfNeeded();
+            createVirtualMachine(environment);
+          });
+        }
+      });
+    }
   }
 
   @Nullable
