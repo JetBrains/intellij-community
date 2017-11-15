@@ -24,6 +24,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -65,7 +66,7 @@ public abstract class ExtensionLocator {
 
     @NotNull
     public List<ExtensionCandidate> findCandidates() {
-      String name = myPsiClass.getQualifiedName();
+      String name = ClassUtil.getJVMClassName(myPsiClass);
       if (name == null) {
         return Collections.emptyList();
       }

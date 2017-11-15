@@ -229,7 +229,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
       if (canCreate) {
         runConfigsAndTypes.addAll(server.getType().getSingletonDeploymentSourceTypes());
-        runConfigsAndTypes.add(null);
+        if (server.getType().mayHaveProjectSpecificDeploymentSources()) {
+          runConfigsAndTypes.add(null);
+        }
       }
 
       ListPopup popup =

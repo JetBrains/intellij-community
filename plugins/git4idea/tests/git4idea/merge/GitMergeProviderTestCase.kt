@@ -134,7 +134,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
     changesToCommit.forEachIndexed { index, changes ->
       changes()
-      git("add .")
+      git("add -A .")
       git("commit -m $branch-$index")
     }
 

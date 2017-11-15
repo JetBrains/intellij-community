@@ -131,7 +131,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Nullable
   private static PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
-    TypeConstraint fact = value == null ? null : memState.getValueFact(DfaFactType.TYPE_CONSTRAINT, value);
+    TypeConstraint fact = value == null ? null : memState.getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
     PsiType type = fact == null ? null : fact.getPsiType();
     if (type != null) return type;
     return expression == null ? null : expression.getType();
@@ -502,7 +502,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return value.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false);
     }
     if (value instanceof DfaVariableValue) {
-      memState.forceNotNull((DfaVariableValue)value);
+      memState.forceVariableFact((DfaVariableValue)value, DfaFactType.CAN_BE_NULL, false);
     }
     return value;
   }
@@ -510,7 +510,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @NotNull
   private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
     if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
-    TypeConstraint constraint = state.getValueFact(DfaFactType.TYPE_CONSTRAINT, qualifier);
+    TypeConstraint constraint = state.getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
     PsiType type = constraint == null ? null : constraint.getPsiType();
     return MethodUtils.findSpecificMethod(method, type);
   }
@@ -624,8 +624,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue result = null;
     if (JavaTokenType.AND == opSign) {
-      LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
-      LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
+      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
       if(left != null && right != null) {
         result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -27,6 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -139,6 +126,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
+  private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   protected final Disposable myDisposable = Disposer.newDisposable();
@@ -474,6 +462,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
         if (portArg != null) {
           portArg.setValue(address);
+
+          // to allow connector to listen on several auto generated addresses
+          if (address.length() == 0 || address.equals("0")) {
+            myArguments.put("argForUniqueness", new EmptyConnectorArgument());
+          }
         }
         //noinspection HardCodedStringLiteral
         final Connector.Argument timeoutArg = myArguments.get("timeout");
@@ -569,6 +562,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Nullable
   static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
@@ -578,23 +572,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final String error = e.getClass().getName() + " : " + e.getLocalizedMessage();
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error", error));
     }
-    List connectors;
-    if (SOCKET_ATTACHING_CONNECTOR_NAME.equals(connectorName) || SHMEM_ATTACHING_CONNECTOR_NAME.equals(connectorName)) {
-      connectors = virtualMachineManager.attachingConnectors();
-    }
-    else if (SOCKET_LISTENING_CONNECTOR_NAME.equals(connectorName) || SHMEM_LISTENING_CONNECTOR_NAME.equals(connectorName)) {
-      connectors = virtualMachineManager.listeningConnectors();
-    }
-    else {
-      return null;
-    }
-    for (Object connector1 : connectors) {
-      Connector connector = (Connector)connector1;
-      if (connectorName.equals(connector.name())) {
-        return connector;
-      }
-    }
-    return null;
+    return StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
@@ -1436,6 +1414,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void stop(boolean forceTerminate) {
+    myIsStopped.set(true);
     stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), ApplicationManager.getApplication().isUnitTestMode() ? 0 : DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
@@ -1844,28 +1823,30 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) throws ExecutionException {
-    getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() throws Exception {
-        closeProcess(false);
-        doReattach();
-      }
+    if (!myIsStopped.get()) {
+      getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          closeProcess(false);
+          doReattach();
+        }
 
-      @Override
-      protected void commandCancelled() {
-        doReattach(); // if the original process is already finished
-      }
+        @Override
+        protected void commandCancelled() {
+          doReattach(); // if the original process is already finished
+        }
 
-      private void doReattach() {
-        DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
-          ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
-          myState.set(State.INITIAL);
-          myConnection = environment.getRemoteConnection();
-          getManagerThread().restartIfNeeded();
-          createVirtualMachine(environment);
-        });
-      }
-    });
+        private void doReattach() {
+          DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+            ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+            myState.set(State.INITIAL);
+            myConnection = environment.getRemoteConnection();
+            getManagerThread().restartIfNeeded();
+            createVirtualMachine(environment);
+          });
+        }
+      });
+    }
   }
 
   @Nullable

@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.jetbrains.python.packaging.requirement;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +22,18 @@ import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Normalizes requirement version.
+ * <p>
+ * Based on
+ * <a href="https://www.python.org/dev/peps/pep-0440/#normalization">https://www.python.org/dev/peps/pep-0440/#normalization</a>
+ * and
+ * <a href="https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering">https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering</a>.
+ *
+ * @deprecated Use {@link com.jetbrains.python.packaging.PyRequirement} instead.
+ * This class will be removed in 2018.2.
+ */
+@Deprecated
 public final class PyRequirementVersionNormalizer {
 
   @NotNull
@@ -57,7 +67,7 @@ public final class PyRequirementVersionNormalizer {
   private static final String LOCAL_VERSION_GROUP = "local";
 
   @NotNull
-  private static final String SEP_REGEXP = "(\\.|-|_)?";
+  private static final String SEP_REGEXP = "([\\.\\-_])?";
 
   @NotNull
   private static final String EPOCH_REGEXP = "(?<" + EPOCH_GROUP + ">\\d+!)?";

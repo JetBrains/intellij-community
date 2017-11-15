@@ -1606,7 +1606,6 @@
 
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
 
-    <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavadocErrorFilter"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
 
     <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenToStaticImportProcessor"/>

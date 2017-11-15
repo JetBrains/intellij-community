@@ -22,7 +22,7 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
+class GuiTestSuite(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
   val myIde = getIdeFromAnnotation(suiteClass)

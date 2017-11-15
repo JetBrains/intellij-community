@@ -19,6 +19,10 @@ abstract class PropertyCheckerTestCase extends TestCase {
     }
   }
 
+  protected <T> T checkGeneratesExample(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
+    return checkFalsified(generator, predicate.negate(), minimizationSteps).getMinimalCounterexample().getExampleValue();
+  }
+
   protected <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
     PropertyFalsified e = checkFails(forAllStable(generator), predicate);
     //noinspection unchecked

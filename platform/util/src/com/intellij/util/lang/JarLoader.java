@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +49,7 @@ class JarLoader extends Loader {
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
   private final Map<Resource.Attribute, String> myAttributes;
 
-  JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
+  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
@@ -153,7 +151,7 @@ class JarLoader extends Loader {
 
     return null;
   }
-  
+
   private class MyResource extends Resource {
     private final URL myUrl;
     private final ZipEntry myEntry;

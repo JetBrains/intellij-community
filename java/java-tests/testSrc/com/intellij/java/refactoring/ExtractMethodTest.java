@@ -1137,6 +1137,30 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractBareThenBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareElseBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareForBody() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareDoWhileBody() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBracedElseBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBracedDoWhileBody() throws Exception {
+    doTest();
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

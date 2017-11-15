@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -527,24 +528,26 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def foundMethod = [false]
 
     try {
-      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, className, project, scope,
-                                         PsiClass.class,
-                                         new Processor<PsiClass>() {
-                                           @Override
-                                           boolean process(PsiClass aClass) {
-                                             foundClass[0] = true
-                                             StubIndex.instance.processElements(JavaStubIndexKeys.METHODS, "bar", project, scope,
-                                                                                PsiMethod.class,
-                                                                                new Processor<PsiMethod>() {
-                                                                                  @Override
-                                                                                  boolean process(PsiMethod method) {
-                                                                                    foundMethod[0] = true
-                                                                                    return true
-                                                                                  }
-                                                                                })
-                                             return true
-                                           }
-                                         })
+      StubIndex.instance.processElements(
+        JavaStubIndexKeys.CLASS_SHORT_NAMES, className, project, scope,
+        PsiClass.class,
+        new Processor<PsiClass>() {
+          @Override
+          boolean process(PsiClass aClass) {
+            foundClass[0] = true
+            StubIndex.instance.processElements(
+              JavaStubIndexKeys.METHODS, "bar", project, scope,
+              PsiMethod.class,
+              new Processor<PsiMethod>() {
+                @Override
+                boolean process(PsiMethod method) {
+                  foundMethod[0] = true
+                  return true
+                }
+              })
+            return true
+          }
+        })
     } catch (e) {
       if (!(e instanceof RuntimeException)) throw e
     }
@@ -556,24 +559,26 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def foundClassStub = [false]
 
     try {
-      StubIndex.instance.processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, project,
-                                        new Processor<String>() {
-                                          @Override
-                                          boolean process(String aClass) {
-                                            if (!className.equals(aClass)) return true;
-                                            foundClassProcessAll[0] = true
-                                            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, project, scope,
-                                                                               PsiClass.class,
-                                                                               new Processor<PsiClass>() {
-                                                                                 @Override
-                                                                                 boolean process(PsiClass clazz) {
-                                                                                   foundClassStub[0] = true
-                                                                                   return true
-                                                                                 }
-                                                                               })
-                                            return true
-                                          }
-                                        })
+      StubIndex.instance.processAllKeys(
+        JavaStubIndexKeys.CLASS_SHORT_NAMES, project,
+        new Processor<String>() {
+          @Override
+          boolean process(String aClass) {
+            if (!className.equals(aClass)) return true
+            foundClassProcessAll[0] = true
+            StubIndex.instance.processElements(
+              JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, project, scope,
+              PsiClass.class,
+              new Processor<PsiClass>() {
+                @Override
+                boolean process(PsiClass clazz) {
+                  foundClassStub[0] = true
+                  return true
+                }
+              })
+            return true
+          }
+        })
     } catch (e) {
       if (!(e instanceof RuntimeException)) throw e
     }
@@ -840,18 +845,103 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         progressIndicatorBase.cancel()
         TimeoutUtil.sleep(500)
         assertTrue(canceled[0])
-      });
-      ProgressManager.getInstance().runProcess({
-                                                 try {
-                                                   progressStarted.countDown();
-                                                   FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
-                                                 }
-                                                 catch (ProcessCanceledException ignore) {
-                                                   canceled[0] = true
-                                                 }
-                                               }, progressIndicatorBase);
+      })
+      ProgressManager.getInstance().runProcess(
+        {
+          try {
+            progressStarted.countDown()
+            FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
+          }
+          catch (ProcessCanceledException ignore) {
+            canceled[0] = true
+          }
+        }, progressIndicatorBase
+      )
     } finally {
-      TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
+      TodoConfiguration.getInstance().setTodoPatterns(oldPatterns)
     }
+  }
+
+  void "test stub updating index problem"() throws IOException {
+    def className = "Foo"
+    myFixture.addClass("class $className {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    def foundClassProcessAll = [false]
+    def foundClassStub = [false]
+
+    try {
+      StubIndex.instance.processAllKeys(
+        JavaStubIndexKeys.CLASS_SHORT_NAMES, project,
+        new Processor<String>() {
+          @Override
+          boolean process(String aClass) {
+            if (!className.equals(aClass)) return true
+            foundClassProcessAll[0] = true
+            // adding file will add file to index's dirty set but it should not be processed within current read action
+            myFixture.addFileToProject("Bar.java", "class Bar { }")
+            StubIndex.instance.processElements(
+              JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, project, scope,
+              PsiClass.class,
+              new Processor<PsiClass>() {
+                @Override
+                boolean process(PsiClass clazz) {
+                  foundClassStub[0] = true
+                  return true
+                }
+              })
+            return true
+          }
+        })
+    } catch (e) {
+      if (!(e instanceof RuntimeException)) throw e
+    }
+
+    assertTrue(foundClassProcessAll[0])
+    assertTrue(foundClassStub[0]) // allow access stub index processing other index
+  }
+
+  void "test document increases beyond too large limit"() {
+    String item = createLongSequenceOfCharacterConstants()
+    def fileText = 'class Bar { char[] item = { ' + item + "};\n }"
+    def file = myFixture.addFileToProject('foo/Bar.java', fileText).virtualFile
+    assertNotNull(findClass("Bar"))
+
+    Document document = FileDocumentManager.getInstance().getDocument(file)
+
+    for (int i = 0; i < 5; ++i) {
+      document.replaceString(0, document.textLength, item + item)
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+      assertNull(findClass("Bar"))
+
+      document.replaceString(0, document.textLength, fileText)
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+      assertNotNull(findClass("Bar"))
+    }
+  }
+
+  private static String createLongSequenceOfCharacterConstants() {
+    String item = "'c',"
+    int userFileSizeLimit = FileUtilRt.getUserFileSizeLimit()
+    while (true) {
+      item += item
+      if (item.length() * 2 > userFileSizeLimit) break
+    }
+    item
+  }
+
+  void "test file increases beyond too large limit"() {
+    String item = createLongSequenceOfCharacterConstants()
+    def fileText = 'class Bar { char[] item = { ' + item + "};\n }"
+    def file = myFixture.addFileToProject('foo/Bar.java', fileText).virtualFile
+    assertNotNull(findClass("Bar"))
+
+    for (int i = 0; i < 5; ++i) {
+      VfsUtil.saveText(file, item + item)
+      assertNull(findClass("Bar"))
+
+      VfsUtil.saveText(file, fileText)
+      assertNotNull(findClass("Bar"))
+   }
   }
 }

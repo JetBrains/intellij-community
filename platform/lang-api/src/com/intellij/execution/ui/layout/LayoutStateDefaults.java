@@ -30,4 +30,7 @@ public interface LayoutStateDefaults {
 
   @NotNull  //this
   LayoutStateDefaults initFocusContent(@NotNull String id, @NotNull String condition, @NotNull final LayoutAttractionPolicy policy);
+
+  @NotNull
+  LayoutStateDefaults clearFocusContent(@NotNull String condition);
 }

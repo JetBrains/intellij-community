@@ -15,6 +15,7 @@
  */
 package git4idea.branch
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -1009,19 +1010,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun assertDetachedState(repository: GitRepository, reference: String) {
     assertCurrentRevision(repository, reference)
-
-    val curBranch = getCurrentBranch(repository)
-    val isDetached = curBranch.contains("detached")
-    assertTrue("Current branch is not detached in ${repository} - $curBranch", isDetached)
+    assertEquals("Repository should be in the detached HEAD state", Repository.State.DETACHED, repository.state)
   }
 
   private fun assertCurrentBranch(repository: GitRepository, name: String) {
-    val curBranch = getCurrentBranch(repository)
-    assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
-  }
-
-  private fun getCurrentBranch(repository: GitRepository): String {
-    return repository.git("branch").lines().find { it.contains("*") }!!.replace('*', ' ').trim()
+    assertEquals("Current branch is incorrect in ${repository}", name, repository.currentBranchName)
   }
 
   private fun assertCurrentRevision(repository: GitRepository, reference: String) {

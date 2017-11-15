@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -701,6 +702,26 @@ public class PyTypeChecker {
         return results.get(0).getElement();
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
+                                                        @NotNull PyTupleExpression parentTuple,
+                                                        @NotNull PyType assignedType,
+                                                        @NotNull TypeEvalContext context) {
+    if (assignedType instanceof PyTupleType) {
+      return getTargetTypeFromTupleAssignment(target, parentTuple, (PyTupleType)assignedType);
+    }
+    else if (assignedType instanceof PyClassLikeType) {
+      return StreamEx
+        .of(((PyClassLikeType)assignedType).getAncestorTypes(context))
+        .select(PyNamedTupleType.class)
+        .findFirst()
+        .map(t -> getTargetTypeFromTupleAssignment(target, parentTuple, t))
+        .orElse(null);
+    }
+
     return null;
   }
 

@@ -38,18 +38,23 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   }
 
   override fun readShellEnv(): MutableMap<String, String> {
-    if (SystemInfo.isUnix) {
-      return super.readShellEnv()
-    }
-    else {
-      if (activate != null) {
-        return readBatEnv(File(activate.first), ContainerUtil.createMaybeSingletonList(activate.second))
+    try {
+      if (SystemInfo.isUnix) {
+        return super.readShellEnv()
       }
       else {
-        LOG.error("Can't find activate script for $virtualEnvSdkPath")
-        return mutableMapOf();
+        if (activate != null) {
+          return readBatEnv(File(activate.first), ContainerUtil.createMaybeSingletonList(activate.second))
+        }
+        else {
+          LOG.error("Can't find activate script for $virtualEnvSdkPath")
+        }
       }
+    } catch (e: Exception) {
+      LOG.warn("Couldn't read shell environment: ${e.message}")
     }
+
+    return mutableMapOf()
   }
 
   override fun dumpProcessEnvToFile(command: MutableList<String>, envFile: File, lineSeparator: String?): MutableMap<String, String> {

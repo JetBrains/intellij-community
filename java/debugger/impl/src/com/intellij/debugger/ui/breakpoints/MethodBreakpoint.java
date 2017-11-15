@@ -18,7 +18,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.jdi.ClassesByName;
+import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -174,13 +173,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                     @NotNull DebugProcessImpl debugProcess,
                                                     @NotNull ReferenceType classType,
                                                     boolean base) {
-    createRequestForPreparedClassEmulated(breakpoint, debugProcess, classType, debugProcess.getVirtualMachineProxy().getClassesByName(), base);
+    createRequestForPreparedClassEmulated(breakpoint, debugProcess, classType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider(), base);
   }
 
   static void createRequestForPreparedClassEmulated(@NotNull MethodBreakpointBase breakpoint,
                                                     @NotNull DebugProcessImpl debugProcess,
                                                     @NotNull ReferenceType classType,
-                                                    @NotNull ClassesByName classesByName,
+                                                    @NotNull ClassesByNameProvider classesByName,
                                                     boolean base) {
     if (!base && !shouldCreateRequest(breakpoint, breakpoint.getXBreakpoint(), debugProcess, true)) {
       return;
@@ -572,7 +571,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,
-                                              BiConsumer<ReferenceType, ClassesByName> consumer,
+                                              BiConsumer<ReferenceType, ClassesByNameProvider> consumer,
                                               ProgressIndicator progressIndicator) {
     long start = 0;
     if (LOG.isDebugEnabled()) {
@@ -599,7 +598,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
 
-      ClassesByName classesByName = ClassesByName.createCache(allTypes);
+      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(allTypes);
 
       for (int i = 0; i < types.size(); i++) {
         if (progressIndicator.isCanceled()) {

@@ -842,12 +842,7 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
-    return promiseAccept(tree, path -> {
-      int count = path.getPathCount();
-      if (count > depth) return TreeVisitor.Action.SKIP_SIBLINGS;
-      tree.expandPath(path);
-      return TreeVisitor.Action.CONTINUE;
-    });
+    return promiseExpand(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE);
   }
 
   @NotNull
@@ -1083,6 +1078,37 @@ public final class TreeUtil {
   @NotNull
   public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
     return Comparator.comparingInt(tree::getRowForPath);
+  }
+
+  /**
+   * Expands nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be expanded
+   * @param visitor  a visitor that controls expanding of tree nodes
+   * @param consumer a path consumer called on done
+   */
+  public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    promiseExpand(tree, visitor).processed(path -> consumer.accept(path));
+  }
+
+  /**
+   * Promises to expand nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be expanded
+   * @param visitor a visitor that controls expanding of tree nodes
+   */
+  @NotNull
+  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    return promiseAccept(tree, path -> {
+      TreeVisitor.Action action = visitor.visit(path);
+      if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
+        TreePath parent = path.getParentPath();
+        if (parent != null && !tree.isExpanded(parent)) return TreeVisitor.Action.SKIP_SIBLINGS;
+        tree.expandPath(path); // expand current path only if parent path is expanded
+        LOG.debug("tree expand path: ", path);
+      }
+      return action;
+    });
   }
 
   /**

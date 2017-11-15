@@ -16,7 +16,6 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
-import com.intellij.semantic.SemElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
@@ -24,7 +23,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 /**
  * The common interface for all Uast elements.
  */
-interface UElement : SemElement {
+interface UElement {
   /**
    * Returns the element parent.
    */

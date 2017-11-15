@@ -30,16 +30,13 @@ import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
 import java.io.File
 
-private var myVersionPrinted = false
-
 fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 
-@JvmOverloads fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
-  printVersionTheFirstTime(project)
-  return doCallGit(project, command, ignoreNonZeroExitCode)
-}
-
-private fun doCallGit(project: Project, command: String, ignoreNonZeroExitCode: Boolean): String {
+@JvmOverloads
+fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
+fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
+@JvmOverloads
+fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -51,10 +48,6 @@ private fun doCallGit(project: Project, command: String, ignoreNonZeroExitCode: 
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }
-
-@JvmOverloads
-fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
-fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
 
 fun cd(repository: GitRepository) = cd(repository.root.path)
 
@@ -154,13 +147,6 @@ fun GitRepository.prepareConflict(initialBranch: String = "master",
   checkout(featureBranch)
   file.append("feature\n").addCommit("on_feature")
   return commit
-}
-
-private fun printVersionTheFirstTime(project: Project) {
-  if (!myVersionPrinted) {
-    myVersionPrinted = true
-    doCallGit(project, "version", false)
-  }
 }
 
 private fun GitRepository.cd(command: () -> String): String {

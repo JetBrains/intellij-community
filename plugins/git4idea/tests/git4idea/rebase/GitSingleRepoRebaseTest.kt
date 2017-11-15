@@ -25,8 +25,10 @@ import com.intellij.util.LineSeparator
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
+import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
 import git4idea.test.*
+import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
@@ -453,6 +455,9 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   // IDEA-176455
   fun `test reword during interactive rebase writes commit message correctly`() {
+    Assume.assumeTrue("Not testing: not possible to fix in Git prior to 1.8.2: ${vcs.version}",
+                      GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(vcs.version)) // IDEA-182044
+
     makeCommit("initial.txt")
     repo.update()
     val initialMessage = "Wrong message"

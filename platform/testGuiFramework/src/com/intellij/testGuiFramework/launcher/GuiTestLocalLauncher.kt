@@ -359,8 +359,13 @@ object GuiTestLocalLauncher {
   private fun List<JpsModule>.module(moduleName: String): JpsModule? =
     this.firstOrNull { it.name == moduleName }
 
-  private fun JpsModule.getClasspath(): MutableCollection<File> =
-    JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots
+  //get production dependencies and test root of the current module
+  private fun JpsModule.getClasspath(): MutableCollection<File> {
+    val result = JpsJavaExtensionService.dependencies(
+      this).productionOnly().runtimeOnly().recursively().classes().roots.toMutableSet()
+    result.addAll(JpsJavaExtensionService.dependencies(this).withoutDepModules().withoutLibraries().withoutSdk().classes().roots)
+    return result.toMutableList()
+  }
 
 
   private fun getOutputRootFromClassloader(): File {

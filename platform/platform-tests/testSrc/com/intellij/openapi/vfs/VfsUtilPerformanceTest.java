@@ -284,12 +284,12 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void PersistentFS_performance_ofManyFilesCreateDelete() {
-    int N = 100_000;
+    int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
 
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      PlatformTestUtil.startPerformanceTest("many files creations", 10000, () -> {
+      PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
         assertEquals(N, events.size());
         assertTrue(!temp.allChildrenLoaded());
         processEvents(events);
@@ -305,7 +305,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .assertTiming();
 
-      PlatformTestUtil.startPerformanceTest("many files deletions", 11000, () -> {
+      PlatformTestUtil.startPerformanceTest("many files deletions", 3_300, () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(0, temp.getCachedChildren().size());

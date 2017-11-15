@@ -350,7 +350,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
                                                      @Nullable String mark) {
       LookupElementBuilder element = LookupElementBuilder.create(targetElement, id);
       if (module != null) {
-        element = element.withTypeText(module.getName(), ModuleType.get(module).getIcon(), false);
+        element = element.withTypeText(module.getName(), ModuleType.get(module).getIcon(), false).withTypeIconRightAligned(true);
       }
       if (mark != null) {
         element = element.withTailText(" {" + mark + "}", true);

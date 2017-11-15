@@ -329,8 +329,17 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    Point point = new Point(myPoint.x, myPoint.y + myEditor.getLineHeight());
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), myHideRunnable);
+    createHighlighter();
+    setHighlighterAttributes();
+
+    // align the popup with the bottom of the line
+    Point point = myEditor.logicalPositionToXY(myEditor.xyToLogicalPosition(myPoint));
+    point.translate(0, myEditor.getLineHeight());
+
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
+      disposeHighlighter();
+      myHideRunnable.run();
+    });
   }
 
   @Override

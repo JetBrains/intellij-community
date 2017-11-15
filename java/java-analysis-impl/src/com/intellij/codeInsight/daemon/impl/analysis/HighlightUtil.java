@@ -2704,7 +2704,8 @@ public class HighlightUtil extends HighlightUtilBase {
         ((PsiClass)resolved).getContainingClass() == null &&
         PsiUtil.isFromDefaultPackage(resolved) &&
         (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
-         PsiUtil.isModuleFile(containingFile))) {
+         PsiUtil.isModuleFile(containingFile) ||
+         !PsiUtil.isFromDefaultPackage(containingFile))) {
       String description = JavaErrorMessages.message("class.in.default.package", ((PsiClass)resolved).getName());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
     }

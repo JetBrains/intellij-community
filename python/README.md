@@ -5,14 +5,6 @@
 The "python" directory in the source repository contains the source code of PyCharm Community Edition and the Python plugin for
 IntelliJ IDEA Community Edition.
 
-## Skeletons
-
-In order to successfully run the full test suite for PyCharm Community Edition and to build a fully working distribution, you need to
-check out the library skeletons, which are stored in a separate Git repository. To do this, you need to change to the 'helpers'
-directory and run the following command:
-
-    git clone https://github.com/JetBrains/python-skeletons.git
-
 ## Building and Running
 
 The code is part of the main IntelliJ IDEA Community Edition project and is compiled together with the rest of the codebase.

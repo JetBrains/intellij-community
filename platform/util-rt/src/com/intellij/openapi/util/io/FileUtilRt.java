@@ -896,7 +896,7 @@ public class FileUtilRt {
 
   private static int parseKilobyteProperty(String key, int defaultValue) {
     try {
-      long i = Integer.parseInt(System.getProperty(key));
+      long i = Integer.parseInt(System.getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
       if (i < 0) return Integer.MAX_VALUE;
       return (int) Math.min(i * KILOBYTE, Integer.MAX_VALUE);
     }

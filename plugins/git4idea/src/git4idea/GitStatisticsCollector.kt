@@ -25,6 +25,7 @@ import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
 import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersion
 import git4idea.repo.GitRemote
 
 fun reportUsage(key: String) {
@@ -52,6 +53,8 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
     usages.add(getBooleanUsage("config.force.push", settings.warnAboutDetachedHead()))
 
+    usages.add(versionUsage(GitVcs.getInstance(project).version))
+
     for (repository in repositories) {
       val branches = repository.branches
       usages.add(getCountingUsage("data.local.branches.count", branches.localBranches.size, listOf(0, 1, 2, 5, 8, 15, 30, 50)))
@@ -66,6 +69,8 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
 
     return usages
   }
+
+  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.semanticPresentation}")
 
   override fun getGroupId(): GroupDescriptor {
     return ID

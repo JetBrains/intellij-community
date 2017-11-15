@@ -14,7 +14,7 @@ import traceback
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -761,6 +761,19 @@ class PyDB:
                 response_msg = "jump is available only within the bottom frame"
         return stop, old_line, response_msg
 
+    def cancel_async_evaluation(self, thread_id, frame_id):
+        self._main_lock.acquire()
+        try:
+            all_threads = threadingEnumerate()
+            for t in all_threads:
+                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
+                        t.frame_id == frame_id:
+                    t.cancel_event.set()
+        except:
+            pass
+        finally:
+            self._main_lock.release()
+
     def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
@@ -801,6 +814,8 @@ class PyDB:
 
             self.process_internal_commands()
             time.sleep(0.01)
+
+        self.cancel_async_evaluation(get_thread_id(thread), str(id(frame)))
 
         # process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
@@ -1519,7 +1534,7 @@ def main():
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
 
-    if os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True':
+    if SHOW_DEBUG_INFO_ENV:
         set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
