@@ -50,7 +50,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     }
   }
 
-  private static void saveAll() {
+  protected static void saveAll() {
     FileDocumentManager.getInstance().saveAllDocuments();
     ApplicationManager.getApplication().saveSettings();
   }
