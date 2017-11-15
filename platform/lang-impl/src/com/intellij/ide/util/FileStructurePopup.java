@@ -35,7 +35,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -112,8 +111,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
-  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
-                                   Experiments.isFeatureEnabled("structure.view.async.tree.model");
+  private final boolean myUseATM = true; //todo inline & remove
 
   private final Project myProject;
   private final FileEditor myFileEditor;
