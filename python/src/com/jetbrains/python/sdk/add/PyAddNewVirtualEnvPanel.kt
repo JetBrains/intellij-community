@@ -64,8 +64,13 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-    selectedSdk = items.find { it.homePath == preferredSdkPath } ?: PyDetectedSdk(preferredSdkPath).apply {
-      childComponent.insertItemAt(this, 0)
+    val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
+    selectedSdk = when {
+      detectedPreferredSdk != null -> detectedPreferredSdk
+      preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
+        childComponent.insertItemAt(this, 0)
+      }
+      else -> items.getOrNull(0)
     }
   }
   private val pathField = TextFieldWithBrowseButton().apply {
