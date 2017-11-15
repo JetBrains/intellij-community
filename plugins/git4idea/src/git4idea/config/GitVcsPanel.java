@@ -37,16 +37,23 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import git4idea.GitVcs;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.NumberFormatter;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.util.containers.ContainerUtil.sorted;
 
 /**
  * Git VCS configuration panel
@@ -74,6 +81,10 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
+  private JCheckBox myUpdateBranchInfoCheckBox;
+  private JFormattedTextField myBranchUpdateTimeField;
+  private JPanel myBranchTimePanel;
+  private JBLabel mySupportedBranchUpLabel;
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
@@ -89,13 +100,14 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myProjectGitPathCheckBox.addActionListener(e -> handleProjectOverrideStateChanged());
     if (!project.isDefault()) {
       final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-      mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+      mySyncControl.setVisible(repositoryManager.moreThanOneRoot());
     }
     else {
       mySyncControl.setVisible(true);
     }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesField);
+    myUpdateBranchInfoCheckBox.addItemListener(e -> UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected(), true));
   }
 
   private void testExecutable() {
@@ -178,6 +190,14 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
+    boolean branchInfoSupported = isBranchInfoSupported();
+    myUpdateBranchInfoCheckBox.setSelected(branchInfoSupported && projectSettings.shouldUpdateBranchInfo());
+    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
+  }
+
+  private boolean isBranchInfoSupported() {
+    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(GitVcs.getInstance(myProject).getVersion());
   }
 
   @Override
@@ -194,8 +214,8 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
             projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
             projectSettings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
-            !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
-              ContainerUtil.sorted(getProtectedBranchesPatterns())));
+            isUpdateBranchSettingsModified(projectSettings) ||
+            !sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(sorted(getProtectedBranchesPatterns())));
   }
 
   private boolean isGitPathModified(@NotNull GitVcsApplicationSettings applicationSettings, @NotNull GitVcsSettings projectSettings) {
@@ -232,6 +252,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
 
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
+    applyBranchUpdateInfo(projectSettings);
     validateExecutableOnceAfterClose();
   }
 
@@ -253,6 +274,29 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     }
   }
 
+  private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
+    boolean branchInfoSupported = isBranchInfoSupported();
+    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    if (!branchInfoSupported) {
+      myUpdateBranchInfoCheckBox.setSelected(false);
+    }
+    if (isUpdateBranchSettingsModified(projectSettings)) {
+      projectSettings.setBranchInfoUpdateTime((Integer)myBranchUpdateTimeField.getValue());
+      projectSettings.setUpdateBranchInfo(myUpdateBranchInfoCheckBox.isSelected());
+      GitBranchIncomingOutgoingManager incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
+      incomingOutgoingManager.stopScheduling();
+      if (projectSettings.shouldUpdateBranchInfo()) {
+        incomingOutgoingManager.startScheduling();
+      }
+    }
+  }
+
+  private boolean isUpdateBranchSettingsModified(@NotNull GitVcsSettings projectSettings) {
+    return projectSettings.getBranchInfoUpdateTime() != (Integer)myBranchUpdateTimeField.getValue() ||
+           projectSettings.shouldUpdateBranchInfo() != myUpdateBranchInfoCheckBox.isSelected();
+  }
+
+
   @NotNull
   private List<String> getProtectedBranchesPatterns() {
     return ParametersListUtil.COLON_LINE_PARSER.fun(myProtectedBranchesField.getText());
@@ -270,5 +314,11 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
         setText(StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' '))));
       }
     });
+    NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
+    numberFormatter.setMinimum(1);
+    numberFormatter.setAllowsInvalid(true);
+    myBranchUpdateTimeField = new JFormattedTextField(numberFormatter);
+    mySupportedBranchUpLabel = new JBLabel("Supported from Git 2.9+");
+    mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(1));
   }
 }

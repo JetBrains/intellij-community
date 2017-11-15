@@ -48,6 +48,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static icons.DvcsImplIcons.*;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
@@ -378,8 +379,20 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myTextLabel.setIcon(null);
       myTextLabel.setDisabledIcon(null);
       myIconLabel.setIcon(isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value));
+      BranchActionGroup branchActionGroup = getSpecificAction(value, BranchActionGroup.class);
+      if (branchActionGroup != null) {
+        myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        myTextLabel.setIcon(chooseUpdateIndicatorIcon(branchActionGroup));
+      }
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
+    }
+
+    private Icon chooseUpdateIndicatorIcon(@NotNull BranchActionGroup branchActionGroup) {
+      if (branchActionGroup.hasIncomingCommits()) {
+        return branchActionGroup.hasOutgoingCommits() ? IncomingOutgoing : Incoming;
+      }
+      return branchActionGroup.hasOutgoingCommits() ? Outgoing : null;
     }
 
     private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {
