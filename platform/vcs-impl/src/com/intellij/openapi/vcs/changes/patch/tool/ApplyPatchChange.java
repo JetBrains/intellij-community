@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.patch.tool;
 
-import com.intellij.diff.comparison.ByWord;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.util.*;
@@ -33,7 +30,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
@@ -72,27 +68,8 @@ class ApplyPatchChange {
     myPatchInsertionRange = hunk.getPatchInsertionRange();
     myStatus = hunk.getStatus();
 
-    myPatchInnerDifferences = calcPatchInnerDifferences(hunk, viewer);
-  }
-
-  @Nullable
-  private static List<DiffFragment> calcPatchInnerDifferences(@NotNull PatchChangeBuilder.Hunk hunk,
-                                                              @NotNull ApplyPatchViewer viewer) {
-    LineRange deletionRange = hunk.getPatchDeletionRange();
-    LineRange insertionRange = hunk.getPatchInsertionRange();
-
-    if (deletionRange.isEmpty() || insertionRange.isEmpty()) return null;
-
-    try {
-      DocumentEx patchDocument = viewer.getPatchEditor().getDocument();
-      CharSequence deleted = DiffUtil.getLinesContent(patchDocument, deletionRange.start, deletionRange.end);
-      CharSequence inserted = DiffUtil.getLinesContent(patchDocument, insertionRange.start, insertionRange.end);
-
-      return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-    }
-    catch (DiffTooBigException ignore) {
-      return null;
-    }
+    DocumentEx patchDocument = viewer.getPatchEditor().getDocument();
+    myPatchInnerDifferences = PatchChangeBuilder.computeInnerDifferences(patchDocument, hunk);
   }
 
   public void reinstallHighlighters() {
