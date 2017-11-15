@@ -307,9 +307,9 @@ internal object JavaConverter {
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
         is PsiSwitchLabelStatement -> expr<UExpression> {
           when {
-            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findSwitchEntry(givenParent, el)
+            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findUSwitchEntry(givenParent, el)
             givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
-              findSwitchEntry(JavaUSwitchExpression(it, null).body, el)
+              findUSwitchEntry(JavaUSwitchExpression(it, null).body, el)
             }
             else -> null
           }

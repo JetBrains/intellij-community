@@ -67,7 +67,7 @@ private fun PsiCodeBlock.convertToSwitchEntryList(containingElement: UExpression
   return result
 }
 
-internal fun findSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement) =
+internal fun findUSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement): JavaUSwitchEntry? =
   body.also { require(it.kind == JavaSpecialExpressionKinds.SWITCH) }
     .expressions.find { (it as? JavaUSwitchEntry)?.labels?.contains(el) ?: false } as? JavaUSwitchEntry
 
