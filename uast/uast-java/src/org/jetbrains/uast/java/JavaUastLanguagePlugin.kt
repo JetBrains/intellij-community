@@ -305,13 +305,14 @@ internal object JavaConverter {
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
-        is PsiSwitchLabelStatement -> when {
-          givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findSwitchEntry(givenParent, el)
-          givenParent == null ->
-            PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let { switchStatement ->
-              findSwitchEntry(JavaUSwitchExpression(switchStatement, null).body, el)
+        is PsiSwitchLabelStatement -> expr<UExpression> {
+          when {
+            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findSwitchEntry(givenParent, el)
+            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
+              findSwitchEntry(JavaUSwitchExpression(it, null).body, el)
             }
-          else -> null
+            else -> null
+          }
         }
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
