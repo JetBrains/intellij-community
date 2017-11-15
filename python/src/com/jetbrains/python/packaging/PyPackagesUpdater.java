@@ -46,9 +46,7 @@ public class PyPackagesUpdater implements StartupActivity {
     if (checkNeeded(project)) {
       application.executeOnPooledThread(() -> {
         try {
-          final PyPackageService service = PyPackageService.getInstance();
-          PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-          service.LAST_TIME_CHECKED = System.currentTimeMillis();
+          PyPIPackageUtil.INSTANCE.updatePyPICache();
         }
         catch (IOException e) {
           LOG.warn(e.getMessage());
