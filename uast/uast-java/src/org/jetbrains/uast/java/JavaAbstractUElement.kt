@@ -86,4 +86,11 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       else -> it
     }
   }
+
+  override fun convertParent(): UElement? = super.convertParent().let { uParent ->
+    when (uParent) {
+      is UAnonymousClass -> uParent.uastParent
+      else -> uParent
+    }
+  }
 }
