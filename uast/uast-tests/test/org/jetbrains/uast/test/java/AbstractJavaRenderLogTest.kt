@@ -53,7 +53,7 @@ abstract class AbstractJavaRenderLogTest : AbstractJavaUastTest(), RenderLogTest
       private val parentStack = Stack<UElement>()
 
       override fun visitElement(node: UElement): Boolean {
-        if (node is UastEmptyExpression) return true // skip UastEmptyExpression the do not have parents (but why?)
+        if (node is UastEmptyExpression) return true // skip UastEmptyExpression they do not have parents (but why?)
 
         val parent = node.uastParent
         if (parent == null) {
@@ -74,7 +74,7 @@ abstract class AbstractJavaRenderLogTest : AbstractJavaUastTest(), RenderLogTest
       }
 
       override fun afterVisitElement(node: UElement) {
-        if (node is UastEmptyExpression) return // skip UastEmptyExpression the do not have parents (but why?)
+        if (node is UastEmptyExpression) return // skip UastEmptyExpression they do not have parents (but why?)
         super.afterVisitElement(node)
         parentStack.pop()
       }
