@@ -593,7 +593,8 @@ new Ba<caret>r() {}
     assert resolved.qualifiedName == 'foo.Foo'
   }
 
-  void 'test prefer alias over class in the same file'() {
+  // https://issues.apache.org/jira/browse/GROOVY-8254
+  void 'test prefer class in the same file over alias'() {
     myFixture.addClass '''\
 package foo;
 interface Foo {}
@@ -607,7 +608,7 @@ new B<caret>ar() {}
     myFixture.configureFromExistingVirtualFile file.containingFile.virtualFile
     def resolved = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
     assert resolved instanceof PsiClass
-    assert resolved.qualifiedName == 'foo.Foo'
+    assert resolved.qualifiedName == 'test.Bar'
   }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
