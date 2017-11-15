@@ -37,10 +37,11 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
       }
   }
 
-  override fun readShellEnv(): MutableMap<String, String> {
+  fun readPythonEnv(): MutableMap<String, String> {
     try {
       if (SystemInfo.isUnix) {
-        return super.readShellEnv()
+        // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
+        return super.readShellEnv(EnvironmentUtil.getEnvironmentMap())
       }
       else {
         if (activate != null) {
@@ -55,11 +56,6 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
 
     return mutableMapOf()
-  }
-
-  override fun dumpProcessEnvToFile(command: MutableList<String>, envFile: File, lineSeparator: String?): MutableMap<String, String> {
-    // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
-    return runProcessAndReadEnvs(command, null, EnvironmentUtil.getEnvironmentMap(), envFile, lineSeparator)
   }
 
   override fun getShellProcessCommand(): MutableList<String> {

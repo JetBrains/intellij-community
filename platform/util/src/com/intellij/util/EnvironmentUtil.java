@@ -162,8 +162,11 @@ public class EnvironmentUtil {
 
 
   public static class ShellEnvReader {
-
     public Map<String, String> readShellEnv() throws Exception {
+      return readShellEnv(null);
+    }
+    
+    protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws Exception {
       File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
@@ -181,7 +184,7 @@ public class EnvironmentUtil {
 
         LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-        return dumpProcessEnvToFile(command, envFile, "\0");
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).second;
       }
       finally {
         FileUtil.delete(envFile);
@@ -208,10 +211,7 @@ public class EnvironmentUtil {
         cl.add(envFile.getPath());
         cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
 
-        return runProcessAndReadOutputAndEnvs(cl,
-                                              batchFile.getParentFile(),
-                                              null,
-                                              envFile, "\0");
+        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParentFile(), null, envFile);
       }
       finally {
         FileUtil.delete(envFile);
@@ -226,44 +226,14 @@ public class EnvironmentUtil {
     }
 
     @NotNull
-    protected Map<String, String> dumpProcessEnvToFile(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
-      throws Exception {
-      return runProcessAndReadEnvs(command, envFile, lineSeparator);
-    }
-
-    @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
-      throws Exception {
-      return runProcessAndReadEnvs(command, null, null, envFile, lineSeparator);
-    }
-
-    @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir,
-                                                               @NotNull File envFile,
-                                                               String lineSeparator) throws Exception {
-      return runProcessAndReadEnvs(command, workingDir, null, envFile, lineSeparator);
-    }
-
-    @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir,
-                                                               @Nullable Map<String, String> envs,
-                                                               @NotNull File envFile,
-                                                               String lineSeparator) throws Exception {
-      return runProcessAndReadOutputAndEnvs(command, workingDir, envs, envFile, lineSeparator).second;
-    }
-
-    @NotNull
     protected static Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                       @Nullable File workingDir,
-                                                                                      @Nullable Map<String, String> envs,
-                                                                                      @NotNull File envFile,
-                                                                                      String lineSeparator) throws Exception {
+                                                                                      @Nullable Map<String, String> scriptEnvironment,
+                                                                                      @NotNull File envFile) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
-      if (envs != null) {
+      if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
-        builder.environment().putAll(envs);
+        builder.environment().putAll(scriptEnvironment);
       }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
@@ -277,7 +247,7 @@ public class EnvironmentUtil {
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
-      return Pair.create(gobbler.getText(), parseEnv(lines, lineSeparator));
+      return Pair.create(gobbler.getText(), parseEnv(lines));
     }
 
     @NotNull
@@ -297,18 +267,18 @@ public class EnvironmentUtil {
     }
 
     @Nullable
-    protected String getShell() throws Exception {
+    protected String getShell() {
       return System.getenv("SHELL");
     }
   }
 
   @NotNull
-  private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
+  private static Map<String, String> parseEnv(String text) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split(lineSeparator);
+    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -437,7 +407,7 @@ public class EnvironmentUtil {
   @TestOnly
   static Map<String, String> testParser(@NotNull String lines) {
     try {
-      return parseEnv(lines, "\0");
+      return parseEnv(lines);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
