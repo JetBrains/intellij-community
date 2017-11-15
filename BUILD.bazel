@@ -6,7 +6,7 @@ iml_project(
     build = "build.xml",
     data = [
         "//prebuilts/studio/jdk",
-        "//prebuilts/tools/common/kotlin-plugin-ij:kotlin-plugin-1.1.4-release-IJ2017.2-3.zip",
+        "//prebuilts/tools/common/kotlin-plugin-ij:kotlin-plugin-1.1.50-release-IJ2017.3-1.zip",
         "//prebuilts/tools/common/kotlin-plugin:kotlin-plugin-for-studio",
         "//prebuilts/tools/common/offline-m2:android-gradle-2.3.2",  # TODO what do we need?
         "//prebuilts/tools/common/simpleperf",

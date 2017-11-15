@@ -37,7 +37,7 @@ target('default': 'Ensures that build/kotlinc directory contains JARs from Kotli
   // Android Studio: always extract Kotlin zip from our prebuilts
   // If at any point in time, the prebuilt is considered stale, then:
   //     0. Set currentVersion below to null instead
-  def currentVersion = "kotlin-plugin-1.1.4-release-IJ2017.2-3.zip"
+  def currentVersion = "kotlin-plugin-1.1.50-release-IJ2017.3-1.zip"
   //     1. comment out the following line to extract from prebuilt
   //     2. comment out the line further below that prevents downloading the plugin from the web (teamcity)
   //        (look for the line after the comment containing "we never want to download")
