@@ -58,7 +58,7 @@ class WelcomeWizardHelper : ApplicationComponent {
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
       UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontSize = 12
+      UISettings.instance.fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
       UISettings.instance.overrideLafFonts = true

@@ -1921,7 +1921,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public void setManualOrder(@NotNull String paneId, final boolean enabled) {
     if (isGlobalOptions()) {
-      getGlobalOptions().setAutoscrollToSource(enabled);
+      getGlobalOptions().setManualOrder(enabled);
     }
     setPaneOption(myManualOrder, enabled, paneId, false);
     final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
