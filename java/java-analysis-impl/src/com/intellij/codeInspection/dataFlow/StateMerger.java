@@ -513,9 +513,7 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      DfaVariableState varState = state.getVariableState(myVar);
-      state.flushVariable(myVar);
-      state.setVariableState(myVar, varState);
+      state.removeEquivalenceRelations(myVar);
     }
   }
 

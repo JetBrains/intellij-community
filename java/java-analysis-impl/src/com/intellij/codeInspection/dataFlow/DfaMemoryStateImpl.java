@@ -1282,12 +1282,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   void doFlush(@NotNull DfaVariableValue varPlain, boolean markUnknown) {
     DfaVariableValue varNegated = varPlain.getNegatedValue();
 
+    removeEquivalenceRelations(varPlain);
+    myVariableStates.remove(varPlain);
+    if (varNegated != null) {
+      myVariableStates.remove(varNegated);
+    }
+    if (markUnknown) {
+      myUnknownVariables.add(varPlain);
+    }
+    myCachedHash = null;
+  }
+
+  void removeEquivalenceRelations(@NotNull DfaVariableValue varPlain) {
+    DfaVariableValue varNegated = varPlain.getNegatedValue();
     final int idPlain = varPlain.getID();
     final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
     int[] classes = myIdToEqClassesIndices.get(idPlain);
     int[] negatedClasses = myIdToEqClassesIndices.get(idNegated);
-    int[] result = ArrayUtil.mergeArrays(ObjectUtils.notNull(classes, ArrayUtil.EMPTY_INT_ARRAY), ObjectUtils.notNull(negatedClasses, ArrayUtil.EMPTY_INT_ARRAY));
+    int[] result = ArrayUtil
+      .mergeArrays(ObjectUtils.notNull(classes, ArrayUtil.EMPTY_INT_ARRAY), ObjectUtils.notNull(negatedClasses, ArrayUtil.EMPTY_INT_ARRAY));
 
     int interruptCount = 0;
 
@@ -1332,13 +1346,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     removeAllFromMap(idPlain);
     removeAllFromMap(idNegated);
     checkInvariants();
-    myVariableStates.remove(varPlain);
-    if (varNegated != null) {
-      myVariableStates.remove(varNegated);
-    }
-    if (markUnknown) {
-      myUnknownVariables.add(varPlain);
-    }
     myCachedNonTrivialEqClasses = null;
     myCachedDistinctClassPairs = null;
     myCachedHash = null;
