@@ -17,7 +17,6 @@ package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureImpl;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -47,6 +46,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,7 +73,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -99,6 +98,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final String myWorkingDir;
   private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
+  private final Alarm myUpdateTreeAlarm;
 
   public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
     myProject = project;
@@ -226,6 +226,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
 
     myProgressAnimator = new ExecutionNodeProgressAnimator(this);
+    myUpdateTreeAlarm = new Alarm(this);
   }
 
   private ExecutionNode getRootElement() {
@@ -442,7 +443,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     };
     if (myRequests.add(update)) {
-      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
+      myUpdateTreeAlarm.addRequest(update, 100);
     }
   }
 
