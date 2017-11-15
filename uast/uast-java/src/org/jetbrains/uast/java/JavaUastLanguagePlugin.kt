@@ -19,9 +19,11 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
+import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
   override val priority = 0
@@ -303,6 +305,14 @@ internal object JavaConverter {
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
+        is PsiSwitchLabelStatement -> when {
+          givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findSwitchEntry(givenParent, el)
+          givenParent == null ->
+            PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let { switchStatement ->
+              findSwitchEntry(JavaUSwitchExpression(switchStatement, null).body, el)
+            }
+          else -> null
+        }
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
     }

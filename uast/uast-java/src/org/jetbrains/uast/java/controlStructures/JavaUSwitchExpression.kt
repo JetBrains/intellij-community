@@ -67,6 +67,19 @@ private fun PsiCodeBlock.convertToSwitchEntryList(containingElement: UExpression
   return result
 }
 
+internal fun findSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement) =
+  body.also { require(it.kind == JavaSpecialExpressionKinds.SWITCH) }
+    .expressions.find { (it as? JavaUSwitchEntry)?.labels?.contains(el) ?: false } as? JavaUSwitchEntry
+
+internal fun findUSwitchClauseBody(switch: JavaUSwitchExpression, psi: PsiElement): UExpressionList {
+  val bodyExpressions = switch.body.expressions
+  val uExpression = bodyExpressions.find {
+    (it as JavaUSwitchEntry).body.expressions.any { it.psi == psi }
+  } ?: throw IllegalStateException("${psi.javaClass} not found in ${bodyExpressions.map { it.asLogString() }}")
+  return (uExpression as JavaUSwitchEntry).body
+}
+
+
 class JavaUSwitchEntry(
   val labels: List<PsiSwitchLabelStatement>,
   val statements: List<PsiStatement>,
