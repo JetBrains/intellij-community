@@ -77,7 +77,7 @@ class JavaUSwitchEntry(
   override val caseValues by lz {
     labels.mapNotNull {
       if (it.isDefaultCase) {
-        JavaUDefaultCaseExpression
+        JavaUDefaultCaseExpression(it, this)
       }
       else {
         val value = it.caseValue
@@ -100,12 +100,8 @@ class JavaUSwitchEntry(
   }
 }
 
-object JavaUDefaultCaseExpression : UExpression, JvmDeclarationUElement {
-  override val uastParent: UElement?
-    get() = null
-
-  override val psi: PsiElement?
-    get() = null
+class JavaUDefaultCaseExpression(override val psi: PsiElement?, givenParent: UElement?)
+  : JavaAbstractUExpression(givenParent), JvmDeclarationUElement {
 
   override val annotations: List<UAnnotation>
     get() = emptyList()
