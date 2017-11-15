@@ -64,6 +64,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
   }
 
+  public boolean hasAuthenticationProblems() {
+    return !myAuthErrorMap.isEmpty();
+  }
+
   public void startScheduling() {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
@@ -72,7 +76,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
         myConnection.subscribe(GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS, this);
       }
-      forceUpdateBranches();
+      forceUpdateBranches(false);
       if (myPeriodicalUpdater == null) {
         int updateTime = GitVcsSettings.getInstance(myProject).getBranchInfoUpdateTime();
         myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(), updateTime, updateTime,
@@ -100,13 +104,13 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @CalledInAny
-  public void forceUpdateBranches() {
+  public void forceUpdateBranches(boolean useForceAuthentication) {
     new Task.Backgroundable(myProject, "Update Branches Info...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myRepositoryManager.getRepositories().forEach(r -> {
           myLocalBranchesToPush.put(r, calculateBranchesToPush(r));
-          myLocalBranchesToPull.put(r, calculateBranchesToPull(r));
+          myLocalBranchesToPull.put(r, calculateBranchesToPull(r, useForceAuthentication));
         });
       }
     }.queue();
@@ -124,26 +128,27 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @CalledInBackground
   private void updateBranchesToPull() {
-    myRepositoryManager.getRepositories().forEach(r -> myLocalBranchesToPull.put(r, calculateBranchesToPull(r)));
+    myRepositoryManager.getRepositories().forEach(r -> myLocalBranchesToPull.put(r, calculateBranchesToPull(r, false)));
   }
 
   @NotNull
-  private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository) {
+  private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository, boolean useForceAuthentication) {
     Map<GitLocalBranch, Hash> result = newHashMap();
     groupTrackInfoByRemotes(repository).entrySet()
-      .forEach(entry -> result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue())));
+      .forEach(entry -> result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue(), useForceAuthentication)));
     return result;
   }
 
   @NotNull
   private Map<GitLocalBranch, Hash> calcBranchesToPullForRemote(@NotNull GitRepository repository,
                                                                 @NotNull GitRemote gitRemote,
-                                                                @NotNull Collection<GitBranchTrackInfo> trackInfoList) {
+                                                                @NotNull Collection<GitBranchTrackInfo> trackInfoList,
+                                                                boolean useForceAuthentication) {
     Map<GitLocalBranch, Hash> result = newHashMap();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
-      lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations())
-      );
+      lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()),
+               useForceAuthentication);
 
     for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
       String remoteBranchName = hashEntry.getKey();
@@ -164,12 +169,14 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
-                                     @NotNull List<String> branchRefNames) {
+                                     @NotNull List<String> branchRefNames,
+                                     boolean useForceAuthentication) {
     Map<String, Hash> result = newHashMap();
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
-      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params));
+      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params,
+                                                                                                 useForceAuthentication));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
@@ -185,9 +192,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                @NotNull GitRemote remote,
-                                               @NotNull List<String> params) {
-    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE, singletonList("credential.helper="));
-    h.setIgnoreAuthenticationRequest(true);
+                                               @NotNull List<String> params, boolean useForceAuthentication) {
+    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE,
+                                          !useForceAuthentication ? singletonList("credential.helper=") : emptyList());
+    h.setIgnoreAuthenticationRequest(!useForceAuthentication);
     h.addParameters(params);
     h.setUrls(remote.getUrls());
     return h;
@@ -230,7 +238,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   public void repositoryChanged(@NotNull GitRepository repository) {
     myLocalBranchesToPush.put(repository, calculateBranchesToPush(repository));
     if (shouldUpdateBranchesToPull(repository)) {
-      myLocalBranchesToPull.put(repository, calculateBranchesToPull(repository));
+      myLocalBranchesToPull.put(repository, calculateBranchesToPull(repository, false));
     }
   }
 
@@ -240,7 +248,8 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     if (remotes.contains(remote)) {
       MultiMap<GitRemote, GitBranchTrackInfo> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
       if (trackInfoByRemotes.containsKey(remote)) {
-        final Map<GitLocalBranch, Hash> newBranchMap = calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote));
+        final Map<GitLocalBranch, Hash> newBranchMap = calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote),
+                                                                                   false);
         myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
           if (branchHashMap == null) {
             return newHashMap(newBranchMap);
