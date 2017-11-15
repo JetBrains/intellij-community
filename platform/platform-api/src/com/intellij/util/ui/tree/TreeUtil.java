@@ -853,12 +853,7 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
-    return promiseAccept(tree, path -> {
-      int count = path.getPathCount();
-      if (count > depth) return TreeVisitor.Action.SKIP_SIBLINGS;
-      tree.expandPath(path);
-      return TreeVisitor.Action.CONTINUE;
-    });
+    return promiseExpand(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE);
   }
 
   @NotNull
