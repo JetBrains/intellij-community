@@ -16,10 +16,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
@@ -38,11 +35,12 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 
-public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener{
+public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
 
   //store map from local branch to related cached remote branch hash per repository
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
+  @NotNull private final MultiMap<GitRepository, GitRemote> myAuthErrorMap = MultiMap.createConcurrentSet();
   @NotNull private final Project myProject;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   @NotNull private final GitRepositoryManager myRepositoryManager;
@@ -72,6 +70,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       if (myConnection == null) {
         myConnection = myProject.getMessageBus().connect();
         myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
+        myConnection.subscribe(GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS, this);
       }
       forceUpdateBranches();
       if (myPeriodicalUpdater == null) {
@@ -174,6 +173,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
+        myAuthErrorMap.remove(repository, remote);
+      }
+      else if (lsRemoteResult.isAuthenticationFailed()) {
+        myAuthErrorMap.putValue(repository, remote);
       }
     });
     return result;
@@ -231,8 +234,28 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
   }
 
+  @Override
+  public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
+    Collection<GitRemote> remotes = myAuthErrorMap.get(repository);
+    if (remotes.contains(remote)) {
+      MultiMap<GitRemote, GitBranchTrackInfo> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
+      if (trackInfoByRemotes.containsKey(remote)) {
+        final Map<GitLocalBranch, Hash> newBranchMap = calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote));
+        myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
+          if (branchHashMap == null) {
+            return newHashMap(newBranchMap);
+          }
+          else {
+            branchHashMap.putAll(newBranchMap);
+            return branchHashMap;
+          }
+        });
+      }
+    }
+  }
+
   @NotNull
-  private static MultiMap<GitRemote,GitBranchTrackInfo> groupTrackInfoByRemotes(@NotNull GitRepository repository) {
+  private static MultiMap<GitRemote, GitBranchTrackInfo> groupTrackInfoByRemotes(@NotNull GitRepository repository) {
     return groupBy(repository.getBranchTrackInfos(), GitBranchTrackInfo::getRemote);
   }
 }
