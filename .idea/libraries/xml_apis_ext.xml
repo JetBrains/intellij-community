@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="xml-apis-ext">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/xml-apis-ext.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
