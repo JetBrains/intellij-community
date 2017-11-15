@@ -82,7 +82,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun canRewordViaAmend() =
-    isLatestCommit() && GitVersionSpecialty.CAN_AMEND_WITHOUT_FILES.existsIn(GitVcs.getInstance(project).version)
+    isLatestCommit() && GitVersionSpecialty.CAN_AMEND_WITHOUT_FILES.existsIn(GitVcs.getInstance(project)!!.version)
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
