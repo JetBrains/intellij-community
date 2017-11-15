@@ -70,7 +70,7 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     return usages
   }
 
-  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.machineFriendlyPresentation}")
+  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.semanticPresentation}")
 
   override fun getGroupId(): GroupDescriptor {
     return ID
