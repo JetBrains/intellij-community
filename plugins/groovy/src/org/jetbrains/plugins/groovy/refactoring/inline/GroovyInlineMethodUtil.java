@@ -525,7 +525,7 @@ public class GroovyInlineMethodUtil {
     GrParameter[] parameters = method.getParameters();
     for (GrParameter parameter : parameters) {
       GrExpression initializer = parameter.getInitializerGroovy();
-      if (nameFilter.contains(parameter.getName()) && initializer != null) {
+      if (initializer != null && nameFilter.contains(parameter.getName())) {
         replaceAllOccurrencesWithExpression(method, call, initializer, parameter);
       }
     }

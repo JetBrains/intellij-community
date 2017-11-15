@@ -281,7 +281,7 @@ public class BytecodeAnalysisConverter {
     }
 
     // no contract clauses for @NotNull methods
-    if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
+    if (!contractClauses.isEmpty() && !notNulls.contains(methodKey)) {
       Map<Boolean, List<StandardMethodContract>> partition =
         StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue() == ValueConstraint.THROW_EXCEPTION);
       List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));

@@ -221,7 +221,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           if (scrollpane != null) {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
-            if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            if (!myMacScrollbarHidden && myMacScrollbarFadeLevel == 0 && scrollpane.contains(loc)) {
               startMacScrollbarFadeout();
             }
           }

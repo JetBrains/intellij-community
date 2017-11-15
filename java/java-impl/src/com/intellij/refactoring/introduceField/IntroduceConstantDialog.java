@@ -415,7 +415,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         }
       }
     }
-    if (!visible.contains(initialVisibility) && !visible.isEmpty()) {
+    if (!visible.isEmpty() && !visible.contains(initialVisibility)) {
       return visible.get(0);
     }
     return null;

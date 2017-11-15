@@ -2874,7 +2874,7 @@ public class AbstractTreeUi {
     if (!canInitiateNewActivity()) return false;
     if (!getBuilder().isSmartExpand()) return false;
 
-    boolean smartExpand = !myNotForSmartExpand.contains(node) && canSmartExpand;
+    boolean smartExpand = canSmartExpand && !myNotForSmartExpand.contains(node);
     return smartExpand && validateAutoExpand(true, getElementFor(node));
   }
 

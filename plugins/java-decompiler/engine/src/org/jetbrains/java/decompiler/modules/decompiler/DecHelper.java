@@ -159,7 +159,7 @@ public class DecHelper {
             if (head == statd) {
               return false;
             }
-            if (!setDest.contains(statd) && post != statd) {
+            if (post != statd && !setDest.contains(statd)) {
               if (post != null) {
                 return false;
               }
