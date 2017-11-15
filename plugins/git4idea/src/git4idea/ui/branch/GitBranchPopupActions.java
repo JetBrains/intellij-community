@@ -31,10 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
-import git4idea.branch.GitBranchUtil;
-import git4idea.branch.GitBrancher;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.branch.GitNewBranchOptions;
+import git4idea.branch.*;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import icons.DvcsImplIcons;
@@ -230,7 +227,24 @@ class GitBranchPopupActions {
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavorite(LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
+      myGitBranchManager.setFavorite(LOCAL, chooseRepo(), myBranchName, isFavorite());
+    }
+
+    @Nullable
+    private GitRepository chooseRepo() {
+      return myRepositories.size() > 1 ? null : mySelectedRepository;
+    }
+
+    @Override
+    public boolean hasSmthToPull() {
+      GitLocalBranch localBranch = new GitLocalBranch(myBranchName);
+      return GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPull(chooseRepo()).contains(localBranch);
+    }
+
+    @Override
+    public boolean hasSmthToPush() {
+      GitLocalBranch localBranch = new GitLocalBranch(myBranchName);
+      return GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPush(chooseRepo()).contains(localBranch);
     }
 
     static class CheckoutAction extends DumbAwareAction {

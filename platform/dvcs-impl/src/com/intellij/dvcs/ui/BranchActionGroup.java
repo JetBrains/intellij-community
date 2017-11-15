@@ -67,4 +67,8 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   public void toggle() {
     setFavorite(!myIsFavorite);
   }
+
+  public boolean hasSmthToPull() {return false;}
+
+  public boolean hasSmthToPush() {return false;}
 }
