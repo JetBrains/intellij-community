@@ -919,7 +919,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
                                         @NotNull JPanel bottomPanel,
                                         @Nullable Runnable backAction) {
     bottomPanel.removeAll();
-    bottomPanel.setPreferredSize(JBUI.size(-1, UIUtil.isUnderDarcula() ? 44 : 40));
 
     if (SystemInfoRt.isUnix) {
       addCancelButton(bottomPanel, backAction);
@@ -947,11 +946,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   @Nullable
-  private static JComponent createCancelButton(@Nullable Runnable backAction) {
-    if (backAction == null) return null;
+  private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
+    if (cancelAction == null) return null;
 
     JButton cancelButton = new JButton("Cancel");
-    cancelButton.addActionListener(e -> backAction.run());
+    cancelButton.addActionListener(e -> cancelAction.run());
 
     return cancelButton;
   }
