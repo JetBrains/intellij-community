@@ -568,7 +568,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private void updateTimeColumnWidth(String text, boolean force) {
     int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
-    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth) {
+    if (myTimeColumnWidth > timeColumnWidth) {
+      timeColumnWidth = myTimeColumnWidth;
+    }
+
+    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth || myTimeColumn.getWidth() < timeColumnWidth) {
       updateTimeColumnWidth(timeColumnWidth);
     }
   }
