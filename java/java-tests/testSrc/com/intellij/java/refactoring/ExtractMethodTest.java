@@ -1161,6 +1161,15 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testInferredNotNullInReturnStatementDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testNullableCheckBreakDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

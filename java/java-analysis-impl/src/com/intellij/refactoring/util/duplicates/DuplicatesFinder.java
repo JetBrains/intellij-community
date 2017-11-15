@@ -267,6 +267,9 @@ public class DuplicatesFinder {
           if (returnValue == null) {
             returnValue = myReturnValue;
           }
+          if (returnValue instanceof GotoReturnValue) {
+            return false;
+          }
           if (returnValue instanceof VariableReturnValue) {
             final ReturnValue value = match.getOutputVariableValue(((VariableReturnValue)returnValue).getVariable());
             if (value != null) {
@@ -284,7 +287,7 @@ public class DuplicatesFinder {
         return true;
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException ignored) {
     }
     return false;
   }
