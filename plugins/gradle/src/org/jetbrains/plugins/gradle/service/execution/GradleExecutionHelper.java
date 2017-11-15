@@ -223,8 +223,7 @@ public class GradleExecutionHelper {
     catch (Throwable e) {
       LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
-      rootCause.printStackTrace();
-      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause), rootCause);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
     finally {
       try {
