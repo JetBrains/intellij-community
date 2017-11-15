@@ -25,6 +25,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+    <javaCompilerConfigurationProxy implementation="com.intellij.compiler.JavaCompilerConfiguration"/>
   </extensions>
 
 </idea-plugin>
