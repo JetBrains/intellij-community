@@ -465,7 +465,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
           // to allow connector to listen on several auto generated addresses
           if (address.length() == 0 || address.equals("0")) {
-            myArguments.put("argForUniqueness", new EmptyConnectorArgument());
+            EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
+            myArguments.put(uniqueArg.name(), uniqueArg);
           }
         }
         //noinspection HardCodedStringLiteral
