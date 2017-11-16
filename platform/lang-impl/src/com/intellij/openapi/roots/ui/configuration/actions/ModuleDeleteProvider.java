@@ -41,7 +41,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,14 +90,13 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
         final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
         final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
         for (final Module module : modules) {
-          final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
           for (final Module otherModule : currentModules) {
             if (otherModule == module || ArrayUtilRt.find(modules, otherModule) != -1) continue;
             if (!otherModuleRootModels.containsKey(otherModule)) {
               otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
             }
           }
-          removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
+          removeModule(module, otherModuleRootModels.values(), modifiableModuleModel);
         }
         final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
         ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
@@ -120,9 +118,8 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,
-                                   @Nullable ModifiableRootModel modifiableRootModelToRemove,
-                                   @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
-                                   @NotNull final ModifiableModuleModel moduleModel) {
+                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
+                                  @NotNull final ModifiableModuleModel moduleModel) {
     // remove all dependencies on the module that is about to be removed
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
@@ -134,10 +131,6 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
           }
         }
       }
-    }
-    // destroyProcess editor
-    if (modifiableRootModelToRemove != null) {
-      modifiableRootModelToRemove.dispose();
     }
     // destroyProcess module
     moduleModel.disposeModule(moduleToRemove);
