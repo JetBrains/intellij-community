@@ -19,10 +19,9 @@ import java.util.List;
 public class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
   public static final int APPEND_LINE_NUMBER = 0x00000001;
-  public static final int TRIM_AT_END = 0x00000002;
   public static final int TRIM_AT_TREE_END = 0x00000004;
 
-  @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_END, TRIM_AT_TREE_END})
+  @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})
   @interface FlagConstant {
   }
 
@@ -76,8 +75,7 @@ public class ProblemDescriptorUtil {
       message = StringUtil.replace(message, "#ref", ref);
     }
 
-    final int endIndex = (flags & TRIM_AT_END) != 0 ? message.indexOf("#end") :
-                         (flags & TRIM_AT_TREE_END) != 0 ? message.indexOf("#treeend") : -1;
+    final int endIndex = (flags & TRIM_AT_TREE_END) != 0 ? message.indexOf("#treeend") : -1;
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
