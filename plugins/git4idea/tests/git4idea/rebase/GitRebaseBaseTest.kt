@@ -28,7 +28,7 @@ import git4idea.test.*
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
 
-  protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
+  protected val LOCAL_CHANGES_WARNING : String = "Local changes were stashed before rebase."
 
   override fun createRepository(rootDir: String) = createRepository(project, rootDir, false)
 
@@ -163,18 +163,14 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun `assert conflict not resolved notification`() {
-    assertWarningNotification("Rebase Suspended",
+    assertWarningNotification("Rebase Stopped Due to Conflicts",
         """
-        You have to <a>resolve</a> the conflicts and <a>continue</a> rebase.<br/>
-        If you want to start from the beginning, you can <a>abort</a> rebase.
         """)
   }
 
   protected fun `assert conflict not resolved notification with link to stash`() {
-    assertWarningNotification("Rebase Suspended",
+    assertWarningNotification("Rebase Stopped Due to Conflicts",
         """
-        You have to <a>resolve</a> the conflicts and <a>continue</a> rebase.<br/>
-        If you want to start from the beginning, you can <a>abort</a> rebase.<br/>
         $LOCAL_CHANGES_WARNING
         """)
   }
@@ -183,7 +179,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        <a>Retry.</a>
         """)
   }
 
@@ -192,7 +187,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertErrorNotification(expectedTitle,
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        You can <a>retry</a> or <a>abort</a> rebase.
         """)
   }
 
@@ -200,7 +194,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        <a>Retry.</a><br/>
         $LOCAL_CHANGES_WARNING
         """)
   }
@@ -212,7 +205,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
           $fileLine
           You must edit all merge conflicts
           and then mark them as resolved using git add
-          You can <a>retry</a> or <a>abort</a> rebase.
           """)
   }
 
