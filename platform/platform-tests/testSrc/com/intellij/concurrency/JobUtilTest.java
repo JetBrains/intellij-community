@@ -59,8 +59,7 @@ public class JobUtilTest extends PlatformTestCase {
     assertTrue(b);
     long elapsed = System.currentTimeMillis() - start;
     int expected = 2 * (9950 + 50 * 1000) / JobSchedulerImpl.CORES_COUNT;
-    String message = "Elapsed: " + elapsed + "; expected: " + expected;
-    LOG.debug(message);
+    String message = "Elapsed: " + elapsed + "; expected: " + expected + "; cores=" + JobSchedulerImpl.CORES_COUNT;
     assertTrue(message, elapsed < expected);
   }
 
