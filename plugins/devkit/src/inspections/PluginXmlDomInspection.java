@@ -41,6 +41,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
@@ -167,12 +168,13 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     GenericAttributeValue<String> name = extensionPoint.getName();
     if (!isValidEpName(name)) {
-      holder.createProblem(name, DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()));
+      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()), null);
     }
     GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
     if (!isValidEpName(qualifiedName)) {
-      holder.createProblem(
-        qualifiedName, DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()));
+      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()), null);
     }
   }
 
@@ -180,7 +182,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (!nameAttrValue.exists()) {
       return true;
     }
-    String name = nameAttrValue.getValue();
+    @NonNls String name = nameAttrValue.getValue();
     return StringUtil.isNotEmpty(name) &&
            Character.isLowerCase(name.charAt(0)) && // also checks that name doesn't start with dot
            !name.toUpperCase().equals(name) && // not all uppercase
