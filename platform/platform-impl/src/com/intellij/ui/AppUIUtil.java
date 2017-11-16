@@ -69,6 +69,12 @@ public class AppUIUtil {
   private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
+    if (SystemInfo.isWindows &&
+        Integer.getInteger("jbre.win.app.icon.id") != null &&
+        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // set by JBRE
+    {
+      return; // JBRE will load icon from the exe resource
+    }
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
