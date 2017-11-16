@@ -56,18 +56,12 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.search.EverythingGlobalScope
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.TodoAttributesUtil
-import com.intellij.psi.search.TodoPattern
+import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
@@ -86,7 +80,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
-
 /**
  * @author Eugene Zhuravlev
  * @since Dec 12, 2007
@@ -862,7 +855,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  void "test stub updating index problem"() throws IOException {
+  void "test stub updating index problem during processAllKeys"() throws IOException {
     def className = "Foo"
     myFixture.addClass("class $className {}")
     def scope = GlobalSearchScope.allScope(project)
@@ -909,7 +902,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     Document document = FileDocumentManager.getInstance().getDocument(file)
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 2; ++i) {
       document.replaceString(0, document.textLength, item + item)
       PsiDocumentManager.getInstance(project).commitDocument(document)
       assertNull(findClass("Bar"))
@@ -922,12 +915,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   private static String createLongSequenceOfCharacterConstants() {
     String item = "'c',"
-    int userFileSizeLimit = FileUtilRt.getUserFileSizeLimit()
-    while (true) {
-      item += item
-      if (item.length() * 2 > userFileSizeLimit) break
-    }
-    item
+    item * (Integer.highestOneBit(FileUtilRt.userFileSizeLimit) / item.length())
   }
 
   void "test file increases beyond too large limit"() {
@@ -936,7 +924,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def file = myFixture.addFileToProject('foo/Bar.java', fileText).virtualFile
     assertNotNull(findClass("Bar"))
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 2; ++i) {
       VfsUtil.saveText(file, item + item)
       assertNull(findClass("Bar"))
 
