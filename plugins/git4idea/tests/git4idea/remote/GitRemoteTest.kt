@@ -16,11 +16,16 @@
 package git4idea.remote
 
 import com.intellij.openapi.components.service
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ThrowableRunnable
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
+import git4idea.remote.GitRemoteTest.ConfigScope.GLOBAL
+import git4idea.remote.GitRemoteTest.ConfigScope.SYSTEM
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
+import git4idea.test.git
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -29,6 +34,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private lateinit var authenticator : TestAuthenticator
   private lateinit var authTestService : GitHttpAuthTestService
+  private lateinit var credentialHelpers: Map<ConfigScope, String>
 
   private val projectName = "projectA"
 
@@ -38,15 +44,16 @@ class GitRemoteTest : GitPlatformTest() {
     authenticator = TestAuthenticator()
     authTestService = service<GitHttpAuthService>() as GitHttpAuthTestService
     authTestService.register(authenticator)
+
+    credentialHelpers = readAndResetCredentialHelpers()
   }
 
   override fun tearDown() {
-    try{
-      authTestService.cleanup()
-    }
-    finally {
-      super.tearDown()
-    }
+    RunAll()
+      .append(ThrowableRunnable { authTestService.cleanup() })
+      .append(ThrowableRunnable { restoreCredentialHelpers() })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   fun `test clone from http with username`() {
@@ -95,6 +102,24 @@ class GitRemoteTest : GitPlatformTest() {
       cloneWaiter.countDown()
     }
     return cloneWaiter
+  }
+
+  private fun readAndResetCredentialHelpers(): Map<ConfigScope, String> {
+    val system = readAndResetCredentialHelper(SYSTEM)
+    val global = readAndResetCredentialHelper(GLOBAL)
+    return mapOf(SYSTEM to system, GLOBAL to global)
+  }
+
+  private fun readAndResetCredentialHelper(scope: ConfigScope): String {
+    val value = git("config ${scope.param()} --get-all credential.helper", true)
+    git("config ${scope.param()} --unset-all credential.helper", true)
+    return value
+  }
+
+  private fun restoreCredentialHelpers() {
+    credentialHelpers.forEach { scope, value ->
+      if (value.isNotBlank()) git("config ${scope.param()} credential.helper ${value}", true)
+    }
   }
 
   private fun assertCloneSuccessful(cloneCompleted: CountDownLatch) {
@@ -178,5 +203,12 @@ class GitRemoteTest : GitPlatformTest() {
     internal fun wasUsernameAsked(): Boolean {
       return usernameAsked
     }
+  }
+
+  private enum class ConfigScope {
+    SYSTEM,
+    GLOBAL;
+
+    fun param() = "--${name.toLowerCase()}"
   }
 }
