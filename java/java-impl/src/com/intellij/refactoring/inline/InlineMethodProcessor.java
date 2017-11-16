@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.Language;
@@ -1285,7 +1286,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       PsiExpression rExpression = assignment.getRExpression();
       while (rExpression instanceof PsiReferenceExpression) rExpression = ((PsiReferenceExpression)rExpression).getQualifierExpression();
-      if (rExpression == null || !PsiUtil.isStatement(rExpression)) {
+      if (rExpression == null) {
+        assignment.delete();
+      }
+      else if (!PsiUtil.isStatement(rExpression)) {
+        if (RemoveUnusedVariableUtil.checkSideEffects(rExpression, resultVar, new ArrayList<>())) {
+          //keep result variable
+          return;
+        }
         assignment.delete();
       }
       else {
