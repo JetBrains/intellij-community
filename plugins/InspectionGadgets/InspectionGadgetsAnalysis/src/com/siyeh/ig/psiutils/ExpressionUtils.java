@@ -925,6 +925,31 @@ public class ExpressionUtils {
   }
 
   /**
+   * Returns call from call chain which name satisfies isWantedCall predicate.
+   * Also checks that all calls between start call and wanted call satisfies isAllowedIntermediateCall
+   * @param call call chain
+   * @param isWantedCall predicate on the name of wanted call
+   * @param isAllowedIntermediateCall predicate on the name of any other call between start call and wanted call
+   * @return call that satisfies isWantedCall predicate or null otherwise
+   */
+  @Nullable
+  public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
+                                                            Predicate<String> isWantedCall,
+                                                            Predicate<String> isAllowedIntermediateCall) {
+    for (PsiMethodCallExpression chainCall = getCallForQualifier(call); chainCall != null;
+         chainCall = getCallForQualifier(chainCall)) {
+      String name = chainCall.getMethodExpression().getReferenceName();
+      if (name == null) return null;
+      if (isWantedCall.test(name)) return chainCall;
+      if (!isAllowedIntermediateCall.test(name) ||
+          !InheritanceUtil.isInheritor(chainCall.getType(), CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Returns an array expression from array length retrieval expression
    * @param expression expression to extract an array expression from
    * @return an array expression or null if supplied expression is not array length retrieval
