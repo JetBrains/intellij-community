@@ -33,6 +33,7 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -211,13 +212,16 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   @NotNull
   public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
-    GlobalSearchScope scope = base;
+    List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : Extensions.getExtensions(EP_NAME, project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        scope = scope.uniteWith(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
       }
     }
-    return scope;
+    if (nonClasspathScopes.isEmpty()) {
+      return base;
+    }
+    return GlobalSearchScope.union(ArrayUtil.prepend(base, nonClasspathScopes.toArray(new GlobalSearchScope[0])));
   }
 
   public PsiManager getPsiManager() {
