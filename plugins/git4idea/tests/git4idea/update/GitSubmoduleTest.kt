@@ -164,6 +164,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("init $moduleName")
     val child = File(testRoot, moduleName)
     cd(child)
+    setupDefaultUsername(project)
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
     git("remote add origin ${testRoot}/$parent")

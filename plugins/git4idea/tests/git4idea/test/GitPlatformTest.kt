@@ -134,9 +134,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return File(testRoot, parentName + ".git")
   }
 
-  private fun createBroRepo(broName: String, parentRepo: File): File {
+  protected fun createBroRepo(broName: String, parentRepo: File): File {
     Executor.cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
+    cd(broName)
+    setupDefaultUsername(project)
     return File(testRoot, broName)
   }
 
