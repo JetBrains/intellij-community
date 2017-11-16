@@ -333,7 +333,7 @@ public abstract class AbstractValueHint {
     setHighlighterAttributes();
 
     // align the popup with the bottom of the line
-    Point point = myEditor.logicalPositionToXY(myEditor.xyToLogicalPosition(myPoint));
+    Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
     point.translate(0, myEditor.getLineHeight());
 
     DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
