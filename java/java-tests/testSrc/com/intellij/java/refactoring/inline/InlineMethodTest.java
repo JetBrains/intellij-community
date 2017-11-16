@@ -327,6 +327,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testUnableToInlineCodeBlockToSuper() {
+    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
   public void testRedundantCastOnMethodReferenceToLambda() {
     doTest();
   }

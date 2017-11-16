@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
@@ -214,7 +215,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        final String errorMessage = checkCalledInSuperOrThisExpr(myMethod.getBody(), element);
+        final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
         if (errorMessage != null) {
           conflicts.putValue(element, errorMessage);
         }
@@ -1507,17 +1508,42 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return ((PsiAssignmentExpression)expression).getRExpression();
   }
 
+  @Deprecated
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
-    if (methodBody.getStatements().length > 1) {
+    return checkUnableToInsertCodeBlock(methodBody, element,
+                                        expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)
+           ? "Inline cannot be applied to multiline method in constructor call"
+           : null;
+  }
+
+  public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
+    if (checkUnableToInsertCodeBlock(methodBody, element,
+                                     expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)) {
+      return "Inline cannot be applied to multiline method in constructor call";
+    }
+    return checkUnableToInsertCodeBlock(methodBody, element,
+                                        expr -> {
+                                          PsiElement parent = expr.getParent();
+                                          return parent instanceof PsiLoopStatement && PsiUtil.isCondition(expr, parent);
+                                        })
+           ? "Inline cannot be applied to multiline method in loop condition"
+           : null;
+  }
+
+  private static boolean checkUnableToInsertCodeBlock(final PsiCodeBlock methodBody,
+                                                      final PsiElement element,
+                                                      final Predicate<PsiMethodCallExpression> errorCondition) {
+    PsiStatement[] statements = methodBody.getStatements();
+    if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {
-        if (RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element) {
-          return "Inline cannot be applied to multiline method in constructor call";
+        if (errorCondition.test(expr)) {
+          return true;
         }
         expr = PsiTreeUtil.getParentOfType(expr, PsiMethodCallExpression.class, true, PsiStatement.class);
       }
     }
-    return null;
+    return false;
   }
 
   public static boolean checkBadReturns(PsiMethod method) {
