@@ -254,7 +254,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineRunnableRun() {
     doTestInlineThisOnly();
   }
-  
+
+  public void testPreserveLeadingTailingComments() {
+    doTestInlineThisOnly();
+  }
+
   public void testOneLineLambdaVoidCompatibleToBlock() {
     doTestInlineThisOnly();
   }

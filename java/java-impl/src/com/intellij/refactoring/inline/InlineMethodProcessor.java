@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -645,42 +646,44 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiLocalVariable[] parmVars = new PsiLocalVariable[blockData.parmVars.length];
     PsiLocalVariable resultVar = null;
     PsiStatement[] statements = blockData.block.getStatements();
-    if (statements.length > 0) {
+    PsiElement firstBodyElement = blockData.block.getFirstBodyElement();
+    if (firstBodyElement instanceof PsiWhiteSpace) firstBodyElement = PsiTreeUtil.skipWhitespacesForward(firstBodyElement);
+    PsiElement firstAdded = null;
+    if (firstBodyElement != null) {
       int last = statements.length - 1;
       /*PsiElement first = statements[0];
       PsiElement last = statements[statements.length - 1];*/
 
-      if (statements.length > 0 && statements[statements.length - 1] instanceof PsiReturnStatement &&
+      if (last > 0 && statements[last] instanceof PsiReturnStatement &&
           tailCall != InlineUtil.TailCallType.Return) {
         last--;
       }
 
-      int first = 0;
-      if (first <= last) {
-        final PsiElement rBraceOrReturnStatement =
-          PsiTreeUtil.skipWhitespacesAndCommentsForward(statements[last]);
-        LOG.assertTrue(rBraceOrReturnStatement != null);
-        final PsiElement beforeRBraceStatement = rBraceOrReturnStatement.getPrevSibling();
-        LOG.assertTrue(beforeRBraceStatement != null);
-        PsiElement firstAdded = anchorParent.addRangeBefore(statements[first], beforeRBraceStatement, anchor);
+      final PsiElement rBraceOrReturnStatement =
+        last >= 0 ? PsiTreeUtil.skipWhitespacesAndCommentsForward(statements[last]) : blockData.block.getLastBodyElement();
+      LOG.assertTrue(rBraceOrReturnStatement != null);
+      final PsiElement beforeRBraceStatement = rBraceOrReturnStatement.getPrevSibling();
+      LOG.assertTrue(beforeRBraceStatement != null);
 
-        PsiElement current = firstAdded.getPrevSibling();
-        LOG.assertTrue(current != null);
-        if (blockData.thisVar != null) {
-          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-          thisVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
-          current = statement;
-        }
-        for (int i = 0; i < parmVars.length; i++) {
-          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-          parmVars[i] = (PsiLocalVariable)statement.getDeclaredElements()[0];
-          current = statement;
-        }
-        if (blockData.resultVar != null) {
-          PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-          resultVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
-        }
+      firstAdded = anchorParent.addRangeBefore(firstBodyElement, beforeRBraceStatement, anchor);
+
+      PsiElement current = firstAdded.getPrevSibling();
+      LOG.assertTrue(current != null);
+      if (blockData.thisVar != null) {
+        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+        thisVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
+        current = statement;
       }
+      for (int i = 0; i < parmVars.length; i++) {
+        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+        parmVars[i] = (PsiLocalVariable)statement.getDeclaredElements()[0];
+        current = statement;
+      }
+      if (blockData.resultVar != null) {
+        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
+        resultVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
+      }
+
       if (statements.length > 0) {
         final PsiStatement lastStatement = statements[statements.length - 1];
         if (lastStatement instanceof PsiReturnStatement && tailCall != InlineUtil.TailCallType.Return) {
@@ -710,10 +713,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
 
-    if (methodCall.getParent() instanceof PsiLambdaExpression) {
+    PsiElement callParent = methodCall.getParent();
+    if (callParent instanceof PsiLambdaExpression) {
       methodCall.delete();
-    } else if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
-      methodCall.getParent().delete();
+    } else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
+      CommentTracker tracker = new CommentTracker();
+      tracker.delete(callParent);
+      if (firstAdded != null) {
+        tracker.insertCommentsBefore(firstAdded);
+      }
     }
     else {
       if (blockData.resultVar != null) {
