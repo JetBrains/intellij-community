@@ -52,10 +52,10 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    return modules != null && !isPrimaryModule(modules);
+    return modules != null && !containsPrimaryModule(modules);
   }
 
-  private static boolean isPrimaryModule(Module[] modules) {
+  private static boolean containsPrimaryModule(Module[] modules) {
     if (!ProjectAttachProcessor.canAttachToProject()) {
       return !PlatformUtils.isIntelliJ();
     }
