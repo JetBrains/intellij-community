@@ -69,7 +69,7 @@ public class MergeUtil {
 
     switch (result) {
       case CANCEL:
-        return "Abort";
+        return "Cancel";
       case LEFT:
         return "Accept Left";
       case RIGHT:
@@ -143,7 +143,7 @@ public class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
-    String message = DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message");
+    String message = "";
     String title = DiffBundle.message("cancel.visual.merge.dialog.title");
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
@@ -151,7 +151,14 @@ public class MergeUtil {
       message = customMessage.second;
     }
 
-    return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return showConfirmationDialog(component.getRootPane(), message, title);
+  }
+
+  public static boolean showConfirmationDialog(@NotNull JComponent component,
+                                               @NotNull String message,
+                                               @NotNull String title) {
+    String content = message == "" ? DiffBundle.message("merge.dialog.discard.result.message") : message;
+    return Messages.showDialog(component, content, title, new String[]{"Discard","Continue merging"}, 0, Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public static void putRevisionInfos(@NotNull MergeRequest request, @NotNull MergeData data) {

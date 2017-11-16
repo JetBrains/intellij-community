@@ -297,10 +297,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) && myContentModified &&
-              Messages.showYesNoDialog(myPanel.getRootPane(),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.message", result == MergeResult.LEFT ? 0 : 1),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.title"), Messages.getQuestionIcon()) != Messages.YES) {
+          if (result == MergeResult.LEFT && myContentModified &&
+              !MergeUtil.showConfirmationDialog(myPanel.getRootPane(), "", DiffBundle.message("merge.dialog.resolve.left.with.discard.title"))) {
+            return;
+          }
+          if (result == MergeResult.RIGHT && myContentModified &&
+              !MergeUtil.showConfirmationDialog(myPanel.getRootPane(), "", DiffBundle.message("merge.dialog.resolve.right.with.discard.title"))) {
             return;
           }
           if (result == MergeResult.RESOLVED) {
@@ -312,7 +314,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
               return;
             }
           }
-          if (result == MergeResult.CANCEL &&
+          if (result == MergeResult.CANCEL && myContentModified &&
               !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
