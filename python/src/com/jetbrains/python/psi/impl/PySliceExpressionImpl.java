@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
@@ -39,21 +40,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = context.getType(getOperand());
-
-    // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
-    if (type instanceof PyTupleType) {
-      return PyBuiltinCache.getInstance(this).getTupleType();
-    }
-
-    if (type instanceof PyCollectionType) {
-      return type;
-    }
-
-    if (type instanceof PyClassType) {
-      return PyUtil.getReturnTypeOfMember(type, PyNames.GETITEM, null, context);
-    }
-
-    return null;
+    return getSliceType(type, context);
   }
 
   @NotNull
@@ -66,5 +53,27 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   @Override
   public PySliceItem getSliceItem() {
     return PsiTreeUtil.getChildOfType(this, PySliceItem.class);
+  }
+
+  @Nullable
+  private PyType getSliceType(@Nullable PyType operandType, @NotNull TypeEvalContext context) {
+    // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
+    if (operandType instanceof PyTupleType) {
+      return PyBuiltinCache.getInstance(this).getTupleType();
+    }
+
+    if (operandType instanceof PyCollectionType) {
+      return operandType;
+    }
+
+    if (operandType instanceof PyClassType) {
+      return PyUtil.getReturnTypeOfMember(operandType, PyNames.GETITEM, null, context);
+    }
+
+    if (operandType instanceof PyUnionType) {
+      return PyUnionType.union(ContainerUtil.map(((PyUnionType)operandType).getMembers(), member -> getSliceType(member, context)));
+    }
+
+    return null;
   }
 }

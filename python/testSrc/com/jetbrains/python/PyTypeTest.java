@@ -2576,6 +2576,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = A.B.__new__(A.B)");
   }
 
+  // PY-26973
+  public void testSliceOnUnion() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Union[str, Any]",
+                   "from typing import Union\n" +
+                   "myvar: Union[str, int]\n" +
+                   "expr = myvar[0:3]")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
