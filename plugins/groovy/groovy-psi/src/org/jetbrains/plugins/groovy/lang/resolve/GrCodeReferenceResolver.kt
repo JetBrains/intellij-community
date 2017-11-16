@@ -1,12 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("LoopToCallChain")
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.contextOfType
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -171,20 +170,32 @@ private fun PsiClass.getPackage(): PsiPackage? {
   return JavaPsiFacade.getInstance(file.project).findPackage(name)
 }
 
-@Suppress("LiftReturnOrAssignment")
 fun GrCodeReferenceElement.processClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   val qualifier = qualifier
   if (qualifier == null) {
-    return processAsUnqualifiedType(processor, state)
+    return processUnqualified(processor, state)
   }
   else {
     return processQualifier(qualifier, processor, state)
   }
 }
 
-private fun GrCodeReferenceElement.processAsUnqualifiedType(processor: PsiScopeProcessor, state: ResolveState): Boolean {
-  return processInnerClasses(processor, state) &&
-         containingFile.treeWalkUp(processor, state, this)
+private fun GrCodeReferenceElement.processUnqualified(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+  if (!processInnerClasses(processor, state)) return false
+  // When all inner classes are processed, it's time to process file level declarations (i.e. imports).
+  // There is no point in processing imports in dummy files.
+  val file = containingFile.skipDummies() ?: return true
+  return file.treeWalkUp(processor, state, this)
+}
+
+private fun GrCodeReferenceElement.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+  val currentClass = contextOfType<GrTypeDefinition>() ?: return true
+
+  if (canResolveToInnerClassOfCurrentClass()) {
+    if (!currentClass.processInnerInHierarchy(processor, state, this)) return false
+  }
+
+  return currentClass.processInnersInOuters(processor, state, this)
 }
 
 private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceElement,
@@ -192,85 +203,30 @@ private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceEl
                                                     state: ResolveState): Boolean {
   for (result in qualifier.multiResolve(false)) {
     val clazz = result.element as? PsiClass ?: continue
-    if (!processInnersInHierarchy(clazz, processor, state.put(PsiSubstitutor.KEY, result.substitutor), this)) return false
+    if (!clazz.processDeclarations(processor, state.put(PsiSubstitutor.KEY, result.substitutor), null, this)) return false
   }
   return true
 }
 
-private fun GrReferenceElement<*>.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
-  val currentClass = parentOfType<GrTypeDefinition>() ?: return true
-
-  if (canResolveToInnerClassOrCurrentClass()) {
-    if (!processInnersInHierarchy(currentClass, processor, state, this)) return false
-  }
-
-  val outers = currentClass.collectOuterClasses().reversed()
-  for (outer in outers) {
-    if (!processInnerClassesInClassAndInterfaces(outer, false, processor, state, this)) return false
-  }
-  return true
-}
-
-private fun GrReferenceElement<*>.canResolveToInnerClassOrCurrentClass(): Boolean {
-  val parent = parent
+private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boolean {
+  val parent = getActualParent()
   return parent !is GrExtendsClause &&
          parent !is GrImplementsClause &&
          (parent !is GrAnnotation || parent.classReference != this) && // annotation's can't be inner classes of current class
          (parent !is GrAnonymousClassDefinition || parent.baseClassReferenceGroovy != this)
 }
 
-private fun processInnersInHierarchy(clazz: PsiClass,
-                                     processor: PsiScopeProcessor,
-                                     state: ResolveState,
-                                     place: PsiElement): Boolean {
-  if (!processInnerClassesInClassAndInterfaces(clazz, false, processor, state, place)) return false
+/**
+ * Reference element may be created from stub. In this case containing file will be dummy, and its context will be reference parent
+ */
+private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFile.context ?: parent
 
-  var superClass: PsiClass? = clazz.superClass
-  while (superClass != null) {
-    if (!processInnerClassesInClassAndInterfaces(superClass, true, processor, state, place)) return false
-    superClass = superClass.superClass
+private fun PsiFile?.skipDummies(): PsiFile? {
+  var file: PsiFile? = this
+  while (file != null && !file.isPhysical) {
+    val context = file.context
+    if (context == null) return file
+    file = context.containingFile
   }
-
-  return true
-}
-
-private fun processInnerClassesInClassAndInterfaces(clazz: PsiClass,
-                                                    includeSynthetic: Boolean,
-                                                    processor: PsiScopeProcessor,
-                                                    state: ResolveState,
-                                                    place: PsiElement): Boolean {
-  val name = processor.getName(state)
-  if (name == null) {
-    for (inner in CollectClassMembersUtil.getInnerClasses(clazz, includeSynthetic)) {
-      if (!processor.execute(inner, state)) return false
-    }
-  }
-  else {
-    val inner = if (includeSynthetic) {
-      clazz.findInnerClassByName(name, false)
-    }
-    else {
-      val inners = (clazz as? GrTypeDefinition)?.codeInnerClasses ?: clazz.innerClasses
-      inners.find { it.name == name }
-    }
-    if (inner != null) {
-      if (!processor.execute(inner, state)) return false
-    }
-  }
-
-  for (anInterface in clazz.interfaces) {
-    if (!anInterface.processDeclarations(processor, state, null, place)) return false
-  }
-
-  return true
-}
-
-private fun GrTypeDefinition.collectOuterClasses(): List<GrTypeDefinition> {
-  val result = SmartList<GrTypeDefinition>()
-  var current: GrTypeDefinition? = containingClass as? GrTypeDefinition
-  while (current != null) {
-    result += current
-    current = current.containingClass as? GrTypeDefinition
-  }
-  return result
+  return file
 }
