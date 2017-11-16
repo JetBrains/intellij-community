@@ -8,12 +8,20 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
+import static com.intellij.openapi.util.RecursionManager.assertOnRecursionPrevention
+
 @CompileStatic
 class ResolveClassInNewTest extends LightGroovyTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   final String basePath = TestUtils.testDataPath + '/resolve/classInNew'
+
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    assertOnRecursionPrevention(testRootDisposable)
+  }
 
   private void doDirectoryTest(String fqn) {
     final name = getTestName()
