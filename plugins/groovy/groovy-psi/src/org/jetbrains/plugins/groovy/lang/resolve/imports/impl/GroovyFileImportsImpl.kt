@@ -6,7 +6,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.util.flatten
 
 internal class GroovyFileImportsImpl(
-  override val file: GroovyFile,
+  override val file: GroovyFileBase,
   private val imports: Map<ImportKind<*>, Collection<GroovyImport>>,
   private val statementToImport: Map<GrImportStatement, GroovyImport>,
   private val importToStatement: Map<GroovyImport, GrImportStatement>
@@ -74,7 +74,7 @@ internal class GroovyFileImportsImpl(
 
     for (import in starImports) {
       val statement = importToStatement[import] ?: continue
-      if (import.resolve(file) == null) {
+      if (import.resolveImport(file) == null) {
         result += statement
       }
     }
@@ -82,7 +82,7 @@ internal class GroovyFileImportsImpl(
     for (import in allNamedImports) {
       if (import.name !in names) continue
       val statement = importToStatement[import] ?: continue
-      if (import.resolve(file) == null) {
+      if (import.resolveImport(file) == null) {
         result += statement
       }
     }

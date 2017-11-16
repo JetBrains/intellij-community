@@ -4,13 +4,13 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 import com.intellij.openapi.util.text.StringUtil.getPackageName
 import com.intellij.openapi.util.text.StringUtil.getShortName
 import com.intellij.util.reverse
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.resolve.Import
 import org.jetbrains.plugins.groovy.lang.resolve.ImportType
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 
-class GroovyImportCollector(private val file: GroovyFile) {
+class GroovyImportCollector(private val file: GroovyFileBase) {
 
   private val statementToImport = mutableMapOf<GrImportStatement, GroovyImport>()
   private val imports = HashMap<ImportKind<*>, LinkedHashMap<String, GroovyImport>>()

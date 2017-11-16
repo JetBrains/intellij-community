@@ -6,19 +6,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
 data class StarImport(val packageFqn: String) : GroovyStarImport {
 
   override val fqn: String get() = packageFqn
 
-  override fun resolve(file: GroovyFile): PsiPackage? {
+  override fun resolveImport(file: GroovyFileBase): PsiPackage? {
     val facade = JavaPsiFacade.getInstance(file.project)
     return facade.findPackage(packageFqn)
   }
 
-  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean {
-    val pckg = resolve(file) ?: return true
+  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
+    val pckg = resolveImport(file) ?: return true
     return pckg.processDeclarations(processor, state, null, place)
   }
 

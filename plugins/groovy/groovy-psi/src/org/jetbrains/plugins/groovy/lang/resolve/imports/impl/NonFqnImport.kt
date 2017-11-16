@@ -4,14 +4,14 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
 
 abstract class NonFqnImport : GroovyImport {
 
   abstract val classFqn: String
 
-  override fun resolve(file: GroovyFile): PsiClass? {
+  override fun resolveImport(file: GroovyFileBase): PsiClass? {
     val facade = JavaPsiFacade.getInstance(file.project)
     val scope = file.resolveScope
 

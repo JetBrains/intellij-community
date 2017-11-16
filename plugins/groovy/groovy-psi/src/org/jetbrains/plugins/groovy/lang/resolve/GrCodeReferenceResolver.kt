@@ -74,7 +74,7 @@ private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<Groovy
     return resolveAsPackageReference()
   }
 
-  val clazz = import.resolve(file) as? PsiClass
+  val clazz = import.resolveImport(file) as? PsiClass
   val classReference = if (import is StaticImport) topLevelReference.qualifier else topLevelReference
   if (clazz == null || classReference == null) return resolveAsPackageReference()
   return resolveAsPartOfFqn(classReference, clazz)
@@ -87,7 +87,7 @@ private fun resolveStaticImportReference(file: GroovyFile, import: StaticImport)
 }
 
 private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Collection<GroovyResolveResult> {
-  val resolved = import.resolve(file) ?: return emptyList()
+  val resolved = import.resolveImport(file) ?: return emptyList()
   return listOf(ElementGroovyResult(resolved))
 }
 

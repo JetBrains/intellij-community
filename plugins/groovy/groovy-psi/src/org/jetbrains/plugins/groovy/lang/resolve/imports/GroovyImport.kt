@@ -4,19 +4,19 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
 interface GroovyImport {
 
   /**
    * Resolves current import using [file] as a context
    */
-  fun resolve(file: GroovyFile): PsiElement?
+  fun resolveImport(file: GroovyFileBase): PsiElement?
 
   /**
    * Feeds the processor with elements available via this import
    */
-  fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean
+  fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean
 
   /**
    * Checks whether this import could be removed wihout any changes in resolve.

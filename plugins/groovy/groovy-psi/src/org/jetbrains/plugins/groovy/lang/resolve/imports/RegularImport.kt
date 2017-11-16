@@ -8,7 +8,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.resolve.checkName
 import org.jetbrains.plugins.groovy.lang.resolve.processClassesInFile
 import org.jetbrains.plugins.groovy.lang.resolve.processClassesInPackage
@@ -34,17 +34,17 @@ data class RegularImport(val classFqn: String, override val name: String) : Groo
 
   override val isAliased: Boolean = getShortName(classFqn) != name
 
-  override fun resolve(file: GroovyFile): PsiClass? {
+  override fun resolveImport(file: GroovyFileBase): PsiClass? {
     if (!file.packageName.isEmpty() && '.' !in classFqn) return null
     val facade = JavaPsiFacade.getInstance(file.project)
     return facade.findClass(classFqn, file.resolveScope)
   }
 
-  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean {
+  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
     if (!processor.shouldProcessClasses()) return true
     if (!processor.checkName(name, state)) return true
 
-    val clazz = resolve(file) ?: return true
+    val clazz = resolveImport(file) ?: return true
     return processor.execute(clazz, state.put(importedNameKey, name))
   }
 

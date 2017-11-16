@@ -6,7 +6,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.NonFqnImport
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor
@@ -15,8 +15,8 @@ data class StaticStarImport(override val classFqn: String) : NonFqnImport(), Gro
 
   override val fqn: String get() = classFqn
 
-  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFile): Boolean {
-    val clazz = resolve(file) ?: return true
+  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
+    val clazz = resolveImport(file) ?: return true
     for (each in GroovyResolverProcessor.allProcessors(processor)) {
       val filteringProcessor = StaticMembersFilteringProcessor(each, null)
       if (!clazz.processDeclarations(filteringProcessor, state, null, place)) return false

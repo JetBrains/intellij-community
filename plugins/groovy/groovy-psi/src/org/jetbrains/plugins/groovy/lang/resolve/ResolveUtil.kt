@@ -11,7 +11,7 @@ import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
@@ -76,7 +76,7 @@ fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   }
 }
 
-fun GroovyFile.processClassesInFile(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+fun GroovyFileBase.processClassesInFile(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   if (!processor.shouldProcessClasses()) return true
   val scriptClass = scriptClass
   if (scriptClass != null && !ResolveUtil.processElement(processor, scriptClass, state)) return false
@@ -86,7 +86,7 @@ fun GroovyFile.processClassesInFile(processor: PsiScopeProcessor, state: Resolve
   return true
 }
 
-fun GroovyFile.processClassesInPackage(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement = this): Boolean {
+fun GroovyFileBase.processClassesInPackage(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement = this): Boolean {
   if (!processor.shouldProcessClasses()) return true
   val aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName) ?: return true
   return aPackage.processDeclarations(PackageSkippingProcessor(processor), state, null, place)

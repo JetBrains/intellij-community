@@ -4,12 +4,13 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 
 interface GroovyFileImports {
 
-  val file: GroovyFile
+  val file: GroovyFileBase
+
 
   val starImports: Collection<StarImport>
 
