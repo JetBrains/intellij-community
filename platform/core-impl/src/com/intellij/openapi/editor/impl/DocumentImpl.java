@@ -699,7 +699,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           long newModificationStamp,
                           int initialStartOffset,
                           int initialOldLength) {
-    LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+    }
 
     assertNotNestedModification();
     myChangeInProgress = true;
