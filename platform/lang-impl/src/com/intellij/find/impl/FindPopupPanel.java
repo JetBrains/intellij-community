@@ -30,10 +30,7 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -428,17 +425,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myResultsPreviewTable.getRowCount() < 2
-            || JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(FindPopupPanel.this,
-                                                                      FindBundle.message(
-                                                                        "find.replace.all.confirmation",
-                                                                        myMessageState[0],
-                                                                        getStringToFind(),
-                                                                        myMessageState[1],
-                                                                        getStringToReplace()),
-                                                                      FindBundle.message(
-                                                                        "find.replace.all.confirmation.title"),
-                                                                      JOptionPane.OK_CANCEL_OPTION)) {
+        if (myResultsPreviewTable.getRowCount() < 2 || MessageDialogBuilder.yesNo(FindBundle.message(
+          "find.replace.all.confirmation.title"), FindBundle.message(
+          "find.replace.all.confirmation",
+          myMessageState[0],
+          getStringToFind(),
+          myMessageState[1],
+          getStringToReplace()))
+              .yesText(Messages.OK_BUTTON).noText(Messages.CANCEL_BUTTON).show() == Messages.YES) {
           doOK(false);
         }
       }
