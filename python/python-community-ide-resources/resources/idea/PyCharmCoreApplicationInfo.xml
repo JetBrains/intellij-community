@@ -12,6 +12,7 @@
   <names product="PyCharm" edition="Community Edition" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
+  <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
 
   <plugins url="http://plugins.jetbrains.com/"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
