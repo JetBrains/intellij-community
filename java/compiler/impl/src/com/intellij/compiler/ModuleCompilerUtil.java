@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
-import com.intellij.util.modules.CircularModulesUtil;
+import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -88,7 +88,7 @@ public final class ModuleCompilerUtil {
   }
 
   public static Couple<Module> addingDependencyFormsCircularity(@NotNull Module currentModule, @NotNull Module toDependOn) {
-    return CircularModulesUtil.addingDependencyFormsCircularity(currentModule, toDependOn);
+    return CircularModuleDependenciesDetector.addingDependencyFormsCircularity(currentModule, toDependOn);
   }
 
   @NotNull

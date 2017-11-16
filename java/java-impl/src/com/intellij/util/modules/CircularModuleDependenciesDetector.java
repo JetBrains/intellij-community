@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CircularModulesUtil {
+public class CircularModuleDependenciesDetector {
   @NotNull
   private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<T>() {
