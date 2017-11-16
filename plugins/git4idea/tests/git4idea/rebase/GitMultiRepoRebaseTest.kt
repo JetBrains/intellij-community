@@ -75,7 +75,6 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertErrorNotification("Rebase Failed",
         """
         contrib: $UNKNOWN_ERROR_TEXT <br/>
-        You can <a>retry</a> or <a>abort</a> rebase.
         $LOCAL_CHANGES_WARNING
         """)
 
