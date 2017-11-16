@@ -26,6 +26,17 @@ class BaseLayoutSpec {
   }
 
   /**
+   * @deprecated use explicit resource name instead of boolean or null. To be removed in IDEA 2018.3.
+   */
+  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar) {
+    if (localizableResourcesInCommonJar) {
+      withModule(moduleName, relativeJarPath)
+    } else {
+      withModule(moduleName, relativeJarPath, null)
+    }
+  }
+
+  /**
    * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
    * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
