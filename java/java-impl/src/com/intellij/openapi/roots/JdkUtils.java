@@ -23,10 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Alefas
- * @since 05/09/2017
- */
 public class JdkUtils {
   @Nullable
   public static Sdk getJdkForElement(PsiElement element) {

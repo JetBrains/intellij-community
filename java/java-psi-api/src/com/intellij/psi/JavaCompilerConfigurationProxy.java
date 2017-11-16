@@ -8,9 +8,6 @@ import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alefas
- */
 public abstract class JavaCompilerConfigurationProxy {
   private static ExtensionPointName<JavaCompilerConfigurationProxy> EP_NAME = new ExtensionPointName<>("com.intellij.javaCompilerConfigurationProxy");
 

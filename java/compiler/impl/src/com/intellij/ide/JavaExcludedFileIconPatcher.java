@@ -26,10 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Alefas
- * @since 04/09/2017
- */
 public class JavaExcludedFileIconPatcher implements FileIconPatcher {
   @Override
   public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, @Nullable Project project) {

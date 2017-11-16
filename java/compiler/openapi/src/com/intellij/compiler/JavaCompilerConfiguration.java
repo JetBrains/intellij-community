@@ -19,9 +19,6 @@ import com.intellij.psi.JavaCompilerConfigurationProxy;
 
 import java.util.List;
 
-/**
- * @author Alefas
- */
 public class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
   @Override
   public List<String> getAdditionalOptionsImpl(Project project, Module module) {

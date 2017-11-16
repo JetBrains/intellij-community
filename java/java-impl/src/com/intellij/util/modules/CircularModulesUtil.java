@@ -30,10 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Alefas
- * @since 04/09/2017
- */
 public class CircularModulesUtil {
   @NotNull
   private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
