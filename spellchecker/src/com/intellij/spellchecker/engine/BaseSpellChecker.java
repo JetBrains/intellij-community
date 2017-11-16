@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.google.common.collect.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -170,16 +171,15 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
     String transformed = transform.transform(word);
     if (transformed == null) return Collections.emptyList();
-    List<Suggestion> suggestions = new ArrayList<>();
+    final MinMaxPriorityQueue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
     for (Dictionary dict : concat(bundledDictionaries, dictionaries)) {
       dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, optimalAlignment(transformed, s, true))));
     }
 
-    Collections.sort(suggestions);
-    int bestMetrics = suggestions.get(0).getMetrics();
+    int bestMetrics = suggestions.peek().getMetrics();
     return suggestions.stream()
-      .limit(maxSuggestions)
       .filter(i -> bestMetrics - i.getMetrics() < quality)
+      .sorted()
       .map(Suggestion::getWord)
       .collect(toList());
   }
