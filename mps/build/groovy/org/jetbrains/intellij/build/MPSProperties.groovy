@@ -25,10 +25,6 @@ class MPSProperties extends ProductProperties {
                  "tests_bootstrap",
                  "execution-openapi",
                  "execution-impl",
-//                 "community-resources",
-                 "platform-resources",
-                 "platform-resources-en",
-                 "colorSchemes",
                  "instrumentation-util",
                  "external-system-impl"]
 
@@ -71,6 +67,11 @@ class MPSProperties extends ProductProperties {
                 excludeFromModule("platform-resources", "META-INF/XmlActions.xml")
                 excludeFromModule("platform-resources", "idea/PlatformActions.xml")
                 excludeFromModule("platform-resources-en", "messages/FeatureStatisticsBundle.properties")
+                //Removing Idea Tips & Tricks
+                excludeFromModule("resources", "META-INF/IdeTipsAndTricks.xml")
+                excludeFromModule("resources-en", "tips/*")
+                excludeFromModule("platform-resources-en", "tips/*")
+                excludeFromModule("remote-servers-impl", "tips/*")
             }
         } as Consumer<PlatformLayout>
 
