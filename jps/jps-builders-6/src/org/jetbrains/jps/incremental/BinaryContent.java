@@ -66,9 +66,8 @@ public final class BinaryContent {
       if (parentFile == null) {
         throw e;
       }
-      if (!parentFile.mkdirs()) {
-        throw e;
-      }
+      //noinspection ResultOfMethodCallIgnored
+      parentFile.mkdirs();
       // second attempt
       _writeToFile(file, this);
     }
