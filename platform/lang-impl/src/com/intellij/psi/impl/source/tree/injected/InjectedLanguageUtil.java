@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -179,7 +180,7 @@ public class InjectedLanguageUtil {
   public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
     PsiFile hostPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(hostDocument);
     if (hostPsiFile == null || !hostPsiFile.isValid()) return false;
-    ConcurrentList<DocumentWindow> documents = getCachedInjectedDocuments(hostPsiFile);
+    List<DocumentWindow> documents = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(hostPsiFile, TextRange.create(hostOffset, hostOffset));
     for (DocumentWindow document : documents) {
       if (document.isValid() && document.getHostRange(hostOffset) != null) return true;
     }
@@ -439,15 +440,25 @@ public class InjectedLanguageUtil {
 
   private static final Key<ConcurrentList<DocumentWindow>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
 
+  /**
+   * @deprecated use {@link InjectedLanguageManager#getCachedInjectedDocumentsInRange(PsiFile, TextRange)} instead
+   */
   @NotNull
+  @Deprecated
   public static ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
-    // modification of cachedInjectedDocuments must be under PsiLock only
+    // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
     ConcurrentList<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected =
-        ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.createConcurrentList());
+      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.createConcurrentList());
     }
     return injected;
+  }
+
+  @NotNull
+  static List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+    List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
+
+    return ContainerUtil.filter(injected, inj-> Arrays.stream(inj.getHostRanges()).anyMatch(range::intersects));
   }
 
   static void clearCachedInjectedFragmentsForFile(@NotNull PsiFile file) {
@@ -474,7 +485,7 @@ public class InjectedLanguageUtil {
     if (viewProvider == null) return;
 
     for (PsiFile hostFile : ((AbstractFileViewProvider)viewProvider).getCachedPsiFiles()) {
-      // modification of cachedInjectedDocuments must be under PsiLock
+      // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock
       synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         List<DocumentWindow> cachedInjectedDocuments = getCachedInjectedDocuments(hostFile);
         for (int i = cachedInjectedDocuments.size() - 1; i >= 0; i--) {
