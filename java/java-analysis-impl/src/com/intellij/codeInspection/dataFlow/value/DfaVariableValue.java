@@ -132,7 +132,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   private boolean hardEquals(PsiModifierListOwner psiVar, PsiType varType, boolean negated, DfaVariableValue qualifier) {
-    return psiVar == myVariable &&
+    return (psiVar == myVariable || SpecialField.ARRAY_LENGTH.isMyAccessor(psiVar) && SpecialField.ARRAY_LENGTH.isMyAccessor(myVariable)) &&
            negated == myIsNegated &&
            qualifier == myQualifier &&
            Comparing.equal(TypeConversionUtil.erasure(varType), TypeConversionUtil.erasure(myVarType));
