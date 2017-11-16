@@ -42,13 +42,14 @@ public interface LayoutStateDefaults {
   /**
    * Schedules an attraction specified by {@code policy} for a content with {@code contentId}. The attraction will be
    * performed when {@code condition} happens.
+   * This method also cancels all previously scheduled attractions associated with {@code condition}.
    * @param contentId String identifying a content
    *                 <ul>
-   *                  <li>{@link RunnerLayoutUi#createContent(java.lang.String, javax.swing.JComponent, java.lang.String, javax.swing.Icon, javax.swing.JComponent)}</li>
+   *                  <li>{@link RunnerLayoutUi#createContent(String, JComponent, String, Icon, JComponent)}</li>
    *                  <li>{@link com.intellij.execution.ui.ExecutionConsole#CONSOLE_CONTENT_ID}</li>
    *                 </ul>
    * @param condition String identifying a moment of time to perform the content attraction, e.g.
-   *                  {@link LayoutViewOptions#STARTUP} - content UI showing
+   *                  {@link LayoutViewOptions#STARTUP} on content UI showing
    * @param policy    LayoutAttractionPolicy instance
    * @return this
    */
@@ -59,7 +60,7 @@ public interface LayoutStateDefaults {
    * Cancels attractions previously scheduled by {@link #initContentAttraction} to be performed
    * when {@code condition} happens.
    * @param condition String identifying a moment of time, e.g.
-   *                  {@link LayoutViewOptions#STARTUP} - content UI showing
+   *                  {@link LayoutViewOptions#STARTUP} on content UI showing
    * @return this
    */
   @NotNull
