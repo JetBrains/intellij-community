@@ -127,7 +127,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public List<RepoPackage> getAllPackagesCached() {
     final List<RepoPackage> pypiPackages = packageCacheToRepoPackages(PyPIPackageCache.getInstance());
     final List<RepoPackage> additionalPackages = PyPIPackageUtil.INSTANCE.getAdditionalPackages();
-    return ContainerUtil.concat(pypiPackages, additionalPackages);
+    // Make a copy, since ManagePackagesDialog attempts to change the passed collection directly
+    final List<RepoPackage> result = new ArrayList<>(pypiPackages);
+    result.addAll(additionalPackages);
+    return result;
   }
 
   @NotNull
