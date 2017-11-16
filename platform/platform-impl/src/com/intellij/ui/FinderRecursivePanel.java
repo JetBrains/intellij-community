@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -381,7 +382,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return selectedValue;
     }
 
-    if (selectedValue instanceof DataProvider) {
+    if (selectedValue instanceof DataProvider && (!(selectedValue instanceof ValidateableNode) || ((ValidateableNode)selectedValue).isValid())) {
       return ((DataProvider)selectedValue).getData(dataId);
     }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
