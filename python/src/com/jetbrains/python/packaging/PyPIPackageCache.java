@@ -83,8 +83,11 @@ public class PyPIPackageCache {
 
   /**
    * Checks that the given name is among those available at PyPI <em>case-insensitively</em>.
-   * @param name
-   * @return
+   * <p>
+   * Note that if the cache hasn't been initialized yet or there was an error during its loading,
+   * {@link #getInstance()} returns an empty sentinel value, and, therefore, this method will return {@code false}.
+   * It's worth writing code analysis so that this value doesn't lead to false positives in the editor
+   * when the cache is merely not ready.
    */
   public boolean containsPackage(@NotNull String name) {
     return Collections.binarySearch(myPackageNames, name, String.CASE_INSENSITIVE_ORDER) >= 0;

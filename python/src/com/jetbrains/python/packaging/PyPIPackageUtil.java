@@ -435,6 +435,9 @@ public class PyPIPackageUtil {
     }
   }
 
+  /**
+   * @see PyPIPackageCache#containsPackage(String)
+   */
   public boolean isInPyPI(@NotNull String packageName) {
     return PyPIPackageCache.getInstance().containsPackage(packageName);
   }
