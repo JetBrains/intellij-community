@@ -44,10 +44,14 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -262,6 +266,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             rehighlightHyperlinksAndFoldings();
           }
         });
+      }
+    });
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (isDisposed() || myEditor == null) return;
+        MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), project, false);
+        for (RangeHighlighter tokenMarker : model.getAllHighlighters()) {
+          ConsoleViewContentType contentType = tokenMarker.getUserData(CONTENT_TYPE);
+          if (contentType != null && tokenMarker instanceof RangeHighlighterEx)
+            ((RangeHighlighterEx)tokenMarker).setTextAttributes(contentType.getAttributes());
+        }
       }
     });
   }
