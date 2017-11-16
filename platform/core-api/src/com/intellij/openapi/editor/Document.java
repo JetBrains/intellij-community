@@ -313,7 +313,7 @@ public interface Document extends UserDataHolder {
    */
   @Nullable
   default RangeMarker getOffsetGuard(int offset) {
-    return null;
+    return getRangeGuard(offset, offset);
   }
 
   /**

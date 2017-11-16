@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   private final int mySuffixLineCount;
   private final Object myLock = new Object();
 
-  private CachedText myCachedText = null;
+  private CachedText myCachedText;
 
   public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, @NotNull Place shreds) {
     myDelegate = delegate;
@@ -271,11 +272,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @Override
   public void insertString(final int offset, @NotNull CharSequence s) {
-    synchronized (myLock) {
-      LOG.assertTrue(offset >= myShreds.get(0).getPrefix().length(), myShreds.get(0).getPrefix());
-      LOG.assertTrue(offset <= getTextLength() - myShreds.get(myShreds.size() - 1).getSuffix().length(),
-                     myShreds.get(myShreds.size() - 1).getSuffix());
-    }
+    assert intersectWithEditable(new TextRange(offset, offset)) != null;
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -471,14 +468,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public RangeMarker getOffsetGuard(final int offset) {
-    return myDelegate.getOffsetGuard(injectedToHost(offset));
-  }
+  public RangeMarker getRangeGuard(int startOffset, int endOffset) {
+    ProperTextRange injRange = new ProperTextRange(startOffset, endOffset);
+    // include prefixes/suffixes in guarded ranges - they can't be edited
+    TextRange editable = ObjectUtils.notNull(intersectWithEditable(injRange), TextRange.EMPTY_RANGE);
+    if (!injRange.equals(editable)) {
+      ProperTextRange guarded = injRange.cutOut(editable.shiftLeft(editable.getStartOffset() - injRange.getStartOffset()));
+      return createRangeMarker(guarded);
+    }
 
-  @Override
-  public RangeMarker getRangeGuard(final int startOffset, final int endOffset) {
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
-
+    ProperTextRange hostRange = injectedToHost(injRange);
     return myDelegate.getRangeGuard(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
@@ -745,9 +744,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public boolean containsRange(int start, int end) {
+  public boolean containsRange(int hostStart, int hostEnd) {
     synchronized (myLock) {
-      ProperTextRange query = new ProperTextRange(start, end);
+      ProperTextRange query = new ProperTextRange(hostStart, hostEnd);
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         Segment hostRange = shred.getHostRangeMarker();
         if (hostRange == null) continue;
