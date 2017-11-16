@@ -79,6 +79,7 @@ public class PyPackagesUpdater implements StartupActivity {
   private static boolean checkNeeded(Project project) {
     if (!hasPython(project)) return false;
     final PyPackageService service = PyPackageService.getInstance();
+    if (service.PYPI_REMOVED) return false;
     final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
     if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
     LOG.debug("Updating outdated PyPI package cache");
