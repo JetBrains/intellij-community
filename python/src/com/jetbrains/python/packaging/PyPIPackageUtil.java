@@ -340,10 +340,10 @@ public class PyPIPackageUtil {
 
   public void updatePyPICache() throws IOException {
     final PyPackageService service = PyPackageService.getInstance();
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
     if (service.PYPI_REMOVED) return;
     final List<String> decodedNames = parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true));
     PyPIPackageCache.reload(decodedNames);
+    service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
