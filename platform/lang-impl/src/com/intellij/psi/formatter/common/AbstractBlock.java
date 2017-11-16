@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -98,8 +97,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     }
 
     TextRange blockRange = myNode.getTextRange();
-    PsiManager psiManager = null;
-    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(psiManager.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
     if (documentWindows.isEmpty()) {
       return EMPTY;
     }
