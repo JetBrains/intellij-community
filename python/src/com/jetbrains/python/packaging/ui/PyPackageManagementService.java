@@ -125,7 +125,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public List<RepoPackage> getAllPackagesCached() {
-    final List<RepoPackage> pypiPackages = packageCacheToRepoPackages(PyPIPackageCache.getInstance());
+    final List<RepoPackage> pypiPackages = getCachedPyPIPackages();
     final List<RepoPackage> additionalPackages = PyPIPackageUtil.INSTANCE.getAdditionalPackages();
     // Make a copy, since ManagePackagesDialog attempts to change the passed collection directly
     final List<RepoPackage> result = new ArrayList<>(pypiPackages);
@@ -134,7 +134,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @NotNull
-  private static List<RepoPackage> packageCacheToRepoPackages(@NotNull PyPIPackageCache cache) {
+  private static List<RepoPackage> getCachedPyPIPackages() {
+    // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
     final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
     return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
