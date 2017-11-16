@@ -267,7 +267,9 @@ public class DuplicatesFinder {
           if (returnValue == null) {
             returnValue = myReturnValue;
           }
-          if (returnValue instanceof GotoReturnValue) {
+          if (returnValue instanceof GotoReturnValue ||
+              returnValue instanceof ConditionalReturnStatementValue &&
+              ((ConditionalReturnStatementValue)returnValue).isEmptyOrConstantExpression()) {
             return false;
           }
           if (returnValue instanceof VariableReturnValue) {
