@@ -233,7 +233,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(myMethod);
     for (PsiReturnStatement statement : returnStatements) {
       PsiExpression value = statement.getReturnValue();
-      if (value != null && !(value instanceof PsiCallExpression)) {
+      if (value != null && !(value instanceof PsiCallExpression) &&
+          RemoveUnusedVariableUtil.checkSideEffects(value, null, new ArrayList<>())) {
         for (UsageInfo info : usagesIn) {
           PsiReference reference = info.getReference();
           if (reference != null) {
@@ -894,7 +895,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (returnValue == null) continue;
         PsiStatement statement;
         if (tailCallType == InlineUtil.TailCallType.Simple) {
-          if (returnValue instanceof PsiExpression && returnStatement.getNextSibling() == myMethodCopy.getBody().getLastBodyElement()) {
+          if (returnStatement.getNextSibling() == myMethodCopy.getBody().getLastBodyElement() &&
+             RemoveUnusedVariableUtil.checkSideEffects(returnValue, null, new ArrayList<>())) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
             returnStatement.getParent().addBefore(exprStatement, returnStatement);

@@ -359,6 +359,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testRemoveReturnForTailTypeSimpleWhenNoSideEffectsPossible() {
+    doTestInlineThisOnly();
+  }
+
   public void testDeleteOverrideAnnotations() {
     doTest();
   }
