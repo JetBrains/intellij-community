@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
     if (offset < (firstNonWsLineOffset + lineCommentPrefix.length()) || 
         !CharArrayUtil.regionMatches(chars, firstNonWsLineOffset, lineCommentPrefix)) return text;
     
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
     String lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + lineCommentPrefix.length()) +
                                   (codeStyleSettings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE ? " " : "");
     return StringUtil.trimTrailing(text, '\n').replace("\n", lineStartReplacement);

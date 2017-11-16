@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
@@ -419,7 +419,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-        CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage());
+        CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFile);
         String space;
         if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
           final FileType fileType = myFile.getFileType();
