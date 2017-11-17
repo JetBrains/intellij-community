@@ -32,6 +32,9 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
+  object Annotations {
+    val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
+  }
 
   @Nls
   override fun getDisplayName(): String {
@@ -77,9 +80,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 checkFileSource(it)
                 noMultiArgsProvider = false
               }
-              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
-              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE -> {
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE -> {
                 noMultiArgsProvider = false
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE -> {
+                if (source == null) {
+                  noMultiArgsProvider = false
+                }
               }
             }
           }
@@ -252,12 +259,16 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
   }
 
   private fun hasMultipleParameters(method: PsiMethod): Boolean {
-    return method.parameterList.parameters
+    val containingClass = method.containingClass
+    return containingClass != null &&
+             method.parameterList.parameters
              .filter { it ->
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO) &&
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER)
              }
-             .count() > 1 && !AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH, 0)
+             .count() > 1
+           && !MetaAnnotationUtil.isMetaAnnotated(method, Annotations.EXTENDS_WITH)
+           && !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(containingClass, Annotations.EXTENDS_WITH)
   }
 }
 
