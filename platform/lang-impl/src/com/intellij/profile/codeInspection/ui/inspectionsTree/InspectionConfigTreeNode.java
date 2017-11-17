@@ -6,10 +6,16 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
+import com.intellij.util.containers.Queue;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
@@ -106,5 +112,27 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return ((Descriptor)userObject).getText();
     }
     return super.toString();
+  }
+
+  public static void updateUpHierarchy(@NotNull InspectionConfigTreeNode node) {
+    updateUpHierarchy(Collections.singletonList(node));
+  }
+
+  public static void updateUpHierarchy(List<? extends InspectionConfigTreeNode> nodes) {
+    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
+    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
+    for (InspectionConfigTreeNode node : nodes) {
+      q.addLast(node);
+    }
+    while (!q.isEmpty()) {
+      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
+      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
+      inspectionConfigTreeNode.dropCache();
+      final TreeNode parent = inspectionConfigTreeNode.getParent();
+      if (parent != null && parent.getParent() != null) {
+        q.addLast((InspectionConfigTreeNode)parent);
+      }
+    }
+
   }
 }

@@ -304,7 +304,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
       if (profile == null) return;
       for (final InspectionConfigTreeNode.Tool aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
         setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
-        aNode.dropCache();
         mySettings.onChanged(aNode);
       }
       updateRightPanel();
@@ -342,7 +341,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
 
       for (InspectionConfigTreeNode node : nodes) {
-        node.dropCache();
         mySettings.onChanged(node);
       }
 

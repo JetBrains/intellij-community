@@ -44,7 +44,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -69,6 +68,7 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode.updateUpHierarchy;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class SingleInspectionProfilePanel extends JPanel {
@@ -91,7 +91,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final InspectionsFilter myInspectionsFilter = new InspectionsFilter() {
     @Override
     protected void filterChanged() {
-      filterTree(myProfileFilter.getFilter());
+      filterTree();
     }
   };
   private boolean myModified;
@@ -177,13 +177,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   public static String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
     return StringUtil.capitalizeWords(severity.getName().toLowerCase(Locale.US), true);
-  }
-
-  private static void updateUpHierarchy(final InspectionConfigTreeNode parent) {
-    if (parent != null) {
-      parent.dropCache();
-      updateUpHierarchy((InspectionConfigTreeNode)parent.getParent());
-    }
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,
@@ -360,8 +353,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         if (node.isProperSetting() != properSetting) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
-          node.dropCache();
-          updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
+          updateUpHierarchy(node);
         }
       }
     }
@@ -404,7 +396,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProfileFilter.setFilter(filter);
   }
 
-  private void filterTree(@Nullable String filter) {
+  private void filterTree() {
+    String filter = myProfileFilter != null ? myProfileFilter.getFilter() : null;
     if (myTreeTable != null) {
       getExpandedNodes(myProfile).saveVisibleState(myTreeTable.getTree());
       fillTreeData(filter, true);
@@ -414,10 +407,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         TreeUtil.selectFirstNode(myTreeTable.getTree());
       }
     }
-  }
-
-  private void filterTree() {
-    filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
   }
 
   private void reloadModel() {
@@ -524,7 +513,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, myProjectProfileManager.getProject()) {
       @Override
       protected void onChanged(final InspectionConfigTreeNode node) {
-        updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
+        updateUpHierarchy(node);
       }
 
       @Override
@@ -687,7 +676,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         continue;
       }
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
-      myRoot.dropCache();
     }
     if (filter != null && forceInclude && myRoot.getChildCount() == 0) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
@@ -856,8 +844,6 @@ public class SingleInspectionProfilePanel extends JPanel {
             protected void onScopeRemoved(final int scopesCount) {
               updateRecursively(nodes, scopesCount == 1);
             }
-
-
           });
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
@@ -896,22 +882,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  private void updateRecursively(List<InspectionConfigTreeNode.Tool> nodes, boolean updateOptionsAndDescriptionPanel) {
-    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
-    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
-    for (InspectionConfigTreeNode node : nodes) {
-      q.addLast(node);
-    }
-    while (!q.isEmpty()) {
-      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
-      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
-      inspectionConfigTreeNode.dropCache();
-      final TreeNode parent = inspectionConfigTreeNode.getParent();
-      if (parent != null && parent.getParent() != null) {
-        q.addLast((InspectionConfigTreeNode)parent);
-      }
-    }
-
+  private void updateRecursively(List<? extends InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {
+    updateUpHierarchy(nodes);
     myTreeTable.repaint();
     if (updateOptionsAndDescriptionPanel) {
       updateOptionsAndDescriptionPanel();
@@ -1214,7 +1186,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     @Override
     public void filter() {
-      filterTree(getFilter());
+      filterTree();
     }
 
     @Override
