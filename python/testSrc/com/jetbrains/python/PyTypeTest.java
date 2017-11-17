@@ -2435,6 +2435,19 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testReplaceSelfInUnion() {
+    doTest("Union[B, int]",
+           "class A:\n" +
+           "    def foo(self, x):\n" +
+           "        if x:\n" +
+           "            return self\n" +
+           "        else:\n" +
+           "            return 1\n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "expr = B().foo(abc)");
+  }
+
   // PY-27143
   public void testReplaceInstanceInClassMethod() {
     doTest("Derived",

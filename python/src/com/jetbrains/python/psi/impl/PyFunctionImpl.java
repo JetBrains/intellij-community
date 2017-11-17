@@ -308,7 +308,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                              @NotNull TypeEvalContext context,
                              boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
-      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
       if (returnType instanceof PyClassType) {
         final PyClassType returnClassType = (PyClassType)returnType;
 
@@ -336,6 +336,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                           returnClassType.isDefinition(),
                                           replacedElementTypes);
         }
+      }
+      else if (returnType instanceof PyUnionType) {
+        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
+        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
       }
     }
     return returnType;
