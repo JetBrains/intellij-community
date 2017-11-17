@@ -201,6 +201,7 @@ rlcompleter
 robotparser
 runpy
 sched
+secrets
 select
 selectors
 sets
