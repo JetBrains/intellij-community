@@ -195,6 +195,9 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         if (contentDescriptor != null) {
           boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
           buildInfo.activateToolWindowWhenAdded = activateToolWindow;
+          if (contentDescriptor instanceof BuildContentDescriptor) {
+            buildInfo.activateToolWindowWhenFailed = ((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed();
+          }
           boolean focusContent = contentDescriptor.isAutoFocusContent();
           myBuildContentManager.setSelectedContent(
             myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());

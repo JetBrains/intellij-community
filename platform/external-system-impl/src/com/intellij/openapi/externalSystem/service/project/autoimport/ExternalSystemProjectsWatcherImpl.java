@@ -127,17 +127,18 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     myNotificationMap = ContainerUtil.newConcurrentMap();
 
-    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
-      @Override
-      public void batchChangeStarted(Project project) {
-        myRefreshRequestsQueue.suspend();
-      }
+    ApplicationManager.getApplication().getMessageBus().connect(myProject)
+      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+        @Override
+        public void batchChangeStarted(Project project) {
+          myRefreshRequestsQueue.suspend();
+        }
 
-      @Override
-      public void batchChangeCompleted(Project project) {
-        myRefreshRequestsQueue.resume();
-      }
-    });
+        @Override
+        public void batchChangeCompleted(Project project) {
+          myRefreshRequestsQueue.resume();
+        }
+      });
   }
 
   @Override
@@ -251,15 +252,23 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private void scheduleUpdate(String projectPath) {
+    scheduleUpdate(projectPath, true);
+  }
+
+  private void scheduleUpdate(String projectPath, boolean reportRefreshError) {
     if (ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
     Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject = findLinkedProjectSettings(projectPath);
     if (linkedProject == null) return;
-    scheduleUpdate(linkedProject);
+    scheduleUpdate(linkedProject, reportRefreshError);
   }
 
   private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject) {
+    scheduleUpdate(linkedProject, true);
+  }
+
+  private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject, boolean reportRefreshError) {
     if (ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
@@ -273,7 +282,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         .findTask(ExternalSystemTaskType.RESOLVE_PROJECT, systemId, projectPath);
       final ExternalSystemTaskState taskState = resolveTask == null ? null : resolveTask.getState();
       if (taskState == null || taskState.isStopped()) {
-        addToRefreshQueue(projectPath, systemId);
+        addToRefreshQueue(projectPath, systemId, reportRefreshError);
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
         // re-schedule to wait for the active project import task end
@@ -283,7 +292,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           @Override
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             progressManager.removeNotificationListener(this);
-            addToRefreshQueue(projectPath, systemId);
+            addToRefreshQueue(projectPath, systemId, reportRefreshError);
           }
         };
         progressManager.addNotificationListener(resolveTask.getId(), taskListener);
@@ -299,11 +308,11 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
   }
 
-  private void addToRefreshQueue(String projectPath, ProjectSystemId systemId) {
+  private void addToRefreshQueue(String projectPath, ProjectSystemId systemId, boolean reportRefreshError) {
     myRefreshRequestsQueue.queue(new Update(Pair.create(systemId, projectPath)) {
       @Override
       public void run() {
-        scheduleRefresh(myProject, projectPath, systemId, false);
+        scheduleRefresh(myProject, projectPath, systemId, reportRefreshError);
       }
     });
   }
@@ -407,7 +416,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static void scheduleRefresh(@NotNull final Project project,
                                       String projectPath,
                                       ProjectSystemId systemId,
-                                      final boolean reportRefreshError) {
+                                      boolean reportRefreshError) {
     ExternalSystemUtil.refreshProject(
       project, systemId, projectPath, new ExternalProjectRefreshCallback() {
         @Override
@@ -642,7 +651,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       filesToUpdate.stream()
         .flatMap(f -> myKnownFiles.get(f.getPath()).stream())
         .distinct()
-        .forEach(path -> myWatcher.scheduleUpdate(path));
+        .forEach(path -> myWatcher.scheduleUpdate(path, false));
     }
 
     private void init() {

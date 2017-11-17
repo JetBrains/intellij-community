@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -29,6 +30,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -128,7 +132,19 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   protected void onBuildFinish(BuildDescriptor buildDescriptor) {
     BuildInfo buildInfo = (BuildInfo)buildDescriptor;
     if (buildInfo.result instanceof FailureResult) {
-      myBuildContentManager.setSelectedContent(buildInfo.content, true, true, true, null);
+      boolean activate = buildInfo.activateToolWindowWhenFailed;
+      myBuildContentManager.setSelectedContent(buildInfo.content, activate, activate, activate, null);
+      List<? extends Failure> failures = ((FailureResult)buildInfo.result).getFailures();
+      if (failures.isEmpty()) return;
+      Failure failure = failures.get(0);
+      if (failure instanceof FailureImpl) {
+        NotificationData notificationData = ((FailureImpl)failure).getNotificationData();
+        if (notificationData != null) {
+          final String title = notificationData.getNotification().getTitle();
+          final String content = notificationData.getNotification().getContent();
+          SystemNotifications.getInstance().notify(ToolWindowId.BUILD, title, content);
+        }
+      }
     }
   }
 
@@ -145,7 +161,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     long endTime = -1;
     EventResult result;
     Content content;
-    public boolean activateToolWindowWhenAdded;
+    boolean activateToolWindowWhenAdded;
+    boolean activateToolWindowWhenFailed = true;
 
     public BuildInfo(@NotNull Object id,
                      @NotNull String title,
