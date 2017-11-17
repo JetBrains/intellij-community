@@ -275,7 +275,7 @@ public class ExternalSystemUtil {
 
     final ExternalProjectRefreshCallback callback;
     if (spec.getCallback() == null) {
-      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager, spec.getExternalSystemId());
+      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager);
     }
     else {
       callback = spec.getCallback();
@@ -405,7 +405,7 @@ public class ExternalSystemUtil {
             @Override
             public void cancel() {
               super.cancel();
-              cancellImport();
+              cancelImport();
             }
           });
         }
@@ -431,7 +431,7 @@ public class ExternalSystemUtil {
         final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask, projectName + " import") {
           @Override
           protected void destroyProcessImpl() {
-            cancellImport();
+            cancelImport();
             closeInput();
           }
         };
@@ -556,7 +556,7 @@ public class ExternalSystemUtil {
         }
       }
 
-      public void cancellImport() {
+      private void cancelImport() {
         myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
       }
     };
@@ -1064,14 +1064,10 @@ public class ExternalSystemUtil {
     private final Set<String> myExternalModulePaths;
     private final Project myProject;
     private final ProjectDataManager myProjectDataManager;
-    private final ProjectSystemId myExternalSystemId;
 
-    public MyMultiExternalProjectRefreshCallback(Project project,
-                                                 ProjectDataManager projectDataManager,
-                                                 ProjectSystemId externalSystemId) {
+    public MyMultiExternalProjectRefreshCallback(Project project, ProjectDataManager projectDataManager) {
       myProject = project;
       myProjectDataManager = projectDataManager;
-      myExternalSystemId = externalSystemId;
       myExternalModulePaths = ContainerUtilRt.newHashSet();
     }
 
