@@ -78,7 +78,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     for (ToolDescriptors toolDescriptors : myInitialToolDescriptors) {
       myRoot.add(new MyInspectionTreeNode(toolDescriptors));
     }
-    TreeUtil.sortRecursively(myRoot, new InspectionsConfigTreeComparator());
+    TreeUtil.sortRecursively(myRoot, InspectionsConfigTreeComparator.INSTANCE);
   }
 
   private void init() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
@@ -60,15 +46,14 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     @NonNls String text;
     int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;
-    if (object instanceof String) {
-      text = (String)object;
+    if (node instanceof InspectionConfigTreeNode.Group) {
+      text = ((InspectionConfigTreeNode.Group)node).getGroupName();
       style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
-      final Descriptor descriptor = node.getDefaultDescriptor();
-      assert descriptor != null;
-      text = descriptor.getText();
-      hint = getHint(descriptor);
+      InspectionConfigTreeNode.Tool toolNode = (InspectionConfigTreeNode.Tool)node;
+      text = toolNode.getDefaultDescriptor().getText();
+      hint = getHint(toolNode.getDefaultDescriptor());
     }
 
     if (text != null) {

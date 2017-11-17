@@ -24,6 +24,16 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
     protected boolean calculateIsProperSettings() {
       return IntStream.range(0, getChildCount()).mapToObj(i -> (InspectionConfigTreeNode)getChildAt(i)).anyMatch(InspectionConfigTreeNode::isProperSetting);
     }
+
+    @Override
+    public String getText() {
+      return getGroupName();
+    }
+
+    @NotNull
+    public String getGroupName() {
+      return (String)getUserObject();
+    }
   }
 
   public static class Tool extends InspectionConfigTreeNode {
@@ -43,34 +53,33 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       final Descriptor defaultDescriptor = getDescriptors().getDefaultDescriptor();
       return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
     }
+
+    @Override
+    public String getText() {
+      return getDefaultDescriptor().getText();
+    }
+
+    public HighlightDisplayKey getKey() {
+      return getDefaultDescriptor().getKey();
+    }
+
+    @NotNull
+    public Descriptor getDefaultDescriptor() {
+      return getDescriptors().getDefaultDescriptor();
+    }
+
+    @NotNull
+    public ToolDescriptors getDescriptors() {
+      return (ToolDescriptors)getUserObject();
+    }
+
+
+    @Nullable
+    public String getScopeName() {
+      return getDescriptors().getDefaultScopeToolState().getScopeName();
+    }
   }
 
-  public HighlightDisplayKey getKey() {
-    return getDefaultDescriptor().getKey();
-  }
-
-  @Nullable
-  public Descriptor getDefaultDescriptor() {
-    final ToolDescriptors descriptors = getDescriptors();
-    return descriptors == null ? null : descriptors.getDefaultDescriptor();
-  }
-
-  @Nullable
-  public ToolDescriptors getDescriptors() {
-    final Object userObject = getUserObject();
-    return userObject instanceof String ? null : (ToolDescriptors)userObject;
-  }
-
-  @Nullable
-  public String getGroupName() {
-    return userObject instanceof String ? (String)userObject : null;
-  }
-
-  @Nullable
-  public String getScopeName() {
-    final ToolDescriptors descriptors = getDescriptors();
-    return descriptors != null ? descriptors.getDefaultScopeToolState().getScopeName() : null;
-  }
 
   public final boolean isProperSetting() {
     return myProperSetting.getValue();
@@ -81,6 +90,8 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   }
 
   protected abstract boolean calculateIsProperSettings();
+
+  public abstract String getText();
 
   @Override
   public String toString() {
