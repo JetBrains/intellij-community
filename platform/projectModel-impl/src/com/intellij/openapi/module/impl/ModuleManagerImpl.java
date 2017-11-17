@@ -1068,6 +1068,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myModulePathsToLoad.clear();
   }
 
+  @Override
+  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    for (UnloadedModuleDescription module : unloadedModules) {
+      myUnloadedModules.remove(module.getName());
+    }
+    setUnloadedModuleNames(new ArrayList<>(myUnloadedModules.keySet()));
+  }
+
   protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {
     UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
