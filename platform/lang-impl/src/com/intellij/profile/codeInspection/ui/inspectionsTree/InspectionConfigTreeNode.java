@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -24,34 +10,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.stream.IntStream;
 
-/**
- * @author anna
- * @since 14-May-2009
- */
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
-  private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      ToolDescriptors descriptors = getDescriptors();
-      if (descriptors != null) {
-        final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
-        return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
-      }
-      for (int i = 0; i < getChildCount(); i++) {
-        InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
-        if (node.isProperSetting()) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
+  private final ClearableLazyValue<Boolean> myProperSetting = ClearableLazyValue.create(this::calculateIsProperSettings);
 
   public static class Group extends InspectionConfigTreeNode {
     public Group(@NotNull String label) {
       setUserObject(label);
+    }
+
+    @Override
+    protected boolean calculateIsProperSettings() {
+      return IntStream.range(0, getChildCount()).mapToObj(i -> (InspectionConfigTreeNode)getChildAt(i)).anyMatch(InspectionConfigTreeNode::isProperSetting);
     }
   }
 
@@ -67,6 +38,12 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
     @Override
     public Object getUserObject() {
       return myPanel.getInitialToolDescriptors().get(myKey);
+    }
+
+    @Override
+    protected boolean calculateIsProperSettings() {
+      final Descriptor defaultDescriptor = getDescriptors().getDefaultDescriptor();
+      return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
     }
   }
 
@@ -88,7 +65,6 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
 
   @Nullable
   public String getGroupName() {
-
     return userObject instanceof String ? (String)userObject : null;
   }
 
@@ -98,13 +74,15 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
     return descriptors != null ? descriptors.getDefaultScopeToolState().getScopeName() : null;
   }
 
-  public boolean isProperSetting() {
+  public final boolean isProperSetting() {
     return myProperSetting.getValue();
   }
 
-  public void dropCache() {
+  public final void dropCache() {
     myProperSetting.drop();
   }
+
+  protected abstract boolean calculateIsProperSettings();
 
   @Override
   public String toString() {
