@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 
-interface MembersCache {
+interface DeclarationHolder {
 
-  fun processMembers(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
+  fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
 }

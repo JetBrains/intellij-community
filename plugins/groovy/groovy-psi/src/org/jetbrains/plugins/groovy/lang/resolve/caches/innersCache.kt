@@ -16,13 +16,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.processInnersInOutersNoCache
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints
 
-fun GrTypeDefinition.getInnersHierarchyCache(): MembersCache {
+fun GrTypeDefinition.getInnersHierarchyCache(): DeclarationHolder {
   return CachedValuesManager.getCachedValue(this) {
     makeResult(buildCache(this::processInnersInHierarchyNoCache))
   }
 }
 
-fun GrTypeDefinition.getInnersOutersCache(): MembersCache {
+fun GrTypeDefinition.getInnersOutersCache(): DeclarationHolder {
   return CachedValuesManager.getCachedValue(this) {
     makeResult(buildCache(this::processInnersInOutersNoCache))
   }
@@ -34,7 +34,7 @@ private fun <T> GrTypeDefinition.makeResult(value: T): Result<T> {
 
 private typealias ProcessFunction = (PsiScopeProcessor, ResolveState, PsiElement) -> Boolean
 
-private inline fun GrTypeDefinition.buildCache(f: ProcessFunction): MembersCache {
+private inline fun GrTypeDefinition.buildCache(f: ProcessFunction): DeclarationHolder {
   val processor = ClassCacheBuilderProcessor()
   f(processor, ResolveState.initial(), this)
   return processor.buildCache()
@@ -44,7 +44,7 @@ private class ClassCacheBuilderProcessor : GrScopeProcessorWithHints(null, Class
 
   private val classMap = HashMap<String, PsiClass>()
 
-  internal fun buildCache(): MembersCache = ClassCacheImpl(classMap)
+  internal fun buildCache(): DeclarationHolder = ClassCache(classMap)
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
     val clazz = element as? PsiClass ?: return true
@@ -59,9 +59,9 @@ private class ClassCacheBuilderProcessor : GrScopeProcessorWithHints(null, Class
   }
 }
 
-private class ClassCacheImpl(private val classMap: Map<String, PsiClass>) : MembersCache {
+private class ClassCache(private val classMap: Map<String, PsiClass>) : DeclarationHolder {
 
-  override fun processMembers(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     if (classMap.isEmpty()) return true
     val name = processor.getName(state)
     if (name == null) {

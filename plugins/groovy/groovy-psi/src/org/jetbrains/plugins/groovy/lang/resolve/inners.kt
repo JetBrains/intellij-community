@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.caches.getInnersOutersCache
 
 fun GrTypeDefinition.processInnerInHierarchy(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
   if (useCaches(place)) {
-    return getInnersHierarchyCache().processMembers(processor, state, place)
+    return getInnersHierarchyCache().processDeclarations(processor, state, place)
   }
   else {
     return processInnersInHierarchyNoCache(processor, state, place)
@@ -27,7 +27,7 @@ fun GrTypeDefinition.processInnerInHierarchy(processor: PsiScopeProcessor, state
 
 fun GrTypeDefinition.processInnersInOuters(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
   if (useCaches(place)) {
-    return getInnersOutersCache().processMembers(processor, state, place)
+    return getInnersOutersCache().processDeclarations(processor, state, place)
   }
   else {
     return processInnersInOutersNoCache(processor, state, place)
