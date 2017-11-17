@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
+import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.openapi.command.WriteCommandAction
@@ -57,6 +58,11 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "module M { exports pkg.m to M1, M2; }",
     "module M { exports pkg.m to M1, M2; }")
 
+  fun testNoExportsToUnnamed() = doExportsTest(
+    "module M { exports pkg.m to M1; }",
+    "module M { exports pkg.m to M1; }",
+    target = "")
+
   fun testExportsExtendsOther() = doExportsTest(
     "module M {\n" +
     "    exports pkg.m to M1;\n" +
@@ -73,8 +79,28 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    exports pkg.m to M1, M2\n" +
     "}")
 
+  fun testNewUses() = doUsesTest(
+    "module M { }",
+    "module M {\n" +
+    "    uses pkg.m.C;\n" +
+    "}")
+
+  fun testUsesAfterOther() = doUsesTest(
+    "module M {\n" +
+    "    uses pkg.m.B;\n" +
+    "}",
+    "module M {\n" +
+    "    uses pkg.m.B;\n" +
+    "    uses pkg.m.C;\n" +
+    "}")
+
+  fun testNoDuplicateUses() = doUsesTest(
+    "module M { uses pkg.m.C; }",
+    "module M { uses pkg.m.C; }")
+
   private fun doRequiresTest(text: String, expected: String) = doTest(text, { AddRequiresDirectiveFix(it, "M2") }, expected)
-  private fun doExportsTest(text: String, expected: String) = doTest(text, { AddExportsDirectiveFix(it, "pkg.m", "M2") }, expected)
+  private fun doExportsTest(text: String, expected: String, target: String = "M2") = doTest(text, { AddExportsDirectiveFix(it, "pkg.m", target) }, expected)
+  private fun doUsesTest(text: String, expected: String) = doTest(text, { AddUsesDirectiveFix(it, "pkg.m.C") }, expected)
 
   private fun doTest(text: String, fix: (PsiJavaModule) -> IntentionAction, expected: String) {
     val file = myFixture.configureByText("module-info.java", text) as PsiJavaFile

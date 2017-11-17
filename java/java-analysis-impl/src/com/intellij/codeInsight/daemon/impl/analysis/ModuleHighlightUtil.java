@@ -226,20 +226,25 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Set<String> exports = JBIterable.from(module.getExports()).map(st -> refText(st.getPackageReference())).filter(Objects::nonNull).toSet();
-    Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
-
     Module host = findModuleForFile(file);
     if (host != null) {
-      for (PsiProvidesStatement statement : module.getProvides()) {
-        PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
-        if (ref != null) {
-          PsiElement target = ref.resolve();
-          if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
-            String className = qName(ref), packageName = StringUtil.getPackageName(className);
-            if (!exports.contains(packageName) && !uses.contains(className)) {
-              String message = JavaErrorMessages.message("module.service.unused");
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+      List<PsiProvidesStatement> provides = JBIterable.from(module.getProvides()).toList();
+      if (!provides.isEmpty()) {
+        Set<String> exports = JBIterable.from(module.getExports()).map(PsiPackageAccessibilityStatement::getPackageName).filter(Objects::nonNull).toSet();
+        Set<String> uses = JBIterable.from(module.getUses()).map(PsiUsesStatement::getClassName).filter(Objects::nonNull).toSet();
+        for (PsiProvidesStatement statement : provides) {
+          PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+          if (ref != null) {
+            PsiElement target = ref.resolve();
+            if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
+              String className = qName(ref), packageName = StringUtil.getPackageName(className);
+              if (!exports.contains(packageName) && !uses.contains(className)) {
+                String message = JavaErrorMessages.message("module.service.unused");
+                HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
+                QuickFixAction.registerQuickFixAction(info, new AddExportsDirectiveFix(module, packageName, ""));
+                QuickFixAction.registerQuickFixAction(info, new AddUsesDirectiveFix(module, className));
+                results.add(info);
+              }
             }
           }
         }
