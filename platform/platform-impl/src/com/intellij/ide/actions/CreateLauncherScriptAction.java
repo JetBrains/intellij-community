@@ -51,7 +51,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final String CONTENTS = "/Contents";
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !SystemInfo.isSnap();
+    return SystemInfo.isUnix && !PathManager.isSnap();
   }
 
   @Override

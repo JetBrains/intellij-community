@@ -13,7 +13,6 @@
 // limitations under the License.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -81,17 +80,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isGNOME = isXWindow && ObjectUtils.notNull(System.getenv("GDMSESSION"), "").startsWith("gnome");
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
-
-  private static final NotNullLazyValue<Boolean> ourIsSnap = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return PathManager.getHomePath().startsWith("/snap/");
-    }
-  };
-  public static boolean isSnap() {
-    return isLinux && ourIsSnap.getValue();
-  }
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
