@@ -101,7 +101,7 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, @NotNull final QualifiedName qName) {
-    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(importElement));
+    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(importElement));
     final PyStatement importStatement = importElement.getContainingImportStatement();
     if (importStatement instanceof PyFromImportStatement) {
       return resolveNameInFromImport((PyFromImportStatement)importStatement, qName);
@@ -128,7 +128,8 @@ public class ResolveImportUtil {
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
-        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
+        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " +
+                                                              candidate.getClass());
       }
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
@@ -150,10 +151,10 @@ public class ResolveImportUtil {
    * Resolves a module reference in a general case.
    *
    *
-   * @param qualifiedName     qualified name of the module reference to resolve
-   * @param sourceFile        where that reference resides; serves as PSI foothold to determine module, project, etc.
-   * @param importIsAbsolute  if false, try old python 2.x's "relative first, absolute next" approach.
-   * @param relativeLevel     if > 0, step back from sourceFile and resolve from there (even if importIsAbsolute is false!).
+   * @param qualifiedName    qualified name of the module reference to resolve
+   * @param sourceFile       where that reference resides; serves as PSI foothold to determine module, project, etc.
+   * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
+   * @param relativeLevel    if > 0, step back from sourceFile and resolve from there (even if importIsAbsolute is false!).
    * @return list of possible candidates
    */
   @NotNull
@@ -263,7 +264,6 @@ public class ResolveImportUtil {
     else {
       return resolveMemberFromReferenceTypeProviders(parent, referencedName);
     }
-
   }
 
   @NotNull
@@ -496,7 +496,7 @@ public class ResolveImportUtil {
     private final boolean myAbsolute;
     private final int myLevel;
 
-    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file , boolean importIsAbsolute, int relativeLevel) {
+    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file, boolean importIsAbsolute, int relativeLevel) {
       myName = qualifiedName;
       myFile = file;
       myAbsolute = importIsAbsolute;
