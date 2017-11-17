@@ -52,7 +52,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Bitness;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
@@ -84,6 +87,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -114,6 +119,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private final ThreadDumpsDatabase myThreadDumpsDatabase = new ThreadDumpsDatabase(new File(PathManager.getTempPath(), "threads.dmp"));
 
   private static final Object ACTION_INVOCATIONS_LOCK = new Object();
+  private static final Lock REPORT_EXCEPTIONS_LOCK = new ReentrantLock();
   // Updates to ourActionInvocations need to be done synchronized on ACTION_INVOCATIONS_LOCK to avoid updates during usage reporting.
   private static Map<String, Multiset<InvocationKind>> ourActionInvocations = new HashMap<>();
 
@@ -149,7 +155,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
         public void appClosing() {
           myProperties.setValue(STUDIO_ACTIVITY_COUNT, Long.toString(ourStudioActionCount.get()));
           StudioCrashDetection.stop();
-          reportActionInvocations();
+          reportExceptionsAndActionInvocations();
         }
       });
 
@@ -174,6 +180,34 @@ public class SystemHealthMonitor implements ApplicationComponent {
           }
         }
       });
+    }
+  }
+
+  private static void reportExceptionsAndActionInvocations() {
+    if (!REPORT_EXCEPTIONS_LOCK.tryLock()) {
+      return;
+    }
+    try {
+      long activityCount = ourStudioActionCount.getAndSet(0);
+      long exceptionCount = ourStudioExceptionCount.getAndSet(0);
+      long bundledPluginExceptionCount = ourBundledPluginsExceptionCount.getAndSet(0);
+      long nonBundledPluginExceptionCount = ourNonBundledPluginsExceptionCount.getAndSet(0);
+      persistExceptionCount(0, STUDIO_EXCEPTION_COUNT_FILE);
+      persistExceptionCount(0, BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
+      persistExceptionCount(0, NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
+      if (ApplicationManager.getApplication().isInternal()) {
+        // should be 0, but accounting for possible crashes in other threads..
+        assert getPersistedExceptionCount(STUDIO_EXCEPTION_COUNT_FILE) < 5;
+      }
+
+      if (activityCount > 0 || exceptionCount > 0) {
+        List<StackTrace> traces = ExceptionRegistry.INSTANCE.getStackTraces(0);
+        ExceptionRegistry.INSTANCE.clear();
+        trackExceptionsAndActivity(activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0, traces);
+      }
+      reportActionInvocations();
+    } finally {
+      REPORT_EXCEPTIONS_LOCK.unlock();
     }
   }
 
@@ -320,24 +354,27 @@ public class SystemHealthMonitor implements ApplicationComponent {
       return;
     }
 
+    List<StudioExceptionDetails> allDetails = stackTraces.stream()
+      .map(t -> StudioExceptionDetails.newBuilder()
+        .setHash(t.md5string())
+        .setCount(t.count())
+        .setSummary(t.summarize(20))
+        .build())
+      .collect(Collectors.toList());
+    final AndroidStudioEvent.Builder eventBuilder = AndroidStudioEvent.newBuilder()
+      .setCategory(EventCategory.PING)
+      .setKind(EventKind.STUDIO_CRASH)
+      .setStudioCrash(StudioCrash.newBuilder()
+                        .setActions(activityCount)
+                        .setExceptions(exceptionCount)
+                        .setBundledPluginExceptions(bundledPluginExceptionCount)
+                        .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
+                        .setCrashes(fatalExceptionCount)
+                        .addAllDetails(allDetails));
     if (!ApplicationManager.getApplication().isInternal()) {
-      List<StudioExceptionDetails> allDetails = stackTraces.stream()
-        .map(t -> StudioExceptionDetails.newBuilder()
-          .setHash(t.md5string())
-          .setCount(t.count())
-          .setSummary(t.summarize(20))
-          .build())
-        .collect(Collectors.toList());
-      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
-                                       .setCategory(EventCategory.PING)
-                                       .setKind(EventKind.STUDIO_CRASH)
-                                       .setStudioCrash(StudioCrash.newBuilder()
-                                                         .setActions(activityCount)
-                                                         .setExceptions(exceptionCount)
-                                                         .setBundledPluginExceptions(bundledPluginExceptionCount)
-                                                         .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
-                                                         .setCrashes(fatalExceptionCount)
-                                                         .addAllDetails(allDetails)));
+      UsageTracker.getInstance().log(eventBuilder);
+    } else {
+      LOG.debug("SystemHealthMonitor would send following analytics event in the release build: " + eventBuilder.build());
     }
   }
 
@@ -496,26 +533,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private static final int INTERVAL_IN_MINUTES = 30;
 
   private static void startActivityMonitoring() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      long activityCount = ourStudioActionCount.getAndSet(0);
-      long exceptionCount = ourStudioExceptionCount.getAndSet(0);
-      long bundledPluginExceptionCount = ourBundledPluginsExceptionCount.getAndSet(0);
-      long nonBundledPluginExceptionCount = ourNonBundledPluginsExceptionCount.getAndSet(0);
-      persistExceptionCount(0, STUDIO_EXCEPTION_COUNT_FILE);
-      persistExceptionCount(0, BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
-      persistExceptionCount(0, NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
-      if (ApplicationManager.getApplication().isInternal()) {
-        // should be 0, but accounting for possible crashes in other threads..
-        assert getPersistedExceptionCount(STUDIO_EXCEPTION_COUNT_FILE) < 5;
-      }
-
-      if (activityCount > 0 || exceptionCount > 0) {
-        List<StackTrace> traces = ExceptionRegistry.INSTANCE.getStackTraces(0);
-        ExceptionRegistry.INSTANCE.clear();
-        trackExceptionsAndActivity(activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0, traces);
-      }
-      reportActionInvocations();
-    }, INITIAL_DELAY_MINUTES, INTERVAL_IN_MINUTES, TimeUnit.MINUTES);
+    JobScheduler.getScheduler().scheduleWithFixedDelay(SystemHealthMonitor::reportExceptionsAndActionInvocations, INITIAL_DELAY_MINUTES, INTERVAL_IN_MINUTES, TimeUnit.MINUTES);
   }
 
   public static void incrementAndSaveExceptionCount() {
