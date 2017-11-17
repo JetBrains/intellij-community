@@ -118,7 +118,10 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
       results = ResolveImportUtil.multiResolveImportElement(myImportElement, myImportedPrefix);
     }
     else {
-      results = ResolveResultList.to(ResolveImportUtil.resolveModuleInRoots(myImportedPrefix, myContainingFile));
+      final ResolveResultList resList = new ResolveResultList();
+      ResolveImportUtil.multiResolveModuleInRoots(myImportedPrefix, myContainingFile)
+                       .forEach(res -> resList.poke(res, RatedResolveResult.RATE_NORMAL));
+      results = resList;
     }
     return StreamEx.of(results).map(this::tryReplaceDirWithPackage)
                    .toList();
