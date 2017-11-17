@@ -651,6 +651,20 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-26643
+  public void testReplaceSelfInCoroutine() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Coroutine[Any, Any, B]",
+                   "class A:\n" +
+                   "    async def foo(self):\n" +
+                   "        return self\n" +
+                   "class B(A):\n" +
+                   "    pass\n" +
+                   "expr = B().foo()")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

@@ -299,6 +299,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    return replaceSelf(returnType, receiver, context, true);
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType,
+                             @Nullable PyExpression receiver,
+                             @NotNull TypeEvalContext context,
+                             boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
       // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
       if (returnType instanceof PyClassType) {
@@ -315,6 +323,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
               return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
             }
           }
+        }
+        else if (allowCoroutineOrGenerator &&
+                 returnType instanceof PyCollectionType &&
+                 PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType) != null) {
+          final List<PyType> replacedElementTypes = ContainerUtil.map(
+            ((PyCollectionType)returnType).getElementTypes(),
+            type -> replaceSelf(type, receiver, context, false)
+          );
+
+          return new PyCollectionTypeImpl(returnClassType.getPyClass(),
+                                          returnClassType.isDefinition(),
+                                          replacedElementTypes);
         }
       }
     }

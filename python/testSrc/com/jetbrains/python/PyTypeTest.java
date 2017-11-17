@@ -2420,6 +2420,21 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-26643
+  public void testReplaceSelfInGenerator() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON33,
+      () -> doTest("Generator[B, Any, B]",
+                   "class A:\n" +
+                   "    def foo(self):\n" +
+                   "        yield self\n" +
+                   "        return self\n" +
+                   "class B(A):\n" +
+                   "    pass\n" +
+                   "expr = B().foo()")
+    );
+  }
+
   // PY-27143
   public void testReplaceInstanceInClassMethod() {
     doTest("Derived",
