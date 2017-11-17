@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
@@ -52,7 +53,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       final PsiType innerReturnType = owner.getReturnType();
       for (final JavaResolveResult result : results) {
         if (result == null) continue;
-        final PsiSubstitutor substitutor = getSubstitutor(expressions, i, result);
+        final PsiSubstitutor substitutor = getSubstitutor(contextCall, expressions, i, result);
         final Pair<PsiType, ConstraintType> constraint = inferConstraint(typeParameter, innerMethodCall, i, innerReturnType, result, substitutor);
         if (constraint != null) return constraint;
       }
@@ -64,18 +65,18 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     return null;
   }
 
-  protected PsiSubstitutor getSubstitutor(PsiExpression[] expressions, int i, JavaResolveResult result) {
+  protected PsiSubstitutor getSubstitutor(PsiCallExpression contextCall, PsiExpression[] expressions, int i, JavaResolveResult result) {
     if (result instanceof MethodCandidateInfo) {
-      PsiExpression[] leftArgs = getExpressions(expressions, i);
-      return ((MethodCandidateInfo)result).inferSubstitutorFromArgs(this, leftArgs);
+      List<PsiExpression> leftArgs = getExpressions(expressions, i);
+      return ((MethodCandidateInfo)result).inferSubstitutorFromArgs(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
     }
     else {
       return result.getSubstitutor();
     }
   }
 
-  protected PsiExpression[] getExpressions(PsiExpression[] expressions, int i) {
-    return Arrays.copyOf(expressions, i);
+  protected List<PsiExpression> getExpressions(PsiExpression[] expressions, int i) {
+    return Arrays.asList(expressions).subList(0, i);
   }
 
   protected static Pair<PsiType, ConstraintType> inferConstraint(PsiTypeParameter typeParameter,
