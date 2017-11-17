@@ -24,19 +24,6 @@ public class PsiUsesStatementImpl extends JavaStubPsiElement<PsiUsesStatementStu
     return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
   }
 
-  @Nullable
-  @Override
-  public String getClassName() {
-    PsiUsesStatementStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.getClassName();
-    }
-    else {
-      PsiJavaCodeReferenceElement ref = getClassReference();
-      return ref != null ? ref.getQualifiedName() : null;
-    }
-  }
-
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {

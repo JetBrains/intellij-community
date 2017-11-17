@@ -24,11 +24,6 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
   }
 
   @Override
-  public String getClassName() {
-    return myClassReference.getCanonicalText();
-  }
-
-  @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     StringUtil.repeatSymbol(buffer, ' ', indentLevel);
     buffer.append("uses ").append(myClassReference.getCanonicalText()).append(";\n");

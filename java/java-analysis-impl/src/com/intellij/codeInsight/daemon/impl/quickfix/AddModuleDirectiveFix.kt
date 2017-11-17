@@ -53,7 +53,7 @@ class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : 
   override fun getText() = QuickFixBundle.message("module.info.add.uses.name", svcName)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
-    if (module.uses.find { svcName == it.className } == null) {
+    if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }
   }

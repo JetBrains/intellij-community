@@ -12,5 +12,4 @@ public interface PsiUsesStatement extends PsiStatement {
   PsiUsesStatement[] EMPTY_ARRAY = new PsiUsesStatement[0];
 
   @Nullable PsiJavaCodeReferenceElement getClassReference();
-  @Nullable String getClassName();
 }
