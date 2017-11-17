@@ -19,10 +19,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
         addVimPlugin(featuredPlugins);
         addMarkdownPlugin(featuredPlugins);
         featuredPlugins.put("BashSupport", "Languages:Bash language support:BashSupport");
-        featuredPlugins.put(".ignore",
-                            "VCS Integration:Support for .gitignore (GIT), .hgignore (Mercurial), .npmignore (NPM), .dockerignore (Docker) etc:mobi.hsz.idea.gitignore");
         featuredPlugins.put("R Language Support", "Languages:R language support:R4Intellij");
-        featuredPlugins.put("YAML/Ansible support", "Languages:YAML/Ansible support with Jinja2 tags:YAML/Ansible support");
       }
     };
 
