@@ -14,8 +14,6 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
     PluginGroups groups = new PluginGroups() {
       @Override
       protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
-        addVcsGroup(tree);
-
         addVimPlugin(featuredPlugins);
         addMarkdownPlugin(featuredPlugins);
         featuredPlugins.put("BashSupport", "Languages:Bash language support:BashSupport");
@@ -29,7 +27,6 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       steps.add(new CustomizeLauncherScriptStep());
     }
 
-    steps.add(new CustomizePluginsStepPanel(groups));
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
   }
 }
