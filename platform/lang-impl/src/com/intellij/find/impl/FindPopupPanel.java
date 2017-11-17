@@ -424,14 +424,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myResultsPreviewTable.getRowCount() < 2 || MessageDialogBuilder.yesNo(FindBundle.message(
-          "find.replace.all.confirmation.title"), FindBundle.message(
-          "find.replace.all.confirmation",
+        if (myResultsPreviewTable.getRowCount() < 2 || ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
           myMessageState[0],
           getStringToFind(),
           myMessageState[1],
-          getStringToReplace()))
-              .yesText(Messages.OK_BUTTON).noText(Messages.CANCEL_BUTTON).show() == Messages.YES) {
+          getStringToReplace())) {
           doOK(false);
         }
       }
