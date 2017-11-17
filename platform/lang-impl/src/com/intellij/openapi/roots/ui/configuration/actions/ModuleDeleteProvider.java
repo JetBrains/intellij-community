@@ -37,15 +37,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   @Override
@@ -89,14 +86,15 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
         final Module[] currentModules = moduleManager.getModules();
         final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
         final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
-        for (final Module module : modules) {
-          for (final Module otherModule : currentModules) {
-            if (otherModule == module || ArrayUtilRt.find(modules, otherModule) != -1) continue;
-            if (!otherModuleRootModels.containsKey(otherModule)) {
-              otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
-            }
+        Set<String> moduleNamesToDelete = Arrays.stream(modules).map(Module::getName).collect(Collectors.toSet());
+        for (final Module otherModule : currentModules) {
+          if (!moduleNamesToDelete.contains(otherModule.getName())) {
+            otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
           }
-          removeModule(module, otherModuleRootModels.values(), modifiableModuleModel);
+        }
+        removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
+        for (final Module module : modules) {
+          modifiableModuleModel.disposeModule(module);
         }
         final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
         ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
@@ -120,19 +118,20 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   public static void removeModule(@NotNull final Module moduleToRemove,
                                   @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
-    // remove all dependencies on the module that is about to be removed
+    removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
+    moduleModel.disposeModule(moduleToRemove);
+  }
+
+  private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,
+                                                  @NotNull Collection<ModifiableRootModel> otherModuleRootModels) {
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof ModuleOrderEntry && orderEntry.isValid()) {
-          final Module orderEntryModule = ((ModuleOrderEntry)orderEntry).getModule();
-          if (orderEntryModule != null && orderEntryModule.equals(moduleToRemove)) {
-            modifiableRootModel.removeOrderEntry(orderEntry);
-          }
+        if (orderEntry instanceof ModuleOrderEntry && orderEntry.isValid() &&
+            moduleNamesToRemove.contains(((ModuleOrderEntry)orderEntry).getModuleName())) {
+          modifiableRootModel.removeOrderEntry(orderEntry);
         }
       }
     }
-    // destroyProcess module
-    moduleModel.disposeModule(moduleToRemove);
   }
 }
