@@ -367,7 +367,7 @@ public class RefactoringUtil {
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
-      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeInfo.getType().equals(typeByExpression))) {
+      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();
