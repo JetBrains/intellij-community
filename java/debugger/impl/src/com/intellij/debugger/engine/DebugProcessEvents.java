@@ -558,7 +558,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
       XDebuggerManagerImpl.NOTIFICATION_GROUP
-        .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
+        .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.WARNING)
         .notify(getProject());
     }
   }

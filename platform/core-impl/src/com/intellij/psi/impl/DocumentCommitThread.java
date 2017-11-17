@@ -312,8 +312,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   public void run() {
     while (!isDisposed) {
       try {
-        boolean polled = pollQueue();
-        if (!polled) break;
+        if (!pollQueue()) break;
       }
       catch(Throwable e) {
         LOG.error(e);
@@ -490,6 +489,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     final Project project = task.project;
     final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     final List<Processor<Document>> finishProcessors = new SmartList<>();
+    Ref<ProperTextRange> changedRange = new Ref<>();
     Runnable runnable = () -> {
       myApplication.assertReadAccessAllowed();
       if (project.isDisposed()) return;
@@ -519,7 +519,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           PsiFileImpl file = pair.first;
           if (file.isValid()) {
             FileASTNode oldFileNode = pair.second;
-            Processor<Document> finishProcessor = doCommit(task, file, oldFileNode);
+            Processor<Document> finishProcessor = doCommit(task, file, oldFileNode, changedRange);
             if (finishProcessor != null) {
               finishProcessors.add(finishProcessor);
             }
@@ -555,14 +555,16 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       return new Pair<>(null, "Indicator was canceled");
     }
 
-    Runnable result = createEdtRunnable(task, synchronously, finishProcessors);
+    ProperTextRange range = changedRange.isNull() ? ProperTextRange.create(0, document.getTextLength()) : changedRange.get();
+    Runnable result = createEdtRunnable(task, synchronously, finishProcessors, range);
     return Pair.create(result, null);
   }
 
   @NotNull
   private Runnable createEdtRunnable(@NotNull final CommitTask task,
                                      final boolean synchronously,
-                                     @NotNull final List<Processor<Document>> finishProcessors) {
+                                     @NotNull final List<Processor<Document>> finishProcessors,
+                                     @NotNull ProperTextRange changedRange) {
     return () -> {
       myApplication.assertIsDispatchThread();
       Document document = task.getDocument();
@@ -578,7 +580,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
 
       boolean changeStillValid = task.isStillValid();
-      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
+      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, changedRange, synchronously, task.reason);
       if (synchronously) {
         assert success;
       }
@@ -720,16 +722,20 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   // public for Upsource
-  @Nullable("returns runnable to execute under write action in AWT to finish the commit")
+  // returns runnable to execute under write action in AWT to finish the commit, updates "outChangedRange"
+  @Nullable
   public Processor<Document> doCommit(@NotNull final CommitTask task,
                                       @NotNull final PsiFile file,
-                                      @NotNull final FileASTNode oldFileNode) {
+                                      @NotNull final FileASTNode oldFileNode,
+                                      @NotNull Ref<ProperTextRange> outChangedRange) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, task, newDocumentText);
+    ProperTextRange changedPsiRange = getChangedPsiRange(file, task, newDocumentText);
     if (changedPsiRange == null) {
       return null;
     }
+
+    outChangedRange.set(outChangedRange.get() == null ? changedPsiRange : outChangedRange.get().union(changedPsiRange));
 
     final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) {
@@ -823,16 +829,17 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @Nullable
-  private static TextRange getChangedPsiRange(@NotNull PsiFile file,
-                                              @NotNull CommitTask task,
-                                              @NotNull CharSequence newDocumentText) {
+  private static ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
+                                                    @NotNull CommitTask task,
+                                                    @NotNull CharSequence newDocumentText) {
     CharSequence oldDocumentText = task.myLastCommittedText;
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      return new TextRange(0, psiLength);
+      return new ProperTextRange(0, psiLength);
     }
-    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject())).getEventsSinceCommit(task.document);
-    int prefix = Integer.MAX_VALUE, suffix = Integer.MAX_VALUE;
+    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getEventsSinceCommit(task.document);
+    int prefix = Integer.MAX_VALUE;
+    int suffix = Integer.MAX_VALUE;
     int lengthBeforeEvent = psiLength;
     for (DocumentEvent event : events) {
       prefix = Math.min(prefix, event.getOffset());
@@ -845,12 +852,16 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     //Important! delete+insert sequence can give some of same chars back, lets grow affixes to include them.
     int shortestLength = Math.min(psiLength, newDocumentText.length());
     while (prefix < shortestLength &&
-           oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) { prefix++; }
+           oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) {
+      prefix++;
+    }
     while (suffix < shortestLength - prefix &&
-           oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) { suffix++; }
+           oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) {
+      suffix++;
+    }
     int end = Math.max(prefix, psiLength - suffix);
     if (end == prefix && newDocumentText.length() == oldDocumentText.length()) return null;
-    return TextRange.create(prefix, end);
+    return ProperTextRange.create(prefix, end);
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {

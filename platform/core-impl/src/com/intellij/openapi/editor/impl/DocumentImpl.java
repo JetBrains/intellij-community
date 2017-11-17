@@ -372,8 +372,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  @SuppressWarnings("ForLoopReplaceableByForEach") // Way too many garbage is produced otherwise in AbstractList.iterator()
   public RangeMarker getOffsetGuard(int offset) {
+    // Way too many garbage is produced otherwise in AbstractList.iterator()
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myGuardedBlocks.size(); i++) {
       RangeMarker block = myGuardedBlocks.get(i);
       if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
@@ -698,7 +699,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           long newModificationStamp,
                           int initialStartOffset,
                           int initialOldLength) {
-    LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+    }
 
     assertNotNestedModification();
     myChangeInProgress = true;

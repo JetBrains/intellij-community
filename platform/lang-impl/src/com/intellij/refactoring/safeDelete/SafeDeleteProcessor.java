@@ -37,6 +37,7 @@ import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +183,29 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    if (checkConflicts(usages, conflicts)) return false;
+
+    UsageInfo[] preprocessedUsages = usages;
+    for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
+      if (preprocessedUsages == null) return false;
+    }
+
+    HashSet<UsageInfo> diff = ContainerUtilRt.newHashSet(preprocessedUsages);
+    diff.removeAll(Arrays.asList(usages));
+
+    if (checkConflicts(diff.toArray(UsageInfo.EMPTY_ARRAY), new ArrayList<>())) return false;
+
+    final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
+    prepareSuccessful(); // dialog is always dismissed
+    if(filteredUsages == null) {
+      return false;
+    }
+    refUsages.set(filteredUsages);
+    return true;
+  }
+
+  private boolean checkConflicts(UsageInfo[] usages, ArrayList<String> conflicts) {
     final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
     for (UsageHolder usageHolder : usageHolders) {
@@ -208,26 +232,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
                                           !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new),
                        usages);
           }
-          return false;
+          return true;
         }
         else {
           myPreviewNonCodeUsages = false;
         }
       }
     }
-
-    UsageInfo[] preprocessedUsages = usages;
-    for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-      preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
-      if (preprocessedUsages == null) return false;
-    }
-    final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
-    prepareSuccessful(); // dialog is always dismissed
-    if(filteredUsages == null) {
-      return false;
-    }
-    refUsages.set(filteredUsages);
-    return true;
+    return false;
   }
 
   private void showUsages(final UsageInfo[] conflictUsages, final UsageInfo[] usages) {

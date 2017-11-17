@@ -258,7 +258,7 @@ public class DfaUtil {
         if (!(e instanceof PsiMethodCallExpression)) return false;
         PsiMethodCallExpression call = (PsiMethodCallExpression)e;
         return call.getMethodExpression().isReferenceTo(referrer) &&
-               (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+               (isStatic || ExpressionUtils.isEffectivelyUnqualified(call.getMethodExpression()));
       };
       if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
         // current method is definitely called from some field initialization

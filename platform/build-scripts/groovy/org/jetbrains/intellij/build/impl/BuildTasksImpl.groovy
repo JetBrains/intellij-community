@@ -264,7 +264,8 @@ idea.fatal.error.notification=disabled
     def productLayout = buildContext.productProperties.productLayout
     def bundledPlugins = productLayout.bundledPluginModules as Set<String>
     def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
-                      productLayout.platformApiModules + productLayout.platformImplementationModules +
+                      productLayout.platformApiJarModules + productLayout.platformImplJarModules +
+                      productLayout.productApiModules + productLayout.productImplementationModules +
                       productLayout.additionalPlatformJars.values() +
                       DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
@@ -421,8 +422,10 @@ idea.fatal.error.notification=disabled
       buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
     }
 
-    checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
-    checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
+    checkModules(layout.platformApiJarModules, "productProperties.productLayout.platformApiJarModules")
+    checkModules(layout.platformImplJarModules, "productProperties.productLayout.platformImplJarModules")
+    checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules")
+    checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")

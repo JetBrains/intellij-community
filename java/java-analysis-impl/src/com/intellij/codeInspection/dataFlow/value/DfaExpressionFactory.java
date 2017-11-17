@@ -32,6 +32,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,7 @@ public class DfaExpressionFactory {
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, var)) return constValue;
       }
 
-      if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
+      if (ExpressionUtils.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 

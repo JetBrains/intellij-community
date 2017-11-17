@@ -438,7 +438,17 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-21408
+  public void testCallableAgainstStructural() {
+    doTest();
+  }
+
   public void testMatchingOpenFunctionCallTypesPy2() {
     doMultiFileTest();
+  }
+
+  // PY-21408
+  public void testClassMetaAttrsAgainstStructural() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 }

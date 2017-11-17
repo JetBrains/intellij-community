@@ -16,7 +16,9 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.config.GitVersionSpecialty
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 
 class GitRewordTest : GitSingleRepoTest() {
 
@@ -119,6 +121,9 @@ class GitRewordTest : GitSingleRepoTest() {
 
   // IDEA-175443
   fun `test reword with hash symbol`() {
+    assumeTrue("Not testing: not possible to fix in Git prior to 1.8.2: ${vcs.version}",
+               GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(vcs.version)) // IDEA-182044
+
     val commit = file("a").create("initial").addCommit("Wrong message").details()
 
     val newMessage = """

@@ -51,5 +51,5 @@ public interface DocumentWindow extends Document {
 
   boolean isValid();
 
-  boolean containsRange(int start, int end);
+  boolean containsRange(int hostStart, int hostEnd);
 }

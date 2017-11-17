@@ -7,17 +7,17 @@ import java.util.function.Predicate;
 
 class ReplayDataStructure extends AbstractDataStructure {
   private final Iterator<StructureElement> iterator;
+  private final IntCustomizer customizer;
 
-  public ReplayDataStructure(StructureNode node, int sizeHint) {
+  public ReplayDataStructure(StructureNode node, int sizeHint, IntCustomizer customizer) {
     super(node, sizeHint);
     this.iterator = node.childrenIterator();
+    this.customizer = customizer;
   }
 
   @Override
   public int drawInt(@NotNull IntDistribution distribution) {
-    int value = nextChild(IntData.class).value;
-    if (!distribution.isValidValue(value)) throw new CannotRestoreValue();
-    return value;
+    return customizer.suggestInt(nextChild(IntData.class), distribution);
   }
 
   @NotNull
@@ -32,7 +32,7 @@ class ReplayDataStructure extends AbstractDataStructure {
   @NotNull
   @Override
   public DataStructure subStructure() {
-    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint());
+    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer);
   }
 
   @Override

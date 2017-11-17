@@ -997,7 +997,7 @@ public class JavaDocInfoGenerator {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
         buffer.append("<small><b>");
-        generateLink(buffer, qName, qName, member, false);
+        generateLink(buffer, qName, qName + generateTypeParameters(parentClass, true), member, false);
         buffer.append("</b></small>");
       }
     }
@@ -1963,7 +1963,7 @@ public class JavaDocInfoGenerator {
     return 0;
   }
 
-  private static String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
+  public static String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
     if (owner.hasTypeParameters()) {
       PsiTypeParameter[] parameters = owner.getTypeParameters();
 

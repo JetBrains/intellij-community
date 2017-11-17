@@ -258,6 +258,10 @@ public class RunnerLayout  {
     myDefaultFocus.put(condition, Pair.create(id, policy));
   }
 
+  void cancelDefaultFocusBy(@NotNull String condition) {
+    myDefaultFocus.remove(condition);
+  }
+
   @Nullable
   public String getToFocus(@NotNull String condition) {
     return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) :

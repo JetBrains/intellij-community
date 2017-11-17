@@ -261,7 +261,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitClassInitializer(PsiClassInitializer initializer) {
     PsiClassInitializer initializer2 = (PsiClassInitializer)myMatchingVisitor.getElement();
     myMatchingVisitor.setResult(myMatchingVisitor.match(initializer.getModifierList(), initializer2.getModifierList()) &&
-                                myMatchingVisitor.match(initializer.getBody(), initializer2.getBody()));
+                                myMatchingVisitor.matchSons(initializer.getBody(), initializer2.getBody()));
   }
 
   @Override
@@ -553,21 +553,20 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  private boolean compareBody(final PsiElement el1, final PsiElement el2) {
-    PsiElement compareElement1 = el1;
-    PsiElement compareElement2 = el2;
-
+  private boolean matchBody(PsiElement patternElement, PsiElement matchElement) {
     if (myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
-      if (el1 instanceof PsiBlockStatement) {
-        compareElement1 = ((PsiBlockStatement)el1).getCodeBlock().getFirstChild();
+      if (matchElement instanceof PsiBlockStatement) {
+        final PsiCodeBlock codeBlock = ((PsiBlockStatement)matchElement).getCodeBlock();
+        if (patternElement instanceof PsiBlockStatement || codeBlock.getStatements().length == 1) {
+          matchElement = codeBlock.getFirstChild();
+        }
       }
-
-      if (el2 instanceof PsiBlockStatement) {
-        compareElement2 = ((PsiBlockStatement)el2).getCodeBlock().getFirstChild();
+      if (patternElement instanceof PsiBlockStatement) {
+        patternElement = ((PsiBlockStatement)patternElement).getCodeBlock().getFirstChild();
       }
     }
 
-    return myMatchingVisitor.matchSequentially(compareElement1, compareElement2);
+    return myMatchingVisitor.matchSequentially(patternElement, matchElement);
   }
 
   @Override
@@ -994,7 +993,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       if (myMatchingVisitor.getResult() && var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection) {
-        myMatchingVisitor.setResult(myMatchingVisitor.match(
+        myMatchingVisitor.setResult(myMatchingVisitor.matchSons(
           ((PsiCatchSection)var.getParent()).getCatchBlock(),
           ((PsiCatchSection)var2.getParent()).getCatchBlock()
         ));
@@ -1229,8 +1228,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiStatement elseBranch = if1.getElseBranch();
     myMatchingVisitor.setResult(myMatchingVisitor.match(if1.getCondition(), if2.getCondition()) &&
-                                compareBody(if1.getThenBranch(), if2.getThenBranch()) &&
-                                (elseBranch == null || compareBody(elseBranch, if2.getElseBranch())));
+                                matchBody(if1.getThenBranch(), if2.getThenBranch()) &&
+                                (elseBranch == null || matchBody(elseBranch, if2.getElseBranch())));
   }
 
   @Override
@@ -1245,13 +1244,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitForStatement(final PsiForStatement for1) {
     final PsiForStatement for2 = (PsiForStatement)myMatchingVisitor.getElement();
 
-    final PsiStatement initialization = for1.getInitialization();
-    MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(initialization);
-
-    myMatchingVisitor.setResult(handler.match(initialization, for2.getInitialization(), myMatchingVisitor.getMatchContext()) &&
+    myMatchingVisitor.setResult(myMatchingVisitor.match(for1.getInitialization(), for2.getInitialization()) &&
                                 myMatchingVisitor.match(for1.getCondition(), for2.getCondition()) &&
                                 myMatchingVisitor.match(for1.getUpdate(), for2.getUpdate()) &&
-                                compareBody(for1.getBody(), for2.getBody()));
+                                matchBody(for1.getBody(), for2.getBody()));
   }
 
   @Override
@@ -1260,7 +1256,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(for1.getIterationParameter(), for2.getIterationParameter()) &&
                                 myMatchingVisitor.match(for1.getIteratedValue(), for2.getIteratedValue()) &&
-                                compareBody(for1.getBody(), for2.getBody()));
+                                matchBody(for1.getBody(), for2.getBody()));
   }
 
   @Override
@@ -1268,7 +1264,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiWhileStatement while2 = (PsiWhileStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(while1.getCondition(), while2.getCondition()) &&
-                                compareBody(while1.getBody(), while2.getBody()));
+                                matchBody(while1.getBody(), while2.getBody()));
   }
 
   @Override
@@ -1295,7 +1291,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiDoWhileStatement while2 = (PsiDoWhileStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(while1.getCondition(), while2.getCondition()) &&
-                                compareBody(while1.getBody(), while2.getBody()));
+                                matchBody(while1.getBody(), while2.getBody()));
   }
 
   @Override
@@ -1386,7 +1382,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.match(parameter, section2.getParameter()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.match(section.getCatchBlock(), section2.getCatchBlock()));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(section.getCatchBlock(), section2.getCatchBlock()));
     }
   }
 

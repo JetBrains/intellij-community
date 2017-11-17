@@ -1010,6 +1010,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartingMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
 
+    myOptionalData.compact();
+
     myTokenTypeChecked = true;
     balanceWhiteSpaces();
 

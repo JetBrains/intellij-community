@@ -31,14 +31,14 @@ import java.util.regex.Pattern;
  * @author Eugene.Kudelevsky
  */
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
-  private final GlobalCompilingVisitor myCompilingVisitor;
+  final GlobalCompilingVisitor myCompilingVisitor;
 
   @NonNls private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
   private static final Pattern ourPattern = Pattern.compile("//" + COMMENT, Pattern.DOTALL);
   private static final Pattern ourPattern2 = Pattern.compile("/\\*" + COMMENT + "\\*/", Pattern.DOTALL);
   private static final Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
 
-  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
+  static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
                                                                                PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
 
   public JavaCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
@@ -465,45 +465,46 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitExpressionStatement(PsiExpressionStatement expr) {
-    myCompilingVisitor.handle(expr);
+  public void visitExpressionStatement(PsiExpressionStatement expressionStatement) {
+    super.visitExpressionStatement(expressionStatement);
 
-    super.visitExpressionStatement(expr);
-
-    final PsiElement child = expr.getLastChild();
+    final PsiElement child = expressionStatement.getLastChild();
     if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment)) {
       // search for expression or symbol
-      final PsiElement reference = expr.getFirstChild();
-      MatchingHandler referenceHandler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
+      final PsiElement reference = expressionStatement.getFirstChild();
+      final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+      MatchingHandler referenceHandler = pattern.getHandler(reference);
 
       if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
         // symbol
-        myCompilingVisitor.getContext().getPattern().setHandler(expr, referenceHandler);
+        pattern.setHandler(expressionStatement, referenceHandler);
         referenceHandler.setFilter(SymbolNodeFilter.getInstance());
 
-        myCompilingVisitor.setHandler(expr, new SymbolHandler((SubstitutionHandler)referenceHandler));
+        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler((SubstitutionHandler)referenceHandler));
       }
       else if (reference instanceof PsiLiteralExpression) {
         MatchingHandler handler = new ExpressionHandler();
-        myCompilingVisitor.setHandler(expr, handler);
+        myCompilingVisitor.setHandler(expressionStatement, handler);
         handler.setFilter(ConstantFilter.getInstance());
       }
       else {
         // just expression
         MatchingHandler handler;
-        myCompilingVisitor.setHandler(expr, handler = new ExpressionHandler());
+        myCompilingVisitor.setHandler(expressionStatement, handler = new ExpressionHandler());
 
         handler.setFilter(ExpressionFilter.getInstance());
       }
     }
-    else if (expr.getExpression() instanceof PsiReferenceExpression &&
-             (myCompilingVisitor.getContext().getPattern().isRealTypedVar(expr.getExpression()))) {
-      // search for statement
-      final MatchingHandler exprHandler = myCompilingVisitor.getContext().getPattern().getHandler(expr);
-      if (exprHandler instanceof SubstitutionHandler) {
-        SubstitutionHandler handler = (SubstitutionHandler)exprHandler;
-        handler.setFilter(new StatementFilter());
-        handler.setMatchHandler(new StatementHandler());
+    else {
+      final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+      if (expressionStatement.getExpression() instanceof PsiReferenceExpression && pattern.isRealTypedVar(expressionStatement)) {
+        // search for statement
+        final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expressionStatement);
+        if (handler instanceof SubstitutionHandler) {
+          final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+          substitutionHandler.setFilter(new StatementFilter());
+          substitutionHandler.setMatchHandler(new StatementHandler());
+        }
       }
     }
   }

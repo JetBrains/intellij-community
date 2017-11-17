@@ -470,17 +470,15 @@ public class PatternCompiler {
     }
 
     NodeFilter filter = LexicalNodesFilter.getInstance();
-
-    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(matchStatements,context);
     List<PsiElement> elements = new SmartList<>();
-
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {
         elements.add(matchStatement);
       }
     }
 
+    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
+    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }
@@ -508,10 +506,6 @@ public class PatternCompiler {
   }
 
   private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
-    if (handler.getPredicate()==null) {
-      handler.setPredicate(predicate);
-    } else {
-      handler.setPredicate(new AndPredicate(handler.getPredicate(), predicate));
-    }
+    handler.setPredicate((handler.getPredicate() == null) ? predicate : new AndPredicate(handler.getPredicate(), predicate));
   }
 }

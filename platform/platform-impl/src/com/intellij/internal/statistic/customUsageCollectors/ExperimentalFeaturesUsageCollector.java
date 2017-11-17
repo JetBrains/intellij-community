@@ -4,12 +4,12 @@ package com.intellij.internal.statistic.customUsageCollectors;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -20,11 +20,10 @@ public class ExperimentalFeaturesUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    Set<UsageDescriptor> usages = new THashSet<>();
-    for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensions()) {
-      usages.add(new UsageDescriptor(feature.id, Experiments.isFeatureEnabled(feature.id) ? 1 : 0));
-    }
-    return usages;
+    return Arrays.stream(Experiments.EP_NAME.getExtensions())
+      .filter(f -> Experiments.isFeatureEnabled(f.id))
+      .map(f -> new UsageDescriptor(f.id))
+      .collect(Collectors.toSet());
   }
 
   @NotNull

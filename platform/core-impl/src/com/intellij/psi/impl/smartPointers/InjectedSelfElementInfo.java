@@ -133,7 +133,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocuments(hostFile)) {
+      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocumentsInRange(hostFile, rangeInHostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
           visitor.visit(injected, Collections.emptyList());

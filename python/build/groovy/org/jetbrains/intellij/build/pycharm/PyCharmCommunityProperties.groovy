@@ -27,8 +27,8 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     applicationInfoModule = "python-community-ide-resources"
     brandingResourcePaths = ["$communityHome/python/resources"]
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
+    productLayout.productApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
+    productLayout.productImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
       "dom-impl", "python-community", "python-community-ide-resources",
       "python-community-ide", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
     ]

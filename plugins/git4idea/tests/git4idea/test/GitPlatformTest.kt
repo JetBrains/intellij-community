@@ -52,9 +52,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    settings = GitVcsSettings.getInstance(project)
-    settings.appSettings.setPathToGit(gitExecutable())
-
     dialogManager = service<DialogManager>() as TestDialogManager
     vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(project)
 
@@ -62,6 +59,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     git = overrideService<Git, TestGitImpl>()
     vcs = GitVcs.getInstance(project)
     vcs.doActivate()
+
+    settings = GitVcsSettings.getInstance(project)
+    settings.appSettings.setPathToGit(gitExecutable())
+    vcs.checkVersion()
 
     logProvider = findGitLogProvider(project)
 
@@ -84,7 +85,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   override fun getDebugLogCategories(): Collection<String> {
     return super.getDebugLogCategories().plus(listOf("#" + Executor::class.java.name,
-                                                     "#" + GitHandler::class.java.name,
+                                                     "#git4idea",
                                                      "#output." + GitHandler::class.java.name))
   }
 
@@ -133,9 +134,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return File(testRoot, parentName + ".git")
   }
 
-  private fun createBroRepo(broName: String, parentRepo: File): File {
+  protected fun createBroRepo(broName: String, parentRepo: File): File {
     Executor.cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
+    cd(broName)
+    setupDefaultUsername(project)
     return File(testRoot, broName)
   }
 

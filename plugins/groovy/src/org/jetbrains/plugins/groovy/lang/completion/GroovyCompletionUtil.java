@@ -383,12 +383,7 @@ public class GroovyCompletionUtil {
                                                   @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
-      if (position != null && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isLocalVariable(element)) {
-        type = TypeInferenceHelper.getInferredType(position, ((GrVariable)element).getName());
-      }
-      else {
-        type = ((GrVariable)element).getTypeGroovy();
-      }
+      type = TypeInferenceHelper.getVariableTypeInContext(position, (GrVariable)element);
     }
     else if (element instanceof PsiVariable) {
       type = ((PsiVariable)element).getType();

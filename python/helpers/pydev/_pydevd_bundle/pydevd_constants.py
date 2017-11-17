@@ -106,6 +106,7 @@ IS_PYCHARM = True
 
 LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
 DEFAULT_VALUE = "__pydevd_value_async"
+ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
 SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True'
@@ -141,6 +142,7 @@ def protect_libraries_from_patching():
         del sys.modules[name]
 
     # import for side effects
+    import _pydev_imps._pydev_saved_modules
 
     for name in patched_modules:
         sys.modules[name] = patched_modules[name]

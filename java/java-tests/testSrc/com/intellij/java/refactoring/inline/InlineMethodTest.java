@@ -254,7 +254,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineRunnableRun() {
     doTestInlineThisOnly();
   }
-  
+
+  public void testPreserveLeadingTailingComments() {
+    doTestInlineThisOnly();
+  }
+
   public void testOneLineLambdaVoidCompatibleToBlock() {
     doTestInlineThisOnly();
   }
@@ -323,6 +327,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testUnableToInlineCodeBlockToSuper() {
+    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
   public void testRedundantCastOnMethodReferenceToLambda() {
     doTest();
   }
@@ -339,11 +347,19 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Constructor <b><code>SomeClass.SomeClass()</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>InlineWithPrivateConstructorAccessMain.main(String...)</code></b>");
   }
 
+  public void testPreserveResultedVariableIfInitializerIsNotSideEffectsFree() {
+    doTestInlineThisOnly();
+  }
+
   public void testExprLambdaExpandToCodeBlock() {
     doTestInlineThisOnly();
   }
 
   public void testSuperCallWhenUnqualifiedInline() {
+    doTestInlineThisOnly();
+  }
+
+  public void testRemoveReturnForTailTypeSimpleWhenNoSideEffectsPossible() {
     doTestInlineThisOnly();
   }
 

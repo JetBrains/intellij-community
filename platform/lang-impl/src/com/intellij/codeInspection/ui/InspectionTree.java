@@ -33,6 +33,7 @@ import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -134,6 +135,15 @@ public class InspectionTree extends Tree {
     }
 
     return toolWrapper;
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent e) {
+    TreePath path = getPathForLocation(e.getX(), e.getY());
+    if (path == null) return null;
+    Object lastComponent = path.getLastPathComponent();
+    if (!(lastComponent instanceof ProblemDescriptionNode)) return null;
+    return ((ProblemDescriptionNode)lastComponent).getToolTipText();
   }
 
   @Nullable

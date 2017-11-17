@@ -650,6 +650,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "new Object().toString();" +
                  "}}";
     assertEquals("Find typed expression statements", 1, findMatchesCount(in3, "'_expr:[exprtype( int )];"));
+
+    String in4 = "class X {" +
+                 "  void x() {" +
+                 "    System.out.println();" +
+                 "    {}" +
+                 "    // comment" +
+                 "    switch (1) {" +
+                 "      case 1: {}" +
+                 "    }\n" +
+                 "  }" +
+                 "}";
+    assertEquals("block statement is a statement too", 1, findMatchesCount(in4, "void '_x() {" +
+                                                                                "  '_st*;" +
+                                                                                "}"));
+
+    String in5 = "class X {" +
+                 "  void x() {" +
+                 "    while (true) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("match block statement with statement variable", 1, findMatchesCount(in5, "while (true) '_st;"));
   }
 
   public void testSearchClass() {
@@ -1069,8 +1090,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testSearchSubstitutions() {
     final String s15 = "'T;";
 
-    assertEquals("search for parameterized pattern", 2, findMatchesCount(s14_1, s15));
-    assertEquals("search for parameterized pattern 2", 5, findMatchesCount(s14_2, s15));
+    assertEquals("search for parameterized pattern", 3, findMatchesCount(s14_1, s15));
+    assertEquals("search for parameterized pattern 2", 7, findMatchesCount(s14_2, s15));
 
     options.setRecursiveSearch(false);
 

@@ -432,6 +432,7 @@ public class AllIcons {
     public static final Icon BalloonError = IconLoader.getIcon("/general/balloonError.png"); // 16x16
     public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.png"); // 16x16
     public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.png"); // 16x16
+    public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.png"); // 12x12
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png"); // 16x16
     public static final Icon CollapseAll = IconLoader.getIcon("/general/collapseAll.png"); // 11x16
     public static final Icon CollapseAllHover = IconLoader.getIcon("/general/collapseAllHover.png"); // 11x16

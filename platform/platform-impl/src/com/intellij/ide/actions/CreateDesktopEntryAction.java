@@ -76,7 +76,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   };
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && SystemInfo.hasXdgOpen();
+    return SystemInfo.isUnix && !SystemInfo.isSnap() && SystemInfo.hasXdgOpen();
   }
 
   @Override

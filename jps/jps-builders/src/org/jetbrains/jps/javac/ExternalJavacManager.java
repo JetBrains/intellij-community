@@ -424,16 +424,14 @@ public class ExternalJavacManager {
           break;
         }
       }
-
-      ChannelGroupFuture future;
       try {
-        future = openChannels.close();
+        return openChannels.close();
       }
       finally {
-        assert eventLoopGroup != null;
-        eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS);
+        if (eventLoopGroup != null) {
+          eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS);
+        }
       }
-      return future;
     }
   }
 

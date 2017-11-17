@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
@@ -54,6 +53,15 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       init(presentation.getContext().getProject());
     }
     myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
+  }
+
+  @Nullable
+  public String getToolTipText() {
+    if (!isValid()) return null;
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return null;
+    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
   }
 
   @Override

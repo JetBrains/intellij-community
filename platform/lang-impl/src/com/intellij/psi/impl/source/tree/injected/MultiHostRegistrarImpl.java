@@ -482,10 +482,27 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
         return oldFile;
       }
+      else if (intersect(oldDocument, documentWindow)) {
+        injected.remove(i); // injected fragments should not overlap. In the End, there can be only one.
+      }
     }
     injected.add(documentWindow);
 
     return injectedPsi;
+  }
+
+  private static boolean intersect(DocumentWindowImpl doc1, DocumentWindowImpl doc2) {
+    Segment[] hostRanges1 = doc1.getHostRanges();
+    Segment[] hostRanges2 = doc2.getHostRanges();
+    // DocumentWindowImpl.getHostRanges() may theoretically return non-sorted ranges
+    for (Segment segment1 : hostRanges1) {
+      for (Segment segment2 : hostRanges2) {
+        if (Math.max(segment1.getStartOffset(), segment2.getStartOffset()) < Math.min(segment1.getEndOffset(), segment2.getEndOffset())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI

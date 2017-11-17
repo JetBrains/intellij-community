@@ -82,9 +82,20 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="sqlite" type="repository">
+        <properties maven-id="org.xerial:sqlite-jdbc:3.20.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
-    <orderEntry type="library" name="sqlite" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

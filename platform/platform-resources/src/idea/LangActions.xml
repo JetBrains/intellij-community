@@ -403,6 +403,9 @@
       <add-to-group group-id="MainToolBar" anchor="first"/>
     </group>
     -->
+    <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction">
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </action>
 
     <group id="ToolbarFindGroup">
       <separator/>
@@ -509,7 +512,6 @@
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
-      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
@@ -540,8 +542,6 @@
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
-      <separator/>
-      <reference ref="RevealIn"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
@@ -576,7 +576,6 @@
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
       <separator/>
-      <reference ref="RevealIn"/>
       <reference ref="ShowFilePath"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>

@@ -267,6 +267,11 @@ public class DuplicatesFinder {
           if (returnValue == null) {
             returnValue = myReturnValue;
           }
+          if (returnValue instanceof GotoReturnValue ||
+              returnValue instanceof ConditionalReturnStatementValue &&
+              ((ConditionalReturnStatementValue)returnValue).isEmptyOrConstantExpression()) {
+            return false;
+          }
           if (returnValue instanceof VariableReturnValue) {
             final ReturnValue value = match.getOutputVariableValue(((VariableReturnValue)returnValue).getVariable());
             if (value != null) {
@@ -284,7 +289,7 @@ public class DuplicatesFinder {
         return true;
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException ignored) {
     }
     return false;
   }
@@ -559,7 +564,7 @@ public class DuplicatesFinder {
       PsiElement child2 = children2[i];
       if (!matchPattern(child1, child2, candidates, match)) {
         matchedExtractablePart = matchExtractableExpression(child1, child2, candidates, match, true);
-        return matchedExtractablePart != null && matchedExtractablePart;
+        if (matchedExtractablePart == null || !matchedExtractablePart) return false;
       }
     }
 

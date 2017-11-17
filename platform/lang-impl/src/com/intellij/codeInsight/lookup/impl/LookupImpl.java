@@ -992,7 +992,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     PsiFile hostFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (hostFile != null) {
       // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
-      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
+      List<DocumentWindow> injected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset));
+      for (DocumentWindow documentWindow : injected ) {
         if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
           return documentWindow;
         }

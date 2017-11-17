@@ -18,6 +18,7 @@ package git4idea.update
 import com.intellij.dvcs.DvcsUtil.getPushSupport
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
@@ -144,7 +145,7 @@ class GitSubmoduleTest : GitPlatformTest() {
 
   private fun addSubmodule(superProject: File, submoduleUrl: File, relativePath: String? = null) {
     cd(superProject)
-    git("submodule add ${submoduleUrl.path} ${relativePath ?: ""}")
+    git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
   }
@@ -164,6 +165,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("init $moduleName")
     val child = File(testRoot, moduleName)
     cd(child)
+    setupDefaultUsername(project)
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
     git("remote add origin ${testRoot}/$parent")
@@ -179,8 +181,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun prepareSecondClone(): File {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    val bro = File(testRoot, "bro")
-    return bro
+    return File(testRoot, "bro")
   }
 
   private fun commitAndPushFromSecondClone(bro: File) {
@@ -199,7 +200,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun assertSubmodulesInfo(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
     val expectedInfos = expectedSubmodules.map {
       val url = it.remotes.first().firstUrl!!
-      GitSubmoduleInfo(getRelativePath(virtualToIoFile(repo.root), virtualToIoFile(it.root))!!, url)
+      GitSubmoduleInfo(FileUtil.toSystemIndependentName(getRelativePath(virtualToIoFile(repo.root), virtualToIoFile(it.root))!!), url)
     }
     assertSameElements("Submodules were read incorrectly for ${getShortRepositoryName(repo)}", repo.submodules, expectedInfos)
   }

@@ -8,8 +8,8 @@ import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.ChainSearcher;
-import com.intellij.compiler.chainsSearch.OperationChain;
 import com.intellij.compiler.chainsSearch.MethodChainLookupRangingHelper;
+import com.intellij.compiler.chainsSearch.OperationChain;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,13 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.patterns.PsiJavaPatterns.or;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiReferenceExpression;
+import static com.intellij.patterns.PsiJavaPatterns.*;
 
 public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
@@ -78,14 +77,16 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
-    CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(context.getProject());
+    if (compilerReferenceService == null) return Collections.emptyList();
+    CompilerReferenceServiceEx compilerReferenceServiceEx = (CompilerReferenceServiceEx) compilerReferenceService;
     ChainSearchTarget target = context.getTarget();
     List<OperationChain> searchResult =
       ChainSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                            target,
                            ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
                            context,
-                           methodsUsageIndexReader);
+                           compilerReferenceServiceEx);
     int maxWeight = searchResult.stream().mapToInt(OperationChain::getChainWeight).max().orElse(0);
 
     return searchResult

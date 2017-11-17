@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -371,18 +357,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return qualifier.getType();
     }
 
-    if (PsiUtil.isCompileStatic(refExpr)) {
-      final PsiType type;
-      if (resolved instanceof GrField) {
-        type = ((GrField)resolved).getType();
-      } else {
-        type = null;
-      }
-      if (type != null) {
-        return result.getSubstitutor().substitute(type);
-      }
-    }
-
     final PsiType nominal = refExpr.getNominalType(true);
 
     Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);
@@ -392,15 +366,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final PsiType inferred = getInferredTypes(refExpr, resolved);
     if (inferred == null) {
-      if (nominal == null) {
-        //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
-        if (resolved instanceof GrVariable) {
-          LOG.assertTrue(resolved.isValid());
-          return ((GrVariable)resolved).getTypeGroovy();
+      if (nominal != null) return nominal;
+      //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
+      if (resolved instanceof GrVariable) {
+        if (PsiUtil.isCompileStatic(refExpr) && resolved instanceof GrField) {
+          return TypesUtil.getJavaLangObject(refExpr);
         }
+        LOG.assertTrue(resolved.isValid());
+        return ((GrVariable)resolved).getTypeGroovy();
       }
-
-      return nominal;
+      return null;
     }
 
     if (nominal == null) return inferred;

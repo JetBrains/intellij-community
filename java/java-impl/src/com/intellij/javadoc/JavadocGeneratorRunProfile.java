@@ -206,10 +206,9 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       parameters.addParametersString(myConfiguration.OTHER_OPTIONS);
 
       if (myConfiguration.OPTION_LINK_TO_JDK_DOCS) {
-        VirtualFile[] docUrls = jdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance());
-        for (VirtualFile docUrl : docUrls) {
+        for (String url : jdk.getRootProvider().getUrls(JavadocOrderRootType.getInstance())) {
           parameters.add("-link");
-          parameters.add(VfsUtil.toUri(docUrl).toString());
+          parameters.add(url);
         }
       }
 

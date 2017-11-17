@@ -36,7 +36,7 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val result =  super.getStorageSpecs(component, stateSpec, operation)
     return StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-      LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager.componentManager!!, result, operation) }
+      LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager.componentManager!!, stateSpec, result, operation) }
     } ?: result
   }
 }
