@@ -390,9 +390,10 @@ public class ExternalSystemUtil {
     else {
       projectName = projectFile.getName();
     }
+    final ExternalSystemResolveProjectTask myTask =
+      new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
+
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
-      private final ExternalSystemResolveProjectTask myTask
-        = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
 
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
@@ -442,7 +443,6 @@ public class ExternalSystemUtil {
           consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
         if (consoleView != null) {
           Disposer.register(project, consoleView);
-          Disposer.register(consoleView, processHandler);
         } else {
           Disposer.register(project, processHandler);
         }

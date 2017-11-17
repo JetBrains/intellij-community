@@ -36,6 +36,7 @@ import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -75,6 +76,8 @@ public class BuildContentManagerImpl implements BuildContentManager {
   public static final String Run = "Run";
   public static final String Debug = "Debug";
   private static final String[] ourPresetOrder = {Build, Sync, Run, Debug};
+  private static final Key<Map<Object, CloseListener>> CONTENT_CLOSE_LISTENERS = Key.create("CONTENT_CLOSE_LISTENERS");
+
   private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
@@ -263,9 +266,16 @@ public class BuildContentManagerImpl implements BuildContentManager {
     return content;
   }
 
-  public void startBuildNotified(@NotNull Content content, @Nullable BuildProcessHandler processHandler) {
+  public void startBuildNotified(@NotNull BuildDescriptor buildDescriptor,
+                                 @NotNull Content content,
+                                 @Nullable BuildProcessHandler processHandler) {
     if (processHandler != null) {
-      new CloseListener(content, processHandler);
+      Map<Object, CloseListener> closeListenerMap = content.getUserData(CONTENT_CLOSE_LISTENERS);
+      if (closeListenerMap == null) {
+        closeListenerMap = ContainerUtil.newHashMap();
+        content.putUserData(CONTENT_CLOSE_LISTENERS, closeListenerMap);
+      }
+      closeListenerMap.put(buildDescriptor.getId(), new CloseListener(content, processHandler));
     }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
@@ -280,7 +290,17 @@ public class BuildContentManagerImpl implements BuildContentManager {
     });
   }
 
-  public void finishBuildNotified(@NotNull Content content) {
+  public void finishBuildNotified(@NotNull BuildDescriptor buildDescriptor, @NotNull Content content) {
+    Map<Object, CloseListener> closeListenerMap = content.getUserData(CONTENT_CLOSE_LISTENERS);
+    if (closeListenerMap != null) {
+      CloseListener closeListener = closeListenerMap.remove(buildDescriptor.getId());
+      if (closeListener != null) {
+        Disposer.dispose(closeListener);
+        if (closeListenerMap.isEmpty()) {
+          content.putUserData(CONTENT_CLOSE_LISTENERS, null);
+        }
+      }
+    }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
       if (pair != null && pair.second.decrementAndGet() == 0) {
@@ -308,8 +328,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
   }
 
   private class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener, Disposable {
+    @Nullable
     private Content myContent;
-    private final BuildProcessHandler myProcessHandler;
+    @Nullable
+    private BuildProcessHandler myProcessHandler;
 
     private CloseListener(@NotNull final Content content, @NotNull BuildProcessHandler processHandler) {
       myContent = content;
@@ -339,8 +361,11 @@ public class BuildContentManagerImpl implements BuildContentManager {
         contentManager.removeContentManagerListener(this);
       }
       ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
-      content.release();
       myContent = null;
+      if (myProcessHandler instanceof Disposable) {
+        Disposer.dispose((Disposable)myProcessHandler);
+      }
+      myProcessHandler = null;
     }
 
     @Override
