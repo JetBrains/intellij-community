@@ -12,8 +12,11 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
+import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
@@ -90,4 +93,11 @@ fun GroovyFileBase.processClassesInPackage(processor: PsiScopeProcessor, state: 
   if (!processor.shouldProcessClasses()) return true
   val aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName) ?: return true
   return aPackage.processDeclarations(PackageSkippingProcessor(processor), state, null, place)
+}
+
+fun PsiScopeProcessor.isAnnotationResolve(): Boolean = getHint(AnnotationHint.HINT_KEY)?.isAnnotationResolve ?: false
+
+fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
+  val (possibleAnnotation, _) = skipSameTypeParents()
+  return possibleAnnotation is GrAnnotation
 }

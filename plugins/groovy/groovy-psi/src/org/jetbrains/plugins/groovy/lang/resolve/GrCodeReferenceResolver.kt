@@ -114,7 +114,7 @@ private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveR
     }
   }
 
-  val processor = ClassProcessor(name, this, typeArguments)
+  val processor = ClassProcessor(name, this, typeArguments, isAnnotationReference())
   val state = ResolveState.initial()
   processClasses(processor, state)
   val classes = processor.results
