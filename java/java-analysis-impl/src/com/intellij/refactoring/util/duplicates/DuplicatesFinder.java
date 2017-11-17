@@ -564,7 +564,7 @@ public class DuplicatesFinder {
       PsiElement child2 = children2[i];
       if (!matchPattern(child1, child2, candidates, match)) {
         matchedExtractablePart = matchExtractableExpression(child1, child2, candidates, match, true);
-        return matchedExtractablePart != null && matchedExtractablePart;
+        if (matchedExtractablePart == null || !matchedExtractablePart) return false;
       }
     }
 
