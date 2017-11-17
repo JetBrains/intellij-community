@@ -201,7 +201,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           boolean focusContent = contentDescriptor.isAutoFocusContent();
           myBuildContentManager.setSelectedContent(
             myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
-          Disposer.register(this, contentDescriptor);
+          Disposer.register(view, contentDescriptor);
         }
         else {
           myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
@@ -233,7 +233,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
         myViewManager.onBuildStart(buildInfo);
         myProgressWatcher.addBuild(buildInfo);
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content, startBuildEvent.getProcessHandler());
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo, buildInfo.content, startBuildEvent.getProcessHandler());
       }
       else {
         if (event instanceof FinishBuildEvent) {
@@ -241,7 +241,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.message = event.getMessage();
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
-          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo.content);
+          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo, buildInfo.content);
           myViewManager.onBuildFinish(buildInfo);
         }
         else {
