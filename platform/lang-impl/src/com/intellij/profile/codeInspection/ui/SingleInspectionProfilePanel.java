@@ -616,9 +616,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     new TreeSpeedSearch(myTreeTable.getTree(), o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
-      return InspectionsConfigTreeComparator.getDisplayTextToSort(node instanceof InspectionConfigTreeNode.Tool
-                                                                  ? ((InspectionConfigTreeNode.Tool)node).getDefaultDescriptor().getText()
-                                                                  : ((InspectionConfigTreeNode.Group)node).getGroupName());
+      return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
 
 

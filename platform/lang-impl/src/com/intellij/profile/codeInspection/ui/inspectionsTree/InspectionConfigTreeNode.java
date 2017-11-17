@@ -25,6 +25,7 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return IntStream.range(0, getChildCount()).mapToObj(i -> (InspectionConfigTreeNode)getChildAt(i)).anyMatch(InspectionConfigTreeNode::isProperSetting);
     }
 
+    @NotNull
     @Override
     public String getText() {
       return getGroupName();
@@ -54,6 +55,7 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
     }
 
+    @NotNull
     @Override
     public String getText() {
       return getDefaultDescriptor().getText();
@@ -91,6 +93,7 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
 
   protected abstract boolean calculateIsProperSettings();
 
+  @NotNull
   public abstract String getText();
 
   @Override

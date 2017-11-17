@@ -14,7 +14,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +34,6 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     if (!(value instanceof InspectionConfigTreeNode)) return component;
     InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
 
-    Object object = node.getUserObject();
     boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
     final Color background = selected ? (reallyHasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
                                       : UIUtil.getTreeTextBackground();
@@ -43,22 +41,17 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     Color foreground =
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();
 
-    @NonNls String text;
     int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;
     if (node instanceof InspectionConfigTreeNode.Group) {
-      text = ((InspectionConfigTreeNode.Group)node).getGroupName();
       style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
       InspectionConfigTreeNode.Tool toolNode = (InspectionConfigTreeNode.Tool)node;
-      text = toolNode.getDefaultDescriptor().getText();
       hint = getHint(toolNode.getDefaultDescriptor());
     }
 
-    if (text != null) {
-      SearchUtil.appendFragments(getFilter(), text, style, foreground, background, component);
-    }
+    SearchUtil.appendFragments(getFilter(), node.getText(), style, foreground, background, component);
     if (hint != null) {
       component.append(" " + hint, selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
