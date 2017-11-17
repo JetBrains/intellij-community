@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -221,7 +207,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     catch (EvaluateException e) {
       myValueException = e;
       setFailed(e);
-      myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e);
+      myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e,
+                                                       isPrintExceptionToConsole() || ApplicationManager.getApplication().isUnitTestMode());
       myIsExpandable = false;
     }
     finally {
@@ -231,8 +218,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsNew = false;
   }
 
+  protected boolean isPrintExceptionToConsole() {
+    return true;
+  }
+
   @Nullable
-  private static ObjectReference getTargetExceptionWithStackTraceFilled(final EvaluationContextImpl evaluationContext, EvaluateException ex){
+  private static ObjectReference getTargetExceptionWithStackTraceFilled(EvaluationContextImpl evaluationContext,
+                                                                        EvaluateException ex,
+                                                                        boolean printToConsole) {
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
@@ -243,7 +236,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
           Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
 
           // print to console as well
-          if (trace instanceof ArrayReference) {
+          if (printToConsole && trace instanceof ArrayReference) {
             ArrayReference traceArray = (ArrayReference)trace;
             process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
             for (Value stackElement : traceArray.getValues()) {
