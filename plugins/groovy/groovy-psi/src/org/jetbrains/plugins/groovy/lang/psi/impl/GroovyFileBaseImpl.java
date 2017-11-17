@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -22,6 +8,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.reference.SoftReference;
@@ -45,6 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
 
 /**
  * @author ilyas
@@ -204,4 +196,19 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     super.deleteChildRange(first, last);
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final GroovyFileImports imports = getImports();
+    if (!processClassesInFile(this, processor, state)) return false;
+    if (!imports.processAllNamedImports(processor, state, place)) return false;
+    if (!processClassesInPackage(this, processor, state, place)) return false;
+    if (!imports.processAllStarImports(processor, state, place)) return false;
+    if (!imports.processDefaultImports(processor, state, place)) return false;
+    return true;
+  }
+
+  protected abstract GroovyFileImports getImports();
 }

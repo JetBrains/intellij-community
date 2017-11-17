@@ -49,9 +49,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProces
 
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
-
 /**
  * Implements all abstractions related to Groovy file
  *
@@ -187,12 +184,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
       if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
     }
 
-    final GroovyFileImports imports = getImports();
-    if (!processClassesInFile(this, processor, state)) return false;
-    if (!imports.processAllNamedImports(processor, state, place)) return false;
-    if (!processClassesInPackage(this, processor, state, place)) return false;
-    if (!imports.processAllStarImports(processor, state, place)) return false;
-    if (!imports.processDefaultImports(processor, state, place)) return false;
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
     if (ResolveUtil.shouldProcessProperties(classHint)) {
       if (!processChildrenScopes(processor, state, lastParent, place)) return false;
