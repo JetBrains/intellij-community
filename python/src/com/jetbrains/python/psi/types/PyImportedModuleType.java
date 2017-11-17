@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -9,20 +8,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.resolve.PointInImport;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.resolve.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author yole
@@ -43,20 +37,33 @@ public class PyImportedModuleType implements PyType {
     final PsiElement resolved = myImportedModule.resolve();
     if (resolved != null) {
       final PsiFile containingFile = location != null ? location.getContainingFile() : null;
-      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true,
-                                                                                           false));
+      PsiElement resolvedChild = ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true,
+                                                                false);
       final PyImportElement importElement = myImportedModule.getImportElement();
       final PyFile resolvedFile = PyUtil.as(resolved, PyFile.class);
       if (location != null && importElement != null && PyUtil.inSameFile(location, importElement) &&
           ResolveImportUtil.getPointInImport(location) == PointInImport.NONE && resolved instanceof PsiFileSystemItem &&
           (resolvedFile == null || !PyUtil.isPackage(resolvedFile) || resolvedFile.getElementNamed(name) == null)) {
-        final List<PsiElement> importedSubmodules = PyModuleType.collectImportedSubmodules((PsiFileSystemItem)resolved, location);
-        if (importedSubmodules != null) {
-          final Set<PsiElement> imported = Sets.newHashSet(importedSubmodules);
-          elements = ContainerUtil.filter(elements, element -> imported.contains(element));
+
+        ResolveResultList res = new ResolveResultList();
+        boolean isPackage =
+          PyModuleType.processImportedSubmodules((PsiFileSystemItem)resolved, location, (nameDefiner, importedSubmodule) -> {
+            if (importedSubmodule.equals(resolvedChild)) {
+              res.add(new ImportedResolveResult(resolvedChild, RatedResolveResult.RATE_NORMAL, nameDefiner));
+              return false;
+            }
+            return true;
+          });
+
+        if (isPackage) {
+          return res;
         }
       }
-      return ResolveImportUtil.rateResults(elements);
+      if (resolvedChild != null) {
+        ResolveResultList l = new ResolveResultList();
+        l.add(new ImportedResolveResult(resolvedChild, RatedResolveResult.RATE_NORMAL, importElement));
+        return l;
+      }
     }
     return null;
   }
