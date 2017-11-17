@@ -66,12 +66,18 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
 
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface ArgumentsSource {}");
+
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public @interface TestInstance {\n" +
+                        "enum Lifecycle {PER_CLASS, PER_METHOD;}\n" +
+                        "Lifecycle value();}");
   }
 
   public void testMalformedSources() { doTest(); }
   public void testMethodSource() { doTest(); }
   public void testMalformedSourcesImplicitConversion() { doTest(); }
   public void testMalformedSourcesImplicitParameters() { doTest(); }
+  public void testMalformedSourcesTestInstancePerClass() { doTest(); }
 
   @Override
   protected String getBasePath() {

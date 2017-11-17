@@ -28,6 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -154,14 +155,16 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
           for (reference in attributeValue.references) {
             if (reference is MethodSourceReference) {
+              val containingClass = method.containingClass
               val resolve = reference.resolve()
               if (resolve !is PsiMethod) {
-                val containingClass = method.containingClass
                 var createFix : CreateMethodQuickFix? = null
-                if (containingClass != null && holder.isOnTheFly)
+                if (containingClass != null && holder.isOnTheFly) {
+                  val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else "";
                   createFix = CreateMethodQuickFix.createFix(containingClass,
-                                                             "static Object[][] " + reference.value + "()",
+                                                             "private$staticModifier Object[][] " + reference.value + "()",
                                                              "return new Object[][] {};")
+                }
                 holder.registerProblem(attributeValue,
                                        "Cannot resolve target method source: \'" + reference.value + "\'",
                                        createFix)
@@ -170,7 +173,8 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 val sourceProvider : PsiMethod = resolve
                 val providerName = sourceProvider.name
 
-                if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC)) {
+                if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
+                    containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
                   holder.registerProblem(attributeValue, "Method source \'$providerName\' must be static",
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                          QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false))
@@ -248,12 +252,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG
         if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE
 
-        val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false)
+        val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, true)
         if (streamItemType != null) {
           return streamItemType
         }
 
-        return PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false)
+        return PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, true)
       }
     }
   }
