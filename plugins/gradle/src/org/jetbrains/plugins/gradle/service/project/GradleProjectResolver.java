@@ -151,6 +151,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                               settings.getServiceDirectory(),
                                                               DistributionType.LOCAL,
                                                               settings.isOfflineWork());
+        buildSrcProjectSettings.setIdeProjectPath(settings.getIdeProjectPath());
+        buildSrcProjectSettings.setJavaHome(settings.getJavaHome());
+        buildSrcProjectSettings.setResolveModulePerSourceSet(settings.isResolveModulePerSourceSet());
+        buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(settings.getRemoteProcessIdleTtlInMs());
+        buildSrcProjectSettings.setVerboseProcessing(settings.isVerboseProcessing());
+        buildSrcProjectSettings.setWrapperPropertyFile(settings.getWrapperPropertyFile());
         buildSrcProjectSettings.withArguments(settings.getArguments())
           .withEnvironmentVariables(settings.getEnv())
           .passParentEnvs(settings.isPassParentEnvs())
