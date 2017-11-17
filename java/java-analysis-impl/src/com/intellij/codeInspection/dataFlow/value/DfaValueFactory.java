@@ -23,7 +23,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
@@ -205,20 +204,6 @@ public class DfaValueFactory {
 
   public Collection<DfaValue> getValues() {
     return Collections.unmodifiableCollection(myValues);
-  }
-
-  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
-    if (qualifier == null) {
-      return true;
-    }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
-      if (thisQualifier == null) return true;
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      return innerMostClass == thisQualifier.resolve();
-    }
-    return false;
   }
 
   @NotNull

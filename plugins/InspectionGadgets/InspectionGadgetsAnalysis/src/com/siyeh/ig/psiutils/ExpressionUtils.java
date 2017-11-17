@@ -1128,4 +1128,18 @@ public class ExpressionUtils {
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
   }
+
+  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
+    PsiExpression qualifier = refExpression.getQualifierExpression();
+    if (qualifier == null) {
+      return true;
+    }
+    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
+      if (thisQualifier == null) return true;
+      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
+      return innerMostClass == thisQualifier.resolve();
+    }
+    return false;
+  }
 }
