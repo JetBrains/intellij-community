@@ -130,16 +130,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   fun hasState(key: String) = get(key) is Element
 
   fun hasStates(): Boolean {
-    if (isEmpty()) {
-      return false
-    }
-
-    for (i in names.indices) {
-      if (states.get(i) is Element) {
-        return true
-      }
-    }
-    return false
+    return !isEmpty() && names.indices.any { states.get(it) is Element }
   }
 
   fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
@@ -241,16 +232,5 @@ private fun arrayEquals(a: ByteArray, a2: ByteArray, size: Int = a.size): Boolea
   if (a === a2) {
     return true
   }
-
-  if (a2.size != size) {
-    return false
-  }
-
-  for (i in 0 until size) {
-    if (a[i] != a2[i]) {
-      return false
-    }
-  }
-
-  return true
+  return a2.size == size && (0 until size).none { a[it] != a2[it] }
 }
