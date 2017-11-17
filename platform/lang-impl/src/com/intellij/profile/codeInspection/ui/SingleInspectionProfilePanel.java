@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.profile.codeInspection.ui;
 
@@ -85,12 +71,9 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 
-import com.intellij.util.containers.Queue;
-
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
-  private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
@@ -760,13 +743,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   // TODO 134099: see IntentionDescriptionPanel#readHTML
-  public static boolean readHTML(JEditorPane browser, String text) {
+  public static void readHTML(JEditorPane browser, String text) {
     try {
       browser.read(new StringReader(text), null);
-      return true;
     }
-    catch (IOException ignored) {
-      return false;
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -795,9 +777,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription();
           try {
-            if (!readHTML(myBrowser, SearchUtil.markup(toHTML(myBrowser, description, false), myProfileFilter.getFilter()))) {
-              readHTML(myBrowser, toHTML(myBrowser, "<b>" + UNDER_CONSTRUCTION + "</b>", false));
-            }
+            readHTML(myBrowser, SearchUtil.markup(toHTML(myBrowser, description, false), myProfileFilter.getFilter()));
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
