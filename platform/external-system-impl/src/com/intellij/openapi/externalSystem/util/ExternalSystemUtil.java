@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.build.BuildContentDescriptor;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
@@ -36,7 +37,6 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -477,8 +477,12 @@ public class ExternalSystemUtil {
                     return null;
                   }
                   else {
-                    RunContentDescriptor contentDescriptor = new RunContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync");
-                    contentDescriptor.setActivateToolWindowWhenAdded(reportRefreshError);
+                    boolean activateToolWindow = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE ||
+                                                 project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
+                    BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
+                      consoleView, processHandler, consoleView.getComponent(), "Sync");
+                    contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
+                    contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
                     contentDescriptor.setAutoFocusContent(reportRefreshError);
                     return contentDescriptor;
                   }
