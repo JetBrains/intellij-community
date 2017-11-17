@@ -28,8 +28,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
@@ -88,7 +90,7 @@ class GitMergeOperation extends GitBranchOperation {
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByMerge =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
         GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
-        GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
+        GitSimpleEventDetector alreadyUpToDateDetector = GitVersionSpecialty.NEW_UP_TO_DATE.existsIn(GitVcs.getInstance(myProject).getVersion()) ? new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE_NEW) : new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
         GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(),
                                             localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,

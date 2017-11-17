@@ -190,6 +190,14 @@ public enum GitVersionSpecialty {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
       return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
     }
+  },
+
+  NEW_UP_TO_DATE {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      // in git 2.15 the Already up-to-date message was changed https://github.com/git/git/commit/7560f547e614244fe1d4648598d4facf7ed33a56
+      return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 15, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

@@ -36,6 +36,7 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
     MERGE_CONFLICT_ON_UNSTASH("conflict"),
     ALREADY_UP_TO_DATE("Already up-to-date"),
+    ALREADY_UP_TO_DATE_NEW("Already up to date"),
     INVALID_REFERENCE("invalid reference:");
 
     private final String myDetectionString;
