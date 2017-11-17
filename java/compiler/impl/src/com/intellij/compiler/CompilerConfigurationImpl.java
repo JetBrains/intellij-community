@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.compiler;
 
@@ -70,6 +56,8 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
+import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
@@ -160,7 +148,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
-
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
@@ -214,28 +201,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       state.addContent(annotationProcessingSettings);
     }
 
-    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+    List<String> moduleNames = getFilteredModuleNameList(myProject, myModuleBytecodeTarget, false);
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !moduleNames.isEmpty()) {
+      final Element bytecodeTarget = element(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
-      if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
-        for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
-          final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null ? value : "");
-        }
-      }
+      writeBytecodeTarget(moduleNames, myModuleBytecodeTarget, bytecodeTarget);
     }
     return state;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    readExternal(state);
   }
 
   @Override
@@ -355,7 +329,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       throw new MalformedPatternException(ex);
     }
   }
-  
+
   public JavacCompiler getJavacCompiler() {
     createCompilers();
     return JAVAC_EXTERNAL_BACKEND;
@@ -692,8 +666,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return true;
   }
 
-
-  public void readExternal(@NotNull Element parentNode)  {
+  @Override
+  public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
@@ -703,8 +677,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       if (myState.BUILD_PROCESS_HEAP_SIZE == DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
         final CompilerWorkspaceConfiguration workspace = CompilerWorkspaceConfiguration.getInstance(myProject);
-        // older version compatibility: as a fallback load this setting from workspace 
-        myState.BUILD_PROCESS_HEAP_SIZE = workspace.COMPILER_PROCESS_HEAP_SIZE; 
+        // older version compatibility: as a fallback load this setting from workspace
+        myState.BUILD_PROCESS_HEAP_SIZE = workspace.COMPILER_PROCESS_HEAP_SIZE;
       }
     }
 
@@ -775,20 +749,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     myBytecodeTargetLevel = null;
     myModuleBytecodeTarget.clear();
-    final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+
+    Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      for (Element elem : bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
-        final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
-        if (name == null) {
-          continue;
-        }
-        final String target = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-        if (target == null) {
-          continue;
-        }
-        myModuleBytecodeTarget.put(name, target);
-      }
+      readByteTargetLevel(parentNode);
+    }
+
+    Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();
+    if (externalState != null) {
+      myModuleBytecodeTarget.putAll(externalState);
     }
   }
 
@@ -889,7 +859,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   /**
-   * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler() 
+   * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler()
    * must be one of the registered compilers in compiler configuration.
    * Otherwise because of lazy compiler initialization, the value of default compiler will point to some other compiler instance
    */
