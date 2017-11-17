@@ -110,6 +110,12 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return dir.getParent().getFileName().toString();
   }
 
+  @Nullable
+  @Override
+  protected Element loadRootElement(@NotNull Path file) {
+    return super.loadRootElement(file);
+  }
+
   private void loadFromDirectory(@NotNull Path dir) {
     myProject.setName(getDirectoryBaseProjectName(dir));
     Path defaultConfigFile = dir.resolve("misc.xml");

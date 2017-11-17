@@ -573,9 +573,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (int id : myData.myChildrenIds) {
         existingNames.add(VfsData.getNameByFileId(id));
       }
-      FSRecords.NameId[] persistentIds = FSRecords.listAll(getId());
-      for (FSRecords.NameId nameId : persistentIds) {
-        existingNames.add(nameId.name);
+      int id = getId();
+      if (id >= 0) {
+        FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
+        for (FSRecords.NameId nameId : persistentIds) {
+          existingNames.add(nameId.name);
+        }
       }
 
       validateAgainst(childrenToCreate, existingNames);

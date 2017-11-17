@@ -275,7 +275,7 @@ public class ExternalSystemUtil {
 
     final ExternalProjectRefreshCallback callback;
     if (spec.getCallback() == null) {
-      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager, spec.getExternalSystemId());
+      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject(), projectDataManager);
     }
     else {
       callback = spec.getCallback();
@@ -390,9 +390,10 @@ public class ExternalSystemUtil {
     else {
       projectName = projectFile.getName();
     }
+    final ExternalSystemResolveProjectTask myTask =
+      new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
+
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
-      private final ExternalSystemResolveProjectTask myTask
-        = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
 
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
@@ -404,7 +405,7 @@ public class ExternalSystemUtil {
             @Override
             public void cancel() {
               super.cancel();
-              cancellImport();
+              cancelImport();
             }
           });
         }
@@ -430,7 +431,7 @@ public class ExternalSystemUtil {
         final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(myTask, projectName + " import") {
           @Override
           protected void destroyProcessImpl() {
-            cancellImport();
+            cancelImport();
             closeInput();
           }
         };
@@ -442,7 +443,6 @@ public class ExternalSystemUtil {
           consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
         if (consoleView != null) {
           Disposer.register(project, consoleView);
-          Disposer.register(consoleView, processHandler);
         } else {
           Disposer.register(project, processHandler);
         }
@@ -529,11 +529,15 @@ public class ExternalSystemUtil {
         final Throwable error = myTask.getError();
         if (error == null) {
           if (callback != null) {
-            DataNode<ProjectData> externalProject = myTask.getExternalProject();
-            if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
-              externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+            final ExternalProjectInfo externalProjectData = ProjectDataManagerImpl.getInstance()
+              .getExternalProjectData(project, externalSystemId, externalProjectPath);
+            if (externalProjectData != null) {
+              DataNode<ProjectData> externalProject = externalProjectData.getExternalProjectStructure();
+              if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+                externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+              }
+              callback.onSuccess(externalProject);
             }
-            callback.onSuccess(externalProject);
           }
           if (!isPreviewMode) {
             externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
@@ -556,7 +560,7 @@ public class ExternalSystemUtil {
         }
       }
 
-      public void cancellImport() {
+      private void cancelImport() {
         myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
       }
     };
@@ -1064,14 +1068,10 @@ public class ExternalSystemUtil {
     private final Set<String> myExternalModulePaths;
     private final Project myProject;
     private final ProjectDataManager myProjectDataManager;
-    private final ProjectSystemId myExternalSystemId;
 
-    public MyMultiExternalProjectRefreshCallback(Project project,
-                                                 ProjectDataManager projectDataManager,
-                                                 ProjectSystemId externalSystemId) {
+    public MyMultiExternalProjectRefreshCallback(Project project, ProjectDataManager projectDataManager) {
       myProject = project;
       myProjectDataManager = projectDataManager;
-      myExternalSystemId = externalSystemId;
       myExternalModulePaths = ContainerUtilRt.newHashSet();
     }
 

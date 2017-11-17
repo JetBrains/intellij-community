@@ -1,18 +1,17 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlBaseReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
@@ -45,8 +44,12 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
     @NotNull
     @Override
     public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-      // No customizations for PluginDescriptorXIncludeFileReferenceHelper to be used
-      return FileReferenceSet.createSet(element, false, false, false).getAllReferences();
+      return new FileReferenceSet(element) {
+        @Override
+        protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
+          return item -> DescriptorUtil.isPluginXml(item.getContainingFile());
+        }
+      }.getAllReferences();
     }
   }
 }

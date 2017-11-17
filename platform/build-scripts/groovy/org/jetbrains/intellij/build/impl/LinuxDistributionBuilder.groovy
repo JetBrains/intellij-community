@@ -222,10 +222,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      buildContext.ant.concat(destfile: "${unixDistPath}/bin/idea.properties", append: true) {
-        filelist(dir: "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap", files: "idea-snap.properties")
-      }
-
       buildContext.ant.delete(quiet: true) {
         fileset(dir: "${unixDistPath}/bin") {
           include(name: "fsnotifier")
