@@ -1087,7 +1087,11 @@ public class PlatformTestUtil {
     ourProjectCleanups.clear();
   }
 
-  public static void disposeApplicationAndStopNonDaemonThreads() {
+  /**
+   * Disposes the application (it also stops some application-related threads)
+   * and checks for project leaks.
+   */
+  public static void disposeApplicationAndCheckForProjectLeaks() {
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
         LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
