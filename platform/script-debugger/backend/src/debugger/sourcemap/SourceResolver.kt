@@ -35,7 +35,8 @@ inline fun SourceResolver(rawSources: List<String>, sourceContents: List<String?
 
 fun SourceResolver(rawSources: List<String>,
                    trimFileScheme: Boolean,
-                   baseUrl: Url?, sourceContents: List<String>?,
+                   baseUrl: Url?,
+                   sourceContents: List<String?>?,
                    baseUrlIsFile: Boolean = true): SourceResolver {
   return SourceResolver(rawSources, sourceContents) { canonicalizeUrl(it, baseUrl, trimFileScheme, baseUrlIsFile) }
 }
