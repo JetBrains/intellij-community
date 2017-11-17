@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -165,7 +166,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                                  @NotNull String name,
                                                                                  @NotNull List<PyImportElement> importElements) {
     final VirtualFile moduleFile = moduleOrPackage.getVirtualFile();
-    final PsiElement anchor = location != null ? location : moduleOrPackage;
+    final PsiElement anchor = location != null ? location.getContainingFile() : moduleOrPackage;
     if (moduleFile != null) {
       for (QualifiedName packageQName : QualifiedNameFinder.findImportableQNames(anchor, moduleOrPackage.getVirtualFile())) {
         final QualifiedName resolvingQName = packageQName.append(name);
@@ -174,7 +175,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
             if (qName.matchesPrefix(resolvingQName)) {
               final List<RatedResolveResult> submodules =
                 ResolveImportUtil
-                  .resolveChildren(moduleOrPackage, name, PyUtil.as(moduleOrPackage, PyFile.class), false, true, false, false);
+                  .resolveChildren(moduleOrPackage, name, PyUtil.as(anchor, PyFile.class), false, true, false, false);
               if (!submodules.isEmpty()) {
                 return ResolveResultList.asImportedResults(submodules, importElement);
               }
@@ -408,39 +409,32 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
-    final PsiElement parentAnchor;
-    if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
-      parentAnchor = ((PyFile)pyPackage).getContainingDirectory();
-    }
-    else if (pyPackage instanceof PsiDirectory && PyUtil.isPackage(((PsiDirectory)pyPackage), location)) {
-      parentAnchor = pyPackage;
-    }
-    else {
+  private static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
+
+    if (!PyUtil.isPackage(pyPackage, location)) {
       return null;
     }
-
     final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
     if (scopeOwner == null) {
       return Collections.emptyList();
     }
+
+    final List<QualifiedName> myQnames = QualifiedNameFinder.findImportableQNames(pyPackage, pyPackage.getVirtualFile());
     final List<PsiElement> result = new ArrayList<>();
-    nextImportElement:
+    final Set<String> seen = Sets.newHashSet();
     for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
-      PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
-      if (resolvedChild == null || !PsiTreeUtil.isAncestor(parentAnchor, resolvedChild, true)) {
-        continue;
-      }
-      QualifiedName importedQName = importElement.getImportedQName();
-      // Looking for strict child of parentAncestor
-      while (resolvedChild != null && resolvedChild.getParent() != parentAnchor) {
-        if (importedQName == null || importedQName.getComponentCount() <= 1) {
-          continue nextImportElement;
+      for (QualifiedName packageQName : myQnames) {
+        for (QualifiedName importedQname : getImportedQNames(importElement)) {
+          if (importedQname.matchesPrefix(packageQName) && importedQname.getComponentCount() > packageQName.getComponentCount()) {
+            final String directChild = importedQname.removeHead(packageQName.getComponentCount()).getFirstComponent();
+            if (directChild != null && seen.add(directChild)) {
+              final List<RatedResolveResult> results =
+                ResolveImportUtil.resolveChildren(pyPackage, directChild, location.getContainingFile(), true, true, false, false);
+              result.addAll(ResolveResultList.getElements(results));
+            }
+          }
         }
-        importedQName = importedQName.removeTail(1);
-        resolvedChild = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedQName));
       }
-      ContainerUtil.addIfNotNull(result, resolvedChild);
     }
     return result;
   }
