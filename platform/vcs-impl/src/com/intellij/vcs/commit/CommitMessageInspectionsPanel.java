@@ -190,9 +190,9 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     }
   }
 
-  private static class MyInspectionTreeNode extends InspectionConfigTreeNode {
+  private static class MyInspectionTreeNode extends InspectionConfigTreeNode.Tool {
     public MyInspectionTreeNode(@NotNull ToolDescriptors descriptors) {
-      setUserObject(descriptors);
+      super(() -> descriptors);
     }
 
     @NotNull

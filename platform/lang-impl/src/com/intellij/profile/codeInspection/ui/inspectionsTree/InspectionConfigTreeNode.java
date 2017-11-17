@@ -4,7 +4,7 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,17 +27,15 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   }
 
   public static class Tool extends InspectionConfigTreeNode {
-    @NotNull private final HighlightDisplayKey myKey;
-    @NotNull private final SingleInspectionProfilePanel myPanel;
+    private final Getter<ToolDescriptors> myGetter;
 
-    public Tool(@NotNull HighlightDisplayKey key, @NotNull SingleInspectionProfilePanel panel) {
-      myKey = key;
-      myPanel = panel;
+    public Tool(Getter<ToolDescriptors> getter) {
+      myGetter = getter;
     }
 
     @Override
     public Object getUserObject() {
-      return myPanel.getInitialToolDescriptors().get(myKey);
+      return myGetter.get();
     }
 
     @Override

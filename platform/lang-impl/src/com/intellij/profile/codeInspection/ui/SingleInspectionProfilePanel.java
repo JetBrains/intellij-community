@@ -725,7 +725,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
-      final InspectionConfigTreeNode node = new InspectionConfigTreeNode.Tool(toolDescriptors.getDefaultDescriptor().getKey(), this);
+      final InspectionConfigTreeNode node = new InspectionConfigTreeNode.Tool(() -> myInitialToolDescriptors.get(toolDescriptors.getDefaultDescriptor().getKey()));
       if (!emptyFilter && !myInspectionsFilter.matches(
         myProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project), node)) {
         continue;
