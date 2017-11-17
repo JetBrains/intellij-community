@@ -128,6 +128,13 @@ public class PathManager {
     return false;
   }
 
+  /**
+   * Check whether IDE is installed via snap packages (https://snapcraft.io/) or not
+   */
+  public static boolean isSnap() {
+    return SystemInfo.isLinux && getHomePath().startsWith("/snap/");
+  }
+
   private static String[] getBinDirectories(File root) {
     List<String> binDirs = ContainerUtil.newSmartList();
 
