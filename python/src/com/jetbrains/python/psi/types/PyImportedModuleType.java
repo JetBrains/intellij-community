@@ -81,21 +81,22 @@ public class PyImportedModuleType implements PyType {
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final List<LookupElement> result = new ArrayList<>();
-    final PsiElement resolved = myImportedModule.resolve();
-    if (resolved instanceof PyFile) {
-      final PyModuleType moduleType = new PyModuleType((PyFile)resolved, myImportedModule);
-      final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
+    for (PsiElement resolveResult : ResolveResultList.getElements(myImportedModule.multiResolve())) {
+      if (resolveResult instanceof PyFile) {
+        final PyModuleType moduleType = new PyModuleType((PyFile)resolveResult, myImportedModule);
+        final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
 
-      result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext));
-    }
-    else if (resolved instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)resolved;
-      if (PyUtil.isPackage(dir, location)) {
-        if (ResolveImportUtil.getPointInImport(location) != PointInImport.NONE) {
-          result.addAll(PyModuleType.getSubModuleVariants(dir, location, null));
-        }
-        else {
-          result.addAll(PyModuleType.collectImportedSubmodulesAsLookupElements(dir, location, context.get(CTX_NAMES)));
+        result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext));
+      }
+      else if (resolveResult instanceof PsiDirectory) {
+        final PsiDirectory dir = (PsiDirectory)resolveResult;
+        if (PyUtil.isPackage(dir, location)) {
+          if (ResolveImportUtil.getPointInImport(location) != PointInImport.NONE) {
+            result.addAll(PyModuleType.getSubModuleVariants(dir, location, null));
+          }
+          else {
+            result.addAll(PyModuleType.collectImportedSubmodulesAsLookupElements(dir, location, context.get(CTX_NAMES)));
+          }
         }
       }
     }

@@ -192,13 +192,26 @@ public class ResolveImportUtil {
     }
   }
 
+  @NotNull
+  public static List<PsiElement> multiResolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
+    if (foothold == null) return Collections.emptyList();
+    return PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
+                                                                              PyResolveImportUtil.fromFoothold(foothold));
+  }
+
+  /**
+   * @deprecated {@link use {@link #multiResolveModuleInRoots(QualifiedName, PsiElement)}}
+   */
+  @Deprecated
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    if (foothold == null) return null;
-    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
-                                                                              PyResolveImportUtil.fromFoothold(foothold));
-    return !results.isEmpty() ? results.get(0) : null;
+    final List<PsiElement> results = multiResolveModuleInRoots(moduleQualifiedName, foothold);
+    if (results.isEmpty()) {
+      return null;
+    }
+    return results.get(0);
   }
+
 
   @Nullable
   static PythonPathCache getPathCache(PsiElement foothold) {
