@@ -4,14 +4,20 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -33,18 +39,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
+  private final CachedValue<DeclarationHolder> myAnnotationsCache;
+  private final CachedValue<DeclarationHolder> myDeclarationsCache;
+
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(viewProvider.getManager().getProject());
+    myAnnotationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
+      buildCache(true), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+    ), false);
+    myDeclarationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
+      buildCache(false), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+    ), false);
   }
 
   public GroovyFileBaseImpl(IFileElementType root, IFileElementType root1, FileViewProvider provider) {
@@ -201,6 +218,36 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    return getAppropriateHolder(processor).processDeclarations(processor, state, place);
+  }
+
+  @NotNull
+  private DeclarationHolder getAppropriateHolder(@NotNull PsiScopeProcessor processor) {
+    if (isAnnotationResolve(processor)) {
+      return myAnnotationsCache.getValue();
+    }
+    else if (useCache()) {
+      return myDeclarationsCache.getValue();
+    }
+    else {
+      return this::processDeclarationsNoCache;
+    }
+  }
+
+  private boolean useCache() {
+    if (!isPhysical()) return false;
+    if (ApplicationManager.getApplication().isDispatchThread()) return false;
+    return getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE;
+  }
+
+  @NotNull
+  private DeclarationHolder buildCache(boolean annotationCache) {
+    FileCacheBuilderProcessor processor = new FileCacheBuilderProcessor(annotationCache);
+    processDeclarationsNoCache(processor, ResolveState.initial(), this);
+    return processor.buildCache();
+  }
+
+  private boolean processDeclarationsNoCache(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
     final GroovyFileImports imports = getImports();
     if (!processClassesInFile(this, processor, state)) return false;
     if (!imports.processAllNamedImports(processor, state, place)) return false;
