@@ -185,7 +185,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
           final PsiReference reference = packageReferenceExpression.getReference();
           if (reference != null) {
             final PsiElement element = reference.resolve();
-            if (element != null) {
+            if (element instanceof PsiDirectory &&
+                ModuleUtilCore.moduleContainsFile(module, ((PsiDirectory)element).getVirtualFile(), false)) {
+              return;
+            }
+            else if (element != null) {
               final PsiFile file = element.getContainingFile();
               if (file != null) {
                 final VirtualFile virtualFile = file.getVirtualFile();
