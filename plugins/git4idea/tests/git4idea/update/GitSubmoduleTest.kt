@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import git4idea.config.GitVersion
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSupport
@@ -30,6 +31,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
@@ -60,7 +62,7 @@ class GitSubmoduleTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    
+
     setUpRepositoryStructure()
     repositoryManager.updateAllRepositories()
   }
@@ -73,6 +75,8 @@ class GitSubmoduleTest : GitPlatformTest() {
   }
 
   fun `test submodules are updated before superprojects`() {
+    assumeTrue("Not testing: no --recurse-submodules flag in ${vcs.version}", vcs.version.isLaterOrEqual(GitVersion(1, 7, 4, 0)))
+
     val bro = prepareSecondClone()
     commitAndPushFromSecondClone(bro) // remote commit to overcome "nothing to do"
 
