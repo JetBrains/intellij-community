@@ -5,7 +5,21 @@ iml_module(
     srcs = ["src"],
     iml_files = ["remote-servers-git-java.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:execution-impl",
+    ],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/git4idea/remote-servers-git[module]",

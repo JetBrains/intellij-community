@@ -8,6 +8,7 @@ iml_module(
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
+    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -17,6 +18,14 @@ iml_module(
         "//tools/idea/plugins/groovy/groovy-psi",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:lvcs-impl",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
@@ -24,6 +33,7 @@ iml_module(
         "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/plugins/properties[module]",
+        "//tools/idea:execution-impl[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/.idea/libraries:Groovy",
@@ -35,7 +45,7 @@ iml_module(
         "//tools/idea/plugins/IntelliLang:IntelliLang-java[module]",
         "//tools/idea/plugins/IntelliLang:IntelliLang-xml[module, test]",
         "//tools/idea/jps/jps-builders[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:spellchecker[module]",
         "//tools/idea/plugins/junit[module, test]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
@@ -43,5 +53,7 @@ iml_module(
         "//tools/idea/plugins/properties/properties-psi-api[module]",
         "//tools/idea/plugins/groovy/groovy-psi[module]",
         "//tools/idea/platform/external-system-api[module]",
+        "//tools/idea:RegExpSupport[module]",
+        "//tools/idea:external-system-impl[module, test]",
     ],
 )

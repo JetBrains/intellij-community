@@ -10,6 +10,7 @@ iml_module(
     iml_files = ["jps-builders-6.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    runtime_deps = ["//tools/idea/jps/lib:optimizedFileManager"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/annotations[module]",
@@ -17,6 +18,5 @@ iml_module(
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:protobuf",
-        "//tools/idea/jps/lib:optimizedFileManager",
     ],
 )

@@ -5,13 +5,32 @@ iml_module(
     srcs = ["src"],
     iml_files = ["protocol-reader-runtime.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:testExtensions",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:xml",
+        "//tools/idea:spellchecker",
+        "//tools/idea:relaxng",
+        "//tools/idea:json",
+        "//tools/idea:images",
+        "//tools/idea:xdebugger-impl",
+    ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:gson"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/util[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:platform-impl[module]",
         "//tools/idea/.idea/libraries:Netty",
     ],
 )

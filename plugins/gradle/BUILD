@@ -7,11 +7,12 @@ iml_module(
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["resources"],
     tags = ["managed"],
+    test_runtime_deps = ["//tools/idea:testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/external-system-api",
-        "//tools/idea:compiler-impl_and_others",
+        "//tools/idea:external-system-impl",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
@@ -19,20 +20,30 @@ iml_module(
         "//tools/idea/plugins/gradle/lib:commons-lang-2.6",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea/plugins/maven:maven2-server-impl",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/external-system-api[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:external-system-impl[module]",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api[module]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
         "//tools/idea/plugins/gradle/jps-plugin:gradle-jps-plugin[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/plugins/groovy:jetgroovy[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:lang-impl[module]",
+        "//tools/idea:execution-impl[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
         "//tools/idea:java-impl[module]",
-        "//tools/idea/plugins/maven:maven_and_others[module]",
+        "//tools/idea/plugins/maven[module]",
         "//tools/idea/plugins/junit[module]",
         "//tools/idea/.idea/libraries:swingx",
         "//tools/idea/.idea/libraries:Slf4j",
@@ -68,6 +79,14 @@ iml_module(
     name = "gradle-tests",
     iml_files = ["gradle-tests.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:json",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea/plugins/maven:maven2-server-impl",
+    ],
     test_srcs = [
         "testData",
         "testSources",
@@ -78,8 +97,8 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:testFramework[module, test]",
+        "//tools/idea:compiler-impl_and_others[module, test]",
         "//tools/idea/plugins/gradle[module, test]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-tests[module, test]",
         "//tools/idea/plugins/maven/maven-server-api[module, test]",

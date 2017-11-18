@@ -7,13 +7,32 @@ iml_module(
     iml_files = ["terminal.iml"],
     resources = ["resources"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:testExtensions",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:xml",
+        "//tools/idea:spellchecker",
+        "//tools/idea:relaxng",
+        "//tools/idea:json",
+        "//tools/idea:images",
+        "//tools/idea:xdebugger-impl",
+    ],
     test_srcs = ["tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/lang-api[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:platform-impl[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:jna",
@@ -21,6 +40,7 @@ iml_module(
         "//tools/idea/platform/remote-servers/api:remote-servers-api[module]",
         "//tools/idea/platform/remote-servers/impl:remote-servers-impl[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea:testFramework[module, test]",
         "//tools/idea/.idea/libraries:jediterm-pty",
     ],
 )

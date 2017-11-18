@@ -1,48 +1,55 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "maven_and_others",
-    # do not sort: must match IML order
-    srcs = [
-        "src/main/java",
-        "maven2-server-impl/src",
-    ],
-    iml_files = [
-        "maven.iml",
-        "maven2-server-impl/maven2-server-impl.iml",
-    ],
+    name = "maven",
+    srcs = ["src/main/java"],
+    iml_files = ["maven.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["src/main/resources"],
     tags = ["managed"],
-    test_srcs = [
-        "src/test/java",
-        "maven2-server-impl/test",
-    ],
+    test_runtime_deps = ["//tools/idea:testExtensions"],
+    test_srcs = ["src/test/java"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
         "//tools/idea/plugins/maven/maven-server-api",
         "//tools/idea/java/openapi",
-        "//tools/idea:platform-impl_and_others",
+        "//tools/idea:xml",
+        "//tools/idea:dom-openapi",
+        "//tools/idea:dom-impl",
         "//tools/idea/java/compiler/openapi:compiler-openapi",
         "//tools/idea:compiler-impl_and_others",
         "//tools/idea/java/execution/openapi:execution-openapi",
+        "//tools/idea:execution-impl",
         "//tools/idea/platform/forms_rt",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/external-system-api",
+        "//tools/idea:external-system-impl",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/plugins/maven:maven2-server-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/maven/maven-server-api[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:platform-impl[module]",
         "//tools/idea:java-impl[module]",
+        "//tools/idea:xml[module]",
         "//tools/idea/plugins/IntelliLang:IntelliLang-xml[module]",
+        "//tools/idea:dom-openapi[module]",
+        "//tools/idea:dom-impl[module]",
         "//tools/idea/plugins/properties[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea:execution-impl[module]",
         "//tools/idea/platform/forms_rt[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/.idea/libraries:XmlBeans",
@@ -51,18 +58,43 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/plugins/groovy:jetgroovy[module]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea:lang-impl[module]",
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea/plugins/maven/jps-plugin:maven-jps-plugin[module]",
         "//tools/idea/plugins/maven/artifact-resolver-m2:maven-artifact-resolver-m2[module]",
         "//tools/idea/plugins/maven/artifact-resolver-m3:maven-artifact-resolver-m3[module]",
         "//tools/idea/plugins/maven/artifact-resolver-m31:maven-artifact-resolver-m31[module]",
+        "//tools/idea:spellchecker[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/plugins/properties/properties-psi-api[module]",
         "//tools/idea/plugins/maven/lib:plexus-archiver-2.4.4",
         "//tools/idea/platform/external-system-api[module]",
+        "//tools/idea:external-system-impl[module]",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/platform/util:util-tests[module, test]",
+    ],
+)
+
+iml_module(
+    name = "maven2-server-impl",
+    srcs = ["maven2-server-impl/src"],
+    iml_files = ["maven2-server-impl/maven2-server-impl.iml"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:json",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+    ],
+    test_srcs = ["maven2-server-impl/test"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/plugins/maven/maven-server-api[module]",
         "//tools/idea/platform/util[module]",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:plexus-utils-1.5.5",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:archetype-common-2.0-alpha-4-SNAPSHOT",
@@ -74,5 +106,6 @@ iml_module(
         "//tools/idea/plugins/maven/maven2-server-impl/lib:activation-1.1",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:commons-beanutils",
+        "//tools/idea/plugins/maven[module, test]",
     ],
 )

@@ -5,6 +5,14 @@ iml_module(
     srcs = ["src"],
     iml_files = ["maven30-server-impl.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/plugins/maven:maven2-server-impl",
+        "//tools/idea:testExtensions",
+        "//tools/idea:json",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -43,7 +51,7 @@ iml_module(
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-2.8-shaded",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-shared-2.8",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-provider-api-2.8",
-        "//tools/idea/plugins/maven:maven_and_others[module]",
+        "//tools/idea/plugins/maven[module, test]",
         "//tools/idea/plugins/maven/maven3-server-common[module]",
     ],
 )

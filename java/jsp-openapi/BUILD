@@ -5,8 +5,28 @@ iml_module(
     srcs = ["src"],
     iml_files = ["jsp-openapi.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:xml",
+        "//tools/idea:spellchecker",
+        "//tools/idea:images",
+    ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/java/jsp-base-openapi"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:lvcs-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",

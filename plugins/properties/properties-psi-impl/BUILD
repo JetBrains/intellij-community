@@ -5,8 +5,28 @@ iml_module(
     srcs = ["src"],
     iml_files = ["properties-psi-impl.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:xml",
+        "//tools/idea:spellchecker",
+        "//tools/idea:images",
+    ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/plugins/properties/properties-psi-api"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:dom-openapi",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/properties/properties-psi-api[module]",
@@ -14,9 +34,10 @@ iml_module(
         "//tools/idea/platform/editor-ui-api[module]",
         "//tools/idea/platform/analysis-api[module]",
         "//tools/idea/xml/xml-psi-api[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:xml-psi-impl[module]",
         "//tools/idea/platform/indexing-impl[module]",
         "//tools/idea/platform/structure-view-impl[module]",
         "//tools/idea/platform/analysis-impl[module]",
+        "//tools/idea:lang-impl[module]",
     ],
 )

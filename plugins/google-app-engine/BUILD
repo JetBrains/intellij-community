@@ -10,9 +10,18 @@ iml_module(
     iml_files = ["google-app-engine.iml"],
     resources = ["resources"],
     tags = ["managed"],
+    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["testSource"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea/plugins/maven:maven2-server-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
@@ -23,11 +32,12 @@ iml_module(
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
         "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:xml[module, test]",
         "//tools/idea/plugins/google-app-engine/runtime:appEngine-runtime[module]",
         "//tools/idea/plugins/google-app-engine/jps-plugin:google-app-engine-jps-plugin[module]",
+        "//tools/idea:dom-openapi[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/remote-servers/api:remote-servers-java-api[module]",
-        "//tools/idea/plugins/maven:maven_and_others[module]",
+        "//tools/idea/plugins/maven[module]",
     ],
 )

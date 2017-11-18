@@ -5,9 +5,24 @@ iml_module(
     srcs = ["src"],
     iml_files = ["manifest.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:external-system-impl",
+        "//tools/idea:execution-impl",
+    ],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:lvcs-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util[module]",
@@ -18,7 +33,7 @@ iml_module(
         "//tools/idea/platform/core-impl[module]",
         "//tools/idea/java/java-psi-api[module]",
         "//tools/idea:java-impl[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module, test]",
+        "//tools/idea:spellchecker[module]",
     ],
 )

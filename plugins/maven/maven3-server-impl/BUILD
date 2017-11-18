@@ -5,6 +5,14 @@ iml_module(
     srcs = ["src"],
     iml_files = ["maven3-server-impl.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/plugins/maven:maven2-server-impl",
+        "//tools/idea:testExtensions",
+        "//tools/idea:json",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -56,7 +64,7 @@ iml_module(
         "//tools/idea/plugins/maven/maven3-server-impl/lib/maven3/lib:wagon-provider-api-2.10",
         "//tools/idea/plugins/maven/maven3-server-common/lib:nexus-indexer-3.0.4",
         "//tools/idea/plugins/maven/maven3-server-common/lib:maven-dependency-tree-1.2",
-        "//tools/idea/plugins/maven:maven_and_others[module]",
+        "//tools/idea/plugins/maven[module, test]",
         "//tools/idea/plugins/maven/maven3-server-common/lib:archetype-common-2.2",
         "//tools/idea/plugins/maven/maven3-server-common/lib:archetype-catalog-2.2",
         "//tools/idea/plugins/maven/maven3-server-common/lib:nexus-indexer-artifact-1.0.1",

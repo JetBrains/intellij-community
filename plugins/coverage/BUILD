@@ -5,6 +5,11 @@ iml_module(
     srcs = ["src"],
     iml_files = ["coverage.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:external-system-impl",
+    ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -18,11 +23,19 @@ iml_module(
         "//tools/idea/plugins/coverage/lib:freemarker",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/coverage-common[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:execution-impl[module]",
         "//tools/idea/platform/testRunner[module]",
         "//tools/idea/plugins/coverage/lib:coverage-report-idea",
         "//tools/idea/plugins/coverage/lib:coverage-report",
@@ -33,7 +46,9 @@ iml_module(
         "//tools/idea/.idea/libraries:JaCoCo",
         "//tools/idea/plugins/coverage/coverage_rt[module]",
         "//tools/idea/java/java-psi-impl[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:lang-impl[module]",
         "//tools/idea:java-impl[module]",
+        "//tools/idea:testFramework[module, test]",
+        "//tools/idea:compiler-impl_and_others[module, test]",
     ],
 )

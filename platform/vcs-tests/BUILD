@@ -5,14 +5,37 @@ iml_module(
     srcs = ["src"],
     iml_files = ["vcs-tests.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:xml",
+        "//tools/idea:spellchecker",
+    ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:platform-resources",
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:dom-openapi",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+        "//tools/idea:images",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:testFramework[module]",
         "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea:vcs-impl[module]",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/.idea/libraries:JUnit4",

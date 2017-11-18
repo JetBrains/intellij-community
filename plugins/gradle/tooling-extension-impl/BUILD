@@ -5,6 +5,16 @@ iml_module(
     srcs = ["src"],
     iml_files = ["gradle-tooling-extension-impl.iml"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:testExtensions",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:json",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:external-system-impl",
+        "//tools/idea:execution-impl",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -39,13 +49,22 @@ iml_module(
     iml_files = ["gradle-tooling-extension-tests.iml"],
     tags = ["managed"],
     test_resources = ["testData"],
+    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea/plugins/maven:maven2-server-impl",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
         "//tools/idea/plugins/gradle[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module, test]",
     ],
 )

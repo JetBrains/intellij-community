@@ -10,9 +10,23 @@ iml_module(
     iml_files = ["eclipse.iml"],
     resources = ["resources"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:external-system-impl",
+        "//tools/idea:execution-impl",
+    ],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:lvcs-impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:JDOM",
@@ -25,6 +39,6 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/plugins/eclipse/jps-plugin:eclipse-jps-plugin[module]",
         "//tools/idea/plugins/eclipse/common-eclipse-util[module]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:testExtensions[module, test]",
     ],
 )
