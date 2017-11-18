@@ -70,7 +70,7 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
-    bundledJreManager = new BundledJreManager(this, communityHome)
+    bundledJreManager = new BundledJreManager(this, compilationContext.paths.communityHome)
 
     // Android Studio: buildNumber is either SNAPSHOT or the one passed from build_studio.sh. fullBuildNumber includes the branch.
     buildNumber = options.buildNumber ?: "SNAPSHOT"

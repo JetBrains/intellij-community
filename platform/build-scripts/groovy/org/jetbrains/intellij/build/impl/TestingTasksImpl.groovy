@@ -51,6 +51,7 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
+    pruneTestPlugins()
     setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
@@ -242,6 +243,7 @@ class TestingTasksImpl extends TestingTasks {
           pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("platform-build-scripts")))
         }
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
+        formatter(type: 'xml') // Android Studio: we also want XML output, besides console output.
       }
 
       classpath {
@@ -319,5 +321,17 @@ class TestingTasksImpl extends TestingTasks {
 
   private boolean isBootstrapSuiteDefault() {
     return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
+  }
+
+  @CompileDynamic
+  private void pruneTestPlugins() {
+    // Android Studio: this is to delete the module-specific plugin.xmls used by android tests. They are not necessary in this context,
+    // since their content is included by the main android plugin.xml
+    def files = context.ant.fileset(dir: "${context.paths.buildOutputRoot}", includes: "**/plugin.xml")
+      .findAll { it.getFile().readLines().collect { it.trim() }.contains("<!-- DELETE FOR ANT TESTS -->") }
+
+    context.ant.delete(failonerror: true) {
+      files.each { fileset(file: it) }
+    }
   }
 }

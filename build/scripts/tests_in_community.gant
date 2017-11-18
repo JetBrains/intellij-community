@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.jps.idea.IdeaProjectLoader
@@ -25,5 +27,17 @@ target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/tests"
   def context = CompilationContextImpl.create(home, home, outputDir)
-  TestingTasks.create(context).runTests([], "community-main", null)
+
+  // Android Studio: customize test options
+  TestingOptions options = new TestingOptions()
+  options.platformPrefix = "AndroidStudio"
+  options.mainModule = "community-main-tests"
+  options.testPatterns = "org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*"
+  options.jvmMemoryOptions = "-Xmx1024m -Dsun.io.useCanonCaches=false"
+  /*
+  options.debugPort = 5005
+  options.suspendDebugProcess = true
+  */
+
+  TestingTasks.create(context, options).runTests([], "community-main", null)
 }

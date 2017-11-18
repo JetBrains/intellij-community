@@ -117,7 +117,7 @@ class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
 
     JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(model.global, "1.8", jdkHome)

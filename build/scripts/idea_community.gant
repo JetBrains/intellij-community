@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.jetbrains.intellij.build.AndroidStudioBuilder
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
 import org.jetbrains.jps.idea.IdeaProjectLoader
@@ -20,13 +22,12 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
 String home = IdeaProjectLoader.guessHome(this)
 
 target(compile: "Compile project") {
-  new IdeaCommunityBuilder(home).compileModules()
+  new AndroidStudioBuilder(home).compileModules()
 }
 
 target('default': 'The default target') {
   def options = new BuildOptions()
-  options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
-  new IdeaCommunityBuilder(home, options).buildDistributions()
+  new AndroidStudioBuilder(home, options).buildDistributions()
 }
 
 target('build-intellij-core' : 'Build intellij-core.zip') {

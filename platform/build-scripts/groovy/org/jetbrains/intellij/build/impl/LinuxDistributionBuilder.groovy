@@ -71,6 +71,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         buildTarGz(null, osSpecificDistPath)
       }
       buildTarGz(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath)  // Android Studio: added by Change Idc07b110 / commit f20681e
+      /* Android Studio: no need to download JRE
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
         buildTarGz(jreDirectoryPath, osSpecificDistPath)
@@ -79,6 +80,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       else {
         buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
       }
+      */
     }
   }
 

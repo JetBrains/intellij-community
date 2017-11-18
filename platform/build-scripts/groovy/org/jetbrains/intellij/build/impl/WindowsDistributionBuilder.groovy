@@ -81,6 +81,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String winDistPath) {
+    /* Android Studio: no need to download JREs
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
@@ -92,13 +93,15 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         def jreDirectoryPath = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
         buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
           tarfileset(dir: "${jreDirectoryPath}/jre32") {
-            include(name: "**/**")
+            include(name: "**\/**")
           }
         }
         jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
       }
     }
+    */
 
+    // Android Studio: we build separate artifacts for win32 and win64.
     if (customizer.buildZipArchive) {
       buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x64),
                   buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)

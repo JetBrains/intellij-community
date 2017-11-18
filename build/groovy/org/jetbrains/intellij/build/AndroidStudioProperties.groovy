@@ -357,12 +357,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new MacDistributionCustomizer() {
       {
-        helpId = "AI"
+        // TODO: In order to re-enable this, override getPathToHelpZip to point to the zip file continaing the help bundle.
+        // helpId = "AI"
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.google.android.studio"
-        dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
         // For now we have all 3 platform icons checked in and we change
         // the icons manually. Fix this when the other platforms have the
         // same mechanisms for our .ico and .svg files

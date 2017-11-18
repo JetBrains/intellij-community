@@ -25,8 +25,14 @@ configurations {
 dependencies {
   kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
 }
-
+/* Android Studio: we do not download the Kotlin plugin from Maven
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
   from zipTree(configurations.kotlinPlugin.singleFile)
+  into "${project.buildDir}/kotlin"
+}
+*/
+
+task setupKotlinPlugin(type: Sync) {
+  from zipTree("${project.rootDir}/../../../../prebuilts/tools/common/kotlin-plugin-ij/kotlin-plugin-1.1.4-release-IJ2017.2-3.zip")
   into "${project.buildDir}/kotlin"
 }

@@ -99,7 +99,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
-      def macZipPath = buildMacZip(osSpecificDistPath)
       def macZipPath = buildMacZip(buildContext.bundledJreManager.findMacJdk(), osSpecificDistPath)  // Android Studio: modified by Change Idc07b110 / commit f20681e
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
         buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")

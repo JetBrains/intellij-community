@@ -314,7 +314,9 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
+      /* AndroidStudio: we don't need to download JREs, they are already available in prebuilts.
       buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
+      */
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()

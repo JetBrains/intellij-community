@@ -59,7 +59,6 @@
         <include name="commons-logging-*.jar"/>
         <include name="slf4j-api-*.jar"/>
         <include name="slf4j-log4j12-*.jar"/>
-        <include name="commons-compress-1.10.jar"/>
       </fileset>
     </path>
 

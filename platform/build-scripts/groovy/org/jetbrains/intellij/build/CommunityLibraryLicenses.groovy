@@ -49,7 +49,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
-    new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io-2.2.jar", version: "2.2", license: "Apache 2.0",
+    new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.2", license: "Apache 2.0",
                        url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
@@ -369,6 +369,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://trove4j.sourceforge.net/html/license.html"),
     new LibraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "http://velocity.apache.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "wadl-core", libraryName: "wadl-core.jar", license: "CDDL 1.1", url: "https://javaee.github.io/wadl/",
+                       licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html"),
     new LibraryLicense(name: "weberknecht", libraryName: "weberknecht-0.1.5.jar", version: "0.1.5", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/pelotoncycle/weberknecht"),
     new LibraryLicense(name: "winp", version: "1.23", license: "MIT", url: "http://java.net/projects/winp",

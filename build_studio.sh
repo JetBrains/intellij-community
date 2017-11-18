@@ -82,13 +82,16 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.release.plugin=true -Dbundle.kotlin.plugin=true
+$ANT "-Dout=$OUT" "-Dbuild.number=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.release.plugin=true -Dbundle.kotlin.plugin=true
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
-cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
-cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
-cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+cp -Rfv "$OUT"/studio/artifacts/android-studio* "$DIST"/
+
+# TODO: bring back custom patcher
+#cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+#cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+
 # Artifact built with gradle. The ant build does not pass OUT_DIR or DIST_DIR
 # down to gradle, so it is relative to prog_dir.
 cp -Rfv ../../out/dist/offline_repo.zip "$DIST"/offline_repo.zip
