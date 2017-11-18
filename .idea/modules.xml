@@ -336,6 +336,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework/uitest-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework/uitest-framework.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/update-server-mock/update-server-mock.iml" filepath="$PROJECT_DIR$/update-server-mock/update-server-mock.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/updater/updater.iml" filepath="$PROJECT_DIR$/updater/updater.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" group="android" />

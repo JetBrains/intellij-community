@@ -113,6 +113,8 @@ iml_project(
         "//tools/adt/idea/sdk-updates:sdk-updates-tests",
         "//tools/adt/idea/smali",
         "//tools/adt/idea/uitest-framework",
+        "//tools/adt/idea/uitest-framework-bazel",
+        "//tools/adt/idea/uitest-framework-gradle",
         "//tools/adt/idea/updater-ui",
         "//tools/adt/idea/wizard",
         "//tools/adt/idea/wizard-model",
