@@ -57,6 +57,8 @@ public interface RunDashboardManager {
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
 
+  void updateDashboard(boolean withSStructure);
+
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 
   boolean isShowConfigurations();
