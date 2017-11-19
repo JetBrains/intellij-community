@@ -138,7 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           waitForChangeListManagerUpdate()
 
           if (mergeCompleted) {
-            LOG.debug("All conflicts resolved, will show commit dialog.")
+            LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
