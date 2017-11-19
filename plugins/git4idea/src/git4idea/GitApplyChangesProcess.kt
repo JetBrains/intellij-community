@@ -251,6 +251,7 @@ class GitApplyChangesProcess(private val project: Project,
   private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList != null && actualList.changes.isEmpty()) {
+      LOG.debug("Changelist $actualList is empty, removing.")
       changeListManager.removeChangeList(actualList)
     }
   }
