@@ -169,7 +169,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("init $moduleName")
     val child = File(testRoot, moduleName)
     cd(child)
-    setupDefaultUsername(project)
+    setupDefaultUsername()
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
     git("remote add origin ${testRoot}/$parent")
@@ -185,7 +185,10 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun prepareSecondClone(): File {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    return File(testRoot, "bro")
+    val broDir = File(testRoot, "bro")
+    cd(broDir)
+    setupDefaultUsername()
+    return broDir
   }
 
   private fun commitAndPushFromSecondClone(bro: File) {

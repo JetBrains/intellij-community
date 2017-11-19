@@ -91,11 +91,12 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   else {
     git("clone -- . $destination")
   }
+  cd(destination)
+  setupDefaultUsername()
 }
 
-fun setupDefaultUsername(project: Project) {
-  setupUsername(project, USER_NAME, USER_EMAIL)
-}
+fun setupDefaultUsername(project: Project) = setupUsername(project, USER_NAME, USER_EMAIL)
+fun GitPlatformTest.setupDefaultUsername() = setupDefaultUsername(project)
 
 fun setupUsername(project: Project, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
