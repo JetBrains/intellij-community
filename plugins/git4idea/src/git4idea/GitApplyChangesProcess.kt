@@ -138,6 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           waitForChangeListManagerUpdate()
 
           if (mergeCompleted) {
+            LOG.debug("All conflicts resolved, will show commit dialog.")
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
@@ -198,10 +199,12 @@ class GitApplyChangesProcess(private val project: Project,
     }
     val changes = actualList.changes
     if (changes.isEmpty()) {
+      LOG.debug("No changes in the $actualList. All changes in the CLM: ${changeListManager.allChanges}")
       alreadyPicked.add(commit)
       return true
     }
 
+    LOG.debug("Showing commit dialog for changes: ${changes}")
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
       refreshVfsAndMarkDirty(changes)
