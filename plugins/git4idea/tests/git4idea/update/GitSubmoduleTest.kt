@@ -152,6 +152,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
+    cd(File(submoduleUrl.path))
+    setupDefaultUsername()
   }
 
   /**
