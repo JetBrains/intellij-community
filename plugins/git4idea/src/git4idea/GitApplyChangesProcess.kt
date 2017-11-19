@@ -199,7 +199,8 @@ class GitApplyChangesProcess(private val project: Project,
     }
     val changes = actualList.changes
     if (changes.isEmpty()) {
-      LOG.debug("No changes in the $actualList. All changes in the CLM: ${changeListManager.allChanges}")
+      val changesString = changeListManager.changeLists.map { it -> "[${it.name}] ${it.changes}" }
+      LOG.debug("No changes in the $actualList. All changes in the CLM: $changesString")
       alreadyPicked.add(commit)
       return true
     }
