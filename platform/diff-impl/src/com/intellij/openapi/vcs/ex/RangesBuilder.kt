@@ -63,9 +63,9 @@ fun compareLines(text1: CharSequence,
                  text2: CharSequence,
                  lineOffsets1: LineOffsets,
                  lineOffsets2: LineOffsets): FairDiffIterable {
-  return compareLines(Range(0, lineOffsets1.lineCount,
-                            0, lineOffsets2.lineCount),
-                      text1, text2, lineOffsets1, lineOffsets2)
+  val lines1 = DiffUtil.getLines(text1, lineOffsets1)
+  val lines2 = DiffUtil.getLines(text2, lineOffsets2)
+  return compareLines(lines1, lines2)
 }
 
 fun compareLines(lineRange: Range,
@@ -78,6 +78,27 @@ fun compareLines(lineRange: Range,
   return compareLines(lines1, lines2)
 }
 
+fun tryCompareLines(lineRange: Range,
+                    text1: CharSequence,
+                    text2: CharSequence,
+                    lineOffsets1: LineOffsets,
+                    lineOffsets2: LineOffsets): FairDiffIterable? {
+  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  return tryCompareLines(lines1, lines2)
+}
+
+fun fastCompareLines(lineRange: Range,
+                     text1: CharSequence,
+                     text2: CharSequence,
+                     lineOffsets1: LineOffsets,
+                     lineOffsets2: LineOffsets): FairDiffIterable {
+  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  return fastCompareLines(lines1, lines2)
+}
+
+
 fun createInnerRanges(lineRange: Range,
                       text1: CharSequence,
                       text2: CharSequence,
@@ -88,14 +109,31 @@ fun createInnerRanges(lineRange: Range,
   return createInnerRanges(lines1, lines2)
 }
 
+private fun compareLines(lines1: List<String>,
+                         lines2: List<String>): FairDiffIterable {
+  val iwIterable: FairDiffIterable = safeCompareLines(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
+  return processLines(lines1, lines2, iwIterable)
+}
+
+private fun tryCompareLines(lines1: List<String>,
+                            lines2: List<String>): FairDiffIterable? {
+  val iwIterable: FairDiffIterable = tryCompareLines(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES) ?: return null
+  return processLines(lines1, lines2, iwIterable)
+}
+
+private fun fastCompareLines(lines1: List<String>,
+                             lines2: List<String>): FairDiffIterable {
+  val iwIterable: FairDiffIterable = fastCompareLines(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
+  return processLines(lines1, lines2, iwIterable)
+}
+
 /**
  * Compare lines, preferring non-optimal but less confusing results for whitespace-only changed lines
  * Ex: "X\n\nY\nZ" vs " X\n Y\n\n Z" should be a single big change, rather than 2 changes separated by "matched" empty line.
  */
-private fun compareLines(lines1: List<String>,
-                         lines2: List<String>): FairDiffIterable {
-  val iwIterable: FairDiffIterable = compareLinesSafe(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
-
+private fun processLines(lines1: List<String>,
+                         lines2: List<String>,
+                         iwIterable: FairDiffIterable): FairDiffIterable {
   val builder = DiffIterableUtil.ExpandChangeBuilder(lines1, lines2)
   for (range in iwIterable.unchanged()) {
     val count = range.end1 - range.start1
@@ -108,12 +146,13 @@ private fun compareLines(lines1: List<String>,
     }
   }
 
-  return DiffIterableUtil.fair(builder.finish())
+  return fair(builder.finish())
 }
+
 
 private fun createInnerRanges(lines1: List<String>,
                               lines2: List<String>): List<LstInnerRange> {
-  val iwIterable: FairDiffIterable = compareLinesSafe(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
+  val iwIterable: FairDiffIterable = safeCompareLines(lines1, lines2, ComparisonPolicy.IGNORE_WHITESPACES)
 
   val result = ArrayList<LstInnerRange>()
   for (pair in DiffIterableUtil.iterateAll(iwIterable)) {
@@ -136,16 +175,24 @@ private fun getChangeType(range: Range, equals: Boolean): Byte {
 }
 
 
-private fun compareLinesSafe(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable {
+private fun safeCompareLines(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable {
+  return tryCompareLines(lines1, lines2, comparisonPolicy) ?: fastCompareLines(lines1, lines2, comparisonPolicy)
+}
+
+private fun tryCompareLines(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable? {
   try {
     return ByLine.compare(lines1, lines2, comparisonPolicy, DumbProgressIndicator.INSTANCE)
   }
   catch (e: DiffTooBigException) {
-    val range = expand(lines1, lines2, 0, 0, lines1.size, lines2.size,
-                       { line1, line2 -> ComparisonUtil.isEquals(line1, line2, comparisonPolicy) })
-    val ranges = if (range.isEmpty) emptyList() else listOf(range)
-    return fair(DiffIterableUtil.create(ranges, lines1.size, lines2.size))
+    return null
   }
+}
+
+private fun fastCompareLines(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable {
+  val range = expand(lines1, lines2, 0, 0, lines1.size, lines2.size,
+                     { line1, line2 -> ComparisonUtil.isEquals(line1, line2, comparisonPolicy) })
+  val ranges = if (range.isEmpty) emptyList() else listOf(range)
+  return fair(DiffIterableUtil.create(ranges, lines1.size, lines2.size))
 }
 
 

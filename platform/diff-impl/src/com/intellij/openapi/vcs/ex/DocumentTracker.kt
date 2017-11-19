@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
@@ -144,14 +145,15 @@ class DocumentTracker : Disposable {
 
 
   @CalledInAwt
-  private fun refreshDirty() {
+  private fun refreshDirty(fullRefresh: Boolean) {
     if (isDisposed || freezeHelper.isFrozen()) return
 
     LOCK.write {
       tracker.refreshDirty(document1.immutableCharSequence,
                            document2.immutableCharSequence,
                            document1.lineOffsets,
-                           document2.lineOffsets)
+                           document2.lineOffsets,
+                           fullRefresh)
     }
   }
 
@@ -170,7 +172,7 @@ class DocumentTracker : Disposable {
       shift += afterLength - beforeLength
     }
 
-    refreshDirty()
+    refreshDirty(true)
   }
 
 
@@ -216,7 +218,7 @@ class DocumentTracker : Disposable {
 
   private inner class MyApplicationListener : ApplicationAdapter() {
     override fun afterWriteActionFinished(action: Any) {
-      refreshDirty()
+      refreshDirty(false)
     }
   }
 
@@ -370,7 +372,7 @@ class DocumentTracker : Disposable {
   }
 
 
-  class Block(val range: Range, internal val isDirty: Boolean) {
+  class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) {
     var data: Any? = null
   }
 
@@ -395,7 +397,8 @@ private class LineTracker(private val multicaster: Listener) {
   fun refreshDirty(text1: CharSequence,
                    text2: CharSequence,
                    lineOffsets1: LineOffsets,
-                   lineOffsets2: LineOffsets) {
+                   lineOffsets2: LineOffsets,
+                   fullRefresh: Boolean) {
     if (!isDirty) return
 
     val removedBlocks = ArrayList<Block>()
@@ -405,7 +408,7 @@ private class LineTracker(private val multicaster: Listener) {
 
     for (block in blocks) {
       if (block.isDirty) {
-        val freshBlocks = refreshBlock(block, text1, text2, lineOffsets1, lineOffsets2)
+        val freshBlocks = refreshBlock(block, text1, text2, lineOffsets1, lineOffsets2, fullRefresh)
 
         removedBlocks.add(block)
         addedBlocks.addAll(freshBlocks)
@@ -451,12 +454,30 @@ private class LineTracker(private val multicaster: Listener) {
                            text1: CharSequence,
                            text2: CharSequence,
                            lineOffsets1: LineOffsets,
-                           lineOffsets2: LineOffsets): List<Block> {
+                           lineOffsets2: LineOffsets,
+                           fullRefresh: Boolean): List<Block> {
     if (block.range.isEmpty) return emptyList()
 
-    val iterable = compareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+    val iterable: FairDiffIterable
+    val isTooBig: Boolean
+    if (block.isTooBig && !fullRefresh) {
+      iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+      isTooBig = true
+    }
+    else {
+      val realIterable = tryCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+      if (realIterable != null) {
+        iterable = realIterable
+        isTooBig = false
+      }
+      else {
+        iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+        isTooBig = true
+      }
+    }
+
     return iterable.iterateChanges().map {
-      Block(shiftRange(it, block.range.start1, block.range.start2), false)
+      Block(shiftRange(it, block.range.start1, block.range.start2), false, isTooBig)
     }
   }
 
@@ -494,7 +515,7 @@ private class LineTracker(private val multicaster: Listener) {
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
     val oldBlocks = blocks
-    val newBlocks = ranges.map { Block(it, dirty) }
+    val newBlocks = ranges.map { Block(it, dirty, false) }
 
     multicaster.onRangesRemoved(oldBlocks)
     multicaster.onRangesAdded(newBlocks)
@@ -607,12 +628,13 @@ private class LineTracker(private val multicaster: Listener) {
         }
       }
 
+      val isTooBig = affectedBlocks.any { it.isTooBig }
       val range = createRange(side, rangeStart, rangeEnd, rangeStartOther, rangeEndOther)
-      return Block(range, true)
+      return Block(range, true, isTooBig)
     }
 
     private fun Block.shift(side: Side, delta: Int) = Block(
-      shiftRange(this.range, side, delta), this.isDirty)
+      shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
 
     private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
       return Range(side[start, otherStart], side[end, otherEnd],

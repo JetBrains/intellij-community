@@ -956,6 +956,11 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets) {
+    return getLines(text, lineOffsets, 0, lineOffsets.getLineCount());
+  }
+
+  @NotNull
   public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
     return getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
   }
