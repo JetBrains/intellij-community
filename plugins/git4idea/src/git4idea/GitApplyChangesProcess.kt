@@ -199,8 +199,7 @@ class GitApplyChangesProcess(private val project: Project,
     }
     val changes = actualList.changes
     if (changes.isEmpty()) {
-      val changesString = changeListManager.changeLists.map { it -> "[${it.name}] ${it.changes}" }
-      LOG.debug("No changes in the $actualList. All changes in the CLM: $changesString")
+      LOG.debug("No changes in the $actualList. All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       alreadyPicked.add(commit)
       return true
     }
@@ -219,6 +218,9 @@ class GitApplyChangesProcess(private val project: Project,
       return false
     }
   }
+
+  private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
+    changeListManagerEx.changeLists.map { it -> "[${it.name}] ${it.changes}" }
 
   private fun waitForChangeListManagerUpdate() {
     val waiter = CountDownLatch(1)
@@ -252,7 +254,8 @@ class GitApplyChangesProcess(private val project: Project,
   private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList != null && actualList.changes.isEmpty()) {
-      LOG.debug("Changelist $actualList is empty, removing.")
+      LOG.debug("Changelist $actualList is empty, removing. " +
+                "All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       changeListManager.removeChangeList(actualList)
     }
   }
