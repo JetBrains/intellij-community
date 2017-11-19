@@ -144,6 +144,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     mainRepo.git("submodule update --init --recursive") // this initializes the grandchild submodule
     grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
+    cd(grandchildRepo)
+    setupDefaultUsername()
     grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
   }
 
