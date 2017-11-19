@@ -32,6 +32,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.config.GitVersionSpecialty
 import git4idea.log.GitLogProvider
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
@@ -177,3 +178,5 @@ fun GitRepository.resolveConflicts() {
   this.git("add -u .")
 }
 
+fun getPrettyFormatTagForFullCommitMessage(project: Project) =
+  if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).version)) "%B" else "%s%n%n%-b"
