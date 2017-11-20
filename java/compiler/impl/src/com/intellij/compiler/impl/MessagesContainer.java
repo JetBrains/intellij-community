@@ -73,31 +73,32 @@ public class MessagesContainer {
       // javac uses hard-coded tab size 8 chars. So recalculate only if project's codestyle is different
       final VirtualFile file = m.getVirtualFile();
       if (file != null && file.isValid()) {
-        final Document doc = FileDocumentManager.getInstance().getDocument(file);
-        if (doc != null) {
-          final int tabCount = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
-            final CharSequence seq = doc.getCharsSequence();
-            int tcount = 0;
-            final int start = doc.getLineStartOffset(line);
-            final int end = doc.getLineEndOffset(line);
-            int charsExpanded = 0;
-            for (int i = start; i< end; i++) {
-              if (seq.charAt(i) == '\t') {
-                charsExpanded += JAVAC_TAB_SIZE;
-                tcount++;
-              }
-              else {
-                charsExpanded += 1;
-              }
-              if (charsExpanded >= col) {
-                break; // consider only those tabs that are located before the given column number
-              }
-            }
-            return tcount;
-          });
-          if (tabCount > 0) {
-            return Math.max(0, col + tabCount * (myTabSize - JAVAC_TAB_SIZE));
+        final int tabCount = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+          final Document doc = FileDocumentManager.getInstance().getDocument(file);
+          if (doc == null) {
+            return 0;
           }
+          int tcount = 0;
+          final CharSequence seq = doc.getCharsSequence();
+          final int start = doc.getLineStartOffset(line);
+          final int end = doc.getLineEndOffset(line);
+          int charsExpanded = 0;
+          for (int i = start; i< end; i++) {
+            if (seq.charAt(i) == '\t') {
+              charsExpanded += JAVAC_TAB_SIZE;
+              tcount++;
+            }
+            else {
+              charsExpanded += 1;
+            }
+            if (charsExpanded >= col) {
+              break; // consider only those tabs that are located before the given column number
+            }
+          }
+          return tcount;
+        });
+        if (tabCount > 0) {
+          return Math.max(0, col + tabCount * (myTabSize - JAVAC_TAB_SIZE));
         }
       }
     }
