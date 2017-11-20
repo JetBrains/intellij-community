@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaCoreBundle;
@@ -81,7 +67,8 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     @NotNull
     @Override
     public ResolveResult[] resolve(@NotNull PsiJavaModuleReference reference, boolean incompleteCode) {
-      PsiFile file = reference.getElement().getContainingFile();
+      PsiJavaModuleReferenceElement refElement = reference.getElement();
+      PsiFile file = refElement.getContainingFile();
       String moduleName = reference.getCanonicalText();
 
       if (file instanceof PsiJavaFile) {
@@ -91,7 +78,8 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
         }
       }
 
-      Collection<PsiJavaModule> modules = findModules(file, moduleName, incompleteCode);
+      boolean global = incompleteCode || refElement.getParent() instanceof PsiPackageAccessibilityStatement;
+      Collection<PsiJavaModule> modules = findModules(file, moduleName, global);
       if (!modules.isEmpty()) {
         ResolveResult[] result = new ResolveResult[modules.size()];
         int i = 0;
@@ -103,9 +91,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       }
     }
 
-    private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
+    private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean global) {
       Project project = file.getProject();
-      GlobalSearchScope scope = incompleteCode ? GlobalSearchScope.allScope(project) : file.getResolveScope();
+      GlobalSearchScope scope = global ? GlobalSearchScope.allScope(project) : file.getResolveScope();
       return JavaFileManager.getInstance(project).findModules(moduleName, scope);
     }
   }
