@@ -171,47 +171,21 @@ public class ModuleHighlightUtil {
   @NotNull
   static List<HighlightInfo> checkDuplicateStatements(@NotNull PsiJavaModule module) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
-
-    checkDuplicateRefs(
-      module.getRequires(),
-      st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText),
-      "module.duplicate.requires",
-      results);
-
-    checkDuplicateRefs(
-      module.getExports(),
-      st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
-      "module.duplicate.exports",
-      results);
-
-    checkDuplicateRefs(
-      module.getOpens(),
-      st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
-      "module.duplicate.opens",
-      results);
-
-    checkDuplicateRefs(
-      module.getUses(),
-      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::qName),
-      "module.duplicate.uses",
-      results);
-
-    checkDuplicateRefs(
-      module.getProvides(),
-      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::qName),
-      "module.duplicate.provides",
-      results);
-
+    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", results);
+    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", results);
+    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", results);
+    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", results);
+    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", results);
     return results;
   }
 
-  private static <T extends PsiElement> void checkDuplicateRefs(Iterable<T> statements,
-                                                                Function<T, Optional<String>> ref,
-                                                                @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
-                                                                List<HighlightInfo> results) {
+  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<T> statements,
+                                                                  Function<T, String> ref,
+                                                                  @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
+                                                                  List<HighlightInfo> results) {
     Set<String> filter = ContainerUtil.newTroveSet();
     for (T statement : statements) {
-      String refText = ref.apply(statement).orElse(null);
+      String refText = ref.apply(statement);
       if (refText != null && !filter.add(refText)) {
         String message = JavaErrorMessages.message(key, refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
@@ -226,20 +200,25 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Set<String> exports = JBIterable.from(module.getExports()).map(st -> refText(st.getPackageReference())).filter(Objects::nonNull).toSet();
-    Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
-
     Module host = findModuleForFile(file);
     if (host != null) {
-      for (PsiProvidesStatement statement : module.getProvides()) {
-        PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
-        if (ref != null) {
-          PsiElement target = ref.resolve();
-          if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
-            String className = qName(ref), packageName = StringUtil.getPackageName(className);
-            if (!exports.contains(packageName) && !uses.contains(className)) {
-              String message = JavaErrorMessages.message("module.service.unused");
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+      List<PsiProvidesStatement> provides = JBIterable.from(module.getProvides()).toList();
+      if (!provides.isEmpty()) {
+        Set<String> exports = JBIterable.from(module.getExports()).map(PsiPackageAccessibilityStatement::getPackageName).filter(Objects::nonNull).toSet();
+        Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
+        for (PsiProvidesStatement statement : provides) {
+          PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+          if (ref != null) {
+            PsiElement target = ref.resolve();
+            if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
+              String className = qName(ref), packageName = StringUtil.getPackageName(className);
+              if (!exports.contains(packageName) && !uses.contains(className)) {
+                String message = JavaErrorMessages.message("module.service.unused");
+                HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
+                QuickFixAction.registerQuickFixAction(info, new AddExportsDirectiveFix(module, packageName, ""));
+                QuickFixAction.registerQuickFixAction(info, new AddUsesDirectiveFix(module, className));
+                results.add(info);
+              }
             }
           }
         }
@@ -247,10 +226,6 @@ public class ModuleHighlightUtil {
     }
 
     return results;
-  }
-
-  private static String refText(PsiJavaCodeReferenceElement ref) {
-    return ref != null ? PsiNameHelper.getQualifiedClassName(ref.getText(), true) : null;
   }
 
   private static String qName(PsiJavaCodeReferenceElement ref) {
@@ -324,13 +299,13 @@ public class ModuleHighlightUtil {
       if (module != null) {
         PsiElement target = refElement.resolve();
         PsiDirectory[] directories = target instanceof PsiPackage ? ((PsiPackage)target).getDirectories(module.getModuleScope(false)) : null;
-        String packageName = refText(refElement);
+        String packageName = statement.getPackageName();
         HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
         if (directories == null || directories.length == 0) {
           String message = JavaErrorMessages.message("package.not.found", packageName);
           return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
         }
-        if (PsiUtil.isPackageEmpty(directories, packageName)) {
+        if (packageName != null && PsiUtil.isPackageEmpty(directories, packageName)) {
           String message = JavaErrorMessages.message("package.is.empty", packageName);
           return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
         }

@@ -31,6 +31,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.config.GitVersion;
 import git4idea.history.browser.SHAHash;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.
@@ -377,6 +379,9 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   public void testLoadingDetailsWithoutChanges() throws Exception {
+    assumeTrue("Not testing: Git doesn't know --allow-empty-message in " + vcs.getVersion(),
+               vcs.getVersion().isLaterOrEqual(new GitVersion(1, 7, 2, 0)));
+
     List<String> expected = ContainerUtil.newArrayList();
 
     String messageFile = "message.txt";

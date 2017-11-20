@@ -266,19 +266,16 @@ public class ClassPath {
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
-        boolean nameIsDirectory = name.endsWith("/");
-        Collection<Loader> loadersSet = nameIsDirectory ? new SmartList<Loader>() : new LinkedHashSet<Loader>();
+        Collection<Loader> loadersSet = new LinkedHashSet<Loader>();
         myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
 
-        if (!nameIsDirectory) {
+        if (name.endsWith("/")) {
+          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this);
+        } else {
           myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
         }
 
-        if (nameIsDirectory) {
-          loaders = (List<Loader>)loadersSet;
-        } else {
-          loaders = new ArrayList<Loader>(loadersSet);
-        }
+        loaders = new ArrayList<Loader>(loadersSet);
       }
 
       myLoaders = loaders;

@@ -474,16 +474,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
         }
-        String listeningAddress = connector.startListening(myArguments);
-        String port = StringUtil.substringAfter(listeningAddress, ":");
-        if (port != null) {
-          listeningAddress = port;
-        }
-        myConnection.setAddress(listeningAddress);
-
-        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
+          String listeningAddress = connector.startListening(myArguments);
+          String port = StringUtil.substringAfter(listeningAddress, ":");
+          if (port != null) {
+            listeningAddress = port;
+          }
+          myConnection.setAddress(listeningAddress);
+
+          myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+
           return connector.accept(myArguments);
+        }
+        catch (IllegalArgumentException e) {
+          throw new CantRunException(e.getLocalizedMessage());
         }
         finally {
           if(myArguments != null) {

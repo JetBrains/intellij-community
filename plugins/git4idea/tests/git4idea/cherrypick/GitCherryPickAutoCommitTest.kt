@@ -74,6 +74,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
+    `assert commit dialog was shown`()
     changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
   }
