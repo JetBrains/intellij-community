@@ -580,9 +580,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
           }
         }
       }
+      container.removeJarDirectory(url);
       return true;
     }
-    return container.removeJarDirectory(url);
+    return false;
   }
 
   private boolean isUnderRoots(@NotNull String url) {
