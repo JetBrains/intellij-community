@@ -408,7 +408,7 @@ public class JBUI {
   }
 
   private static float discreteScale(float scale) {
-    return (float)(Math.floor(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION);
+    return Math.round(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION;
   }
 
   /**
