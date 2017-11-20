@@ -5,17 +5,16 @@ class ArgumentFoldingWholeStatement {
     List<String> y;
 
     private void foo() {
-        newMethod();
+        newMethod(x);
     }
 
-    private void newMethod() {
+    private void newMethod(List<String> x) {
         x.add(str());
         baz();
     }
 
     private void bar() {
-        y.add(str());
-        baz();
+        newMethod(y);
     }
 
     private String str() { return null; }

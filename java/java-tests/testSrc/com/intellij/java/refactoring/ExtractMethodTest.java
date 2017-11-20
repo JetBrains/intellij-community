@@ -1181,6 +1181,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDecrementDifferentFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testArgumentFoldingWholeStatement() throws Exception {
     doDuplicatesTest();
   }
@@ -1190,6 +1194,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testArgumentFoldingWholeStatementForUpdateList() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testArgumentFoldingMethodCall() throws Exception {
     doDuplicatesTest();
   }
 

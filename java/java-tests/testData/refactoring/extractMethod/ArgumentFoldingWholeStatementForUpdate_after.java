@@ -6,19 +6,17 @@ class ArgumentFoldingWholeStatement {
 
     private void foo() {
 
-        newMethod();
+        newMethod(x);
     }
 
-    private void newMethod() {
+    private void newMethod(List<String> x) {
         for (int i = 0; ++i < 5; x.indexOf(str())) {
             baz();
         }
     }
 
     private void bar() {
-        for (int i = 0; ++i < 5; y.indexOf(str())) {
-            baz();
-        }
+        newMethod(y);
     }
 
     private String str() { return null; }
