@@ -42,6 +42,7 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
+  void testInstanceOfAssignmentDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
 
   void testCastTwice() {
