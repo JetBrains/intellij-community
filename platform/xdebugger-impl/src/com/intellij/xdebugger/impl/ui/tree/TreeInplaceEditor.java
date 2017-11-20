@@ -122,7 +122,16 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
       @Override
+      public void componentMoved(ComponentEvent e) {
+        resetBounds();
+      }
+
+      @Override
       public void componentResized(ComponentEvent e) {
+        resetBounds();
+      }
+
+      private void resetBounds() {
         final Project project = getProject();
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!isShown() || project == null || project.isDisposed()) {
@@ -132,6 +141,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
           JLayeredPane layeredPane1 = tree1.getRootPane().getLayeredPane();
           Rectangle bounds1 = getEditorBounds();
           if (bounds1 == null) {
+            doOKAction();
             return;
           }
           Point layeredPanePoint1 = SwingUtilities.convertPoint(tree1, bounds1.x, bounds1.y, layeredPane1);
@@ -192,7 +202,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
     SwingUtilities.invokeLater(() -> {
       if (!isShown()) return;
-      defaultToolkit.addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      defaultToolkit.addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK);
     });
 
     myRemoveActions.add(() -> defaultToolkit.removeAWTEventListener(this));
@@ -208,12 +218,12 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       return;
     }
     MouseEvent mouseEvent = (MouseEvent)event;
-    if (mouseEvent.getClickCount() == 0 && !(event instanceof MouseWheelEvent)) {
+    if (mouseEvent.getClickCount() == 0) {
       return;
     }
 
     final int id = mouseEvent.getID();
-    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED && id != MouseEvent.MOUSE_WHEEL) {
+    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED) {
       return;
     }
 
@@ -249,9 +259,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component componentAtPoint = SwingUtilities.getDeepestComponentAt(sourceComponent, originalPoint.x, originalPoint.y);
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
-        if (id != MouseEvent.MOUSE_WHEEL) {
-          doPopupOKAction();
-        }
+        doPopupOKAction();
         return;
       }
     }
@@ -267,6 +275,9 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     Rectangle bounds = tree.getVisibleRect();
     Rectangle nodeBounds = tree.getPathBounds(getNodePath());
     if (bounds == null || nodeBounds == null) {
+      return null;
+    }
+    if (bounds.y > nodeBounds.y || bounds.y + bounds.height < nodeBounds.y + nodeBounds.height) {
       return null;
     }
     bounds.y = nodeBounds.y;
