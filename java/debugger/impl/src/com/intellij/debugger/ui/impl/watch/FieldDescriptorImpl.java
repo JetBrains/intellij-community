@@ -14,10 +14,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -102,7 +102,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   private boolean populateExceptionStackTraceIfNeeded(Value value, EvaluationContextImpl evaluationContext) {
     if ("stackTrace".equals(getName()) &&
-        Registry.is("debugger.populate.exception.stack") &&
+        ViewsGeneralSettings.getInstance().POPULATE_THROWABLE_STACKTRACE &&
         value instanceof ArrayReference &&
         ((ArrayReference)value).length() == 0 &&
         DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
