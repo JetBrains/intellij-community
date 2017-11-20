@@ -54,6 +54,7 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testStreamDfa() { doTest() }
   void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
+  void testCastWhenMethodComesFromDfaSuperType() { doTest() }
 
   void testCastTwice() {
     configureByTestName()
