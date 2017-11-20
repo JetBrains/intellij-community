@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,5 +99,18 @@ public final class PyTypeUtil {
       .map(PyClassType::getPyClass)
       .map(dictClass -> new PyCollectionTypeImpl(dictClass, false, Arrays.asList(builtinCache.getStrType(), valueType)))
       .orElse(null);
+  }
+
+  /**
+   * Given a type creates a stream of all its members if it's a union type or of only the type itself otherwise.
+   * <p>
+   * It allows to process types received as the result of multiresolve uniformly with the others.
+   */
+  @NotNull
+  public static StreamEx<PyType> toStream(@Nullable PyType type) {
+    if (type instanceof PyUnionType) {
+      return StreamEx.of(((PyUnionType)type).getMembers());
+    }
+    return StreamEx.of(type);
   }
 }

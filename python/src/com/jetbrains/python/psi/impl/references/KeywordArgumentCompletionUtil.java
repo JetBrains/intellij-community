@@ -51,14 +51,7 @@ public class KeywordArgumentCompletionUtil {
             calleeType = context.getType(implicit);
           }
         }
-        final StreamEx<PyType> types;
-        if (calleeType instanceof PyUnionType) {
-          types = StreamEx.of(((PyUnionType)calleeType).getMembers());
-        }
-        else {
-          types = StreamEx.of(calleeType);
-        }
-        final List<LookupElement> extra = types
+        final List<LookupElement> extra = PyTypeUtil.toStream(calleeType)
           .select(PyCallableType.class)
           .flatMap(type -> collectParameterNamesFromType(type, callExpr, context).stream())
           .map(name -> PyUtil.createNamedParameterLookup(name, element.getProject()))
