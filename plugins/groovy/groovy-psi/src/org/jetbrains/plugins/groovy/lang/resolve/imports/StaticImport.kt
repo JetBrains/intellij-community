@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.NonFqnImport
+import org.jetbrains.plugins.groovy.lang.resolve.isAnnotationResolve
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMembers
@@ -38,6 +39,7 @@ data class StaticImport constructor(
   override val isAliased: Boolean = memberName != name
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
+    if (processor.isAnnotationResolve()) return true
     if (!processor.shouldProcessMembers()) return true
     val clazz = resolveImport(file) ?: return true
     val namesMapping = namesMapping()

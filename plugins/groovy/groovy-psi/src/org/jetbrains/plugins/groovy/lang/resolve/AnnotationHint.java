@@ -7,5 +7,11 @@ public interface AnnotationHint {
 
   Key<AnnotationHint> HINT_KEY = Key.create("groovy.annotation.resolve");
 
+  /**
+   * @return {@code true} if this processor expects only classes that may be annotations or
+   * {@code false} if this processor expects all other declarations except classes that may be annotations
+   * @see ResolveUtilKt#isAnnotationResolve
+   * @see ResolveUtilKt#isNonAnnotationResolve
+   */
   boolean isAnnotationResolve();
 }

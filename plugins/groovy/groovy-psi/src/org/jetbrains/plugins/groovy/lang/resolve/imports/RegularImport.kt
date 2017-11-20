@@ -9,11 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.resolve.checkName
-import org.jetbrains.plugins.groovy.lang.resolve.processClassesInFile
-import org.jetbrains.plugins.groovy.lang.resolve.processClassesInPackage
+import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessClasses
 
 /**
  * Represents regular import, possibly aliased.
@@ -41,6 +38,7 @@ data class RegularImport(val classFqn: String, override val name: String) : Groo
   }
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
+    if (processor.isNonAnnotationResolve()) return true
     if (!processor.shouldProcessClasses()) return true
     if (!processor.checkName(name, state)) return true
 

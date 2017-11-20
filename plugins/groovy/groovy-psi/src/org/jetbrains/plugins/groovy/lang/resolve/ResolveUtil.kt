@@ -95,7 +95,17 @@ fun GroovyFileBase.processClassesInPackage(processor: PsiScopeProcessor, state: 
   return aPackage.processDeclarations(PackageSkippingProcessor(processor), state, null, place)
 }
 
-fun PsiScopeProcessor.isAnnotationResolve(): Boolean = getHint(AnnotationHint.HINT_KEY)?.isAnnotationResolve ?: false
+val PsiScopeProcessor.annotationHint: AnnotationHint? get() = getHint(AnnotationHint.HINT_KEY)
+
+fun PsiScopeProcessor.isAnnotationResolve(): Boolean {
+  val hint = annotationHint ?: return false
+  return hint.isAnnotationResolve
+}
+
+fun PsiScopeProcessor.isNonAnnotationResolve(): Boolean {
+  val hint = annotationHint ?: return false
+  return !hint.isAnnotationResolve
+}
 
 fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
   val (possibleAnnotation, _) = skipSameTypeParents()

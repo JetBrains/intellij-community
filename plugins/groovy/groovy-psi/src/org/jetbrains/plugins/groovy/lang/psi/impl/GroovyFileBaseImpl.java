@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
@@ -52,6 +53,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   private final CachedValue<DeclarationHolder> myAnnotationsCache;
   private final CachedValue<DeclarationHolder> myDeclarationsCache;
+  private final DeclarationHolder myAllCachedDeclarations;
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -62,6 +64,9 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myDeclarationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
       buildCache(false), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
     ), false);
+    myAllCachedDeclarations = (processor, state, place) ->
+      myAnnotationsCache.getValue().processDeclarations(processor, state, place) &&
+      myDeclarationsCache.getValue().processDeclarations(processor, state, place);
   }
 
   public GroovyFileBaseImpl(IFileElementType root, IFileElementType root1, FileViewProvider provider) {
@@ -223,14 +228,20 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   @NotNull
   private DeclarationHolder getAppropriateHolder(@NotNull PsiScopeProcessor processor) {
-    if (isAnnotationResolve(processor)) {
+    AnnotationHint hint = getAnnotationHint(processor);
+    if (hint == null) {
+      if (useCache()) {
+        return myAllCachedDeclarations;
+      }
+      else {
+        return this::processDeclarationsNoCache;
+      }
+    }
+    else if (hint.isAnnotationResolve()) {
       return myAnnotationsCache.getValue();
     }
-    else if (useCache()) {
-      return myDeclarationsCache.getValue();
-    }
     else {
-      return this::processDeclarationsNoCache;
+      return myDeclarationsCache.getValue();
     }
   }
 
