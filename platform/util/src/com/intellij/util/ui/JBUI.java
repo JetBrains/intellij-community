@@ -390,17 +390,7 @@ public class JBUI {
   }
 
   private static float discreteScale(float scale) {
-    int intPart = (int)Math.floor(scale);
-    float fractPart = scale - intPart;
-
-    if (fractPart == 0) return scale;
-
-    for (float f = 0; f < 1; f += DISCRETE_SCALE_RESOLUTION) {
-      if (fractPart < (f + DISCRETE_SCALE_RESOLUTION)) {
-        return intPart + f;
-      }
-    }
-    return intPart; // unreachable
+    return Math.round(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION;
   }
 
   /**
