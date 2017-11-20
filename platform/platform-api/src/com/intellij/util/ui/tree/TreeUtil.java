@@ -30,6 +30,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,17 @@ public final class TreeUtil {
   public static JBIterable<Object> nodeChildren(@Nullable Object node, @NotNull TreeModel model) {
     int count = model.getChildCount(node);
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> model.getChild(node, index));
+  }
+
+  @NotNull
+  public static JBTreeTraverser<TreeNode> treeNodeTraverser(@Nullable TreeNode treeNode) {
+    return JBTreeTraverser.<TreeNode>from(node -> nodeChildren(node)).withRoot(treeNode);
+  }
+  
+  @NotNull
+  public static JBIterable<TreeNode> nodeChildren(@Nullable TreeNode treeNode) {
+    int count = treeNode == null ? 0 : treeNode.getChildCount();
+    return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
   }
 
   @NotNull
@@ -331,24 +343,16 @@ public final class TreeUtil {
     }
   }
 
-  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
-    final int childCount = node.getChildCount();
-    for (int i = 0; i < childCount; i++){
-      if (!traverse(node.getChildAt(i), traverse)) return false;
-    }
-    return traverse.accept(node);
+    return treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS).processEach(traverse::accept);
   }
 
-  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
-  public static boolean traverseDepth(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
-    if (!traverse.accept(node)) return false;
-    final int childCount = node.getChildCount();
-    for (int i = 0; i < childCount; i++)
-      if (!traverseDepth(node.getChildAt(i), traverse)) return false;
-    return true;
+  public static boolean traverseDepth(@NotNull TreeNode node, @NotNull Traverse traverse) {
+    return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
