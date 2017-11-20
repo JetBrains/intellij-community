@@ -61,8 +61,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -644,12 +642,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         .createActionToolbar("BuildResults", new DefaultActionGroup(consoleActions), false);
       myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
       myPanel.setVisible(false);
-      tree.addTreeSelectionListener(new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          TreePath path = tree.getSelectionPath();
-          setNode(path != null ? (DefaultMutableTreeNode)path.getLastPathComponent() : null);
+      tree.addTreeSelectionListener(e -> {
+        TreePath path = e.getPath();
+        if (path == null || !e.isAddedPath()) {
+          return;
         }
+        TreePath selectionPath = tree.getSelectionPath();
+        setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
       });
 
       Disposer.register(threeComponentsSplitter, myConsole);
