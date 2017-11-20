@@ -53,6 +53,13 @@ public final class TreeUtil {
   private TreeUtil() {}
 
   @NotNull
+  public static JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {
+    TreeModel model = tree.getModel();
+    Object root = model.getRoot();
+    return JBTreeTraverser.from(node -> nodeChildren(node, model)).withRoot(root);
+  }
+
+  @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
@@ -324,7 +331,7 @@ public final class TreeUtil {
     }
   }
 
-  /** @deprecated use TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treePathTraverser() */
   @Deprecated
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
     final int childCount = node.getChildCount();
@@ -334,7 +341,7 @@ public final class TreeUtil {
     return traverse.accept(node);
   }
 
-  /** @deprecated use TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treePathTraverser() */
   @Deprecated
   public static boolean traverseDepth(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
     if (!traverse.accept(node)) return false;
