@@ -30,12 +30,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class DataFlowRunner {
@@ -372,9 +374,23 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  @NotNull
-  MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
-    return new MultiMap<>(myNestedClosures);
+  public void forNestedClosures(BiConsumer<PsiElement, Collection<? extends DfaMemoryState>> consumer) {
+    for (PsiElement closure : myNestedClosures.keySet()) {
+      List<DfaVariableValue> unusedVars = StreamEx.of(getFactory().getValues())
+        .select(DfaVariableValue.class)
+        .filter(var -> var.getQualifier() == null)
+        .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
+                       !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
+        .toList();
+      Collection<? extends DfaMemoryState> states = myNestedClosures.get(closure);
+      if (!unusedVars.isEmpty()) {
+        List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
+          .peek(state -> unusedVars.forEach(state::flushVariable))
+          .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
+        states = StateQueue.mergeGroup(stateList);
+      }
+      consumer.accept(closure, states);
+    }
   }
 
   @NotNull
