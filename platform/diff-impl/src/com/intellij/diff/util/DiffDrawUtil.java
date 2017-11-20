@@ -323,18 +323,22 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type) {
     if (line == 0) return Collections.emptyList();
-    return createLineMarker(editor, line - 1, type, SeparatorPlacement.BOTTOM, false, false, true);
+    return new LineMarkerBuilder(editor, line - 1, SeparatorPlacement.BOTTOM)
+      .withType(type)
+      .withDefaultRenderer(false)
+      .withDefaultGutterRenderer(false)
+      .done();
   }
 
   @NotNull
   private static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                          @NotNull final SeparatorPlacement placement,
-                                                         boolean doubleLine, boolean resolved, boolean paintFoldingOutline) {
-    LineMarkerBuilder builder = new LineMarkerBuilder(editor, line, placement)
-      .withType(type).withResolved(resolved)
-      .withDefaultRenderer(doubleLine);
-    if (paintFoldingOutline) builder.withDefaultGutterRenderer(doubleLine);
-    return builder.done();
+                                                         boolean doubleLine, boolean resolved) {
+    return new LineMarkerBuilder(editor, line, placement)
+      .withType(type)
+      .withResolved(resolved)
+      .withDefaultRenderer(doubleLine)
+      .done();
   }
 
   @NotNull
@@ -417,15 +421,15 @@ public class DiffDrawUtil {
 
       if (isEmptyRange) {
         if (isFirstLine) {
-          highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved, false));
+          highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved));
         }
         else {
-          highlighters.addAll(createLineMarker(editor, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved, false));
+          highlighters.addAll(createLineMarker(editor, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
         }
       }
       else if (resolved) {
-        highlighters.addAll(createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved, false));
-        highlighters.addAll(createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved, false));
+        highlighters.addAll(createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
+        highlighters.addAll(createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
       }
 
       if (stripeAttributes != null) {
