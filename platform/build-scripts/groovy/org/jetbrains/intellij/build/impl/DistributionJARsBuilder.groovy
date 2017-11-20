@@ -406,7 +406,7 @@ class DistributionJARsBuilder {
           }
         }
         layout.includedProjectLibraries.each {
-          projectLibrary(it)
+          projectLibrary(it, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
         }
         layout.includedArtifacts.entrySet().each {
           def artifactName = it.key
