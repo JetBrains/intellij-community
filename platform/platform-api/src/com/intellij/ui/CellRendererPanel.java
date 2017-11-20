@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
@@ -100,6 +98,10 @@ public class CellRendererPanel extends JPanel {
     return getComponent(0).getPreferredSize();
   }
 
+  protected Dimension super_getPreferredSize() {
+    return super.getPreferredSize();
+  }
+
   @Override
   public void reshape(int x, int y, int w, int h) {
     // suppress per-cell "moved" and "resized" events on paint
@@ -126,6 +128,10 @@ public class CellRendererPanel extends JPanel {
     doLayout();
   }
 
+  protected void super_validate() {
+    super.validate();
+  }
+
   public void revalidate() {
   }
 
@@ -139,4 +145,18 @@ public class CellRendererPanel extends JPanel {
   }
 
 // END no validation methods --------------
+
+  public static class SuperPreferredSize extends CellRendererPanel {
+    @Override
+    public Dimension getPreferredSize() {
+      return super_getPreferredSize();
+    }
+  }
+
+  public static class SuperValidate extends SuperPreferredSize {
+    @Override
+    public void validate() {
+      super_validate();
+    }
+  }
 }

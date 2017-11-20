@@ -91,10 +91,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     if (!super.equals(o)) return false;
 
     ExpressionTypeMemoryState that = (ExpressionTypeMemoryState)o;
-
-    if (!myStates.equals(that.myStates)) return false;
-
-    return true;
+    return myStates.equals(that.myStates);
   }
 
   @Override

@@ -521,7 +521,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   /**
    * Initializes {@link #myResult} property with {@link Spacing} which {@code 'min line feeds'} property is defined
-   * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
+   * from {@link CommonCodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
    */
   private void setAroundClassSpacing() {
     myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, mySettings.BLANK_LINES_AROUND_CLASS + 1,

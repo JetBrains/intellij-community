@@ -343,7 +343,7 @@ class CommunityLibraryLicenses {
                        license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.12", license: "link (commercial license)",
                        url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
-    new LibraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/",
+    new LibraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2-2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
                        licenseUrl: "https://github.com/cbeust/testng/blob/master/LICENSE.txt"),

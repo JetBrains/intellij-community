@@ -17,10 +17,7 @@ package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -420,6 +417,21 @@ public class GuessManagerImpl extends GuessManager {
     public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       ((ExpressionTypeMemoryState) memState).setExpressionType(instruction.getCasted(), instruction.getCastTo());
       return super.visitTypeCast(instruction, runner, memState);
+    }
+
+    @Override
+    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      PsiExpression left = instruction.getLExpression();
+      PsiExpression right = instruction.getRExpression();
+      if (left != null && right != null) {
+        MultiMap<PsiExpression, PsiType> states = ((ExpressionTypeMemoryState)memState).getStates();
+        states.remove(left);
+        PsiType rightType = right.getType();
+        if (rightType != null) {
+          ((ExpressionTypeMemoryState) memState).setExpressionType(left, runner.getFactory().createDfaType(rightType).getPsiType());
+        }
+      }
+      return super.visitAssign(instruction, runner, memState);
     }
 
     @Override

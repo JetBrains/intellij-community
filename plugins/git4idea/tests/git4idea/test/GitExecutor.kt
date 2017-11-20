@@ -122,7 +122,7 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
-private fun lastMessage(project: Project) = git(project, "log -1 --pretty=%B")
+private fun lastMessage(project: Project) = git(project, "log -1 --pretty=${getPrettyFormatTagForFullCommitMessage(project)}")
 
 fun GitRepository.log(vararg params: String) = cd { log(project, *params) }
 fun GitPlatformTest.log(vararg params: String) = log(project, *params)

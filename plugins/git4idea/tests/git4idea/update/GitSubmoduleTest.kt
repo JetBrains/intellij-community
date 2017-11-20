@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import git4idea.config.GitVersion
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSupport
@@ -30,6 +31,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
@@ -60,7 +62,7 @@ class GitSubmoduleTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    
+
     setUpRepositoryStructure()
     repositoryManager.updateAllRepositories()
   }
@@ -73,6 +75,8 @@ class GitSubmoduleTest : GitPlatformTest() {
   }
 
   fun `test submodules are updated before superprojects`() {
+    assumeTrue("Not testing: no --recurse-submodules flag in ${vcs.version}", vcs.version.isLaterOrEqual(GitVersion(1, 7, 4, 0)))
+
     val bro = prepareSecondClone()
     commitAndPushFromSecondClone(bro) // remote commit to overcome "nothing to do"
 
@@ -140,6 +144,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     mainRepo.git("submodule update --init --recursive") // this initializes the grandchild submodule
     grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
+    cd(grandchildRepo)
+    setupDefaultUsername()
     grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
   }
 
@@ -148,6 +154,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
+    cd(File(submoduleUrl.path))
+    setupDefaultUsername()
   }
 
   /**
@@ -165,7 +173,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("init $moduleName")
     val child = File(testRoot, moduleName)
     cd(child)
-    setupDefaultUsername(project)
+    setupDefaultUsername()
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
     git("remote add origin ${testRoot}/$parent")
@@ -181,7 +189,10 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun prepareSecondClone(): File {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    return File(testRoot, "bro")
+    val broDir = File(testRoot, "bro")
+    cd(broDir)
+    setupDefaultUsername()
+    return broDir
   }
 
   private fun commitAndPushFromSecondClone(bro: File) {

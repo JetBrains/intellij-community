@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -102,15 +87,14 @@ public class VisibleTreeState{
   }
 
   private static State getState(InspectionConfigTreeNode node) {
-    Descriptor descriptor = node.getDefaultDescriptor();
     final State expandedNode;
-    if (descriptor != null) {
-      expandedNode = new State(descriptor);
+    if (node instanceof InspectionConfigTreeNode.Tool) {
+      expandedNode = new State(((InspectionConfigTreeNode.Tool)node).getKey().toString());
     }
     else {
       final StringBuilder buf = new StringBuilder();
       while (node.getParent() != null) {
-        buf.append(node.getGroupName());
+        buf.append(((InspectionConfigTreeNode.Group)node).getGroupName());
         node = (InspectionConfigTreeNode)node.getParent();
       }
       expandedNode = new State(buf.toString());
@@ -129,18 +113,12 @@ public class VisibleTreeState{
   }
 
 
-  public static class State implements Comparable{
+  public static class State implements Comparable<State> {
     @Tag("id")
     public String myKey;
-    Descriptor myDescriptor;
 
     public State(String key) {
       myKey = key;
-    }
-
-    public State(Descriptor descriptor) {
-      myKey = descriptor.toString();
-      myDescriptor = descriptor;
     }
 
     //readExternal
@@ -161,23 +139,12 @@ public class VisibleTreeState{
 
     @Override
     public int hashCode() {
-      int result = myKey != null ? myKey.hashCode() : 0;
-      result = 31 * result + (myDescriptor != null ? myDescriptor.hashCode() : 0);
-      return result;
+      return myKey != null ? myKey.hashCode() : 0;
     }
 
     @Override
-    public int compareTo(Object o) {
-      if (!(o instanceof State)) return -1;
-      final State other = (State)o;
-      if (myKey.equals(other.myKey)) {
-        if (myDescriptor != null && other.myDescriptor != null) {
-          final String scope1 = myDescriptor.getScopeName();
-          final String scope2 = other.myDescriptor.getScopeName();
-          return scope1.compareTo(scope2);
-        }
-      }
-      return myKey.compareTo(other.myKey);
+    public int compareTo(State state) {
+      return myKey.compareTo(state.myKey);
     }
   }
 }
