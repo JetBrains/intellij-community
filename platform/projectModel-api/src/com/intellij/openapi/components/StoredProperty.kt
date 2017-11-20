@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import kotlin.reflect.KProperty
+
+private val LOG = logger<BaseState>()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   private val properties: MutableList<StoredProperty> = SmartList()
@@ -78,7 +67,10 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
         return property.value != property.defaultValue
       }
     }
-    return false
+    LOG.warn("Cannot find property by name: ${accessor.name}")
+    // do not return false - maybe accessor delegates actual set to our property
+    // default value in this case will be filtered by common filter (instance will be created in this case, as for non-smart state classes)
+    return true
   }
 
   @Transient
