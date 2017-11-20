@@ -204,11 +204,14 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           refsToRebind.add(reference);
         }
       }
+      if (member instanceof PsiField) {
+        ((PsiField)member).normalizeDeclaration();
+      }
+
       member = (PsiMember)member.copy();
       RefactoringUtil.replaceMovedMemberTypeParameters(member, PsiUtil.typeParametersIterable(sourceClass), substitutor, factory);
       PsiMember newMember = null;
       if (member instanceof PsiField) {
-        ((PsiField)member).normalizeDeclaration();
         if (sourceClass.isInterface() && !targetClass.isInterface()) {
           PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
           PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);

@@ -42,6 +42,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testBodyTypeParameter() { doTest(); }
   public void testDisagreeTypeParameter() { doTest(true); }
   public void testFieldAndReferencedClass() { doTest(); }
+  public void testSecondNormalizedField() { doTest(); }
   public void testFieldAndStaticReferencedClass() { doTest(); }
   public void testThisRefInAnonymous() { doTest(); }
   public void testSuperOverHierarchyConflict() { doTest(true); }
