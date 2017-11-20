@@ -26,6 +26,8 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.util.regex.Pattern
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
@@ -157,13 +159,15 @@ class LayoutBuilder {
 
     /**
      * Include JARs added as classes roots of project library {@code libraryName} to the current place in the layout
+     * @param removeVersionFromJarName if {@code true} versions will be removed from the JAR names. <strong>It may be used to temporary
+     * keep names of JARs included into bootstrap classpath only.</strong>
      */
-    def projectLibrary(String libraryName) {
+    def projectLibrary(String libraryName, boolean removeVersionFromJarName = false) {
       def library = project.libraryCollection.findLibrary(libraryName)
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in the project")
       }
-      jpsLibrary(library)
+      jpsLibrary(library, removeVersionFromJarName)
     }
 
     /**
@@ -195,9 +199,21 @@ class LayoutBuilder {
       jpsLibrary(library)
     }
 
-    def jpsLibrary(JpsLibrary library) {
+    private static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
+
+    /**
+     * @param removeVersionFromJarName if {@code true} versions will be removed from the JAR names. <strong>It may be used to temporary
+     *      * keep names of JARs included into bootstrap classpath only.</strong>
+     **/
+    def jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false) {
       library.getFiles(JpsOrderRootType.COMPILED).each {
-        ant.fileset(file: it.absolutePath)
+        def matcher = it.name =~ JAR_NAME_WITH_VERSION_PATTERN
+        if (removeVersionFromJarName && matcher.matches()) {
+          ant.renamedFile(filePath: it.absolutePath, newName: matcher.group(1) + ".jar")
+        }
+        else {
+          ant.fileset(file: it.absolutePath)
+        }
       }
     }
 
