@@ -33,12 +33,7 @@ internal open class ExternalProjectStorage(fileSpec: String, project: Project, s
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
-      if (element == null) {
-        manager.fileStorage.remove(fileSpec)
-      }
-      else {
-        manager.fileStorage.write(fileSpec, element)
-      }
+      manager.fileStorage.write(fileSpec, element)
     }
   }
 }

@@ -65,6 +65,8 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRule : TestRule {
 
+  var CREATE_NEW_PROJECT_ACTION_NAME = "Create New Project"
+
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
   private var myProjectPath: File? = null
@@ -156,12 +158,12 @@ class GuiTestRule : TestRule {
     }
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
-      val welcomeFrameFixture = WelcomeFrameFixture.find(robot());
+      val welcomeFrameFixture = WelcomeFrameFixture.find(robot())
       val tenSec = org.fest.swing.timing.Timeout.timeout(10, TimeUnit.SECONDS)
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName("Create New Project", robot(), welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(), welcomeFrameFixture.target(), tenSec)
           actionLinkFixture.target().isShowing
         } catch (componentLookupException: ComponentLookupException) {
           false

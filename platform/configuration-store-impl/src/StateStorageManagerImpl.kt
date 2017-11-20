@@ -174,7 +174,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       key = normalizedCollapsedPath
     }
     else {
-      key = storageClass.name!!
+      val storageClassName = storageClass.name!!
+      // we cannot change this ancient logic for now, so, detect this case manually
+      if (storageClassName === "com.intellij.openapi.externalSystem.configurationStore.ExternalProjectStorage") {
+        key = "$normalizedCollapsedPath@ExternalProjectStorage"
+      }
+      else {
+        key = storageClassName
+      }
     }
 
     val storage = storageLock.read { storages.get(key) } ?: return storageLock.write {

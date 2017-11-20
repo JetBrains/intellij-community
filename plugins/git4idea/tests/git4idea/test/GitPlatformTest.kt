@@ -22,7 +22,9 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
@@ -36,6 +38,8 @@ import git4idea.config.GitVcsSettings
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
+import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.io.File
 
 abstract class GitPlatformTest : VcsPlatformTest() {
@@ -47,6 +51,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var dialogManager: TestDialogManager
   protected lateinit var vcsHelper: MockVcsHelper
   protected lateinit var logProvider: GitLogProvider
+
+  private lateinit var credentialHelpers: Map<ConfigScope, String>
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -69,18 +75,19 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
+
+    credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
-    try {
-      if (wasInit { dialogManager }) dialogManager.cleanup()
-      if (wasInit { git }) git.reset()
-      if (wasInit { settings }) settings.appSettings.setPathToGit(null)
-    }
-    finally {
-      super.tearDown()
-    }
+    RunAll()
+      .append(ThrowableRunnable { restoreCredentialHelpers() })
+      .append(ThrowableRunnable { if (wasInit { dialogManager }) dialogManager.cleanup() })
+      .append(ThrowableRunnable { if (wasInit { git }) git.reset() })
+      .append(ThrowableRunnable { if (wasInit { settings }) settings.appSettings.setPathToGit(null) })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   override fun getDebugLogCategories(): Collection<String> {
@@ -88,6 +95,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
                                                      "#git4idea",
                                                      "#output." + GitHandler::class.java.name))
   }
+
+  protected open fun hasRemoteGitOperation() = false
 
   protected open fun createRepository(rootDir: String): GitRepository {
     return createRepository(project, rootDir)
@@ -160,6 +169,24 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
+  private fun readAndResetCredentialHelpers(): Map<ConfigScope, String> {
+    val system = readAndResetCredentialHelper(SYSTEM)
+    val global = readAndResetCredentialHelper(GLOBAL)
+    return mapOf(SYSTEM to system, GLOBAL to global)
+  }
+
+  private fun readAndResetCredentialHelper(scope: ConfigScope): String {
+    val value = git("config ${scope.param()} --get-all credential.helper", true)
+    git("config ${scope.param()} --unset-all credential.helper", true)
+    return value
+  }
+
+  private fun restoreCredentialHelpers() {
+    credentialHelpers.forEach { scope, value ->
+      if (value.isNotBlank()) git("config ${scope.param()} credential.helper ${value}", true)
+    }
+  }
+
   protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes)
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
@@ -182,4 +209,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
 
+
+  private enum class ConfigScope {
+    SYSTEM,
+    GLOBAL;
+
+    fun param() = "--${name.toLowerCase()}"
+  }
 }

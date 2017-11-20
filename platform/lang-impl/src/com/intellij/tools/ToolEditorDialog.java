@@ -80,6 +80,11 @@ public class ToolEditorDialog extends DialogWrapper {
   private JBCheckBox myShowConsoleOnStdErrCheckbox;
   private RawCommandLineEditor myOutputFilterField;
 
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
+
   @Override
   @NotNull
   protected JPanel createCenterPanel() {

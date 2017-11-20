@@ -115,10 +115,10 @@ public class ArtifactRepositoryManager {
     // setup session here
 
     session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
+    session.setProxySelector(new org.jetbrains.idea.maven.aether.JreProxySelector());
     session.setReadOnly();
     mySession = session;
   }
-
 
   public void addRemoteRepository(final String id, final String url) {
     myRemoteRepositories.add(createRemoteRepository(id, url));

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
+import git4idea.config.GitVersion
 import git4idea.repo.GitRepository
 import git4idea.test.*
 
@@ -205,9 +206,10 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun `assert error about unstaged file before continue rebase`(file : String) {
+    val fileLine = if (vcs.version.isLaterOrEqual(GitVersion(1, 7, 3, 0))) "$file: needs update" else ""
     assertErrorNotification("Continue Rebase Failed",
-        """
-          $file: needs update
+          """
+          $fileLine
           You must edit all merge conflicts
           and then mark them as resolved using git add
           You can <a>retry</a> or <a>abort</a> rebase.

@@ -27,7 +27,7 @@ import junit.framework.TestCase;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testFramework.PlatformTestUtil.captureMemorySnapshot;
-import static com.intellij.testFramework.PlatformTestUtil.disposeApplicationAndStopNonDaemonThreads;
+import static com.intellij.testFramework.PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks;
 
 /**
  * This must be the last test.
@@ -60,7 +60,7 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    disposeApplicationAndStopNonDaemonThreads();
+    disposeApplicationAndCheckForProjectLeaks();
 
     try {
       Disposer.assertIsEmpty(true);

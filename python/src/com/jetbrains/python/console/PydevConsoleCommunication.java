@@ -178,12 +178,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public synchronized void close() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       myWebServer.shutdown();
       myWebServer = null;
     }
-    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
   }
 
   /**
@@ -195,6 +195,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @NotNull
   public synchronized Future<Void> closeAsync() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       Future<Void> shutdownFuture = myWebServer.shutdownAsync();

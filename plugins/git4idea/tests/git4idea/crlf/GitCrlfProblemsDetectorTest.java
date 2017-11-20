@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static git4idea.test.GitExecutor.git;
 import static java.util.Arrays.asList;
 
 public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
@@ -50,7 +49,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
       }
 
       if (!StringUtil.isEmptyOrSpaces(myOldSystemAutoCrlfValue)) {
-        git("config --global core.autocrlf " + myOldSystemAutoCrlfValue);
+        git("config --system core.autocrlf " + myOldSystemAutoCrlfValue);
       }
     }
     finally {

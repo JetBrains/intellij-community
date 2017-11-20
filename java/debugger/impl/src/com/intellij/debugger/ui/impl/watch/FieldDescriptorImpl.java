@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -31,7 +17,9 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -95,10 +83,29 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      return (myObject != null) ? myObject.getValue(myField) : myField.declaringType().getValue(myField);
+      if (myObject != null) {
+        populateExceptionStackTraceIfNeeded(evaluationContext);
+        return myObject.getValue(myField);
+      }
+      else {
+        return myField.declaringType().getValue(myField);
+      }
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
+  }
+
+  private void populateExceptionStackTraceIfNeeded(EvaluationContextImpl evaluationContext) {
+    if ("stackTrace".equals(getName()) &&
+        Registry.is("debugger.populate.exception.stack") &&
+        DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
+      try {
+        invokeExceptionGetStackTrace(myObject, evaluationContext);
+      }
+      catch (Throwable e) {
+        LOG.info(e); // catch all exceptions to ensure the method returns gracefully
+      }
     }
   }
 
