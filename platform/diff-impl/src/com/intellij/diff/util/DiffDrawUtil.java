@@ -310,9 +310,16 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
-                                                         boolean ignored, boolean resolved, boolean hideWithoutLineNumbers) {
-    return new LineHighlighterBuilder(editor, startLine, endLine, type).withIgnored(ignored).withResolved(resolved)
-      .withHideWithoutLineNumbers(hideWithoutLineNumbers).done();
+                                                         boolean ignored,
+                                                         boolean resolved,
+                                                         boolean hideWithoutLineNumbers,
+                                                         boolean hideStripeMarkers) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type)
+      .withIgnored(ignored)
+      .withResolved(resolved)
+      .withHideWithoutLineNumbers(hideWithoutLineNumbers)
+      .withHideStripeMarkers(hideStripeMarkers)
+      .done();
   }
 
   @NotNull
@@ -333,10 +340,13 @@ public class DiffDrawUtil {
   @NotNull
   private static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                          @NotNull final SeparatorPlacement placement,
-                                                         boolean doubleLine, boolean resolved) {
+                                                         boolean doubleLine,
+                                                         boolean resolved,
+                                                         boolean hideStripeMarkers) {
     return new LineMarkerBuilder(editor, line, placement)
       .withType(type)
       .withResolved(resolved)
+      .withHideStripeMarkers(hideStripeMarkers)
       .withDefaultRenderer(doubleLine)
       .done();
   }
@@ -372,6 +382,7 @@ public class DiffDrawUtil {
     private boolean ignored = false;
     private boolean resolved = false;
     private boolean hideWithoutLineNumbers = false;
+    private boolean hideStripeMarkers = false;
 
     private LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
@@ -392,8 +403,15 @@ public class DiffDrawUtil {
       return this;
     }
 
+    @NotNull
     public LineHighlighterBuilder withHideWithoutLineNumbers(boolean hideWithoutLineNumbers) {
       this.hideWithoutLineNumbers = hideWithoutLineNumbers;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withHideStripeMarkers(boolean hideStripeMarkers) {
+      this.hideStripeMarkers = hideStripeMarkers;
       return this;
     }
 
@@ -410,7 +428,7 @@ public class DiffDrawUtil {
       int end = offsets.getEndOffset();
 
       TextAttributes attributes = isEmptyRange || resolved ? null : getTextAttributes(type, editor, ignored);
-      TextAttributes stripeAttributes = isEmptyRange || resolved ? null : getStripeTextAttributes(type, editor);
+      TextAttributes stripeAttributes = isEmptyRange || resolved || hideStripeMarkers ? null : getStripeTextAttributes(type, editor);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
@@ -421,15 +439,15 @@ public class DiffDrawUtil {
 
       if (isEmptyRange) {
         if (isFirstLine) {
-          highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved));
+          highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved, hideStripeMarkers));
         }
         else {
-          highlighters.addAll(createLineMarker(editor, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
+          highlighters.addAll(createLineMarker(editor, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved, hideStripeMarkers));
         }
       }
       else if (resolved) {
-        highlighters.addAll(createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
-        highlighters.addAll(createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
+        highlighters.addAll(createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved, hideStripeMarkers));
+        highlighters.addAll(createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved, hideStripeMarkers));
       }
 
       if (stripeAttributes != null) {
@@ -474,6 +492,7 @@ public class DiffDrawUtil {
     private final int line;
 
     private boolean resolved = false;
+    private boolean hideStripeMarkers = false;
     @Nullable private TextDiffType type;
     @Nullable private LineSeparatorRenderer renderer;
     @Nullable private LineMarkerRenderer gutterRenderer;
@@ -493,6 +512,12 @@ public class DiffDrawUtil {
     @NotNull
     public LineMarkerBuilder withResolved(boolean resolved) {
       this.resolved = resolved;
+      return this;
+    }
+
+    @NotNull
+    public LineMarkerBuilder withHideStripeMarkers(boolean hideStripeMarkers) {
+      this.hideStripeMarkers = hideStripeMarkers;
       return this;
     }
 
@@ -529,7 +554,7 @@ public class DiffDrawUtil {
       highlighter.setLineSeparatorRenderer(renderer);
       highlighter.setLineMarkerRenderer(gutterRenderer);
 
-      if (type == null || resolved) return Collections.singletonList(highlighter);
+      if (type == null || resolved || hideStripeMarkers) return Collections.singletonList(highlighter);
 
       TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
       RangeHighlighter stripeHighlighter = editor.getMarkupModel()
