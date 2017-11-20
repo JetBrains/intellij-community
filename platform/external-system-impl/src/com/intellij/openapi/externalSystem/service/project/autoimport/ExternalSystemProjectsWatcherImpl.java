@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.autoimport;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -69,7 +70,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -492,35 +492,21 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                           ProjectSystemId systemId,
                           String projectPath) {
       super(systemId.getReadableName() + " Import",
-            ExternalSystemBundle.message("import.needed", systemId.getReadableName()),
-            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a>" +
-            " &nbsp;&nbsp;" +
-            "<a href='autoImport'>" + ExternalSystemBundle.message("import.enableAutoImport") + "</a>",
+            ExternalSystemBundle.message("import.needed", systemId.getReadableName()), "",
             NotificationType.INFORMATION, null);
-
       mySystemId = systemId;
       myNotificationMap = notificationMap;
       projectPaths = ContainerUtil.newHashSet(projectPath);
-      setListener(new NotificationListener.Adapter() {
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.importChanged")) {
         @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          boolean isReimport = event.getDescription().equals("reimport");
-          boolean isAutoImport = event.getDescription().equals("autoImport");
-
-          projectPaths.stream()
-            .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
-            .distinct()
-            .filter(Objects::nonNull)
-            .forEach(settings -> {
-              if (isReimport) {
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, true);
-              }
-              if (isAutoImport) {
-                settings.setUseAutoImport(true);
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, false);
-              }
-            });
-          notification.expire();
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, false);
+        }
+      });
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.enableAutoImport")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, true);
         }
       });
     }
@@ -530,6 +516,23 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       super.expire();
       projectPaths.clear();
       myNotificationMap.remove(mySystemId);
+    }
+
+    private void doAction(@NotNull Notification notification,
+                          Project project,
+                          ProjectSystemId systemId,
+                          boolean isAutoImport) {
+      projectPaths.stream()
+        .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
+        .distinct()
+        .filter(Objects::nonNull)
+        .forEach(settings -> {
+          if (isAutoImport) {
+            settings.setUseAutoImport(true);
+          }
+          scheduleRefresh(project, settings.getExternalProjectPath(), systemId, !isAutoImport);
+        });
+      notification.expire();
     }
   }
 
