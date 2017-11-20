@@ -842,7 +842,7 @@ skip_backup:
   StrCpy $2 ""
   StrCpy $3 ${PRODUCT_PATHS_SELECTOR}
   Call OMWriteRegStr
-  StrCpy $1 ${PRODUCT_PATHS_SELECTOR}
+  StrCpy $1 $R5
   StrCpy $2 ""
   Call OMReadRegStr
   StrCmp $3 "" 0 command_exists
