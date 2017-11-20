@@ -82,7 +82,7 @@ public class CommonDataflow {
         return states;
       }
     };
-    RunnerResult result = runner.analyzeMethod(block, visitor);
+    RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     return result == RunnerResult.OK ? dfr : null;
   }
 

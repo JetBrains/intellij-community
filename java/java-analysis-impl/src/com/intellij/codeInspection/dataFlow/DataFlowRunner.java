@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -245,6 +246,28 @@ public class DataFlowRunner {
     }
   }
 
+  public RunnerResult analyzeMethodRecursively(PsiElement block, StandardInstructionVisitor visitor) {
+    Collection<DfaMemoryState> states = createInitialStates(block, visitor);
+    if (states == null) return RunnerResult.NOT_APPLICABLE;
+    return analyzeBlockRecursively(block, states, visitor);
+  }
+
+  private RunnerResult analyzeBlockRecursively(PsiElement block,
+                                               Collection<? extends DfaMemoryState> states,
+                                               StandardInstructionVisitor visitor) {
+    RunnerResult result = analyzeMethod(block, visitor, false, states);
+    if (result != RunnerResult.OK) return result;
+
+    Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
+    forNestedClosures((closure, nestedStates) -> {
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
+      if (res != RunnerResult.OK) {
+        ref.set(res);
+      }
+    });
+    return ref.get();
+  }
+
   @Nullable
   private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
     if(var.getQualifier() != null) return null;
@@ -375,14 +398,16 @@ public class DataFlowRunner {
   }
 
   public void forNestedClosures(BiConsumer<PsiElement, Collection<? extends DfaMemoryState>> consumer) {
-    for (PsiElement closure : myNestedClosures.keySet()) {
+    // Copy to avoid concurrent modifications
+    MultiMap<PsiElement, DfaMemoryState> closures = new MultiMap<>(myNestedClosures);
+    for (PsiElement closure : closures.keySet()) {
       List<DfaVariableValue> unusedVars = StreamEx.of(getFactory().getValues())
         .select(DfaVariableValue.class)
         .filter(var -> var.getQualifier() == null)
         .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
                        !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
         .toList();
-      Collection<? extends DfaMemoryState> states = myNestedClosures.get(closure);
+      Collection<? extends DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
         List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
           .peek(state -> unusedVars.forEach(state::flushVariable))
