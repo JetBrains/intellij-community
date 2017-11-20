@@ -94,6 +94,11 @@ public class ExtractableExpressionPart {
         return matchConstant(expression);
       }
     }
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiExpressionStatement ||
+        parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement) {
+      return null;
+    }
     if (complexityHolder != null && (isConstant || complexityHolder.isAcceptableExpression(expression))) {
       return matchExpression(expression);
     }
