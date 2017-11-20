@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -72,7 +73,7 @@ class JarLoader extends Loader {
 
   private static String urlToFilePath(URL url) {
     try {
-      return url.toURI().getPath();
+      return new File(url.toURI()).getPath();
     } catch (URISyntaxException ex) {
       return url.getPath();
     }
