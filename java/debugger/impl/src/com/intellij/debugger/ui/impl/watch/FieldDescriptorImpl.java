@@ -84,8 +84,12 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (myObject != null) {
-        populateExceptionStackTraceIfNeeded(evaluationContext);
-        return myObject.getValue(myField);
+        Value fieldValue = myObject.getValue(myField);
+        if (populateExceptionStackTraceIfNeeded(fieldValue, evaluationContext)) {
+          // re-read stacktrace value
+          fieldValue = myObject.getValue(myField);
+        }
+        return fieldValue;
       }
       else {
         return myField.declaringType().getValue(myField);
@@ -96,17 +100,21 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
-  private void populateExceptionStackTraceIfNeeded(EvaluationContextImpl evaluationContext) {
+  private boolean populateExceptionStackTraceIfNeeded(Value value, EvaluationContextImpl evaluationContext) {
     if ("stackTrace".equals(getName()) &&
         Registry.is("debugger.populate.exception.stack") &&
+        value instanceof ArrayReference &&
+        ((ArrayReference)value).length() == 0 &&
         DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
       try {
         invokeExceptionGetStackTrace(myObject, evaluationContext);
+        return true;
       }
       catch (Throwable e) {
         LOG.info(e); // catch all exceptions to ensure the method returns gracefully
       }
     }
+    return false;
   }
 
   public boolean isStatic() {
