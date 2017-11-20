@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
@@ -266,19 +265,16 @@ public class ClassPath {
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
-        boolean nameIsDirectory = name.endsWith("/");
-        Collection<Loader> loadersSet = nameIsDirectory ? new SmartList<Loader>() : new LinkedHashSet<Loader>();
+        Collection<Loader> loadersSet = new LinkedHashSet<Loader>();
         myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
 
-        if (!nameIsDirectory) {
+        if (name.endsWith("/")) {
+          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this);
+        } else {
           myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
         }
 
-        if (nameIsDirectory) {
-          loaders = (List<Loader>)loadersSet;
-        } else {
-          loaders = new ArrayList<Loader>(loadersSet);
-        }
+        loaders = new ArrayList<Loader>(loadersSet);
       }
 
       myLoaders = loaders;
