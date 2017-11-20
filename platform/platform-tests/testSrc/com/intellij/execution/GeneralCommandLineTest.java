@@ -3,6 +3,8 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.Pair;
@@ -395,6 +397,32 @@ public class GeneralCommandLineTest {
     Map<String, String> expected = newHashMap(pair("a", "b"));
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, env, expected, false);
+  }
+
+  @Test
+  public void deleteTempFile() throws Exception {
+    File temp = tempDir.newFile("temp");
+    FileUtil.writeToFile(temp, "something");
+    assertTrue(temp.exists());
+    GeneralCommandLine cmd = new GeneralCommandLine(SystemInfo.isWindows ? "ver" : "uname");
+    OSProcessHandler.deleteFileOnTermination(cmd, temp);
+    execAndGetOutput(cmd);
+    assertFalse(temp.exists());
+  }
+
+  @Test
+  public void deleteTempFileWhenProcessCreationFails() throws Exception {
+    File temp = tempDir.newFile("temp");
+    FileUtil.writeToFile(temp, "something");
+    assertTrue(temp.exists());
+    GeneralCommandLine cmd = new GeneralCommandLine("there_should_not_be_such_command");
+    OSProcessHandler.deleteFileOnTermination(cmd, temp);
+    try {
+      ExecUtil.execAndGetOutput(cmd);
+      fail("Process creation should fail");
+    }
+    catch (ProcessNotCreatedException ignored) { }
+    assertFalse(temp.exists());
   }
 
   @NotNull
