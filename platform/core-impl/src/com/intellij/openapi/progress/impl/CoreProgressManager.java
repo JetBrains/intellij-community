@@ -330,6 +330,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       ApplicationManager.getApplication().invokeLater(() -> {
         Project project = task.getProject();
         if (project != null && project.isDisposed()) {
+          LOG.info("Task canceled because of project disposal: " + task);
           finishTask(task, true, null);
           return;
         }
