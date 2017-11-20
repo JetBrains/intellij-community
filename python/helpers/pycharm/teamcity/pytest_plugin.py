@@ -232,7 +232,7 @@ class EchoTeamCityMessages(object):
                 err_message = "AssertionError: " + err_message
             if err_message.startswith("AssertionError:"):
                 diff_error = fetch_diff_error_from_message(err_message)
-        except:
+        except Exception:
             pass
 
         if diff_error:
@@ -313,7 +313,7 @@ class EchoTeamCityMessages(object):
         if self.coverage_controller is not None:
             try:
                 self._report_coverage()
-            except:
+            except Exception:
                 tb = traceback.format_exc()
                 self.teamcity.customMessage("Coverage statistics reporting failed", "ERROR", errorDetails=tb)
 
@@ -349,7 +349,7 @@ class EchoTeamCityMessages(object):
                         total += nums
                     except KeyboardInterrupt:
                         raise
-                    except:
+                    except Exception:
                         if self.config.ignore_errors:
                             continue
 
