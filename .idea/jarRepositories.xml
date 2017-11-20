@@ -16,5 +16,10 @@
       <option name="name" value="IntelliJ Dependencies on Bintray" />
       <option name="url" value="https://jetbrains.bintray.com/intellij-third-party-dependencies" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="jcenter"/>
+      <option name="name" value="JCenter on Bintray"/>
+      <option name="url" value="https://jcenter.bintray.com"/>
+    </remote-repository>
   </component>
 </project>
