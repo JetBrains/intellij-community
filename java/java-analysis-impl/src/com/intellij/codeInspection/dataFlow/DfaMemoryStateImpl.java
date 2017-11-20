@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
@@ -106,7 +107,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
     copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
+    Set<DfaVariableValue> vars = new HashSet<>(copy.myVariableStates.keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);
     }
@@ -1206,9 +1207,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return state;
   }
 
-  @NotNull
-  Map<DfaVariableValue, DfaVariableState> getVariableStates() {
-    return myVariableStates;
+  void forVariableStates(BiConsumer<DfaVariableValue, DfaVariableState> consumer) {
+    myVariableStates.forEach(consumer);
   }
 
   @NotNull

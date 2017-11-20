@@ -265,8 +265,7 @@ class StateMerger {
     Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
-      variableStates.forEach((varValue, varState) -> {
+      state.forVariableStates((varValue, varState) -> {
         LongRangeSet range = varState.getFact(RANGE);
         if (range != null) {
           ranges.computeIfAbsent(varValue, k -> new HashMap<>()).put(range, range);
@@ -378,12 +377,12 @@ class StateMerger {
 
   @NotNull
   private Set<Fact> getFacts(@NotNull DfaMemoryStateImpl state) {
-    Set<Fact> result = myFacts.get(state);
-    if (result != null) {
-      return result;
-    }
-    
-    result = ContainerUtil.newLinkedHashSet();
+    return myFacts.computeIfAbsent(state, StateMerger::doGetFacts);
+  }
+
+  @NotNull
+  private static Set<Fact> doGetFacts(DfaMemoryStateImpl state) {
+    Set<Fact> result = ContainerUtil.newLinkedHashSet();
 
     IdentityHashMap<EqClass, EqClassInfo> classInfo = new IdentityHashMap<>();
 
@@ -426,10 +425,7 @@ class StateMerger {
       }
     }
 
-    Map<DfaVariableValue, DfaVariableState> states = state.getVariableStates();
-    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : states.entrySet()) {
-      DfaVariableValue var = entry.getKey();
-      DfaVariableState variableState = entry.getValue();
+    state.forVariableStates((var, variableState) -> {
       TypeConstraint typeConstraint = variableState.getTypeConstraint();
       for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
         result.add(new InstanceofFact(var, true, type));
@@ -437,9 +433,7 @@ class StateMerger {
       for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
         result.add(new InstanceofFact(var, false, type));
       }
-    }
-
-    myFacts.put(state, result);
+    });
     return result;
   }
 
