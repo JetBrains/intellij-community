@@ -46,8 +46,15 @@ public class StreamInlining {
 
   void test2(int[] array) {
     IntStream.of(array).filter(x -> x < 5)
-      .filter(x -> x > 7) // TODO: find variable state for non-qualified value
+      .filter(x -> <warning descr="Condition 'x > 7' is always 'false'">x > 7</warning>)
       .forEach(value -> System.out.println(value));
+  }
+
+  void testInstanceof(List<?> objects) {
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(x -> <warning descr="Condition 'x instanceof Number' is always 'false'">x instanceof Number</warning>)
+      .forEach(System.out::println);
   }
 
   // IDEA-152871

@@ -276,10 +276,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (getVariableState(var).isNotNull()) {
-      DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-      applyRelation(var, dfaNull, true);
-    }
+    updateEqClassesByState(var);
   }
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
@@ -734,6 +731,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
       setVariableState((DfaVariableValue)value, newState);
+      updateEquivalentVariables((DfaVariableValue)value, newState);
       return updateEqClassesByState((DfaVariableValue)value);
     }
     return true;
@@ -758,6 +756,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaVariableState newState = state.intersectFact(factType, factValue);
         if (newState == null) return false;
         setVariableState(var, newState);
+        updateEquivalentVariables(var, newState);
         return updateEqClassesByState(var);
       }
     }
@@ -927,12 +926,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     final boolean containsCalls = dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls();
-    
+
     // track "x" property state only inside "if (getX() != null) ..."
     if (containsCalls && !isNotNull(dfaLeft) && isNull(dfaRight) && !isNegated) {
       return true;
     }
-    
+
     if (dfaLeft == dfaRight) {
       return containsCalls || !isNegated;
     }
@@ -1161,6 +1160,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myVariableStates.put(dfaVar, state);
     }
     myCachedHash = null;
+  }
+
+  protected void updateEquivalentVariables(DfaVariableValue dfaVar, DfaVariableState state) {
+    int index = getEqClassIndex(dfaVar);
+    if (index != -1) {
+      for (DfaValue value : myEqClasses.get(index).getMemberValues()) {
+        if (value != dfaVar && value instanceof DfaVariableValue) {
+          setVariableState((DfaVariableValue)value, state);
+        }
+      }
+    }
   }
 
   @NotNull
