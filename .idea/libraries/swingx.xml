@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="swingx">
+  <library name="swingx" type="repository">
+    <properties maven-id="org.swinglabs:swingx-core:1.6.2-2" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/swingx-core-1.6.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/swinglabs/swingx-core/1.6.2-2/swingx-core-1.6.2-2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/swingx-1.6.2-src.zip!/java"/>
+      <root url="jar://$MAVEN_REPOSITORY$/org/swinglabs/swingx-core/1.6.2-2/swingx-core-1.6.2-2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
