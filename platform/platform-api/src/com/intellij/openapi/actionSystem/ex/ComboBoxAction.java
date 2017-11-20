@@ -50,10 +50,14 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon = null;
   private static Icon myDisabledIcon = null;
+  private static Icon myWin10ComboDropTriangleIcon = null;
 
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
-      return IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      if (myWin10ComboDropTriangleIcon == null) {
+        myWin10ComboDropTriangleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      }
+      return myWin10ComboDropTriangleIcon;
     }
     Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
     if (myIcon != icon) {
