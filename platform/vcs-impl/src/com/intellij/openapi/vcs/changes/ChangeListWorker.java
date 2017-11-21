@@ -316,7 +316,7 @@ public class ChangeListWorker {
           Set<ListData> lists = getAffectedLists(tracker);
           for (ListData partialList : lists) {
             Set<Change> listChanges = map.computeIfAbsent(partialList, key -> new HashSet<>());
-            listChanges.add(change);
+            listChanges.add(toChangeListChange(change, partialList));
           }
         }
       }
@@ -478,16 +478,30 @@ public class ChangeListWorker {
       else {
         PartialChangeTracker tracker = getChangeTrackerFor(change);
         if (tracker != null) {
-          HashSet<ListData> fromLists = getAffectedLists(tracker);
-          fromLists.remove(targetList);
+          if (change instanceof ChangeListChange) {
+            String fromListId = ((ChangeListChange)change).getChangeListId();
+            ListData fromList = getDataById(fromListId);
 
-          if (!fromLists.isEmpty()) {
-            if (myMainWorker) {
-              tracker.moveChangesTo(targetList.id);
-            }
+            if (fromList != null && fromList != targetList) {
+              if (myMainWorker) {
+                tracker.moveChanges(fromList.id, targetList.id);
+              }
 
-            for (ListData fromList : fromLists) {
               result.putValue(fromList, change);
+            }
+          }
+          else {
+            HashSet<ListData> fromLists = getAffectedLists(tracker);
+            fromLists.remove(targetList);
+
+            if (!fromLists.isEmpty()) {
+              if (myMainWorker) {
+                tracker.moveChangesTo(targetList.id);
+              }
+
+              for (ListData fromList : fromLists) {
+                result.putValue(fromList, change);
+              }
             }
           }
         }
@@ -685,6 +699,14 @@ public class ChangeListWorker {
       .setDefault(data.isDefault)
       .setReadOnly(data.isReadOnly)
       .build();
+  }
+
+  @NotNull
+  private static Change toChangeListChange(@NotNull Change change, @NotNull ListData list) {
+    if (change.getClass() == Change.class) {
+      return new ChangeListChange(change, list.name, list.id);
+    }
+    return change;
   }
 
   private static class ListData {
@@ -1059,6 +1081,8 @@ public class ChangeListWorker {
     void defaultListChanged(@NotNull String oldListId, @NotNull String newListId);
 
     void changeListRemoved(@NotNull String listId);
+
+    void moveChanges(@NotNull String fromListId, @NotNull String toListId);
 
     void moveChangesTo(@NotNull String toListId);
   }

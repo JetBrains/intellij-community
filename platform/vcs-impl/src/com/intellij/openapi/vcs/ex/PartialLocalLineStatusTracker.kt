@@ -143,6 +143,14 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
+  override fun moveChanges(fromListId: String, toListId: String) {
+    documentTracker.writeLock {
+      if (!affectedChangeLists.contains(fromListId)) return@writeLock
+
+      moveMarkers({ it.changelistId == fromListId }, ChangeListMarker(toListId))
+    }
+  }
+
   override fun moveChangesTo(toListId: String) {
     documentTracker.writeLock {
       moveMarkers({ true }, ChangeListMarker(toListId))
