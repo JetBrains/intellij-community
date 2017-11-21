@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.XmlAttributeValuePattern;
@@ -13,8 +14,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-
-import java.util.Objects;
 
 /**
  * XIncludes in plugin.xml files are resolved in a bit different way than usually.
@@ -29,7 +28,7 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
 
   private static XmlAttributeValuePattern getPattern() {
     return XmlPatterns.xmlAttributeValue().withLocalName("href")
-      .inside(true, XmlPatterns.xmlTag().withLocalName("include"))
+      .withSuperParent(2, XmlPatterns.xmlTag().withLocalName("include"))
       .with(new PatternCondition<XmlAttributeValue>("XInclude inside plugin.xml") {
         @Override
         public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
@@ -46,12 +45,11 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
     @NotNull
     @Override
     public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-      PsiFile containingFile = element.getContainingFile();
-      PsiFile file = containingFile != null ? containingFile.getOriginalFile() : null;
+      PsiFile file = CompletionUtil.getOriginalOrSelf(element).getContainingFile();
       return new FileReferenceSet(element) {
         @Override
         protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-          return item -> DescriptorUtil.isPluginXml(item.getContainingFile()) && !Objects.equals(file, item);
+          return item -> DescriptorUtil.isPluginXml(item.getContainingFile()) && !file.equals(item);
         }
       }.getAllReferences();
     }

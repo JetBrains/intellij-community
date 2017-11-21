@@ -9,12 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +45,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
 
   private static Collection<PsiFileSystemItem> getRoots(@NotNull Project project) {
     List<VirtualFile> roots = ProjectRootManager.getInstance(project)
-      .getModuleSourceRoots(ContainerUtil.set(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE));
+      .getModuleSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
     PsiManager psiManager = PsiManager.getInstance(project);
     return roots.stream()
       .map(virtualFile -> psiManager.findDirectory(virtualFile))
