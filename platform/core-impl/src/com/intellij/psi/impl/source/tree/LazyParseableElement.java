@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.impl.DebugUtil;
@@ -222,15 +223,17 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private void setChildren(@NotNull TreeElement parsedNode, @Nullable AstPath thisPath) {
-    try {
-      AstPath.cacheNodePaths(this, parsedNode, thisPath);
-      TreeElement last = rawSetParents(parsedNode, this);
-      super.setFirstChildNode(parsedNode);
-      super.setLastChildNode(last);
-    }
-    catch (Throwable e) {
-      LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
-    }
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      try {
+        AstPath.cacheNodePaths(this, parsedNode, thisPath);
+        TreeElement last = rawSetParents(parsedNode, this);
+        super.setFirstChildNode(parsedNode);
+        super.setLastChildNode(last);
+      }
+      catch (Throwable e) {
+        LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
+      }
+    });
   }
 
   @Override
