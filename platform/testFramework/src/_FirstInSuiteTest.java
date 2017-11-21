@@ -63,7 +63,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     // some tests do not initialize Application but want to use parallel streams
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
-    System.out.println("ForkJoinPool.commonPool: " + ForkJoinPool.commonPool());
+    System.out.println("ForkJoinPool.commonPool: " + ForkJoinPool.commonPool()+"; factory: "+ForkJoinPool.commonPool().getFactory());
     System.out.println("cpu cores: " + Runtime.getRuntime().availableProcessors());
 
     suiteStarted = System.nanoTime();
