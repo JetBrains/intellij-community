@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
