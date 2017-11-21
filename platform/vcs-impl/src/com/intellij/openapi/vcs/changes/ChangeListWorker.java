@@ -88,9 +88,9 @@ public class ChangeListWorker {
     if (myDefault != null) return;
 
     if (!myLists.isEmpty()) {
-      myDefault = myLists.iterator().next();
-      myDefault.isDefault = true;
-    }
+    myDefault = myLists.iterator().next();
+    myDefault.isDefault = true;
+  }
     else {
       myDefault = new ListData(null, LocalChangeList.DEFAULT_NAME);
       myDefault.isDefault = true;
@@ -166,8 +166,8 @@ public class ChangeListWorker {
   public boolean setReadOnly(String name, boolean value) {
     ListData list = getDataByName(name);
     if (list != null) {
-      list.isReadOnly = value;
-    }
+    list.isReadOnly = value;
+  }
     return list != null;
   }
 
@@ -301,58 +301,16 @@ public class ChangeListWorker {
 
   @NotNull
   public List<File> getAffectedPaths() {
-    final Set<FilePath> set = myIdx.getAffectedPaths();
-    final List<File> result = new ArrayList<>(set.size());
-    for (FilePath path : set) {
-      result.add(path.getIOFile());
-    }
-    return result;
+    return ContainerUtil.map(myIdx.getAffectedPaths(), FilePath::getIOFile);
   }
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    final Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
-    for (ListData list : myLists) {
-      for (Change change : list.changes) {
-        final ContentRevision before = change.getBeforeRevision();
-        final ContentRevision after = change.getAfterRevision();
-        if (before != null) {
-          final VirtualFile file = before.getFile().getVirtualFile();
-          if (file != null) {
-            result.add(file);
-          }
-        }
-        if (after != null) {
-          final VirtualFile file = after.getFile().getVirtualFile();
-          if (file != null) {
-            result.add(file);
-          }
-        }
-      }
-    }
-    return new ArrayList<>(result);
-  }
-
-  @Nullable
-  public LocalChangeList getChangeListFor(@NotNull VirtualFile file) {
-    FilePath filePath = VcsUtil.getFilePath(file);
-
-    Pair<ListData, Change> pair = getChangeAndListByPath(filePath);
-    if (pair == null) return null;
-
-    return toChangeList(pair.first);
+    return ContainerUtil.mapNotNull(myIdx.getAffectedPaths(), FilePath::getVirtualFile);
   }
 
   @Nullable
   public Change getChangeForPath(@Nullable FilePath filePath) {
-    Pair<ListData, Change> pair = getChangeAndListByPath(filePath);
-    if (pair == null) return null;
-
-    return pair.second;
-  }
-
-  @Nullable
-  private Pair<ListData, Change> getChangeAndListByPath(@Nullable FilePath filePath) {
     if (filePath == null) return null;
     for (ListData list : myLists) {
       for (Change change : list.changes) {
@@ -360,7 +318,7 @@ public class ChangeListWorker {
         ContentRevision after = change.getAfterRevision();
         if (before != null && before.getFile().equals(filePath) ||
             after != null && after.getFile().equals(filePath)) {
-          return Pair.create(list, change);
+          return change;
         }
       }
     }
@@ -391,7 +349,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
+  public List<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
     List<LocalChangeList> result = new ArrayList<>();
 
     for (ListData list : myLists) {
@@ -406,35 +364,9 @@ public class ChangeListWorker {
     return result;
   }
 
-  @Nullable
-  public LocalChangeList getChangeListForChange(final Change change) {
-    for (ListData list : myLists) {
-      if (list.changes.contains(change)) return toChangeList(list);
-    }
-    return null;
-  }
-
-  @Nullable
-  public LocalChangeList getChangeListIfOnlyOne(@Nullable Change[] changes) {
-    if (changes == null || changes.length == 0) {
-      return null;
-    }
-
-    final Change first = changes[0];
-
-    for (ListData list : myLists) {
-      if (list.changes.contains(first)) {
-        // must contain all other
-        for (int i = 1; i < changes.length; i++) {
-          final Change change = changes[i];
-          if (!list.changes.contains(change)) {
-            return null;
-          }
-        }
-        return toChangeList(list);
-      }
-    }
-    return null;
+  @NotNull
+  public List<LocalChangeList> getChangeListsForChange(@NotNull Change change) {
+    return getInvolvedLists(Collections.singletonList(change));
   }
 
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
@@ -443,7 +375,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public List<Change> getChangesIn(@NotNull FilePath dirPath) {
+  public List<Change> getChangesUnder(@NotNull FilePath dirPath) {
     List<Change> changes = new ArrayList<>();
     for (ListData list : myLists) {
       for (Change change : list.changes) {
@@ -817,15 +749,13 @@ public class ChangeListWorker {
     }
 
     public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
-      myWorker.myIdx.remove(filePath);
+      Change change = myWorker.getChangeForPath(filePath);
+      if (change == null) return;
 
-      Pair<ListData, Change> pair = myWorker.getChangeAndListByPath(filePath);
-      if (pair == null) return;
-
-      ListData list = pair.first;
-      Change change = pair.second;
-
-      list.removeChange(change);
+      for (ListData list : myWorker.myLists) {
+        list.removeChange(change);
+      }
+      myWorker.myIdx.changeRemoved(change);
     }
 
 

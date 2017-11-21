@@ -994,15 +994,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
-      return myWorker.getChangeListForChange(change);
+      List<LocalChangeList> lists = myWorker.getChangeListsForChange(change);
+      return ContainerUtil.getFirstItem(lists);
     }
   }
 
   @Override
   public String getChangeListNameIfOnlyOne(final Change[] changes) {
     synchronized (myDataLock) {
-      LocalChangeList list = myWorker.getChangeListIfOnlyOne(changes);
-      return list != null ? list.getName() : null;
+      List<LocalChangeList> lists = myWorker.getInvolvedLists(Arrays.asList(changes));
+      return lists.size() == 1 ? lists.get(0).getName() : null;
     }
   }
 
@@ -1022,7 +1023,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public LocalChangeList getChangeList(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
-      return myWorker.getChangeListFor(file);
+      Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
+      if (change == null) return null;
+      return getChangeList(change);
     }
   }
 
@@ -1079,7 +1082,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   public Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
     synchronized (myDataLock) {
-      return myWorker.getChangesIn(dirPath);
+      return myWorker.getChangesUnder(dirPath);
     }
   }
 
