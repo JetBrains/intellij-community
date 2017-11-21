@@ -227,14 +227,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   private String getWriteAccessAnchorPath() throws ExecutionException {
-    final VirtualFile sitePackagesDir;
-    if (PythonSdkType.isVirtualEnv(mySdk)) {
-      sitePackagesDir = PythonSdkType.findVirtualEnvSitePackagesDirectory(mySdk);
-    }
-    else {
-      sitePackagesDir = PythonSdkType.findSitePackagesDirectory(mySdk);
-    }
-
+    final VirtualFile sitePackagesDir = PythonSdkType.getSitePackagesDirectory(mySdk);
     if (sitePackagesDir == null) {
       // Perhaps a system interpreter on Linux that has only "dist-packages", use executable path as a fallback then
       final String homePath = mySdk.getHomePath();
