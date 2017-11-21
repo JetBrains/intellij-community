@@ -44,6 +44,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -364,12 +365,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
-      clickable.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          ToolbarClicksCollector.record(action, myPlace);
-        }
-      });
+      class ToolbarClicksCollectorListener extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
+      }
+      if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
+        clickable.addMouseListener(new ToolbarClicksCollectorListener());
+      }
     }
     return customComponent;
   }
