@@ -75,6 +75,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       if (!value.isNegated()) {
         setExpressionType(value.getExpression(), value.getCastType());
       }
+      return super.applyCondition(((DfaInstanceofValue)dfaCond).getRelation());
     }
 
     return super.applyCondition(dfaCond);
