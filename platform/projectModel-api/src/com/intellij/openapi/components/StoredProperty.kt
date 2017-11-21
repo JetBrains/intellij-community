@@ -103,19 +103,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   fun copyFrom(state: BaseState) {
-    assert(state.properties.size == properties.size)
+    LOG.assertTrue(state.properties.size == properties.size)
     var changed = false
     for ((index, property) in properties.withIndex()) {
       val otherProperty = state.properties.get(index)
-      //assert(otherProperty.name == property.name)
-      if (property.name != null) {
-        if (otherProperty.name == null) {
-          otherProperty.name = property.name
-        }
-        else {
-          assert(otherProperty.name == property.name)
-        }
-      }
+      LOG.assertTrue(otherProperty.name == property.name)
       if (property.setValue(otherProperty)) {
         changed = true
       }
@@ -130,13 +122,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 private class ObjectStoredProperty<T>(override val defaultValue: T) : StoredPropertyBase<T>() {
   override var value = defaultValue
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T {
-    name = property.name
-    return value
-  }
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) {
-    name = property.name
     if (this.value != value) {
       thisRef.ownModificationCount++
       this.value = value
@@ -164,13 +152,9 @@ private class ObjectStoredProperty<T>(override val defaultValue: T) : StoredProp
 private class NormalizedStringStoredProperty(override val defaultValue: String?) : StoredPropertyBase<String?>() {
   override var value = defaultValue
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): String? {
-    name = property.name
-    return value
-  }
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: String?) {
-    name = property.name
     var newValue = value
     if (newValue != null && newValue.isEmpty()) {
       newValue = null
@@ -202,13 +186,9 @@ private class NormalizedStringStoredProperty(override val defaultValue: String?)
 private class IntStoredProperty(override val defaultValue: Int) : StoredPropertyBase<Int>() {
   override var value = defaultValue
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): Int {
-    name = property.name
-    return value
-  }
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Int) {
-    name = property.name
     if (this.value != value) {
       thisRef.ownModificationCount++
       this.value = value
@@ -235,13 +215,9 @@ private class IntStoredProperty(override val defaultValue: Int) : StoredProperty
 private class FloatStoredProperty(override val defaultValue: Float) : StoredPropertyBase<Float>() {
   override var value = defaultValue
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): Float {
-    name = property.name
-    return value
-  }
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
-    name = property.name
     if (this.value != value) {
       thisRef.ownModificationCount++
       this.value = value
