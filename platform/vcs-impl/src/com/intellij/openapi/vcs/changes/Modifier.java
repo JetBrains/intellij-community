@@ -60,20 +60,6 @@ public class Modifier {
     impl(command);
   }
 
-  private void impl(ChangeListCommand command) {
-    if (myInsideUpdate) {
-      // apply command and store it to be applied again when update is finished
-      // notification about this invocation might be sent later if the update is cancelled
-      command.apply(myWorker);
-      myCommandQueue.add(command);
-    }
-    else {
-      // apply and notify immediately
-      command.apply(myWorker);
-      myNotificator.callNotify(command);
-    }
-  }
-
   public boolean setReadOnly(String name, boolean value) {
     SetReadOnly command = new SetReadOnly(name, value);
     impl(command);
@@ -92,6 +78,22 @@ public class Modifier {
     impl(command);
     return command.getOldComment();
   }
+
+
+  private void impl(ChangeListCommand command) {
+    if (myInsideUpdate) {
+      // apply command and store it to be applied again when update is finished
+      // notification about this invocation might be sent later if the update is cancelled
+      command.apply(myWorker);
+      myCommandQueue.add(command);
+    }
+    else {
+      // apply and notify immediately
+      command.apply(myWorker);
+      myNotificator.callNotify(command);
+    }
+  }
+
 
   public boolean isInsideUpdate() {
     return myInsideUpdate;

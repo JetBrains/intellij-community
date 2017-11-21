@@ -921,11 +921,62 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     setDefaultChangeList(list.getName());
   }
 
+  @Override
+  public boolean setReadOnly(final String name, final boolean value) {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.setReadOnly(name, value);
+        myChangesViewManager.scheduleRefresh();
+        return result;
+      }
+    });
+  }
+
+  @Override
+  public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.editName(fromName, toName);
+        myChangesViewManager.scheduleRefresh();
+        return result;
+      }
+    });
+  }
+
+  @Override
+  public String editComment(@NotNull final String fromName, final String newComment) {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        final String oldComment = myModifier.editComment(fromName, newComment);
+        myChangesViewManager.scheduleRefresh();
+        return oldComment;
+      }
+    });
+  }
+
+  @Override
+  public void moveChangesTo(@NotNull final LocalChangeList list, @NotNull final Change... changes) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        myModifier.moveChangesTo(list.getName(), changes);
+      }
+    });
+    myChangesViewManager.scheduleRefresh();
+  }
+
   @NotNull
   @Override
   public LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
       return myWorker.getDefaultList().copy();
+    }
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultListName() {
+    synchronized (myDataLock) {
+      return myWorker.getDefaultList().getName();
     }
   }
 
@@ -1041,16 +1092,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       key = myWorker.getVcsFor(change);
     }
     return key != null ? ProjectLevelVcsManager.getInstance(myProject).findVcsByName(key.getName()) : null;
-  }
-
-  @Override
-  public void moveChangesTo(@NotNull final LocalChangeList list, @NotNull final Change... changes) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      synchronized (myDataLock) {
-        myModifier.moveChangesTo(list.getName(), changes);
-      }
-    });
-    myChangesViewManager.scheduleRefresh();
   }
 
   @Override
@@ -1380,47 +1421,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       return myComposite.getSwitchedFileHolder().getBranchForFile(file);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getDefaultListName() {
-    synchronized (myDataLock) {
-      return myWorker.getDefaultList().getName();
-    }
-  }
-
-  @Override
-  public boolean setReadOnly(final String name, final boolean value) {
-    return ReadAction.compute(() -> {
-      synchronized (myDataLock) {
-        final boolean result = myModifier.setReadOnly(name, value);
-        myChangesViewManager.scheduleRefresh();
-        return result;
-      }
-    });
-  }
-
-  @Override
-  public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    return ReadAction.compute(() -> {
-      synchronized (myDataLock) {
-        final boolean result = myModifier.editName(fromName, toName);
-        myChangesViewManager.scheduleRefresh();
-        return result;
-      }
-    });
-  }
-
-  @Override
-  public String editComment(@NotNull final String fromName, final String newComment) {
-    return ReadAction.compute(() -> {
-      synchronized (myDataLock) {
-        final String oldComment = myModifier.editComment(fromName, newComment);
-        myChangesViewManager.scheduleRefresh();
-        return oldComment;
-      }
-    });
   }
 
   @TestOnly
