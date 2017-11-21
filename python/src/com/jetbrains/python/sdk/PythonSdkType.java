@@ -769,22 +769,25 @@ public final class PythonSdkType extends SdkType {
     return true;
   }
 
+  /**
+   * Returns the "site-packages" directory that is going to be used for installing new packages with {@code pip}.
+   * <p>
+   * Note that on a virtual env there might be two such directories in {@code sys.path} depending on whether
+   * the option "--system-site-packages" was given during its creation. Then the one inside the actual virtual
+   * env tree will be returned, as it's the one used to install new packages.
+   * Also, on some systems, first of all in system distributions of Python on Linux, there might be no
+   * "site-packages" at all, and this method returns {@code null} accordingly in this case.
+   */
   @Nullable
-  public static VirtualFile findSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-    if (libDir != null) {
-      return libDir.findChild(PyNames.SITE_PACKAGES);
+  public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    final VirtualFile libDir;
+    if (isVirtualEnv(pythonSdk)) {
+      libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
     }
-    return null;
-  }
-
-  @Nullable
-  public static VirtualFile findVirtualEnvSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    final VirtualFile libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-    if (libDir != null) {
-      return libDir.findChild(PyNames.SITE_PACKAGES);
+    else {
+      libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
     }
-    return null;
+    return libDir != null ? libDir.findChild(PyNames.SITE_PACKAGES) : null;
   }
 
   @Nullable
