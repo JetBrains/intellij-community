@@ -68,7 +68,7 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
   @CalledInAwt
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-      // later to avoid saving inside document change event processing.
+      // later to avoid saving inside document change event processing and deadlock with CLM.
       TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
         val isEmpty = documentTracker.readLock { blocks.isEmpty() }

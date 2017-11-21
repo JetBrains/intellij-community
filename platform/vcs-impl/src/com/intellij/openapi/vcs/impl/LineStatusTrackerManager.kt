@@ -42,7 +42,10 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
@@ -125,6 +128,7 @@ class LineStatusTrackerManager(
       forcedDocuments.clear()
 
       for (data in trackers.values) {
+        unregisterTrackerInCLM(data.tracker)
         data.tracker.release()
       }
       trackers.clear()
@@ -246,6 +250,21 @@ class LineStatusTrackerManager(
     }
   }
 
+  private fun registerTrackerInCLM(tracker: LineStatusTracker<*>) {
+    if (tracker is PartialLocalLineStatusTracker) {
+      val filePath = VcsUtil.getFilePath(tracker.virtualFile)
+      changeListManager.registerChangeTracker(filePath, tracker)
+    }
+  }
+
+  private fun unregisterTrackerInCLM(tracker: LineStatusTracker<*>) {
+    if (tracker is PartialLocalLineStatusTracker) {
+      val filePath = VcsUtil.getFilePath(tracker.virtualFile)
+      changeListManager.unregisterChangeTracker(filePath, tracker)
+    }
+  }
+
+
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
     if (virtualFile == null || virtualFile is LightVirtualFile || !virtualFile.isValid) return false
@@ -266,8 +285,13 @@ class LineStatusTrackerManager(
     if (!arePartialChangelistsEnabled(virtualFile)) return false
 
     val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
-    return status == FileStatus.MODIFIED ||
-           status == FileStatus.NOT_CHANGED
+    if (status != FileStatus.MODIFIED &&
+        status != FileStatus.NOT_CHANGED) return false
+
+    val change = ChangeListManager.getInstance(project).getChange(virtualFile)
+    return change != null && change.javaClass == Change::class.java &&
+           change.type == Change.Type.MODIFICATION && change.afterRevision is CurrentContentRevision
+
   }
 
   private fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
@@ -306,6 +330,7 @@ class LineStatusTrackerManager(
 
       trackers.put(document, TrackerData(tracker))
 
+      registerTrackerInCLM(tracker)
       refreshTracker(tracker, oldChangesChangelistId)
 
       log("Tracker installed", virtualFile)
@@ -318,6 +343,7 @@ class LineStatusTrackerManager(
       if (isDisposed) return
       val data = trackers.remove(document) ?: return
 
+      unregisterTrackerInCLM(data.tracker)
       data.tracker.release()
 
       log("Tracker released", data.tracker.virtualFile)

@@ -43,6 +43,8 @@ class DocumentTracker : Disposable {
   private val dispatcher: EventDispatcher<Listener> = EventDispatcher.create(Listener::class.java)
   private val multicaster = dispatcher.multicaster
 
+  // Any external calls (ex: Document modifications) must be avoided under lock,
+  // do avoid deadlock with ChangeListManager
   internal val LOCK: Lock = Lock()
 
   val document1: Document
@@ -193,14 +195,20 @@ class DocumentTracker : Disposable {
       val document = side[document1, document2]
       val otherDocument = otherSide[document1, document2]
 
+      val appliedBlocks = LOCK.write {
+        tracker.partiallyApplyBlocks(side, condition)
+      }
+
+      // We use already filtered blocks here, because conditions might have been changed from other thread.
+      // The documents/blocks themselves did not change though.
+      LineTracker.processAppliedRanges(appliedBlocks, { true }, side) { block, shift, _ ->
+        DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
+                                   otherDocument, block.range.start(otherSide), block.range.end(otherSide))
+
+        consumer(block, shift)
+      }
+
       LOCK.write {
-        tracker.partiallyApplyBlocks(side, condition) { block, shift ->
-          DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
-                                     otherDocument, block.range.start(otherSide), block.range.end(otherSide))
-
-          consumer(block, shift)
-        }
-
         freezeHelper.setFrozenContent(side, document.immutableCharSequence)
       }
     }
@@ -506,20 +514,14 @@ private class LineTracker(private val multicaster: Listener) {
   }
 
 
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
-    val otherSide = side.other()
-
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
     val oldBlocks = blocks
     val newBlocks = mutableListOf<Block>()
+    val appliedBlocks = mutableListOf<Block>()
 
-    var shift = 0
-    for (block in blocks) {
-      if (condition(block)) {
-        consumer(block, shift)
-
-        val deleted = block.range.end(side) - block.range.start(side)
-        val inserted = block.range.end(otherSide) - block.range.start(otherSide)
-        shift += inserted - deleted
+    processAppliedRanges(blocks, condition, side) { block, shift, isApplied ->
+      if (isApplied) {
+        appliedBlocks += block
       }
       else {
         val newBlock = block.shift(side, shift)
@@ -535,6 +537,8 @@ private class LineTracker(private val multicaster: Listener) {
     blocks = newBlocks
 
     multicaster.afterExplicitChange()
+
+    return appliedBlocks
   }
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
@@ -655,6 +659,25 @@ private class LineTracker(private val multicaster: Listener) {
       val isTooBig = affectedBlocks.any { it.isTooBig }
       val range = createRange(side, rangeStart, rangeEnd, rangeStartOther, rangeEndOther)
       return Block(range, true, isTooBig)
+    }
+
+    fun processAppliedRanges(blocks: List<Block>, condition: (Block) -> Boolean, side: Side,
+                             handler: (block: Block, shift: Int, isApplied: Boolean) -> Unit) {
+      val otherSide = side.other()
+
+      var shift = 0
+      for (block in blocks) {
+        if (condition(block)) {
+          handler(block, shift, true)
+
+          val deleted = block.range.end(side) - block.range.start(side)
+          val inserted = block.range.end(otherSide) - block.range.start(otherSide)
+          shift += inserted - deleted
+        }
+        else {
+          handler(block, shift, false)
+        }
+      }
     }
 
     private fun Block.shift(side: Side, delta: Int) = Block(

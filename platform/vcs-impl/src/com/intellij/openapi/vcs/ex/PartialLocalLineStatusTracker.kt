@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
@@ -42,12 +43,12 @@ class PartialLocalLineStatusTracker(project: Project,
                                     document: Document,
                                     virtualFile: VirtualFile,
                                     mode: Mode
-) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode) {
+) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
   override val renderer = MyLineStatusMarkerRenderer(this)
 
-  private val defaultMarker: ChangeListMarker
+  private var defaultMarker: ChangeListMarker
   private var currentMarker: ChangeListMarker? = null
 
   private val affectedChangeLists = HashSet<String>()
@@ -65,34 +66,40 @@ class PartialLocalLineStatusTracker(project: Project,
                                                         this.marker.changelistId)
 
 
-  fun getAffectedChangeListsIds(): List<String> {
+  override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
       assert(!affectedChangeLists.isEmpty())
       affectedChangeLists.toList()
     }
   }
 
-  private fun updateAffectedChangeLists() {
-    documentTracker.writeLock {
-      val newIds = HashSet<String>()
-      for (block in blocks) {
-        newIds.add(block.marker.changelistId)
-      }
+  private fun updateAffectedChangeLists(notifyChangeListManager: Boolean = true) {
+    val oldIds = HashSet<String>()
+    val newIds = HashSet<String>()
 
-      if (newIds.isEmpty()) {
-        if (affectedChangeLists.size == 1) {
-          newIds.add(affectedChangeLists.single())
-        }
-        else {
-          newIds.add(defaultMarker.changelistId)
-        }
-      }
+    for (block in blocks) {
+      newIds.add(block.marker.changelistId)
+    }
 
-      affectedChangeLists.clear()
-      affectedChangeLists.addAll(newIds)
+    if (newIds.isEmpty()) {
+      if (affectedChangeLists.size == 1) {
+        newIds.add(affectedChangeLists.single())
+      }
+      else {
+        newIds.add(defaultMarker.changelistId)
+      }
+    }
+
+    oldIds.addAll(affectedChangeLists)
+
+    affectedChangeLists.clear()
+    affectedChangeLists.addAll(newIds)
+
+    if (notifyChangeListManager && oldIds != newIds) {
+      // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
+      changeListManager.notifyChangelistsChanged()
     }
   }
-
 
   @CalledInAwt
   fun setBaseRevision(vcsContent: CharSequence, changelistId: String?) {
@@ -104,6 +111,59 @@ class PartialLocalLineStatusTracker(project: Project,
       currentMarker = null
     }
   }
+
+
+  override fun initChangeTracking(defaultId: String, changelistsIds: List<String>) {
+    documentTracker.writeLock {
+      defaultMarker = ChangeListMarker(defaultId)
+
+      val idsSet = changelistsIds.toSet()
+      moveMarkers({ !idsSet.contains(it.changelistId) }, defaultMarker)
+    }
+  }
+
+  override fun defaultListChanged(oldListId: String, newListId: String) {
+    documentTracker.writeLock {
+      defaultMarker = ChangeListMarker(newListId)
+    }
+  }
+
+  override fun changeListRemoved(listId: String) {
+    documentTracker.writeLock {
+      if (!affectedChangeLists.contains(listId)) return@writeLock
+
+      moveMarkers({ it.changelistId == listId }, defaultMarker)
+
+      if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
+        affectedChangeLists.clear()
+        affectedChangeLists.add(defaultMarker.changelistId)
+      }
+    }
+  }
+
+  override fun moveChangesTo(toListId: String) {
+    documentTracker.writeLock {
+      moveMarkers({ true }, ChangeListMarker(toListId))
+    }
+  }
+
+  private fun moveMarkers(condition: (ChangeListMarker) -> Boolean, toMarker: ChangeListMarker) {
+    val affectedBlocks = mutableListOf<Block>()
+
+    for (block in blocks) {
+      if (condition(block.marker)) {
+        block.marker = toMarker
+        affectedBlocks.add(block)
+      }
+    }
+
+    updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
+
+    for (block in affectedBlocks) {
+      updateHighlighter(block)
+    }
+  }
+
 
   private inner class MyLineTrackerListener : DocumentTracker.Listener {
     override fun onRangeAdded(block: Block) {

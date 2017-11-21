@@ -334,6 +334,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return "ChangeListManager";
   }
 
+  public void registerChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
+    synchronized (myDataLock) {
+      myWorker.registerChangeTracker(filePath, tracker);
+    }
+  }
+
+  public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
+    synchronized (myDataLock) {
+      myWorker.unregisterChangeTracker(filePath, tracker);
+    }
+  }
+
   /**
    * update itself might produce actions done on AWT thread (invoked-after),
    * so waiting for its completion on AWT thread is not good runnable is invoked on AWT thread
@@ -1020,6 +1032,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       List<LocalChangeList> lists = myWorker.getAffectedLists(change);
       return ContainerUtil.getFirstItem(lists);
     }
+  }
+
+  public void notifyChangelistsChanged() {
+    myWorker.notifyChangelistsChanged();
   }
 
   @Override
