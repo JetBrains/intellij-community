@@ -243,14 +243,9 @@ public class SubstitutionHandler extends MatchingHandler {
     MatchResult substitution = context.hasResult() ? context.getResult().findSon(name) : null;
 
     if (minOccurs >= 1 &&
-        ( substitution == null ||
-          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatch()) != elementContext
-        )
-       ) {
+        (substitution == null || StructuralSearchUtil.getElementContextByPsi(substitution.getMatch()) != elementContext)) {
       return false;
-    } else if (maxOccurs <= 1 &&
-        substitution!=null && substitution.hasSons()
-    ) {
+    } else if (maxOccurs <= 1 && substitution!=null && substitution.hasSons()) {
       return false;
     } else if (maxOccurs==0 && totalMatchedOccurs!=-1) {
       return false;

@@ -230,8 +230,7 @@ public abstract class MatchingHandler {
       final MatchingHandler handler = context.getPattern().getHandler( element );
 
       if (handler instanceof SubstitutionHandler) {
-        if (!((SubstitutionHandler)handler).validate(
-          context, StructuralSearchUtil.getProfileByPsiElement(element).getElementContextByPsi(element))) {
+        if (!((SubstitutionHandler)handler).validate(context, StructuralSearchUtil.getElementContextByPsi(element))) {
           return false;
         }
       } else {
