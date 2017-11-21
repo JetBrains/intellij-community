@@ -128,7 +128,7 @@ public class ControlFlowUtils {
   }
 
   @Contract(value = "null -> false", pure = true)
-  public static boolean loopConditionNotSpecified(@Nullable PsiLoopStatement loopStatement) {
+  public static boolean isEndlessLoop(@Nullable PsiLoopStatement loopStatement) {
     if(loopStatement == null) return false;
     if (loopStatement instanceof PsiWhileStatement) {
       return BoolUtils.isTrue(((PsiWhileStatement)loopStatement).getCondition());
@@ -137,8 +137,11 @@ public class ControlFlowUtils {
       return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
     }
     if (loopStatement instanceof PsiForStatement) {
-      PsiExpression condition = ((PsiForStatement)loopStatement).getCondition();
-      return condition == null || BoolUtils.isTrue(condition);
+      PsiForStatement forStatement = (PsiForStatement)loopStatement;
+      PsiExpression condition = forStatement.getCondition();
+      if(condition != null && !BoolUtils.isTrue(condition)) return false;
+      return (forStatement.getInitialization() == null || forStatement.getInitialization() instanceof PsiEmptyStatement)
+             && (forStatement.getUpdate() == null || forStatement.getUpdate() instanceof PsiEmptyStatement);
     }
     return false;
   }
