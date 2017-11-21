@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -157,8 +158,9 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     final PsiElement appendStatementParent = appendStatement.getParent();
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     final PsiCodeBlock codeBlock = factory.createCodeBlockFromText(builder.toString(), appendStatement);
+    CommentTracker tracker = new CommentTracker();
     if (appendStatementParent instanceof PsiLoopStatement || appendStatementParent instanceof PsiIfStatement) {
-      final PsiElement insertedCodeBlock = appendStatement.replace(codeBlock);
+      final PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
       final PsiCodeBlock reformattedCodeBlock = (PsiCodeBlock)codeStyleManager.reformat(insertedCodeBlock);
       if (showRenameTemplate) {
         final PsiStatement[] statements = reformattedCodeBlock.getStatements();
@@ -170,13 +172,13 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       final PsiStatement[] statements = codeBlock.getStatements();
       PsiVariable variable = null;
       for (int i = 0, length = statements.length; i < length; i++) {
-        final PsiElement insertedStatement = appendStatementParent.addBefore(statements[i], appendStatement);
+        final PsiElement insertedStatement = appendStatementParent.addBefore(tracker.markUnchanged(statements[i]), appendStatement);
         if (i == 0 && showRenameTemplate) {
           variable = (PsiVariable)((PsiDeclarationStatement) insertedStatement).getDeclaredElements()[0];
         }
         codeStyleManager.reformat(insertedStatement);
       }
-      appendStatement.delete();
+      tracker.deleteAndRestoreComments(appendStatement);
       if (variable != null) {
         HighlightUtil.showRenameTemplate(appendStatementParent, variable);
       }
