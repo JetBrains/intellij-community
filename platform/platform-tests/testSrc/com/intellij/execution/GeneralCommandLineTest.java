@@ -404,7 +404,7 @@ public class GeneralCommandLineTest {
     File temp = tempDir.newFile("temp");
     FileUtil.writeToFile(temp, "something");
     assertTrue(temp.exists());
-    GeneralCommandLine cmd = new GeneralCommandLine(SystemInfo.isWindows ? "ver" : "uname");
+    GeneralCommandLine cmd = SystemInfo.isWindows ? new GeneralCommandLine("cmd", "/c", "ver") : new GeneralCommandLine("uname");
     OSProcessHandler.deleteFileOnTermination(cmd, temp);
     execAndGetOutput(cmd);
     assertFalse(temp.exists());
