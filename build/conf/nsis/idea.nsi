@@ -1342,9 +1342,11 @@ skip_delete_settings:
   StrCpy $5 "Software\${MANUFACTURER}"
 shortcuts:
   ;user has the admin rights
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
+  SetShellVarContext current
+  IfFileExists "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
   SetShellVarContext all
 keep_current_user:
+  DetailPrint "Desktop: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
   DetailPrint "Start Menu: $SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}"
 
   Delete "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
