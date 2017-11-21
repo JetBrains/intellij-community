@@ -726,6 +726,12 @@ public class JDOMUtil {
       iterator.remove();
 
       Element existingChild = to.getChild(child.getName());
+      if (existingChild != null && isEmpty(existingChild)) {
+        // replace empty tag
+        to.removeChild(child.getName());
+        existingChild = null;
+      }
+
       // if no children (e.g. `<module fileurl="value" />`), it means that element should be added as list item
       if (existingChild == null || existingChild.getChildren().isEmpty() || !isAttributesEqual(existingChild.getAttributes(), child.getAttributes(), false)) {
         to.addContent(child);
