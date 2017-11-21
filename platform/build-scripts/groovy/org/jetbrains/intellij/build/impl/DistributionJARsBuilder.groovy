@@ -127,6 +127,7 @@ class DistributionJARsBuilder {
         withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
       }
       withProjectLibrariesFromIncludedModules(buildContext)
+      removeVersionFromProjectLibraryJarNames("Trove4j")
     }
   }
 
