@@ -531,33 +531,41 @@ public class ExternalSystemUtil {
         myTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
         if (project.isDisposed()) return;
 
-        final Throwable error = myTask.getError();
-        if (error == null) {
-          if (callback != null) {
-            DataNode<ProjectData> externalProject = myTask.getExternalProject();
-            if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
-              externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+        try {
+          final Throwable error = myTask.getError();
+          if (error == null) {
+            if (callback != null) {
+              DataNode<ProjectData> externalProject = myTask.getExternalProject();
+              if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+                externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+              }
+              callback.onSuccess(externalProject);
             }
-            callback.onSuccess(externalProject);
+            if (!isPreviewMode) {
+              externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+            }
+            return;
           }
-          if (!isPreviewMode) {
-            externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+          if (error instanceof ImportCanceledException) {
+            // stop refresh task
+            return;
           }
-          return;
-        }
-        if (error instanceof ImportCanceledException) {
-          // stop refresh task
-          return;
-        }
-        String message = ExternalSystemApiUtil.buildErrorMessage(error);
-        if (StringUtil.isEmpty(message)) {
-          message = String.format(
-            "Can't resolve %s project at '%s'. Reason: %s", externalSystemId.getReadableName(), externalProjectPath, message
-          );
-        }
+          String message = ExternalSystemApiUtil.buildErrorMessage(error);
+          if (StringUtil.isEmpty(message)) {
+            message = String.format(
+              "Can't resolve %s project at '%s'. Reason: %s", externalSystemId.getReadableName(), externalProjectPath, message
+            );
+          }
 
-        if (callback != null) {
-          callback.onFailure(message, extractDetails(error));
+          if (callback != null) {
+            callback.onFailure(message, extractDetails(error));
+          }
+        }
+        finally {
+          if (!isPreviewMode) {
+            project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
+            project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
+          }
         }
       }
 
