@@ -47,12 +47,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   private static Process startProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    Set<File> tempFiles = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     try {
       return commandLine.createProcess();
     }
     catch (ExecutionException | RuntimeException | Error e) {
-      deleteTempFiles(tempFiles);
+      deleteTempFiles(commandLine.getUserData(DELETE_FILES_ON_TERMINATION));
       throw e;
     }
   }
@@ -70,7 +69,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
   @Deprecated
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
