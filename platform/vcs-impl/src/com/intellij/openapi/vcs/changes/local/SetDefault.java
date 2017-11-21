@@ -51,9 +51,4 @@ public class SetDefault implements ChangeListCommand {
       dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy);
     }
   }
-
-  @Nullable
-  public String getPrevious() {
-    return myPrevious;
-  }
 }

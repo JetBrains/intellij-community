@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.changes.local.*;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,24 +45,19 @@ public class Modifier {
     return command.getNewListCopy();
   }
 
-  @Nullable
-  public String setDefault(String name) {
+  public void setDefault(String name) {
     SetDefault command = new SetDefault(name);
     impl(command);
-    return command.getPrevious();
   }
 
-  public boolean removeChangeList(@NotNull String name) {
+  public void removeChangeList(@NotNull String name) {
     RemoveList command = new RemoveList(name);
     impl(command);
-    return command.isRemoved();
   }
 
-  @Nullable
-  public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
+  public void moveChangesTo(String name, @NotNull Change[] changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
-    return command.getMovedFrom();
   }
 
   private void impl(ChangeListCommand command) {

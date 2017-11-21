@@ -44,8 +44,4 @@ public class RemoveList implements ChangeListCommand {
       multicaster.changeListRemoved(myListCopy);
     }
   }
-
-  public boolean isRemoved() {
-    return myRemoved;
-  }
 }
