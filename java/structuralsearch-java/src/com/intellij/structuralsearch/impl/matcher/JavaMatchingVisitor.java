@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -34,6 +20,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -421,53 +408,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
-    final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
-
     this.myClazz = clazz2;
+    final JavaCompiledPattern javaPattern = (JavaCompiledPattern)myMatchingVisitor.getMatchContext().getPattern();
 
-    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
-    assert pattern instanceof JavaCompiledPattern;
-    final JavaCompiledPattern javaPattern = (JavaCompiledPattern)pattern;
-
-    MatchContext.MatchedElementsListener listener = new MatchContext.MatchedElementsListener() {
-      private Set<PsiElement> myMatchedElements;
-
-      @Override
-      public void matchedElements(Collection<PsiElement> matchedElements) {
-        if (matchedElements == null) return;
-        if (myMatchedElements == null) {
-          myMatchedElements = new HashSet<>(matchedElements);
-        }
-        else {
-          myMatchedElements.addAll(matchedElements);
-        }
-      }
-
-      @Override
-      public void commitUnmatched() {
-        final List<PsiMember> members = PsiTreeUtil.getChildrenOfTypeAsList(clazz2, PsiMember.class);
-        final List<PsiMember> unmatchedElements =
-          ContainerUtil.filter(members, a -> myMatchedElements == null || !myMatchedElements.contains(a));
-        MatchingHandler unmatchedSubstitutionHandler = null;
-        for (PsiElement element = clazz.getFirstChild(); element != null; element = element.getNextSibling()) {
-          if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
-            unmatchedSubstitutionHandler = pattern.getHandler(element);
-            break;
-          }
-        }
-        if (unmatchedSubstitutionHandler instanceof SubstitutionHandler) {
-          final SubstitutionHandler handler = (SubstitutionHandler)unmatchedSubstitutionHandler;
-          for (PsiMember element : unmatchedElements) {
-            handler.handle(element, myMatchingVisitor.getMatchContext());
-          }
-        } else {
-          clazz2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
-        }
-      }
-    };
-    myMatchingVisitor.getMatchContext().setMatchedElementsListener(listener);
-
-    boolean result = false;
+    final Set<PsiElement> matchedElements = new THashSet<>();
+    final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
+    myMatchingVisitor.getMatchContext().setMatchedElementsListener(es -> matchedElements.addAll(es));
     try {
       final boolean templateIsInterface = clazz.isInterface();
       if (templateIsInterface && !clazz2.isInterface()) return false;
@@ -543,11 +489,27 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      result = true;
+      final List<PsiElement> unmatchedElements = new SmartList<>(PsiTreeUtil.getChildrenOfTypeAsList(clazz2, PsiMember.class));
+      unmatchedElements.removeAll(matchedElements);
+      MatchingHandler unmatchedSubstitutionHandler = null;
+      for (PsiElement element = clazz.getFirstChild(); element != null; element = element.getNextSibling()) {
+        if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
+          unmatchedSubstitutionHandler = myMatchingVisitor.getMatchContext().getPattern().getHandler(element);
+          break;
+        }
+      }
+      if (unmatchedSubstitutionHandler instanceof SubstitutionHandler) {
+        final SubstitutionHandler handler = (SubstitutionHandler)unmatchedSubstitutionHandler;
+        for (PsiElement element : unmatchedElements) {
+          handler.handle(element, myMatchingVisitor.getMatchContext());
+        }
+      } else {
+        clazz2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
+      }
+
       return true;
     }
     finally {
-      if (result) listener.commitUnmatched();
       this.myClazz = saveClazz;
       myMatchingVisitor.getMatchContext().setMatchedElementsListener(oldListener);
     }
