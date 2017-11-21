@@ -60,7 +60,7 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
     List<Trinity<PsiLanguageInjectionHost, InjectedLanguage,TextRange>> trinities =
       Collections.singletonList(Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host)));
     InjectorUtils.registerInjection(language, trinities, containingFile, registrar);
-    InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, registrar);
+    InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, context, language);
   }
 
 }

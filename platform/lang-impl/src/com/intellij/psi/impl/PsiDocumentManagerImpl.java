@@ -19,8 +19,8 @@ package com.intellij.psi.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindowImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
@@ -43,7 +43,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
@@ -206,6 +205,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @NotNull
   @Override
   protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
-    return MultiHostRegistrarImpl.freezeWindow((DocumentWindowImpl)document);
+    return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
 }

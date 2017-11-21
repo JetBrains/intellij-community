@@ -57,7 +57,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,10 +65,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
-*/
-public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationTracker {
+class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationTracker {
   private List<Pair<Place, PsiFile>> result;
   private Language myLanguage;
   private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
@@ -86,9 +82,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private final PsiFile myHostPsiFile;
   private ReferenceInjector myReferenceInjector;
 
-  public MultiHostRegistrarImpl(@NotNull Project project,
-                                @NotNull PsiFile hostPsiFile,
-                                @NotNull PsiElement contextElement) {
+  MultiHostRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
@@ -99,18 +93,21 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
 
-  public List<Pair<Place, PsiFile>> getResult() {
+  @Nullable("null means nobody cared to call .doneInjecting()")
+  List<Pair<Place, PsiFile>> getResult() {
     return result;
   }
 
   @NotNull
-  public PsiElement getContextElement() {
-    return myContextElement;
+  @Override
+  public MultiHostRegistrar startInjecting(@NotNull Language language) {
+    return startInjecting(language, null);
   }
 
-  @Override
   @NotNull
-  public MultiHostRegistrar startInjecting(@NotNull Language language) {
+  @Override
+  public MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
+    fileExtension = extension;
     escapers = new SmartList<>();
     shreds = new SmartList<>();
     outChars = new StringBuilder();
@@ -129,9 +126,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       myReferenceInjector = injector;
     }
     myLanguage = language;
-    // todo uncomment
-    //LanguageFileType fileType = myLanguage.getAssociatedFileType();
-    //fileExtension = fileType == null ? null : fileType.getDefaultExtension();
     return this;
   }
 
@@ -144,10 +138,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     myLanguage = null;
 
     cleared = true;
-  }
-
-  public void setFileExtension(@Nullable  String fileExtension) {
-    this.fileExtension = fileExtension;
   }
 
   @Override
@@ -306,12 +296,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     }
   }
 
-  @NotNull
-  private static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
+  private static void createDocument(@NotNull LightVirtualFile virtualFile) {
     CharSequence content = virtualFile.getContent();
     DocumentImpl document = new DocumentImpl(content, StringUtil.indexOf(content, '\r') >= 0, false);
     FileDocumentManagerImpl.registerDocument(document, virtualFile);
-    return document;
   }
 
   // returns true if shreds were set, false if old ones were reused
@@ -388,12 +376,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  public void addToResults(Place place, PsiFile psiFile, @NotNull MultiHostRegistrarImpl from) {
+  void addToResults(@NotNull Place place, @Nullable /*WAT?*/PsiFile psiFile, @NotNull MultiHostRegistrarImpl from) {
     addToResults(place, psiFile);
     myReferenceInjector = from.myReferenceInjector;
   }
 
-  private void addToResults(Place place, PsiFile psiFile) {
+  private void addToResults(@NotNull Place place, @Nullable /*WAT?*/PsiFile psiFile) {
     if (result == null) {
       result = new SmartList<>();
     }
@@ -430,12 +418,13 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     TreeUtil.clearCaches((TreeElement)parsedNode);
   }
 
-  // under com.intellij.psi.PsiLock.LOCK
-  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,
-                                          final PsiFile injectedPsi,
-                                          final Place shreds,
-                                          final PsiFile hostPsiFile,
-                                          final PsiDocumentManager documentManager) {
+  // under InjectedLanguageManagerImpl.ourInjectionPsiLock
+  @NotNull
+  private static PsiFile registerDocument(@NotNull DocumentWindowImpl newDocumentWindow,
+                                          @NotNull PsiFile newInjectedPsi,
+                                          @NotNull Place shreds,
+                                          @NotNull PsiFile hostPsiFile,
+                                          @NotNull PsiDocumentManager documentManager) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
 
     for (int i = injected.size()-1; i>=0; i--) {
@@ -451,44 +440,51 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         Disposer.dispose(oldDocument);
         continue;
       }
-      InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)viewProvider;
 
-      final ASTNode injectedNode = injectedPsi.getNode();
+      final ASTNode newInjectedNode = newInjectedPsi.getNode();
       final ASTNode oldFileNode = oldFile.getNode();
-      assert injectedNode != null : "New node is null";
-      if (oldDocument.areRangesEqual(documentWindow)) {
-        if (oldFile.getFileType() != injectedPsi.getFileType() || oldFile.getLanguage() != injectedPsi.getLanguage()) {
+      assert newInjectedNode != null : "New node is null";
+      if (oldDocument.areRangesEqual(newDocumentWindow)) {
+        if (oldFile.getFileType() != newInjectedPsi.getFileType() || oldFile.getLanguage() != newInjectedPsi.getLanguage()) {
           injected.remove(i);
           Disposer.dispose(oldDocument);
           continue;
         }
-        oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
+        oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, newInjectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
 
         assert shreds.isValid();
-        if (!oldFile.textMatches(injectedPsi)) {
-          oldViewProvider.performNonPhysically(() -> {
-            DebugUtil.startPsiModification("injected tree diff");
-            try {
-              final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                                  oldFileNode.getText());
-              DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
-            }
-            finally {
-              DebugUtil.finishPsiModification();
-            }
-          });
-        }
+        mergePsi(oldFile, oldFileNode, newInjectedPsi, newInjectedNode);
         assert shreds.isValid();
 
         return oldFile;
       }
-      else if (intersect(oldDocument, documentWindow)) {
+      else if (intersect(oldDocument, newDocumentWindow)) {
         injected.remove(i); // injected fragments should not overlap. In the End, there can be only one.
       }
     }
-    injected.add(documentWindow);
+    injected.add(newDocumentWindow);
 
-    return injectedPsi;
+    return newInjectedPsi;
+  }
+
+  private static void mergePsi(@NotNull PsiFileImpl oldFile,
+                               @NotNull ASTNode oldFileNode,
+                               @NotNull PsiFile injectedPsi,
+                               @NotNull ASTNode injectedNode) {
+    if (!oldFile.textMatches(injectedPsi)) {
+      InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
+      oldViewProvider.performNonPhysically(() -> {
+        DebugUtil.startPsiModification("injected tree diff");
+        try {
+          final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                              oldFileNode.getText());
+          DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
+        }
+        finally {
+          DebugUtil.finishPsiModification();
+        }
+      });
+    }
   }
 
   private static boolean intersect(DocumentWindowImpl doc1, DocumentWindowImpl doc2) {
@@ -583,22 +579,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     return String.valueOf(result);
   }
 
+  // performance: avoid context.getContainingFile()
   @NotNull
-  public PsiFile getHostPsiFile() {
+  PsiFile getHostPsiFile() {
     return myHostPsiFile;
   }
 
   ReferenceInjector getReferenceInjector() {
     return myReferenceInjector;
-  }
-
-  @NotNull
-  public static DocumentWindow freezeWindow(@NotNull DocumentWindowImpl window) {
-    Place shreds = window.getShreds();
-    Project project = shreds.getHostPointer().getProject();
-    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
-    Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl) shred).withPsiRange()));
-    return new DocumentWindowImpl(delegate, window.isOneLine(), place);
   }
 
   boolean isValid() {
