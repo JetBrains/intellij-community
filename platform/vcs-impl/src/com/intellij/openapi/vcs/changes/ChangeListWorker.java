@@ -216,23 +216,6 @@ public class ChangeListWorker {
     ensureDefaultListExists();
   }
 
-  private void addChangeToList(@NotNull ListData list, @NotNull Change change, VcsKey vcsKey) {
-    list.addChange(change);
-    myIdx.changeAdded(change, vcsKey);
-  }
-
-  public void addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() +
-                " vcs: " + (vcsKey == null ? null : vcsKey.getName()));
-    }
-
-    ListData changeList = getDataByName(name);
-    if (changeList == null) return;
-
-    addChangeToList(changeList, change, vcsKey);
-  }
-
   public boolean removeChangeList(@NotNull String name) {
     ListData list = getDataByName(name);
     if (list == null) return false;
@@ -358,18 +341,6 @@ public class ChangeListWorker {
     if (pair == null) return null;
 
     return toChangeList(pair.first);
-  }
-
-  public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
-    myIdx.remove(filePath);
-
-    Pair<ListData, Change> pair = getChangeAndListByPath(filePath);
-    if (pair == null) return;
-
-    ListData list = pair.first;
-    Change change = pair.second;
-
-    list.removeChange(change);
   }
 
   @Nullable
@@ -805,7 +776,15 @@ public class ChangeListWorker {
 
 
     public void addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
-      myWorker.addChangeToList(name, change, vcsKey);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() +
+                  " vcs: " + (vcsKey == null ? null : vcsKey.getName()));
+      }
+
+      ListData changeList = myWorker.getDataByName(name);
+      if (changeList == null) return;
+
+      addChangeToList(changeList, change, vcsKey);
     }
 
     public void addChangeToCorrespondingList(@NotNull Change change, VcsKey vcsKey) {
@@ -821,7 +800,7 @@ public class ChangeListWorker {
           if (LOG.isDebugEnabled()) {
             LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
           }
-          myWorker.addChangeToList(list, change, vcsKey);
+          addChangeToList(list, change, vcsKey);
           return;
         }
       }
@@ -829,11 +808,24 @@ public class ChangeListWorker {
       if (LOG.isDebugEnabled()) {
         LOG.debug("[addChangeToCorrespondingList] added to default list");
       }
-      myWorker.addChangeToList(myWorker.myDefault, change, vcsKey);
+      addChangeToList(myWorker.myDefault, change, vcsKey);
+    }
+
+    private void addChangeToList(@NotNull ListData list, @NotNull Change change, VcsKey vcsKey) {
+      list.addChange(change);
+      myWorker.myIdx.changeAdded(change, vcsKey);
     }
 
     public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
-      myWorker.removeRegisteredChangeFor(filePath);
+      myWorker.myIdx.remove(filePath);
+
+      Pair<ListData, Change> pair = myWorker.getChangeAndListByPath(filePath);
+      if (pair == null) return;
+
+      ListData list = pair.first;
+      Change change = pair.second;
+
+      list.removeChange(change);
     }
 
 
