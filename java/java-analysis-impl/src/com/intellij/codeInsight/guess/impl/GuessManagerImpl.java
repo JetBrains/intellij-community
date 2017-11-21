@@ -501,6 +501,10 @@ public class GuessManagerImpl extends GuessManager {
         TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
+          if (myConstraint == null) {
+            myConstraint = TypeConstraint.EMPTY;
+            return;
+          }
         }
       }
     }
