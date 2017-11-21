@@ -16,7 +16,6 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
@@ -148,7 +147,7 @@ public class ExecutionNode extends CachingSimpleNode {
       final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
       String durationText = StringUtil.formatDuration(duration);
       int index = durationText.indexOf("s ");
-      if(index != -1) {
+      if (index != -1) {
         durationText = durationText.substring(0, index + 1);
       }
       return "Running for " + durationText;
@@ -218,10 +217,7 @@ public class ExecutionNode extends CachingSimpleNode {
     if (myResult instanceof FailureResult) {
       List<Navigatable> result = new SmartList<>();
       for (Failure failure : ((FailureResult)myResult).getFailures()) {
-        NotificationData notificationData = ((FailureImpl)failure).getNotificationData();
-        if (notificationData != null) {
-          ContainerUtil.addIfNotNull(result, notificationData.getNavigatable());
-        }
+        ContainerUtil.addIfNotNull(result, failure.getNavigatable());
       }
       return result;
     }
