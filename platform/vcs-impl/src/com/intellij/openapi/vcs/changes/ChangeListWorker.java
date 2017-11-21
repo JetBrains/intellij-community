@@ -95,38 +95,19 @@ public class ChangeListWorker {
     myDefault.isDefault = true;
   }
 
-  public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
-                                     @NotNull PlusMinusModify<BaseRevision> deltaListener) {
-    boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
-
-    setChangeLists(ContainerUtil.map(updatedWorker.myLists, updatedWorker::toChangeList));
-
-    if (somethingChanged) {
-      FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    }
-  }
-
-  private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
-                                            @NotNull PlusMinusModify<BaseRevision> deltaListener) {
-    final Set<BaseRevision> toRemove = new HashSet<>();
-    final Set<BaseRevision> toAdd = new HashSet<>();
-    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
-    was.getDelta(became, toRemove, toAdd, toModify);
-
-    for (BaseRevision pair : toRemove) {
-      deltaListener.minus(pair);
-    }
-    for (BaseRevision pair : toAdd) {
-      deltaListener.plus(pair);
-    }
-    for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
-      deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
-    }
-    return !toRemove.isEmpty() || !toAdd.isEmpty();
-  }
-
   public ChangeListWorker copy() {
     return new ChangeListWorker(this);
+  }
+
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
+  public LocalChangeList getDefaultList() {
+    return toChangeList(myDefault);
   }
 
   @Nullable
@@ -140,6 +121,110 @@ public class ChangeListWorker {
     if (id == null) return null;
     return toChangeList(getDataById(id));
   }
+
+  @NotNull
+  public List<LocalChangeList> getChangeLists() {
+    return ContainerUtil.map(myLists, this::toChangeList);
+  }
+
+  public int getChangeListsNumber() {
+    return myLists.size();
+  }
+
+
+  @Nullable
+  public Change getChangeForPath(@Nullable FilePath filePath) {
+    if (filePath == null) return null;
+    for (ListData list : myLists) {
+      for (Change change : list.changes) {
+        ContentRevision before = change.getBeforeRevision();
+        ContentRevision after = change.getAfterRevision();
+        if (before != null && before.getFile().equals(filePath) ||
+            after != null && after.getFile().equals(filePath)) {
+          return change;
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public Collection<Change> getAllChanges() {
+    final Collection<Change> changes = new HashSet<>();
+    for (ListData list : myLists) {
+      changes.addAll(list.changes);
+    }
+    return changes;
+  }
+
+  @NotNull
+  public List<LocalChangeList> getChangeListsForChange(@NotNull Change change) {
+    return getInvolvedLists(Collections.singletonList(change));
+  }
+
+  @NotNull
+  public List<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
+    List<LocalChangeList> result = new ArrayList<>();
+
+    for (ListData list : myLists) {
+      for (Change change : changes) {
+        if (list.changes.contains(change)) {
+          result.add(toChangeList(list));
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
+
+  @NotNull
+  public List<File> getAffectedPaths() {
+    return ContainerUtil.map(myIdx.getAffectedPaths(), FilePath::getIOFile);
+  }
+
+  @NotNull
+  public List<VirtualFile> getAffectedFiles() {
+    return ContainerUtil.mapNotNull(myIdx.getAffectedPaths(), FilePath::getVirtualFile);
+  }
+
+  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
+    FilePath dir = VcsUtil.getFilePath(virtualFile);
+    return myIdx.haveChangesUnder(dir);
+  }
+
+  @NotNull
+  public List<Change> getChangesUnder(@NotNull FilePath dirPath) {
+    List<Change> changes = new ArrayList<>();
+    for (ListData list : myLists) {
+      for (Change change : list.changes) {
+        ContentRevision after = change.getAfterRevision();
+        ContentRevision before = change.getBeforeRevision();
+        if (after != null && after.getFile().isUnder(dirPath, false) ||
+            before != null && before.getFile().isUnder(dirPath, false)) {
+          changes.add(change);
+        }
+      }
+    }
+    return changes;
+  }
+
+  @Nullable
+  public VcsKey getVcsFor(@NotNull Change change) {
+    return myIdx.getVcsFor(change);
+  }
+
+  @Nullable
+  public FileStatus getStatus(@NotNull VirtualFile file) {
+    return myIdx.getStatus(file);
+  }
+
+  @Nullable
+  public FileStatus getStatus(@NotNull FilePath file) {
+    return myIdx.getStatus(file);
+  }
+
 
   public boolean setDefaultList(String name) {
     ListData newDefault = getDataByName(name);
@@ -159,6 +244,30 @@ public class ChangeListWorker {
     return true;
   }
 
+  public boolean editName(@NotNull String fromName, @NotNull String toName) {
+    if (fromName.equals(toName)) return false;
+    if (getDataByName(toName) != null) return false;
+
+    final ListData list = getDataByName(fromName);
+    if (list == null || list.isReadOnly) return false;
+
+    list.name = toName;
+    return true;
+  }
+
+  @Nullable
+  public String editComment(@NotNull String name, @NotNull String newComment) {
+    final ListData list = getDataByName(name);
+    if (list == null) return null;
+
+    final String oldComment = list.comment;
+    if (!Comparing.equal(oldComment, newComment)) {
+      list.comment = newComment;
+    }
+    return oldComment;
+  }
+
+
   @NotNull
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String description, @Nullable String id,
                                        @Nullable ChangeListData data) {
@@ -175,33 +284,6 @@ public class ChangeListWorker {
     putNewListData(list);
 
     return toChangeList(list);
-  }
-
-  void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
-    myDefault = null;
-    myLists.clear();
-    myIdx.clear();
-
-    for (LocalChangeListImpl list : lists) {
-      ListData copy = new ListData(list);
-      putNewListData(copy);
-
-      if (list.isDefault()) {
-        if (myDefault != null) {
-          LOG.error("multiple default lists found");
-          copy.isDefault = false;
-        }
-        else {
-          myDefault = copy;
-        }
-      }
-
-      for (Change change : copy.changes) {
-        myIdx.changeAdded(change, null);
-      }
-    }
-
-    ensureDefaultListExists();
   }
 
   public boolean removeChangeList(@NotNull String name) {
@@ -245,142 +327,63 @@ public class ChangeListWorker {
     return result;
   }
 
-  public boolean editName(@NotNull String fromName, @NotNull String toName) {
-    if (fromName.equals(toName)) return false;
-    if (getDataByName(toName) != null) return false;
 
-    final ListData list = getDataByName(fromName);
-    if (list == null || list.isReadOnly) return false;
+  public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
+                                     @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+    boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
-    list.name = toName;
-    return true;
-  }
+    setChangeLists(ContainerUtil.map(updatedWorker.myLists, updatedWorker::toChangeList));
 
-  @Nullable
-  public String editComment(@NotNull String name, @NotNull String newComment) {
-    final ListData list = getDataByName(name);
-    if (list == null) return null;
-
-    final String oldComment = list.comment;
-    if (!Comparing.equal(oldComment, newComment)) {
-      list.comment = newComment;
+    if (somethingChanged) {
+      FileStatusManager.getInstance(myProject).fileStatusesChanged();
     }
-    return oldComment;
   }
 
-  public boolean isEmpty() {
-    return myLists.isEmpty();
+  private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
+                                            @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+    final Set<BaseRevision> toRemove = new HashSet<>();
+    final Set<BaseRevision> toAdd = new HashSet<>();
+    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
+    was.getDelta(became, toRemove, toAdd, toModify);
+
+    for (BaseRevision pair : toRemove) {
+      deltaListener.minus(pair);
+    }
+    for (BaseRevision pair : toAdd) {
+      deltaListener.plus(pair);
+    }
+    for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
+      deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
+    }
+    return !toRemove.isEmpty() || !toAdd.isEmpty();
   }
 
-  @NotNull
-  public LocalChangeList getDefaultList() {
-    return toChangeList(myDefault);
-  }
 
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
+  void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
+    myDefault = null;
+    myLists.clear();
+    myIdx.clear();
 
-  @NotNull
-  public List<LocalChangeList> getChangeLists() {
-    return ContainerUtil.map(myLists, this::toChangeList);
-  }
+    for (LocalChangeListImpl list : lists) {
+      ListData copy = new ListData(list);
+      putNewListData(copy);
 
-  @NotNull
-  public List<File> getAffectedPaths() {
-    return ContainerUtil.map(myIdx.getAffectedPaths(), FilePath::getIOFile);
-  }
-
-  @NotNull
-  public List<VirtualFile> getAffectedFiles() {
-    return ContainerUtil.mapNotNull(myIdx.getAffectedPaths(), FilePath::getVirtualFile);
-  }
-
-  @Nullable
-  public Change getChangeForPath(@Nullable FilePath filePath) {
-    if (filePath == null) return null;
-    for (ListData list : myLists) {
-      for (Change change : list.changes) {
-        ContentRevision before = change.getBeforeRevision();
-        ContentRevision after = change.getAfterRevision();
-        if (before != null && before.getFile().equals(filePath) ||
-            after != null && after.getFile().equals(filePath)) {
-          return change;
+      if (list.isDefault()) {
+        if (myDefault != null) {
+          LOG.error("multiple default lists found");
+          copy.isDefault = false;
+        }
+        else {
+          myDefault = copy;
         }
       }
-    }
-    return null;
-  }
 
-  @Nullable
-  public FileStatus getStatus(@NotNull VirtualFile file) {
-    return myIdx.getStatus(file);
-  }
-
-  @Nullable
-  public FileStatus getStatus(@NotNull FilePath file) {
-    return myIdx.getStatus(file);
-  }
-
-  @NotNull
-  public Collection<Change> getAllChanges() {
-    final Collection<Change> changes = new HashSet<>();
-    for (ListData list : myLists) {
-      changes.addAll(list.changes);
-    }
-    return changes;
-  }
-
-  public int getChangeListsNumber() {
-    return myLists.size();
-  }
-
-  @NotNull
-  public List<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
-    List<LocalChangeList> result = new ArrayList<>();
-
-    for (ListData list : myLists) {
-      for (Change change : changes) {
-        if (list.changes.contains(change)) {
-          result.add(toChangeList(list));
-          break;
-        }
+      for (Change change : copy.changes) {
+        myIdx.changeAdded(change, null);
       }
     }
 
-    return result;
-  }
-
-  @NotNull
-  public List<LocalChangeList> getChangeListsForChange(@NotNull Change change) {
-    return getInvolvedLists(Collections.singletonList(change));
-  }
-
-  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
-    FilePath dir = VcsUtil.getFilePath(virtualFile);
-    return myIdx.haveChangesUnder(dir);
-  }
-
-  @NotNull
-  public List<Change> getChangesUnder(@NotNull FilePath dirPath) {
-    List<Change> changes = new ArrayList<>();
-    for (ListData list : myLists) {
-      for (Change change : list.changes) {
-        ContentRevision after = change.getAfterRevision();
-        ContentRevision before = change.getBeforeRevision();
-        if (after != null && after.getFile().isUnder(dirPath, false) ||
-            before != null && before.getFile().isUnder(dirPath, false)) {
-          changes.add(change);
-        }
-      }
-    }
-    return changes;
-  }
-
-  @Nullable
-  public VcsKey getVcsFor(@NotNull Change change) {
-    return myIdx.getVcsFor(change);
+    ensureDefaultListExists();
   }
 
 
