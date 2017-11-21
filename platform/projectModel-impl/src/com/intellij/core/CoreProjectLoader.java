@@ -89,6 +89,6 @@ public class CoreProjectLoader {
 
   @NotNull
   static Map<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    return FileStorageCoreUtil.load(JdomKt.loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
+    return FileStorageCoreUtil.load(JdomKt.loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager));
   }
 }

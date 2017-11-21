@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
@@ -35,20 +36,19 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * @author traff
  */
 public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T extends RunConfigurationExtensionBase<U>> {
-  public static final Key<List<Element>> RUN_EXTENSIONS = Key.create("run.extension.elements");
+  private static final Key<List<Element>> RUN_EXTENSIONS = Key.create("run.extension.elements");
   private static final String EXT_ID_ATTR = "ID";
   private static final String EXTENSION_ROOT_ATTR = "EXTENSION";
 
-  protected final ExtensionPointName<T> myExtensionPointName;
+  private final ExtensionPointName<T> myExtensionPointName;
 
   public RunConfigurationExtensionsManager(ExtensionPointName<T> extensionPointName) {
     myExtensionPointName = extensionPointName;
@@ -63,35 +63,34 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     List<Element> children = parentNode.getChildren(getExtensionRootAttr());
     // if some of extensions settings weren't found we should just keep it because some plugin with extension
     // may be turned off
-    boolean found = true;
+    boolean hasUnknownExtension = false;
     for (Element element : children) {
       final T extension = extensions.remove(element.getAttributeValue(getIdAttrName()));
-      if (extension != null) {
-        extension.readExternal(configuration, element);
+      if (extension == null) {
+        hasUnknownExtension = true;
       }
       else {
-        found = false;
+        extension.readExternal(configuration, element);
       }
     }
-    if (!found) {
-      List<Element> copy = new ArrayList<>(children.size());
-      for (Element child : children) {
-        copy.add(child.clone());
-      }
+    if (hasUnknownExtension) {
+      List<Element> copy = children.stream().map(JDOMUtil::internElement).collect(Collectors.toList());
       configuration.putCopyableUserData(RUN_EXTENSIONS, copy);
     }
   }
 
+  @NotNull
   protected String getIdAttrName() {
     return EXT_ID_ATTR;
   }
 
+  @NotNull
   protected String getExtensionRootAttr() {
     return EXTENSION_ROOT_ATTR;
   }
 
   public void writeExternal(@NotNull U configuration, @NotNull Element parentNode) {
-    final TreeMap<String, Element> map = ContainerUtil.newTreeMap();
+    Map<String, Element> map = ContainerUtil.newTreeMap();
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
       for (Element element : elements) {
@@ -170,6 +169,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     }
   }
 
+  @NotNull
   protected List<T> getApplicableExtensions(@NotNull U configuration) {
     List<T> extensions = new SmartList<>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
@@ -180,6 +180,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     return extensions;
   }
 
+  @NotNull
   protected List<T> getEnabledExtensions(@NotNull U configuration, @Nullable RunnerSettings runnerSettings) {
     List<T> extensions = new SmartList<>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
