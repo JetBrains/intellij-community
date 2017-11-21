@@ -8,13 +8,17 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -41,6 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Objects;
 
 /**
  * @author traff
@@ -53,6 +58,9 @@ public class TerminalView {
   private final Project myProject;
 
   private TerminalDockContainer myDockContainer;
+
+  @Nullable
+  private VirtualFile myPreviousSelectedFile;
 
   public TerminalView(Project project) {
     myProject = project;
@@ -82,8 +90,16 @@ public class TerminalView {
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
         if (window != null) {
           boolean visible = window.isVisible();
-          if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            initTerminal(window);
+          if (visible) {
+            VirtualFile selectedFile = window.getSelectedFile().orElse(null);
+            if (toolWindow.getContentManager().getContentCount() == 0) {
+              initTerminal(window);
+              myPreviousSelectedFile = selectedFile;
+            }
+            else if (!Objects.equals(myPreviousSelectedFile, selectedFile)) {
+              terminalRunner.openSessionForFile(myTerminalWidget, selectedFile);
+              myPreviousSelectedFile = selectedFile;
+            }
           }
         }
       }
@@ -114,6 +130,7 @@ public class TerminalView {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
+    myPreviousSelectedFile = toolWindow.getSelectedFile().orElse(null);
     myTerminalWidget = terminalRunner.createTerminalWidget(content);
     myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
       @Override
@@ -394,4 +411,4 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   private static boolean isDfmSupportEnabled() {
     return Registry.get("terminal.distraction.free").asBoolean();
   }
-} 
+}

@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.Optional;
 
 public interface ToolWindow extends BusyObject {
 
@@ -45,6 +47,24 @@ public interface ToolWindow extends BusyObject {
   void activate(@Nullable Runnable runnable, boolean autoFocusContents);
 
   void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced);
+
+  /**
+   * Activates the tool window.
+   *
+   * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
+   * @param selectedFile A file that user have selected to open the window.
+   */
+  default void activate(@Nullable Runnable runnable, @Nullable VirtualFile selectedFile) {
+  }
+
+  /**
+   * Gets the file that user have opened the window for.
+   *
+   * @return the file, selected by user or {@link Optional#empty()}, if the user have selected nothing or file info is unavailable.
+   */
+  default Optional<VirtualFile> getSelectedFile() {
+    return Optional.empty();
+  }
 
   /**
    * @return whether the tool window is visible or not.
@@ -180,7 +200,7 @@ public interface ToolWindow extends BusyObject {
   void setShowStripeButton(boolean show);
 
   boolean isShowStripeButton();
-  
+
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);
