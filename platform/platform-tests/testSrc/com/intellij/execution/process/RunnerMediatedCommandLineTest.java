@@ -22,4 +22,9 @@ public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
     assumeTrue("runner mediator not found", injected);
     return commandLine;
   }
+
+  @Override
+  protected void assumeCanTestWindowsShell() {
+    assumeTrue(false);
+  }
 }
