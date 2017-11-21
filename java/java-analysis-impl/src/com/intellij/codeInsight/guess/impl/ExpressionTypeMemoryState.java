@@ -50,7 +50,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       return false;
     }
   };
-  private final MultiMap<PsiExpression, PsiType> myStates = MultiMap.create(EXPRESSION_HASHING_STRATEGY);
+  private final MultiMap<PsiExpression, PsiType> myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
 
   public ExpressionTypeMemoryState(final DfaValueFactory factory) {
     super(factory);

@@ -507,7 +507,7 @@ public class GuessManagerImpl extends GuessManager {
 
     private void addToResult(MultiMap<PsiExpression, PsiType> map) {
       if (myResult == null) {
-        myResult = MultiMap.create(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        myResult = MultiMap.createSet(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
         myResult.putAllValues(map);
       } else {
         final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
