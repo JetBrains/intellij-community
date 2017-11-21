@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Objects;
+
 /**
  * XIncludes in plugin.xml files are resolved in a bit different way than usually.
  * This class along with {@link PluginDescriptorXIncludeFileReferenceHelper} provides the way
@@ -44,10 +46,12 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
     @NotNull
     @Override
     public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      PsiFile containingFile = element.getContainingFile();
+      PsiFile file = containingFile != null ? containingFile.getOriginalFile() : null;
       return new FileReferenceSet(element) {
         @Override
         protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-          return item -> DescriptorUtil.isPluginXml(item.getContainingFile());
+          return item -> DescriptorUtil.isPluginXml(item.getContainingFile()) && !Objects.equals(file, item);
         }
       }.getAllReferences();
     }
