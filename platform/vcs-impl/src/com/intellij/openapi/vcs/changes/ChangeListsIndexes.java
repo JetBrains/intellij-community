@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.HashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +36,18 @@ public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
   private final Map<FilePath, Data> myMap;
   private final TreeSet<FilePath> myAffectedPaths;
+  private final Set<Change> myChanges;
 
   public ChangeListsIndexes() {
     myMap = new HashMap<>();
     myAffectedPaths = new TreeSet<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myChanges = new HashSet<>();
   }
 
   public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
     myMap = new HashMap<>(idx.myMap);
     myAffectedPaths = new TreeSet<>(idx.myAffectedPaths);
+    myChanges = new HashSet<>(idx.myChanges);
   }
 
   private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
@@ -54,7 +58,7 @@ public class ChangeListsIndexes {
     }
   }
 
-  public void remove(final FilePath file) {
+  private void remove(final FilePath file) {
     myMap.remove(file);
     myAffectedPaths.remove(file);
   }
@@ -71,6 +75,8 @@ public class ChangeListsIndexes {
   }
 
   public void changeAdded(@NotNull Change change, VcsKey key) {
+    myChanges.add(change);
+
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
 
@@ -90,6 +96,8 @@ public class ChangeListsIndexes {
   }
 
   public void changeRemoved(@NotNull Change change) {
+    myChanges.remove(change);
+
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
 
@@ -99,6 +107,11 @@ public class ChangeListsIndexes {
     if (beforeRevision != null) {
       remove(beforeRevision.getFile());
     }
+  }
+
+  @NotNull
+  public Set<Change> getChanges() {
+    return myChanges;
   }
 
   @Nullable

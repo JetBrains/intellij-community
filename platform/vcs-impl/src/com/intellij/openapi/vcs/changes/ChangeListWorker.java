@@ -135,14 +135,12 @@ public class ChangeListWorker {
   @Nullable
   public Change getChangeForPath(@Nullable FilePath filePath) {
     if (filePath == null) return null;
-    for (ListData list : myLists) {
-      for (Change change : list.changes) {
-        ContentRevision before = change.getBeforeRevision();
-        ContentRevision after = change.getAfterRevision();
-        if (before != null && before.getFile().equals(filePath) ||
-            after != null && after.getFile().equals(filePath)) {
-          return change;
-        }
+    for (Change change : myIdx.getChanges()) {
+      ContentRevision before = change.getBeforeRevision();
+      ContentRevision after = change.getAfterRevision();
+      if (before != null && before.getFile().equals(filePath) ||
+          after != null && after.getFile().equals(filePath)) {
+        return change;
       }
     }
     return null;
@@ -150,11 +148,7 @@ public class ChangeListWorker {
 
   @NotNull
   public Collection<Change> getAllChanges() {
-    final Collection<Change> changes = new HashSet<>();
-    for (ListData list : myLists) {
-      changes.addAll(list.changes);
-    }
-    return changes;
+    return new ArrayList<>(myIdx.getChanges());
   }
 
   @NotNull
@@ -197,14 +191,12 @@ public class ChangeListWorker {
   @NotNull
   public List<Change> getChangesUnder(@NotNull FilePath dirPath) {
     List<Change> changes = new ArrayList<>();
-    for (ListData list : myLists) {
-      for (Change change : list.changes) {
-        ContentRevision after = change.getAfterRevision();
-        ContentRevision before = change.getBeforeRevision();
-        if (after != null && after.getFile().isUnder(dirPath, false) ||
-            before != null && before.getFile().isUnder(dirPath, false)) {
-          changes.add(change);
-        }
+    for (Change change : myIdx.getChanges()) {
+      ContentRevision after = change.getAfterRevision();
+      ContentRevision before = change.getBeforeRevision();
+      if (after != null && after.getFile().isUnder(dirPath, false) ||
+          before != null && before.getFile().isUnder(dirPath, false)) {
+        changes.add(change);
       }
     }
     return changes;
@@ -735,6 +727,11 @@ public class ChangeListWorker {
     }
 
     private void addChangeToList(@NotNull ListData list, @NotNull Change change, VcsKey vcsKey) {
+      if (myWorker.myIdx.getChanges().contains(change)) {
+        LOG.warn(String.format("Multiple equal changes added: %s", change));
+        return;
+      }
+
       list.addChange(change);
       myWorker.myIdx.changeAdded(change, vcsKey);
     }
