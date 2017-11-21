@@ -299,6 +299,7 @@ public class PyRequirement {
    * @deprecated This method will be removed in 2018.2.
    */
   @NotNull
+  @Deprecated
   public PyRequirement withVersionComparator(@NotNull Comparator<String> comparator) {
     return new PyRequirement(myName,
                              ContainerUtil.map(myVersionSpecs, spec -> spec.withVersionComparator(comparator)), myInstallOptions, myExtras);
