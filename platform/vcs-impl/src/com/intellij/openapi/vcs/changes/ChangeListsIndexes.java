@@ -50,6 +50,17 @@ public class ChangeListsIndexes {
     myChanges = new HashSet<>(idx.myChanges);
   }
 
+  public void copyFrom(@NotNull ChangeListsIndexes idx) {
+    myMap.clear();
+    myAffectedPaths.clear();
+    myChanges.clear();
+
+    myMap.putAll(idx.myMap);
+    myAffectedPaths.addAll(idx.myAffectedPaths);
+    myChanges.addAll(idx.myChanges);
+  }
+
+
   private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
     myAffectedPaths.add(file);
