@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
   private final Map<Resource.Attribute, String> myAttributes;
+  private volatile SoftReference<Attributes> myCachedManifestAttributes;
 
   JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
@@ -58,7 +60,12 @@ class JarLoader extends Loader {
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
-      myAttributes = getAttributes(zipFile);
+      ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+      Attributes manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+
+      myAttributes = getAttributes(manifestAttributes);
+      myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
+
       if (preloadJarContents) {
         JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
         if (loader != null) {
@@ -71,6 +78,10 @@ class JarLoader extends Loader {
     }
   }
 
+  <T> T withManifestAttributes(Function<Attributes, T> processor) {
+    return processor.fun(myCachedManifestAttributes.get());
+  }
+
   private static String urlToFilePath(URL url) {
     try {
       return new File(url.toURI()).getPath();
@@ -80,29 +91,35 @@ class JarLoader extends Loader {
   }
 
   @Nullable
-  private static Map<Resource.Attribute, String> getAttributes(ZipFile zipFile) {
-    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-    if (entry == null) return null;
-
+  private static Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
+    if (attributes == null) return null;
     Map<Resource.Attribute, String> map = null;
     try {
-      InputStream stream = zipFile.getInputStream(entry);
-      try {
-        Attributes attributes = new Manifest(stream).getMainAttributes();
-        for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
-          String value = attributes.getValue(p.second);
-          if (value != null) {
-            if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
-            map.put(p.first, value);
-          }
+      for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+        String value = attributes.getValue(p.second);
+        if (value != null) {
+          if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+          map.put(p.first, value);
         }
+      }
+    }
+    catch (Exception ignored) { }
+    return map;
+  }
+
+  @Nullable
+  private static Attributes loadManifestAttributes(@Nullable InputStream stream) {
+    if (stream == null) return null;
+    try {
+      try {
+        return new Manifest(stream).getMainAttributes();
       }
       finally {
         stream.close();
       }
     }
     catch (Exception ignored) { }
-    return map;
+    return null;
   }
 
   @NotNull
