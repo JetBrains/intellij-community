@@ -87,15 +87,12 @@ public class ChangeListWorker {
   private void ensureDefaultListExists() {
     if (myDefault != null) return;
 
-    if (!myLists.isEmpty()) {
+    if (myLists.isEmpty()) {
+      putNewListData(new ListData(null, LocalChangeList.DEFAULT_NAME));
+    }
+
     myDefault = myLists.iterator().next();
     myDefault.isDefault = true;
-  }
-    else {
-      myDefault = new ListData(null, LocalChangeList.DEFAULT_NAME);
-      myDefault.isDefault = true;
-      putNewListData(myDefault);
-    }
   }
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
@@ -144,31 +141,22 @@ public class ChangeListWorker {
     return toChangeList(getDataById(id));
   }
 
-  /**
-   * @return previous default list name or null if nothing was done
-   */
-  @Nullable
-  public String setDefault(String name) {
+  public boolean setDefaultList(String name) {
     ListData newDefault = getDataByName(name);
-    if (newDefault == null) {
-      return null;
-    }
-
-    String previousName = myDefault.name;
+    if (newDefault == null || newDefault.isDefault) return false;
 
     myDefault.isDefault = false;
     newDefault.isDefault = true;
     myDefault = newDefault;
-
-    return previousName;
+    return true;
   }
 
   public boolean setReadOnly(String name, boolean value) {
     ListData list = getDataByName(name);
-    if (list != null) {
+    if (list == null || list.isReadOnly) return false;
+
     list.isReadOnly = value;
-  }
-    return list != null;
+    return true;
   }
 
   @NotNull
@@ -818,7 +806,7 @@ public class ChangeListWorker {
 
     @Override
     public void setDefaultChangeList(@NotNull String list) {
-      myWorker.setDefault(list);
+      myWorker.setDefaultList(list);
     }
   }
 }
