@@ -132,7 +132,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable,
       references,
       delete,
-      declaration -> anchorBlock.addBefore(declaration, anchor)
+      declaration -> {
+        PsiElement parent = anchorBlock.getParent();
+        if (parent instanceof PsiSwitchStatement) {
+          PsiElement switchContainer = parent.getParent();
+          return switchContainer.addBefore(declaration, parent);
+        }
+        return anchorBlock.addBefore(declaration, anchor);
+      }
     );
   }
 
