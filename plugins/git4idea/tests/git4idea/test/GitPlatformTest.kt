@@ -52,7 +52,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var vcsHelper: MockVcsHelper
   protected lateinit var logProvider: GitLogProvider
 
-  private lateinit var credentialHelpers: Map<ConfigScope, String>
+  private lateinit var credentialHelpers: Map<ConfigScope, List<String>>
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -169,21 +169,21 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
-  private fun readAndResetCredentialHelpers(): Map<ConfigScope, String> {
+  private fun readAndResetCredentialHelpers(): Map<ConfigScope, List<String>> {
     val system = readAndResetCredentialHelper(SYSTEM)
     val global = readAndResetCredentialHelper(GLOBAL)
     return mapOf(SYSTEM to system, GLOBAL to global)
   }
 
-  private fun readAndResetCredentialHelper(scope: ConfigScope): String {
-    val value = git("config ${scope.param()} --get-all credential.helper", true)
+  private fun readAndResetCredentialHelper(scope: ConfigScope): List<String> {
+    val values = git("config ${scope.param()} --get-all -z credential.helper", true).split("\u0000").filter{it.isNotBlank()}
     git("config ${scope.param()} --unset-all credential.helper", true)
-    return value
+    return values
   }
 
   private fun restoreCredentialHelpers() {
-    credentialHelpers.forEach { scope, value ->
-      if (value.isNotBlank()) git("config ${scope.param()} credential.helper ${value}", true)
+    credentialHelpers.forEach { scope, values ->
+      values.forEach { git("config --add ${scope.param()} credential.helper ${it}", true) }
     }
   }
 
