@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
@@ -40,6 +41,9 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionEditor = new XDebuggerExpressionComboBox(project, editorsProvider, historyId, sourcePosition, true, false) {
       @Override
       protected void prepareEditor(Editor editor) {
+        Font font = EditorUtil.getEditorFont();
+        editor.getColorsScheme().setEditorFontName(font.getFontName());
+        editor.getColorsScheme().setEditorFontSize(font.getSize());
       }
     };
     myExpressionEditor.setExpression(expression);
