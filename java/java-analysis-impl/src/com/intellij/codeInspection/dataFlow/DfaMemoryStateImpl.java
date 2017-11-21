@@ -894,7 +894,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
-    if (!isUnknownState(dfaVar)) {
+    if (!isUnknownState(dfaVar) && !(dfaVar.getVariableType() instanceof PsiPrimitiveType)) {
       if (value instanceof DfaConstValue) {
         Object constValue = ((DfaConstValue)value).getValue();
         if (constValue == null) {
