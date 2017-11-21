@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
@@ -196,8 +182,12 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     return myView.getFoldRegionLayout(foldRegion).getWidth();
   }
 
-  private static int getFoldRegionWidthInColumns(FoldRegion foldRegion) {
-    return foldRegion.getPlaceholderText().length();
+  private int getFoldRegionWidthInColumns(FoldRegion foldRegion) {
+    int maxVisualColumn = 0;
+    for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(foldRegion).getFragmentsInVisualOrder(0)) {
+      maxVisualColumn = fragment.getEndVisualColumn();
+    }
+    return maxVisualColumn;
   }
 
   private int[] getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
@@ -376,6 +366,33 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
                : column == myCurrentVisualColumn ? getEndX() : getStartX();
     }
 
+    int getVisualLength() {
+      if (myDelegate != null) return myDelegate.getLength();
+      if (myFoldRegion != null) {
+        int length = 0;
+        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
+          length += fragment.getLength();
+        }
+        return length;
+      }
+      return 0;
+    }
+
+    // returned offset is visual and relative (counted from fragment's start)
+    int visualColumnToOffset(int relativeVisualColumn) {
+      if (myDelegate != null) return myDelegate.visualColumnToOffset(relativeVisualColumn);
+      if (myFoldRegion != null) {
+        int relativeOffset = 0;
+        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(0)) {
+          if (relativeVisualColumn >= fragment.getStartVisualColumn() && relativeVisualColumn <= fragment.getEndVisualColumn()) {
+            return relativeOffset + fragment.visualColumnToOffset(relativeVisualColumn - fragment.getStartVisualColumn());
+          }
+          relativeOffset += fragment.getLength();
+        }
+      }
+      return 0;
+    }
+
     // absolute
     int getStartOffset() {
       return myDelegate != null ? myDelegate.getStartOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
@@ -427,19 +444,21 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myInlays.get(myCurrentInlayIndex - 1);
     }
 
-    // columns are visual (relative to fragment's start)
-    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
+    // offsets are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeOffset, int endRelativeOffset) {
       if (myDelegate != null) {
-        myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
+        myDelegate.draw(g, x, y, startRelativeOffset, endRelativeOffset);
       }
       else if (myFoldRegion != null) {
+        int relativeOffset = 0;
         for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
-          int fragmentStart = fragment.getStartVisualColumn();
-          int fragmentEnd = fragment.getEndVisualColumn();
-          if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
+          int relativeOffsetEnd = relativeOffset + fragment.getLength();
+          if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
             fragment.draw(g, fragment.getStartX(), y,
-                          Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+                          Math.max(0, startRelativeOffset - relativeOffset), 
+                          Math.min(relativeOffsetEnd, endRelativeOffset) - relativeOffset);
           }
+          relativeOffset = relativeOffsetEnd;
         }
       }
     }
