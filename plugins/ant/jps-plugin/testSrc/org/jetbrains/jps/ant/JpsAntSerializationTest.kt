@@ -15,22 +15,28 @@
  */
 package org.jetbrains.jps.ant
 
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.directoryContent
 import gnu.trove.THashSet
 import org.jetbrains.jps.ant.model.JpsAntExtensionService
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 
 /**
  * @author nik
  */
 class JpsAntSerializationTest : JpsSerializationTestCase() {
+  private lateinit var antHome: File
+
+  override fun setUp() {
+    super.setUp()
+    antHome = createTempDir("antHome")
+  }
+
   fun testLoadArtifactProperties() {
     loadProject(PROJECT_PATH)
     val artifacts = JpsArtifactService.getInstance().getSortedArtifacts(myProject)
@@ -63,6 +69,12 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
   }
 
   fun testLoadAntInstallations() {
+    directoryContent {
+      file("foo.jar")
+      dir("lib") {
+        file("bar.jar")
+      }
+    }.generate(antHome)
     loadGlobalSettings(OPTIONS_PATH)
     val installation = JpsAntExtensionService.findAntInstallation(myModel, "Apache Ant version 1.8.2")
     assertNotNull(installation)
@@ -71,15 +83,14 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
 
     val installation2 = JpsAntExtensionService.findAntInstallation(myModel, "Patched Ant")
     assertNotNull(installation2)
-    assertContainsElements(toFiles(installation2!!.classpath),
-                                          PathManagerEx.findFileUnderCommunityHome("lib/ant/lib/ant.jar"),
-                                          PathManagerEx.findFileUnderCommunityHome("lib/trove4j.jar"),
-                                          PathManagerEx.findFileUnderCommunityHome("lib/dev/easymock-3.4.jar"))
+    UsefulTestCase.assertSameElements(toFiles(installation2!!.classpath),
+                                      File(antHome, "foo.jar"),
+                                      File(antHome, "lib/bar.jar"))
   }
 
   override fun getPathVariables(): Map<String, String> {
     val pathVariables = super.getPathVariables()
-    pathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PlatformTestUtil.getCommunityPath())
+    pathVariables.put("MY_ANT_HOME_DIR", antHome.absolutePath)
     return pathVariables
   }
 
