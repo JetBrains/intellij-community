@@ -57,7 +57,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     LOG.info(String.format("Failed to import Gradle project at '%1$s'", projectPath), error);
 
     if(error instanceof ProcessCanceledException) {
-      return new ExternalSystemException("Project import was cancelled");
+      return new ExternalSystemException("Project build was cancelled");
     }
 
     Throwable rootCause = executionErrorHandler.getRootCause();
