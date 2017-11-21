@@ -443,7 +443,8 @@ public class ExternalSystemUtil {
           consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
         if (consoleView != null) {
           Disposer.register(project, consoleView);
-        } else {
+        }
+        else {
           Disposer.register(project, processHandler);
         }
 
@@ -458,6 +459,7 @@ public class ExternalSystemUtil {
                 Presentation p = e.getPresentation();
                 p.setEnabled(processHandler.isProcessTerminated());
               }
+
               @Override
               public void actionPerformed(AnActionEvent e) {
                 refreshProject(externalProjectPath, importSpec);
@@ -465,7 +467,8 @@ public class ExternalSystemUtil {
             };
             String systemId = id.getProjectSystemId().getReadableName();
             rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
-            rerunImportAction.getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
+            rerunImportAction.getTemplatePresentation()
+              .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
             String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
@@ -497,7 +500,9 @@ public class ExternalSystemUtil {
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            FailureResultImpl failureResult = createFailureResult(e, projectName, externalSystemId, project);
+            String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                        externalSystemId.getReadableName(), projectName);
+            FailureResultImpl failureResult = createFailureResult(title, e, externalSystemId, project);
             String message = isPreviewMode ? "project preview creation failed" : "sync failed";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
@@ -602,54 +607,76 @@ public class ExternalSystemUtil {
   }
 
   @NotNull
+  public static FailureResultImpl createFailureResult(@NotNull String title,
+                                                      @NotNull Exception exception,
+                                                      @NotNull ProjectSystemId externalSystemId,
+                                                      @NotNull Project project) {
+    ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
+    NotificationData notificationData = notificationManager.createNotification(title, exception, externalSystemId, project);
+    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
+  }
+
+  /**
+   * @deprecated to be removed in 2018.2
+   */
+  @NotNull
   public static FailureResultImpl createFailureResult(@NotNull Exception exception,
-                                                      String projectName,
-                                                      ProjectSystemId externalSystemId,
-                                                      Project project) {
+                                                      @NotNull String projectName,
+                                                      @NotNull ProjectSystemId externalSystemId,
+                                                      @NotNull Project project) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData = notificationManager.createNotification(exception, projectName, externalSystemId, project);
-    FailureResultImpl failureResult;
+    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
+  }
+
+  @NotNull
+  private static FailureResultImpl createFailureResult(@NotNull Exception exception,
+                                                       @NotNull ProjectSystemId externalSystemId,
+                                                       @NotNull Project project,
+                                                       @NotNull ExternalSystemNotificationManager notificationManager,
+                                                       @NotNull NotificationData notificationData) {
     if (notificationData.isBalloonNotification()) {
       notificationManager.showNotification(externalSystemId, notificationData);
-      failureResult = new FailureResultImpl(exception);
+      return new FailureResultImpl(exception);
+    }
+
+    NotificationGroup group;
+    if (notificationData.getBalloonGroup() == null) {
+      ExternalProjectsView externalProjectsView =
+        ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
+      group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+              ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
     }
     else {
-      NotificationGroup group;
-      if (notificationData.getBalloonGroup() == null) {
-        ExternalProjectsView externalProjectsView =
-          ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
-        group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-      }
-      else {
-        final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-        group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
-      }
-      if (group != null) {
-        int line = notificationData.getLine() - 1;
-        int column = notificationData.getColumn() - 1;
-        final VirtualFile virtualFile =
-          notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
-
-        final Navigatable navigatable;
-        if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
-          navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
-        }
-        else {
-          navigatable = notificationData.getNavigatable();
-        }
-
-        final Notification notification = group.createNotification(
-          notificationData.getTitle(), notificationData.getMessage(),
-          notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
-        failureResult = new FailureResultImpl(list(new FailureImpl(
-          notificationData.getMessage(), exception, new NotificationDataImpl(notification, notificationData.getListener(), navigatable))));
-      }
-      else {
-        failureResult = new FailureResultImpl(exception);
-      }
+      final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+      group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
     }
-    return failureResult;
+    int line = notificationData.getLine() - 1;
+    int column = notificationData.getColumn() - 1;
+    final VirtualFile virtualFile =
+      notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
+
+    final Navigatable navigatable;
+    if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
+      navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
+    }
+    else {
+      navigatable = notificationData.getNavigatable();
+    }
+
+    final Notification notification;
+    if (group == null) {
+      notification = new Notification(externalSystemId.getReadableName() + " build", notificationData.getTitle(),
+                                      notificationData.getMessage(),
+                                      notificationData.getNotificationCategory().getNotificationType(),
+                                      notificationData.getListener());
+    }
+    else {
+      notification = group.createNotification(
+        notificationData.getTitle(), notificationData.getMessage(),
+        notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+    }
+    return new FailureResultImpl(list(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable)));
   }
 
   public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
