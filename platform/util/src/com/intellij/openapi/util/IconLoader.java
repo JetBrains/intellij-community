@@ -466,9 +466,6 @@ public final class IconLoader {
 
     @NotNull
     private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
-      if (updateScaleContext(ctx)) {
-        myRealIcon = null;
-      }
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
@@ -491,32 +488,23 @@ public final class IconLoader {
           }
         }
       }
-      Object realIcon = myRealIcon;
-      if (realIcon instanceof Icon) return (ImageIcon)realIcon;
-
-      ImageIcon icon;
-      if (realIcon instanceof Reference) {
-        icon = ((Reference<ImageIcon>)realIcon).get();
-        if (icon != null) return icon;
+      if (!updateScaleContext(ctx) && myRealIcon != null) {
+        // try returning the current icon as the context is up-to-date
+        Object icon = myRealIcon;
+        if (icon instanceof Reference) icon = ((Reference<ImageIcon>)icon).get();
+        if (icon instanceof ImageIcon) return (ImageIcon)icon;
       }
 
-      icon = myScaledIconsCache.getOrScaleIcon(1f);
-
+      ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
       if (icon != null) {
-        if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {
-          realIcon = icon;
-        }
-        else {
-          realIcon = new SoftReference<ImageIcon>(icon);
-        }
-        myRealIcon = realIcon;
+        myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<ImageIcon>(icon);
+        return icon;
       }
-
-      return icon == null ? EMPTY_ICON : icon;
+      return EMPTY_ICON;
     }
 
     private boolean isValid() {
-      return myRealIcon != null && dark == USE_DARK_ICONS && getGlobalFilter() == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
+      return dark == USE_DARK_ICONS && getGlobalFilter() == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
     }
 
     @Override
