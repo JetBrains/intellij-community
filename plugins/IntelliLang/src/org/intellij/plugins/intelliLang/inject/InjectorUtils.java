@@ -19,16 +19,19 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -55,6 +58,7 @@ import java.util.regex.Pattern;
  * @author Gregory.Shrago
  */
 public class InjectorUtils {
+  private static final Logger LOG = Logger.getInstance(InjectorUtils.class);
   public static final Comparator<TextRange> RANGE_COMPARATOR = (o1, o2) -> {
     if (o1.intersects(o2)) return 0;
     return o1.getStartOffset() - o2.getStartOffset();
@@ -99,7 +103,7 @@ public class InjectorUtils {
     //}
     registerInjection(language, list, host.getContainingFile(), registrar);
     if (support != null) {
-      registerSupport(support, true, registrar);
+      registerSupport(support, true, host, language);
     }
     return !ranges.isEmpty();
   }
@@ -122,10 +126,12 @@ public class InjectorUtils {
       InjectedLanguage injectedLanguage = t.second;
 
       if (!injectionStarted) {
-        registrar.startInjecting(language);
         // TextMate language requires file extension
-        if (registrar instanceof MultiHostRegistrarImpl && !StringUtil.equalsIgnoreCase(language.getID(), t.second.getID())) {
-          ((MultiHostRegistrarImpl)registrar).setFileExtension(StringUtil.toLowerCase(t.second.getID()));
+        if (!StringUtil.equalsIgnoreCase(language.getID(), t.second.getID())) {
+          registrar.startInjecting(language, StringUtil.toLowerCase(t.second.getID()));
+        }
+        else {
+          registrar.startInjecting(language);
         }
         injectionStarted = true;
       }
@@ -219,19 +225,33 @@ public class InjectorUtils {
     return false;
   }
 
+  public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull PsiElement element, @NotNull Language language) {
+    putInjectedFileUserData(element, language, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
+    if (settingsAvailable) {
+      putInjectedFileUserData(element, language, LanguageInjectionSupport.SETTINGS_EDITOR, support);
+    }
+  }
+
+  /**
+   * @deprecated use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead
+   */
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
+    LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
     putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
     if (settingsAvailable) {
       putInjectedFileUserData(registrar, LanguageInjectionSupport.SETTINGS_EDITOR, support);
     }
   }
 
-  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
-    InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
+  public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, Key<T> key, T value) {
+    InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);
   }
 
-  public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
-    return InjectedLanguageUtil.getInjectedFile(registrar);
+  /**
+   * @deprecated use {@link InjectorUtils#putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead
+   */
+  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+    InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
 
   @SuppressWarnings("UnusedParameters")

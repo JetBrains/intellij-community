@@ -25,6 +25,14 @@ import com.intellij.openapi.util.TextRange;
 
 public interface MultiHostRegistrar {
   @NotNull /*this*/ MultiHostRegistrar startInjecting(@NotNull Language language);
+
+  /**
+   * @param extension The injected file name will have this extension. Some parsers require extension. By default the extension is taken from the host file.
+   */
+  @NotNull
+  default /*this*/ MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
+    return startInjecting(language);
+  }
   @NotNull /*this*/ MultiHostRegistrar addPlace(@NonNls @Nullable String prefix, @NonNls @Nullable String suffix, @NotNull PsiLanguageInjectionHost host, @NotNull TextRange rangeInsideHost);
   void doneInjecting();
 }

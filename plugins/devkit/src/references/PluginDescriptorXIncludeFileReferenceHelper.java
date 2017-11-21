@@ -12,11 +12,12 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Provides resource roots to be used as contexts in FileReferenceSet during the XIncludes resolving.
@@ -43,9 +44,10 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
   }
 
   private static Collection<PsiFileSystemItem> getRoots(@NotNull Project project) {
-    VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    List<VirtualFile> roots = ProjectRootManager.getInstance(project)
+      .getModuleSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
     PsiManager psiManager = PsiManager.getInstance(project);
-    return Stream.of(roots)
+    return roots.stream()
       .map(virtualFile -> psiManager.findDirectory(virtualFile))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

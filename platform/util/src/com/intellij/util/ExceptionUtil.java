@@ -54,7 +54,7 @@ public class ExceptionUtil {
     for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
       if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
       int newDepth = trace.length - i;
-      th.setStackTrace(Arrays.asList(trace).subList(0, newDepth).toArray(new StackTraceElement[newDepth]));
+      th.setStackTrace(Arrays.copyOf(trace, newDepth));
       break;
     }
     return th;

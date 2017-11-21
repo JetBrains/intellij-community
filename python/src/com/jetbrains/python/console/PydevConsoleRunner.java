@@ -145,8 +145,12 @@ public interface PydevConsoleRunner {
     return Pair.create(sdk, module);
   }
 
-  static String constructPyPathAndWorkingDirCommand(Collection<String> pythonPath, String workingDir, String command) {
-    pythonPath.add(workingDir);
+  static String constructPyPathAndWorkingDirCommand(@NotNull Collection<String> pythonPath,
+                                                    @Nullable String workingDir,
+                                                    @NotNull String command) {
+    if (workingDir != null) {
+      pythonPath.add(workingDir);
+    }
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath,
                                                                     input -> "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'"));
 

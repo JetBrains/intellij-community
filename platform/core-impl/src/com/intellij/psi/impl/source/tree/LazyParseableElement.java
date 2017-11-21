@@ -58,7 +58,7 @@ public class LazyParseableElement extends CompositeElement {
    * Guarded by {@link #lock}
    * */
   @NotNull private Getter<CharSequence> myText;
-  private boolean myParsed;
+  private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
@@ -142,9 +142,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   public boolean isParsed() {
-    synchronized (lock) {
-      return myParsed;
-    }
+    return myParsed;
   }
 
   private CharSequence myText() {
@@ -173,6 +171,8 @@ public class LazyParseableElement extends CompositeElement {
     if (!ourParsingAllowed) {
       LOG.error("Parsing not allowed!!!");
     }
+    if (myParsed) return;
+
     CharSequence text;
     synchronized (lock) {
       if (myParsed) return;

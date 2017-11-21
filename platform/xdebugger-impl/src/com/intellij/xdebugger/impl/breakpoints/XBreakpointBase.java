@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -279,7 +280,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public S getState() {
-    Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
+    Element propertiesElement =
+      myProperties == null ? null : JDOMUtil.internElement(XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS));
     myState.setCondition(BreakpointState.Condition.create(!myConditionEnabled, myCondition));
     myState.setLogExpression(BreakpointState.LogExpression.create(!myLogExpressionEnabled, myLogExpression));
     myState.setPropertiesElement(propertiesElement);

@@ -96,7 +96,7 @@ public abstract class AstPath extends SubstrateRef {
     return node.getUserData(NODE_PATH);
   }
 
-  static void cacheNodePaths(@NotNull LazyParseableElement parent, @NotNull TreeElement child, @Nullable AstPath parentPath) {
+  static void cacheNodePaths(@NotNull LazyParseableElement parent, @Nullable TreeElement child, @Nullable AstPath parentPath) {
     if (parentPath == null) {
       return;
     }
@@ -108,19 +108,28 @@ public abstract class AstPath extends SubstrateRef {
       child.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
         @Override
         public void visitComposite(CompositeElement composite) {
-          if (composite instanceof LazyParseableElement || composite.getElementType() instanceof IStubElementType) {
+          boolean lazy = composite instanceof LazyParseableElement;
+          if (lazy || composite.getElementType() instanceof IStubElementType) {
             int index = children.size();
             composite.putUserData(NODE_PATH, depth % 4 == 0 ? new MilestoneChildPath(parentPath, index, depth) : new ChildPath(parentPath, index));
             children.add(composite);
           }
 
-          super.visitComposite(composite);
+          if (!lazy) {
+            super.visitComposite(composite);
+          }
         }
       });
       child = child.getTreeNext();
     }
 
     parent.putUserData(PATH_CHILDREN, children.isEmpty() ? CompositeElement.EMPTY_ARRAY : children.toArray(CompositeElement.EMPTY_ARRAY));
+
+    for (CompositeElement each : children) {
+      if (each instanceof LazyParseableElement && ((LazyParseableElement)each).isParsed()) {
+        cacheNodePaths((LazyParseableElement)each, each.getFirstChildNode(), getNodePath(each));
+      }
+    }
   }
 
   public static void invalidatePaths(@NotNull LazyParseableElement scope) {

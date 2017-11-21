@@ -114,6 +114,9 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
+      withModule("jps-model-serialization", "jps-model.jar")
+      withModule("jps-model-impl", "jps-model.jar")
+
       if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
         withModule("coverage-common", productLayout.mainJarName)
       }

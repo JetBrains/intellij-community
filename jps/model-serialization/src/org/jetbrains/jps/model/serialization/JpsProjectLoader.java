@@ -116,6 +116,23 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return super.loadRootElement(file);
   }
 
+  @Nullable
+  @Override
+  protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
+    Path externalConfigDir = resolveExternalProjectConfig("project");
+    Element data = super.loadComponentData(serializer, configFile);
+    if (externalConfigDir != null && serializer.getComponentName().equals("CompilerConfiguration")) {
+      Element externalData = JDomSerializationUtil.findComponent(loadRootElement(externalConfigDir.resolve(configFile.getFileName())), "External" + serializer.getComponentName());
+      if (data == null) {
+        return externalData;
+      }
+      else if (externalData != null) {
+        return JDOMUtil.deepMerge(data, externalData);
+      }
+    }
+    return data;
+  }
+
   private void loadFromDirectory(@NotNull Path dir) {
     myProject.setName(getDirectoryBaseProjectName(dir));
     Path defaultConfigFile = dir.resolve("misc.xml");

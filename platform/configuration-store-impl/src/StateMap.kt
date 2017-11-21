@@ -25,6 +25,7 @@ import gnu.trove.THashMap
 import org.iq80.snappy.SnappyFramedInputStream
 import org.iq80.snappy.SnappyFramedOutputStream
 import org.jdom.Element
+import org.jdom.JDOMInterner
 import java.io.ByteArrayInputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -157,11 +158,8 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val state = states.get(index) as? Element ?: return null
-    if (!archive) {
-      return state
-    }
-    return if (states.compareAndSet(index, state, archiveState(state).toByteArray())) state else getState(key, true)
+    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state });
+    return prev as? Element
   }
 
   fun archive(key: String, state: Element?) {
@@ -199,7 +197,7 @@ fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap,
   }
 
   val newStates = oldStates.toMutableMap()
-  newStates.put(key, newBytes ?: newState)
+  newStates.put(key, newBytes ?: JDOMUtil.internElement(newState))
   return newStates
 }
 
@@ -209,8 +207,8 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     states.remove(key)
     return true
   }
-
-  newLiveStates?.put(key, newState)
+  var newStateInterned = JDOMUtil.internElement(newState)
+  newLiveStates?.put(key, newStateInterned)
 
   val oldState = states.get(key)
 
@@ -224,7 +222,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     newBytes = getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
   }
 
-  states.put(key, newBytes ?: newState)
+  states.put(key, newBytes ?: newStateInterned)
   return true
 }
 
