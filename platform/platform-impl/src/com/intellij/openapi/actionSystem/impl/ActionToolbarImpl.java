@@ -193,6 +193,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  public String getPlace() {
+    return myPlace;
+  }
+
   @Override
   public void addNotify() {
     super.addNotify();
