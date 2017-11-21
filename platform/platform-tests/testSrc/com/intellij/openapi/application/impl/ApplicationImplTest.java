@@ -30,7 +30,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -40,10 +43,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("StatementWithEmptyBody")
@@ -140,7 +140,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     try {
       PlatformTestUtil.startPerformanceTest("lock/unlock", expectedMs, () -> {
-        final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
+        final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Thread> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
           Thread thread = new Thread(() -> {
@@ -516,7 +516,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     PlatformTestUtil.startPerformanceTest("RWLock/unlock", 1500, ()-> {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
-      final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
+      final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
       List<Thread> threads = new ArrayList<>(numOfThreads);
       for (int i = 0; i < numOfThreads; i++) {
         @SuppressWarnings("Convert2Lambda") // runnable is more debuggable

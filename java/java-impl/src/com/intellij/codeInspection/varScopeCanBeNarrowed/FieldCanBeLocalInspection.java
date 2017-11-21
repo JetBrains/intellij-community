@@ -70,12 +70,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
       }
       if (element != null) {
         final PsiElement finalElement = element;
-        Runnable runnable = () -> {
-          beforeDelete(project, variable, finalElement);
-          variable.normalizeDeclaration();
-          variable.delete();
-        };
-        ApplicationManager.getApplication().runWriteAction(runnable);
+        ApplicationManager.getApplication().runWriteAction(() -> deleteSourceVariable(project, variable, finalElement));
       }
       return element;
     }

@@ -16,10 +16,10 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -134,16 +134,15 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     if (buildInfo.result instanceof FailureResult) {
       boolean activate = buildInfo.activateToolWindowWhenFailed;
       myBuildContentManager.setSelectedContent(buildInfo.content, activate, activate, activate, null);
-      List<? extends Failure> failures = ((FailureResult)buildInfo.result).getFailures();
+      List<? extends Failure>
+        failures = ((FailureResult)buildInfo.result).getFailures();
       if (failures.isEmpty()) return;
       Failure failure = failures.get(0);
-      if (failure instanceof FailureImpl) {
-        NotificationData notificationData = ((FailureImpl)failure).getNotificationData();
-        if (notificationData != null) {
-          final String title = notificationData.getNotification().getTitle();
-          final String content = notificationData.getNotification().getContent();
-          SystemNotifications.getInstance().notify(ToolWindowId.BUILD, title, content);
-        }
+      Notification notification = failure.getNotification();
+      if (notification != null) {
+        final String title = notification.getTitle();
+        final String content = notification.getContent();
+        SystemNotifications.getInstance().notify(ToolWindowId.BUILD, title, content);
       }
     }
   }
@@ -196,7 +195,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       String tabName = getPinnedTabName(buildsView);
       UIUtil.invokeLaterIfNeeded(() -> {
         content.setPinnable(false);
-        if(content.getIcon() == null) {
+        if (content.getIcon() == null) {
           content.setIcon(EmptyIcon.ICON_8);
         }
         content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);

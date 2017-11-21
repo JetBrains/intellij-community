@@ -21,6 +21,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBGradientPaint;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -44,17 +45,18 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-
     Dimension size = c.getSize();
 
     Rectangle viewRect = new Rectangle(size);
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
     AbstractButton b = (AbstractButton) c;
-    //ButtonModel model = b.getModel();
+
     Font f = c.getFont();
     g.setFont(f);
     FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+
+    JBInsets.removeFrom(viewRect, c.getInsets());
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -191,9 +193,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   @Override
-  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {
-
-  }
+  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {}
 
   @Override
   public Icon getDefaultIcon() {

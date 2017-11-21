@@ -33,6 +33,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +133,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable,
       references,
       delete,
-      declaration -> anchorBlock.addBefore(declaration, anchor)
+      declaration -> {
+        PsiElement parent = anchorBlock.getParent();
+        if (parent instanceof PsiSwitchStatement) {
+          PsiElement switchContainer = parent.getParent();
+          return switchContainer.addBefore(declaration, parent);
+        }
+        return anchorBlock.addBefore(declaration, anchor);
+      }
     );
   }
 
@@ -147,12 +155,18 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return WriteAction.compute(() -> {
       final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
       if (delete) {
-        beforeDelete(project, variable, newDeclaration);
-        variable.normalizeDeclaration();
-        variable.delete();
+        deleteSourceVariable(project, variable, newDeclaration);
       }
       return newDeclaration;
     });
+  }
+
+  protected void deleteSourceVariable(@NotNull Project project, @NotNull V variable, PsiElement newDeclaration) {
+    CommentTracker tracker = new CommentTracker();
+    beforeDelete(project, variable, newDeclaration);
+    variable.normalizeDeclaration();
+    tracker.delete(variable);
+    tracker.insertCommentsBefore(newDeclaration);
   }
 
   protected PsiElement moveDeclaration(PsiElementFactory elementFactory,

@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
@@ -33,8 +33,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
 
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourCheckedIterator = new ResourceStringLoaderIterator(true);
@@ -206,7 +204,7 @@ public class ClassPath {
     else if (file.isFile()) {
       Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);
       if (processRecursively) {
-        String[] referencedJars = loadManifestClasspath(file);
+        String[] referencedJars = loadManifestClasspath((JarLoader)loader);
         if (referencedJars != null) {
           for (String referencedJar : referencedJars) {
             try {
@@ -430,23 +428,20 @@ public class ClassPath {
     }
   }
 
-  private static String[] loadManifestClasspath(File file) {
+  private static String[] loadManifestClasspath(JarLoader loader) {
     try {
-      JarInputStream inputStream = new JarInputStream(new FileInputStream(file));
-      try {
-        Manifest manifest = inputStream.getManifest();
-        if (manifest != null) {
-          final String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-          if (classPath != null) {
-            String[] urls = classPath.split(" ");
-            if (urls.length > 0 && urls[0].startsWith("file:")) {
-              return urls;
-            }
-          }
+      String classPath = loader.withManifestAttributes(new Function<Attributes, String>() {
+        @Override
+        public String fun(Attributes attributes) {
+          return attributes == null ? null : attributes.getValue(Attributes.Name.CLASS_PATH);
         }
-      }
-      finally {
-        inputStream.close();
+      });
+
+      if (classPath != null) {
+        String[] urls = classPath.split(" ");
+        if (urls.length > 0 && urls[0].startsWith("file:")) {
+          return urls;
+        }
       }
     }
     catch (Exception ignore) { }

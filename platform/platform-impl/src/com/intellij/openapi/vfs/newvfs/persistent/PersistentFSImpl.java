@@ -70,9 +70,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
   private final IntObjectMap<VirtualFileSystemEntry>
-    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
+    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();

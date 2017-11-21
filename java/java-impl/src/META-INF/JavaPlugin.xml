@@ -213,8 +213,8 @@
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowToPanel$Provider"/>
     <usageTypeProvider implementation="com.intellij.usages.impl.rules.JavaUsageTypeProvider"/>
-    <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaClassGroupRuleProvider"/>
+    <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.NonJavaFileGroupRuleProvider"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.JavaQualifiedNameProvider"/>
     <referenceImporter implementation="com.intellij.codeInsight.daemon.impl.JavaReferenceImporter"/>
@@ -236,8 +236,8 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
     <referenceProviderType key="Class Reference Provider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java"

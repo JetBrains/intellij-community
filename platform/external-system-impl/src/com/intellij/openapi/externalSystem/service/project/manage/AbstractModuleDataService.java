@@ -248,10 +248,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           return;
         }
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          for (Module module : modules) {
-            if (module.isDisposed()) continue;
-            String path = module.getModuleFilePath();
+        for (Module module : modules) {
+          if (module.isDisposed()) continue;
+          String path = module.getModuleFilePath();
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
               ServiceKt.getStateStore(module).save(new ArrayList<>());
@@ -267,10 +267,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             catch (Exception e) {
               LOG.warn(e);
             }
-            final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
-            moduleModel.disposeModule(module);
-            ModuleBuilder.deleteModuleFile(path);
           }
+          modelsProvider.getModifiableModuleModel().disposeModule(module);
+          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {

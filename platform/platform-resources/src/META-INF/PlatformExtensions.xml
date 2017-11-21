@@ -60,6 +60,8 @@
                         serviceImplementation="com.intellij.ide.CopyPasteManagerEx"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.JBPopupFactory"
                         serviceImplementation="com.intellij.ui.popup.PopupFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.ui.panel.JBPanelFactory"
+                        serviceImplementation="com.intellij.ui.panel.PanelFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.ex.FileEditorProviderManager"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
@@ -205,6 +207,7 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -387,6 +390,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>

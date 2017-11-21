@@ -367,7 +367,7 @@ public class RefactoringUtil {
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
-      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeInfo.getType().equals(typeByExpression))) {
+      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();
@@ -889,15 +889,12 @@ public class RefactoringUtil {
       final PsiElement invalidBody = lambdaExpression.getBody();
       if (invalidBody == null) return declaration;
 
-      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory
-        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression.getParent());
+      String lambdaParamListWithArrowAndComments = lambdaExpression.getText()
+        .substring(0, (declaration.isPhysical() ? declaration : invalidBody).getStartOffsetInParent());
+      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambdaParamListWithArrowAndComments + "{}", lambdaExpression.getParent());
       PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
-
-      lambdaExpression =
-        (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(
-          lambdaExpression.getParameterList().getText() + " -> " + invalidBody.getText(), lambdaExpression));
 
       final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
       LOG.assertTrue(lambdaExpressionBody != null);

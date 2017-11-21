@@ -404,7 +404,7 @@ public class JavaCompletionUtil {
         }
       }
       
-      return containsMember(castType, o) && !containsMember(plainQualifier, o);
+      return containsMember(castType, o, true) && !containsMember(plainQualifier, o, true);
     }
     return false;
   }
@@ -469,7 +469,7 @@ public class JavaCompletionUtil {
         }
       }), -1);
     }
-    if (containsMember(qualifierType, object) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+    if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
@@ -495,9 +495,11 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  @Contract("null, _ -> false")
-  public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
-    if (qualifierType instanceof PsiArrayType && object instanceof PsiMember) { //length and clone()
+  @Contract("null, _, _ -> false")
+  private static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object, boolean checkBases) {
+    if (!(object instanceof PsiMember)) return false;
+
+    if (qualifierType instanceof PsiArrayType) { //length and clone()
       PsiFile file = ((PsiMember)object).getContainingFile();
       if (file == null || file.getVirtualFile() == null) { //yes, they're a bit dummy
         return true;
@@ -506,12 +508,11 @@ public class JavaCompletionUtil {
     else if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
       if (qualifierClass == null) return false;
-      if (object instanceof PsiMethod && qualifierClass.findMethodBySignature((PsiMethod)object, false) != null) {
+      if (object instanceof PsiMethod && qualifierClass.findMethodBySignature((PsiMethod)object, checkBases) != null) {
         return true;
       }
-      if (object instanceof PsiMember) {
-        return qualifierClass.equals(((PsiMember)object).getContainingClass());
-      }
+      PsiClass memberClass = ((PsiMember)object).getContainingClass();
+      return checkBases ? InheritanceUtil.isInheritorOrSelf(qualifierClass, memberClass, true) : qualifierClass.equals(memberClass);
     }
     return false;
   }

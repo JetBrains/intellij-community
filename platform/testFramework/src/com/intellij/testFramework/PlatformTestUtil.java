@@ -694,7 +694,7 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
-          int coreCountUsedHere = usedReferenceCpuCores < 8 ? Math.min(JobSchedulerImpl.CORES_COUNT, usedReferenceCpuCores) : JobSchedulerImpl.CORES_COUNT;
+          int coreCountUsedHere = usedReferenceCpuCores < 8 ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores) : JobSchedulerImpl.getJobPoolParallelism();
           expectedOnMyMachine *= usedReferenceCpuCores;
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
           expectedOnMyMachine /= coreCountUsedHere;

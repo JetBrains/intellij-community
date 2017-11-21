@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,8 +53,8 @@ import java.util.List;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS =
-    Key.create("HIGHLIGHT_TOKENS");
+  private static final Logger LOG = Logger.getInstance(InjectedLanguageUtil.class);
+  static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
   // meaning: injected file text is probably incorrect
@@ -648,13 +649,39 @@ public class InjectedLanguageUtil {
            getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
   }
 
-  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
-    PsiFile psiFile = getInjectedFile(registrar);
-    if (psiFile != null) psiFile.putUserData(key, value);
+  public static <T> void putInjectedFileUserData(@NotNull PsiElement element,
+                                                 @NotNull Language language,
+                                                 @NotNull Key<T> key,
+                                                 T value) {
+    PsiFile file = getCachedInjectedFileWithLanguage(element, language);
+    if (file != null) {
+      file.putUserData(key, value);
+    }
   }
 
-  public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
+  /**
+   * @deprecated use {@link #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead
+   */
+  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+    LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");
     final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
-    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
+    if (result != null && !result.isEmpty()) {
+      PsiFile file = result.get(result.size() - 1).getSecond();
+      file.putUserData(key, value);
+    }
+  }
+
+  @Nullable
+  public static PsiFile getCachedInjectedFileWithLanguage(@NotNull PsiElement element, @NotNull Language language) {
+    if (!element.isValid()) return null;
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null || !containingFile.isValid()) return null;
+    return InjectedLanguageManager.getInstance(containingFile.getProject())
+      .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())
+      .stream()
+      .map(documentWindow -> PsiDocumentManager.getInstance(containingFile.getProject()).getPsiFile(documentWindow))
+      .filter(file -> file != null && file.getLanguage() == language)
+      .findFirst()
+      .orElse(null);
   }
 }

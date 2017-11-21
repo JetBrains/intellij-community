@@ -114,6 +114,9 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
+      withModule("jps-model-serialization", "jps-model.jar")
+      withModule("jps-model-impl", "jps-model.jar")
+
       if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
         withModule("coverage-common", productLayout.mainJarName)
       }
@@ -127,6 +130,7 @@ class DistributionJARsBuilder {
         withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
       }
       withProjectLibrariesFromIncludedModules(buildContext)
+      removeVersionFromProjectLibraryJarNames("Trove4j")
     }
   }
 
@@ -216,7 +220,7 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
@@ -406,7 +410,7 @@ class DistributionJARsBuilder {
           }
         }
         layout.includedProjectLibraries.each {
-          projectLibrary(it)
+          projectLibrary(it, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
         }
         layout.includedArtifacts.entrySet().each {
           def artifactName = it.key

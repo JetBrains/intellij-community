@@ -15,12 +15,11 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
@@ -33,7 +32,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Vladimir Kondratyev
  */
-public class ShowPopupMenuAction extends AnAction implements DumbAware, PopupAction {
+public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction {
   public ShowPopupMenuAction() {
     setEnabledInModalContext(true);
   }
@@ -53,17 +52,13 @@ public class ShowPopupMenuAction extends AnAction implements DumbAware, PopupAct
                 ? Math.max(0, point2.y - 1) //To avoid cursor jump to the line below. http://www.jetbrains.net/jira/browse/IDEADEV-10644
                 : point2.y;
 
-    deepest.dispatchEvent(
-      new MouseEvent(
-        focusOwner,
-        MouseEvent.MOUSE_PRESSED,
-        System.currentTimeMillis(), 0,
-        point2.x,
-        coord,
-        1,
-        true
-      )
-    );
+    MouseEvent event = new MouseEvent(
+      focusOwner, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
+      0, point2.x, coord, 1, true);
+    for (Component cur = deepest; cur != null; cur = cur.getParent()) {
+      cur.dispatchEvent(event);
+      if (event.isConsumed()) break;
+    }
   }
 
   public void update(AnActionEvent e) {

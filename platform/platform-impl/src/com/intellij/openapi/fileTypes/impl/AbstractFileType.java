@@ -351,13 +351,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
     }
-    else if (matcher instanceof WildcardFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
-    }
-    else if (matcher instanceof ExactFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
-    }
-    else {
+    else if (writePattern(matcher, mapping)) {
       return null;
     }
 
@@ -376,13 +370,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
         mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
       }
     }
-    else if (matcher instanceof WildcardFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
-    }
-    else if (matcher instanceof ExactFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
-    }
-    else {
+    else if (writePattern(matcher, mapping)) {
       return null;
     }
     if (specifyTypeName) {
@@ -390,6 +378,19 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     }
 
     return mapping;
+  }
+
+  private static boolean writePattern(FileNameMatcher matcher, Element mapping) {
+    if (matcher instanceof WildcardFileNameMatcher) {
+      mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
+    }
+    else if (matcher instanceof ExactFileNameMatcher) {
+      mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
+    }
+    else {
+      return true;
+    }
+    return false;
   }
 
   @Override

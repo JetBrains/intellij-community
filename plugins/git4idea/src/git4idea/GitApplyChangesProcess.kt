@@ -138,6 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           waitForChangeListManagerUpdate()
 
           if (mergeCompleted) {
+            LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
@@ -198,10 +199,12 @@ class GitApplyChangesProcess(private val project: Project,
     }
     val changes = actualList.changes
     if (changes.isEmpty()) {
+      LOG.debug("No changes in the $actualList. All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       alreadyPicked.add(commit)
       return true
     }
 
+    LOG.debug("Showing commit dialog for changes: ${changes}")
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
       refreshVfsAndMarkDirty(changes)
@@ -215,6 +218,9 @@ class GitApplyChangesProcess(private val project: Project,
       return false
     }
   }
+
+  private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
+    changeListManagerEx.changeLists.map { it -> "[${it.name}] ${it.changes}" }
 
   private fun waitForChangeListManagerUpdate() {
     val waiter = CountDownLatch(1)
@@ -248,6 +254,8 @@ class GitApplyChangesProcess(private val project: Project,
   private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList != null && actualList.changes.isEmpty()) {
+      LOG.debug("Changelist $actualList is empty, removing. " +
+                "All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       changeListManager.removeChangeList(actualList)
     }
   }

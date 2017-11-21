@@ -3,7 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -269,10 +269,12 @@ public class ShowFilePathAction extends AnAction {
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
-      String cmd = toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"';
-      LOG.debug(cmd);
-      Process process = Runtime.getRuntime().exec(cmd);  // no advanced quoting/escaping is needed
-      new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
+      String call = toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"';
+      LOG.debug(call);
+      File script = ExecUtil.createTempExecutableScript("idea_show_file_", ".bat", call);
+      GeneralCommandLine cmd = new GeneralCommandLine(script.getPath());
+      OSProcessHandler.deleteFileOnTermination(cmd, script);
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (SystemInfo.isMac) {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);

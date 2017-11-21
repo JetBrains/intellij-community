@@ -144,6 +144,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
     mainRepo.git("submodule update --init --recursive") // this initializes the grandchild submodule
     grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
+    cd(grandchildRepo)
+    setupDefaultUsername()
     grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
   }
 
@@ -152,6 +154,8 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
+    cd(File(submoduleUrl.path))
+    setupDefaultUsername()
   }
 
   /**
@@ -169,7 +173,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("init $moduleName")
     val child = File(testRoot, moduleName)
     cd(child)
-    setupDefaultUsername(project)
+    setupDefaultUsername()
     tac("initial.txt", "initial")
     val parent = "$moduleName.git"
     git("remote add origin ${testRoot}/$parent")
@@ -185,7 +189,10 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun prepareSecondClone(): File {
     cd(testRoot)
     git("clone --recurse-submodules parent.git bro")
-    return File(testRoot, "bro")
+    val broDir = File(testRoot, "bro")
+    cd(broDir)
+    setupDefaultUsername()
+    return broDir
   }
 
   private fun commitAndPushFromSecondClone(bro: File) {

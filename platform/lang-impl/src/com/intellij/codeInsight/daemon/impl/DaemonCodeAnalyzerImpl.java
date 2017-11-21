@@ -364,7 +364,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
-      while (progress.isRunning() && System.currentTimeMillis() < start + 5*60*1000) {
+      while (progress.isRunning() && System.currentTimeMillis() < start + 10*60*1000) {
         wrap(() -> {
           progress.checkCanceled();
           if (callbackWhileWaiting != null) {

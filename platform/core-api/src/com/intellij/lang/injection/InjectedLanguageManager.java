@@ -107,4 +107,6 @@ public abstract class InjectedLanguageManager {
    * (which don't work for uncommitted document).
    */
   public abstract boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset);
+  @NotNull
+  public abstract DocumentWindow freezeWindow(@NotNull DocumentWindow document);
 }

@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -119,7 +120,13 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
     }
 
     private boolean isCopyVariable(PsiVariable variable) {
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
+      PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
+      if (initializer instanceof PsiTypeCastExpression) {
+        PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
+        if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)initializer)) {
+          initializer = operand;
+        }
+      }
       if (!(initializer instanceof PsiReferenceExpression)) {
         return false;
       }

@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,7 +42,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -398,6 +402,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset) {
     return InjectedLanguageUtil.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
+  }
+
+  @NotNull
+  @Override
+  public DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+    Place shreds = ((DocumentWindowImpl)document).getShreds();
+    Project project = shreds.getHostPointer().getProject();
+    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
+    Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl) shred).withPsiRange()));
+    return new DocumentWindowImpl(delegate, ((DocumentWindowImpl)document).isOneLine(), place);
   }
 
   private static int appendRange(@NotNull List<TextRange> result, int start, int length) {

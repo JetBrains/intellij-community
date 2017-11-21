@@ -89,9 +89,9 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
       }
       InjectorUtils.registerInjection(language, list, containingFile, registrar);
-      InjectorUtils.registerSupport(mySupport, true, registrar);
+      InjectorUtils.registerSupport(mySupport, true, list.get(0).getFirst(), language);
       if (Boolean.TRUE.equals(unparsableRef.get())) {
-        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+        InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
       return true;
     });

@@ -204,7 +204,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           Disposer.register(view, contentDescriptor);
         }
         else {
-          myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
+          myBuildContentManager.setSelectedContent(myContent, true, true, false, null);
         }
         buildInfo.content = myContent;
 

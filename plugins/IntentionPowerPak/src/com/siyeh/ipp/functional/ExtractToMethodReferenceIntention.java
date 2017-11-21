@@ -37,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -129,7 +130,9 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
       PsiMethodReferenceExpression methodReference =
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
-      methodReference = (PsiMethodReferenceExpression)lambdaExpression.replace(methodReference);
+      CommentTracker tracker = new CommentTracker();
+      methodReference = (PsiMethodReferenceExpression)tracker.replace(lambdaExpression, methodReference);
+      tracker.insertCommentsBefore(methodReference);
 
       startInplaceRename(editor, method, methodReference);
     }

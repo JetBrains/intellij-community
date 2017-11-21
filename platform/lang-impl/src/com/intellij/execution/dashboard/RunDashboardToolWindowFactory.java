@@ -28,6 +28,11 @@ import org.jetbrains.annotations.NotNull;
 public class RunDashboardToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
   @Override
   public boolean value(Project project) {
+    return !RunDashboardManager.getInstance(project).getTypes().isEmpty();
+  }
+
+  @Override
+  public boolean shouldBeAvailable(@NotNull Project project) {
     return RunDashboardManager.getInstance(project).isToolWindowAvailable();
   }
 

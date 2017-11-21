@@ -568,4 +568,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testArrayStoreProblems() { doTest(); }
 
   public void testNestedScopeComplexity() { doTest(); }
+
+  public void testNullableReturn() { doTest(); }
 }

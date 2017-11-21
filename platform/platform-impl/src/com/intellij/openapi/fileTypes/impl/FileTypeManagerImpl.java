@@ -318,7 +318,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             }
           }
           else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
-            readGlobalMappings(e);
+            readGlobalMappings(e, true);
           }
         }
 
@@ -331,7 +331,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           extensionMap.addContent(new Element(AbstractFileType.ELEMENT_MAPPING)
                                     .setAttribute(AbstractFileType.ATTRIBUTE_EXT, "tagx")
                                     .setAttribute(AbstractFileType.ATTRIBUTE_TYPE, "XML"));
-          readGlobalMappings(extensionMap);
+          readGlobalMappings(extensionMap, true);
         }
       }
     }
@@ -1064,7 +1064,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
       }
       else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
-        readGlobalMappings(element);
+        readGlobalMappings(element, false);
       }
     }
 
@@ -1144,7 +1144,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private void readGlobalMappings(@NotNull Element e) {
+  private void readGlobalMappings(@NotNull Element e, boolean isAddToInit) {
     for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(e)) {
       FileType type = getFileTypeByName(association.getSecond());
       FileNameMatcher matcher = association.getFirst();
@@ -1156,6 +1156,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           }
         }
         associate(type, matcher, false);
+        if (isAddToInit) {
+          myInitialAssociations.addAssociation(matcher, type);
+        }
       }
       else {
         myUnresolvedMappings.put(matcher, association.getSecond());

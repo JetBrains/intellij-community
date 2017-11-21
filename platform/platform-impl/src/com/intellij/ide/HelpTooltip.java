@@ -47,7 +47,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
@@ -99,7 +98,6 @@ public class HelpTooltip implements Disposable {
   private int myDismissDelay;
 
   private MouseAdapter myMouseListener;
-  private PropertyChangeListener myPropertyChangeListener;
 
   public enum Alignment {
     RIGHT {
@@ -210,9 +208,6 @@ public class HelpTooltip implements Disposable {
     myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
     neverHide = neverHide || DarculaButtonUI.isHelpButton(component);
 
-    owner = component;
-    owner.putClientProperty(TOOLTIP_PROPERTY, this);
-
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setBorderColor(BORDER_COLOR).setShowShadow(false);
@@ -236,16 +231,23 @@ public class HelpTooltip implements Disposable {
       }
     };
 
-    myPropertyChangeListener = evt -> {
-      if (evt.getNewValue() == null) { // owner is removed from the component tree
+    component.addPropertyChangeListener("ancestor", evt -> {
+      if (evt.getNewValue() == null) {
         hidePopup(true);
         Disposer.dispose(this);
+      } else {
+        registerOn((JComponent)evt.getSource());
       }
-    };
+    });
 
+    registerOn(component);
+  }
+
+  private void registerOn(JComponent component) {
+    owner = component;
+    owner.putClientProperty(TOOLTIP_PROPERTY, this);
     owner.addMouseListener(myMouseListener);
     owner.addMouseMotionListener(myMouseListener);
-    owner.addPropertyChangeListener("ancestor", myPropertyChangeListener);
   }
 
   @Override
@@ -253,7 +255,6 @@ public class HelpTooltip implements Disposable {
     if (owner != null) {
       owner.removeMouseListener(myMouseListener);
       owner.removeMouseMotionListener(myMouseListener);
-      owner.removePropertyChangeListener(myPropertyChangeListener);
       owner.putClientProperty(TOOLTIP_PROPERTY, null);
       owner = null;
       masterPopup = null;

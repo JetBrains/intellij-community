@@ -50,7 +50,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       return false;
     }
   };
-  private final MultiMap<PsiExpression, PsiType> myStates = MultiMap.create(EXPRESSION_HASHING_STRATEGY);
+  private final MultiMap<PsiExpression, PsiType> myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
 
   public ExpressionTypeMemoryState(final DfaValueFactory factory) {
     super(factory);
@@ -75,6 +75,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       if (!value.isNegated()) {
         setExpressionType(value.getExpression(), value.getCastType());
       }
+      return super.applyCondition(((DfaInstanceofValue)dfaCond).getRelation());
     }
 
     return super.applyCondition(dfaCond);
@@ -91,10 +92,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     if (!super.equals(o)) return false;
 
     ExpressionTypeMemoryState that = (ExpressionTypeMemoryState)o;
-
-    if (!myStates.equals(that.myStates)) return false;
-
-    return true;
+    return myStates.equals(that.myStates);
   }
 
   @Override

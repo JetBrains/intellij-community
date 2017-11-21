@@ -104,3 +104,14 @@ class Example3
     private long total = 0;
   }
 }
+
+class Example4 {
+  @GuardedBy("this")
+  protected Object field;
+
+  static class Example4Derived extends Example4 {
+    synchronized void foo() {
+      Object o = field;
+    }
+  }
+}
