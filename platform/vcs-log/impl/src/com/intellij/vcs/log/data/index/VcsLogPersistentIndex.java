@@ -782,7 +782,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             }
           }
         };
-        VcsNotifier.getInstance(myProject).notifyImportantWarning("Log indexing for " + myRoot.getName() + " cancelled",
+        VcsNotifier.getInstance(myProject).notifyImportantWarning("Log Indexing for \"" + myRoot.getName() + "\" Stopped",
                                                                   "Indexing was taking too long (" +
                                                                   StopWatch.formatTime(time - time % 1000) +
                                                                   ")<p/><a href='resume'>Resume</a>",
