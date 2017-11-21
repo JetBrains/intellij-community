@@ -369,9 +369,9 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
-                                              @NotNull PyExpression qualifier,
-                                              @NotNull TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
+                                               @NotNull PyExpression qualifier,
+                                               @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }

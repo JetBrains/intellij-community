@@ -1947,6 +1947,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = my_list.count");
   }
 
+  // PY-26616
+  public void testClassMethodQualifiedWithDefinition() {
+    doTest("(x: str) -> Foo",
+           "class Foo:\n" +
+           "    @classmethod\n" +
+           "    def make_foo(cls, x: str) -> 'Foo':\n" +
+           "        pass\n" +
+           "expr = Foo.make_foo");
+  }
+
   public void testConstructingGenericClassWithNotFilledGenericValue() {
     doTest("MyIterator",
            "from typing import Iterator\n" +
