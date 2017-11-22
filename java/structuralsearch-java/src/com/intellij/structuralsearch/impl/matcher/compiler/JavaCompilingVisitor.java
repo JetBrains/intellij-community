@@ -351,6 +351,23 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
+  public void visitParameter(PsiParameter parameter) {
+    super.visitParameter(parameter);
+    final PsiElement parent = parameter.getParent();
+    if (!(parent instanceof PsiCatchSection)) {
+      return;
+    }
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final MatchingHandler handler = pattern.getHandlerSimple(parameter);
+    final String name = "__catch_" + parent.getTextOffset();
+    final SubstitutionHandler substitutionHandler =
+      handler instanceof SubstitutionHandler
+      ? new SubstitutionHandler(name, false, ((SubstitutionHandler)handler).getMinOccurs(), ((SubstitutionHandler)handler).getMaxOccurs(), true)
+      : new SubstitutionHandler(name, false, 1, 1, true);
+    pattern.setHandler(parent, substitutionHandler);
+  }
+
+  @Override
   public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
     super.visitDeclarationStatement(psiDeclarationStatement);
 

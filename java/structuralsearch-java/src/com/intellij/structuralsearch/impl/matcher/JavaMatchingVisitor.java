@@ -953,13 +953,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final PsiExpression var2Initializer = var2.getInitializer();
         myMatchingVisitor.setResult(myMatchingVisitor.match(initializer, var2Initializer));
       }
-
-      if (myMatchingVisitor.getResult() && var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchSons(
-          ((PsiCatchSection)var.getParent()).getCatchBlock(),
-          ((PsiCatchSection)var2.getParent()).getCatchBlock()
-        ));
-      }
     }
     finally {
       saveOrDropResult(nameIdentifier, isTypedVar, var2.getNameIdentifier());
@@ -1337,15 +1330,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitCatchSection(final PsiCatchSection section) {
+  public void visitCatchSection(PsiCatchSection section) {
     final PsiCatchSection section2 = (PsiCatchSection)myMatchingVisitor.getElement();
-    final PsiParameter parameter = section.getParameter();
-    if (parameter != null) {
-      myMatchingVisitor.setResult(myMatchingVisitor.match(parameter, section2.getParameter()));
-    }
-    else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(section.getCatchBlock(), section2.getCatchBlock()));
-    }
+    final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(section);
+    myMatchingVisitor.setResult(myMatchingVisitor.match(section.getParameter(), section2.getParameter()) &&
+                                myMatchingVisitor.matchSons(section.getCatchBlock(), section2.getCatchBlock()) &&
+                                ((SubstitutionHandler)handler).handle(section2, myMatchingVisitor.getMatchContext()));
   }
 
   @Override
@@ -1391,29 +1381,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       ContainerUtil.addAll(unmatchedElements, catches2);
-      for (PsiCatchSection catchSection : catches1) {
-        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catchSection);
-        final PsiElement pinnedNode = handler.getPinnedNode();
-
-        if (pinnedNode != null) {
-          myMatchingVisitor.setResult(handler.match(catchSection, pinnedNode, myMatchingVisitor.getMatchContext()));
-          if (!myMatchingVisitor.getResult()) return;
-        }
-        else {
-          boolean matched = false;
-          for (int j = 0; j < unmatchedElements.size(); ++j) {
-            if (handler.match(catchSection, unmatchedElements.get(j), myMatchingVisitor.getMatchContext())) {
-              unmatchedElements.remove(j);
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            myMatchingVisitor.setResult(false);
-            return;
-          }
-        }
-      }
+      myMatchingVisitor.getMatchContext().setMatchedElementsListener(matchedElements -> unmatchedElements.removeAll(matchedElements));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2));
 
       if (finally1 != null) {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
@@ -1421,7 +1390,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         unmatchedElements.add(finally2);
       }
 
-      if (myMatchingVisitor.getResult() && unmatchedElements.size() > 0) {
+      if (myMatchingVisitor.getResult() && !unmatchedElements.isEmpty()) {
         try2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
       }
     }

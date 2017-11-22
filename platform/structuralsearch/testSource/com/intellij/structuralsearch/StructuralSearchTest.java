@@ -607,7 +607,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
                     "try { a(); } catch(Exception ex) {}" +
                     "}}";
-    assertEquals("finally matching", 2,
+    assertEquals("catch parameter matching", 3,
                  findMatchesCount(s10031, "try { a(); } catch('_Type+ 'Arg+) { '_Statements*; }\n"));
 
     String s10033 = "class X {{ " +
@@ -2453,6 +2453,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final List<MatchResult> matches = findMatches(source, pattern7, StdFileTypes.JAVA);
     assertEquals(3, matches.size());
     assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
+
+    String pattern8 = "try { '_St1*; } catch ('_E '_e{2,2}) { '_St2*; }";
+    final List<MatchResult> matches2 = findMatches(source, pattern8, StdFileTypes.JAVA);
+    assertEquals(1, matches2.size());
+    assertEquals("Find try with exactly 2 catch blocks",
+                 "try {\n" +
+                 "  } catch(NullPointerException  | UnsupportedOperationException e) {\n" +
+                 "    throw e;\n" +
+                 "  } catch(Exception e) {\n" +
+                 "     throw new RuntimeException(e);\n" +
+                 "  } finally {}",
+                 matches2.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {
