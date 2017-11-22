@@ -212,6 +212,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in atomic action
    */
   public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
