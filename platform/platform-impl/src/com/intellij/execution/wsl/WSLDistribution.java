@@ -280,10 +280,10 @@ public class WSLDistribution {
    * @return actual file name
    */
   @NotNull
-  public String resolveSymlink(@NotNull String path, int timeoutInMillisecondss) {
+  public String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
 
     try {
-      final ProcessOutput output = executeOnWsl(timeoutInMillisecondss, "readlink", "-f", path);
+      final ProcessOutput output = executeOnWsl(timeoutInMilliseconds, "readlink", "-f", path);
       if (output.getExitCode() == 0) {
         String stdout = output.getStdout().trim();
         if (output.getExitCode() == 0 && StringUtil.isNotEmpty(stdout)) {
