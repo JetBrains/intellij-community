@@ -140,7 +140,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     val path = p.replace(File.separatorChar, '/')
     val tempDir = FileUtil.getTempDirectory().replace(File.separatorChar, '/')
     return when {
-      path.matches("$tempDir/classpath-?\\d*.jar".toRegex()) -> "#classpath.jar#"
+      path.matches("$tempDir/classpath?\\d*.jar".toRegex()) -> "#classpath.jar#"
       path.matches("$tempDir/idea_classpath\\d*".toRegex()) -> "#classpath#"
       path.matches("$tempDir/idea_vm_params\\d*".toRegex()) -> "#vm_params#"
       path.matches("$tempDir/idea_app_params\\d*".toRegex()) -> "#app_params#"
