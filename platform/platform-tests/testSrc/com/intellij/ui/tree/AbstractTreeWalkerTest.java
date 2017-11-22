@@ -167,16 +167,10 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createFinder(TreeNode node) {
-    return new TreeVisitor.Finder() {
+    return new TreeVisitor.ByComponent<Object>(node, o -> o) {
       @Override
-      protected boolean found(@NotNull TreePath path) {
-        return node.equals(path.getLastPathComponent());
-      }
-
-      @Override
-      protected boolean contains(@NotNull TreePath path) {
-        Object component = path.getLastPathComponent();
-        return component instanceof Node && node instanceof Node && ((Node)node).isNodeAncestor((Node)component);
+      protected boolean contains(@NotNull Object pathComponent, @NotNull Object thisComponent) {
+        return pathComponent instanceof Node && thisComponent instanceof Node && ((Node)thisComponent).isNodeAncestor((Node)pathComponent);
       }
     };
   }
@@ -311,7 +305,7 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createPathFinder(String... names) {
-    return new TreeVisitor.PathFinder(new TreePath(names), Object::toString);
+    return new TreeVisitor.ByTreePath<>(new TreePath(names), Object::toString);
   }
 
   private static void test(TreeNode node, int count, @NotNull TreeVisitor visitor, Object... expected) {
