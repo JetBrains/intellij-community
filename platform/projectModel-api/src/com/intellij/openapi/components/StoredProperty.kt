@@ -67,7 +67,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
         return property.value != property.defaultValue
       }
     }
-    LOG.warn("Cannot find property by name: ${accessor.name}")
+    LOG.debug("Cannot find property by name: ${accessor.name}")
     // do not return false - maybe accessor delegates actual set to our property
     // default value in this case will be filtered by common filter (instance will be created in this case, as for non-smart state classes)
     return true
