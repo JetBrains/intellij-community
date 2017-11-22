@@ -30,7 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 
 /**
@@ -374,6 +377,21 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
+  }
+
+  @Override
+  public boolean shouldProcessExternalFile(@NotNull PsiFile file) {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+    return Arrays
+      .stream(((PsiClassOwner)psiFile).getClasses())
+      .flatMap(c -> Arrays.stream(c.getSuperTypes()))
+      .map(t -> t.resolve())
+      .filter(Objects::nonNull);
   }
 
   @Override

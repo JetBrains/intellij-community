@@ -52,6 +52,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
@@ -64,7 +65,7 @@ public class RefManagerImpl extends RefManager {
   private RefProject myRefProject;
 
   private final BitSet myUnprocessedFiles = new BitSet();
-  private final boolean processJVMClasses = Registry.is("batch.inspections.process.by.default.jvm.languages");
+  private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
@@ -169,7 +170,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  void fireNodeMarkedReferenced(PsiElement what, PsiElement from) {
+  public void fireNodeMarkedReferenced(PsiElement what, PsiElement from) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(what, from, false);
     }
@@ -457,60 +458,59 @@ public class RefManagerImpl extends RefManager {
       if (extension != null) {
         extension.visitElement(element);
       }
-      else if (processJVMClasses) {
-        processElementNoExtension(element);
+      else if (processExternalElements) {
+        PsiFile file = element.getContainingFile();
+        if (file != null) {
+          boolean referencesProcessed = false;
+          for (RefManagerExtension<?> managerExtension : myExtensions.values()) {
+            if (managerExtension.shouldProcessExternalFile(file)) {
+              RefElement refFile = getReference(file);
+              LOG.assertTrue(refFile != null, file);
+              if (!referencesProcessed) {
+                referencesProcessed = true;
+                for (PsiReference reference : element.getReferences()) {
+                  PsiElement resolve = reference.resolve();
+                  if (resolve != null) {
+                    fireNodeMarkedReferenced(resolve, file);
+                    RefElement refWhat = getReference(resolve);
+                    if (refWhat == null) {
+                      PsiFile targetContainingFile = resolve.getContainingFile();
+                      //no logic to distinguish different elements in the file anyway
+                      if (file == targetContainingFile) continue;
+                      refWhat = getReference(targetContainingFile);
+                    }
+
+                    if (refWhat != null) {
+                      ((RefElementImpl)refWhat).addInReference(refFile);
+                      ((RefElementImpl)refFile).addOutReference(refWhat);
+                    }
+                  }
+                }
+              }
+
+              Stream<? extends PsiElement> implicitRefs = managerExtension.extractExternalFileImplicitReferences(file);
+              implicitRefs.forEach(e -> {
+                RefElement superClassReference = getReference(e);
+                if (superClassReference != null) {
+                  //in case of implicit inheritance, e.g. GroovyObject
+                  //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
+                  //inReference is not important in this case
+                  ((RefElementImpl)refFile).addOutReference(superClassReference);
+                }
+              });
+            }
+          }
+
+          if (!referencesProcessed && element instanceof PsiFile) {
+            VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+            if (virtualFile instanceof VirtualFileWithId) {
+              registerUnprocessed((VirtualFileWithId)virtualFile);
+            }
+          }
+        }
       }
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
-      }
-    }
-
-    private void processElementNoExtension(PsiElement element) {
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile instanceof PsiClassOwner) {
-        RefElement refFile = getReference(containingFile);
-        LOG.assertTrue(refFile != null, containingFile);
-        for (PsiReference reference : element.getReferences()) {
-          PsiElement resolve = reference.resolve();
-          if (resolve != null) {
-            fireNodeMarkedReferenced(resolve, containingFile);
-            RefElement refWhat = getReference(resolve);
-            if (refWhat == null) {
-              PsiFile targetContainingFile = resolve.getContainingFile();
-              //no logic to distinguish different elements in the file anyway
-              if (containingFile == targetContainingFile) continue;
-              refWhat = getReference(targetContainingFile);
-            }
-
-            if (refWhat != null) {
-              ((RefElementImpl)refWhat).addInReference(refFile);
-              ((RefElementImpl)refFile).addOutReference(refWhat);
-            }
-          }
-        }
-
-        for (PsiClass aClass : ((PsiClassOwner)containingFile).getClasses()) {
-          PsiClassType[] superTypes = aClass.getSuperTypes();
-          for (PsiClassType type : superTypes) {
-            PsiClass superClass = type.resolve();
-            if (superClass != null) {
-              RefElement superClassReference = getReference(superClass);
-              if (superClassReference != null) {
-                //in case of implicit inheritance, e.g. GroovyObject
-                //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
-                //inReference is not important in this case
-                ((RefElementImpl)refFile).addOutReference(superClassReference);
-              }
-            }
-          }
-        }
-
-      }
-      else if (element instanceof PsiFile) {
-        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-        if (virtualFile instanceof VirtualFileWithId) {
-          registerUnprocessed((VirtualFileWithId)virtualFile);
-        }
       }
     }
 

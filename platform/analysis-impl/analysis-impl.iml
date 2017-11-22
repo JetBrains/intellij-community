@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="editor-ui-ex" />
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="uast-common" />
     <orderEntry type="module" module-name="external-system-api" />
   </component>
 </module>
