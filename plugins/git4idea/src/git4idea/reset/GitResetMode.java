@@ -19,18 +19,18 @@ import org.jetbrains.annotations.NotNull;
 
 public enum GitResetMode {
 
-  SOFT("Soft", "--soft", "<nobr>Files won't change, differences will be staged for commit.</nobr>"),
-  MIXED("Mixed", "--mixed", "<nobr>Files won't change, differences won't be staged.</nobr>"),
-  HARD("Hard", "--hard", "<nobr>Files will be reverted to the state of the selected commit.</nobr><br/>" +
-                         "<nobr>Warning: any local changes will be lost.</nobr>"),
-  KEEP("Keep", "--keep", "<nobr>Files will be reverted to the state of the selected commit,</nobr><br/>" +
-                         "<nobr>but local changes will be kept intact.</nobr>");
+  SOFT("Soft", "--soft", "Files won't change, differences will be staged for commit."),
+  MIXED("Mixed", "--mixed", "Files won't change, differences won't be staged."),
+  HARD("Hard", "--hard", "Files will be reverted to the state of the selected commit.",
+                         "Warning: any local changes will be lost."),
+  KEEP("Keep", "--keep", "Files will be reverted to the state of the selected commit,",
+                         "but local changes will be kept intact.");
 
   @NotNull private final String myName;
   @NotNull private final String myArgument;
-  @NotNull private final String myDescription;
+  @NotNull private final String[] myDescription;
 
-  GitResetMode(@NotNull String name, @NotNull String argument, @NotNull String description) {
+  GitResetMode(@NotNull String name, @NotNull String argument, @NotNull String... description) {
     myName = name;
     myArgument = argument;
     myDescription = description;
@@ -52,7 +52,7 @@ public enum GitResetMode {
   }
 
   @NotNull
-  public String getDescription() {
+  public String[] getDescription() {
     return myDescription;
   }
 
