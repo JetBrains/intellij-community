@@ -62,27 +62,6 @@ public interface TreeVisitor {
   }
 
 
-  abstract class Finder implements TreeVisitor {
-    @NotNull
-    @Override
-    public Action visit(@NotNull TreePath path) {
-      return found(path) ? Action.INTERRUPT : contains(path) ? Action.CONTINUE : Action.SKIP_CHILDREN;
-    }
-
-    /**
-     * @param path a currently visited path
-     * @return {@code true} if the specified path is found and visiting can be interrupted
-     */
-    protected abstract boolean found(@NotNull TreePath path);
-
-    /**
-     * @param path a currently visited path
-     * @return {@code true} if the specified path may contain a seeking path
-     */
-    protected abstract boolean contains(@NotNull TreePath path);
-  }
-
-
   abstract class Base<T> implements TreeVisitor {
     private final Function<TreePath, T> converter;
 
@@ -205,51 +184,6 @@ public interface TreeVisitor {
     @Override
     protected final boolean contains(@NotNull T component) {
       throw new UnsupportedOperationException();
-    }
-  }
-
-
-  class PathFinder implements TreeVisitor {
-    private final Function<Object, Object> converter;
-    private final TreePath path;
-
-    public PathFinder(@NotNull TreePath path) {
-      this(path, object -> object);
-    }
-
-    public PathFinder(@NotNull TreePath path, @NotNull Function<Object, Object> converter) {
-      this.converter = converter;
-      this.path = path;
-    }
-
-    @NotNull
-    @Override
-    public Action visit(@NotNull TreePath path) {
-      Object component = converter.apply(path.getLastPathComponent());
-      if (component == null) return Action.SKIP_CHILDREN;
-
-      int pathCount = path.getPathCount();
-      int thisCount = this.path.getPathCount();
-      if (thisCount < pathCount) return Action.SKIP_CHILDREN;
-
-      Action action = thisCount == pathCount ? Action.INTERRUPT : Action.CONTINUE;
-
-      TreePath value = this.path;
-      while (thisCount > pathCount) {
-        thisCount--;
-        value = value.getParentPath();
-        if (value == null) return Action.SKIP_CHILDREN;
-      }
-      return matches(component, value.getLastPathComponent()) ? action : Action.SKIP_CHILDREN;
-    }
-
-    /**
-     * @param pathComponent a last component of the current path
-     * @param thisComponent a component of the seeking path at the same level
-     * @return {@code true} if both components match each other
-     */
-    protected boolean matches(@NotNull Object pathComponent, @NotNull Object thisComponent) {
-      return pathComponent.equals(thisComponent);
     }
   }
 }
