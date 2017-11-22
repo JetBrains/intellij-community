@@ -48,7 +48,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
 
     String id = getIntentionId(action);
 
-    String key = language.getID() + ": " + id;
+    String key = language.getID() + " " + id;
     final Integer count = state.myIntentions.get(key);
     int value = count == null ? 1 : count + 1;
     state.myIntentions.put(key, value);
