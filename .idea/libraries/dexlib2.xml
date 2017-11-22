@@ -1,8 +1,7 @@
 <component name="libraryTable">
   <library name="dexlib2">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/dexlib2-2.0.8-dev.jar!/" />
-      <root url="jar://$PROJECT_DIR$/android/android/lib/dexlib2-util-2.0.8-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/dexlib2-2.2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="analytics-protos" type="repository">
+    <properties maven-id="com.android.tools.analytics-library:protos:26.0.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/protos/26.0.0/protos-26.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.0.0/protobuf-java-3.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
