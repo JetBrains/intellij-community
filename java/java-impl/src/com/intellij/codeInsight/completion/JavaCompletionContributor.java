@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -924,7 +925,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
           if (index.get(name, project, scope).size() > 0 && filter.add(name)) {
-            LookupElement lookup = LookupElementBuilder.create(name);
+            LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
             if (statement instanceof PsiRequiresStatement) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
             result.addElement(lookup);
           }
@@ -937,7 +938,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
             for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
               if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0 && filter.add(name)) {
-                LookupElement lookup = LookupElementBuilder.create(name);
+                LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
                 lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
                 lookup = PrioritizedLookupElement.withPriority(lookup, -1);
                 result.addElement(lookup);
