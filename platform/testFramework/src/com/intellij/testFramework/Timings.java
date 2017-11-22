@@ -23,7 +23,7 @@ import java.io.*;
 /**
  * @author peter
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class Timings {
   private static final int IO_PROBES = 42;
 
@@ -46,32 +46,21 @@ public class Timings {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
 
-        final FileWriter writer = new FileWriter(tempFile);
-        try {
+        try (FileWriter writer = new FileWriter(tempFile)) {
           for (int j = 0; j < 15; j++) {
             writer.write("test" + j);
             writer.flush();
           }
         }
-        finally {
-          writer.close();
-        }
 
-        final FileReader reader = new FileReader(tempFile);
-        try {
-          while (reader.read() >= 0) {}
-        }
-        finally {
-          reader.close();
+        try (FileReader reader = new FileReader(tempFile)) {
+          while (reader.read() >= 0) {
+          }
         }
 
         if (i == IO_PROBES - 1) {
-          final FileOutputStream stream = new FileOutputStream(tempFile);
-          try {
+          try (FileOutputStream stream = new FileOutputStream(tempFile)) {
             stream.getFD().sync();
-          }
-          finally {
-            stream.close();
           }
         }
 
