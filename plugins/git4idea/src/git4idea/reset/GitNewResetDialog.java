@@ -75,8 +75,8 @@ public class GitNewResetDialog extends DialogWrapper {
     String description = prepareDescription(myProject, myCommits);
     panel.add(new JBLabel(XmlStringUtil.wrapInHtml(description)), gb.nextLine().next().coverLine());
 
-    String explanation = "This will reset the current branch head to the selected commit, <br/>" +
-                         "and update the working tree and the index according to the selected mode:";
+    String explanation = "<nobr>This will reset the current branch head to the selected commit,</nobr><br/>" +
+                         "<nobr>and update the working tree and the index according to the selected mode:</nobr>";
     panel.add(new JBLabel(XmlStringUtil.wrapInHtml(explanation), UIUtil.ComponentStyle.SMALL), gb.nextLine().next().coverLine());
 
     for (GitResetMode mode : GitResetMode.values()) {
