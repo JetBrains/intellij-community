@@ -80,17 +80,16 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
-    }, false) {
+    }, false, this) {
       @NotNull
       @Override
       protected ProgressIndicator startNewBackgroundTask() {
         return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
-    Disposer.register(this, mySingleTaskController);
   }
 
   protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {

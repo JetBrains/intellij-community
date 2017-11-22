@@ -106,7 +106,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = ContainerUtil.newLinkedHashSet();
-    mySingleTaskController = new MySingleTaskController(project);
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
@@ -131,7 +130,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
     }
 
-    Disposer.register(myIndexStorage != null ? myIndexStorage : this, mySingleTaskController);
+    mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
+
     Disposer.register(disposableParent, this);
   }
 
@@ -542,8 +542,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    public MySingleTaskController(@NotNull Project project) {
-      super(EmptyConsumer.getInstance(), false);
+    public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+      super(project, EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 

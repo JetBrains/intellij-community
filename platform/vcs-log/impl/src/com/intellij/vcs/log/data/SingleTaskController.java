@@ -18,6 +18,8 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,10 +52,13 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   private boolean myIsDisposed = false;
 
-  public SingleTaskController(@NotNull Consumer<Result> handler, boolean cancelRunning) {
+  public SingleTaskController(@NotNull Project project, @NotNull Consumer<Result> handler, boolean cancelRunning, @NotNull Disposable parent) {
     myResultHandler = handler;
     myAwaitingRequests = ContainerUtil.newLinkedList();
     myCancelRunning = cancelRunning;
+
+    Disposer.register(parent, () -> Disposer.dispose(this));
+    Disposer.register(project, this);
   }
 
   /**
@@ -158,7 +163,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     synchronized (LOCK) {
       if (myIsDisposed) return;
       myIsDisposed = true;
-      
+
       if (myRunningTask != null) {
         myRunningTask.cancel();
         myRunningTask = null;
