@@ -914,7 +914,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   private static void addModuleReferences(PsiElement moduleRef, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
-    if (statement instanceof PsiRequiresStatement || statement instanceof PsiPackageAccessibilityStatement) {
+    boolean requires;
+    if ((requires = statement instanceof PsiRequiresStatement) || statement instanceof PsiPackageAccessibilityStatement) {
       PsiElement parent = statement.getParent();
       if (parent != null) {
         Project project = moduleRef.getProject();
@@ -926,12 +927,12 @@ public class JavaCompletionContributor extends CompletionContributor {
         for (String name : index.getAllKeys(project)) {
           if (index.get(name, project, scope).size() > 0 && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (statement instanceof PsiRequiresStatement) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
             result.addElement(lookup);
           }
         }
 
-        if (statement instanceof PsiRequiresStatement) {
+        if (requires) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
