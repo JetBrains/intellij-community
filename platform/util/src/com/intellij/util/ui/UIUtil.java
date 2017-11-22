@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -62,6 +50,7 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -808,6 +797,19 @@ public class UIUtil {
   }
 
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    Stroke stroke = ((Graphics2D)g).getStroke();
+    if (stroke instanceof BasicStroke) {
+      if (x1 == x2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(x1, Math.min(y1, y2), lineWidth, Math.abs(y1 - y2) + lineWidth));
+        return;
+      }
+      if (y1 == y2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(Math.min(x1, x2), y1, Math.abs(x1 - x2) + lineWidth, lineWidth));
+        return;
+      }
+    }
     g.drawLine(x1, y1, x2, y2);
   }
 
