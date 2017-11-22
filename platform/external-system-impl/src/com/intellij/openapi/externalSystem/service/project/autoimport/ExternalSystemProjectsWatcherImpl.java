@@ -63,6 +63,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -333,7 +334,9 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           timeStamp += file.lastModified();
         }
         Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps();
-        if (isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+        if (isProjectOpen &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
           Long affectedFilesTimestamp = modificationStamps.get(settings.getExternalProjectPath());
           affectedFilesTimestamp = affectedFilesTimestamp == null ? -1L : affectedFilesTimestamp;
           if (timeStamp != affectedFilesTimestamp) {
@@ -362,6 +365,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               Long crc = virtualFile.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
               if (crc != null) {
                 modificationStamps.put(path, crc);
+              }
+              else {
+                UIUtil.invokeLaterIfNeeded(() -> {
+                  Long newCrc = calculateCrc(virtualFile);
+                  virtualFile.putUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT, newCrc);
+                  modificationStamps.put(path, newCrc);
+                });
               }
             }
           }
