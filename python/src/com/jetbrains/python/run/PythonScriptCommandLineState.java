@@ -82,7 +82,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       Module module = myConfig.getModule();
       PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
       PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, myConfig.getSdk(), settingsProvider);
-      String workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
+      String workingDir = myConfig.getWorkingDirectory();
+      if (StringUtil.isEmptyOrSpaces(workingDir)) {
+        workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
+      }
       String[] setupFragment = PydevConsoleRunnerFactory.createSetupFragment(module, workingDir, pathMapper, settingsProvider);
 
       if (myConfig.getSdk() == null) {
