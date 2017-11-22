@@ -87,7 +87,7 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
 
     // Annotation Processing check
     boolean annotationProcessorsEnabled = hasAnnotationProcessorsEnabled(project);
-    if (!annotationProcessorsEnabled) {
+    if (hasLombokLibrary && !annotationProcessorsEnabled) {
 
       String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(project).getDisplayName();
 
