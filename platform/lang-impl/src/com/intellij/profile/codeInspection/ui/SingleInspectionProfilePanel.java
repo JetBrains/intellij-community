@@ -120,7 +120,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void performProfileReset() {
     //forcibly initialize configs to be able compare xmls after reset
-    TreeUtil.traverse(myRoot, n -> {
+    TreeUtil.treeNodeTraverser(myRoot).traverse().processEach(n -> {
       InspectionConfigTreeNode node = (InspectionConfigTreeNode)n;
       if (node instanceof InspectionConfigTreeNode.Tool && node.isProperSetting()) {
         ((InspectionConfigTreeNode.Tool)node).getDefaultDescriptor().loadConfig();
