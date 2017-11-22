@@ -102,6 +102,7 @@
     <!-- ===================================================== -->
     <!-- Preparations for build:                               -->
     <!-- Copy list of modules                                  -->
+    <!-- Copy Kotlin compiler settings                         -->
     <!-- Copy list of libraries                                -->
     <!-- Apply MPS patches                                     -->
     <!-- ===================================================== -->
@@ -119,6 +120,13 @@
             <substitution
                     expression="\0      &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}"/>
         </replaceregexp>
+    </target>
+
+    <target name="kotlinc"
+            description="Copy IDEA Community Kotlin compiler settings">
+        <echo message="Copy IDEA Community Kotlin compiler settings"/>
+        <delete file="${basedir}/../.idea/kotlinc.xml"/>
+        <copy file="${community.folder}/.idea/kotlinc.xml" todir="${basedir}/../.idea"/>
     </target>
 
     <target name="libraries" description="Copy IDEA Community libraries and update paths (add community folder)">
@@ -155,7 +163,7 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="patch,modules,libraries" description="Make all build preparation tasks"/>
+    <target name="prepare" depends="patch,modules,kotlinc,libraries" description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
     <target name="compile" description="Runs building script.">
