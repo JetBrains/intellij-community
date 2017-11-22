@@ -12,6 +12,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -215,8 +217,11 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }, ModalityState.stateForComponent(editor.getComponent()));
   }
 
-  private static void process(Throwable t, ExternalAnnotator annotator, PsiFile file) {
+  private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
-    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + "); root: " + file + " (" + file.getVirtualFile() + ")", t);
+    VirtualFile file = root.getVirtualFile();
+    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")",
+              new Attachment("root_path.txt", file != null ? file.getPath() : root.getName()),
+              new Attachment("stack", t));
   }
 }
