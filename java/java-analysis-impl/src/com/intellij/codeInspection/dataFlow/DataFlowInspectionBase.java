@@ -616,6 +616,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                         InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
                                         InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
     }
+    else if (psiAnchor instanceof PsiMethodReferenceExpression) {
+      holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.method.reference", evaluatesToTrue),
+                             createReplaceWithTrivialLambdaFix(evaluatesToTrue));
+    }
     else {
       boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
       if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {

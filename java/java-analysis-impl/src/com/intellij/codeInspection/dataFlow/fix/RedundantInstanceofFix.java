@@ -19,10 +19,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,10 +36,17 @@ public class RedundantInstanceofFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
+    String replacement;
     if (psiElement instanceof PsiInstanceOfExpression) {
-      PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
-        createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
-      psiElement.replace(compareToNull);
+      replacement = ((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null";
     }
+    else if (psiElement instanceof PsiMethodReferenceExpression) {
+      replacement = CommonClassNames.JAVA_UTIL_OBJECTS + "::nonNull";
+    }
+    else {
+      return;
+    }
+    PsiExpression compareToNull = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, psiElement.getParent());
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement.replace(compareToNull));
   }
 }

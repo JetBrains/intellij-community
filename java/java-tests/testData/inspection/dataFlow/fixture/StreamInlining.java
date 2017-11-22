@@ -57,6 +57,40 @@ public class StreamInlining {
       .forEach(System.out::println);
   }
 
+  void testIsInstanceIncomplete(List<?> objects) {
+    IntStream is = objects.stream()
+      .filter(String.class::isInstance)
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>);
+  }
+
+  Stream<String> testInstanceOfMap(List<?> objects) {
+    return objects.stream().filter(it -> it instanceof String)
+      .map(entry -> {
+        if (<warning descr="Condition 'entry instanceof String' is always 'true'">entry instanceof String</warning>) {
+          return (String)entry;
+        }
+        return null;
+      })
+      .filter(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>);
+  }
+
+  void test(Stream<String> stream, Optional<String> opt) {
+    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with '!= null'">String.class::isInstance</warning>).forEach(System.out::println);
+    opt.filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>).ifPresent(System.out::println);
+  }
+
   // IDEA-152871
   static class A {
 

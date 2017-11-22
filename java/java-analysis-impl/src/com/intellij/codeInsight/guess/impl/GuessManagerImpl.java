@@ -446,6 +446,9 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      if (instruction.getLeft() == null) {
+        return super.visitInstanceof(instruction, runner, memState);
+      }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
       DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
