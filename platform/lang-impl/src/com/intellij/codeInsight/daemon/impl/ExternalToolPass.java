@@ -130,7 +130,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     if (myMainHighlightingPass) {
       doAnnotate();
-      applyRelevant();
+      doApply();
       return getHighlights();
     }
     return super.getInfos();
@@ -153,7 +153,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
           doAnnotate();
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
             if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-              applyRelevant();
+              doApply();
               doFinish(getHighlights(), modificationStampBefore);
             }
           });
@@ -184,7 +184,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   @SuppressWarnings("unchecked")
-  private void applyRelevant() {
+  private void doApply() {
     for (MyData data : myAnnotationData) {
       if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
         try {
