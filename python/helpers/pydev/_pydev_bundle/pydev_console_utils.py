@@ -93,6 +93,10 @@ class BaseStdIn:
     def close(self, *args, **kwargs):
         pass  # expected in StdIn
 
+    def __iter__(self):
+        # BaseStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
+        return self.original_stdin.__iter__()
+
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
         if hasattr(self.original_stdin, item):
