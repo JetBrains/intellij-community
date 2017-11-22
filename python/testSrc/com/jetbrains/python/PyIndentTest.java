@@ -305,7 +305,8 @@ public class PyIndentTest extends PyTestCase {
   }
 
   public void testAlignInCall() {  // PY-6360
-    CodeStyleSettingsManager.getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    CodeStyleSettingsManager.getSettings(myFixture.getProject())
+      .getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("list(a,<caret>)",
            "list(a,\n" +
            "     <caret>)");
