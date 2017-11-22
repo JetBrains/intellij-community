@@ -1,4 +1,4 @@
-// "Collapse if statement " "true"
+// "Extract variables from if " "true"
 
 import java.util.Collection;
 import java.util.List;
@@ -10,7 +10,12 @@ public class IfStatementWithIdenticalBranches {
   }
 
   int work() {
+    if<caret>(true)  {
       int x = getX();
-    return x;
+      //Then
+    } else {
+      int x = getX();
+      return x;
+    }
   }
 }
