@@ -312,9 +312,7 @@ class EditorPainter implements TextDrawingCallback {
         color.equals(myEditor.getColorsScheme().getDefaultBackground()) ||
         color.equals(myEditor.getBackgroundColor())) return;
     g.setColor(color);
-    int xStartRounded = (int)x;
-    int xEndRounded = (int)(x + width);
-    g.fillRect(xStartRounded, y, xEndRounded - xStartRounded, myView.getLineHeight());
+    g.fill(new Rectangle2D.Float(x, y, width, myView.getLineHeight()));
   }
 
   private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset) {
