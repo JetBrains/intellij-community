@@ -73,7 +73,6 @@ fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
-fun GitPlatformTest.checkoutNew(branchName: String, startPoint: String = "") = checkoutNew(project, branchName, startPoint)
 private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
   git(project, "checkout -b $branchName $startPoint")
 
@@ -102,7 +101,6 @@ private fun tacp(project: Project, file: String): String {
 }
 
 fun GitRepository.appendAndCommit(file: String, additionalContent: String) = cd { appendAndCommit(project, file, additionalContent) }
-fun GitPlatformTest.appendAndCommit(file: String, additionalContent: String) = appendAndCommit(project, file, additionalContent)
 private fun appendAndCommit(project: Project, file: String, additionalContent: String): String {
   append(file, additionalContent)
   add(project, file)

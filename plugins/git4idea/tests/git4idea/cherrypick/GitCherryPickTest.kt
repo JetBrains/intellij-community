@@ -53,9 +53,9 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun `check conflict with cherry-picked commit should show merge dialog`() {
     val initial = tac("c.txt", "base\n")
-    val commit = appendAndCommit("c.txt", "master")
-    checkoutNew("feature", initial)
-    appendAndCommit("c.txt", "feature")
+    val commit = repo.appendAndCommit("c.txt", "master")
+    repo.checkoutNew("feature", initial)
+    repo.appendAndCommit("c.txt", "feature")
 
     `do nothing on merge`()
 
