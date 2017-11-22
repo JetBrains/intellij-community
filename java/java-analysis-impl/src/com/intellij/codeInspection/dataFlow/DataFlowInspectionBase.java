@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -472,7 +474,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     });
   }
 
-  private void reportConstantReferenceValues(ProblemsHolder holder, StandardInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
+  private void reportConstantReferenceValues(ProblemsHolder holder, DataFlowInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
     for (Pair<PsiReferenceExpression, DfaConstValue> pair : visitor.getConstantReferenceValues()) {
       PsiReferenceExpression ref = pair.first;
       if (ref.getParent() instanceof PsiReferenceExpression || !reportedAnchors.add(ref)) {
@@ -849,6 +851,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+    private static final Object ANY_VALUE = new Object();
     private final Map<NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
@@ -859,6 +862,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
     private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
+    private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
     private boolean myAlwaysReturnsNotNull = true;
 
     @Override
@@ -992,6 +996,34 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
     }
 
+    @Override
+    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      PsiExpression place = instruction.getPlace();
+      if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
+        DfaValue dfaValue = instruction.getValue();
+        if (dfaValue instanceof DfaVariableValue) {
+          DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
+          boolean report = constValue != null && shouldReportConstValue(constValue.getValue(), place);
+          myPossibleVariableValues.putValue(instruction, report ? constValue : ANY_VALUE);
+        }
+      }
+      return super.visitPush(instruction, runner, memState);
+    }
+
+    public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {
+      List<Pair<PsiReferenceExpression, DfaConstValue>> result = ContainerUtil.newArrayList();
+      for (PushInstruction instruction : myPossibleVariableValues.keySet()) {
+        Collection<Object> values = myPossibleVariableValues.get(instruction);
+        if (values.size() == 1) {
+          Object singleValue = values.iterator().next();
+          if (singleValue != ANY_VALUE) {
+            result.add(Pair.create((PsiReferenceExpression)instruction.getPlace(), (DfaConstValue)singleValue));
+          }
+        }
+      }
+      return result;
+    }
+
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
       List<MethodContract> contracts = instruction.getContracts();
       return !contracts.isEmpty() && contracts.stream().anyMatch(
@@ -1023,6 +1055,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         else info.normalNpe = true;
       }
       return ok;
+    }
+
+    private static boolean shouldReportConstValue(Object value, PsiElement place) {
+      return value == null || value instanceof Boolean;
     }
 
     private static class StateInfo {
