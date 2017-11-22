@@ -17,6 +17,7 @@
       <module fileurl="file://$PROJECT_DIR$/aether-dependency-resolver/aether-dependency-resolver.iml" filepath="$PROJECT_DIR$/aether-dependency-resolver/aether-dependency-resolver.iml" group="community" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" filepath="$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/analytics-library/testing/analytics-testing.iml" filepath="$PROJECT_DIR$/android/tools-base/analytics-library/testing/analytics-testing.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/apkparser/analyzer/analyzer.iml" filepath="$PROJECT_DIR$/android/tools-base/apkparser/analyzer/analyzer.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/android/android.iml" filepath="$PROJECT_DIR$/android/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" group="android" />
@@ -25,6 +26,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/android/android-test-framework/android-test-framework.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/android/android/android-tests.iml" filepath="$PROJECT_DIR$/android/android/android-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/android/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
