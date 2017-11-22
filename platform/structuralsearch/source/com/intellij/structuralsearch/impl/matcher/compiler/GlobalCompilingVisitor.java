@@ -216,23 +216,26 @@ public class GlobalCompilingVisitor {
     return predicate != null && handler.getMinOccurs() != 0 && predicate.couldBeOptimized();
   }
 
-  public static void addFilesToSearchForGivenWord(String refname,
+  public static void addFilesToSearchForGivenWord(String word,
                                                   boolean endTransaction,
                                                   GlobalCompilingVisitor.OccurenceKind kind,
                                                   CompileContext compileContext) {
     if (!compileContext.getSearchHelper().doOptimizing()) {
       return;
     }
-    if (ourReservedWords.contains(refname)) return; // skip our special annotations !!!
+    if (ourReservedWords.contains(word)) return; // skip our special annotations !!!
 
     if (kind == GlobalCompilingVisitor.OccurenceKind.CODE) {
-      compileContext.getSearchHelper().addWordToSearchInCode(refname);
+      compileContext.getSearchHelper().addWordToSearchInCode(word);
     }
     else if (kind == GlobalCompilingVisitor.OccurenceKind.COMMENT) {
-      compileContext.getSearchHelper().addWordToSearchInComments(refname);
+      compileContext.getSearchHelper().addWordToSearchInComments(word);
     }
     else if (kind == GlobalCompilingVisitor.OccurenceKind.LITERAL) {
-      compileContext.getSearchHelper().addWordToSearchInLiterals(refname);
+      compileContext.getSearchHelper().addWordToSearchInLiterals(word);
+    }
+    else if (kind == GlobalCompilingVisitor.OccurenceKind.TEXT) {
+      compileContext.getSearchHelper().addWordToSearchInText(word);
     }
 
     if (endTransaction) {
@@ -264,7 +267,7 @@ public class GlobalCompilingVisitor {
   }
 
   public enum OccurenceKind {
-    LITERAL, COMMENT, CODE
+    LITERAL, COMMENT, CODE, TEXT
   }
 
   private static class WordTokenizer {

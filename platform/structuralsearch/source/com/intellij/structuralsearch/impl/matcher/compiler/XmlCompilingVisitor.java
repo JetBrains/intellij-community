@@ -16,6 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandl
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
+
 /**
 * @author Eugene.Kudelevsky
 */
@@ -51,6 +53,15 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
       super.visitXmlAttribute(attribute);
     }
 
+    @Override
+    public void visitXmlText(XmlText text) {
+      final String string = text.getText();
+      if (!myCompilingVisitor.getContext().getPattern().isTypedVar(string)) {
+        myCompilingVisitor.processTokenizedName(string, false, TEXT);
+      }
+      super.visitXmlText(text);
+    }
+
     /**
      * @param word  word to check index with
      * @return true, if psi tree should be processed deeper, false otherwise.
@@ -70,12 +81,11 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
         final RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
         if (predicate != null && predicate.couldBeOptimized()) {
-          GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.CODE,
-                                                              compileContext);
+          GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, CODE, compileContext);
         }
       }
       else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, GlobalCompilingVisitor.OccurenceKind.CODE, compileContext);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, CODE, compileContext);
       }
       return true;
     }
