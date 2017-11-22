@@ -51,6 +51,7 @@ import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.impl.JavaModuleIndexImpl;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -365,6 +366,13 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
     catch (RebuildRequestedException | IOException e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      // the following code models module index reload after each make session
+      final JavaModuleIndex moduleIndex = JpsJavaExtensionService.getInstance().getJavaModuleIndex(descriptor.getProject(), descriptor.dataManager.getDataPaths().getDataStorageRoot());
+      if (moduleIndex instanceof JavaModuleIndexImpl) {
+        ((JavaModuleIndexImpl)moduleIndex).dropCache();
+      }
     }
     return result;
   }
