@@ -48,9 +48,9 @@ interface TomlArray : TomlValue {
 
 interface TomlTable : TomlKeyValueOwner, TomlHeaderOwner
 interface TomlArrayTable : TomlKeyValueOwner, TomlHeaderOwner
-interface TomlInlineTable : TomlKeyValueOwner
+interface TomlInlineTable : TomlKeyValueOwner, TomlValue
 
-interface TomlTableHeader : TomlValue {
+interface TomlTableHeader : TomlElement {
     val names: List<TomlKey>
 }
 
