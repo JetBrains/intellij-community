@@ -129,7 +129,7 @@ public class XmlStringUtil {
     StringBuilder sb = new StringBuilder(HTML_START);
     for (int i = 0; i < lines.length; i++) {
       CharSequence sequence = lines[i];
-      if (i >0) sb.append("<br>");
+      if (i > 0) sb.append("<br>");
       sb.append("<nobr>").append(sequence).append("</nobr>");
     }
     return sb.append(HTML_END).toString();
