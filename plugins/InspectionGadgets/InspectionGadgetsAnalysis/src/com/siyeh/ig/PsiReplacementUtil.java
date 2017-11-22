@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,9 @@ import org.jetbrains.annotations.Nullable;
 public class PsiReplacementUtil {
   private static final Logger LOG = Logger.getInstance(PsiReplacementUtil.class);
 
+  /**
+   * Consider to use {@link #replaceExpression(PsiExpression, String, CommentTracker)} to preserve comments
+   */
   public static void replaceExpression(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -43,6 +47,15 @@ public class PsiReplacementUtil {
     final PsiElement replacementExpression = expression.replace(newExpression);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     styleManager.reformat(replacementExpression);
+  }
+
+  /**
+   * @param commentTracker ensure to {@link CommentTracker#markUnchanged(PsiElement)} expressions used as getText in newExpressionText
+   */
+  public static void replaceExpression(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText, CommentTracker tracker) {
+    final Project project = expression.getProject();
+    final PsiElement replacementExpression = tracker.replaceAndRestoreComments(expression, newExpressionText);
+    CodeStyleManager.getInstance(project).reformat(replacementExpression);
   }
 
   public static PsiElement replaceExpressionAndShorten(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
@@ -57,12 +70,25 @@ public class PsiReplacementUtil {
     return styleManager.reformat(replacementExp);
   }
 
+  /**
+   * Consider to use {@link #replaceStatement(PsiExpression, String, CommentTracker)} to preserve comments
+   */
   public static PsiElement replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     final Project project = statement.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
     final PsiElement replacementExp = statement.replace(newStatement);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    return styleManager.reformat(replacementExp);
+  }
+
+  /**
+   * @param commentTracker ensure to {@link CommentTracker#markUnchanged(PsiElement)} expressions used as getText in newStatementText
+   */
+  public static PsiElement replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText, CommentTracker commentTracker) {
+    final Project project = statement.getProject();
+    final PsiElement replacementExp = commentTracker.replaceAndRestoreComments(statement, newStatementText);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     return styleManager.reformat(replacementExp);
   }
@@ -152,13 +178,14 @@ public class PsiReplacementUtil {
   }
 
   public static void replaceOperatorAssignmentWithAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
+    CommentTracker tracker = new CommentTracker();
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final PsiExpression rhs = assignmentExpression.getRExpression();
     final String operator = sign.getText();
     final String newOperator = operator.substring(0, operator.length() - 1);
-    final String lhsText = lhs.getText();
-    final String rhsText = (rhs == null) ? "" : rhs.getText();
+    final String lhsText = tracker.markUnchanged(lhs).getText();
+    final String rhsText = (rhs == null) ? "" : tracker.markUnchanged(rhs).getText();
     final boolean parentheses = ParenthesesUtils.areParenthesesNeeded(sign, rhs);
     final String cast = getCastString(lhs, rhs);
     final StringBuilder newExpression = new StringBuilder(lhsText);
@@ -176,7 +203,7 @@ public class PsiReplacementUtil {
     if (!cast.isEmpty()) {
       newExpression.append(')');
     }
-    replaceExpression(assignmentExpression, newExpression.toString());
+    replaceExpression(assignmentExpression, newExpression.toString(), tracker);
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
