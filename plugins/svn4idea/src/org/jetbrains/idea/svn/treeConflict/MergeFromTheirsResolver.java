@@ -33,7 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
