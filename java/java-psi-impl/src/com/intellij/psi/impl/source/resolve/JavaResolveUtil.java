@@ -153,7 +153,7 @@ public class JavaResolveUtil {
         PsiClass topAccessClass = getTopLevelClass(accessObjectClass, memberClass);
         if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
         if (accessObjectClass instanceof PsiAnonymousClass && accessObjectClass.isInheritor(memberClass, true)) {
-          if (place instanceof PsiMethodCallExpression) {
+          if (!(place instanceof PsiAnonymousClass)) {
             return false;
           }
         }

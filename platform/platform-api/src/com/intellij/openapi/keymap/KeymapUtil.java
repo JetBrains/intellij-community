@@ -169,9 +169,7 @@ public class KeymapUtil {
   public static String getKeyText(int code) {
     switch (code) {
       case KeyEvent.VK_BACK_QUOTE:     return "`";
-      case KeyEvent.VK_ADD:            return "+";
       case KeyEvent.VK_SEPARATOR:      return ",";
-      case KeyEvent.VK_SUBTRACT:       return "-";
       case KeyEvent.VK_DECIMAL:        return ".";
       case KeyEvent.VK_SLASH:          return "/";
       case KeyEvent.VK_BACK_SLASH:     return "\\";
@@ -180,8 +178,6 @@ public class KeymapUtil {
       case KeyEvent.VK_CLOSE_BRACKET:  return "]";
       case KeyEvent.VK_OPEN_BRACKET:   return "[";
       case KeyEvent.VK_EQUALS:         return "=";
-      case KeyEvent.VK_MINUS:          return "-";
-      case KeyEvent.VK_PLUS:           return "+";
     }
 
     String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);

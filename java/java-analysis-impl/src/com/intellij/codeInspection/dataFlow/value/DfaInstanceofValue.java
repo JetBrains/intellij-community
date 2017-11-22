@@ -26,16 +26,23 @@ public class DfaInstanceofValue extends DfaValue {
   private final @NotNull PsiExpression myExpression;
   private final @NotNull PsiType myCastType;
   private final boolean myNegated;
+  private final @NotNull DfaValue myRelation;
 
-  public DfaInstanceofValue(DfaValueFactory factory, @NotNull PsiExpression expression, @NotNull PsiType castType) {
-    this(factory, expression, castType, false);
-  }
-
-  public DfaInstanceofValue(DfaValueFactory factory, @NotNull PsiExpression expression, @NotNull PsiType castType, boolean negated) {
+  public DfaInstanceofValue(DfaValueFactory factory,
+                            @NotNull PsiExpression expression,
+                            @NotNull PsiType castType,
+                            @NotNull DfaValue relation,
+                            boolean negated) {
     super(factory);
     myExpression = expression;
     myCastType = castType;
+    myRelation = relation;
     myNegated = negated;
+  }
+
+  @NotNull
+  public DfaValue getRelation() {
+    return myRelation;
   }
 
   @NotNull
@@ -54,6 +61,6 @@ public class DfaInstanceofValue extends DfaValue {
 
   @Override
   public DfaValue createNegated() {
-    return new DfaInstanceofValue(myFactory, myExpression, myCastType, !myNegated);
+    return new DfaInstanceofValue(myFactory, myExpression, myCastType, myRelation.createNegated(), !myNegated);
   }
 }

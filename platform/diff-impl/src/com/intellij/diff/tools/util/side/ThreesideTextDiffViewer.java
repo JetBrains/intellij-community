@@ -100,7 +100,6 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
 
     ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
-    ((EditorMarkupModel)ThreeSide.BASE.select(holders).getEditor().getMarkupModel()).setErrorStripeVisible(false);
 
     for (TextEditorHolder holder : holders) {
       DiffUtil.disableBlitting(holder.getEditor());

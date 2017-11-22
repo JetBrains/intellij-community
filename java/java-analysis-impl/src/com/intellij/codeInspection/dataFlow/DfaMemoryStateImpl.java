@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -897,19 +894,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
-    if (!isUnknownState(dfaVar)) {
+    if (!isUnknownState(dfaVar) && !(dfaVar.getVariableType() instanceof PsiPrimitiveType)) {
       if (value instanceof DfaConstValue) {
         Object constValue = ((DfaConstValue)value).getValue();
         if (constValue == null) {
           setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
           return;
         }
+        PsiType psiType;
         if (constValue instanceof PsiVariable) {
-          DfaPsiType dfaType = myFactory.createDfaType(((PsiVariable)constValue).getType());
-          DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
-          if (state != null) {
-            setVariableState(dfaVar, state);
-          }
+          psiType = ((PsiVariable)constValue).getType();
+        }
+        else {
+          PsiModifierListOwner context = dfaVar.getPsiVariable();
+          psiType = JavaPsiFacade.getElementFactory(context.getProject())
+            .createTypeByFQClassName(constValue.getClass().getName(), context.getResolveScope());
+        }
+        DfaPsiType dfaType = myFactory.createDfaType(psiType);
+        DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
+        if (state != null) {
+          setVariableState(dfaVar, state);
         }
       }
       if (isNotNull(value) && !isNotNull(dfaVar)) {

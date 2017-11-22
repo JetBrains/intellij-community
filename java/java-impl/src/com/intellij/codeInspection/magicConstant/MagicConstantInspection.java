@@ -791,7 +791,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
                                @NotNull PsiFile file,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
-      boolean allValid = !myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).anyMatch(p -> p == null || !p.isValid());
+      boolean allValid = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).allMatch(p -> p != null && p.isValid());
       return allValid && super.isAvailable(project, file, startElement, endElement);
     }
   }

@@ -90,6 +90,10 @@ public class MacKeymapUtil {
       case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
       case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
       case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
+      case KeyEvent.VK_SUBTRACT:       return "-";
+      case KeyEvent.VK_ADD:            return "+";
+      case KeyEvent.VK_MINUS:          return "-";
+      case KeyEvent.VK_PLUS:           return "+";
       case KeyEvent.VK_DIVIDE:         return "NumPad /";
       case KeyEvent.VK_NUMPAD0:        return "0";
       case KeyEvent.VK_NUMPAD1:        return "1";

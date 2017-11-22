@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.LightProjectDescriptor
 
 /**
  * @author peter
@@ -26,7 +27,12 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
-  
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8
+  }
+
   void testCastInstanceofedQualifier() { doTest() }
   void testCastInstanceofedQualifierInForeach() { doTest() }
   void testCastComplexInstanceofedQualifier() { doTest() }
@@ -42,8 +48,14 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
+  void testAssignmentPreciseTypeDfa() { doTest() }
+  void testDeclarationPreciseTypeDfa() { doTest() }
   void testInstanceOfAssignmentDfa() { doTest() }
+  void testStreamDfa() { doTest() }
+  void testStreamIncompleteDfa() { doTest() }
+  void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
+  void testCastWhenMethodComesFromDfaSuperType() { doTest() }
 
   void testCastTwice() {
     configureByTestName()

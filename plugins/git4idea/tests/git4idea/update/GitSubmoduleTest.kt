@@ -154,8 +154,6 @@ class GitSubmoduleTest : GitPlatformTest() {
     git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
-    cd(File(submoduleUrl.path))
-    setupDefaultUsername()
   }
 
   /**
@@ -165,6 +163,8 @@ class GitSubmoduleTest : GitPlatformTest() {
   private fun addSubmoduleInProject(submoduleUrl: File, moduleName: String, relativePath: String? = null): GitRepository {
     addSubmodule(File(projectPath), submoduleUrl, relativePath)
     val rootPath = "${projectPath}/${relativePath ?: moduleName}"
+    cd(rootPath)
+    setupDefaultUsername()
     return registerRepo(project, rootPath)
   }
 

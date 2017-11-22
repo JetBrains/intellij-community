@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;

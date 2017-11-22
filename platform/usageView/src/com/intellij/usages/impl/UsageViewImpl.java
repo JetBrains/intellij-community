@@ -1904,7 +1904,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   @TestOnly
-  String getNodeText(@NotNull TreeNode node) {
+  public String getNodeText(@NotNull TreeNode node) {
     return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 

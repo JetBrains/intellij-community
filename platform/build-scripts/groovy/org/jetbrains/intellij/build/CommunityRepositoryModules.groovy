@@ -64,8 +64,6 @@ class CommunityRepositoryModules {
     "editor-ui-ex",
     "images",
     "indexing-impl",
-    "jps-model-impl",
-    "jps-model-serialization",
     "json",
     "lang-impl",
     "lvcs-impl",

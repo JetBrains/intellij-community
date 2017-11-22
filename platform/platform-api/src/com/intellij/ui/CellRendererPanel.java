@@ -21,9 +21,9 @@ import java.awt.*;
 
 /**
  * Cell renderer CPU optimization.
- * @see javax.swing.table.DefaultTableCellRenderer#invalidate()
  *
  * @author gregsh
+ * @see javax.swing.table.DefaultTableCellRenderer#invalidate()
  */
 public class CellRendererPanel extends JPanel {
 
@@ -31,7 +31,7 @@ public class CellRendererPanel extends JPanel {
 
   public CellRendererPanel() {
     super(null); // we do the layout ourselves
-    setOpaque(false); // to be consistent with #isOpaque
+    super.setOpaque(false); // to be consistent with #isOpaque
   }
 
   public final boolean isSelected() {
@@ -50,8 +50,12 @@ public class CellRendererPanel extends JPanel {
   }
 
   // isOpaque() optimization ----------------
-  public boolean isOpaque() {
+  public final boolean isOpaque() {
     return false;
+  }
+
+  @Override
+  public final void setOpaque(boolean isOpaque) {
   }
 
   @Override
@@ -98,7 +102,7 @@ public class CellRendererPanel extends JPanel {
     return getComponent(0).getPreferredSize();
   }
 
-  protected Dimension super_getPreferredSize() {
+  protected final Dimension super_getPreferredSize() {
     return super.getPreferredSize();
   }
 
@@ -128,7 +132,7 @@ public class CellRendererPanel extends JPanel {
     doLayout();
   }
 
-  protected void super_validate() {
+  protected final void super_validate() {
     super.validate();
   }
 
@@ -144,12 +148,20 @@ public class CellRendererPanel extends JPanel {
   public void repaint() {
   }
 
-// END no validation methods --------------
+  // END no validation methods --------------
 
   public static class SuperPreferredSize extends CellRendererPanel {
     @Override
     public Dimension getPreferredSize() {
       return super_getPreferredSize();
+    }
+  }
+
+  public static class SuperPreferredSizeWithBackground extends SuperPreferredSize {
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
 

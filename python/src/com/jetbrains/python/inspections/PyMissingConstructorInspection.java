@@ -105,9 +105,7 @@ public class PyMissingConstructorInspection extends PyInspection {
 
       return cls.getAncestorClasses(context)
         .stream()
-        .filter(baseClass -> PyBroadExceptionInspection.equalsException(baseClass, context))
-        .findAny()
-        .isPresent();
+        .anyMatch(baseClass -> PyBroadExceptionInspection.equalsException(baseClass, context));
     }
 
     private static boolean hasConstructorCall(@NotNull PyClass cls, @NotNull PyFunction initMethod, @NotNull TypeEvalContext context) {
@@ -189,9 +187,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         return cls.getAncestorClasses(context)
           .stream()
           .map(PyClass::getName)
-          .filter(firstArg::equals)
-          .findAny()
-          .isPresent();
+          .anyMatch(firstArg::equals);
       }
 
       private static boolean isSuperClassCall(@NotNull PyExpression calleeQualifier,
@@ -202,9 +198,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         return callingClass != null &&
                cls.getAncestorClasses(context)
                  .stream()
-                 .filter(callingClass::equals)
-                 .findAny()
-                 .isPresent();
+                 .anyMatch(callingClass::equals);
       }
 
       @Nullable

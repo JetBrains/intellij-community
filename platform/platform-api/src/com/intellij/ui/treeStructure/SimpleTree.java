@@ -476,13 +476,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }, null, false);
   }
 
-  private void debugTree(AbstractTreeBuilder aBuilder) {
-    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), node -> {
-      System.out.println("Node: " + node);
-      return true;
-    });
-  }
-
   private boolean hasSingleSelection() {
     return !isSelectionEmpty() && getSelectionPaths().length == 1;
   }

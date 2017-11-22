@@ -76,14 +76,16 @@ public class DataFlowRunner {
   }
 
   @Nullable
-  private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+  private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
+                                                         @NotNull InstructionVisitor visitor,
+                                                         boolean allowInlining) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
       PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
         final RunnerResult result;
         try {
-          myInlining = false;
+          myInlining = allowInlining;
           result = analyzeMethod(block, visitor);
         }
         finally {
@@ -91,7 +93,7 @@ public class DataFlowRunner {
         }
         if (result == RunnerResult.OK) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
-          if (!closureStates.isEmpty()) {
+          if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
           }
         }
@@ -102,10 +104,39 @@ public class DataFlowRunner {
     return Collections.singletonList(createMemoryState());
   }
 
+  /**
+   * Analyze this particular method (lambda, class initializer) without inlining this method into parent one.
+   * E.g. if supplied method is a lambda within Stream API call chain, it still will be analyzed as separate method.
+   * On the other hand, inlining will normally work inside the supplied method.
+   *
+   * @param psiBlock method/lambda/class initializer body
+   * @param visitor a visitor to use
+   * @return result status
+   */
   @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
-    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
+  }
+
+  /**
+   * Analyze this particular method (lambda, class initializer) trying to inline it into outer scope if possible.
+   * Usually inlining works, e.g. for lambdas inside stream API calls.
+   *
+   * @param psiBlock method/lambda/class initializer body
+   * @param visitor a visitor to use
+   * @return result status
+   */
+  @NotNull
+  public final RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, true);
+    if (initialStates == null) {
+      return RunnerResult.NOT_APPLICABLE;
+    }
+    if (initialStates.isEmpty()) {
+      return RunnerResult.OK;
+    }
+    return analyzeMethod(psiBlock, visitor, false, initialStates);
   }
 
   public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
@@ -247,7 +278,7 @@ public class DataFlowRunner {
   }
 
   public RunnerResult analyzeMethodRecursively(PsiElement block, StandardInstructionVisitor visitor) {
-    Collection<DfaMemoryState> states = createInitialStates(block, visitor);
+    Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
     return analyzeBlockRecursively(block, states, visitor);
   }

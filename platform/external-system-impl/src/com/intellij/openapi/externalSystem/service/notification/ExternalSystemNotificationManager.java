@@ -122,13 +122,24 @@ public class ExternalSystemNotificationManager implements Disposable {
     showNotification(externalSystemId, notificationData);
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   @NotNull
   public NotificationData createNotification(@NotNull Throwable error,
                                              @NotNull String externalProjectName,
                                              @NotNull ProjectSystemId externalSystemId,
                                              @NotNull Project project) {
-    String title =
-      ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemId.getReadableName(), externalProjectName);
+    String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                externalSystemId.getReadableName(), externalProjectName);
+    return createNotification(title, error, externalSystemId, project);
+  }
+
+  @NotNull
+  public NotificationData createNotification(@NotNull String title,
+                                             @NotNull Throwable error,
+                                             @NotNull ProjectSystemId externalSystemId,
+                                             @NotNull Project project) {
     String message = ExternalSystemApiUtil.buildErrorMessage(error);
     NotificationCategory notificationCategory = NotificationCategory.ERROR;
     String filePath = null;

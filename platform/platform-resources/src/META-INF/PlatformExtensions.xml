@@ -207,6 +207,7 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -389,7 +390,9 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.RegistryUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsNameUsageCollector"/>

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.impl.DebugUtil;
@@ -58,7 +59,7 @@ public class LazyParseableElement extends CompositeElement {
    * Guarded by {@link #lock}
    * */
   @NotNull private Getter<CharSequence> myText;
-  private boolean myParsed;
+  private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
@@ -142,9 +143,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   public boolean isParsed() {
-    synchronized (lock) {
-      return myParsed;
-    }
+    return myParsed;
   }
 
   private CharSequence myText() {
@@ -173,6 +172,8 @@ public class LazyParseableElement extends CompositeElement {
     if (!ourParsingAllowed) {
       LOG.error("Parsing not allowed!!!");
     }
+    if (myParsed) return;
+
     CharSequence text;
     synchronized (lock) {
       if (myParsed) return;
@@ -222,15 +223,17 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private void setChildren(@NotNull TreeElement parsedNode, @Nullable AstPath thisPath) {
-    try {
-      AstPath.cacheNodePaths(this, parsedNode, thisPath);
-      TreeElement last = rawSetParents(parsedNode, this);
-      super.setFirstChildNode(parsedNode);
-      super.setLastChildNode(last);
-    }
-    catch (Throwable e) {
-      LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
-    }
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      try {
+        AstPath.cacheNodePaths(this, parsedNode, thisPath);
+        TreeElement last = rawSetParents(parsedNode, this);
+        super.setFirstChildNode(parsedNode);
+        super.setLastChildNode(last);
+      }
+      catch (Throwable e) {
+        LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
+      }
+    });
   }
 
   @Override

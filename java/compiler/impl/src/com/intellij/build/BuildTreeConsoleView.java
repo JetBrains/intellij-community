@@ -16,7 +16,6 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -24,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -669,7 +669,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           text = failure.getError().getMessage();
         }
         if (text == null) continue;
-        printDetails((FailureImpl)failure, text);
+        printDetails(failure, text);
         hasChanged = true;
         if (iterator.hasNext()) {
           myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -689,7 +689,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    public void printDetails(FailureImpl failure, String text) {
+    public void printDetails(Failure failure, String text) {
       String content = StringUtil.convertLineSeparators(text);
       while (true) {
         Matcher tagMatcher = TAG_PATTERN.matcher(content);
@@ -708,11 +708,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             myConsole.printHyperlink(linkText, new HyperlinkInfo() {
               @Override
               public void navigate(Project project) {
-                NotificationData notificationData = failure.getNotificationData();
-                if (notificationData != null) {
-                  notificationData.getListener().hyperlinkUpdate(
-                    notificationData.getNotification(),
-                    IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
+                Notification notification = failure.getNotification();
+                if (notification != null && notification.getListener() != null) {
+                  notification.getListener().hyperlinkUpdate(
+                    notification, IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
                 }
               }
             });
