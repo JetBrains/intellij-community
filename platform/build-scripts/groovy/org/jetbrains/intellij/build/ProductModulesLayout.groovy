@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -173,7 +174,10 @@ class ProductModulesLayout {
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 
+  /**
+   * @deprecated this method isn't supposed to be used in product build scripts
+   */
   List<String> getIncludedPlatformModules() {
-    productApiModules + productImplementationModules + additionalPlatformJars.values()
+    DistributionJARsBuilder.getIncludedPlatformModules(this)
   }
 }

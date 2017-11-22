@@ -9,6 +9,7 @@ import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -76,7 +77,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + getIncludedPlatformModules(productLayout)).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -140,6 +141,11 @@ class DistributionJARsBuilder {
 
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) + toolModules
+  }
+
+  static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
+    modulesLayout.platformApiJarModules + modulesLayout.platformImplJarModules + modulesLayout.productApiModules +
+    modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
   /**
