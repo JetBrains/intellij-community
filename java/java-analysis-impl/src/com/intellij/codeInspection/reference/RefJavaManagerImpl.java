@@ -65,8 +65,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   @Override
