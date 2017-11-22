@@ -94,10 +94,10 @@ fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
 }
 
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
-  Assertions.assertThat(actual).isEqualToIgnoringWhitespace(lastMessage()).withFailMessage(failMessage)
+  assertMessage(actual, lastMessage(), failMessage)
 }
 
-fun GitPlatformTest.assertMessage(actual: String, expected: String, failMessage: String = "Commit message is incorrect") {
+fun assertMessage(actual: String, expected: String, failMessage: String = "Commit message is incorrect") {
   Assertions.assertThat(actual).isEqualToIgnoringWhitespace(expected).withFailMessage(failMessage)
 }
 

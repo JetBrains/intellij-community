@@ -55,7 +55,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertLastMessage(newMessage, "Message reworded incorrectly")
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
   }
 
   fun `test undo reword`() {
@@ -114,7 +114,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertLastMessage("Message reworded incorrectly")
+    assertLastMessage(newMessage)
   }
 
   // IDEA-175443
