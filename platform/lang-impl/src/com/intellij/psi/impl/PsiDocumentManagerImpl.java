@@ -19,7 +19,6 @@ package com.intellij.psi.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -43,6 +42,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
@@ -154,7 +154,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
                                               boolean synchronously, 
                                               boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
-      EditorWindowImpl.disposeInvalidEditors();
+      InjectedLanguageManagerImpl.disposeInvalidEditors();
     }
     return super.finishCommitInWriteAction(document, finishProcessors, synchronously, forceNoPsiCommit);
   }

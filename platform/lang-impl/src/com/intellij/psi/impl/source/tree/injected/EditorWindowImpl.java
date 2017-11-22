@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.injected.editor;
+package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -63,10 +51,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author Alexey
- */
-public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
+class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
   private volatile PsiFile myInjectedFile;
@@ -81,7 +66,8 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final SoftWrapModelWindow mySoftWrapModel;
   private final InlayModelWindow myInlayModel;
 
-  public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
+  @NotNull
+  static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
     assert injectedFile.isValid();
     EditorWindowImpl window;
@@ -121,7 +107,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myInlayModel = new InlayModelWindow();
   }
 
-  public static void disposeInvalidEditors() {
+  static void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     Iterator<EditorWindowImpl> iterator = allEditors.iterator();
     while (iterator.hasNext()) {

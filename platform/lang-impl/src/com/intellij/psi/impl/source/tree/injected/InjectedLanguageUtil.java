@@ -17,9 +17,10 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.injected.editor.*;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
@@ -466,7 +467,7 @@ public class InjectedLanguageUtil {
     file.putUserData(INJECTED_DOCS_KEY, null);
   }
 
-  public static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
+  static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
     VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     if (psiManagerEx.getProject().isDisposed()) return;
@@ -600,10 +601,6 @@ public class InjectedLanguageUtil {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) return ((VirtualFileWindow)virtualFile).getDocumentWindow();
     return null;
-  }
-
-  public static boolean isInjectableLanguage(Language language) {
-    return LanguageUtil.isInjectableLanguage(language);
   }
 
   public static boolean isHighlightInjectionBackground(@Nullable PsiLanguageInjectionHost host) {

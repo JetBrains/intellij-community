@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -118,6 +116,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public void dispose() {
     myProgress.cancel();
+    disposeInvalidEditors();
+  }
+
+  public static void disposeInvalidEditors() {
     EditorWindowImpl.disposeInvalidEditors();
   }
 
