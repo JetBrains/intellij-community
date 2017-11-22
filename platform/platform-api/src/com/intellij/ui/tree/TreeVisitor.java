@@ -83,6 +83,132 @@ public interface TreeVisitor {
   }
 
 
+  abstract class Base<T> implements TreeVisitor {
+    private final Function<TreePath, T> converter;
+
+    public Base(Function<TreePath, T> converter) {
+      this.converter = converter;
+    }
+
+    @NotNull
+    @Override
+    public Action visit(@NotNull TreePath path) {
+      return visit(path, converter.apply(path));
+    }
+
+    @NotNull
+    @SuppressWarnings("unused")
+    protected Action visit(@NotNull TreePath path, T component) {
+      if (component == null) return Action.SKIP_CHILDREN;
+      if (matches(component)) return Action.INTERRUPT;
+      if (contains(component)) return Action.CONTINUE;
+      return Action.SKIP_CHILDREN;
+    }
+
+    /**
+     * @param component a last component of the current path
+     * @return {@code true} if the given component matches to a searching object
+     */
+    @SuppressWarnings("unused")
+    protected boolean matches(@NotNull T component) {
+      return false;
+    }
+
+    /**
+     * @param component a last component of the current path
+     * @return {@code true} if the given component contains a searching object
+     */
+    @SuppressWarnings("unused")
+    protected abstract boolean contains(@NotNull T component);
+  }
+
+
+  abstract class ByComponent<T> extends Base<T> {
+    private final T component;
+
+    public ByComponent(@NotNull T componentToFind, Function<Object, T> converter) {
+      super(converter.compose(TreePath::getLastPathComponent));
+      this.component = componentToFind;
+    }
+
+    @Override
+    protected boolean matches(@NotNull T component) {
+      return matches(component, this.component);
+    }
+
+    @Override
+    protected boolean contains(@NotNull T component) {
+      return contains(component, this.component);
+    }
+
+    /**
+     * @param pathComponent a last component of the current path
+     * @param thisComponent a seeking component
+     * @return {@code true} if both components match each other
+     */
+    protected boolean matches(@NotNull T pathComponent, @NotNull T thisComponent) {
+      return pathComponent.equals(thisComponent);
+    }
+
+    /**
+     * @param pathComponent a last component of the current path
+     * @param thisComponent a seeking component
+     * @return {@code true} if the first component may contain the second one
+     */
+    @SuppressWarnings("unused")
+    protected abstract boolean contains(@NotNull T pathComponent, @NotNull T thisComponent);
+  }
+
+
+  class ByTreePath<T> extends Base<T> {
+    private final TreePath path;
+
+    public ByTreePath(@NotNull TreePath path, Function<Object, T> converter) {
+      super(converter.compose(TreePath::getLastPathComponent));
+      this.path = path;
+    }
+
+    @NotNull
+    @Override
+    protected Action visit(@NotNull TreePath path, T component) {
+      if (component == null) return Action.SKIP_CHILDREN;
+
+      int pathCount = path.getPathCount();
+      int thisCount = this.path.getPathCount();
+      if (thisCount < pathCount) return Action.SKIP_CHILDREN;
+
+      Action action = thisCount == pathCount ? Action.INTERRUPT : Action.CONTINUE;
+
+      TreePath value = this.path;
+      while (thisCount > pathCount) {
+        thisCount--;
+        value = value.getParentPath();
+        if (value == null) return Action.SKIP_CHILDREN;
+      }
+      return matches(component, value.getLastPathComponent()) ? action : Action.SKIP_CHILDREN;
+    }
+
+    /**
+     * @param pathComponent a last component of the current path
+     * @param thisComponent a component of the seeking path at the same level
+     * @return {@code true} if both components match each other
+     */
+    protected boolean matches(@NotNull T pathComponent, @NotNull Object thisComponent) {
+      return pathComponent.equals(thisComponent);
+    }
+
+    @Override
+    protected final boolean matches(@NotNull T component) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected final boolean contains(@NotNull T component) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+
   class PathFinder implements TreeVisitor {
     private final Function<Object, Object> converter;
     private final TreePath path;

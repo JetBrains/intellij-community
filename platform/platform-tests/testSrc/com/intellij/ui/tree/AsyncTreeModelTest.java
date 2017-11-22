@@ -166,7 +166,7 @@ public final class AsyncTreeModelTest {
     TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
-      -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), true, path
+      -> test.visit(new TreeVisitor.ByTreePath<>(tp, Object::toString), true, path
       -> test.expand(path.getParentPath(), () // expand parent path because leaf nodes are ignored
       -> testPathState(test.tree, "   +'root'\n     +'upper'\n       +'middle'\n         +'lower'\n            'node'\n", test::done)))));
   }
@@ -178,7 +178,7 @@ public final class AsyncTreeModelTest {
     TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
-      -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), false, path -> {
+      -> test.visit(new TreeVisitor.ByTreePath<>(tp, Object::toString), false, path -> {
       assertNull(path);
       test.done();
     })));

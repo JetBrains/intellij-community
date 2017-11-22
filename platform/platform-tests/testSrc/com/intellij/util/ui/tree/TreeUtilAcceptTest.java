@@ -368,19 +368,18 @@ public final class TreeUtilAcceptTest {
                      node("RootGreekEpsilon")));
   }
 
-  static class Visitor extends TreeVisitor.Finder {
+  static class Visitor extends TreeVisitor.Base<TreePath> {
     final AtomicLong counter = new AtomicLong();
+
+    public Visitor() {
+      super(path -> path);
+    }
 
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
       counter.incrementAndGet();
       return super.visit(path);
-    }
-
-    @Override
-    protected boolean found(@NotNull TreePath path) {
-      return false;
     }
 
     @Override
@@ -410,7 +409,7 @@ public final class TreeUtilAcceptTest {
     }
 
     @Override
-    protected boolean found(@NotNull TreePath path) {
+    protected boolean matches(@NotNull TreePath path) {
       return value.equals(value(path));
     }
 
