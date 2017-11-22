@@ -148,18 +148,6 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
-
-        <property name="patchKotlinVersion"
-                  value="${basedir}/patches/Use_Kotlin_1_1_50_Release_instead_of_1_2_0_RC.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchKotlinVersion}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchKotlinVersion}"/>
-        </exec>
     </target>
 
     <!-- ===================================================== -->
