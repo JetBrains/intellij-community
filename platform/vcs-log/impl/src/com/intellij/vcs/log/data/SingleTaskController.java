@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
@@ -36,7 +37,7 @@ import java.util.List;
  * <p/>
  * The class is thread-safe: all operations are synchronized.
  */
-public abstract class SingleTaskController<Request, Result> {
+public abstract class SingleTaskController<Request, Result> implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
@@ -46,6 +47,8 @@ public abstract class SingleTaskController<Request, Result> {
 
   @NotNull private List<Request> myAwaitingRequests;
   @Nullable private ProgressIndicator myRunningTask;
+
+  private boolean myIsDisposed = false;
 
   public SingleTaskController(@NotNull Consumer<Result> handler, boolean cancelRunning) {
     myResultHandler = handler;
@@ -60,6 +63,7 @@ public abstract class SingleTaskController<Request, Result> {
    */
   public final void request(@NotNull Request requests) {
     synchronized (LOCK) {
+      if (myIsDisposed) return;
       myAwaitingRequests.add(requests);
       LOG.debug("Added requests: " + requests);
       if (myRunningTask != null && myCancelRunning) {
@@ -146,6 +150,21 @@ public abstract class SingleTaskController<Request, Result> {
         myRunningTask = startNewBackgroundTask();
         LOG.debug("Restarted a bg task " + myRunningTask);
       }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    synchronized (LOCK) {
+      if (myIsDisposed) return;
+      myIsDisposed = true;
+      
+      if (myRunningTask != null) {
+        myRunningTask.cancel();
+        myRunningTask = null;
+      }
+
+      myAwaitingRequests.clear();
     }
   }
 }
