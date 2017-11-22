@@ -205,7 +205,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   @Nullable
-  public String getType(final RefEntity ref) {
+  public String getType(@NotNull final RefEntity ref) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final String type = extension.getType(ref);
       if (type != null) return type;
@@ -293,7 +293,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   @Nullable
-  public String getGroupName(final RefElement entity) {
+  public String getGroupName(@NotNull final RefElement entity) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final String groupName = extension.getGroupName(entity);
       if (groupName != null) return groupName;
@@ -541,12 +541,12 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   @Nullable
-  public RefElement getReference(final PsiElement elem) {
+  public RefElement getReference(@Nullable PsiElement elem) {
     return getReference(elem, false);
   }
 
   @Nullable
-  public RefElement getReference(final PsiElement elem, final boolean ignoreScope) {
+  public RefElement getReference(PsiElement elem, final boolean ignoreScope) {
     if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
                                  elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
@@ -650,7 +650,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public RefModule getRefModule(Module module) {
+  public RefModule getRefModule(@Nullable Module module) {
     if (module == null) {
       return null;
     }

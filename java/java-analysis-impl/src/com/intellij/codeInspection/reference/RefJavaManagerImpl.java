@@ -244,7 +244,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public RefElement createRefElement(final PsiElement elem) {
+  public RefElement createRefElement(@NotNull final PsiElement elem) {
     if (elem instanceof PsiClass) {
       return new RefClassImpl((PsiClass)elem, myRefManager);
     }
@@ -306,7 +306,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public String getType(final RefEntity ref) {
+  public String getType(@NotNull final RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -341,7 +341,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new MyJavaElementVisitor();
@@ -351,13 +351,13 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public String getGroupName(final RefEntity entity) {
+  public String getGroupName(@NotNull final RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(final PsiElement psiElement) {
+  public boolean belongsToScope(@NotNull final PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
@@ -372,7 +372,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void onEntityInitialized(RefElement refElement, PsiElement psiElement) {
+  public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
