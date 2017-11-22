@@ -66,7 +66,6 @@ public class RefManagerImpl extends RefManager {
   private final BitSet myUnprocessedFiles = new BitSet();
   private final boolean processJVMClasses = Registry.is("batch.inspections.process.by.default.jvm.languages");
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<PsiElement, RefElement> myPsiToRefTable = ContainerUtil.newConcurrentMap(); // replacement of myRefTable
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 
@@ -134,7 +133,7 @@ public class RefManagerImpl extends RefManager {
   public void cleanup() {
     myScope = null;
     myRefProject = null;
-    (usePsiAsKey() ? myPsiToRefTable : myRefTable).clear();
+    myRefTable.clear();
     myCachedSortedRefs = null;
     myModules.clear();
     myContext = null;
@@ -375,7 +374,7 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = new ArrayList<>(usePsiAsKey() ? myPsiToRefTable.values() : myRefTable.values());
+    answer = new ArrayList<>(myRefTable.values());
     List<RefElement> list = answer;
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
@@ -423,27 +422,15 @@ public class RefManagerImpl extends RefManager {
     }
 
     if (element != null &&
-        (usePsiAsKey() ? myPsiToRefTable.remove(element) : myRefTable.remove(createAnchor(element))) != null) return;
+        myRefTable.remove(createAnchor(element)) != null) return;
 
     //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-    if (usePsiAsKey()) {
-      for (Map.Entry<PsiElement, RefElement> entry : myPsiToRefTable.entrySet()) {
-        RefElement value = entry.getValue();
-        PsiElement anchor = entry.getKey();
-        if (value == refElem) {
-          myPsiToRefTable.remove(anchor);
-          break;
-        }
-      }
-    }
-    else {
-      for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
-        RefElement value = entry.getValue();
-        PsiAnchor anchor = entry.getKey();
-        if (value == refElem) {
-          myRefTable.remove(anchor);
-          break;
-        }
+    for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
+      RefElement value = entry.getValue();
+      PsiAnchor anchor = entry.getKey();
+      if (value == refElem) {
+        myRefTable.remove(anchor);
+        break;
       }
     }
     myCachedSortedRefs = null;
@@ -637,7 +624,7 @@ public class RefManagerImpl extends RefManager {
 
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
-    T result = (T)(usePsiAsKey() ? myPsiToRefTable.get(element) : myRefTable.get(psiAnchor));
+    T result = (T)(myRefTable.get(psiAnchor));
 
     if (result != null) return result;
 
@@ -650,7 +637,7 @@ public class RefManagerImpl extends RefManager {
     if (result == null) return null;
 
     myCachedSortedRefs = null;
-    RefElement prev = usePsiAsKey() ? myPsiToRefTable.putIfAbsent(element, result) : myRefTable.putIfAbsent(psiAnchor, result);
+    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
     if (prev != null) {
       //noinspection unchecked
       result = (T)prev;
@@ -722,9 +709,5 @@ public class RefManagerImpl extends RefManager {
 
   boolean isValidPointForReference() {
     return myIsInProcess || myOfflineView || ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  private static boolean usePsiAsKey() {
-    return Registry.is("batch.inspections.use.psi.as.ref.table.key");
   }
 }
