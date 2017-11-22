@@ -23,33 +23,38 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
+import org.jetbrains.plugins.terminal.TerminalView;
 
 /**
  * An action that activates the terminal window for file, selected by user.
- *
- * @see <a href="https://youtrack.jetbrains.com/oauth?state=%2Fissue%2FIDEA-149976">Corresponding ticket</a>
  */
 public class RevealFileInTerminalAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(getSelectedFile(e) != null);
+    Project project = getEventProject(e);
+    e.getPresentation().setEnabledAndVisible(project != null && getSelectedFile(e) != null);
   }
 
-  private static VirtualFile getSelectedFile(AnActionEvent e) {
-    return ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));
+  @Nullable
+  private static VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
+    return ShowFilePathAction.findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = getEventProject(e);
-    if (project == null) {
+    VirtualFile selectedFile = getSelectedFile(e);
+    if (project == null || selectedFile == null) {
       return;
     }
 
-    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window != null && window.isAvailable()) {
-      window.activate(null, getSelectedFile(e));
+      TerminalView.getInstance(project).setFileToOpen(selectedFile);
+      window.activate(null);
     }
   }
 }

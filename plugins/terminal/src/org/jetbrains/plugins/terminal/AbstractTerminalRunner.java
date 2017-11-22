@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -86,13 +85,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       openSessionInDirectory(widget.getFirst(), widget.getSecond());
       return true;
     }, parent);
-    final ToolWindow window = getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    openSessionForFile(terminalWidget, window.getSelectedFile().orElse(null));
+    openSessionForFile(terminalWidget, TerminalView.getInstance(myProject).getFileToOpen());
     return terminalWidget;
-  }
-
-  private ToolWindow getToolWindow(String windowId) {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(windowId);
   }
 
   private void initConsoleUI(final T process) {
@@ -156,7 +150,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
     // Request focus
-    getToolWindow(defaultExecutor.getId()).activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
+    if (toolWindow != null) {
+      toolWindow.activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
+    }
   }
 
   @NotNull
@@ -167,21 +164,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public abstract String runningTargetName();
 
   public void openSessionForFile(@NotNull TerminalWidget terminalWidget, @Nullable VirtualFile file) {
-    openSessionInDirectory(terminalWidget, Optional.ofNullable(file).map(this::getClosestParentFolderPath).orElse(null));
+    openSessionInDirectory(terminalWidget, getParentDirectoryPath(file));
   }
 
   @Nullable
-  private String getClosestParentFolderPath(@Nullable VirtualFile selectedFile) {
-    if (selectedFile != null) {
-      if (selectedFile.isDirectory()) {
-        return selectedFile.getPath();
-      }
-      VirtualFile parent = selectedFile.getParent();
-      if (parent != null) {
-        return parent.getPath();
-      }
-    }
-    return null;
+  private static String getParentDirectoryPath(@Nullable VirtualFile file) {
+    VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
+    return dir != null ? dir.getPath() : null;
   }
 
   private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {

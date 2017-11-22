@@ -45,7 +45,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Objects;
 
 /**
  * @author traff
@@ -60,7 +59,7 @@ public class TerminalView {
   private TerminalDockContainer myDockContainer;
 
   @Nullable
-  private VirtualFile myPreviousSelectedFile;
+  private VirtualFile myFileToOpen;
 
   public TerminalView(Project project) {
     myProject = project;
@@ -69,7 +68,6 @@ public class TerminalView {
   public static TerminalView getInstance(@NotNull Project project) {
     return project.getComponent(TerminalView.class);
   }
-
 
   public void initTerminal(final ToolWindow toolWindow) {
     LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
@@ -91,15 +89,13 @@ public class TerminalView {
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible) {
-            VirtualFile selectedFile = window.getSelectedFile().orElse(null);
             if (toolWindow.getContentManager().getContentCount() == 0) {
               initTerminal(window);
-              myPreviousSelectedFile = selectedFile;
             }
-            else if (!Objects.equals(myPreviousSelectedFile, selectedFile)) {
-              terminalRunner.openSessionForFile(myTerminalWidget, selectedFile);
-              myPreviousSelectedFile = selectedFile;
+            else if (myFileToOpen != null) {
+              terminalRunner.openSessionForFile(myTerminalWidget, myFileToOpen);
             }
+            myFileToOpen = null;
           }
         }
       }
@@ -130,7 +126,6 @@ public class TerminalView {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
-    myPreviousSelectedFile = toolWindow.getSelectedFile().orElse(null);
     myTerminalWidget = terminalRunner.createTerminalWidget(content);
     myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
       @Override
@@ -176,6 +171,15 @@ public class TerminalView {
 
   private JComponent getComponentToFocus() {
     return myTerminalWidget != null ? myTerminalWidget.getComponent() : null;
+  }
+
+  @Nullable
+  public VirtualFile getFileToOpen() {
+    return myFileToOpen;
+  }
+
+  public void setFileToOpen(@Nullable VirtualFile fileToOpen) {
+    myFileToOpen = fileToOpen;
   }
 
   public void openLocalSession(Project project, ToolWindow terminal) {
