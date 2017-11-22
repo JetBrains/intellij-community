@@ -17,8 +17,10 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +33,21 @@ public class NegateConditionalIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
-    final String newExpression = conditionalExpression.getCondition().getText() + '?' +
-                                 BoolUtils.getNegatedExpressionText(conditionalExpression.getThenExpression()) + ':' +
-                                 BoolUtils.getNegatedExpressionText(conditionalExpression.getElseExpression());
-    replaceExpressionWithNegatedExpressionString(newExpression, conditionalExpression);
+    PsiExpression condition = conditionalExpression.getCondition();
+    PsiExpression thenExpression = conditionalExpression.getThenExpression();
+    PsiExpression elseExpression = conditionalExpression.getElseExpression();
+    final String newExpression = condition.getText() + '?' +
+                                 BoolUtils.getNegatedExpressionText(thenExpression) + ':' +
+                                 BoolUtils.getNegatedExpressionText(elseExpression);
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(condition);
+    if (thenExpression != null) {
+      tracker.markUnchanged(thenExpression);
+    }
+    if (elseExpression != null) {
+      tracker.markUnchanged(elseExpression);
+    }
+    replaceExpressionWithNegatedExpressionString(newExpression, conditionalExpression, tracker);
   }
 
   @NotNull

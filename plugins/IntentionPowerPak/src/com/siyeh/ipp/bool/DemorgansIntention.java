@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -50,7 +51,11 @@ public class DemorgansIntention extends MutablyNamedIntention {
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     final String newExpression = convertConjunctionExpression(polyadicExpression);
-    replaceExpressionWithNegatedExpressionString(newExpression, polyadicExpression);
+    CommentTracker tracker = new CommentTracker();
+    for (PsiExpression expression : polyadicExpression.getOperands()) {
+      tracker.markUnchanged(expression);
+    }
+    replaceExpressionWithNegatedExpressionString(newExpression, polyadicExpression, tracker);
   }
 
   private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression) {
