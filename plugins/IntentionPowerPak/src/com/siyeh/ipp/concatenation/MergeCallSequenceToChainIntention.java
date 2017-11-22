@@ -67,7 +67,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
       }
       methodCallExpression = (PsiMethodCallExpression)grandParent;
     }
-    PsiReplacementUtil.replaceExpression(expression, newMethodCallExpression.toString(), false);
+    PsiReplacementUtil.replaceExpression(expression, newMethodCallExpression.toString());
     tracker.deleteAndRestoreComments(nextSibling);
   }
 
