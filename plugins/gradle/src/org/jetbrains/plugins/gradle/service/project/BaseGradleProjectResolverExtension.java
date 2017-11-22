@@ -52,7 +52,6 @@ import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
-import org.gradle.internal.impldep.com.google.common.io.InputSupplier;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -470,19 +469,19 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs);
   }
 
-  private void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+  private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     ContentRootData excludedContentRootData;
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
     if (contentRootDataDataNode == null ||
         !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
       excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getAbsolutePath());
+      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
     }
     else {
       excludedContentRootData = contentRootDataDataNode.getData();
     }
 
     excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getAbsolutePath());
-    ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
   }
 
   @Nullable
