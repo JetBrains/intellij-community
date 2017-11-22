@@ -269,9 +269,9 @@ class UndoRedoStacksHolder {
   }
 
   @Nullable
-  public UndoableGroup findGlobalUndoableGroup(int timestamp) {
+  public UndoableGroup findGlobalUndoableGroup(UndoableGroup timestamp) {
     for (UndoableGroup group : myGlobalStack) {
-      if (group.getCommandTimestamp() == timestamp) {
+      if (group == timestamp) {
         return group;
       }
     }

@@ -98,7 +98,7 @@ abstract class UndoRedo {
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
-      UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup.getCommandTimestamp());
+      UndoableGroup globalUndoableGroup = getStackHolder().findGlobalUndoableGroup(myUndoableGroup);
       if (globalUndoableGroup != null) {
         if(isRedo())
           myManager.redo(null);
