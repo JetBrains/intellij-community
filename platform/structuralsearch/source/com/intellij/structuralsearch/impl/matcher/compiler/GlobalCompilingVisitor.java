@@ -107,6 +107,10 @@ public class GlobalCompilingVisitor {
     }
   }
 
+  public void setFilterSimple(PsiElement element, NodeFilter filter) {
+    context.getPattern().getHandler(element).setFilter(filter);
+  }
+
   public List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }

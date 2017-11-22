@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 * @author Eugene.Kudelevsky
 */
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
-  private final GlobalCompilingVisitor myCompilingVisitor;
+  final GlobalCompilingVisitor myCompilingVisitor;
 
   public XmlCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
@@ -92,8 +92,6 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   @Override
   public void visitXmlText(XmlText text) {
     super.visitXmlText(text);
-
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(text);
-    handler.setFilter(TagValueFilter.getInstance());
+    myCompilingVisitor.setFilterSimple(text, TagValueFilter.getInstance());
   }
 }

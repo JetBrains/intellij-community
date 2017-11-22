@@ -341,13 +341,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
     super.visitBlockStatement(psiBlockStatement);
-    myCompilingVisitor.getContext().getPattern().getHandler(psiBlockStatement).setFilter(BlockFilter.getInstance());
+    myCompilingVisitor.setFilterSimple(psiBlockStatement, BlockFilter.getInstance());
   }
 
   @Override
-  public void visitVariable(PsiVariable psiVariable) {
-    super.visitVariable(psiVariable);
-    myCompilingVisitor.getContext().getPattern().getHandler(psiVariable).setFilter(VariableFilter.getInstance());
+  public void visitVariable(PsiVariable variable) {
+    super.visitVariable(variable);
+    myCompilingVisitor.setFilterSimple(variable, e -> e instanceof PsiVariable);
   }
 
   @Override
@@ -361,9 +361,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
       if (reference != null && reference.getParameterList().getTypeParameterElements().length > 0) {
         myCompilingVisitor.setHandler(psiDeclarationStatement, new TypedSymbolHandler());
-        final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
         // typed symbol
-        handler.setFilter(TypedSymbolNodeFilter.getInstance());
+        myCompilingVisitor.setFilterSimple(psiDeclarationStatement, TypedSymbolNodeFilter.getInstance());
 
         final PsiTypeElement[] params = reference.getParameterList().getTypeParameterElements();
         for (PsiTypeElement param : params) {
@@ -371,9 +370,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
               (myCompilingVisitor.getContext().getPattern().isRealTypedVar(
                 param.getInnermostComponentReferenceElement().getReferenceNameElement()))
             ) {
-            myCompilingVisitor.getContext().getPattern().getHandler(param).setFilter(
-              TypeParameterFilter.getInstance()
-            );
+            myCompilingVisitor.setFilterSimple(param, TypeParameterFilter.getInstance());
           }
         }
 
@@ -392,8 +389,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         }
       }
       myCompilingVisitor.setHandler(psiDeclarationStatement, new AnnotationHandler());
-      final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiDeclarationStatement);
-      handler.setFilter(AnnotationFilter.getInstance());
+      myCompilingVisitor.setFilterSimple(psiDeclarationStatement, AnnotationFilter.getInstance());
       return;
     }
 
@@ -413,7 +409,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitDocComment(PsiDocComment psiDocComment) {
     super.visitDocComment(psiDocComment);
-    myCompilingVisitor.getContext().getPattern().getHandler(psiDocComment).setFilter(JavaDocFilter.getInstance());
+    myCompilingVisitor.setFilterSimple(psiDocComment, JavaDocFilter.getInstance());
   }
 
   @Override
@@ -489,8 +485,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
       else {
         // just expression
-        MatchingHandler handler;
-        myCompilingVisitor.setHandler(expressionStatement, handler = new ExpressionHandler());
+        MatchingHandler handler = new ExpressionHandler();
+        myCompilingVisitor.setHandler(expressionStatement, handler);
 
         handler.setFilter(ExpressionFilter.getInstance());
       }
