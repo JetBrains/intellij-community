@@ -1,0 +1,12 @@
+<html>
+<body>
+<p>Detects nullable comparator in sort methods on elements which are not Comparable</p>
+<!-- tooltip end -->
+<p><code>
+  List&ltException&gt list = new ArrayList<>();
+  list.add(new Exception());
+  list.add(new Exception());
+  list.sort(null); // Fails at runtime with ClassCastException
+</code></p>
+</body>
+</html>
