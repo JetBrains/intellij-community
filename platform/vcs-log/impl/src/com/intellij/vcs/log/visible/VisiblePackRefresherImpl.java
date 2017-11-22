@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,6 +80,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         return indicator;
       }
     };
+    Disposer.register(this, myTaskController);
 
     myIndexingFinishedListener = root -> myTaskController.request(new IndexingFinishedRequest(root));
     myLogData.getIndex().addListener(myIndexingFinishedListener);
