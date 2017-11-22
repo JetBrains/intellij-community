@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,12 +29,13 @@ public abstract class ProgressPanel {
   /**
    * <code>LABELED_PANEL_PROPERTY</code> is installed on the owner component after <code>ProgressPanelBuilder.createPanel</code>
    * has been called.
-   * @param component is the <code>JComponent</code> descendant to get the <code>ProgressPanel</code> for
+   * @param parent is <code>JProgressBar</code> itself or any of its parents
    * @return instance of <code>ProgressPanel</code> or <code>null</code>
    */
   @Nullable
-  public static ProgressPanel forComponent(JComponent component) {
-    return (ProgressPanel)component.getClientProperty(LABELED_PANEL_PROPERTY);
+  public static ProgressPanel forComponent(JComponent parent) {
+    JProgressBar pb = UIUtil.findComponentOfType(parent, JProgressBar.class);
+    return pb != null ? (ProgressPanel)pb.getClientProperty(LABELED_PANEL_PROPERTY) : null;
   }
 
   public enum State {
@@ -70,4 +72,6 @@ public abstract class ProgressPanel {
    * Set the comment text.
    */
   public abstract void setCommentText(String comment);
+
+  public abstract void setSeparatorEnabled(boolean enabled);
 }

@@ -2,6 +2,7 @@
 package com.intellij.ui.panel;
 
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -93,7 +94,9 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
 
     if (StringUtil.isNotEmpty(myLabelText)) {
       gc.insets = JBUI.insetsRight(8);
-      JLabel lbl = new JLabel(myLabelText);
+      JLabel lbl = new JLabel();
+      LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(lbl);
+      lbl.setLabelFor(myComponent);
       panel.add(lbl, gc);
     }
 

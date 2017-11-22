@@ -15,7 +15,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,41 +87,29 @@ public class ComponentPanelTestAction extends AnAction {
       text.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(text).
-        setLabelText("Textfield:").
+        setLabelText("&Textfield:").
         setCommentText("My short description").
         setCommentLocation(SwingConstants.RIGHT).createPanel());
 
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
+      panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JTextField()).
+        setLabelText("&Path:").createPanel());
+
+      panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JTextField()).
+        setLabelText("&Options:").createPanel());
+
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JCheckBox("This is a checkbox 1")).
         setCommentText("My long long long long long long long long long long comment").
         setCommentLocation(SwingConstants.BOTTOM).createPanel());
 
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JCheckBox("This is a checkbox 2")).
         setHelpTooltipText("Help tooltip description").createPanel());
 
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
-      ButtonGroup bg = new ButtonGroup();
-      JRadioButton radioButton = new JRadioButton("RadioButton 1", true);
-      bg.add(radioButton);
-      panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(radioButton).
-        setHelpTooltipText("Help tooltip description").createPanel());
-
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
-      radioButton = new JRadioButton("RadioButton 2", true);
-      bg.add(radioButton);
-      panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(radioButton).
-        setCommentText("My radiobutton").setCommentLocation(SwingConstants.BOTTOM).createPanel());
-
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JButton("Abracadabra")).
         setCommentText("Do abradabra stuff").setCommentLocation(SwingConstants.BOTTOM).createPanel());
 
-      panel.add(Box.createRigidArea(new JBDimension(0, 5)));
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JComboBox<>(items)).
         setCommentText("Very important combobox").setCommentLocation(SwingConstants.BOTTOM).createPanel());
-
 
       panel.add(JBPanelFactory.getInstance().createComponentPanelBuilder(new JCheckBox("Checkbox")).
         setHelpTooltipText("Checkbox description").
@@ -141,25 +129,25 @@ public class ComponentPanelTestAction extends AnAction {
       JBPanelFactory pf = JBPanelFactory.getInstance();
       PanelGridBuilder<ComponentPanelBuilder> gb = pf.createComponentPanelGridBuilder().
         add(pf.createComponentPanelBuilder(new JTextField()).
-          setLabelText("Port:").
+          setLabelText("&Port:").
           setCommentText("Port").
           setCommentLocation(SwingConstants.BOTTOM)).
         add(pf.createComponentPanelBuilder(new JTextField()).
-          setLabelText("Host:").
+          setLabelText("&Host:").
           setCommentText("Host").
           setCommentLocation(SwingConstants.BOTTOM)).
         add(pf.createComponentPanelBuilder(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
-          setLabelText("Protocol:").
+          setLabelText("P&rotocol:").
           setCommentText("Choose protocol").
           setCommentLocation(SwingConstants.BOTTOM).
           setHelpTooltipText("Protocol selection").
           setHelpTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
         add(pf.createComponentPanelBuilder(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
-          setLabelText("Set parameters:").
+          setLabelText("&Set parameters:").
           setCommentText("Runtime parameters").
           setCommentLocation(SwingConstants.BOTTOM)).
         add(pf.createComponentPanelBuilder(cbb).
-          setLabelText("Detect runlevel:")).
+          setLabelText("&Detect runlevel:")).
         add(pf.createComponentPanelBuilder(new JCheckBox("Run in a loop")).
               setCommentText("Comment text").setCommentLocation(SwingConstants.RIGHT)
             //setHelpTooltipText("Allow to run endlessly").
@@ -229,18 +217,20 @@ public class ComponentPanelTestAction extends AnAction {
       }
     }
 
-    @SuppressWarnings("ConstantConditions")
     private JComponent createProgressGridPanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
       JBPanelFactory pf = JBPanelFactory.getInstance();
+
+      JProgressBar pb1 = new JProgressBar(0, 100);
+      JProgressBar pb2 = new JProgressBar(0, 100);
       PanelGridBuilder<ProgressPanelBuilder> pbb = pf.createProgressPanelGridBuilder().
-        add(pf.createProgressPanelBuilder(new JProgressBar(0, 100)).
+        add(pf.createProgressPanelBuilder(pb1).
           setLabelText("Label 1.1").
           setLabelLocation(SwingConstants.TOP).
           setCancelAction(()-> System.out.println("Cancel action #1"))).
-        add(pf.createProgressPanelBuilder(new JProgressBar(0, 100)).
+        add(pf.createProgressPanelBuilder(pb2).
           setLabelText("Label 1.2").
           setLabelLocation(SwingConstants.TOP).
           setPauseAction(()-> System.out.println("Pause action #2")).
@@ -249,15 +239,18 @@ public class ComponentPanelTestAction extends AnAction {
 
       panel.add(pbb.createPanel());
 
-      JProgressBar pb1 = new JProgressBar(0, 100);
-      JProgressBar pb2 = new JProgressBar(0, 100);
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb1)).setCommentText("Long long long long long long long text");
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb2)).setCommentText("Short text");
+
+      JProgressBar pb3 = new JProgressBar(0, 100);
+      JProgressBar pb4 = new JProgressBar(0, 100);
       pbb = pf.createProgressPanelGridBuilder().
-        add(pf.createProgressPanelBuilder(pb1).
+        add(pf.createProgressPanelBuilder(pb3).
           setTopSeparatorEnabled(true).
           setLabelText("Label 2.1").
           setLabelLocation(SwingConstants.LEFT).
           setCancelAction(()-> System.out.println("Cancel action #3"))).
-        add(pf.createProgressPanelBuilder(pb2).
+        add(pf.createProgressPanelBuilder(pb4).
           setLabelText("Label 2.2").
           setLabelLocation(SwingConstants.LEFT).
           setPauseAction(()-> System.out.println("Pause action #4")).
@@ -265,19 +258,19 @@ public class ComponentPanelTestAction extends AnAction {
         expandVertically(false);
 
       panel.add(pbb.createPanel());
-      ProgressPanel.forComponent(pb1).setCommentText("Long long long long long long text");
-      ProgressPanel.forComponent(pb2).setCommentText("Short text");
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb3)).setCommentText("Long long long long long long text");
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb4)).setCommentText("Short text");
 
-      JProgressBar pb3 = new JProgressBar(0, 100);
-      JProgressBar pb4 = new JProgressBar(0, 100);
+      JProgressBar pb5 = new JProgressBar(0, 100);
+      JProgressBar pb6 = new JProgressBar(0, 100);
       pbb = pf.createProgressPanelGridBuilder().
-        add(pf.createProgressPanelBuilder(pb3).
+        add(pf.createProgressPanelBuilder(pb5).
           setTopSeparatorEnabled(true).
           setLabelText("Label 3.1").
           setLabelLocation(SwingConstants.LEFT).
           setCancelAction(()-> System.out.println("Cancel action #5")).
           setSmallVariant(true)).
-        add(pf.createProgressPanelBuilder(pb4).
+        add(pf.createProgressPanelBuilder(pb6).
           setLabelText("Label 3.2").
           setLabelLocation(SwingConstants.LEFT).
           setPauseAction(()-> System.out.println("Pause action #6")).
@@ -286,8 +279,8 @@ public class ComponentPanelTestAction extends AnAction {
         expandVertically(false);
 
       panel.add(pbb.createPanel());
-      ProgressPanel.forComponent(pb3).setCommentText("Long long long long long long text");
-      ProgressPanel.forComponent(pb4).setCommentText("Short text");
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb5)).setCommentText("Long long long long long long text");
+      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb6)).setCommentText("Short text");
 
       pbb = pf.createProgressPanelGridBuilder().
         add(pf.createProgressPanelBuilder(new JProgressBar(0, 100)).
@@ -314,11 +307,6 @@ public class ComponentPanelTestAction extends AnAction {
           setCommentEnabled(false).
           setSmallVariant(true).
           setCancelAction(()-> System.out.println("Cancel action #9"))).
-        add(pf.createProgressPanelBuilder(new JProgressBar(0, 100)).
-          setCommentEnabled(false).
-          setSmallVariant(true).
-          setPauseAction(()-> System.out.println("Pause action #10")).
-          setResumeAction(()-> System.out.println("Resume action #10"))).
         expandVertically(false);
 
       panel.add(pbb.createPanel());

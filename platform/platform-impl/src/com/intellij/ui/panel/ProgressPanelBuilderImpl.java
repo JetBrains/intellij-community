@@ -137,6 +137,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
     private IconButton resumeIcon;
     private IconButton pauseIcon;
 
+    private SeparatorComponent mySeparatorComponent = new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL);
+
     private State state = State.PLAYING;
 
     private LabeledPanelImpl() {
@@ -149,6 +151,12 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
         float size = font.getSize2D();
         Font smallFont = font.deriveFont(size - 2.0f);
         comment.setFont(smallFont);
+      }
+
+      if (StringUtil.isNotEmpty(initialLabelText)) {
+        Dimension size = comment.getPreferredSize();
+        size.width = label.getMinimumSize().width;
+        comment.setMinimumSize(size);
       }
 
       cancelIcon = new IconButton(null,
@@ -174,6 +182,12 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
     @Override
     public void setLabelText(String labelText) {
       label.setText(StringUtil.isNotEmpty(labelText) ? labelText : "");
+
+      if (StringUtil.isNotEmpty(labelText)) {
+        Dimension size = comment.getPreferredSize();
+        size.width = label.getMinimumSize().width;
+        comment.setMinimumSize(size);
+      }
     }
 
     @Override
@@ -188,10 +202,15 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       }
     }
 
+    @Override
+    public void setSeparatorEnabled(boolean enabled) {
+      mySeparatorComponent.setVisible(enabled);
+    }
+
     private void setCommentText(String commentText, boolean serviceComment) {
       if (serviceComment) {
-        comment.setText(commentText == null ? myCommentText : commentText);
         myServiceComment = commentText != null;
+        comment.setText(commentText == null ? myCommentText : commentText);
       } else if (!myServiceComment) {
         myCommentText = StringUtil.isNotEmpty(commentText) ? commentText : emptyComment();
         comment.setText(myCommentText);
@@ -206,25 +225,26 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
     void addToPanel(JPanel panel, GridBagConstraints gc) {
       gc.gridx = 0;
       gc.anchor = GridBagConstraints.LINE_START;
+      gc.fill = GridBagConstraints.HORIZONTAL;
 
       if (topSeparatorEnabled) {
         gc.insets = JBUI.insetsBottom(13);
         gc.gridwidth = gridWidth();
         gc.weightx = 1.0;
-        panel.add(new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL), gc);
+        panel.add(mySeparatorComponent, gc);
         gc.gridy++;
       }
 
       gc.weightx = 0.0;
       gc.gridwidth = 1;
-      gc.insets = JBUI.insets(topSeparatorEnabled ? 0 : 13, 13, 0, location == SwingConstants.TOP ? 13 : 0);
+      gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 13, 0, location == SwingConstants.TOP ? 13 : 0);
       panel.add(label, gc);
 
       if (location == SwingConstants.TOP) {
         gc.insets = JBUI.insets(5, 13, 7, 0);
         gc.gridy++;
       } else if (location == SwingConstants.LEFT) {
-        gc.insets = JBUI.insets(topSeparatorEnabled ? 0 : 13, 12, 0, 0);
+        gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 12, 0, 0);
         gc.gridx++;
       }
 
@@ -235,26 +255,19 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
-      gc.insets = JBUI.insets(location == SwingConstants.TOP || topSeparatorEnabled ? 0 : 13, 10, 0, 13);
+      gc.insets = JBUI.insets(location == SwingConstants.TOP || topSeparatorEnabled || smallVariant ? 0 : 13, 10, 0, 13);
+
       if (cancelAction != null) {
         if (cancelAsButton) {
           JButton cancelButton = new JButton("Cancel");
           cancelButton.addActionListener((e) -> cancelAction.run());
           panel.add(cancelButton, gc);
-          gc.gridx ++;
         } else {
           button = new InplaceButton(cancelIcon, a -> {
-            button.setVisible(false);
+            button.setPainting(false);
             state = State.CANCELLED;
             cancelAction.run();
           }).setFillBg(false);
-
-          if (commentEnabled) {
-            button.addMouseListener(new HoverListener());
-          }
-
-          panel.add(button, gc);
-          gc.gridx++;
         }
       } else if (resumeAction != null && pauseAction != null) {
         button = new InplaceButton(pauseIcon, a -> {
@@ -268,19 +281,27 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
             resumeAction.run();
           }
         }).setFillBg(false);
+      }
+
+      if (button != null) {
+        button.setMinimumSize(button.getPreferredSize());
 
         if (commentEnabled) {
           button.addMouseListener(new HoverListener());
         }
 
+        gc.anchor = GridBagConstraints.EAST;
+        gc.fill = GridBagConstraints.NONE;
         panel.add(button, gc);
-        gc.gridx++;
       }
 
       if (commentEnabled) {
         gc.gridy++;
         gc.gridx = location == SwingConstants.TOP ? 0 : 1;
         gc.insets = location == SwingConstants.TOP ? JBUI.insets(0, 13) : JBUI.insets(-4, 13, 0, 13);
+        gc.weightx = 1.0;
+        gc.anchor = GridBagConstraints.LINE_START;
+        gc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(comment, gc);
       }
 
