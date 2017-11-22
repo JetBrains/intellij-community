@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -62,7 +48,7 @@ public class BraceMatchingUtil {
     BRACE_MATCHERS.put(fileType, braceMatcher);
   }
 
-  @TestOnly 
+  @TestOnly
   public static int getMatchedBraceOffset(@NotNull Editor editor, boolean forward, @NotNull PsiFile file) {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
@@ -91,10 +77,15 @@ public class BraceMatchingUtil {
     private final Stack<String> myTagNameStack = new Stack<>();
 
     MatchBraceContext(@NotNull CharSequence fileText, @NotNull FileType fileType, @NotNull HighlighterIterator iterator, boolean forward) {
-      this(fileText, fileType, iterator, forward,isStrictTagMatching(getBraceMatcher(fileType, iterator), fileType, getTokenGroup(iterator.getTokenType(), fileType)));
+      this(fileText, fileType, iterator, forward,
+           isStrictTagMatching(getBraceMatcher(fileType, iterator), fileType, getTokenGroup(iterator.getTokenType(), fileType)));
     }
 
-    MatchBraceContext(@NotNull CharSequence fileText, @NotNull FileType fileType, @NotNull HighlighterIterator iterator, boolean forward, boolean strict) {
+    MatchBraceContext(@NotNull CharSequence fileText,
+                      @NotNull FileType fileType,
+                      @NotNull HighlighterIterator iterator,
+                      boolean forward,
+                      boolean strict) {
       this.fileText = fileText;
       this.fileType = fileType;
       this.iterator = iterator;
@@ -163,8 +154,7 @@ public class BraceMatchingUtil {
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
-              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive))
-          {
+              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)) {
             matched = false;
             break;
           }
@@ -195,7 +185,9 @@ public class BraceMatchingUtil {
     return new MatchBraceContext(fileText, fileType, iterator, forward, isStrict).doBraceMatch();
   }
 
-  public static boolean findStructuralLeftBrace(@NotNull FileType fileType, @NotNull HighlighterIterator iterator, @NotNull CharSequence fileText) {
+  public static boolean findStructuralLeftBrace(@NotNull FileType fileType,
+                                                @NotNull HighlighterIterator iterator,
+                                                @NotNull CharSequence fileText) {
     final Stack<IElementType> braceStack = new Stack<>();
     final Stack<String> tagNameStack = new Stack<>();
 
@@ -238,7 +230,9 @@ public class BraceMatchingUtil {
     return false;
   }
 
-  public static boolean isStructuralBraceToken(@NotNull FileType fileType, @NotNull HighlighterIterator iterator, @NotNull CharSequence text) {
+  public static boolean isStructuralBraceToken(@NotNull FileType fileType,
+                                               @NotNull HighlighterIterator iterator,
+                                               @NotNull CharSequence text) {
     BraceMatcher matcher = getBraceMatcher(fileType, iterator);
     return matcher.isStructuralBrace(iterator, text, fileType);
   }
@@ -265,10 +259,10 @@ public class BraceMatchingUtil {
   }
 
   // TODO: better name for this method
-  public static int findLeftmostLParen(HighlighterIterator iterator,
-                                       IElementType lparenTokenType,
-                                       CharSequence fileText,
-                                       FileType fileType) {
+  public static int findLeftmostLParen(@NotNull HighlighterIterator iterator,
+                                       @NotNull IElementType lparenTokenType,
+                                       @NotNull CharSequence fileText,
+                                       @NotNull FileType fileType) {
     int lastLbraceOffset = -1;
 
     Stack<IElementType> braceStack = new Stack<>();
@@ -299,10 +293,10 @@ public class BraceMatchingUtil {
     return lastLbraceOffset;
   }
 
-  public static int findLeftLParen(HighlighterIterator iterator,
-                                       IElementType lparenTokenType,
-                                       CharSequence fileText,
-                                       FileType fileType) {
+  public static int findLeftLParen(@NotNull HighlighterIterator iterator,
+                                   @NotNull IElementType lparenTokenType,
+                                   @NotNull CharSequence fileText,
+                                   @NotNull FileType fileType) {
     int lastLbraceOffset = -1;
 
     Stack<IElementType> braceStack = new Stack<>();
@@ -334,10 +328,10 @@ public class BraceMatchingUtil {
   }
 
   // TODO: better name for this method
-  public static int findRightmostRParen(HighlighterIterator iterator,
-                                        IElementType rparenTokenType,
-                                        CharSequence fileText,
-                                        FileType fileType) {
+  public static int findRightmostRParen(@NotNull HighlighterIterator iterator,
+                                        @NotNull IElementType rparenTokenType,
+                                        @NotNull CharSequence fileText,
+                                        @NotNull FileType fileType) {
     int lastRbraceOffset = -1;
 
     Stack<IElementType> braceStack = new Stack<>();
