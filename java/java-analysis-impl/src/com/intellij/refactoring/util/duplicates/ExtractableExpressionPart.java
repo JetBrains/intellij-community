@@ -122,7 +122,7 @@ public class ExtractableExpressionPart {
   @Nullable
   static ExtractableExpressionPart matchVariable(@NotNull PsiReferenceExpression expression, @Nullable List<PsiElement> scope) {
     PsiElement resolved = expression.resolve();
-    if (resolved instanceof PsiField && isUnqualifiedModification(expression)) {
+    if (resolved instanceof PsiField && isModification(expression)) {
       return null;
     }
     if (resolved instanceof PsiVariable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
@@ -132,23 +132,20 @@ public class ExtractableExpressionPart {
     return null;
   }
 
-  private static boolean isUnqualifiedModification(@NotNull PsiReferenceExpression expression) {
-    PsiExpression qualifier = expression.getQualifierExpression();
-    if (qualifier == null || qualifier instanceof PsiQualifiedExpression) { // 'this.' and 'super.' with fields are just like unqualified
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-      if (parent instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
-        if (PsiTreeUtil.isAncestor(assignment.getLExpression(), expression, false)) {
-          return true;
-        }
+  private static boolean isModification(@NotNull PsiReferenceExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (PsiTreeUtil.isAncestor(assignment.getLExpression(), expression, false)) {
+        return true;
       }
-      else if (parent instanceof PsiUnaryExpression) {
-        PsiUnaryExpression unary = (PsiUnaryExpression)parent;
-        IElementType tokenType = unary.getOperationTokenType();
-        if ((tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) &&
-            PsiTreeUtil.isAncestor(unary.getOperand(), expression, false)) {
-          return true;
-        }
+    }
+    else if (parent instanceof PsiUnaryExpression) {
+      PsiUnaryExpression unary = (PsiUnaryExpression)parent;
+      IElementType tokenType = unary.getOperationTokenType();
+      if ((tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) &&
+          PsiTreeUtil.isAncestor(unary.getOperand(), expression, false)) {
+        return true;
       }
     }
     return false;

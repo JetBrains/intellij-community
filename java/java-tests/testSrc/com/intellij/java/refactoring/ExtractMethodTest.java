@@ -1185,6 +1185,22 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDecrementDifferentStaticFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentOuterFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentInnerFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentChainedFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testArgumentFoldingWholeStatement() throws Exception {
     doDuplicatesTest();
   }
