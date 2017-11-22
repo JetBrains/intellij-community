@@ -54,7 +54,7 @@ public abstract class JpsLoaderBase {
   }
 
   @Nullable
-  private <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, Path configFile) {
+  protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     return JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
   }
 

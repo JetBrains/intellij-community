@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,8 @@ public interface SpellCheckerEngine {
   void loadDictionary(@NotNull Loader loader);
 
   void addModifiableDictionary(@NotNull EditableDictionary dictionary);
+
+  void addDictionary(@NotNull Dictionary dictionary);
 
   Transformation getTransformation();
 

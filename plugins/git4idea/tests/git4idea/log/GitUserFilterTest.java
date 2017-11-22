@@ -15,8 +15,6 @@
  */
 package git4idea.log;
 
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
 import com.intellij.vcs.log.VcsUser;
@@ -37,14 +35,6 @@ public class GitUserFilterTest extends GitSingleRepoTest {
       protected String commit(@NotNull VcsUser user) {
         String userName = user.getName();
         String userEmail = user.getEmail();
-        if (SystemInfoRt.isWindows) {
-          if (userName.contains("\"")) {
-            userName = StringUtil.escapeChar(userName, '"');
-          }
-          if (userEmail.contains("\"")) {
-            userEmail = StringUtil.escapeChar(userEmail, '"');
-          }
-        }
         GitTestUtil.setupUsername(myProject, userName, userEmail);
         String commit = modify(GitUserFilterTest.this, "file.txt");
         GitTestUtil.setupDefaultUsername(myProject);
