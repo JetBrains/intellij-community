@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
@@ -202,7 +201,7 @@ public class ClassPath {
       return new FileLoader(url, index, myCanHavePersistentIndex);
     }
     else if (file.isFile()) {
-      Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents);
+      Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath((JarLoader)loader);
         if (referencedJars != null) {
@@ -247,6 +246,16 @@ public class ClassPath {
     }
     myLoaders.add(loader);
     myLoadersMap.put(url, loader);
+  }
+
+  Attributes getManifestData(URL url) {
+    return myCanUseCache && myCachePool != null ? myCachePool.getManifestData(url) : null;
+  }
+
+  void cacheManifestData(URL url, Attributes manifestAttributes) {
+    if (myCanUseCache && myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
+      myCachePool.cacheManifestData(url, manifestAttributes);
+    }
   }
 
   private class MyEnumeration implements Enumeration<URL> {
@@ -430,12 +439,7 @@ public class ClassPath {
 
   private static String[] loadManifestClasspath(JarLoader loader) {
     try {
-      String classPath = loader.withManifestAttributes(new Function<Attributes, String>() {
-        @Override
-        public String fun(Attributes attributes) {
-          return attributes == null ? null : attributes.getValue(Attributes.Name.CLASS_PATH);
-        }
-      });
+      String classPath = loader.getManifestAttributes().getValue(Attributes.Name.CLASS_PATH);
 
       if (classPath != null) {
         String[] urls = classPath.split(" ");

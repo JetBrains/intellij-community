@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,7 @@ class JarLoader extends Loader {
   private final Map<Resource.Attribute, String> myAttributes;
   private volatile SoftReference<Attributes> myCachedManifestAttributes;
 
-  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
+  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents, ClassPath classPath) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
@@ -60,8 +59,13 @@ class JarLoader extends Loader {
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
-      ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-      Attributes manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+      Attributes manifestAttributes = classPath.getManifestData(url);
+      if (manifestAttributes == null) {
+        ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+        manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+        if (manifestAttributes == null) manifestAttributes = new Attributes(0);
+        classPath.cacheManifestData(url, manifestAttributes);
+      }
 
       myAttributes = getAttributes(manifestAttributes);
       myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
@@ -78,8 +82,8 @@ class JarLoader extends Loader {
     }
   }
 
-  <T> T withManifestAttributes(Function<Attributes, T> processor) {
-    return processor.fun(myCachedManifestAttributes.get());
+  Attributes getManifestAttributes() {
+    return myCachedManifestAttributes.get();
   }
 
   private static String urlToFilePath(URL url) {
