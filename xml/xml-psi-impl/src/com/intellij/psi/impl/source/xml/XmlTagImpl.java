@@ -1215,10 +1215,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   protected class BodyInsertTransaction extends InsertTransaction {
     private final TreeElement myChild;
     private ASTNode myNewElement;
+    private final XmlElementDescriptor myParentDescriptor;
 
     public BodyInsertTransaction(TreeElement child) {
       super(XmlTagImpl.this);
       myChild = child;
+      myParentDescriptor = myChild.getElementType() == XmlElementType.XML_TAG ? getDescriptor() : null;
     }
 
     @Override
@@ -1226,15 +1228,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       final ASTNode anchor = expandTag();
       if (myChild.getElementType() == XmlElementType.XML_TAG) {
         // compute where to insert tag according to DTD or XSD
-        final XmlElementDescriptor parentDescriptor = getDescriptor();
         final XmlTag[] subTags = getSubTags();
-        final PsiElement declaration = parentDescriptor != null ? parentDescriptor.getDeclaration() : null;
+        final PsiElement declaration = myParentDescriptor != null ? myParentDescriptor.getDeclaration() : null;
         // filtering out generated dtds
         if (declaration != null &&
             declaration.getContainingFile() != null &&
             declaration.getContainingFile().isPhysical() &&
             subTags.length > 0) {
-          final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
+          final XmlElementDescriptor[] childElementDescriptors = myParentDescriptor.getElementsDescriptors(XmlTagImpl.this);
           int subTagNum = -1;
           for (final XmlElementDescriptor childElementDescriptor : childElementDescriptors) {
             final String childElementName = childElementDescriptor.getName();
