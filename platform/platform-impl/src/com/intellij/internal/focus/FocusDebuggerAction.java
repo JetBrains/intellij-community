@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -175,39 +176,13 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             if (previousFocusGraphics != null) previousFocusGraphics.dispose();
           }
         }
-        Arrays.stream(Frame.getFrames()).
-          filter(frame -> frame instanceof IdeFrame).
-          filter(f -> ((JFrame)f).getGlassPane() != null).
-          map(frame -> ((JFrame)frame).getGlassPane()).
-          map(jGlassPane -> jGlassPane.getGraphics()).
-          filter(g -> g != null).
-          forEach(graphics -> {
-            Graphics glassPaneGraphics = graphics.create();
-            try {
-              glassPaneGraphics.setColor(myApplicationState.getColor());
-              glassPaneGraphics.fillOval(5,5, 10, 10);
-            } finally {
-              glassPaneGraphics.dispose();
-            }
-          });
-        Arrays.stream(Window.getOwnerlessWindows()).
-          filter(window -> window != null && window instanceof RootPaneContainer).
-          map(window -> (RootPaneContainer)window).
-          filter(f -> ((JFrame)f).getGlassPane() != null).
-          filter(window -> window.getRootPane() != null).
-          map(window -> (window).getGlassPane()).
-          map(jGlassPane -> jGlassPane.getGraphics()).
-          filter(g -> g != null).
-          forEach(graphics -> {
-            Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
-            try {
-              glassPaneGraphics.setColor(JBColor.black);
-              glassPaneGraphics.setStroke(new BasicStroke(2));
-              glassPaneGraphics.drawOval(5,5, 10, 10);
-            } finally {
-              glassPaneGraphics.dispose();
-            }
-          });
+        drawOnGraphics(g -> {
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+          g.setColor(JBColor.black);
+          g.setStroke(new BasicStroke(2));
+          g.drawOval(5,5, 10, 10);
+        });
       }
     }
 
@@ -230,21 +205,15 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           default:
             break;
         }
-        Arrays.stream(Frame.getFrames()).
-          filter(frame -> frame instanceof IdeFrame).
-          filter(f -> ((JFrame)f).getGlassPane() != null).
-          map(frame -> ((JFrame)frame).getGlassPane()).
-          map(jGlassPane -> jGlassPane.getGraphics()).
-          filter(g -> g != null).
-          forEach(graphics -> {
-            Graphics glassPaneGraphics = graphics.create();
-            try {
-              glassPaneGraphics.setColor(myApplicationState.getColor());
-              glassPaneGraphics.fillOval(5,5, 10, 10);
-            } finally {
-              glassPaneGraphics.dispose();
-            }
-          });
+        drawOnGraphics(g -> {
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+          g.setColor(JBColor.black);
+          g.setStroke(new BasicStroke(2));
+          g.drawOval(5,5, 10, 10);
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+        });
         Arrays.stream(Window.getOwnerlessWindows()).
           filter(window -> window != null && window instanceof RootPaneContainer).
           map(window -> (RootPaneContainer)window).
@@ -255,14 +224,32 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           forEach(graphics -> {
             Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
             try {
-              glassPaneGraphics.setColor(JBColor.black);
-              glassPaneGraphics.setStroke(new BasicStroke(2));
-              glassPaneGraphics.drawOval(5,5, 10, 10);
+
             } finally {
               glassPaneGraphics.dispose();
             }
           });
       }
+    }
+
+    private void drawOnGraphics(Consumer<Graphics2D> consumer) {
+      Arrays.stream(Frame.getFrames()).
+        filter(window -> window != null && window instanceof RootPaneContainer).
+        map(window -> (RootPaneContainer)window).
+        filter(w -> w instanceof JFrame).
+        filter(f -> f.getGlassPane() != null).
+        filter(window -> window.getRootPane() != null).
+        map(window -> (window).getGlassPane()).
+        map(jGlassPane -> jGlassPane.getGraphics()).
+        filter(g -> g != null).
+        forEach(graphics -> {
+          Graphics glassPaneGraphics = graphics.create();
+          try {
+            consumer.accept((Graphics2D)glassPaneGraphics);
+          } finally {
+            glassPaneGraphics.dispose();
+          }
+        });
     }
   }
 }
