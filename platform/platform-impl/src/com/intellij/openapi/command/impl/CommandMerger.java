@@ -69,6 +69,8 @@ public class CommandMerger {
   }
 
   private boolean shouldMerge(Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+    if (nextCommandToMerge.isTransparent() && nextCommandToMerge.myStateAfter == null && myStateAfter != null) return false;
+    if (isTransparent() && myStateBefore == null && nextCommandToMerge.myStateBefore != null) return false;
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
@@ -195,6 +197,12 @@ public class CommandMerger {
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
       if (!undoRedo.isTemporary()) break;
       if (!undoRedo.execute(true, false)) return;
+      if (!undoRedo.hasMoreActions()) break;
+    }
+
+    while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
+      if (!undoRedo.isTransparent()) break;
+      if (!undoRedo.execute(false, false)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
