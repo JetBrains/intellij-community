@@ -845,7 +845,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else {
-        if (cls.getDecoratorList() != null) {
+        if (PyKnownDecoratorUtil.hasUnknownDecorator(cls, myTypeEvalContext)) {
           return true;
         }
         final String docString = cls.getDocStringValue();

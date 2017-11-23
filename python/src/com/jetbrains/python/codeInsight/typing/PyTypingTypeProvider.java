@@ -91,7 +91,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("frozenset", "FrozenSet")
     .build();
 
-  private static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
+  public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     .add(GENERIC)
     .add("typing.AbstractGeneric")
     .add(PROTOCOL)

@@ -61,6 +61,7 @@ public class PyKnownDecoratorUtil {
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
     TYPING_OVERLOAD("typing.overload"),
+    TYPING_RUNTIME("typing.runtime"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 
