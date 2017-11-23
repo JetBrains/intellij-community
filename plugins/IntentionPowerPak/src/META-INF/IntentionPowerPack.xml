@@ -400,11 +400,6 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    <!--<intentionAction>
-      <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>-->
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.MakeCallChainIntoCallSequenceIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
