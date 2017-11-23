@@ -36,12 +36,12 @@ class ComplexityHolder {
   private int computeComplexity(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
 
-    if (expression instanceof PsiLiteralExpression || expression instanceof PsiQualifiedExpression) {
-      return 1;
+    if (expression instanceof PsiAssignmentExpression || expression instanceof PsiSuperExpression) {
+      return TOO_COMPLEX;
     }
 
-    if (expression instanceof PsiAssignmentExpression) {
-      return TOO_COMPLEX;
+    if (expression instanceof PsiLiteralExpression || expression instanceof PsiQualifiedExpression) {
+      return 1;
     }
 
     if (expression instanceof PsiUnaryExpression) {
