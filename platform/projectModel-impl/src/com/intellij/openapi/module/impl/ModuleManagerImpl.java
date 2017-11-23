@@ -78,7 +78,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected final MessageBus myMessageBus;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
-  private LinkedHashSet<ModulePath> myModulePathsToLoad;
+  private Set<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
   private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
 
@@ -176,7 +176,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     loadState(modulePaths);
   }
 
-  private void loadState(LinkedHashSet<ModulePath> modulePaths) {
+  private void loadState(Set<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = modulePaths;
     Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
