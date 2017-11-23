@@ -40,7 +40,9 @@ public class NullableComparatorInspection extends AbstractBaseJavaLocalInspectio
           elementType = tryCast(type, PsiClassType.class);
           if(elementType == null) return;
         } else return;
-        if(InheritanceUtil.isInheritor(elementType.resolve(), CommonClassNames.JAVA_LANG_COMPARABLE)) return;
+        PsiClass elementClass = elementType.resolve();
+        if(elementClass == null) return;
+        if(InheritanceUtil.isInheritor(elementClass, CommonClassNames.JAVA_LANG_COMPARABLE)) return;
         PsiExpression comparator = call.getArgumentList().getExpressions()[0];
         Nullness nullness = NullnessUtil.getExpressionNullness(comparator);
         if(nullness != Nullness.NULLABLE) return;
