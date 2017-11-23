@@ -65,7 +65,7 @@ public interface TreeVisitor {
   abstract class Base<T> implements TreeVisitor {
     private final Function<TreePath, T> converter;
 
-    public Base(Function<TreePath, T> converter) {
+    public Base(@NotNull Function<TreePath, T> converter) {
       this.converter = converter;
     }
 
@@ -105,7 +105,7 @@ public interface TreeVisitor {
   abstract class ByComponent<T> extends Base<T> {
     private final T component;
 
-    public ByComponent(@NotNull T componentToFind, Function<Object, T> converter) {
+    public ByComponent(@NotNull T componentToFind, @NotNull Function<Object, T> converter) {
       super(converter.compose(TreePath::getLastPathComponent));
       this.component = componentToFind;
     }
@@ -140,11 +140,23 @@ public interface TreeVisitor {
 
 
   class ByTreePath<T> extends Base<T> {
+    private final boolean ignoreRoot;
     private final TreePath path;
 
-    public ByTreePath(@NotNull TreePath path, Function<Object, T> converter) {
+    public ByTreePath(@NotNull TreePath path, @NotNull Function<Object, T> converter) {
+      this(false, path, converter);
+    }
+
+    public ByTreePath(boolean ignoreRoot, @NotNull TreePath path, @NotNull Function<Object, T> converter) {
       super(converter.compose(TreePath::getLastPathComponent));
+      this.ignoreRoot = ignoreRoot;
       this.path = path;
+    }
+
+    @NotNull
+    @Override
+    public Action visit(@NotNull TreePath path) {
+      return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : super.visit(path);
     }
 
     @NotNull
@@ -153,6 +165,7 @@ public interface TreeVisitor {
       if (component == null) return Action.SKIP_CHILDREN;
 
       int pathCount = path.getPathCount();
+      if (ignoreRoot) pathCount--;
       int thisCount = this.path.getPathCount();
       if (thisCount < pathCount) return Action.SKIP_CHILDREN;
 
