@@ -297,6 +297,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
+  public final Object myFractionalMetricsHintValue = Registry.is("editor.text.fractional.metrics")
+                                                     ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                                                     : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
   final EditorView myView;
 
   private boolean myCharKeyPressed;

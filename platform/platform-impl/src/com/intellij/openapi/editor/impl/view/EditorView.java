@@ -516,7 +516,11 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private boolean setFontRenderContext(FontRenderContext context) {
     FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
     if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
-    myFontRenderContext = contextToSet;
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue 
+                          ? contextToSet
+                          : new FontRenderContext(contextToSet.getTransform(), 
+                                                  contextToSet.getAntiAliasingHint(), 
+                                                  myEditor.myFractionalMetricsHintValue);
     return true;
   }
 
@@ -530,8 +534,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private static boolean areEqualContexts(FontRenderContext c1, FontRenderContext c2) {
     if (c1 == c2) return true;
     if (c1 == null || c2 == null) return false;
-    // We ignore fractional metrics aspect of contexts, because we assume it's not changing during editor's lifecycle.
-    // And it has different values for component graphics (OFF) and component's font metrics (DEFAULT), causing
+    // We ignore fractional metrics aspect of contexts, because we it's not changing during editor's lifecycle.
+    // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
