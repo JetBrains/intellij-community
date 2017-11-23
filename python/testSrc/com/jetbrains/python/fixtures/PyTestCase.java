@@ -95,20 +95,24 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
-    assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."));
+    assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
+  }
+
+  protected void assertProjectFilesNotParsed(@NotNull TypeEvalContext context) {
+    assertRootNotParsed(context.getOrigin(), myFixture.getTempDirFixture().getFile("."), context);
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-      assertRootNotParsed(currentFile, root);
+      assertRootNotParsed(currentFile, root, null);
     }
   }
 
-  private void assertRootNotParsed(@NotNull PsiFile currentFile, @NotNull VirtualFile root) {
+  private void assertRootNotParsed(@NotNull PsiFile currentFile, @NotNull VirtualFile root, @Nullable TypeEvalContext context) {
     for (VirtualFile file : VfsUtil.collectChildrenRecursively(root)) {
       final PyFile pyFile = PyUtil.as(myFixture.getPsiManager().findFile(file), PyFile.class);
-      if (pyFile != null && !pyFile.equals(currentFile)) {
+      if (pyFile != null && !pyFile.equals(currentFile) && (context == null || !context.maySwitchToAST(pyFile))) {
         assertNotParsed(pyFile);
       }
     }

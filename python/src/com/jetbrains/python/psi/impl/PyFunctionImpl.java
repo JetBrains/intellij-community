@@ -669,6 +669,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isGenerator();
+    }
+
     Boolean result = myIsGenerator;
     if (result == null) {
       Ref<Boolean> containsYield = Ref.create(false);

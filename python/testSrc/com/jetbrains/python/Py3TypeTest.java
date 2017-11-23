@@ -657,6 +657,7 @@ public class Py3TypeTest extends PyTestCase {
     final Project project = expr.getProject();
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertProjectFilesNotParsed(containingFile);
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
   }
 
