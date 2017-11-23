@@ -43,6 +43,7 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_fram
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_file_utils import get_fullname
 
 
 __version_info__ = (1, 1, 1)
@@ -985,28 +986,12 @@ class PyDB:
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
-    def get_fullname(self, mod_name):
-        if IS_PY3K:
-            import pkgutil
-        else:
-            from _pydev_imps import _pydev_pkgutil_old as pkgutil
-        try:
-            loader = pkgutil.get_loader(mod_name)
-        except:
-            return None
-        if loader is not None:
-            for attr in ("get_filename", "_get_filename"):
-                meth = getattr(loader, attr, None)
-                if meth is not None:
-                    return meth(mod_name)
-        return None
-
     def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
         module_name = None
         if is_module:
             file, _,  entry_point_fn = file.partition(':')
             module_name = file
-            filename = self.get_fullname(file)
+            filename = get_fullname(file)
             if filename is None:
                 sys.stderr.write("No module named %s\n" % file)
                 return

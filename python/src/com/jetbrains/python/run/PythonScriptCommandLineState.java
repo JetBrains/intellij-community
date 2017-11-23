@@ -43,6 +43,7 @@ import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.actions.ShowVarsAction;
+import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   @Override
   public ExecutionResult execute(Executor executor,
                                  PythonProcessStarter processStarter,
-                                 final CommandLinePatcher... patchers) throws ExecutionException {
+                                 CommandLinePatcher... patchers) throws ExecutionException {
     Project project = myConfig.getProject();
 
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
@@ -77,6 +78,23 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER).addParameterAt(1, "--cmd-line");
           }
         }));
+      }
+      else {
+        if (myConfig.isModuleMode()) {
+          patchers = ArrayUtil.append(patchers, new CommandLinePatcher() {
+            @Override
+            public void patchCommandLine(GeneralCommandLine commandLine) {
+              ParametersList parametersList = commandLine.getParametersList();
+              boolean isModule = PyDebugRunner.patchExeParams(parametersList);
+              if (isModule) {
+                ParamsGroup scriptParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+                if (scriptParams != null) {
+                  scriptParams.addParameterAt(0, PyDebugRunner.MODULE_PARAM);
+                }
+              }
+            }
+          });
+        }
       }
 
       Module module = myConfig.getModule();
