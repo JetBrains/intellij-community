@@ -57,6 +57,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String COROUTINE = "typing.Coroutine";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String GENERIC = "typing.Generic";
+  public static final String PROTOCOL = "typing.Protocol";
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
   private static final String CALLABLE = "typing.Callable";
@@ -93,7 +94,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     .add(GENERIC)
     .add("typing.AbstractGeneric")
-    .add("typing.Protocol")
+    .add(PROTOCOL)
     .build();
 
   /**
@@ -125,6 +126,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if ("Generic".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains(GENERIC)) {
         return createTypingGenericType();
+      }
+    }
+    // Check for the exact name in advance for performance reasons
+    if ("Protocol".equals(referenceExpression.getName())) {
+      if (resolveToQualifiedNames(referenceExpression, context).contains(PROTOCOL)) {
+        return createTypingProtocolType();
       }
     }
     return null;
@@ -236,6 +243,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return new PyCustomType(GENERIC, null, false);
   }
 
+  @NotNull
+  private static PyType createTypingProtocolType() {
+    return new PyCustomType(PROTOCOL, null, false);
+  }
+
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
     return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD;
   }
@@ -308,6 +320,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       // Depends on typing.Generic defined as a target expression
       if (GENERIC.equals(target.getQualifiedName())) {
         return createTypingGenericType();
+      }
+      // Depends on typing.Protocol defined as a target expression
+      if (PROTOCOL.equals(target.getQualifiedName())) {
+        return createTypingProtocolType();
       }
       final PyExpression annotation = getAnnotationValue(target, context);
       if (annotation != null) {
