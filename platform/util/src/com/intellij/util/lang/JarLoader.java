@@ -89,7 +89,7 @@ class JarLoader extends Loader {
   private static String urlToFilePath(URL url) {
     try {
       return new File(url.toURI()).getPath();
-    } catch (URISyntaxException ex) {
+    } catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
       return url.getPath();
     }
   }
