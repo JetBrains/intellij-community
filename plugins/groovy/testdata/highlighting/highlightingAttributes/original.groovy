@@ -79,3 +79,22 @@ C.setStaticSetter(42)
 C.staticMethod()
 
 c.'method with literal name'()
+
+class Outer {
+
+  def getThis() {}
+  def getSuper() {}
+
+  class Inner {
+    def foo() {
+      this
+      super.hashCode()
+      Outer.this
+      Outer.super.toString()
+    }
+  }
+}
+
+def outer = new Outer()
+outer.this
+outer.super
