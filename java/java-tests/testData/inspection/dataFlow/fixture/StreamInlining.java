@@ -87,7 +87,7 @@ public class StreamInlining {
   }
 
   void test(Stream<String> stream, Optional<String> opt) {
-    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with '!= null'">String.class::isInstance</warning>).forEach(System.out::println);
+    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with a null check">String.class::isInstance</warning>).forEach(System.out::println);
     opt.filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>).ifPresent(System.out::println);
   }
 
