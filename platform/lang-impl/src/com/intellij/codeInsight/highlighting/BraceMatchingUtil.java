@@ -109,12 +109,7 @@ public class BraceMatchingUtil {
       }
       boolean matched = false;
       while (true) {
-        if (!forward) {
-          iterator.retreat();
-        }
-        else {
-          iterator.advance();
-        }
+        advance(iterator, forward);
         if (iterator.atEnd()) {
           break;
         }
@@ -126,13 +121,13 @@ public class BraceMatchingUtil {
         }
         String tagName = getTagName(myMatcher, fileText, iterator);
         if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
-        if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)) {
+        if (isBraceToken(iterator, fileText, fileType, !forward)) {
           myBraceStack.push(tokenType);
           if (isStrict) {
             myTagNameStack.push(tagName);
           }
         }
-        else if (forward ? isRBraceToken(iterator, fileText, fileType) : isLBraceToken(iterator, fileText, fileType)) {
+        else if (isBraceToken(iterator, fileText, fileType, forward)) {
           IElementType topTokenType = myBraceStack.pop();
           String topTagName = null;
           if (isStrict) {
@@ -258,108 +253,92 @@ public class BraceMatchingUtil {
     return tokenType == null ? -1 : getBraceMatcher(fileType, tokenType).getBraceTokenGroupId(tokenType);
   }
 
-  // TODO: better name for this method
   public static int findLeftmostLParen(@NotNull HighlighterIterator iterator,
                                        @NotNull IElementType lparenTokenType,
                                        @NotNull CharSequence fileText,
                                        @NotNull FileType fileType) {
-    int lastLbraceOffset = -1;
-
-    Stack<IElementType> braceStack = new Stack<>();
-    for (; !iterator.atEnd(); iterator.retreat()) {
-      final IElementType tokenType = iterator.getTokenType();
-
-      if (isLBraceToken(iterator, fileText, fileType)) {
-        if (!braceStack.isEmpty()) {
-          IElementType topToken = braceStack.pop();
-          if (!isPairBraces(tokenType, topToken, fileType)) {
-            break; // unmatched braces
-          }
-        }
-        else {
-          if (tokenType == lparenTokenType) {
-            lastLbraceOffset = iterator.getStart();
-          }
-          else {
-            break;
-          }
-        }
-      }
-      else if (isRBraceToken(iterator, fileText, fileType)) {
-        braceStack.push(iterator.getTokenType());
-      }
-    }
-
-    return lastLbraceOffset;
+    return findLeftOrRightParenth(iterator, lparenTokenType, fileText, fileType, false, false);
   }
 
   public static int findLeftLParen(@NotNull HighlighterIterator iterator,
                                    @NotNull IElementType lparenTokenType,
                                    @NotNull CharSequence fileText,
                                    @NotNull FileType fileType) {
-    int lastLbraceOffset = -1;
-
-    Stack<IElementType> braceStack = new Stack<>();
-    for (; !iterator.atEnd(); iterator.retreat()) {
-      final IElementType tokenType = iterator.getTokenType();
-
-      if (isLBraceToken(iterator, fileText, fileType)) {
-        if (!braceStack.isEmpty()) {
-          IElementType topToken = braceStack.pop();
-          if (!isPairBraces(tokenType, topToken, fileType)) {
-            break; // unmatched braces
-          }
-        }
-        else {
-          if (tokenType == lparenTokenType) {
-            return iterator.getStart();
-          }
-          else {
-            break;
-          }
-        }
-      }
-      else if (isRBraceToken(iterator, fileText, fileType)) {
-        braceStack.push(iterator.getTokenType());
-      }
-    }
-
-    return lastLbraceOffset;
+    return findLeftOrRightParenth(iterator, lparenTokenType, fileText, fileType, false, true);
   }
 
-  // TODO: better name for this method
   public static int findRightmostRParen(@NotNull HighlighterIterator iterator,
                                         @NotNull IElementType rparenTokenType,
                                         @NotNull CharSequence fileText,
                                         @NotNull FileType fileType) {
-    int lastRbraceOffset = -1;
+    return findLeftOrRightParenth(iterator, rparenTokenType, fileText, fileType, true, false);
+  }
+
+  /**
+   * Goes through the iterator and finds the left or right parenth corresponding to the provided options
+   *
+   * @param iterator iterator of the file
+   * @param targetParenTokenType the parenth token type you're searching for.
+   * @param fileText text of the file
+   * @param fileType the file's type
+   * @param searchingForRight are we going to the right and searching for the right parenth? (e.g. ')', ']', '}')
+   * @param stopOnFirstFinishedGroup are we searching for the last corresponding brace in a line of wrapped braces?
+   *                                   `(<caret>[{}])[](){}` will return the first ')' if stopOnFirstFinishedGroup == true
+   *                                                    ^
+   *
+   *                                   `(<caret>[{}])[](){}` will return the last ')' if stopOnFirstFinishedGroup == false
+   *                                                ^
+   * @return the offset of the found parenth or -1
+   */
+  private static int findLeftOrRightParenth(@NotNull HighlighterIterator iterator,
+                                            @NotNull IElementType targetParenTokenType,
+                                            @NotNull CharSequence fileText,
+                                            @NotNull FileType fileType,
+                                            boolean searchingForRight,
+                                            boolean stopOnFirstFinishedGroup) {
+    int lastBraceOffset = -1;
 
     Stack<IElementType> braceStack = new Stack<>();
-    for (; !iterator.atEnd(); iterator.advance()) {
-      final IElementType tokenType = iterator.getTokenType();
+    while (!iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
 
-      if (isRBraceToken(iterator, fileText, fileType)) {
-        if (!braceStack.isEmpty()) {
-          IElementType topToken = braceStack.pop();
-          if (!isPairBraces(tokenType, topToken, fileType)) {
-            break; // unmatched braces
-          }
+      if (isBraceToken(iterator, fileText, fileType, searchingForRight)) {
+        if (braceStack.isEmpty()) {
+          if (tokenType != targetParenTokenType) break; //unmatched braces
+
+          lastBraceOffset = iterator.getStart();
+          if (stopOnFirstFinishedGroup) break; //first brace group finished. stop searching
         }
         else {
-          if (tokenType == rparenTokenType) {
-            lastRbraceOffset = iterator.getStart();
-          }
-          else {
-            break;
-          }
+          IElementType topToken = braceStack.pop();
+          if (!isPairBraces(tokenType, topToken, fileType)) break; // unmatched braces
         }
       }
-      else if (isLBraceToken(iterator, fileText, fileType)) {
+      else if (isBraceToken(iterator, fileText, fileType, !searchingForRight)) {
         braceStack.push(iterator.getTokenType());
       }
+
+      advance(iterator, searchingForRight);
     }
 
-    return lastRbraceOffset;
+    return lastBraceOffset;
+  }
+
+  private static boolean isBraceToken(@NotNull HighlighterIterator iterator,
+                                      @NotNull CharSequence fileText,
+                                      @NotNull FileType fileType,
+                                      boolean searchingForRight) {
+    return searchingForRight ? isRBraceToken(iterator, fileText, fileType)
+                             : isLBraceToken(iterator, fileText, fileType);
+  }
+
+  private static void advance(@NotNull HighlighterIterator iterator, boolean forward) {
+    if (forward) {
+      iterator.advance();
+    }
+    else {
+      iterator.retreat();
+    }
   }
 
   private static class BraceMatcherHolder {
