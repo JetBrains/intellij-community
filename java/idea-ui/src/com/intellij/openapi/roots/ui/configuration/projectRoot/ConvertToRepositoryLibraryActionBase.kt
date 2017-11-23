@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.ui.DialogWrapper
@@ -155,6 +156,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
+    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
+                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()
