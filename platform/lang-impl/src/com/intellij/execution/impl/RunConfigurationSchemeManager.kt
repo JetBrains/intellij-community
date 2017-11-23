@@ -15,6 +15,7 @@ private val LOG = logger<RunConfigurationSchemeManager>()
 internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
     return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
   }
 
