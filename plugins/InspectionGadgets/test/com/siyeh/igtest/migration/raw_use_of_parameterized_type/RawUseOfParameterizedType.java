@@ -33,6 +33,8 @@ interface X {
 }
 class Y implements X {
 
+  Y(Map<String, <warning descr="Raw use of parameterized class 'Comparable'">Comparable</warning>> properties) {}
+
   @Override
   public <warning descr="Raw use of parameterized class 'List'">List</warning> foo(Map map) {
     return null;
@@ -45,5 +47,14 @@ class Y implements X {
 
   int f(Object o) {
     return ((List[])o).length;
+  }
+}
+class Z extends Y {
+  Z(Map<String, Comparable> properties) {
+    this(properties, "");
+  }
+
+  Z(Map<String, Comparable> properties, String s) {
+    super(properties);
   }
 }
