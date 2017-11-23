@@ -7,16 +7,16 @@ import java.util.concurrent.Callable;
 
 @interface Anno {
 
-  Class method() default List.class;
+  <warning descr="Raw use of parameterized class 'Class'">Class</warning> method() default List.class;
   Class<? extends List> method2() default List.class;
 }
 class RawUseOfParameterizedType {
   void array() {
-    final ArrayList[] array =
+    final <warning descr="Raw use of parameterized class 'ArrayList'">ArrayList</warning>[] array =
       new ArrayList[10];
   }
   void anonymous() {
-    new Callable() {
+    new <warning descr="Raw use of parameterized class 'Callable'">Callable</warning>() {
       @Override
       public Object call() throws Exception {
         return null;
@@ -29,12 +29,12 @@ class RawUseOfParameterizedType {
   }
 }
 interface X {
-  List foo(Map map);
+  <warning descr="Raw use of parameterized class 'List'">List</warning> foo(<warning descr="Raw use of parameterized class 'Map'">Map</warning> map);
 }
 class Y implements X {
 
   @Override
-  public List foo(Map map) {
+  public <warning descr="Raw use of parameterized class 'List'">List</warning> foo(Map map) {
     return null;
   }
 
