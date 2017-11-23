@@ -55,6 +55,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
             val tracker = actionsTracker(lookup, experimentHelper)
             actionListener.listener = tracker
             lookup.addLookupListener(tracker)
+            lookup.addLookupListener(LookupCompletedTracker())
             lookup.setPrefixChangeListener(tracker)
         }
     }
