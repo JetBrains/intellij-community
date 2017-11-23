@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.awt.event.ActionEvent
+import javax.swing.Action
 
 /**
  * @author nik
@@ -35,6 +37,9 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
                             private val mavenCoordinates: JpsMavenRepositoryLibraryDescriptor,
                             private val libraryName: String,
                             project: Project) : DialogWrapper(project) {
+  companion object {
+    val CHANGE_COORDINATES_CODE = 2;
+  }
 
   private val panel: DiffRequestPanel
 
@@ -53,4 +58,14 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
   override fun createCenterPanel() = panel.component
 
   override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
+
+  override fun createActions(): Array<Action> {
+    return arrayOf(okAction, ChangeCoordinatesAction(), cancelAction)
+  }
+
+  private inner class ChangeCoordinatesAction : DialogWrapperAction("Change Coordinates...") {
+    override fun doAction(e: ActionEvent?) {
+      close(CHANGE_COORDINATES_CODE)
+    }
+  }
 }

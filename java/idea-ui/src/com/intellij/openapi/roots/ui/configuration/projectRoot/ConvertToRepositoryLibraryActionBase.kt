@@ -38,6 +38,7 @@ import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
@@ -91,10 +92,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
                                    null) != Messages.YES) {
         return
       }
-      val coordinates = specifyMavenCoordinates(listOf(mavenCoordinates)) ?: return
-      ApplicationManager.getApplication().invokeLater {
-        downloadLibraryAndReplace(library, coordinates)
-      }
+      changeCoordinatesAndRetry(mavenCoordinates, library)
       return
     }
 
@@ -104,11 +102,16 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     if (task.cancelled) return
 
     if (!task.filesAreTheSame) {
-      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
-                                     LibraryUtil.getPresentableName(library), project).showAndGet()
+      val dialog = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
+                                         LibraryUtil.getPresentableName(library), project)
+      dialog.show()
       task.deleteTemporaryFiles()
-      if (!ok) {
-        return
+      when (dialog.exitCode) {
+        DialogWrapper.CANCEL_EXIT_CODE -> return
+        LibraryJarsDiffDialog.CHANGE_COORDINATES_CODE -> {
+          changeCoordinatesAndRetry(mavenCoordinates, library)
+          return
+        }
       }
     }
     ApplicationManager.getApplication().invokeLater {
@@ -118,6 +121,13 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
                            editor.addRoots(roots)
                          }
                        })
+    }
+  }
+
+  private fun changeCoordinatesAndRetry(mavenCoordinates: JpsMavenRepositoryLibraryDescriptor, library: LibraryEx) {
+    val coordinates = specifyMavenCoordinates(listOf(mavenCoordinates)) ?: return
+    ApplicationManager.getApplication().invokeLater {
+      downloadLibraryAndReplace(library, coordinates)
     }
   }
 
