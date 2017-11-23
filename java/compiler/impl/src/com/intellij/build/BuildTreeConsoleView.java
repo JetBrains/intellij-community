@@ -32,9 +32,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -134,6 +132,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return super.getCellRenderer(row, column);
       }
     };
+    EditSourceOnDoubleClickHandler.install(treeTable);
+    EditSourceOnEnterKeyHandler.install(treeTable, null);
 
     TreeTableTree tree = treeTable.getTree();
     final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
