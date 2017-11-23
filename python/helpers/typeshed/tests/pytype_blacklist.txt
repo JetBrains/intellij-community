@@ -8,34 +8,73 @@ stdlib/2/typing.pyi
 stdlib/3/builtins.pyi
 stdlib/3/typing.pyi
 
-# Because of 'from . import path':
-stdlib/2/os/__init__.pyi
-stdlib/3/os/__init__.pyi
-
-# We've not been running the pytype tests under Python 3, for quite a while.
-# The below are files that have regressed and need fixing:
-stdlib/3/collections/__init__.pyi
-stdlib/3/collections/abc.pyi
-stdlib/3/concurrent/futures/__init__.pyi
-stdlib/3/concurrent/futures/_base.pyi
-stdlib/3/concurrent/futures/process.pyi
-stdlib/3/concurrent/futures/thread.pyi
-stdlib/3/http/__init__.pyi
-stdlib/3/http/cookiejar.pyi
-stdlib/3/inspect.pyi
-stdlib/3/json/__init__.pyi
-stdlib/3/ssl.pyi
-stdlib/3/subprocess.pyi
-stdlib/3/sys.pyi
-stdlib/3/textwrap.pyi
-stdlib/3/time.pyi
-stdlib/3/types.pyi
-stdlib/3/unittest/__init__.pyi
-stdlib/3/wsgiref/types.pyi
-stdlib/3.4/asyncio/events.pyi
-stdlib/3.4/asyncio/futures.pyi
-stdlib/3.4/asyncio/locks.pyi
-stdlib/3.4/asyncio/queues.pyi
-stdlib/3.4/asyncio/streams.pyi
-stdlib/3.4/asyncio/subprocess.pyi
+# pytype doesn't yet support aliases with implicit type parameters
+# (e.g., here, FutureT = Future[T])
 stdlib/3.4/asyncio/tasks.pyi
+
+# builtins not found
+stdlib/2/os/__init__.pyi # parse only
+
+# Below files can not be loaded by PyType without an error.
+# Notice that the current travis configuration loads these files with Python 2.7.
+# The files will be parsed but not loaded to verify them.
+stdlib/3.4/asyncio/__init__.pyi # parse only
+stdlib/3.4/asyncio/events.pyi # parse only
+stdlib/3.4/asyncio/futures.pyi # parse only
+stdlib/3.4/asyncio/locks.pyi # parse only
+stdlib/3.4/asyncio/protocols.pyi # parse only
+stdlib/3.4/asyncio/queues.pyi # parse only
+stdlib/3.4/asyncio/streams.pyi # parse only
+stdlib/3.4/asyncio/subprocess.pyi # parse only
+stdlib/3.5/zipapp.pyi # parse only
+stdlib/3/_compression.pyi # parse only
+stdlib/3/ast.pyi # parse only
+stdlib/3/collections/__init__.pyi # parse only.pyi
+stdlib/3/concurrent/futures/__init__.pyi # parse only
+stdlib/3/concurrent/futures/process.pyi # parse only
+stdlib/3/concurrent/futures/thread.pyi # parse only
+stdlib/3/curses/__init__.pyi # parse only
+stdlib/3/email/__init__.pyi # parse only
+stdlib/3/email/contentmanager.pyi # parse only
+stdlib/3/email/encoders.pyi # parse only
+stdlib/3/email/feedparser.pyi # parse only
+stdlib/3/email/generator.pyi # parse only
+stdlib/3/email/header.pyi # parse only
+stdlib/3/email/headerregistry.pyi # parse only
+stdlib/3/email/iterators.pyi # parse only
+stdlib/3/email/message.pyi # parse only
+stdlib/3/email/mime/base.pyi # parse only
+stdlib/3/email/mime/message.pyi # parse only
+stdlib/3/email/mime/multipart.pyi # parse only
+stdlib/3/email/parser.pyi # parse only
+stdlib/3/email/policy.pyi # parse only
+stdlib/3/email/utils.pyi # parse only
+stdlib/3/gzip.pyi # parse only
+stdlib/3/html/parser.pyi # parse only
+stdlib/3/http/client.pyi # parse only
+stdlib/3/http/cookiejar.pyi # parse only
+stdlib/3/http/server.pyi # parse only
+stdlib/3/imp.pyi # parse only
+stdlib/3/importlib/__init__.pyi # parse only
+stdlib/3/importlib/abc.pyi # parse only
+stdlib/3/importlib/machinery.pyi # parse only
+stdlib/3/io.pyi # parse only
+stdlib/3/json/__init__.pyi # parse only
+stdlib/3/multiprocessing/__init__.pyi # parse only
+stdlib/3/multiprocessing/context.pyi # parse only
+stdlib/3/multiprocessing/managers.pyi # parse only
+stdlib/3/multiprocessing/pool.pyi # parse only
+stdlib/3/multiprocessing/process.pyi # parse only
+stdlib/3/multiprocessing/synchronize.pyi # parse only
+stdlib/3/os/__init__.pyi # parse only
+stdlib/3/pipes.pyi # parse only
+stdlib/3/smtplib.pyi # parse only
+stdlib/3/sqlite3/__init__.pyi # parse only
+stdlib/3/sre_parse.pyi # parse only
+stdlib/3/time.pyi # parse only
+stdlib/3/tkinter/__init__.pyi # parse only
+stdlib/3/tkinter/ttk.pyi # parse only
+stdlib/3/tokenize.pyi # parse only
+stdlib/3/types.pyi # parse only
+stdlib/3/urllib/error.pyi # parse only
+stdlib/3/urllib/request.pyi # parse only
