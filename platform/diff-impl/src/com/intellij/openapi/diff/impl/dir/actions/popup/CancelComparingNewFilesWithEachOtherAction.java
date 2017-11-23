@@ -17,7 +17,7 @@ public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction 
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model == null) return;
     for (DirDiffElementImpl element : model.getSelectedElements()) {
-      if (element.getType() == DiffType.CHANGED) {
+      if (isChangedOrEqual(element)) {
         model.setReplacement(element, null);
       }
     }
@@ -28,7 +28,11 @@ public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction 
   public void update(AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     e.getPresentation().setEnabledAndVisible(model != null && model.getSelectedElements().stream().anyMatch(
-      it -> it.getType() == DiffType.CHANGED && Comparing.equal(model.getReplacementName(it), it.getTargetName())
+      it -> isChangedOrEqual(it) && Comparing.equal(model.getReplacementName(it), it.getTargetName())
     ));
+  }
+
+  private static boolean isChangedOrEqual(DirDiffElementImpl element) {
+    return element.getType() == DiffType.CHANGED || element.getType() == DiffType.EQUAL;
   }
 }
