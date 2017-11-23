@@ -17,6 +17,7 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -43,19 +44,20 @@ public class DetailExceptionsIntention extends Intention {
     if (!(parent instanceof PsiTryStatement)) {
       return;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     @NonNls final StringBuilder newTryStatement = new StringBuilder("try");
     final Set<PsiClassType> exceptionsThrown = new HashSet<>();
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      newTryStatement.append(resourceList.getText());
+      newTryStatement.append(commentTracker.markUnchanged(resourceList).getText());
       ExceptionUtils.calculateExceptionsThrown(resourceList, exceptionsThrown);
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
     }
-    final String tryBlockText = tryBlock.getText();
+    final String tryBlockText = commentTracker.markUnchanged(tryBlock).getText();
     newTryStatement.append(tryBlockText);
     ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
@@ -77,16 +79,17 @@ public class DetailExceptionsIntention extends Intention {
         Collections.sort(exceptionsToExpand, comparator);
         for (PsiType thrownType : exceptionsToExpand) {
           newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');
-          newTryStatement.append(block.getText());
+          newTryStatement.append(commentTracker.markUnchanged(block).getText());
           exceptionsAlreadyEmitted.add(thrownType);
         }
       }
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatement.append("finally").append(finallyBlock.getText());
+      newTryStatement.append("finally").append(commentTracker.markUnchanged(finallyBlock).getText());
     }
     final String newStatement = newTryStatement.toString();
-    PsiReplacementUtil.replaceStatementAndShortenClassNames(tryStatement, newStatement);
+
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(tryStatement, newStatement, commentTracker);
   }
 }

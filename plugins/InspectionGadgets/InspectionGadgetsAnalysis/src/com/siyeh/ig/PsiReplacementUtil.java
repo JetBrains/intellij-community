@@ -94,6 +94,12 @@ public class PsiReplacementUtil {
   }
 
   public static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
+    replaceStatementAndShortenClassNames(statement, newStatementText, null);
+  }
+
+ public static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement,
+                                                         @NotNull @NonNls String newStatementText,
+                                                         @Nullable CommentTracker tracker) {
     final Project project = statement.getProject();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -134,10 +140,14 @@ public class PsiReplacementUtil {
       }
     }
     else {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiElementFactory factory = facade.getElementFactory();
-      PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
-      newStatement = (PsiStatement)statement.replace(newStatement);
+      PsiStatement newStatement;
+      if (tracker != null) {
+        newStatement = (PsiStatement)tracker.replaceAndRestoreComments(statement, newStatementText);
+      }
+      else {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        newStatement = (PsiStatement)statement.replace(factory.createStatementFromText(newStatementText, statement));
+      }
       javaStyleManager.shortenClassReferences(newStatement);
       styleManager.reformat(newStatement);
     }
