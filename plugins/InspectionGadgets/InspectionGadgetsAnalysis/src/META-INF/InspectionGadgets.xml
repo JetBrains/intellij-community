@@ -1809,7 +1809,7 @@
                      implementationClass="com.siyeh.ig.numeric.ConstantMathCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="divzero" shortName="DivideByZero" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="divide.by.zero.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues"
-                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.numeric.DivideByZeroInspection"/>
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.numeric.DivideByZeroInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleLiteralMayBeFloatLiteral" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="double.literal.may.be.float.literal.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
@@ -2030,6 +2030,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringOperation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" displayName="Redundant Collection operation"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
