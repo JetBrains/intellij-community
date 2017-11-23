@@ -94,6 +94,28 @@
     <component>
       <implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>
+        com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
+      </implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
+      <interface-class>com.intellij.completion.FeatureManager</interface-class>
+    </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.stats.personalization.impl.ProjectUserFactorStorage</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.stats.personalization.UserFactorsManager</interface-class>
+      <implementation-class>com.intellij.stats.personalization.impl.UserFactorsManagerImpl</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>
