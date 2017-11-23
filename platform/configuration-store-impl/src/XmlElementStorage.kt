@@ -118,12 +118,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
-      element?.normalizeRootName()
+      val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeed(componentName, normalized, originalStates, newLiveStates)
       }
       else {
-        updateState(copiedStates!!, componentName, element, newLiveStates)
+        updateState(copiedStates!!, componentName, normalized, newLiveStates)
       }
     }
 
@@ -250,12 +250,24 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 }
 
 internal fun Element.normalizeRootName(): Element {
-  if (!org.jdom.JDOMInterner.isInterned(this) && parent != null) {
-    LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
-    detach()
+  if (org.jdom.JDOMInterner.isInterned(this)) {
+    if (FileStorageCoreUtil.COMPONENT == name) {
+      return this
+    }
+    else {
+      val clone = clone()
+      clone.name = FileStorageCoreUtil.COMPONENT
+      return clone
+    }
   }
-  name = FileStorageCoreUtil.COMPONENT
-  return this
+  else {
+    if (parent != null) {
+      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      detach()
+    }
+    name = FileStorageCoreUtil.COMPONENT
+    return this
+  }
 }
 
 // newStorageData - myStates contains only live (unarchived) states
