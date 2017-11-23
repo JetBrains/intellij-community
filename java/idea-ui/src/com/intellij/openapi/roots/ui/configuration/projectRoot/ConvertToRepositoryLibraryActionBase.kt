@@ -79,7 +79,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun downloadLibraryAndReplace(library: LibraryEx,
                                         mavenCoordinates: JpsMavenRepositoryLibraryDescriptor) {
-    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version)
+    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version, mavenCoordinates.isIncludeTransitiveDependencies)
     val hasSources = RepositoryUtils.libraryHasSources(library)
     val hasJavadoc = RepositoryUtils.libraryHasJavaDocs(library)
     LOG.debug("Resolving $mavenCoordinates")
@@ -150,7 +150,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText)
+    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies)
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
