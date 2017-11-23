@@ -134,10 +134,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     if (target instanceof PyTargetExpression) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyTargetExpression)target);
       if (pythonStub instanceof PyTypedElement) {
-        // XXX: Force the switch to AST for getting the type out of the hint in the comment
-        final TypeEvalContext effectiveContext = context.maySwitchToAST(pythonStub) ?
-                                                 context : TypeEvalContext.deepCodeInsight(target.getProject());
-        return effectiveContext.getType((PyTypedElement)pythonStub);
+        return context.getType((PyTypedElement)pythonStub);
       }
     }
     return null;

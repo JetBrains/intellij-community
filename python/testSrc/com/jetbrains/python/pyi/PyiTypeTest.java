@@ -91,6 +91,7 @@ public class PyiTypeTest extends PyTestCase {
     final Project project = element.getProject();
     final PsiFile containingFile = element.getContainingFile();
     assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertProjectFilesNotParsed(myFixture.getFile());
     assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
   }
 
