@@ -283,11 +283,11 @@ public class BraceMatchingUtil {
    * @param fileType the file's type
    * @param searchingForRight are we going to the right and searching for the right parenth? (e.g. ')', ']', '}')
    * @param stopOnFirstFinishedGroup are we searching for the last corresponding brace in a line of wrapped braces?
-   *                                   `(<caret>[{}])[](){}` will return the first ')' if stopOnFirstFinishedGroup == true
-   *                                                    ^
+   *                                   Examples: `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
+   *                                                            ^
    *
-   *                                   `(<caret>[{}])[](){}` will return the last ')' if stopOnFirstFinishedGroup == false
-   *                                                ^
+   *                                             `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
+   *                                                          ^
    * @return the offset of the found parenth or -1
    */
   private static int findLeftOrRightParenth(@NotNull HighlighterIterator iterator,
