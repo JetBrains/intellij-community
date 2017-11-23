@@ -1878,16 +1878,11 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    height++;
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
-      if (jmHiDPI) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
-      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1897,7 +1892,7 @@ public class UIUtil {
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
       if (drawTopLine) drawLine(g ,x, 0, width, 0);
-      if (drawBottomLine) drawLine(g ,x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
+      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
