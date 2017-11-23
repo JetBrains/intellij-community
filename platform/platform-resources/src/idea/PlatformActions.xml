@@ -840,7 +840,10 @@
       <action id="DirDiffMenu.EnableEqual" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Equal Files" icon="AllIcons.Vcs.Equal"/>
       <action id="DirDiffMenu.EnableNotEqual" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Difference" icon="AllIcons.Vcs.Not_equal"/>
       <separator/>
-
+      <action id="DirDiffMenu.CompareNewFilesWithEachOtherAction" class="com.intellij.openapi.diff.impl.dir.actions.popup.CompareNewFilesWithEachOtherAction"
+              text="Compare New Files with Each Other" icon="AllIcons.Vcs.Merge"/>
+      <action id="DirDiffMenu.CancelComparingNewFilesWithEachOther" class="com.intellij.openapi.diff.impl.dir.actions.popup.CancelComparingNewFilesWithEachOtherAction"
+              text="Cancel Comparing New Files with Each Other" icon="AllIcons.Vcs.Remove"/>
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
     </group>
 
