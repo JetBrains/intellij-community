@@ -814,4 +814,8 @@ def bar() {
 }
 ''', 'java.util.List<java.util.List<java.io.Serializable>>'
   }
+
+  void 'test enum values() type'() {
+    doExprTest 'enum E {}; E.values()', 'E[]'
+  }
 }
