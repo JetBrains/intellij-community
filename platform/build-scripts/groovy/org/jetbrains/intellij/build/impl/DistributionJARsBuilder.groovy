@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -88,16 +85,16 @@ class DistributionJARsBuilder {
           withModule(it, jarName)
         }
       }
-      productLayout.platformApiJarModules.each {
+      getPlatformApiModules(productLayout).each {
         withModule(it, "platform-api.jar")
       }
-      productLayout.platformImplJarModules.each {
+      getPlatformImplModules(productLayout).each {
         withModule(it, "platform-impl.jar")
       }
-      productLayout.productApiModules.each {
+      getProductApiModules(productLayout).each {
         withModule(it, "openapi.jar")
       }
-      productLayout.productImplementationModules.each {
+      getProductImplModules(productLayout).each {
         withModule(it, productLayout.mainJarName)
       }
       productLayout.moduleExcludes.entrySet().each {
@@ -144,8 +141,8 @@ class DistributionJARsBuilder {
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    modulesLayout.platformApiJarModules + modulesLayout.platformImplJarModules + modulesLayout.productApiModules +
-    modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
+    getPlatformApiModules(modulesLayout) + getPlatformImplModules(modulesLayout) + getProductApiModules(modulesLayout) +
+    getProductImplModules(modulesLayout) + modulesLayout.additionalPlatformJars.values()
   }
 
   /**
@@ -153,6 +150,22 @@ class DistributionJARsBuilder {
    */
   static List<String> getToolModules() {
     ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater"]
+  }
+
+  static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
+    productLayout.platformApiModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_API_MODULES : []
+  }
+
+  static List<String> getPlatformImplModules(ProductModulesLayout productLayout) {
+    productLayout.platformImplementationModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES : []
+  }
+
+  static List<String> getProductApiModules(ProductModulesLayout productLayout) {
+    productLayout.platformApiModules.isEmpty() ? productLayout.productApiModules : productLayout.platformApiModules
+  }
+
+  static List<String> getProductImplModules(ProductModulesLayout productLayout) {
+    productLayout.platformImplementationModules.isEmpty() ? productLayout.productImplementationModules : productLayout.platformImplementationModules
   }
 
   Collection<String> getIncludedProjectArtifacts() {

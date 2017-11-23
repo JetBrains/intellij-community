@@ -33,45 +33,31 @@ class ProductModulesLayout {
    */
   String mainJarName
 
-  /**
-   * Names of the modules which need to be packed into platform-api.jar in the product's 'lib' directory.
-   * @see CommunityRepositoryModules#PLATFORM_API_MODULES
-   */
   List<String> platformApiJarModules = []
-
-  /**
-   * Names of the modules which need to be included into platform-impl in the product's 'lib' directory
-   * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
-   */
   List<String> platformImplJarModules = []
 
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
-   * @param modulesList
-   * @deprecated Use {@link #productApiModules} instead. To be removed in IDEA 2018.3.
-   */
-  def setPlatformApiModules(List<String> modulesList) {
-    productApiModules = modulesList
-  }
-
-  /**
-   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
-   * @param modulesList
-   * @deprecated Use {@link #productImplementationModules} instead. To be removed in IDEA 2018.3.
-   */
-  def setPlatformImplementationModules(List<String> modulesList) {
-    productImplementationModules = modulesList
-  }
-
-  /**
-   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
+   * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.
    */
-  List<String> productApiModules = []
+  List<String> platformApiModules = []
 
   /**
    * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
+   * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.   */
+  List<String> platformImplementationModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   */
+  List<String> productApiModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    */
   List<String> productImplementationModules = []
 
