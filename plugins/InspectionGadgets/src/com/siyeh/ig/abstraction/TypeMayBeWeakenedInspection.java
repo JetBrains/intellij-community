@@ -118,6 +118,11 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       });
       popup.showInBestPositionFor(editor);
     }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   }
 
   @Override
