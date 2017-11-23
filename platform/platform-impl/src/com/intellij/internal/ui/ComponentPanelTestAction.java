@@ -2,9 +2,9 @@
 package com.intellij.internal.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ComponentPanelTestAction extends AnAction {
+public class ComponentPanelTestAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
