@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.stats.sender.isSendAllowed
 import com.intellij.stats.sender.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.personalization.UserFactorsManager
 import java.beans.PropertyChangeListener
 
 
@@ -36,7 +37,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
     }
 
     private val actionListener = LookupActionsListener()
-    
+
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup == null) {
@@ -45,6 +46,9 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
         else if (lookup is LookupImpl) {
             if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
 
+            val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
+                    .associate { it.id to it.compute() }
+            lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactors)
             val shownTimesTracker = PositionTrackingListener(lookup)
             lookup.setPrefixChangeListener(shownTimesTracker)
 
