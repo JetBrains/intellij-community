@@ -106,8 +106,8 @@ class RegistrationCheckerUtil {
       return finder.getTypes();
     }
 
-    Set<PsiFile> processedXmlFiles = new HashSet<>();
-    processedXmlFiles.add(pluginXmlFile);
+    Set<PsiFile> processedFiles = new HashSet<>();
+    processedFiles.add(pluginXmlFile);
 
     // <depends> plugin.xml files
     for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
@@ -126,28 +126,27 @@ class RegistrationCheckerUtil {
             return finder.getTypes();
           }
         }
-        processedXmlFiles.add(depPluginXml);
+        processedFiles.add(depPluginXml);
       }
     }
 
-    Set<VirtualFile> includedFiles = new HashSet<>();
     Project project = module.getProject();
-    for (PsiFile file : processedXmlFiles) { // main plugin.xml + dependents
-      VirtualFile[] includes = FileIncludeManager.getManager(project).getIncludedFiles(file.getVirtualFile(), true, true);
-      Collections.addAll(includedFiles, includes);
-    }
-
     PsiManager psiManager = PsiManager.getInstance(project);
-    for (VirtualFile includedFile : includedFiles) {
-      PsiFile includedPsiFile = psiManager.findFile(includedFile);
-      if (includedPsiFile == null) {
-        continue;
-      }
-      if (!processedXmlFiles.add(includedPsiFile)) {
-        continue;
-      }
-      if (!finder.processScope(GlobalSearchScope.fileScope(includedPsiFile))) {
-        return finder.getTypes();
+    FileIncludeManager includeManager = FileIncludeManager.getManager(project);
+    Set<PsiFile> processedIncludedFiles = new HashSet<>();
+    for (PsiFile file : processedFiles) { // main plugin.xml + dependents
+      VirtualFile[] includes = includeManager.getIncludedFiles(file.getVirtualFile(), true, true);
+      for (VirtualFile includedFile : includes) {
+        PsiFile includedPsiFile = psiManager.findFile(includedFile);
+        if (includedPsiFile == null) {
+          continue;
+        }
+        if (processedFiles.contains(includedPsiFile) || !processedIncludedFiles.add(includedPsiFile)) {
+          continue;
+        }
+        if (!finder.processScope(GlobalSearchScope.fileScope(includedPsiFile))) {
+          return finder.getTypes();
+        }
       }
     }
 
