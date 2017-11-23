@@ -146,4 +146,9 @@ public class PyiTypeTest extends PyTestCase {
   public void testComparisonOperatorOverloads() {
     doTest("int");
   }
+
+  // PY-24929
+  public void testInstanceAttributeAnnotation() {
+    doTest("int");
+  }
 }

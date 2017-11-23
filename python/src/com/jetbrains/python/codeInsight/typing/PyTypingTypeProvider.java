@@ -19,6 +19,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
@@ -31,6 +32,7 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -325,20 +327,71 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (PROTOCOL.equals(target.getQualifiedName())) {
         return createTypingProtocolType();
       }
-      final PyExpression annotation = getAnnotationValue(target, context);
-      if (annotation != null) {
-        return Ref.deref(getType(annotation, new Context(context)));
+      final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
+      if (annotatedType != null) {
+        return annotatedType.get();
       }
-      final String comment = target.getTypeCommentAnnotation();
-      if (comment != null) {
-        final PyType type = Ref.deref(getVariableTypeCommentType(comment, referenceTarget, new Context(context)));
+
+      final PyClass pyClass = target.getContainingClass();
+      // an assignment inside a method
+      if (pyClass != null && target.isQualified() && ScopeUtil.getScopeOwner(target) instanceof PyFunction) {
+        final String name = target.getReferencedName();
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+        final StreamEx<PyType> typeStream;
+        if (context.maySwitchToAST(target)) {
+          final PyType qualifierType = context.getType(target.getQualifier());
+          if (qualifierType instanceof PyUnionType) {
+            typeStream = StreamEx.of(((PyUnionType)qualifierType).getMembers());
+          }
+          else {
+            typeStream = StreamEx.of(qualifierType);
+          }
+        }
+        else if (PyUtil.isInstanceAttribute(target)) {
+          typeStream = StreamEx.of(new PyClassTypeImpl(pyClass, false));
+        }
+        else {
+          return null;
+        }
+        return typeStream
+          .select(PyClassLikeType.class)
+          .map(PyClassLikeType::toClass)  // force search on the class level right away
+          .flatMap(x -> {
+            final List<? extends RatedResolveResult> resolved = x.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+            return resolved == null ? StreamEx.empty() : StreamEx.of(resolved);
+          })
+          .map(RatedResolveResult::getElement)
+          .select(PyTargetExpression.class)
+          .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+          .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+          .nonNull()
+          .map(Ref::get)
+          .foldLeft(PyUnionType::union)
+          .orElse(null);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getTypeFromTargetExpressionAnnotation(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final PyExpression annotation = getAnnotationValue(target, context);
+    if (annotation != null) {
+      return getType(annotation, new Context(context));
+    }
+    final String comment = target.getTypeCommentAnnotation();
+    if (comment != null) {
+      final Ref<PyType> fromTypeComment = getVariableTypeCommentType(comment, target, new Context(context));
+      if (fromTypeComment != null) {
+        final PyType type = Ref.deref(fromTypeComment);
         if (type instanceof PyTupleType) {
           final PyTupleExpression tupleExpr = PsiTreeUtil.getParentOfType(target, PyTupleExpression.class);
           if (tupleExpr != null) {
-            return PyTypeChecker.getTargetTypeFromTupleAssignment(target, tupleExpr, (PyTupleType)type);
+            return Ref.create(PyTypeChecker.getTargetTypeFromTupleAssignment(target, tupleExpr, (PyTupleType)type));
           }
         }
-        return type;
+        return fromTypeComment;
       }
     }
     return null;
