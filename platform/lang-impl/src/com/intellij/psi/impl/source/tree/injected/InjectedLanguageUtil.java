@@ -145,7 +145,7 @@ public class InjectedLanguageUtil {
       containingFile = host.getContainingFile();
     }
 
-    MultiHostRegistrarImpl registrar = probeElementsUp(host, containingFile, probeUp);
+    InjectionRegistrarImpl registrar = probeElementsUp(host, containingFile, probeUp);
     if (registrar == null) {
       // no injections found
       return true;
@@ -314,19 +314,19 @@ public class InjectedLanguageUtil {
   }
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
-  private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
+  private static final Key<ParameterizedCachedValue<InjectionRegistrarImpl, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
-  private static MultiHostRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
+  private static InjectionRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
-    MultiHostRegistrarImpl registrar = null;
+    InjectionRegistrarImpl registrar = null;
     PsiElement current = element;
     nextParent:
     while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
+      ParameterizedCachedValue<InjectionRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
       if (data == null || (registrar = data.getValue(current)) == null || !registrar.isValid()) {
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
       }
@@ -362,12 +362,12 @@ public class InjectedLanguageUtil {
           e.putUserData(INJECTED_PSI, null);
         }
         else {
-          ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
+          ParameterizedCachedValue<InjectionRegistrarImpl, PsiElement> cachedValue =
             CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
 
-          CachedValueProvider.Result<MultiHostRegistrarImpl> result =
+          CachedValueProvider.Result<InjectionRegistrarImpl> result =
             CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, registrar);
-          ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
+          ((PsiParameterizedCachedValue<InjectionRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
           e.putUserData(INJECTED_PSI, cachedValue);
         }
@@ -661,7 +661,7 @@ public class InjectedLanguageUtil {
    */
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
     LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");
-    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    final List<Pair<Place,PsiFile>> result = ((InjectionRegistrarImpl)registrar).getResult();
     if (result != null && !result.isEmpty()) {
       PsiFile file = result.get(result.size() - 1).getSecond();
       file.putUserData(key, value);

@@ -5,10 +5,9 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFileWindow {
+class VirtualFileWindowImpl extends com.intellij.injected.editor.VirtualFileWindowImpl implements VirtualFileWindow {
   private final VirtualFile myDelegate;
   private final DocumentWindowImpl myDocumentWindow;
 
