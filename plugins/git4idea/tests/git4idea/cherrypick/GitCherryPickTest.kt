@@ -88,6 +88,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
   }
 
   protected fun cherryPick(hashes: List<String>) {
+    updateChangeListManager()
     val details = readDetails(hashes)
     GitCherryPicker(project, git).cherryPick(details)
   }

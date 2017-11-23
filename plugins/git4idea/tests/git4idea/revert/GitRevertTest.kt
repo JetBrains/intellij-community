@@ -261,5 +261,8 @@ class GitRevertTest : GitSingleRepoTest() {
     return commitToRevert
   }
 
-  private fun revert(vararg commit: VcsFullCommitDetails) = GitRevertOperation(project, listOf(*commit), true).execute()
+  private fun revert(vararg commit: VcsFullCommitDetails) {
+    updateChangeListManager()
+    GitRevertOperation(project, listOf(*commit), true).execute()
+  }
 }
