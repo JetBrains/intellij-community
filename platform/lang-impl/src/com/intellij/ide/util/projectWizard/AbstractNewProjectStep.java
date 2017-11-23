@@ -153,6 +153,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
   }
 
   public static class AbstractCallback<T> implements PairConsumer<ProjectSettingsStepBase<T>, ProjectGeneratorPeer<T>> {
+    @Override
     public void consume(@Nullable final ProjectSettingsStepBase<T> settings, @NotNull final ProjectGeneratorPeer<T> projectGeneratorPeer) {
       if (settings == null) return;
 

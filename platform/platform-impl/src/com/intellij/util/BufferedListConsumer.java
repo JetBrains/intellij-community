@@ -51,6 +51,7 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     }
   }
 
+  @Override
   public void consume(List<T> list) {
     synchronized (myFlushLock) {
       myCnt += list.size();

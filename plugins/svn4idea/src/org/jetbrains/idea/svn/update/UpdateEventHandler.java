@@ -106,6 +106,7 @@ public class UpdateEventHandler implements ProgressTracker {
     myUpdatedFiles = updatedFiles;
   }
 
+  @Override
   public void consume(final ProgressEvent event) {
     if (event == null || event.getFile() == null) {
       return;

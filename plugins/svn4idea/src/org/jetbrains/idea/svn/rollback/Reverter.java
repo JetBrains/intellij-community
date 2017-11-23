@@ -193,6 +193,7 @@ public class Reverter {
   private static ProgressTracker createRevertHandler(@NotNull final List<VcsException> exceptions,
                                                      @NotNull final RollbackProgressListener listener) {
     return new ProgressTracker() {
+      @Override
       public void consume(ProgressEvent event) {
         if (event.getAction() == EventAction.REVERT) {
           final File file = event.getFile();
