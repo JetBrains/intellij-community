@@ -205,11 +205,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M8 { exports pkg.m8; }", M8)
     addFile("pkg/m8/C8.java", "package pkg.m8;\npublic class C8 { }", M8)
 
-    fixes("module M { requires <caret>M.missing; }")
+    fixes("module M { requires <caret>M.missing; }", arrayOf())
     fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
-    fixes("module M { exports pkg.main.impl to <caret>M3; }")
-    fixes("module M { exports <caret>pkg.missing; }")
-    fixes("module M { exports <caret>pkg.m3; }")
+    fixes("module M { exports pkg.main.impl to <caret>M3; }", arrayOf())
+    fixes("module M { exports <caret>pkg.missing; }", arrayOf())
+    fixes("module M { exports <caret>pkg.m3; }", arrayOf())
     fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
     fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
 
@@ -403,9 +403,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun fixes(text: String, fixes: Array<String> = arrayOf()) = fixes("module-info.java", text, fixes)
+  private fun fixes(text: String, fixes: Array<String>) = fixes("module-info.java", text, fixes)
 
-  private fun fixes(path: String, text: String, fixes: Array<String> = arrayOf()) {
+  private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
       .map { (if (it is IntentionActionDelegate) it.delegate else it)::class.simpleName }
