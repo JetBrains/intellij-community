@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.LookupElementPositionTracker
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.stats.completion.events.*
+import com.intellij.stats.personalization.UserFactorsManager
 
 
 class CompletionFileLogger(private val installationUID: String,
@@ -78,12 +79,14 @@ class CompletionFileLogger(private val installationUID: String,
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
         val mlRankingVersion = "NONE"
 
+        val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
+
         val event = CompletionStartedEvent(
                 ideVersion, pluginVersion, mlRankingVersion,
                 installationUID, completionUID,
                 language?.displayName,
                 isExperimentPerformed, experimentVersion,
-                lookupEntryInfos, selectedPosition = 0)
+                lookupEntryInfos, userFactors, selectedPosition = 0)
 
         event.isOneLineMode = lookup.editor.isOneLineMode
         event.fillCompletionParameters()
