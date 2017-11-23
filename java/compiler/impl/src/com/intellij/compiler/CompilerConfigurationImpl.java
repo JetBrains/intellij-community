@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ExternalModuleListStorage;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -64,7 +63,6 @@ import java.util.*;
 import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
 import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
-import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.optimize;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
@@ -156,6 +154,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
+
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
@@ -609,7 +608,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      ResourcePatterns.handleDirPattern(dirPattern);
+      dirPattern = ResourcePatterns.optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -618,6 +617,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
     final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
+  }
+
+  private static String optimize(String wildcardPattern) {
+    return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {
