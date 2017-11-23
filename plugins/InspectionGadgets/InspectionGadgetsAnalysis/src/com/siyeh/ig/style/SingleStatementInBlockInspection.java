@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,9 @@ public class SingleStatementInBlockInspection extends BaseInspection {
 
     handleComments(blockStatement, codeBlock);
 
-    final String text = statement.getText();
-    PsiReplacementUtil.replaceStatement(blockStatement, text);
+    CommentTracker commentTracker = new CommentTracker();
+    final String text = commentTracker.markUnchanged(statement).getText();
+    PsiReplacementUtil.replaceStatement(blockStatement, text, commentTracker);
   }
 
   private static void handleComments(PsiBlockStatement blockStatement, PsiCodeBlock codeBlock) {

@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,8 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
     final PsiAssignmentExpression assignment =
       (PsiAssignmentExpression)element;
     final PsiExpression expression = assignment.getLExpression();
-    final String expressionText = expression.getText();
+    CommentTracker commentTracker = new CommentTracker();
+    final String expressionText = commentTracker.markUnchanged(expression).getText();
     final IElementType tokenType = assignment.getOperationTokenType();
     final String newExpressionText;
     if (JavaTokenType.PLUSEQ.equals(tokenType)) {
@@ -70,6 +72,6 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
     else {
       return;
     }
-    PsiReplacementUtil.replaceExpression(assignment, newExpressionText);
+    PsiReplacementUtil.replaceExpression(assignment, newExpressionText, commentTracker);
   }
 }

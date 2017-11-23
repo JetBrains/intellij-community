@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends BaseInspection {
@@ -71,13 +72,14 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
       final String operandText = getShortCircuitOperand(tokenType);
       final PsiExpression[] operands = expression.getOperands();
       final StringBuilder newExpression = new StringBuilder();
+      CommentTracker commentTracker = new CommentTracker();
       for (PsiExpression operand : operands) {
         if (newExpression.length() != 0) {
           newExpression.append(operandText);
         }
-        newExpression.append(operand.getText());
+        newExpression.append(commentTracker.markUnchanged(operand).getText());
       }
-      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
     }
 
     private static String getShortCircuitOperand(IElementType tokenType) {

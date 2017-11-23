@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -51,12 +52,12 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     if (info instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)info;
       return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-                                             calculateReplacementExpression(prefixExpression));
+                                             calculateReplacementExpression(prefixExpression, new CommentTracker()));
     }
     else {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)info;
       return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-                                             calculateReplacementExpression(binaryExpression));
+                                             calculateReplacementExpression(binaryExpression, new CommentTracker()));
     }
   }
 
@@ -78,14 +79,15 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
+      CommentTracker commentTracker = new CommentTracker();
       final String replacement;
       if (element instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
-        replacement = calculateReplacementExpression(prefixExpression);
+        replacement = calculateReplacementExpression(prefixExpression, commentTracker);
       }
       else if (element instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
-        replacement = calculateReplacementExpression(binaryExpression);
+        replacement = calculateReplacementExpression(binaryExpression, commentTracker);
       }
       else {
         return;
@@ -93,12 +95,13 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
       if (replacement == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement);
+
+      PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, commentTracker);
     }
   }
 
   @NonNls
-  static String calculateReplacementExpression(PsiPrefixExpression expression) {
+  static String calculateReplacementExpression(PsiPrefixExpression expression, CommentTracker commentTracker) {
     final PsiExpression operand = ParenthesesUtils.stripParentheses(expression.getOperand());
     if (!(operand instanceof PsiBinaryExpression)) {
       return null;
@@ -109,12 +112,12 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     if (lhs == null || rhs == null) {
       return null;
     }
-    return ParenthesesUtils.getText(lhs, ParenthesesUtils.EQUALITY_PRECEDENCE) + "==" +
-           ParenthesesUtils.getText(rhs, ParenthesesUtils.EQUALITY_PRECEDENCE);
+    return ParenthesesUtils.getText(commentTracker.markUnchanged(lhs), ParenthesesUtils.EQUALITY_PRECEDENCE) + "==" +
+           ParenthesesUtils.getText(commentTracker.markUnchanged(rhs), ParenthesesUtils.EQUALITY_PRECEDENCE);
   }
 
   @NonNls
-  static String calculateReplacementExpression(PsiBinaryExpression expression) {
+  static String calculateReplacementExpression(PsiBinaryExpression expression, CommentTracker commentTracker) {
     final PsiExpression rhs1 = ParenthesesUtils.stripParentheses(expression.getROperand());
     if (rhs1 == null) {
       return null;
@@ -128,8 +131,8 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     if (rhs2 == null) {
       return null;
     }
-    return ParenthesesUtils.getText(rhs1, ParenthesesUtils.OR_PRECEDENCE) + "||" +
-           ParenthesesUtils.getText(rhs2, ParenthesesUtils.OR_PRECEDENCE);
+    return ParenthesesUtils.getText(commentTracker.markUnchanged(rhs1), ParenthesesUtils.OR_PRECEDENCE) + "||" +
+           ParenthesesUtils.getText(commentTracker.markUnchanged(rhs2), ParenthesesUtils.OR_PRECEDENCE);
 
   }
 

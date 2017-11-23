@@ -4,10 +4,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +72,16 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
+    CommentTracker commentTracker = new CommentTracker();
     final String replacementExpression =
-      ExpressionUtils.hasStringType(arguments[0]) ? buildReplacementExpression(arguments, 0) : buildReplacementExpression(arguments, 1);
-    PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression);
+      ExpressionUtils.hasStringType(arguments[0]) ? buildReplacementExpression(arguments, 0, commentTracker)
+                                                  : buildReplacementExpression(arguments, 1, commentTracker);
+    PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression, commentTracker);
   }
 
-  public static String buildReplacementExpression(PsiExpression[] arguments, int indexOfFormatString) {
+  private static String buildReplacementExpression(PsiExpression[] arguments,
+                                                   int indexOfFormatString,
+                                                   CommentTracker commentTracker) {
     final StringBuilder builder = new StringBuilder();
     String value = (String)ExpressionUtils.computeConstantExpression(arguments[indexOfFormatString]);
     assert value != null;
@@ -101,10 +102,10 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
       count++;
       final PsiExpression argument = arguments[indexOfFormatString + count];
       if (builder.length() == 0 && !ExpressionUtils.hasStringType(argument)) {
-        builder.append("String.valueOf(").append(argument.getText()).append(')');
+        builder.append("String.valueOf(").append(commentTracker.markUnchanged(argument).getText()).append(')');
       }
       else {
-        builder.append(argument.getText());
+        builder.append(commentTracker.markUnchanged(argument).getText());
       }
       start = end + 2;
       end = value.indexOf("%s", start);

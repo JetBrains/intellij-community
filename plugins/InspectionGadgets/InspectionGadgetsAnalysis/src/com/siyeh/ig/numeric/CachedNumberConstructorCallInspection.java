@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,8 +124,9 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
       assert argList != null;
       final PsiExpression[] args = argList.getExpressions();
       final PsiExpression arg = args[0];
-      final String text = arg.getText();
-      PsiReplacementUtil.replaceExpression(expression, className + ".valueOf(" + text + ')');
+      CommentTracker commentTracker = new CommentTracker();
+      final String text = commentTracker.markUnchanged(arg).getText();
+      PsiReplacementUtil.replaceExpression(expression, className + ".valueOf(" + text + ')', commentTracker);
     }
   }
 
