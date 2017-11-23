@@ -36,17 +36,10 @@ public class NegateConditionalIntention extends Intention {
     PsiExpression condition = conditionalExpression.getCondition();
     PsiExpression thenExpression = conditionalExpression.getThenExpression();
     PsiExpression elseExpression = conditionalExpression.getElseExpression();
-    final String newExpression = condition.getText() + '?' +
-                                 BoolUtils.getNegatedExpressionText(thenExpression) + ':' +
-                                 BoolUtils.getNegatedExpressionText(elseExpression);
     CommentTracker tracker = new CommentTracker();
-    tracker.markUnchanged(condition);
-    if (thenExpression != null) {
-      tracker.markUnchanged(thenExpression);
-    }
-    if (elseExpression != null) {
-      tracker.markUnchanged(elseExpression);
-    }
+    final String newExpression = tracker.markUnchanged(condition).getText() + '?' +
+                                 BoolUtils.getNegatedExpressionText(thenExpression, tracker) + ':' +
+                                 BoolUtils.getNegatedExpressionText(elseExpression, tracker);
     replaceExpressionWithNegatedExpressionString(newExpression, conditionalExpression, tracker);
   }
 

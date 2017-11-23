@@ -207,17 +207,18 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
-      newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition()));
+      CommentTracker tracker = new CommentTracker();
+      newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition(), tracker));
       final PsiNewExpression newException = getThrownNewException(ifStatement.getThenBranch());
-      final String message = getExceptionMessage(newException);
+      final String message = getExceptionMessage(newException, tracker);
       if (message != null) {
         newStatementText.append(':').append(message);
       }
       newStatementText.append(';');
-      PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString(), tracker);
     }
 
-    private static String getExceptionMessage(PsiNewExpression newExpression) {
+    private static String getExceptionMessage(PsiNewExpression newExpression, CommentTracker tracker) {
       if (newExpression == null) {
         return null;
       }
@@ -229,7 +230,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       if (arguments.length < 1) {
         return null;
       }
-      return arguments[0].getText();
+      return tracker.markUnchanged(arguments[0]).getText();
     }
   }
 }
