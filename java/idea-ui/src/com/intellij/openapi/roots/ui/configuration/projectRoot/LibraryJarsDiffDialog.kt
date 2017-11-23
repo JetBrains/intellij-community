@@ -48,7 +48,10 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
     setOKButtonText("Replace")
     val request: ContentDiffRequest = DiffRequestFactory.getInstance().createFromFiles(project, libraryFile, downloadedFile)
     panel = DiffManager.getInstance().createRequestPanel(project, disposable, window)
-    panel.putContextHints(DirDiffSettings.KEY, DirDiffSettings().apply { enableChoosers = false })
+    panel.putContextHints(DirDiffSettings.KEY, DirDiffSettings().apply {
+      enableChoosers = false
+      enableOperations = false
+    })
     panel.setRequest(request)
     init()
   }

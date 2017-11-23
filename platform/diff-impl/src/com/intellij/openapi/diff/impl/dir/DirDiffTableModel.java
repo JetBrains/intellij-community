@@ -177,7 +177,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public boolean isOperationsEnabled() {
-    return !myDisposed && mySource.isOperationsEnabled() && myTarget.isOperationsEnabled();
+    return !myDisposed && mySettings.enableOperations && mySource.isOperationsEnabled() && myTarget.isOperationsEnabled();
   }
 
   public List<DirDiffElementImpl> getElements() {
