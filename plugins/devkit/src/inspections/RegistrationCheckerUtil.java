@@ -39,9 +39,7 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class RegistrationCheckerUtil {
 
@@ -102,12 +100,13 @@ class RegistrationCheckerUtil {
       return null;
     }
 
-    Set<PsiFile> processedXmlFiles = new HashSet<>();
     // "main" plugin.xml
     XmlFile pluginXmlFile = pluginXml.getFile();
     if (!finder.processScope(GlobalSearchScope.fileScope(pluginXmlFile))) {
       return finder.getTypes();
     }
+
+    Set<PsiFile> processedXmlFiles = new HashSet<>();
     processedXmlFiles.add(pluginXmlFile);
 
     // <depends> plugin.xml files
@@ -131,9 +130,13 @@ class RegistrationCheckerUtil {
       }
     }
 
+    Set<VirtualFile> includedFiles = new HashSet<>();
     Project project = module.getProject();
-    VirtualFile pluginXmlVirtualFile = pluginXmlFile.getVirtualFile();
-    VirtualFile[] includedFiles = FileIncludeManager.getManager(project).getIncludedFiles(pluginXmlVirtualFile, true, true);
+    for (PsiFile file : processedXmlFiles) { // main plugin.xml + dependents
+      VirtualFile[] includes = FileIncludeManager.getManager(project).getIncludedFiles(file.getVirtualFile(), true, true);
+      Collections.addAll(includedFiles, includes);
+    }
+
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile includedFile : includedFiles) {
       PsiFile includedPsiFile = psiManager.findFile(includedFile);
