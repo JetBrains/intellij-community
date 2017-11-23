@@ -312,7 +312,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-19220
   public void testMultiLineAssignmentComment() {
-    doTest("List[str]", 
+    doTest("List[str]",
            "from typing import List\n" +
            "\n" +
            "expr = [\n" +
@@ -486,7 +486,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentCallableParameter() {
-    doTest("(bool, str) -> int", 
+    doTest("(bool, str) -> int",
            "from typing import Callable\n" +
            "\n" +
            "def f(cb):\n" +
@@ -536,12 +536,12 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18598
   public void testFunctionTypeCommentEllipsisParameters() {
-   doTest("(x: Any, y: Any, z: Any) -> int", 
+   doTest("(x: Any, y: Any, z: Any) -> int",
           "def f(x, y=42, z='foo'):\n" +
           "    # type: (...) -> int \n" +
           "    pass\n" +
           "\n" +
-          "expr = f"); 
+          "expr = f");
   }
 
   // PY-20421
@@ -558,7 +558,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18762
   public void testHomogeneousTuple() {
-    doTest("Tuple[int, ...]", 
+    doTest("Tuple[int, ...]",
            "from typing import Tuple\n" +
            "\n" +
            "def f(xs: Tuple[int, ...]):\n" +
@@ -578,7 +578,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18762
   public void testHomogeneousTupleUnpackingTarget() {
-    doTest("int", 
+    doTest("int",
            "from typing import Tuple\n" +
            "\n" +
            "xs = unknown() # type: Tuple[int, ...]\n" +
@@ -618,7 +618,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18877
   public void testFunctionTypeCommentOnTheSameLine() {
-    doTest("(x: int, y: int) -> None", 
+    doTest("(x: int, y: int) -> None",
            "def f(x,\n" +
            "      y):  # type: (int, int) -> None\n" +
            "    pass\n" +
@@ -729,7 +729,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testIllegalAnnotationTargets() {
-    doTest("Tuple[Any, int, Any, Any]", 
+    doTest("Tuple[Any, int, Any, Any]",
            "(w, _): Tuple[int, Any]\n" +
            "((x)): int\n" +
            "y: bool = z = undefined()\n" +
@@ -929,7 +929,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testListContainingClasses() {
-    doTest("Type[str]", 
+    doTest("Type[str]",
            "xs = [str]\n" +
            "expr = xs.pop()");
   }
@@ -985,6 +985,39 @@ public class PyTypingTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  // PY-24729
+  public void testAnnotatedInstanceAttributeReferenceOutsideClass() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        self.attr = 'foo'\n" +
+           "\n" +
+           "expr = C().attr\n");
+  }
+
+  // PY-24729
+  public void testAnnotatedInstanceAttributeReferenceInsideClass() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        self.attr = 'foo'\n" +
+           "        \n" +
+           "    def m(self):\n" +
+           "        expr = self.attr\n");
+  }
+
+  // PY-24729
+  public void testAnnotatedInstanceAttributeInOtherFile() {
+    doMultiFileStubAwareTest("int",
+                    "from other import C\n" +
+                    "\n" +
+                    "expr = C().attr");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -1008,9 +1041,23 @@ public class PyTypingTest extends PyTestCase {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
+  }
+
+  private void doMultiFileStubAwareTest(@NotNull final String expectedType, @NotNull final String text) {
+    myFixture.copyDirectoryToProject("types/" + getTestName(false), "");
+    myFixture.copyDirectoryToProject("typing", "");
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertProjectFilesNotParsed(expr.getContainingFile());
+
+    final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }
 }
