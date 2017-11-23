@@ -73,6 +73,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
@@ -85,6 +86,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private AbstractTreeBuilder myTreeBuilder;
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
+  private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
   private String mySubId;
   @NonNls private static final String ELEMENT_SUBPANE = "subPane";
   @NonNls private static final String ATTRIBUTE_SUBID = "subId";
@@ -460,6 +462,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   protected void saveExpandedPaths() {
+    myTreeStateRestored.set(false);
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
       if (!treeState.isEmpty()) {
@@ -469,6 +472,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final void restoreExpandedPaths(){
+    if (myTreeStateRestored.getAndSet(true)) return;
     TreeState treeState = myReadTreeState.get(getSubId());
     if (treeState != null && !treeState.isEmpty()) {
       treeState.applyTo(myTree);
