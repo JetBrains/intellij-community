@@ -1,7 +1,6 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -19,9 +18,9 @@ public class HgInitCommand {
     myProject = project;
   }
 
-  public HgCommandResult execute(@NotNull VirtualFile repositoryRoot) {
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject, repositoryRoot.getPath());
+  public HgCommandResult execute(@NotNull String rootPath) {
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject, rootPath);
     executor.setShowOutput(true);
-    return executor.executeInCurrentThread(null, "init", Collections.singletonList(repositoryRoot.getPath()));
+    return executor.executeInCurrentThread(null, "init", Collections.singletonList(rootPath));
   }
 }
