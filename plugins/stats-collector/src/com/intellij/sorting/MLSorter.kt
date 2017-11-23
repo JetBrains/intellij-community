@@ -30,6 +30,7 @@ import com.intellij.plugin.ManualMlSorting
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.completion.prefixLength
+import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import java.util.*
@@ -123,10 +124,11 @@ class MLSorter : CompletionFinalSorter() {
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
         val prefixLength = lookup.prefixLength()
+        val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors().associate { it.id to it.compute() }
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
-                    val rank: Double = calculateElementRank(lookupElement, index, relevance, prefixLength) ?: return null
+                    val rank: Double = calculateElementRank(lookupElement, index, relevance, userFactors, prefixLength) ?: return null
                     lookupElement to rank
                 }
                 .sortedByDescending { it.second }
@@ -145,6 +147,7 @@ class MLSorter : CompletionFinalSorter() {
     private fun calculateElementRank(element: LookupElement,
                                      position: Int,
                                      relevance: List<Pair<String, Any?>>,
+                                     userFactors: Map<String, Any>,
                                      prefixLength: Int): Double? 
     {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)
@@ -157,7 +160,7 @@ class MLSorter : CompletionFinalSorter() {
         val state = LookupElementInfo(position, query_length = prefixLength, result_length = elementLength)
 
         val relevanceMap = relevance.associate { it.first to it.second }
-        val mlRank: Double? = ranker.rank(state, relevanceMap)
+        val mlRank: Double? = ranker.rank(state, relevanceMap, userFactors)
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
 

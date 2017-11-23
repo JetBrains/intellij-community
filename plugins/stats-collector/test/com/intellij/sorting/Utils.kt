@@ -39,7 +39,7 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
 
         val state = LookupElementInfo(old_order, prefix_length, element.lookupString.length)
 
-        val calculated_ml_rank = ranker.rank(state, weights)
+        val calculated_ml_rank = ranker.rank(state, weights, emptyMap())
         Assertions.assertThat(calculated_ml_rank).isEqualTo(ml_rank?.toDouble())
                 .withFailMessage("Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}")
     }
