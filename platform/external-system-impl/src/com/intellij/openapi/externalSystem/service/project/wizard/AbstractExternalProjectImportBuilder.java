@@ -406,4 +406,14 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     return result;
   }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
+    }
+    return project;
+  }
 }
