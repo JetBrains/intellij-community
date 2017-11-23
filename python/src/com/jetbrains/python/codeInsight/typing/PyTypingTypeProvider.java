@@ -333,34 +333,31 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
 
       final PyClass pyClass = target.getContainingClass();
-      // an assignment inside a method
-      if (pyClass != null && target.isQualified() && ScopeUtil.getScopeOwner(target) instanceof PyFunction) {
+      final PyFunction method = as(ScopeUtil.getScopeOwner(target), PyFunction.class);
+      if (pyClass != null && method != null && target.isQualified()) {
         final String name = target.getReferencedName();
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-        final StreamEx<PyType> typeStream;
+        boolean isInstanceAttribute = false;
         if (context.maySwitchToAST(target)) {
-          final PyType qualifierType = context.getType(target.getQualifier());
-          if (qualifierType instanceof PyUnionType) {
-            typeStream = StreamEx.of(((PyUnionType)qualifierType).getMembers());
-          }
-          else {
-            typeStream = StreamEx.of(qualifierType);
-          }
-        }
-        else if (PyUtil.isInstanceAttribute(target)) {
-          typeStream = StreamEx.of(new PyClassTypeImpl(pyClass, false));
+          isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
+            .select(PyParameter.class)
+            .filter(PyParameter::isSelf)
+            .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == method);
         }
         else {
+          isInstanceAttribute = PyUtil.isInstanceAttribute(target);
+        }
+        if (!isInstanceAttribute) {
           return null;
         }
-        return typeStream
-          .select(PyClassLikeType.class)
-          .map(PyClassLikeType::toClass)  // force search on the class level right away
-          .flatMap(x -> {
-            final List<? extends RatedResolveResult> resolved = x.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
-            return resolved == null ? StreamEx.empty() : StreamEx.of(resolved);
-          })
+        // Set isDefinition=true to start searching right from the class level.
+        final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
+        final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+        if (classAttrs == null) {
+          return null;
+        }
+        return StreamEx.of(classAttrs)
           .map(RatedResolveResult::getElement)
           .select(PyTargetExpression.class)
           .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
