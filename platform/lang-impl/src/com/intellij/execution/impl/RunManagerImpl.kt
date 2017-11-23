@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -31,6 +32,7 @@ import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -226,8 +228,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
   }
 
-  internal fun createTemplateSettings(factory: ConfigurationFactory) = RunnerAndConfigurationSettingsImpl(this,
-    factory.createTemplateConfiguration(project, this), isTemplate = true, singleton = factory.isConfigurationSingletonByDefault)
+  internal fun createTemplateSettings(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
+    return RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(project, this), isTemplate = true, singleton = factory.isConfigurationSingletonByDefault)
+  }
 
   override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
     (settings as RunnerAndConfigurationSettingsImpl).isShared = isShared
@@ -528,32 +531,32 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     val nameGenerator = UniqueNameGenerator()
     workspaceSchemeManagerProvider.load(parentNode) {
-      var name: String? = it.getAttributeValue("name")
-      if (name == "<template>" || name == null) {
+      var schemeKey: String? = it.getAttributeValue("name")
+      if (schemeKey == "<template>" || schemeKey == null) {
         // scheme name must be unique
         it.getAttributeValue("type")?.let {
-          if (name == null) {
-            name = "<template>"
+          if (schemeKey == null) {
+            schemeKey = "<template>"
           }
-          name += " of type ${it}"
+          schemeKey += ", type: ${it}"
         }
       }
-      else if (name != null) {
+      else if (schemeKey != null) {
         val typeId = it.getAttributeValue("type")
         if (typeId == null) {
-          LOG.warn("typeId is null for '${name}'")
+          LOG.warn("typeId is null for '${schemeKey}'")
         }
-        name = "${typeId ?: "unknown"}-${name}"
+        schemeKey = "${typeId ?: "unknown"}-${schemeKey}"
       }
 
       // in case if broken configuration, do not fail, just generate name
-      if (name == null) {
-        name = nameGenerator.generateUniqueName("Unnamed")
+      if (schemeKey == null) {
+        schemeKey = nameGenerator.generateUniqueName("Unnamed")
       }
       else {
-        nameGenerator.addExistingName(name!!)
+        nameGenerator.addExistingName(schemeKey!!)
       }
-      name!!
+      "${schemeKey!!}, factoryName: ${it.getAttributeValue("factoryName", "")}"
     }
 
     workspaceSchemeManager.reload()
@@ -1009,5 +1012,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     removed.forEach { eventPublisher.runConfigurationRemoved(it) }
     changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
+  }
+
+  @TestOnly
+  fun getTemplateIdToConfiguration(): Map<String, RunnerAndConfigurationSettingsImpl> {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      throw IllegalStateException("test only")
+    }
+    return templateIdToConfiguration
   }
 }
