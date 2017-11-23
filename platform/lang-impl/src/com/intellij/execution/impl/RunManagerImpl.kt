@@ -661,9 +661,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         schemeKey = nameGenerator.generateUniqueName("Unnamed")
       }
       else {
+        schemeKey = "${schemeKey!!}, factoryName: ${it.getAttributeValue("factoryName", "")}"
         nameGenerator.addExistingName(schemeKey!!)
       }
-      "${schemeKey!!}, factoryName: ${it.getAttributeValue("factoryName", "")}"
+      schemeKey!!
     }
 
     workspaceSchemeManager.reload()
