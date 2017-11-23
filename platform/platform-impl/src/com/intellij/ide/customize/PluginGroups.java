@@ -267,7 +267,7 @@ public class PluginGroups {
   }
 
   public static void addTrainingPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("IDE Features Trainer", "Code tools:A good way to learn basic IDE shortcuts for beginners:training");
+    featuredPlugins.put("IDE Features Trainer", "Code tools:Learn basic shortcuts and essential IDE features with quick interactive exercises:training");
   }
 
   public static void addLuaPlugin(Map<String, String> featuredPlugins) {
