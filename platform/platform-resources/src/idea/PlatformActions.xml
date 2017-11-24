@@ -22,16 +22,36 @@
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
     <group id="ScrollPaneActions" text="Scroll">
-      <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
-      <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
-      <action id="ScrollPane-unitScrollUp" text="Scroll Up" class="com.intellij.ui.ScrollPaneActions$Up"/>
-      <action id="ScrollPane-unitScrollDown" text="Scroll Down" class="com.intellij.ui.ScrollPaneActions$Down"/>
-      <action id="ScrollPane-unitScrollLeft" text="Scroll Left" class="com.intellij.ui.ScrollPaneActions$Left"/>
-      <action id="ScrollPane-unitScrollRight" text="Scroll Right" class="com.intellij.ui.ScrollPaneActions$Right"/>
-      <action id="ScrollPane-scrollUp" text="Scroll Page Up" class="com.intellij.ui.ScrollPaneActions$PageUp"/>
-      <action id="ScrollPane-scrollDown" text="Scroll Page Down" class="com.intellij.ui.ScrollPaneActions$PageDown"/>
-      <action id="ScrollPane-scrollLeft" text="Scroll Page Left" class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
-      <action id="ScrollPane-scrollRight" text="Scroll Page Right" class="com.intellij.ui.ScrollPaneActions$PageRight"/>
+      <action id="ScrollPane-scrollHome" text="Scroll Home"
+              description="Scrolls the surrounding scrollable area to the top."
+              class="com.intellij.ui.ScrollPaneActions$Home"/>
+      <action id="ScrollPane-scrollEnd" text="Scroll End"
+              description="Scrolls the surrounding scrollable area to the bottom."
+              class="com.intellij.ui.ScrollPaneActions$End"/>
+      <action id="ScrollPane-unitScrollUp" text="Scroll Up"
+              description="Scrolls the surrounding scrollable area up by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Up"/>
+      <action id="ScrollPane-unitScrollDown" text="Scroll Down"
+              description="Scrolls the surrounding scrollable area down by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Down"/>
+      <action id="ScrollPane-unitScrollLeft" text="Scroll Left"
+              description="Scrolls the surrounding scrollable area left by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Left"/>
+      <action id="ScrollPane-unitScrollRight" text="Scroll Right"
+              description="Scrolls the surrounding scrollable area right by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Right"/>
+      <action id="ScrollPane-scrollUp" text="Scroll Page Up"
+              description="Scrolls the surrounding scrollable area up by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageUp"/>
+      <action id="ScrollPane-scrollDown" text="Scroll Page Down"
+              description="Scrolls the surrounding scrollable area down by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageDown"/>
+      <action id="ScrollPane-scrollLeft" text="Scroll Page Left"
+              description="Scrolls the surrounding scrollable area left by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
+      <action id="ScrollPane-scrollRight" text="Scroll Page Right"
+              description="Scrolls the surrounding scrollable area right by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageRight"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
