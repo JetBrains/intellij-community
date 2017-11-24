@@ -28,9 +28,6 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -48,11 +45,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
     .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
-  private final UMethod myAppMainPattern;
-  private final UMethod myAppPremainPattern;
-  private final UMethod myAppAgentmainPattern;
-  private final UClass myApplet;
-  private final UClass myServlet;
+  private final PsiMethod myAppMainPattern;
+  private final PsiMethod myAppPremainPattern;
+  private final PsiMethod myAppAgentmainPattern;
+  private final PsiClass myApplet;
+  private final PsiClass myServlet;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -64,16 +61,12 @@ public class RefJavaManagerImpl extends RefJavaManager {
     final Project project = manager.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-    myAppMainPattern = (UMethod)UastContextKt.toUElement(factory.createMethodFromText("void main(String[] args);", null));
-    myAppPremainPattern = (UMethod)UastContextKt
-      .toUElement(factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null));
-    myAppAgentmainPattern = (UMethod)UastContextKt
-      .toUElement(factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null));
+    myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
+    myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
+    myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = (UClass)UastContextKt
-      .toUElement(JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project)));
-    myServlet = (UClass)UastContextKt
-      .toUElement(JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project)));
+    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -388,7 +381,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public boolean shouldProcessExternalFile(@NotNull PsiFile file) {
-    return file instanceof PsiClassOwner;
+    return false;
   }
 
   @NotNull
