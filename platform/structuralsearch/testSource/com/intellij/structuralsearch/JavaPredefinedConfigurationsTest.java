@@ -45,6 +45,18 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
                        asList("System.out.println()",
                               "System.out.println(1)",
                               "x()")));
+    testCases.put(SSRBundle.message("predefined.configuration.constructors.of.the.class"),
+                  pair("class X {" +
+                       "  X() {}" +
+                       "  X(int i) {" +
+                       "    System.out.println(i);" +
+                       "  }" +
+                       "  X(String... ss) {}" +
+                       "  void m() {}" +
+                       "}",
+                       asList("X() {}",
+                              "X(int i) {    System.out.println(i);  }",
+                              "X(String... ss) {}")));
   }
 
   public void testPredefinedConfigurations() {
