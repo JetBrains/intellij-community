@@ -322,13 +322,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     final PsiElement firstElement = elements[0];
     final PsiElement secondElement = elements[1];
+    final PsiElement lastElement = elements[elements.length - 1];
 
     if (firstElement instanceof PsiDocComment) {
       // might be method with javadoc
       return true;
     }
     else if (firstElement instanceof PsiDeclarationStatement && PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement) {
-      // might be method
+      // might be method or static initializer
       return true;
     }
     else if (firstElement instanceof PsiErrorElement &&
@@ -337,9 +338,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       // might be generic method
       return true;
     }
-    else if (elements.length == 3 && PsiModifier.STATIC.equals(firstElement.getText()) && secondElement instanceof PsiWhiteSpace &&
-        elements[2] instanceof PsiBlockStatement) {
-      // looks like static initializer
+    else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
+      firstElement.getLastChild() instanceof PsiErrorElement && lastElement instanceof PsiBlockStatement) {
+      // might be constructor
       return true;
     }
     return false;

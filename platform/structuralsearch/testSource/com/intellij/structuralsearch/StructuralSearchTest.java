@@ -795,10 +795,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s143 = "class A { A() {} };\n" +
                         "class B { B(int a) {} };\n" +
                         "class C { C() {} C(int a) {} };\n" +
-                        "class D {}\n" +
+                        "class D { void method() {} }\n" +
                         "class E {}";
     assertEquals("parameterless constructor search", 3,
                  findMatchesCount(s143, "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b+ '_c+); }"));
+    assertEquals("parameterless constructor search 2", 2,
+                 findMatchesCount(s143, "'_Constructor() { '_st*; }"));
   }
 
   public void testScriptSearch() {
