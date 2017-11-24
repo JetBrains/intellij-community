@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -98,16 +97,15 @@ class JarLoader extends Loader {
   private static Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
     if (attributes == null) return null;
     Map<Resource.Attribute, String> map = null;
-    try {
-      for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
-        String value = attributes.getValue(p.second);
-        if (value != null) {
-          if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
-          map.put(p.first, value);
-        }
+
+    for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+      String value = attributes.getValue(p.second);
+      if (value != null) {
+        if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+        map.put(p.first, value);
       }
     }
-    catch (Exception ignored) { }
+
     return map;
   }
 
