@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -308,7 +309,7 @@ public class QuickDocOnMouseOverManager {
       ApplicationManager.getApplication().invokeLater(() -> {
         myCurrentRequest = null;
 
-        if (editor.isDisposed()) return;
+        if (editor.isDisposed() || IdeTooltipManager.getInstance().hasCurrent() && !docManager.hasActiveDockedDocWindow()) return;
 
         PsiElement targetElement = targetElementRef.get();
         String documentation = documentationRef.get();
