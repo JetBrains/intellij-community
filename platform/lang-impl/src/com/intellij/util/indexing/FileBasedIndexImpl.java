@@ -1974,25 +1974,27 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         myScheduledVfsEventsWorkers.incrementAndGet();
         myVfsEventsExecutor.submit(this::processFilesInReadActionWithYieldingToWriteAction);
 
-        Runnable startDumbMode = () -> {
-          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-            DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
-            DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(project);
-
-            if (task != null) {
-              dumbService.queueTask(task);
+        if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
+          Runnable startDumbMode = () -> {
+            for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+              DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
+              DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(project);
+  
+              if (task != null) {
+                dumbService.queueTask(task);
+              }
             }
+          };
+
+          Application app = ApplicationManager.getApplication();
+          if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ && 
+              app.isDispatchThread() && 
+              !LaterInvocator.isInModalContext()) {
+            startDumbMode.run();
           }
-        };
-        
-        Application app = ApplicationManager.getApplication();
-        if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ && 
-            app.isDispatchThread() && 
-            !LaterInvocator.isInModalContext()) {
-          startDumbMode.run();
-        }
-        else {
-          app.invokeLater(startDumbMode, ModalityState.NON_MODAL);
+          else {
+            app.invokeLater(startDumbMode, ModalityState.NON_MODAL);
+          }
         }
       }
     }
