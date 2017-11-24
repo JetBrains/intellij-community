@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -86,6 +87,8 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   static {
+    // to setup thread factory even when running a single test
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
     Logger.setFactory(TestLoggerFactory.class);
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
