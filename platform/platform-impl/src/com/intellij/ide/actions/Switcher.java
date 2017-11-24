@@ -321,7 +321,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(UIUtil.isUnderDarcula() ? SEPARATOR_COLOR : BORDER_COLOR);
-          g.drawLine(0, 0, getWidth(), 0);
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
         }
       };
 
@@ -391,7 +391,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(SEPARATOR_COLOR);
-          g.drawLine(0, 0, 0, getHeight());
+          UIUtil.drawLine(g, 0, 0, 0, getHeight());
         }
       };
       separator.setBackground(toolWindows.getBackground());
