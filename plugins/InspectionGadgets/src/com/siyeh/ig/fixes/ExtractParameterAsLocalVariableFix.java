@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BlockUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,8 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     assert parameterName != null;
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
-    final String initializerText = (rhs == null) ? parameterName : rhs.getText();
+    CommentTracker tracker = new CommentTracker();
+    final String initializerText = (rhs == null) ? parameterName : tracker.markUnchanged(rhs).getText();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiDeclarationStatement newStatement = (PsiDeclarationStatement)
       factory.createStatementFromText(parameter.getType().getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
@@ -103,7 +105,7 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     assert anchor != null;
     newStatement = (PsiDeclarationStatement)(rhs == null
                                              ? codeBlock.addBefore(newStatement, anchor)
-                                             : anchor.replace(newStatement));
+                                             : tracker.replaceAndRestoreComments(anchor, newStatement));
     replaceReferences(collector.getCollection(), variableName, body);
     if (isOnTheFly()) {
       final PsiLocalVariable variable = (PsiLocalVariable)newStatement.getDeclaredElements()[0];
