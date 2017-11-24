@@ -31,6 +31,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.*;
@@ -248,10 +250,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           return;
         }
 
+        AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectData.getOwner());
+        SyncType syncType = localSettings.getProjectSyncType().get(projectData.getLinkedExternalProjectPath());
         for (Module module : modules) {
           if (module.isDisposed()) continue;
           String path = module.getModuleFilePath();
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
               ServiceKt.getStateStore(module).save(new ArrayList<>());
