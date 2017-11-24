@@ -346,6 +346,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
+  public PsiElement getPSIElementFromNode(TreeNode node) {
+    return getPSIElement(getElementFromTreeNode(node));
+  }
+
+  @Nullable
   protected Module getNodeModule(@Nullable final Object element) {
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;
@@ -602,7 +607,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElement(getElementFromTreeNode(node));
+          return getPSIElementFromNode(node);
         }
 
         @Override
