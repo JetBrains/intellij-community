@@ -15,17 +15,11 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -93,64 +87,32 @@ public class PsiReplacementUtil {
     return styleManager.reformat(replacementExp);
   }
 
+  /**
+   * Consider to use {@link #replaceStatementAndShortenClassNames(PsiStatement, String, CommentTracker)} to preserve comments
+   */
   public static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     replaceStatementAndShortenClassNames(statement, newStatementText, null);
   }
 
- public static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement,
-                                                         @NotNull @NonNls String newStatementText,
-                                                         @Nullable CommentTracker tracker) {
+  /**
+   * @param tracker ensure to {@link CommentTracker#markUnchanged(PsiElement)} expressions used as getText in newStatementText
+   */
+  public static PsiElement replaceStatementAndShortenClassNames(@NotNull PsiStatement statement,
+                                                                @NotNull @NonNls String newStatementText,
+                                                                @Nullable CommentTracker tracker) {
     final Project project = statement.getProject();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    if (FileTypeUtils.isInServerPageFile(statement)) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);
-      if (jspFile == null) {
-        return;
-      }
-      final Document document = documentManager.getDocument(jspFile);
-      if (document == null) {
-        return;
-      }
-      documentManager.doPostponedOperationsAndUnblockDocument(document);
-      final TextRange textRange = statement.getTextRange();
-      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), newStatementText);
-      documentManager.commitDocument(document);
-      final FileViewProvider viewProvider = jspFile.getViewProvider();
-      PsiElement elementAt = viewProvider.findElementAt(textRange.getStartOffset(), JavaLanguage.INSTANCE);
-      if (elementAt == null) {
-        return;
-      }
-      final int endOffset = textRange.getStartOffset() + newStatementText.length();
-      while (elementAt.getTextRange().getEndOffset() < endOffset || !(elementAt instanceof PsiStatement)) {
-        elementAt = elementAt.getParent();
-        if (elementAt == null) {
-          LOG.error("Cannot decode statement");
-          return;
-        }
-      }
-      final PsiStatement newStatement = (PsiStatement)elementAt;
-      javaStyleManager.shortenClassReferences(newStatement);
-      final TextRange newTextRange = newStatement.getTextRange();
-      final Language baseLanguage = viewProvider.getBaseLanguage();
-      final PsiFile element = viewProvider.getPsi(baseLanguage);
-      if (element != null) {
-        styleManager.reformatRange(element, newTextRange.getStartOffset(), newTextRange.getEndOffset());
-      }
+
+    PsiStatement newStatement;
+    if (tracker != null) {
+      newStatement = (PsiStatement)tracker.replaceAndRestoreComments(statement, newStatementText);
     }
     else {
-      PsiStatement newStatement;
-      if (tracker != null) {
-        newStatement = (PsiStatement)tracker.replaceAndRestoreComments(statement, newStatementText);
-      }
-      else {
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        newStatement = (PsiStatement)statement.replace(factory.createStatementFromText(newStatementText, statement));
-      }
-      javaStyleManager.shortenClassReferences(newStatement);
-      styleManager.reformat(newStatement);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      newStatement = (PsiStatement)statement.replace(factory.createStatementFromText(newStatementText, statement));
     }
+    return styleManager.reformat(javaStyleManager.shortenClassReferences(newStatement));
   }
 
   public static void replaceExpressionWithReferenceTo(@NotNull PsiExpression expression, @NotNull PsiMember target) {
