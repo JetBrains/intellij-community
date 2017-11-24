@@ -5,11 +5,11 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -218,49 +218,11 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   }
 
   private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
-    List<PsiComment> keptComments = getComments(replacedStatement);
-    if (!keptComments.isEmpty()) {
-      returnStatement = (PsiReturnStatement)returnStatement.copy();
-      PsiElement lastReturnChild = returnStatement.getLastChild();
-      Project project = returnStatement.getProject();
-      for (PsiComment comment : keptComments) {
-        lastReturnChild = returnStatement.addAfter(comment, lastReturnChild);
-      }
-      CodeStyleManager.getInstance(project).reformat(returnStatement, true);
-    }
-    replacedStatement.replace(returnStatement);
+    new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement);
   }
 
   private static void removeElementKeepComments(PsiElement removedElement) {
-    List<PsiComment> keptComments = getComments(removedElement);
-    if (!keptComments.isEmpty()) {
-      PsiComment firstComment = keptComments.get(0);
-      PsiElement lastComment = removedElement.replace(firstComment);
-      PsiElement parent = lastComment.getParent();
-      Project project = parent.getProject();
-      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-      styleManager.reformat(lastComment, true);
-      if (keptComments.size() > 1) {
-        for (PsiComment comment : keptComments.subList(1, keptComments.size())) {
-          lastComment = parent.addAfter(comment, lastComment);
-          styleManager.reformat(lastComment, true);
-        }
-      }
-    }
-    else {
-      removedElement.delete();
-    }
-  }
-
-  private static List<PsiComment> getComments(PsiElement commentedElement) {
-    final List<PsiComment> comments = new ArrayList<>();
-    commentedElement.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitComment(PsiComment comment) {
-        comments.add(comment);
-      }
-    });
-    return comments;
+    new CommentTracker().deleteAndRestoreComments(removedElement);
   }
 
   private static class Mover {
