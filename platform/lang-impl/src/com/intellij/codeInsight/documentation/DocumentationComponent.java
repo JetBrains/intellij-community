@@ -46,10 +46,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -258,8 +255,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
     HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit(false);
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
-    editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
-    editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    if (isMonospacedFont(editorFontName)) {
+      editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
+      editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    }
     myEditorPane.setEditorKit(editorKit);
     myScrollPane = new JBScrollPane(myEditorPane) {
       @Override
@@ -449,6 +448,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     registerActions();
 
     updateControlState();
+  }
+
+  private static boolean isMonospacedFont(String fontName) {
+    return FontInfo.isMonospaced(new Font(fontName, Font.PLAIN, 12));
   }
 
   public DocumentationComponent(final DocumentationManager manager) {
