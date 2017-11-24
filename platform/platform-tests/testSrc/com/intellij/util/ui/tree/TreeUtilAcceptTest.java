@@ -371,7 +371,7 @@ public final class TreeUtilAcceptTest {
   static class Visitor extends TreeVisitor.Base<TreePath> {
     final AtomicLong counter = new AtomicLong();
 
-    public Visitor() {
+    Visitor() {
       super(path -> path);
     }
 
