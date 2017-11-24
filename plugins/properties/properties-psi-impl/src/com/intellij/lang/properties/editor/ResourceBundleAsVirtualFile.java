@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -68,7 +67,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
   }
 
   @Override
-  public void rename(Object requestor, @NotNull String newName) throws IOException {
+  public void rename(Object requestor, @NotNull String newName) {
     throw new UnsupportedOperationException();
   }
 
@@ -108,40 +107,40 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
 
   @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void delete(Object requestor) throws IOException {
+  public void delete(Object requestor) {
     //todo
   }
 
   @Override
-  public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
+  public void move(Object requestor, @NotNull VirtualFile newParent) {
     //todo
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte[] contentsToByteArray() {
     //TODO compare files action uses this method
     return new byte[0];
   }
