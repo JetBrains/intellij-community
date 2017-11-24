@@ -87,7 +87,7 @@ class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
         if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
           AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, PsiNameValuePair.EMPTY_ARRAY, myAnnosToRemove);
           PsiFile containingFile = psiParam.getContainingFile();
-          if (fix.isAvailable(project, containingFile, psiParam, psiParam)) {
+          if (psiParam.isValid() && fix.isAvailable(project, containingFile, psiParam, psiParam)) {
             fix.invoke(project, containingFile, psiParam, psiParam);
           }
         }
