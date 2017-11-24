@@ -2,10 +2,11 @@ package com.siyeh.ipp.conditional.withIf;
 
 class Comment {
   public String get() {
+    String s;//comment
       /*before then*/
       /*after then*/
-      //comment
-      if (239 > 42) return "239";
-      else return "42";
+      if (239 > 42) s = "239";
+      else s = "42";
+      return s;
   }
 }
