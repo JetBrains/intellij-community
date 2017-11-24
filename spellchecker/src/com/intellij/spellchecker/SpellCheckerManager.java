@@ -37,13 +37,12 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AggregatedDictionaryState;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -95,9 +94,9 @@ public class SpellCheckerManager implements Disposable {
         }
         else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
-          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
-          if (stream != null) {
-            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
+          final URL resource = provider.getClass().getResource(dictionary);
+          if (resource != null) {
+            loadDictionary(resource.getFile());
           }
           else {
             LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
@@ -145,9 +144,9 @@ public class SpellCheckerManager implements Disposable {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
-          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
-          if (stream != null) {
-            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
+          final URL resource = provider.getClass().getResource(dictionary);
+          if (resource != null) {
+            loadDictionary(resource.getFile());
           }
           else {
             LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
