@@ -194,8 +194,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     return result;
   }
 
-  public void addSettingAction(@NotNull AnAction action) {
-    if (mySettingsButton != null) {
+  public void addToolbarAction(@NotNull AnAction action, boolean underSettingsPopup) {
+    if (myTitleToolbarPanel == null) return;
+    if (mySettingsButton != null && underSettingsPopup) {
       mySettingsActions.add(action);
       mySettingsButton.update();
     }
