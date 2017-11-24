@@ -145,7 +145,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       final String expressionText = expression.getText();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpressionText);
+        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpressionText, commentTracker);
       }
       else if (parent instanceof PsiPrefixExpression && !unboxedType.equalsToText("boolean")) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
