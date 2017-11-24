@@ -41,6 +41,20 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class JobUtilTest extends PlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
+  private long timeOutMs;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    timeOutMs = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
+  }
+  private boolean timeOut(Object workProgress) {
+    if (System.currentTimeMillis() > timeOutMs) {
+      System.err.println("Timed out. Stopped at "+workProgress);
+      return true;
+    }
+    return false;
+  }
 
   public void testUnbalancedTaskJobUtilPerformance() {
     List<Integer> things = new ArrayList<>(Collections.nCopies(10_000, null));
@@ -111,7 +125,7 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilProcessesAllItemsStress() throws Exception {
     List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
     final AtomicReference<Exception> exception = new AtomicReference<>();
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       long start = System.currentTimeMillis();
       COUNT.set(0);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
@@ -128,7 +142,7 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilRecursiveStress() {
     int N = Timings.adjustAccordingToMySpeed(100, true);
     final List<String> list = Collections.nCopies(N, null);
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       long start = System.currentTimeMillis();
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
@@ -234,7 +248,7 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilRecursiveCancel() {
     final List<String> list = Collections.nCopies(100, "");
     final List<Integer> ilist = Collections.nCopies(100, 0);
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       long start = System.currentTimeMillis();
       boolean success = false;
@@ -263,7 +277,7 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testSaturation() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(1);
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       JobLauncher.getInstance().submitToJobThread(() -> {
         try {
           latch.await();
@@ -292,7 +306,7 @@ public class JobUtilTest extends PlatformTestCase {
       return delay.get() % 100 != 0;
     };
     int N = Timings.adjustAccordingToMySpeed(10_000, true);
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       ProgressIndicator indicator = new EmptyProgressIndicator();
       boolean result = JobLauncher.getInstance()
         .invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""), indicator, false, false, processor);
@@ -308,7 +322,7 @@ public class JobUtilTest extends PlatformTestCase {
       processorCalled.incrementAndGet();
       return true;
     };
-    for (int i=0; i<10/*0*/; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       LOG.debug("i = " + i);
       processorCalled.set(0);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
@@ -329,7 +343,7 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() {
     Random random = new Random();
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
@@ -360,7 +374,7 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished() throws Exception {
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
