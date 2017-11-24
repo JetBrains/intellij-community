@@ -94,7 +94,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
   }
 
-  @NotNull public PsiLock getFilePsiLock() {
+  @NotNull
+  public PsiLock getFilePsiLock() {
     return myPsiLock;
   }
 
@@ -107,7 +108,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return SingleRootFileViewProvider.isTooLargeForContentLoading(file) ?
-             new PsiLargeBinaryFileImpl(((PsiManagerImpl)getManager()), this) :
+             new PsiLargeBinaryFileImpl((PsiManagerImpl)getManager(), this) :
              new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {

@@ -53,7 +53,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     exception = null;
-    timeOut = System.currentTimeMillis() + 2*60*1000;
+    timeOut = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
   }
 
   @Override
@@ -65,7 +65,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private volatile Throwable exception;
   public void testAcquireReadActionLockVsRunReadActionPerformance() throws Throwable {
-    final int N = 100000000;
+    final int N = 100_000_000;
     final Application application = ApplicationManager.getApplication();
     String err = null;
 
@@ -120,17 +120,17 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
 
   public void testRead50Write50LockPerformance() {
-    final int readIterations = 600000;
-    final int writeIterations = 600000;
+    final int readIterations = 600_000;
+    final int writeIterations = 600_000;
 
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
   public void testRead100Write0LockPerformance() {
-    final int readIterations = 60000000;
+    final int readIterations = 60_000_000;
     final int writeIterations = 0;
 
-    runReadWrites(readIterations, writeIterations, 10000);
+    runReadWrites(readIterations, writeIterations, 10_000);
   }
 
   private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
@@ -251,7 +251,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         while (!read1Acquired.get() && ok());
         TimeoutUtil.sleep(1000); // make sure it called writelock
 
-        long timeout = System.currentTimeMillis() + 10000;
+        long timeout = System.currentTimeMillis() + 10_000;
         while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -270,7 +270,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         holdRead1.set(false);
         while (!writeAcquired.get() && ok());
 
-        timeout = System.currentTimeMillis() + 10000;
+        timeout = System.currentTimeMillis() + 10_000;
         while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -290,7 +290,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         while (!read2Released.get() && ok());
 
-        timeout = System.currentTimeMillis() + 10000;
+        timeout = System.currentTimeMillis() + 10_000;
         while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -500,7 +500,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()));
     boolean result = ((ApplicationEx)ApplicationManager.getApplication())
-      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> TimeoutUtil.sleep(10000));
+      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> TimeoutUtil.sleep(10_000));
     assertTrue(result);
     UIUtil.dispatchAllInvocationEvents();
     if (exception != null) throw exception;
@@ -597,7 +597,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private static void waitForFuture(Future<?> future) {
     try {
-      future.get(10000, TimeUnit.MILLISECONDS);
+      future.get(10_000, TimeUnit.MILLISECONDS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
