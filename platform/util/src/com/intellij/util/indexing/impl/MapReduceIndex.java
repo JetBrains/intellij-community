@@ -59,14 +59,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void run() {
       try {
-        Lock writeLock = getWriteLock();
-        if (writeLock.tryLock()) {
-          try {
-            myStorage.clearCaches();
-          } finally {
-            writeLock.unlock();
-          }
+        getReadLock().lock();
+        try {
+          myStorage.clearCaches();
+        } finally {
+          getReadLock().unlock();
         }
+
         flush();
       } catch (Throwable e) {
         requestRebuild(e);

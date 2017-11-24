@@ -988,12 +988,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
       final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
-      index.getWriteLock().lock();
+      index.getReadLock().lock();
       try {
         memStorage.clearCaches();
       }
       finally {
-        index.getWriteLock().unlock();
+        index.getReadLock().unlock();
       }
     }
   }
