@@ -93,8 +93,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
-    VcsLogProgress progress = new VcsLogProgress();
-    Disposer.register(this, progress);
+    VcsLogProgress progress = new VcsLogProgress(project, this);
 
     VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
     if (invalidator.isValid()) {

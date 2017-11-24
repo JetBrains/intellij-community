@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,11 @@ public class VcsLogProgress implements Disposable {
   @NotNull private final List<ProgressListener> myListeners = ContainerUtil.newArrayList();
   @NotNull private final Set<ProgressIndicator> myTasksWithVisibleProgress = ContainerUtil.newHashSet();
   @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = ContainerUtil.newHashSet();
+
+  public VcsLogProgress(@NotNull Project project, @NotNull Disposable parent) {
+    Disposer.register(parent, () -> Disposer.dispose(this));
+    Disposer.register(project, this);
+  }
 
   @NotNull
   public ProgressIndicator createProgressIndicator() {

@@ -210,7 +210,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
     }, myProject);
     return new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
-                                   new VcsLogProgress(),
+                                   new VcsLogProgress(myProject, myLogData),
                                    myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
     ) {
       @Override
