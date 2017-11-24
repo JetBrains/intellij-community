@@ -62,6 +62,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   @Nullable private MyToolbarButton mySettingsButton;
 
   private final List<AnAction> mySettingsActions = ContainerUtil.newArrayList();
+  @Nullable private JPanel myTitleToolbarPanel;
 
   public BranchActionGroupPopup(@NotNull String title,
                                 @NotNull Project project,
@@ -87,8 +88,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
-    JPanel panel = new NonOpaquePanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+    myTitleToolbarPanel = new NonOpaquePanel();
+    myTitleToolbarPanel.setLayout(new BoxLayout(myTitleToolbarPanel, BoxLayout.LINE_AXIS));
+    myTitleToolbarPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
     myRestoreSizeButton = new MyToolbarButton("Restore Size", CollapseComponent, CollapseComponentHover, e -> {
       WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
       myInternalSizeChanged = true;
@@ -99,6 +101,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         return myUserSizeChanged;
       }
     };
+    myRestoreSizeButton.setBorder(JBUI.Borders.empty(0, 2));
     mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, AllIcons.General.GearHover, e -> {
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
@@ -109,14 +112,14 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         return !mySettingsActions.isEmpty();
       }
     };
-    mySettingsButton.setBorder(JBUI.Borders.emptyLeft(4));
+    mySettingsButton.setBorder(JBUI.Borders.empty(0, 2));
 
-    panel.add(myRestoreSizeButton);
-    panel.add(mySettingsButton);
+    myTitleToolbarPanel.add(mySettingsButton);
+    myTitleToolbarPanel.add(myRestoreSizeButton);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
       @Override
       public JComponent getComponent() {
-        return panel;
+        return myTitleToolbarPanel;
       }
     }, JBUI.Borders.emptyRight(2));
   }
