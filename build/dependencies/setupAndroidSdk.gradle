@@ -30,14 +30,14 @@ import de.undercouch.gradle.tasks.download.Download
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
 task downloadGradleDistribution(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-3.3-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-3.3-bin.zip"
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-4.1-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.1-bin.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
 }
 
 task downloadOfflineRepo(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_04.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_01.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
@@ -50,7 +50,7 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}_3_0.zip"
   dest "$buildDir/android-sdk/${osFamily}.zip"
   onlyIfNewer true
   onlyIf { !currentOs.isMacOsX() && inJetBrainsNetwork }
