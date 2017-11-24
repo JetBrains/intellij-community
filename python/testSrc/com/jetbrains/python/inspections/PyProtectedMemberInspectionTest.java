@@ -74,6 +74,11 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-26112
+  public void testMemberResolvedToStub() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
