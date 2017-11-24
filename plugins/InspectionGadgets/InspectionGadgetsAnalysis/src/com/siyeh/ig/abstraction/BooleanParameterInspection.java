@@ -17,12 +17,12 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +93,9 @@ public class BooleanParameterInspection extends BaseInspection {
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
         if (!PsiType.BOOLEAN.equals(type)) {
+          continue;
+        }
+        if (MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, true)) {
           continue;
         }
         count++;
