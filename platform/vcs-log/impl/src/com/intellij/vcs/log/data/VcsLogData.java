@@ -24,8 +24,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +49,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -85,7 +90,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogIndex myIndex;
 
-  @NotNull private final AtomicBoolean myInitialized = new AtomicBoolean();
+  @NotNull private final Object myLock = new Object();
+  private boolean myInitialized = false;
+  @Nullable private Pair<Future<?>, ProgressIndicator> myInitialization = null;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -103,7 +110,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       myStorage = createStorage();
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
         myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
-      } else {
+      }
+      else {
         LOG.info("Vcs log index is turned off for project " + myProject.getName());
         myIndex = new EmptyIndex();
       }
@@ -147,21 +155,32 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public void initialize() {
-    if (myInitialized.compareAndSet(false, true)) {
-      StopWatch stopWatch = StopWatch.start("initialize");
-      Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          resetState();
-          readCurrentUser();
-          DataPack dataPack = myRefresher.readFirstBlock();
-          fireDataPackChangeEvent(dataPack);
-          stopWatch.report();
-        }
-      };
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable,
-                                                                         myRefresher.getProgress().createProgressIndicator());
+    synchronized (myLock) {
+      if (!myInitialized) {
+        myInitialized = true;
+        StopWatch stopWatch = StopWatch.start("initialize");
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            resetState();
+            readCurrentUser();
+            DataPack dataPack = myRefresher.readFirstBlock();
+            fireDataPackChangeEvent(dataPack);
+            stopWatch.report();
+          }
+
+          @Override
+          public void onFinished() {
+            synchronized (myLock) {
+              myInitialization = null;
+            }
+          }
+        };
+        CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        myInitialization = Pair.create(manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null), indicator);
+      }
     }
   }
 
@@ -285,6 +304,23 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public void dispose() {
+    Pair<Future<?>, ProgressIndicator> initialization;
+
+    synchronized (myLock) {
+      initialization = myInitialization;
+      myInitialization = null;
+      myInitialized = true;
+    }
+
+    if (initialization != null) {
+      initialization.second.cancel();
+      try {
+        initialization.first.get(1, TimeUnit.MINUTES);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        LOG.warn(e);
+      }
+    }
     resetState();
   }
 
