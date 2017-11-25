@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package git4idea.tests;
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.tests
 
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatus
 
-public class GitChangeProviderConflictTest extends GitChangeProviderTest {
+class GitChangeProviderConflictTest : GitChangeProviderTest() {
 
   /**
    * "modify-modify" merge conflict.
@@ -29,46 +14,46 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
    * 5. Merge the branch on master.
    * Merge conflict "modify-modify" happens.
    */
-  public void testConflictMM() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY);
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictMM() {
+    modifyFileInBranches("a.txt", GitChangeProviderTest.FileAction.MODIFY, GitChangeProviderTest.FileAction.MODIFY)
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
   /**
    * Modify-Delete conflict.
    */
-  public void testConflictMD() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE);
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictMD() {
+    modifyFileInBranches("a.txt", GitChangeProviderTest.FileAction.MODIFY, GitChangeProviderTest.FileAction.DELETE)
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
   /**
    * Delete-Modify conflict.
    */
-  public void testConflictDM() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY);
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictDM() {
+    modifyFileInBranches("a.txt", GitChangeProviderTest.FileAction.DELETE, GitChangeProviderTest.FileAction.MODIFY)
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
   /**
    * Create a file with conflicting content.
    */
-  public void testConflictCC() throws Exception {
-    modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
-    VirtualFile zfile = projectRoot.findChild("z.txt");
-    assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictCC() {
+    modifyFileInBranches("z.txt", GitChangeProviderTest.FileAction.CREATE, GitChangeProviderTest.FileAction.CREATE)
+    val zfile = projectRoot.findChild("z.txt")
+    assertChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
-  public void testConflictRD() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
-    VirtualFile newfile = projectRoot.findChild("a.txt_master_new"); // renamed in master
-    assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictRD() {
+    modifyFileInBranches("a.txt", GitChangeProviderTest.FileAction.RENAME, GitChangeProviderTest.FileAction.DELETE)
+    val newfile = projectRoot.findChild("a.txt_master_new") // renamed in master
+    assertChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
-  public void testConflictDR() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
-    VirtualFile newFile = projectRoot.findChild("a.txt_feature_new"); // deleted in master, renamed in feature
-    assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
+  fun testConflictDR() {
+    modifyFileInBranches("a.txt", GitChangeProviderTest.FileAction.DELETE, GitChangeProviderTest.FileAction.RENAME)
+    val newFile = projectRoot.findChild("a.txt_feature_new") // deleted in master, renamed in feature
+    assertChanges(newFile!!, FileStatus.MERGED_WITH_CONFLICTS)
   }
 
 }

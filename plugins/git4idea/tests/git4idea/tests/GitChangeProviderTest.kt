@@ -1,52 +1,28 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package git4idea.tests;
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.tests
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.MockChangeListManagerGate;
-import com.intellij.testFramework.vcs.MockChangelistBuilder;
-import com.intellij.testFramework.vcs.MockDirtyScope;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitVcs;
-import git4idea.status.GitChangeProvider;
-import git4idea.test.GitSingleRepoTest;
-import git4idea.test.GitTestUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.openapi.vcs.Executor.touch;
-import static com.intellij.openapi.vcs.VcsTestUtil.*;
-import static git4idea.test.GitExecutor.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsTestUtil.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.vcs.MockChangeListManagerGate
+import com.intellij.testFramework.vcs.MockChangelistBuilder
+import com.intellij.testFramework.vcs.MockDirtyScope
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.status.GitChangeProvider
+import git4idea.test.*
+import junit.framework.TestCase
+import java.io.File
+import java.util.*
 
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
@@ -54,108 +30,86 @@ import static git4idea.test.GitExecutor.*;
  * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  */
-public abstract class GitChangeProviderTest extends GitSingleRepoTest {
+abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
-  protected GitChangeProvider myChangeProvider;
-  protected VcsModifiableDirtyScope myDirtyScope;
-  protected VirtualFile myRootDir;
-  protected VirtualFile mySubDir;
-  protected GitVcs myVcs;
+  protected lateinit var changeProvider: GitChangeProvider
+  protected lateinit var dirtyScope: VcsModifiableDirtyScope
+  protected lateinit var subDir: VirtualFile
 
-  protected VirtualFile atxt;
-  protected VirtualFile btxt;
-  protected VirtualFile dir_ctxt;
-  protected VirtualFile subdir_dtxt;
+  protected lateinit var atxt: VirtualFile
+  protected lateinit var btxt: VirtualFile
+  protected lateinit var dir_ctxt: VirtualFile
+  protected lateinit var subdir_dtxt: VirtualFile
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    try {
-      initTest();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
+  override fun setUp() {
+    super.setUp()
+    changeProvider = vcs.changeProvider as GitChangeProvider
+
+    createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt")
+    addCommit("initial")
+
+    atxt = getVirtualFile("a.txt")
+    btxt = getVirtualFile("b.txt")
+    dir_ctxt = getVirtualFile("dir/c.txt")
+    subdir_dtxt = getVirtualFile("dir/subdir/d.txt")
+    subDir = projectRoot.findChild("dir")!!
+
+    dirtyScope = MockDirtyScope(myProject, vcs)
+
+    cd(projectPath)
   }
 
-  private void initTest() {
-    myVcs = GitVcs.getInstance(myProject);
-    myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
+  override fun makeInitialCommit() = false
 
-    GitTestUtil.createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
-    addCommit(this, "initial");
+  private fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
 
-    atxt = getVirtualFile("a.txt");
-    btxt = getVirtualFile("b.txt");
-    dir_ctxt = getVirtualFile("dir/c.txt");
-    subdir_dtxt = getVirtualFile("dir/subdir/d.txt");
-
-    myRootDir = projectRoot;
-    mySubDir = myRootDir.findChild("dir");
-
-    myDirtyScope = new MockDirtyScope(myProject, myVcs);
-
-    cd(projectPath);
+  protected fun modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
+    git("checkout -b feature")
+    performActionOnFileAndRecordToIndex(filename, "feature", featureAction)
+    repo.commit("commit to feature")
+    repo.checkout("master")
+    refresh()
+    performActionOnFileAndRecordToIndex(filename, "master", masterAction)
+    repo.commit("commit to master")
+    git("merge feature", true)
+    refresh()
   }
 
-  @Override
-  protected boolean makeInitialCommit() {
-    return false;
-  }
-
-  @Nullable
-  private VirtualFile getVirtualFile(@NotNull String relativePath) {
-    return VfsUtil.findFileByIoFile(new File(projectPath, relativePath), true);
-  }
-
-  protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
-    git("checkout -b feature");
-    performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
-    commit(repo, "commit to feature");
-    checkout(repo, "master");
-    refresh();
-    performActionOnFileAndRecordToIndex(filename, "master", masterAction);
-    commit(repo, "commit to master");
-    git("merge feature", true);
-    refresh();
-  }
-
-  protected enum FileAction {
+  protected enum class FileAction {
     CREATE, MODIFY, DELETE, RENAME
   }
 
-  private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws Exception {
-    VirtualFile file = myRootDir.findChild(filename);
+  private fun performActionOnFileAndRecordToIndex(filename: String, branchName: String, action: FileAction) {
+    val file = projectRoot.findChild(filename)
     if (action != FileAction.CREATE) { // file doesn't exist yet
-      assertNotNull("VirtualFile is null: " + filename, file);
+      TestCase.assertNotNull("VirtualFile is null: " + filename, file)
     }
-    switch (action) {
-      case CREATE:
-        File f = touch(filename, "initial content in branch " + branchName);
-        final VirtualFile createdFile = VfsUtil.findFileByIoFile(f, true);
-        dirty(createdFile);
-        add(repo, filename);
-        break;
-      case MODIFY:
-        //noinspection ConstantConditions
-        overwrite(VfsUtilCore.virtualToIoFile(file), "new content in branch " + branchName);
-        dirty(file);
-        add(repo, filename);
-        break;
-      case DELETE:
-        dirty(file);
-        git("rm " + filename);
-        break;
-      case RENAME:
-        String newName = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
-        dirty(file);
-        mv(repo, filename, newName);
-        myRootDir.refresh(false, true);
-        dirty(myRootDir.findChild(newName));
-        break;
-      default:
-        break;
+    when (action) {
+      GitChangeProviderTest.FileAction.CREATE -> {
+        val f = touch(filename, "initial content in branch " + branchName)
+        val createdFile = VfsUtil.findFileByIoFile(f, true)
+        dirty(createdFile)
+        repo.add(filename)
+      }
+      GitChangeProviderTest.FileAction.MODIFY -> {
+
+        overwrite(VfsUtilCore.virtualToIoFile(file!!), "new content in branch " + branchName)
+        dirty(file)
+        repo.add(filename)
+      }
+      GitChangeProviderTest.FileAction.DELETE -> {
+        dirty(file)
+        git("rm " + filename)
+      }
+      GitChangeProviderTest.FileAction.RENAME -> {
+        val newName = filename + "_" + branchName.replace("\\s".toRegex(), "_") + "_new"
+        dirty(file)
+        repo.mv(filename, newName)
+        projectRoot.refresh(false, true)
+        dirty(projectRoot.findChild(newName))
+      }
+      else -> {
+      }
     }
   }
 
@@ -163,116 +117,117 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
    * Pass null in the fileStatuses array to indicate that proper file has not changed.
    */
-  protected void assertChanges(VirtualFile[] virtualFiles, FileStatus[] fileStatuses) throws VcsException {
-    Map<FilePath, Change> result = getChanges(virtualFiles);
-    for (int i = 0; i < virtualFiles.length; i++) {
-      FilePath fp = VcsUtil.getFilePath(virtualFiles[i]);
-      FileStatus status = fileStatuses[i];
+  protected fun assertChanges(virtualFiles: List<VirtualFile>, fileStatuses: List<FileStatus?>) {
+    val result = getChanges(virtualFiles)
+    for (i in virtualFiles.indices) {
+      val fp = VcsUtil.getFilePath(virtualFiles[i])
+      val status = fileStatuses[i]
       if (status == null) {
-        assertFalse("File [" + tos(fp) + " shouldn't be in the changelist, but it was.", result.containsKey(fp));
-        continue;
+        TestCase.assertFalse("File [" + tos(fp) + " shouldn't be in the changelist, but it was.", result.containsKey(fp))
+        continue
       }
-      assertTrue("File [" + tos(fp) + "] didn't change. Changes: " + tos(result), result.containsKey(fp));
-      assertEquals("File statuses don't match for file [" + tos(fp) + "]", result.get(fp).getFileStatus(), status);
+      TestCase.assertTrue("File [" + tos(fp) + "] didn't change. Changes: " + tos(result), result.containsKey(fp))
+      TestCase.assertEquals("File statuses don't match for file [" + tos(fp) + "]", result[fp]!!.getFileStatus(), status)
     }
   }
 
-  protected void assertChanges(VirtualFile virtualFile, FileStatus fileStatus) throws VcsException {
-    assertChanges(new VirtualFile[] { virtualFile }, new FileStatus[] { fileStatus });
+  protected fun assertChanges(virtualFile: VirtualFile, fileStatus: FileStatus) {
+    assertChanges(listOf(virtualFile), listOf(fileStatus))
   }
 
   /**
    * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
    * Assumes that only one change for a file has happened.
    */
-  protected Map<FilePath, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
-    final List<FilePath> changedPaths = ObjectsConvertor.vf2fp(Arrays.asList(changedFiles));
+  private fun getChanges(changedFiles: List<VirtualFile>): Map<FilePath, Change> {
+    val changedPaths = changedFiles.map { VcsUtil.getFilePath(it) }
 
     // get changes
-    MockChangelistBuilder builder = new MockChangelistBuilder();
-    myChangeProvider.getChanges(myDirtyScope, builder, new EmptyProgressIndicator(), new MockChangeListManagerGate(ChangeListManager.getInstance(myProject)));
-    List<Change> changes = builder.getChanges();
+    val builder = MockChangelistBuilder()
+    changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(),
+                              MockChangeListManagerGate(ChangeListManager.getInstance(myProject)))
+    val changes = builder.changes
 
     // get changes for files
-    final Map<FilePath, Change> result = new HashMap<>();
-    for (Change change : changes) {
-      VirtualFile file = change.getVirtualFile();
-      FilePath filePath = null;
-      if (file == null) { // if a file was deleted, just find the reference in the original list of files and use it. 
-        String path = change.getBeforeRevision().getFile().getPath();
-        for (FilePath fp : changedPaths) {
-          if (FileUtil.pathsEqual(fp.getPath(), path)) {
-            filePath = fp;
-            break;
+    val result = HashMap<FilePath, Change>()
+    for (change in changes) {
+      val file = change.virtualFile
+      var filePath: FilePath? = null
+      if (file == null) { // if a file was deleted, just find the reference in the original list of files and use it.
+        val path = change.beforeRevision!!.file.path
+        for (fp in changedPaths) {
+          if (FileUtil.pathsEqual(fp.path, path)) {
+            filePath = fp
+            break
           }
         }
-      } else {
-        filePath = VcsUtil.getFilePath(file);
       }
-      result.put(filePath, change);
+      else {
+        filePath = VcsUtil.getFilePath(file)
+      }
+      result.put(filePath!!, change)
     }
-    return result;
+    return result
   }
 
-  protected VirtualFile create(VirtualFile parent, String name) {
-    VirtualFile file = createFile(parent, name, "content" + Math.random());
-    dirty(file);
-    return file;
+  protected fun create(parent: VirtualFile, name: String): VirtualFile {
+    val file = parent.createFile(name, "content" + Math.random())
+    dirty(file)
+    return file
   }
 
-  protected void edit(VirtualFile file, String content) {
-    editFileInCommand(myProject, file, content);
-    dirty(file);
+  protected fun edit(file: VirtualFile, content: String) {
+    editFileInCommand(myProject, file, content)
+    dirty(file)
   }
 
-  protected void moveFile(VirtualFile file, VirtualFile newParent) {
-    dirty(file);
-    moveFileInCommand(myProject, file, newParent);
-    dirty(file);
+  protected fun moveFile(file: VirtualFile, newParent: VirtualFile) {
+    dirty(file)
+    moveFileInCommand(myProject, file, newParent)
+    dirty(file)
   }
 
-  @NotNull
-  protected VirtualFile copy(VirtualFile file, VirtualFile newParent) {
-    dirty(file);
-    VirtualFile newFile = copyFileInCommand(myProject, file, newParent, file.getName());
-    dirty(newFile);
-    return newFile;
+  protected fun copy(file: VirtualFile, newParent: VirtualFile): VirtualFile {
+    dirty(file)
+    val newFile = copyFileInCommand(myProject, file, newParent, file.name)
+    dirty(newFile)
+    return newFile
   }
 
-  protected void deleteFile(VirtualFile file) {
-    dirty(file);
-    deleteFileInCommand(myProject, file);
+  protected fun deleteFile(file: VirtualFile) {
+    dirty(file)
+    deleteFileInCommand(myProject, file)
   }
 
-  protected void dirty(VirtualFile file) {
-    myDirtyScope.addDirtyFile(VcsUtil.getFilePath(file));
+  protected fun dirty(file: VirtualFile?) {
+    dirtyScope.addDirtyFile(VcsUtil.getFilePath(file!!))
   }
 
-  protected String tos(FilePath fp) {
-    return FileUtil.getRelativePath(new File(projectPath), fp.getIOFile());
+  protected fun tos(fp: FilePath): String? {
+    return FileUtil.getRelativePath(File(projectPath), fp.ioFile)
   }
 
-  protected String tos(Change change) {
-    switch (change.getType()) {
-      case NEW: return "A: " + tos(change.getAfterRevision());
-      case DELETED: return "D: " + tos(change.getBeforeRevision());
-      case MOVED: return "M: " + tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
-      case MODIFICATION: return "M: " + tos(change.getAfterRevision());
-      default: return "~: " +  tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
+  protected fun tos(change: Change): String {
+    when (change.type) {
+      Change.Type.NEW -> return "A: " + tos(change.afterRevision)!!
+      Change.Type.DELETED -> return "D: " + tos(change.beforeRevision)!!
+      Change.Type.MOVED -> return "M: " + tos(change.beforeRevision) + " -> " + tos(change.afterRevision)
+      Change.Type.MODIFICATION -> return "M: " + tos(change.afterRevision)!!
+      else -> return "~: " + tos(change.beforeRevision) + " -> " + tos(change.afterRevision)
     }
   }
 
-  protected String tos(ContentRevision revision) {
-    return tos(revision.getFile());
+  protected fun tos(revision: ContentRevision?): String? {
+    return tos(revision!!.file)
   }
 
-  protected String tos(Map<FilePath, Change> changes) {
-    StringBuilder stringBuilder = new StringBuilder("[");
-    for (Change change : changes.values()) {
-      stringBuilder.append(tos(change)).append(", ");
+  protected fun tos(changes: Map<FilePath, Change>): String {
+    val stringBuilder = StringBuilder("[")
+    for (change in changes.values) {
+      stringBuilder.append(tos(change)).append(", ")
     }
-    stringBuilder.append("]");
-    return stringBuilder.toString();
+    stringBuilder.append("]")
+    return stringBuilder.toString()
   }
 
 }
