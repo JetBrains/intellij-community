@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.VfsTestUtil.createDir
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.ui.GuiUtils
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.add
@@ -19,7 +20,7 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
   }
 
   fun testCreateFileInDir() {
-    val dir = createDir(projectRoot, "newdir")
+    val dir = runInEdtAndGet { createDir(projectRoot, "newdir") }
     dirty(dir)
     val bfile = create(dir, "new.txt")
     repo.add(bfile.path)
