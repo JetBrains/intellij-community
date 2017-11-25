@@ -456,6 +456,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("match literal contents", 1, findMatchesCount(s2, "\"'String:[regex( alpha )]\""));
     assertEquals("negate match literal contents", 2, findMatchesCount(s2, "\"'String:[!regex( alpha )]\""));
     assertEquals("match literal contents and all types", 1, findMatchesCount(s2, "\"'String:[regex( alpha ) && exprtype( .* )]\""));
+
+    String s3 = "class A {" +
+                "  int i = 0x20;" +
+                "  char c = 'a';" +
+                "  char d = 'A';" +
+                "  char e = 'z'" +
+                "}";
+    assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
+    assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
   }
 
   public void testCovariantArraySearch() {
@@ -2320,6 +2329,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     try {
       findMatchesCount(source, "import java.util.ArrayList;");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "\\'aa\\'");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "\\'$var$ \\'");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(s4, "0x100000000");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 

@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -229,14 +230,23 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @Override
   public void visitLiteralExpression(PsiLiteralExpression expression) {
-    String value = expression.getText();
+    String text = expression.getText();
 
-    if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+    if (StringUtil.isQuotedString(text)) {
       @Nullable MatchingHandler handler =
-        myCompilingVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL);
+        myCompilingVisitor.processPatternStringWithFragments(text, GlobalCompilingVisitor.OccurenceKind.LITERAL);
 
+      if (PsiType.CHAR.equals(expression.getType()) &&
+          (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
+        throw new MalformedPatternException("Bad character literal");
+      }
       if (handler != null) {
         expression.putUserData(CompiledPattern.HANDLER_KEY, handler);
+      }
+    }
+    else {
+      if (!PsiType.NULL.equals(expression.getType()) && expression.getValue() == null) {
+        throw new MalformedPatternException("Bad literal");
       }
     }
     super.visitLiteralExpression(expression);
