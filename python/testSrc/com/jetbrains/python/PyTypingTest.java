@@ -1083,6 +1083,70 @@ public class PyTypingTest extends PyTestCase {
                              "expr = C().attr");
   }
 
+  // PY-24990
+  public void testSelfAnnotationSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C().method()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().method()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D.factory()");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
