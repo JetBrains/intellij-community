@@ -49,19 +49,6 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
                   listOf(DELETED, DELETED))
   }
 
-  fun testMoveNewFile() {
-    // IDEA-59587
-    // Reproducibility of the bug (in the original roots cause) depends on the order of new and old paths in the dirty scope.
-    // MockDirtyScope shouldn't preserve the order of items added there - a Set is returned from getDirtyFiles().
-    // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
-    // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
-    // This is not consistent though.
-    val dir = projectRoot.findChild("dir")!!
-    val file = create(dir, "new.txt")
-    moveFile(file, projectRoot)
-    assertChanges(file, ADDED)
-  }
-
   fun testSimultaneousOperationsOnMultipleFiles() {
     edit(atxt, "new afile content")
     edit(dir_ctxt, "new cfile content")
