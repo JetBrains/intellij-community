@@ -57,7 +57,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
             ElseIf elseIf = ElseIf.from(ifStatement, thenStatements);
             if (elseIf == null) return;
             String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if");
-            holder.registerProblem(ifStatement.getChildren()[0], message, ProblemHighlightType.WEAK_WARNING, new MergeElseIfsFix());
+            holder.registerProblem(ifStatement.getChildren()[0], message, ProblemHighlightType.INFORMATION, new MergeElseIfsFix());
             return;
           }
           if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
@@ -203,10 +203,14 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         ct.markUnchanged(condition);
       }
       PsiElement parent = ifToDelete.getParent();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(parent.getProject()).getElementFactory();
       for (int i = conditions.size() - 1; i >= 0; i--) {
         PsiExpression condition = conditions.get(i);
-        parent.addAfter(factory.createStatementFromText(condition.getText() + ";", condition), ifToDelete);
+        List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(condition);
+        PsiStatement[] sideEffectStatements = StatementExtractor.generateStatements(sideEffectExpressions, condition);
+        for (int statementIndex = sideEffectStatements.length - 1; statementIndex >= 0; statementIndex--) {
+          PsiStatement statement = sideEffectStatements[statementIndex];
+          parent.addAfter(statement, ifToDelete);
+        }
       }
       ct.deleteAndRestoreComments(ifToDelete);
     }
@@ -777,7 +781,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       PsiStatement thenStatement = ifStatement.getThenBranch();
-      PsiStatement elseStatement = ifStatement.getThenBranch();
+      PsiStatement elseStatement = ifStatement.getElseBranch();
       if (thenStatement == null || elseStatement == null) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, notEquivalentVariableDeclarations.isEmpty(), thenLen, elseLen,
                                           thenStatement, elseStatement);
