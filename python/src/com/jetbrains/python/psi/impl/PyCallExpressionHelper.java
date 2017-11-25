@@ -803,13 +803,22 @@ public class PyCallExpressionHelper {
       filterExplicitParameters(parameters, callable, callSite, resolveContext);
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
+    final Map<PyExpression, PyCallableParameter> mapped = new LinkedHashMap<>();
+    final PyExpression receiver = callSite.getReceiver(callable);
+    if (receiver != null && !explicitParameters.equals(parameters)) {
+      final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
+      if (first != null && first.getParameter() != null && first.getParameter().isSelf()) {
+        mapped.put(receiver, first);
+      }
+    }
+    mapped.putAll(mappingResults.getMappedParameters());
 
     final PyCallExpression.PyMarkedCallee markedCallee =
       new PyCallExpression.PyMarkedCallee(callableType, callable, null, 0, false, RatedResolveResult.RATE_NORMAL);
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    markedCallee,
-                                                   mappingResults.getMappedParameters(),
+                                                   mapped,
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
                                                    mappingResults.getParametersMappedToVariadicPositionalArguments(),
