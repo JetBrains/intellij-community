@@ -787,7 +787,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
       else if (matchedArrayDimensions != 0) {
-        regExpPredicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+        regExpPredicate = handler.findRegExpPredicate();
 
         if (regExpPredicate != null) {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {

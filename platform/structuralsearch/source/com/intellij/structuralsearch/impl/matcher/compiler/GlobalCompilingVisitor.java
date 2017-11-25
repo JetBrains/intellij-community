@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeFilter;
@@ -151,19 +152,14 @@ public class GlobalCompilingVisitor {
 
     @NonNls StringBuilder buf = new StringBuilder(content.length());
     Matcher matcher = substitutionPattern.matcher(content);
-    List<SubstitutionHandler> handlers = null;
+    List<SubstitutionHandler> handlers = new SmartList<>();
     int start = 0;
     String word;
     boolean hasLiteralContent = false;
 
     SubstitutionHandler handler = null;
     while (matcher.find()) {
-      if (handlers == null) handlers = new SmartList<>();
-      handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
-      if (handler != null) handlers.add(handler);
-
       word = content.substring(start, matcher.start());
-
       if (!word.isEmpty()) {
         buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
         hasLiteralContent = true;
@@ -171,7 +167,11 @@ public class GlobalCompilingVisitor {
         processTokenizedName(word, false, kind);
       }
 
-      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+      handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
+      if (handler == null) throw new MalformedPatternException();
+
+      handlers.add(handler);
+      RegExpPredicate predicate = handler.findRegExpPredicate();
 
       if (predicate == null || !predicate.isWholeWords()) {
         buf.append("(.*?)");
@@ -204,7 +204,7 @@ public class GlobalCompilingVisitor {
       buf.append("$");
     }
 
-    if (handlers != null) {
+    if (!handlers.isEmpty()) {
       return hasLiteralContent ? new LiteralWithSubstitutionHandler(buf.toString(), handlers) : handler;
     }
 

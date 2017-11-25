@@ -10,7 +10,6 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
@@ -79,7 +78,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
           return false;
         }
 
-        final RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+        final RegExpPredicate predicate = handler.findRegExpPredicate();
         if (predicate != null && predicate.couldBeOptimized()) {
           GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, CODE, compileContext);
         }

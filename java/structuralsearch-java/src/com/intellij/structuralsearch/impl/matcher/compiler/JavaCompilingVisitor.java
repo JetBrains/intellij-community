@@ -118,7 +118,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
           return false;
         }
 
-        final RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+        final RegExpPredicate predicate = handler.findRegExpPredicate();
         if (predicate != null && predicate.couldBeOptimized()) {
           if (handler.isStrictSubtype() || handler.isSubtype()) {
             addDescendantsOf(predicate.getRegExp(), handler.isSubtype(), compileContext);
@@ -213,7 +213,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         ((RegExpPredicate)handler.getPredicate()).setMultiline(true);
       }
 
-      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+      RegExpPredicate predicate = handler.findRegExpPredicate();
       if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.COMMENT);
       }
