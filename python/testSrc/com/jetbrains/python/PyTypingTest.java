@@ -720,6 +720,40 @@ public class PyTypingTest extends PyTestCase {
            "    expr = x");
   }
 
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeWithTarget() {
+    doTest("int",
+           "x: int\n" +
+           "with foo() as x:\n" +
+           "    expr = x\n");
+  }
+
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeForTarget() {
+    doTest("int",
+           "x: int\n" +
+           "for x in foo():\n" +
+           "    expr = x\n");
+  }
+
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeUnpackingTarget() {
+    doTest("int",
+           "x: int\n" +
+           "x, y = foo()\n" +
+           "expr = x");
+  }
+
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeOnlyFirstHintConsidered() {
+    doTest("int",
+           "x: int\n" +
+           "x = foo()\n" +
+           "x: str\n" +
+           "x = baz()\n" +
+           "expr = x");
+  }
+
   public void testInstanceAttributeAnnotation() {
     doTest("int",
            "class C:\n" +
