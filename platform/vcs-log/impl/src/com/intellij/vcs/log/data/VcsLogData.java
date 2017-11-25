@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -83,6 +84,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogIndex myIndex;
+
+  @NotNull private final AtomicBoolean myInitialized = new AtomicBoolean();
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -144,19 +147,22 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public void initialize() {
-    StopWatch stopWatch = StopWatch.start("initialize");
-    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        resetState();
-        readCurrentUser();
-        DataPack dataPack = myRefresher.readFirstBlock();
-        fireDataPackChangeEvent(dataPack);
-        stopWatch.report();
-      }
-    };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, myRefresher.getProgress().createProgressIndicator());
+    if (myInitialized.compareAndSet(false, true)) {
+      StopWatch stopWatch = StopWatch.start("initialize");
+      Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          resetState();
+          readCurrentUser();
+          DataPack dataPack = myRefresher.readFirstBlock();
+          fireDataPackChangeEvent(dataPack);
+          stopWatch.report();
+        }
+      };
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable,
+                                                                         myRefresher.getProgress().createProgressIndicator());
+    }
   }
 
   private void readCurrentUser() {
