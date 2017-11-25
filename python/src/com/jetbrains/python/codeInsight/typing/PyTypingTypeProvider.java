@@ -19,6 +19,9 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
@@ -316,39 +319,56 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return annotatedType.get();
       }
 
-      final PyClass pyClass = target.getContainingClass();
-      final PyFunction method = as(ScopeUtil.getScopeOwner(target), PyFunction.class);
-      if (pyClass != null && method != null && target.isQualified()) {
-        final String name = target.getReferencedName();
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final String name = target.getReferencedName();
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
+      if (name == null || scopeOwner == null) {
+        return null;
+      }
 
-        boolean isInstanceAttribute = false;
-        if (context.maySwitchToAST(target)) {
-          isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
-            .select(PyParameter.class)
-            .filter(PyParameter::isSelf)
-            .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == method);
+      final PyClass pyClass = target.getContainingClass();
+
+      if (target.isQualified()) {
+        if (pyClass != null && scopeOwner instanceof PyFunction) {
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+          boolean isInstanceAttribute = false;
+          if (context.maySwitchToAST(target)) {
+            isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
+              .select(PyParameter.class)
+              .filter(PyParameter::isSelf)
+              .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
+          }
+          else {
+            isInstanceAttribute = PyUtil.isInstanceAttribute(target);
+          }
+          if (!isInstanceAttribute) {
+            return null;
+          }
+          // Set isDefinition=true to start searching right from the class level.
+          final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
+          final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+          if (classAttrs == null) {
+            return null;
+          }
+          return StreamEx.of(classAttrs)
+            .map(RatedResolveResult::getElement)
+            .select(PyTargetExpression.class)
+            .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+            .nonNull()
+            .map(Ref::get)
+            .foldLeft(PyUnionType::union)
+            .orElse(null);
         }
-        else {
-          isInstanceAttribute = PyUtil.isInstanceAttribute(target);
-        }
-        if (!isInstanceAttribute) {
-          return null;
-        }
-        // Set isDefinition=true to start searching right from the class level.
-        final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
-        final List<? extends RatedResolveResult> classAttrs = classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
-        if (classAttrs == null) {
-          return null;
-        }
-        return StreamEx.of(classAttrs)
-          .map(RatedResolveResult::getElement)
+      }
+      else {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        return StreamEx.of(scope.getNamedElements(name, false))
           .select(PyTargetExpression.class)
-          .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
           .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
           .nonNull()
           .map(Ref::get)
-          .foldLeft(PyUnionType::union)
+          .findFirst()
           .orElse(null);
       }
     }
