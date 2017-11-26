@@ -7,7 +7,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -181,7 +180,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     if (parent is GrMethodCall) return null
     val name = referenceName ?: return null
     if (name.isEmpty() || !name.first().isUpperCase()) return null
-    val qname = getQualifiedReferenceName() ?: return null
+    val qname = qualifiedReferenceName ?: return null
     return facade.findClass(qname, scope)
   }
 
@@ -192,7 +191,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   for (parent in parents().drop(1)) {
     if (parent !is GrReferenceExpression) return null
     if (parent.resolveClass() == null) continue
-    val qname = getQualifiedReferenceName()!!
+    val qname = qualifiedReferenceName!!
     return facade.findPackage(qname)
   }
 
@@ -206,17 +205,4 @@ private fun GrReferenceExpression.resolveLocalVariable(): GroovyResolveResult? {
   val processor = LocalVariableProcessor(name)
   treeWalkUp(processor, state)
   return processor.resolveResult
-}
-
-private fun GrReferenceElement<*>.getQualifiedReferenceName(): String? {
-  val parts = mutableListOf<String>()
-  var current = this
-  while (true) {
-    val name = current.referenceName ?: return null
-    parts.add(name)
-    val qualifier = current.qualifier ?: break
-    qualifier as? GrReferenceExpression ?: return null
-    current = qualifier
-  }
-  return parts.reversed().joinToString(separator = ".")
 }

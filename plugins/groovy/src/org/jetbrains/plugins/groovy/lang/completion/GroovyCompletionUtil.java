@@ -329,10 +329,10 @@ public class GroovyCompletionUtil {
     return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  private static LookupElementBuilder setupLookupBuilder(PsiElement element,
-                                                         PsiSubstitutor substitutor,
-                                                         LookupElementBuilder builder,
-                                                         @Nullable PsiElement position) {
+  public static LookupElement setupLookupBuilder(PsiElement element,
+                                                 PsiSubstitutor substitutor,
+                                                 LookupElementBuilder builder,
+                                                 @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
@@ -602,7 +602,7 @@ public class GroovyCompletionUtil {
 
   public static void processVariants(GrReferenceElement referenceElement, PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
     if (referenceElement instanceof GrCodeReferenceElementImpl) {
-      CompleteCodeReferenceElement.processVariants((GrCodeReferenceElementImpl)referenceElement, consumer, matcher);
+      CompleteCodeReferenceElement.complete((GrCodeReferenceElement)referenceElement, matcher, consumer);
     }
     else if (referenceElement instanceof GrReferenceExpressionImpl) {
       CompleteReferenceExpression.processVariants(matcher, consumer, (GrReferenceExpressionImpl)referenceElement, parameters);
