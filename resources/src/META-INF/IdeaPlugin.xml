@@ -869,12 +869,6 @@
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.StringTokenizerDelimiterInspection"
                      displayName="Duplicated delimiters in java.util.StringTokenizer"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CommonIfParts"
-                     groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.CommonIfPartsInspection"
-                     bundle="messages.InspectionsBundle"
-                     key="inspection.common.if.parts.family"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
