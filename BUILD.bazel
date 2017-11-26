@@ -378,6 +378,7 @@ iml_project(
         "//tools:fest-swing",
     ],
     tags = ["managed"],
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
