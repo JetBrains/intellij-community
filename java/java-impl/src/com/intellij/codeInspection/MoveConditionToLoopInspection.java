@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,9 +15,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+  public boolean noConversionToDoWhile = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionsBundle.message("inspection.move.condition.to.loop.no.conversion.to.do.while"), "noConversionToDoWhile");
+    return panel;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -37,11 +50,23 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       }
 
       private void visitLoop(@NotNull PsiLoopStatement loopStatement) {
-        Context context = Context.from(loopStatement);
+        Context context = Context.from(loopStatement, noConversionToDoWhile);
         if (context == null) return;
         PsiElement highlightElement = context.myConditionStatement.getChildren()[0];
+        LocalQuickFix[] fixes;
+        if (context.myConditionInTheBeginning) {
+          fixes = new LocalQuickFix[]{new LoopTransformationFix()};
+        }
+        else {
+          SetInspectionOptionFix setInspectionOptionFix =
+            new SetInspectionOptionFix(MoveConditionToLoopInspection.this,
+                                       "noConversionToDoWhile",
+                                       InspectionsBundle.message("inspection.move.condition.to.loop.no.conversion.to.do.while"),
+                                       true);
+          fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
+        }
         holder.registerProblem(highlightElement, InspectionsBundle.message("inspection.move.condition.to.loop.description"),
-                               new LoopTransformationFix());
+                               ProblemHighlightType.INFORMATION, fixes);
       }
     };
   }
@@ -82,17 +107,24 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
 
 
     @Nullable
-    static Context from(@NotNull PsiLoopStatement loopStatement) {
+    static Context from(@NotNull PsiLoopStatement loopStatement, boolean noConversionToDoWhile) {
       if (!ControlFlowUtils.isEndlessLoop(loopStatement)) return null;
       PsiStatement body = loopStatement.getBody();
-      if(body == null) return null;
+      if (body == null) return null;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
       if (statements.length < 2) return null;
+      if (StreamEx.ofTree((PsiElement)body, el -> StreamEx.of(el.getChildren()))
+            .select(PsiBreakStatement.class)
+            .filter(stmt -> ControlFlowUtils.statementBreaksLoop(stmt, loopStatement))
+            .count() != 1) {
+        return null;
+      }
       PsiStatement first = statements[0];
       PsiExpression firstBreakCondition = extractBreakCondition(first, loopStatement);
       if (firstBreakCondition != null) {
         return new Context(loopStatement, body, firstBreakCondition, first, true);
       }
+      if (noConversionToDoWhile) return null;
       PsiStatement last = statements[statements.length - 1];
       PsiExpression lastBreakCondition = extractBreakCondition(last, loopStatement);
       if (lastBreakCondition != null) {
@@ -135,7 +167,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       if (ifStatement == null) return;
       PsiLoopStatement loop = getEnclosingLoop(ifStatement);
       if (loop == null) return;
-      Context context = Context.from(loop);
+      Context context = Context.from(loop, false);
       if (context == null) return;
       CommentTracker ct = new CommentTracker();
       PsiExpression conditionCopy = (PsiExpression)ct.markUnchanged(context.myCondition).copy();
