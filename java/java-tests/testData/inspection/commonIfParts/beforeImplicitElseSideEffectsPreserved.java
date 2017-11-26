@@ -1,4 +1,4 @@
-// "Collapse if statement " "true"
+// "Collapse if statement " "false"
 
 import java.util.Collection;
 import java.util.List;
@@ -16,9 +16,9 @@ public class IfStatementWithIdenticalBranches {
   int work() {
     A a1 = new A();
     A a2 = new A();
-    if<caret>(sideEffects/*intruder1*/(a1)) { // c1
+    if(sideEffects(a1)) {
       if<caret>(sideEffects(a2)) {
-        return /*intruder2*/ 12; //c2
+        return 12;
       }
     }
     return 12;
