@@ -24,6 +24,7 @@ public class BackwardReferenceIndexUtil {
                            TObjectIntHashMap<? extends JavacRef> refs,
                            Collection<JavacDef> defs,
                            Collection<JavacTypeCast> casts,
+                           Collection<JavacRef> implicitToString,
                            final BackwardReferenceIndexWriter writer) {
 
     try {
@@ -34,7 +35,7 @@ public class BackwardReferenceIndexUtil {
       Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
       Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
       Map<LightRef, Collection<LightRef>> castMap = new THashMap<>();
-      Map<LightRef, Void> implicitToString = new THashMap<>();
+      Map<LightRef, Void> implicitToStringMap = new THashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -110,7 +111,11 @@ public class BackwardReferenceIndexUtil {
         castMap.computeIfAbsent(enumeratedCastType, t -> new SmartList<>()).add(enumeratedOperandType);
       }
 
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData, implicitToString));
+      for (JavacRef ref : implicitToString) {
+        implicitToStringMap.put(writer.asClassUsage(ref), null);
+      }
+
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData, implicitToStringMap));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);
