@@ -50,15 +50,12 @@ public class DemorgansIntention extends MutablyNamedIntention {
   @Override
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
-    final String newExpression = convertConjunctionExpression(polyadicExpression);
     CommentTracker tracker = new CommentTracker();
-    for (PsiExpression expression : polyadicExpression.getOperands()) {
-      tracker.markUnchanged(expression);
-    }
+    final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
     replaceExpressionWithNegatedExpressionString(newExpression, polyadicExpression, tracker);
   }
 
-  private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression) {
+  private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression, CommentTracker tracker) {
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     final boolean tokenTypeAndAnd = tokenType.equals(JavaTokenType.ANDAND);
     final String flippedConjunction = tokenTypeAndAnd ? "||" : "&&";
@@ -67,12 +64,14 @@ public class DemorgansIntention extends MutablyNamedIntention {
       if (result.length() != 0) {
         result.append(flippedConjunction);
       }
-      result.append(convertLeafExpression(operand, tokenTypeAndAnd));
+      result.append(convertLeafExpression(operand, tokenTypeAndAnd, tracker));
     }
     return result.toString();
   }
 
-  private static String convertLeafExpression(PsiExpression expression, boolean tokenTypeAndAnd) {
+  private static String convertLeafExpression(PsiExpression expression,
+                                              boolean tokenTypeAndAnd,
+                                              CommentTracker tracker) {
     if (BoolUtils.isNegation(expression)) {
       final PsiExpression negatedExpression = BoolUtils.getNegated(expression);
       if (negatedExpression == null) {
@@ -80,12 +79,12 @@ public class DemorgansIntention extends MutablyNamedIntention {
       }
       if (tokenTypeAndAnd) {
         if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.OR_PRECEDENCE) {
-          return '(' + negatedExpression.getText() + ')';
+          return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
         }
       } else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
-        return '(' + negatedExpression.getText() + ')';
+        return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
       }
-      return negatedExpression.getText();
+      return tracker.markUnchanged(negatedExpression).getText();
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -93,13 +92,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       assert rhs != null;
-      return lhs.getText() + negatedComparison + rhs.getText();
+      return tracker.markUnchanged(lhs).getText() + negatedComparison + tracker.markUnchanged(rhs).getText();
     }
     else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + expression.getText() + ')';
+      return "!(" + tracker.markUnchanged(expression).getText() + ')';
     }
     else {
-      return '!' + expression.getText();
+      return '!' + tracker.markUnchanged(expression).getText();
     }
   }
 }
