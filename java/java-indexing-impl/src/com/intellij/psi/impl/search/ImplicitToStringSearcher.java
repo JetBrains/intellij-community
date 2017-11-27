@@ -20,7 +20,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
       return;
     }
     PsiClass targetClass = ReadAction.compute(() -> method.getContainingClass());
-    if (targetClass == null || ReadAction.compute(() -> CommonClassNames.JAVA_LANG_OBJECT.equals(targetClass.getQualifiedName()))) {
+    if (targetClass == null) {
       return;
     }
 
