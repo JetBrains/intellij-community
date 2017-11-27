@@ -64,6 +64,15 @@ public class PsiReplacementUtil {
     return styleManager.reformat(replacementExp);
   }
 
+  public static PsiElement replaceExpressionAndShorten(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText, CommentTracker tracker) {
+    final Project project = expression.getProject();
+    final PsiElement replacementExp = tracker.replaceAndRestoreComments(expression, newExpressionText);
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    javaCodeStyleManager.shortenClassReferences(replacementExp);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    return styleManager.reformat(replacementExp);
+  }
+
   /**
    * Consider to use {@link #replaceStatement(PsiExpression, String, CommentTracker)} to preserve comments
    */

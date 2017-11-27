@@ -171,7 +171,10 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         if (!(condition instanceof PsiBinaryExpression)) return null;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
         if (nullComparedExpression == null) return null;
-        return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";"), nullComparedExpression, null);
+        CommentTracker tracker = new CommentTracker();
+        return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker),
+                            tracker.markUnchanged(nullComparedExpression),
+                            null);
       } else {
         PsiReferenceExpression ref = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiReferenceExpression.class);
         if (ref == null) return null;
@@ -185,7 +188,10 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         }
         PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length > 2) return null;
-        return new Replacer(text -> PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text), args[0], args.length == 2 ? args[1] : null);
+        CommentTracker tracker = new CommentTracker();
+        return new Replacer(text -> PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text, tracker),
+                            tracker.markUnchanged(args[0]),
+                            args.length == 2 ? tracker.markUnchanged(args[1]) : null);
       }
     }
 
