@@ -15,6 +15,7 @@ import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -97,7 +98,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
           continue;
         }
 
-        if (!processBinaryExpression(lOperand, rOperand, consumer, targetClass, targetMethod)) {
+        if (!processBinaryExpression(lOperand, rOperand, consumer, targetMethod)) {
           return false;
         }
       }
@@ -108,25 +109,26 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
   private static boolean processBinaryExpression(@NotNull PsiExpression lhs,
                                                  @NotNull PsiExpression rhs,
                                                  @NotNull Processor<PsiReference> consumer,
-                                                 @NotNull PsiClass targetClass,
                                                  @NotNull PsiMethod targetMethod) {
-    if (!processBinaryExpressionInOneDirection(lhs, rhs, consumer, targetClass, targetMethod)) {
+    if (!processBinaryExpressionInOneDirection(lhs, rhs, consumer, targetMethod)) {
       return false;
     }
-    return processBinaryExpressionInOneDirection(rhs, lhs, consumer, targetClass, targetMethod);
+    return processBinaryExpressionInOneDirection(rhs, lhs, consumer, targetMethod);
   }
 
   private static boolean processBinaryExpressionInOneDirection(@NotNull PsiExpression stringExpr,
                                                                @NotNull PsiExpression expr,
                                                                @NotNull Processor<PsiReference> consumer,
-                                                               @NotNull PsiClass psiClass,
                                                                @NotNull PsiMethod targetMethod) {
     PsiType strType = stringExpr.getType();
     if (strType == null || !strType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return true;
 
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expr.getType());
-    if (aClass != null && PsiUtil.preferCompiledElement(aClass) == psiClass) {
-      return consumer.process(new MyImplicitToStringReference(expr, targetMethod));
+    if (aClass != null && !CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
+      PsiMethod implicitlyUsedMethod = aClass.findMethodBySignature(targetMethod, true);
+      if (implicitlyUsedMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, implicitlyUsedMethod)) {
+        return consumer.process(new MyImplicitToStringReference(expr, targetMethod));
+      }
     }
     return true;
   }
