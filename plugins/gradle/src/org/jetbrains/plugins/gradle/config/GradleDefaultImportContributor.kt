@@ -1,18 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.config;
+package org.jetbrains.plugins.gradle.config
 
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil
-import java.util.*
 
-/**
- * @author peter
- */
-public class GradleDefaultImportContributor extends GrImportContributorBase {
+class GradleDefaultImportContributor : GrImportContributor {
 
-  // As listed here - http://www.gradle.org/docs/current/userguide/userguide_single.html#sec:using_gradle_without_ide_support
-  public static final String[] IMPLICIT_GRADLE_PACKAGES = {
+  private val imports = arrayOf(
     "org.gradle",
     "org.gradle.api",
     "org.gradle.api.artifacts",
@@ -185,15 +182,14 @@ public class GradleDefaultImportContributor extends GrImportContributorBase {
     "org.gradle.testing.jacoco.plugins",
     "org.gradle.testing.jacoco.tasks",
     "org.gradle.util"
-  };
+  ).map(::StarImport)
 
-
-  @NotNull
-  @Override
-  public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
-    if (file.isScript() && GroovyScriptUtil.getScriptType(file) instanceof GradleScriptType) {
-      return Arrays.asList(IMPLICIT_GRADLE_PACKAGES);
+  override fun getFileImports(file: GroovyFile): List<GroovyImport> {
+    return if (file.isScript && GroovyScriptUtil.getScriptType(file) is GradleScriptType) {
+      imports
     }
-    return Collections.emptyList();
+    else {
+      emptyList()
+    }
   }
 }
