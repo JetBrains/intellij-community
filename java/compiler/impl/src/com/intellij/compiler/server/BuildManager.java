@@ -100,8 +100,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -251,11 +250,11 @@ public class BuildManager implements Disposable {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE) {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(()->{
-            if (shouldTriggerMake(events)) {
-              scheduleAutoMake();
+          application.executeOnPooledThread(() -> {
+            if (!application.isDisposed()) {
+              ReadAction.run(()->{ if (shouldTriggerMake(events)) scheduleAutoMake(); });
             }
-          }));
+          });
         }
       }
 
