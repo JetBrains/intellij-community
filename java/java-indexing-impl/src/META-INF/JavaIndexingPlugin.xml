@@ -67,6 +67,7 @@
     <classesWithAnnotatedMembersSearch implementation="com.intellij.psi.impl.search.ClassesWithAnnotatedMembersSearcher"/>
     <deepestSuperMethodsSearch implementation="com.intellij.psi.impl.search.MethodDeepestSuperSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
+    <methodReferencesSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <overridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaOverridingMethodsSearcher"/>
     <classInheritorsSearch implementation="com.intellij.psi.impl.search.JavaClassInheritorsSearcher"/>
