@@ -248,6 +248,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/observable-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/observable-ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" filepath="$PROJECT_DIR$/../base/perf-logger/perf-logger.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/perfd-host/perfd-host.iml" filepath="$PROJECT_DIR$/../adt/idea/perfd-host/perfd-host.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/perflib/perflib.iml" filepath="$PROJECT_DIR$/../base/perflib/perflib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../base/pixelprobe/pixelprobe.iml" filepath="$PROJECT_DIR$/../base/pixelprobe/pixelprobe.iml" group="android/sdktools" />
