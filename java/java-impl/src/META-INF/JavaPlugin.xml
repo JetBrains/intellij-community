@@ -515,7 +515,7 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceNullCheckInspection"
                      bundle="messages.InspectionsBundle"
-                     key="inspection.require.non.null.message"/>
+                     key="inspection.require.non.null.description"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalIsPresent"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
