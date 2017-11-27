@@ -1623,6 +1623,11 @@
       <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrRemoveExplicitTypeDeclarationIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.annotations.AddAnnotationValueIntention</className>
+    </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
                     serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
