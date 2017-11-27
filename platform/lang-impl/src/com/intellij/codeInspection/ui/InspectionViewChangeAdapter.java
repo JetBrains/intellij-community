@@ -117,11 +117,14 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
           if (node instanceof SuppressableInspectionTreeNode) {
             RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
             if (element != null) {
-              VirtualFile vFile = element.getPointer().getVirtualFile();
-              if (vFile == null || !vFile.isValid()) {
-                dropNodeCache((SuppressableInspectionTreeNode)node);
-                if (!needUpdateUI[0]) {
-                  needUpdateUI[0] = true;
+              SmartPsiElementPointer pointer = element.getPointer();
+              if (pointer != null) {
+                VirtualFile vFile = pointer.getVirtualFile();
+                if (vFile == null || !vFile.isValid()) {
+                  dropNodeCache((SuppressableInspectionTreeNode)node);
+                  if (!needUpdateUI[0]) {
+                    needUpdateUI[0] = true;
+                  }
                 }
               }
             }
