@@ -158,22 +158,22 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
-    return getScopeWithouthCodeReferences(element,
+    return getScopeWithoutCodeReferences(element,
                                           e -> buildScopeWithoutReferences(getReferentFileIds(e)),
-                                          "scope without code references");
+                                         "scope without code references");
   }
 
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement toStringMethod) {
-    return getScopeWithouthCodeReferences(toStringMethod,
+    return getScopeWithoutCodeReferences(toStringMethod,
                                           e -> buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(e)),
-                                          "scope without implicit toString references");
+                                         "scope without implicit toString references");
   }
 
-  private GlobalSearchScope getScopeWithouthCodeReferences(@NotNull PsiElement element,
-                                                           @NotNull Function<PsiElement, GlobalSearchScope> scopeCalculator,
-                                                           @NotNull String operationName) {
+  private GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element,
+                                                          @NotNull Function<PsiElement, GlobalSearchScope> scopeCalculator,
+                                                          @NotNull String operationName) {
     if (!isServiceEnabledFor(element)) return null;
 
     try {
