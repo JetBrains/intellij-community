@@ -135,6 +135,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
     assertEquals("setUp failed", 5, myRevisionsAfterRename.size());
     cd(projectPath);
+    updateChangeListManager();
   }
 
   @Override
