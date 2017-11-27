@@ -175,6 +175,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider) {
+    if (!(provider instanceof InjectedFileViewProvider)) return null;
+    return ((InjectedFileViewProvider)provider).getShreds().getHostPointer().getElement();
+  }
+
+  @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();

@@ -777,9 +777,9 @@ public final class EditorUtil {
     }
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes foldedTextAttributes = scheme.getAttributes(textAttributesKey);
-    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, foldedTextAttributes.getFontType(),
-                                                                            scheme.getFontPreferences(), null);
+    TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
+    int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
+    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, style, scheme.getFontPreferences(), null);
     return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
   }
 }

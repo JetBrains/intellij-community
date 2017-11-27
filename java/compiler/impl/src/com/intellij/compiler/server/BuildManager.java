@@ -100,7 +100,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -249,8 +250,12 @@ public class BuildManager implements Disposable {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
-          scheduleAutoMake();
+        if (!IS_UNIT_TEST_MODE) {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(()->{
+            if (shouldTriggerMake(events)) {
+              scheduleAutoMake();
+            }
+          }));
         }
       }
 

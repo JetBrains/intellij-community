@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -62,16 +61,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    try {
-      initTest();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-  }
 
-  private void initTest() throws IOException {
     myRevisions = new ArrayList<>(7);
     myRevisionsAfterRename = new ArrayList<>(4);
 
@@ -134,24 +124,18 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     // newer revisions go first in the log output
     for (int i = revisions.length - 1, j = 0; i >= 0; i--, j++) {
       String[] details = revisions[j].trim().split("#");
-      String[] parents;
-      if (details.length > 2) {
-        parents = details[2].split(" ");
-      }
-      else {
-        parents = ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-      final GitTestRevision revision = new GitTestRevision(details[0], details[1], parents, commitMessages[i],
-                                                           USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null,
-                                                           contents[i]);
+      GitTestRevision revision = new GitTestRevision(details[0], details[1], commitMessages[i],
+                                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null,
+                                                     contents[i]);
       myRevisions.add(revision);
       if (i > RENAME_COMMIT_INDEX) {
         myRevisionsAfterRename.add(revision);
       }
     }
 
-    assertEquals(myRevisionsAfterRename.size(), 5);
+    assertEquals("setUp failed", 5, myRevisionsAfterRename.size());
     cd(projectPath);
+    updateChangeListManager();
   }
 
   @Override
@@ -237,15 +221,11 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   private TestCommit modify(String file) throws IOException {
-    editAppend(file, "Modified");
+    FileUtil.appendToFile(new File(file), "Modified");
     String message = "Modified PostHighlightingPass";
     addCommit(repo, message);
     String hash = last(this);
     return new TestCommit(hash, message, file);
-  }
-
-  private static void editAppend(String file, String content) throws IOException {
-    FileUtil.appendToFile(new File(file), content);
   }
 
   @NotNull
@@ -437,11 +417,9 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final String myCommitterEmail;
     final String myBranchName;
     final byte[] myContent;
-    private String[] myParents;
 
     public GitTestRevision(String hash,
                            String gitTimestamp,
-                           String[] parents,
                            String commitMessage,
                            String authorName,
                            String authorEmail,
@@ -451,7 +429,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
                            String content) {
       myHash = hash;
       myDate = gitTimeStampToDate(gitTimestamp);
-      myParents = parents;
       myCommitMessage = commitMessage;
       myAuthorName = authorName;
       myAuthorEmail = authorEmail;
