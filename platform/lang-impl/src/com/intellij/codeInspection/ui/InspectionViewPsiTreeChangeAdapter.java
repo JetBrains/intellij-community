@@ -5,6 +5,8 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Alarm;
@@ -23,29 +25,35 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
   private final InspectionResultsView myView;
   private final Alarm myAlarm;
   private final Set<VirtualFile> myUnPresentEditedFiles = ContainerUtil.createWeakSet();
+  private final ProjectFileIndex myFileIndex;
 
   public InspectionViewPsiTreeChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
+    myFileIndex = ProjectFileIndex.getInstance(view.getProject());
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
   }
 
   @Override
   public void filesChanged(@NotNull List<VFileEvent> events) {
     //TODO filter out non project files
-    boolean someFilesWereDeletedOrReplaced = false;
+    boolean someFilesWereDeletedOrMoved = false;
     Set<VirtualFile> filesToCheck = new THashSet<>();
     for (VFileEvent event : events) {
-      if (!someFilesWereDeletedOrReplaced && (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent)) {
-        someFilesWereDeletedOrReplaced = true;
+      if (!someFilesWereDeletedOrMoved && (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent)) {
+        someFilesWereDeletedOrMoved = true;
       }
-      if ((event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) && !myUnPresentEditedFiles.contains(event.getFile())) {
+      VirtualFile file = event.getFile();
+      if (file != null &&
+          isInSourceContent(file) &&
+          (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) &&
+          !myUnPresentEditedFiles.contains(event.getFile())) {
         filesToCheck.add(event.getFile());
       }
     }
-    if (filesToCheck.isEmpty() && !someFilesWereDeletedOrReplaced) return;
+    if (filesToCheck.isEmpty() && !someFilesWereDeletedOrMoved) return;
 
     boolean[] needUpdateUI = {false};
-    if (someFilesWereDeletedOrReplaced) {
+    if (someFilesWereDeletedOrMoved) {
       //TODO combine 1
       synchronized (myView.getTreeStructureUpdateLock()) {
         InspectionTreeNode root = myView.getTree().getRoot();
@@ -106,6 +114,15 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
     }
+  }
+
+  protected boolean isInSourceContent(VirtualFile file) {
+    return ReadAction.compute(() -> {
+      if (myView.getProject().isDisposed()) {
+        return false;
+      }
+      return myFileIndex.isInSourceContent(file);
+    });
   }
 
   private static void processNodesIfNeed(InspectionTreeNode node, Processor<InspectionTreeNode> processor) {
