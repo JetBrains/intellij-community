@@ -33,6 +33,7 @@ enum class ImportType {
   STATIC_STAR
 }
 
+@Deprecated("use org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor")
 abstract class GrImportContributorBase : GrImportContributor {
 
   abstract fun appendImplicitlyImportedPackages(file: GroovyFile): List<String>
