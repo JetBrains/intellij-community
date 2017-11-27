@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,9 +64,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   @NotNull
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
-    final RefEntity[] refEntities = tree.getSelectedElements();
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    return refEntities.length == 0 ? QuickFixAction.EMPTY : presentation.getQuickFixes(refEntities, tree);
+    QuickFixAction[] fixes = getCommonSelectedFixes(presentation, tree.getSelectedDescriptors());
+    return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(tree.getSelectedElements()), QuickFixAction[]::new);
   }
 
 

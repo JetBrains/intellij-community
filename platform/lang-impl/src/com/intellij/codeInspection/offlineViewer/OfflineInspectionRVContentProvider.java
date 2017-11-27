@@ -15,14 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.TreeTraversal;
-import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Function;
 
@@ -52,40 +48,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   @NotNull
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths == null) return QuickFixAction.EMPTY; 
-    final List<RefEntity> selectedElements = new ArrayList<>();
-    final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
-    for (TreePath selectionPath : treePaths) {
-      TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent()).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
-        if (!((InspectionTreeNode)node).isValid()) return true;
-        if (node instanceof ProblemDescriptionNode) {
-          if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) return true;
-          final ProblemDescriptionNode descriptorNode = (ProblemDescriptionNode)node;
-          final RefEntity element = descriptorNode.getElement();
-          selectedElements.add(element);
-          CommonProblemDescriptor[] descriptors = actions.get(element);
-          final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-          final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
-                                                                                 : new CommonProblemDescriptor[]{descriptor};
-          actions.put(element, descriptors == null ?
-                               descriptorAsArray :
-                               DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
-        }
-        else if (node instanceof RefElementNode) {
-          selectedElements.add(((RefElementNode)node).getElement());
-        }
-        return true;
-      });
-    }
-
-    if (selectedElements.isEmpty()) return QuickFixAction.EMPTY;
-
-    final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
-
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions::get, tree.getSelectedDescriptors());
+    return getCommonSelectedFixes(presentation, tree.getSelectedDescriptors());
   }
 
   @Override

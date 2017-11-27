@@ -1,8 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInspection.ActionClassHolder;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -18,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -390,5 +394,57 @@ public abstract class InspectionRVContentProvider {
     for (InspectionTreeNode node : children) {
       merge(node, current, true);
     }
+  }
+
+  @NotNull
+  protected static QuickFixAction[] getCommonSelectedFixes(@NotNull InspectionToolPresentation presentation,
+                                                           @NotNull CommonProblemDescriptor[] descriptors) {
+    Map<String, LocalQuickFixWrapper> result = null;
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      if (result == null) {
+        result = new HashMap<>();
+        for (QuickFix fix : fixes) {
+          if (fix == null) continue;
+          result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, presentation.getToolWrapper()));
+        }
+      }
+      else {
+        for (String familyName : new ArrayList<>(result.keySet())) {
+          boolean isFound = false;
+          for (QuickFix fix : fixes) {
+            if (fix == null) continue;
+            if (familyName.equals(fix.getFamilyName())) {
+              isFound = true;
+              final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
+              LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
+                             "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
+                             "Please assign reported exception for the inspection \"" + presentation.getToolWrapper().getTool().getClass() + "\" (\"" +
+                             presentation.getToolWrapper().getShortName() + "\") developer");
+              try {
+                quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+              }
+              catch (AbstractMethodError e) {
+                //for plugin compatibility
+                quickFixAction.setText("Name is not available");
+              }
+              break;
+            }
+          }
+          if (!isFound) {
+            result.remove(familyName);
+            if (result.isEmpty()) {
+              return QuickFixAction.EMPTY;
+            }
+          }
+        }
+      }
+    }
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
+  }
+
+  private static Class getFixClass(QuickFix fix) {
+    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
   }
 }
