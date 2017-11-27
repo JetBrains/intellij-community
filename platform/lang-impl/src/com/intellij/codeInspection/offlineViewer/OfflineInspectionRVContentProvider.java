@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.offlineViewer;
 
@@ -57,9 +59,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (TreePath selectionPath : treePaths) {
       TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent()).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
         if (!((InspectionTreeNode)node).isValid()) return true;
-        if (node instanceof OfflineProblemDescriptorNode) {
-          if (((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
-          final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
+        if (node instanceof ProblemDescriptionNode) {
+          if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) return true;
+          final ProblemDescriptionNode descriptorNode = (ProblemDescriptionNode)node;
           final RefEntity element = descriptorNode.getElement();
           selectedElements.add(element);
           CommonProblemDescriptor[] descriptors = actions.get(element);
@@ -180,7 +182,14 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
-      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
+      RefEntity resolvedEntity = resolveResult.getResolvedEntity();
+      CommonProblemDescriptor resolvedDescriptor = resolveResult.getResolvedDescriptor();
+      if (resolvedEntity != null && resolvedDescriptor != null) {
+        presentation.getProblemElements().put(resolvedEntity, resolvedDescriptor);
+        elemNode.insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(resolvedEntity, resolvedDescriptor, presentation)), true);
+      } else {
+        elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
+      }
     }
   }
 }
