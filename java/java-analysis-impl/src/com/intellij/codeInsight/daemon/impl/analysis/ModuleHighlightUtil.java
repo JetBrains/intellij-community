@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -30,10 +31,14 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -42,7 +47,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForFile;
-import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
 public class ModuleHighlightUtil {
   private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
@@ -73,7 +77,7 @@ public class ModuleHighlightUtil {
         }
       }
       else if ((root = index.getSourceRootForFile(file)) != null) {
-        VirtualFile descriptorFile = root.findChild(MODULE_INFO_FILE);
+        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
           if (psiFile instanceof PsiJavaFile) {
@@ -85,9 +89,10 @@ public class ModuleHighlightUtil {
     else {
       Module module = index.getModuleForFile(file);
       if (module != null) {
-        boolean isTest = index.isInTestSourceContent(file);
-        List<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope()).stream()
-          .filter(f -> index.isInTestSourceContent(f) == isTest)
+        JavaSourceRootType rootType = index.isInTestSourceContent(file) ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+        List<VirtualFile> files = ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream()
+          .map(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE))
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
         if (files.size() == 1) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
@@ -139,10 +144,10 @@ public class ModuleHighlightUtil {
 
   @Nullable
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    if (!MODULE_INFO_FILE.equals(file.getName())) {
+    if (!PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorMessages.message("module.file.wrong.name");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(MODULE_INFO_FILE));
+      QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(PsiJavaModule.MODULE_INFO_FILE));
       return info;
     }
 
@@ -154,7 +159,7 @@ public class ModuleHighlightUtil {
     Module module = findModuleForFile(file);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
@@ -239,7 +244,7 @@ public class ModuleHighlightUtil {
       VirtualFile root = ProjectFileIndex.SERVICE.getInstance(file.getProject()).getSourceRootForFile(vFile);
       if (root != null && !root.equals(vFile.getParent())) {
         String message = JavaErrorMessages.message("module.file.wrong.location");
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(element)).descriptionAndTooltip(message).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
       }
