@@ -53,6 +53,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     };
     createActionsToolbar();
-    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new InspectionViewPsiTreeChangeAdapter(this), this);
 
     ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(getProject());
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
