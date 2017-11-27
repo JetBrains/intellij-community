@@ -1,12 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.ast.api.*;
@@ -216,7 +215,8 @@ final class JavacReferenceCollectorListener implements TaskListener {
                                      createReferenceHolder(),
                                      myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
                                      new ArrayList<JavacTypeCast>(),
-                                     createDefinitionHolder());
+                                     createDefinitionHolder(),
+                                     new THashSet<JavacRef>());
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
     }
 
@@ -226,6 +226,12 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     void sinkDeclaration(JavacDef def) {
      myFileData.getDefs().add(def);
+    }
+
+    void sinkImplicitToString(@Nullable JavacRef ref) {
+      if (ref != null) {
+        myFileData.getImplicitToStringRefs().add(ref);
+      }
     }
 
     public void sinkTypeCast(JavacTypeCast typeCast) {
