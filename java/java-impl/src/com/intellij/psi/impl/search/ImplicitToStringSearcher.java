@@ -65,13 +65,17 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
       VirtualFile file = entry.getKey();
       int[] offsets = entry.getValue();
       ProgressManager.checkCanceled();
-      if (!processFile(file, offsets, psiManager, targetClass, targetMethod, consumer)) {
+      if (!processFile(file, offsets, psiManager, targetMethod, consumer)) {
         return;
       }
     }
   }
 
-  private static boolean processFile(VirtualFile file, int[] offsets, PsiManager manager, PsiClass targetClass, PsiMethod targetMethod, Processor<PsiReference> consumer) {
+  private static boolean processFile(VirtualFile file,
+                                     int[] offsets,
+                                     PsiManager manager,
+                                     PsiMethod targetMethod,
+                                     Processor<PsiReference> consumer) {
     return ReadAction.compute(() -> {
       PsiFile psiFile = ObjectUtils.notNull(manager.findFile(file));
       if (!(psiFile instanceof PsiJavaFile)) {
