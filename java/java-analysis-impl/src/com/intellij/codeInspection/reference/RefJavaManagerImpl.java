@@ -381,7 +381,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public boolean shouldProcessExternalFile(@NotNull PsiFile file) {
-    return false;
+    return file instanceof PsiClassOwner;
   }
 
   @NotNull
