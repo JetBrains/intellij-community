@@ -182,7 +182,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
         if (toolWindow != null) {
-          toolWindow.activate(() -> {});
+          return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
         }
       }
       else {
