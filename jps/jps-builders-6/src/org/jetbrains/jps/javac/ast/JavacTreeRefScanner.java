@@ -107,14 +107,17 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   @Override
   public Tree visitBinary(BinaryTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
-    ExpressionTree lOp = node.getLeftOperand();
-    ExpressionTree rOp = node.getRightOperand();
-    Set<TypeElement> typeElements = extractImplicitToStringCalls(lOp, rOp, collector);
-    if (typeElements != null) {
-      for (TypeElement element : typeElements) {
-        JavacRef.JavacElementRefBase ref = collector.asJavacRef(element);
-        if (ref != null) {
-          collector.sinkImplicitToString(ref);
+    Tree.Kind kind = node.getKind();
+    if (kind == Tree.Kind.PLUS) {
+      ExpressionTree lOp = node.getLeftOperand();
+      ExpressionTree rOp = node.getRightOperand();
+      Set<TypeElement> typeElements = extractImplicitToStringCalls(lOp, rOp, collector);
+      if (typeElements != null) {
+        for (TypeElement element : typeElements) {
+          JavacRef.JavacElementRefBase ref = collector.asJavacRef(element);
+          if (ref != null) {
+            collector.sinkImplicitToString(ref);
+          }
         }
       }
     }

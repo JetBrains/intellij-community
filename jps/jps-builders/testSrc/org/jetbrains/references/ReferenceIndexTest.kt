@@ -183,5 +183,17 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testImplicitToString() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testImplicitToStringLong() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testImplicitToStringLongObject() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testImplicitToStringHierarchy() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 
