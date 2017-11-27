@@ -78,6 +78,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove redundant constructor") ||
                                      intentionText.startsWith("Remove block marker comments") ||
                                      intentionText.startsWith("Remove redundant method") ||
+                                     intentionText.startsWith("Replace unicode escape with character") ||
                                      intentionText.startsWith("Remove 'serialVersionUID' field") ||
                                      intentionText.matches("Simplify '.*' to .*")
       ;
