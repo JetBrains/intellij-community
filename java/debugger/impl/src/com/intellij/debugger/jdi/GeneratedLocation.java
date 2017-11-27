@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -36,7 +34,7 @@ public class GeneratedLocation implements Location {
 
   @Override
   public long codeIndex() {
-    throw new IllegalStateException();
+    return myLineNumber; // for more or less correct LocationImpl.equals
   }
 
   @Override
