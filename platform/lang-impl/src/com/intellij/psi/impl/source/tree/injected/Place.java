@@ -23,20 +23,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author cdr
-*/
 public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
   Place(@NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
     super(shreds);
   }
 
   @NotNull
-  public SmartPsiElementPointer<PsiLanguageInjectionHost> getHostPointer() {
+  SmartPsiElementPointer<PsiLanguageInjectionHost> getHostPointer() {
     return ((ShredImpl)get(0)).getSmartPointer();
   }
 
-  public boolean isValid() {
+  boolean isValid() {
     for (PsiLanguageInjectionHost.Shred shred : this) {
       if (!shred.isValid()) {
         return false;
@@ -45,7 +42,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
     return true;
   }
 
-  public void dispose() {
+  void dispose() {
     for (PsiLanguageInjectionHost.Shred shred : this) {
       shred.dispose();
     }
