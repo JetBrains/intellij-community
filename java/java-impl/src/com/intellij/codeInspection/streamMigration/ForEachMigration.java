@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -59,7 +60,7 @@ class ForEachMigration extends BaseStreamApiMigration {
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement loopStatement = tb.getStreamSourceStatement();
-    restoreComments(loopStatement, body);
+    CommentTracker ct = new CommentTracker();
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
@@ -78,21 +79,20 @@ class ForEachMigration extends BaseStreamApiMigration {
       }
       String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, call, false).names[0];
 
-      String streamText = tb.add(new StreamApiMigrationInspection.MapOp(mapExpression, tb.getVariable(), addedType)).generate();
-      String forEachBody = varName + "->" + call.getMethodExpression().getText() + "(" + varName + ")";
+      String streamText = tb.add(new StreamApiMigrationInspection.MapOp(mapExpression, tb.getVariable(), addedType)).generate(ct);
+      String forEachBody = varName + "->" + ct.text(call.getMethodExpression()) + "(" + varName + ")";
       String callText = streamText + "." + getReplacement() + "(" + forEachBody + ");";
-      return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
+      return ct.replaceAndRestoreComments(loopStatement, callText);
     }
 
     tb.replaceContinueWithReturn(factory);
 
-    String stream = tb.generate(true) + "." + getReplacement() + "(";
-    PsiElement block = tb.convertToElement(factory);
+    String stream = tb.generate(ct, true) + "." + getReplacement() + "(";
+    PsiElement block = tb.convertToElement(ct, factory);
 
     final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
-    PsiExpressionStatement callStatement = (PsiExpressionStatement)factory
-      .createStatementFromText(stream + functionalExpressionText + ");", loopStatement);
-    callStatement = (PsiExpressionStatement)loopStatement.replace(callStatement);
+    PsiExpressionStatement callStatement =
+      (PsiExpressionStatement)ct.replaceAndRestoreComments(loopStatement, stream + functionalExpressionText + ");");
 
     final PsiExpressionList argumentList = ((PsiCallExpression)callStatement.getExpression()).getArgumentList();
     LOG.assertTrue(argumentList != null, callStatement.getText());

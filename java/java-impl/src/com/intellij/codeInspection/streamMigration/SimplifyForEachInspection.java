@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    String createReplacement() {
+    String createReplacement(CommentTracker ct) {
       return myExpression.getText() + (myIsCollectionForEach? ".stream()" : "");
     }
 

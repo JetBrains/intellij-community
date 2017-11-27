@@ -665,7 +665,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return StreamEx.ofNullable(myExpression);
     }
 
-    abstract String createReplacement();
+    abstract String createReplacement(CommentTracker ct);
 
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return false;
@@ -689,11 +689,11 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public String createReplacement() {
+    public String createReplacement(CommentTracker ct) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myExpression.getProject());
-      PsiExpression intermediate = makeIntermediateExpression(factory);
+      PsiExpression intermediate = makeIntermediateExpression(ct, factory);
       PsiExpression expression =
-        myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(intermediate), myExpression) : intermediate;
+        myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(intermediate, ct), myExpression) : intermediate;
       return "." + getOpName() + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
     }
 
@@ -702,8 +702,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return "filter";
     }
 
-    PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
-      return myExpression;
+    PsiExpression makeIntermediateExpression(CommentTracker ct, PsiElementFactory factory) {
+      return ct.markUnchanged(myExpression);
     }
   }
 
@@ -731,9 +731,9 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
 
     @Override
-    PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
-      return factory.createExpressionFromText(mySource.createReplacement() + ".anyMatch(" +
-                                              LambdaUtil.createLambda(myMatchVariable, myExpression) + ")", myExpression);
+    PsiExpression makeIntermediateExpression(CommentTracker ct, PsiElementFactory factory) {
+      return factory.createExpressionFromText(mySource.createReplacement(ct) + ".anyMatch(" +
+                                              ct.lambdaText(myMatchVariable, myExpression) + ")", myExpression);
     }
 
     @Override
@@ -756,8 +756,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public String createReplacement() {
-      return StreamRefactoringUtil.generateMapOperation(myVariable, myType, myExpression);
+    public String createReplacement(CommentTracker ct) {
+      return StreamRefactoringUtil.generateMapOperation(myVariable, myType, ct.markUnchanged(myExpression));
     }
 
     @Override
@@ -775,11 +775,11 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public String createReplacement() {
+    public String createReplacement(CommentTracker ct) {
       String operation = "flatMap";
       PsiType inType = myVariable.getType();
       PsiType outType = mySource.getVariable().getType();
-      String lambda = myVariable.getName() + " -> " + getStreamExpression();
+      String lambda = myVariable.getName() + " -> " + getStreamExpression(ct);
       if (outType instanceof PsiPrimitiveType && !outType.equals(inType)) {
         if (outType.equals(PsiType.INT)) {
           operation = "flatMapToInt";
@@ -802,8 +802,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    String getStreamExpression() {
-      return mySource.createReplacement();
+    String getStreamExpression(CommentTracker ct) {
+      return mySource.createReplacement(ct);
     }
 
     @Override
@@ -839,8 +839,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
-      return ".limit(" + getLimitExpression() + ")";
+    String createReplacement(CommentTracker ct) {
+      return ".limit(" + getLimitExpression(ct) + ")";
     }
 
     PsiLocalVariable getCounterVariable() {
@@ -863,9 +863,9 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return variable == myCounterVariable && PsiTreeUtil.isAncestor(myCounter, reference, false);
     }
 
-    private String getLimitExpression() {
+    private String getLimitExpression(CommentTracker ct) {
       if (myDelta == 0) {
-        return myExpression.getText();
+        return ct.text(myExpression);
       }
       if (myExpression instanceof PsiLiteralExpression) {
         Object value = ((PsiLiteralExpression)myExpression).getValue();
@@ -873,7 +873,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
           return String.valueOf(((Number)value).longValue() + myDelta);
         }
       }
-      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+" + myDelta;
+      return ct.text(myExpression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+" + myDelta;
     }
   }
 
@@ -883,7 +883,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
+    String createReplacement(CommentTracker ct) {
       return ".distinct()";
     }
   }
@@ -930,8 +930,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
-      return myExpression.getText() + ".lines()";
+    String createReplacement(CommentTracker ct) {
+      return ct.text(myExpression) + ".lines()";
     }
 
     @Override
@@ -1068,13 +1068,13 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
+    String createReplacement(CommentTracker ct) {
       if (myExpression instanceof PsiNewExpression) {
         PsiArrayInitializerExpression initializer = ((PsiNewExpression)myExpression).getArrayInitializer();
         if (initializer != null) {
           PsiElement[] children = initializer.getChildren();
           if (children.length > 2) {
-            String initializerText = StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining();
+            String initializerText = StreamEx.of(children, 1, children.length - 1).map(ct::text).joining();
             PsiType type = myExpression.getType();
             if (type instanceof PsiArrayType) {
               PsiType componentType = ((PsiArrayType)type).getComponentType();
@@ -1094,7 +1094,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
           }
         }
       }
-      return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + myExpression.getText() + ")";
+      return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + ct.text(myExpression) + ")";
     }
 
     @Nullable
@@ -1120,8 +1120,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
-      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()" + tryUnbox(myVariable);
+    String createReplacement(CommentTracker ct) {
+      return ct.text(myExpression, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".stream()" + tryUnbox(myVariable);
     }
 
     @Contract("null, _ -> false")
@@ -1170,10 +1170,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public String createReplacement() {
+    public String createReplacement(CommentTracker ct) {
       String className = myVariable.getType().equals(PsiType.LONG) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
       String methodName = myIncluding ? "rangeClosed" : "range";
-      return className + "." + methodName + "(" + myExpression.getText() + ", " + myBound.getText() + ")";
+      return className + "." + methodName + "(" + ct.text(myExpression) + ", " + ct.text(myBound) + ")";
     }
 
     CountingLoopSource withBound(PsiExpression bound) {
@@ -1277,12 +1277,12 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    String createReplacement() {
+    String createReplacement(CommentTracker ct) {
       String lambda;
       if (myOpType != null) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
         PsiExpression expression = myUnaryExpression == null ? myExpression : factory.createExpressionFromText("1", null);
-        String expressionText = ParenthesesUtils.getText(expression, ParenthesesUtils.getPrecedenceForOperator(myOpType));
+        String expressionText = ParenthesesUtils.getText(ct.markUnchanged(expression), ParenthesesUtils.getPrecedenceForOperator(myOpType));
         String lambdaBody = myVariable.getName() + getOperationSign(myOpType) + expressionText;
         if (!myVariable.getType().equals(expression.getType())) {
           lambdaBody = ("(" + myVariable.getType().getCanonicalText() + ")") + "(" + lambdaBody + ")";
@@ -1290,11 +1290,11 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
         lambda = myVariable.getName() + "->" + lambdaBody;
       }
       else {
-        lambda = LambdaUtil.createLambda(myVariable, myExpression);
+        lambda = ct.lambdaText(myVariable, myExpression);
       }
-      String maybeCondition = myCondition != null ? LambdaUtil.createLambda(myVariable, myCondition) + "," : "";
+      String maybeCondition = myCondition != null ? ct.lambdaText(myVariable, myCondition) + "," : "";
 
-      return getStreamClass(myVariable.getType()) + ".iterate(" + myInitializer.getText() + "," + maybeCondition + lambda + ")";
+      return getStreamClass(myVariable.getType()) + ".iterate(" + ct.text(myInitializer) + "," + maybeCondition + lambda + ")";
     }
 
     @Contract(value = "null -> null", pure = true)

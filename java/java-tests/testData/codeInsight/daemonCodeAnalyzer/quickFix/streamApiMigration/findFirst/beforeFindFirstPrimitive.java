@@ -7,7 +7,7 @@ public class Main {
     for(String str : dat<caret>a) {
       if(str.startsWith("xyz")) {
         int len = str.length();
-        if(len > 10) {
+        if(len /*bigger*/> 10 /*ten*/) {
           return len;
         }
       }
