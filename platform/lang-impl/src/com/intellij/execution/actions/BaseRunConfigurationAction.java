@@ -62,7 +62,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (Registry.is("suggest.all.run.configuration.from.context") || context.findExisting() == null) {
+    if (Registry.is("suggest.all.run.configurations.from.context") || context.findExisting() == null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.size() > 1) {
         final AnAction[] children = new AnAction[producers.size()];

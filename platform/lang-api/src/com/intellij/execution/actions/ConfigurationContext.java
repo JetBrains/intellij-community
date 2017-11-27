@@ -192,7 +192,7 @@ public class ConfigurationContext {
   public RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) {
       RunnerAndConfigurationSettings configuration = myExistingConfiguration.get();
-      if (configuration == null || !Registry.is("suggest.all.run.configuration.from.context") || configuration.equals(myConfiguration)) {
+      if (configuration == null || !Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
         return configuration;
       }
     }
@@ -234,7 +234,7 @@ public class ConfigurationContext {
     for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(getProject())) {
       RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
-        if (!Registry.is("suggest.all.run.configuration.from.context") || configuration.equals(myConfiguration)) {
+        if (!Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
           myExistingConfiguration.set(configuration);
         }
       }
