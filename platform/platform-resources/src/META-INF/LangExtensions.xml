@@ -12,6 +12,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInspection.actions.CleanupInspectionUtil"
+                        serviceImplementation="com.intellij.codeInspection.actions.CleanupInspectionUtilImpl"/>
+
     <applicationService serviceInterface="com.intellij.lang.cacheBuilder.CacheBuilderRegistry"
                         serviceImplementation="com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl"/>
 
