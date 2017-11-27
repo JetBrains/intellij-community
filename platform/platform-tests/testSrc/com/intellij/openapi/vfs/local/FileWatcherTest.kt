@@ -403,7 +403,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
     val rootRequest = watch(fsRoot)
-    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY, true)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("") } }, mapOf(file2 to 'U'))
@@ -549,7 +549,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     return vFile
   }
 
-  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY, filter: Boolean = false) {
+  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
     LOG.debug("** waiting for ${expectedOps}")
     watcherEvents.down()
     alarm.cancelAllRequests()
@@ -564,7 +564,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
-    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !filter || !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()
