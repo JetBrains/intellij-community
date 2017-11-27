@@ -35,7 +35,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters parameters, @NotNull Processor<PsiReference> consumer) {
     PsiMethod targetMethod = parameters.getMethod();
-    if (!"toString".equals(targetMethod.getName()) || targetMethod.getParameters().length != 0) {
+    if (ReadAction.compute(() -> !"toString".equals(targetMethod.getName()) || targetMethod.getParameters().length != 0)) {
       return;
     }
     PsiClass targetClass = ReadAction.compute(() -> targetMethod.getContainingClass());
