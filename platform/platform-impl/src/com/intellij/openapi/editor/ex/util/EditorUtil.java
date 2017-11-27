@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -766,5 +767,19 @@ public final class EditorUtil {
         if (animationWasEnabled) scrollingModel.enableAnimation();
       }
     }
+  }
+
+  @NotNull
+  public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
+    int codePoint = (int)c;
+    if (!Character.isValidCodePoint(codePoint)) {
+      return fallback;
+    }
+
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes foldedTextAttributes = scheme.getAttributes(textAttributesKey);
+    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, foldedTextAttributes.getFontType(),
+                                                                            scheme.getFontPreferences(), null);
+    return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
   }
 }
