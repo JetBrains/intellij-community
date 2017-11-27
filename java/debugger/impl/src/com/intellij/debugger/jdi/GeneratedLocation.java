@@ -76,4 +76,8 @@ public class GeneratedLocation implements Location {
   public int compareTo(@NotNull Location o) {
     throw new IllegalStateException();
   }
+
+  public String toString() {
+    return myReferenceType.name() + ":" + myLineNumber;
+  }
 }
