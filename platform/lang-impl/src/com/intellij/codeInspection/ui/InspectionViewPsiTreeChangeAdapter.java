@@ -37,7 +37,6 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
 
   @Override
   public void filesChanged(@NotNull List<VFileEvent> events) {
-    //TODO filter out non project files
     boolean someFilesWereDeletedOrMoved = false;
     Set<VirtualFile> filesToCheck = new THashSet<>();
     for (VFileEvent event : events) {
