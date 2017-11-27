@@ -34,7 +34,7 @@ public class GeneratedLocation implements Location {
 
   @Override
   public long codeIndex() {
-    return myLineNumber; // for more or less correct LocationImpl.equals
+    return -2; // for more or less correct LocationImpl.equals
   }
 
   @Override
