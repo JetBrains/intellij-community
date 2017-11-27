@@ -33,11 +33,11 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
 
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters parameters, @NotNull Processor<PsiReference> consumer) {
-    PsiMethod method = parameters.getMethod();
-    if (!"toString".equals(method.getName()) || method.getParameters().length != 0) {
+    PsiMethod targetMethod = parameters.getMethod();
+    if (!"toString".equals(targetMethod.getName()) || targetMethod.getParameters().length != 0) {
       return;
     }
-    PsiClass targetClass = ReadAction.compute(() -> method.getContainingClass());
+    PsiClass targetClass = ReadAction.compute(() -> targetMethod.getContainingClass());
     if (targetClass == null) {
       return;
     }
@@ -45,8 +45,8 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
     DumbService dumbService = DumbService.getInstance(project);
     Map<VirtualFile, int[]> fileOffsets = new THashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
-      GlobalSearchScope scopeWithoutToString = CompilerReferenceService.getInstance(project).getScopeWithoutImplicitToStringCodeReferences(method);
-
+      CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+      GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(targetClass);
       GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
                                                                            ? parameters.getEffectiveSearchScope()
                                                                            : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getEffectiveSearchScope()), project);
@@ -64,7 +64,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
       VirtualFile file = entry.getKey();
       int[] offsets = entry.getValue();
       ProgressManager.checkCanceled();
-      if (!processFile(file, offsets, psiManager, targetClass, method, consumer)) {
+      if (!processFile(file, offsets, psiManager, targetClass, targetMethod, consumer)) {
         return;
       }
     }

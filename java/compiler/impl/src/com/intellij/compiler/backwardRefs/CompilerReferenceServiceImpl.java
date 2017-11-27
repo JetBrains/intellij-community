@@ -40,7 +40,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -158,32 +157,33 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
-    return getScopeWithoutCodeReferences(element,
-                                          e -> buildScopeWithoutReferences(getReferentFileIds(e)),
-                                         "scope without code references");
-  }
-
-  @Nullable
-  @Override
-  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement toStringMethod) {
-    return getScopeWithoutCodeReferences(toStringMethod,
-                                          e -> buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(e)),
-                                         "scope without implicit toString references");
-  }
-
-  private GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element,
-                                                          @NotNull Function<PsiElement, GlobalSearchScope> scopeCalculator,
-                                                          @NotNull String operationName) {
     if (!isServiceEnabledFor(element)) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(scopeCalculator.fun(element),
-                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this));
+                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFileIds(element)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
     }
-    catch (RuntimeException e) {
-      return onException(e, operationName);
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without code references");
+    }
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+    if (!isServiceEnabledFor(aClass)) return null;
+
+    try {
+      return CachedValuesManager.getCachedValue(aClass,
+                                                () -> CachedValueProvider.Result.create(
+                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
+    }
+    catch (RuntimeException e1) {
+      return onException(e1, "scope without implicit toString references");
     }
   }
 
