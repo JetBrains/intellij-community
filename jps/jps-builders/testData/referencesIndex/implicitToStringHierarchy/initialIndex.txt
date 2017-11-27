@@ -21,7 +21,4 @@ Members Signatures:
 
 
 Implicit toString():
-Foo in Foo
-FooEx in Foo
 FooExEx in Foo
-java.lang.Object in Foo

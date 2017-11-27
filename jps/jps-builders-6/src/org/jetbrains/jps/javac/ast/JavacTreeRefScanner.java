@@ -4,7 +4,6 @@ package org.jetbrains.jps.javac.ast;
 import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
-import gnu.trove.THashSet;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -15,7 +14,6 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -111,13 +109,11 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (kind == Tree.Kind.PLUS) {
       ExpressionTree lOp = node.getLeftOperand();
       ExpressionTree rOp = node.getRightOperand();
-      Set<TypeElement> typeElements = extractImplicitToStringCalls(lOp, rOp, collector);
-      if (typeElements != null) {
-        for (TypeElement element : typeElements) {
-          JavacRef.JavacElementRefBase ref = collector.asJavacRef(element);
-          if (ref != null) {
-            collector.sinkImplicitToString(ref);
-          }
+      TypeElement typeElement = extractImplicitToStringCalls(lOp, rOp, collector);
+      if (typeElement != null) {
+        JavacRef.JavacElementRefBase ref = collector.asJavacRef(typeElement);
+        if (ref != null) {
+          collector.sinkImplicitToString(ref);
         }
       }
     }
@@ -344,9 +340,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     return false;
   }
 
-  private static Set<TypeElement> extractImplicitToStringCalls(Tree lOp,
-                                                               Tree rOp,
-                                                               JavacReferenceCollectorListener.ReferenceCollector collector) {
+  private static TypeElement extractImplicitToStringCalls(Tree lOp,
+                                                          Tree rOp,
+                                                          JavacReferenceCollectorListener.ReferenceCollector collector) {
     TypeMirror lTypeMirror = collector.getType(lOp);
     if (lTypeMirror == null) return null;
     Element lType = collector.getTypeUtility().asElement(lTypeMirror);
@@ -357,14 +353,10 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (!(rType instanceof TypeElement)) return null;
 
     if (isToStringImplicitCall((TypeElement)lType, (TypeElement)rType, collector)) {
-      Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)rType, result, collector.getTypeUtility());
-      return result;
+      return (TypeElement)rType;
     }
     if (isToStringImplicitCall((TypeElement)rType, (TypeElement)lType, collector)) {
-      Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)lType, result, collector.getTypeUtility());
-      return result;
+      return (TypeElement)lType;
     }
     return null;
   }
@@ -372,20 +364,5 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   private static boolean isToStringImplicitCall(TypeElement strElement, TypeElement element, JavacReferenceCollectorListener.ReferenceCollector collector) {
     TypeElement stringEthalone = collector.getNameTable().getStringElement();
     return strElement == stringEthalone && element != stringEthalone;
-  }
-
-  private static void visitTypeHierarchy(TypeElement element, Set<TypeElement> collector, Types typeUtility) {
-    if (collector.add(element)) {
-      TypeMirror superclass = element.getSuperclass();
-      Element superClass = typeUtility.asElement(superclass);
-      if (superClass instanceof TypeElement) {
-        visitTypeHierarchy((TypeElement)superClass, collector, typeUtility);
-      }
-      for (TypeMirror mirror : element.getInterfaces()) {
-        if (mirror instanceof TypeElement) {
-          visitTypeHierarchy((TypeElement)mirror, collector, typeUtility);
-        }
-      }
-    }
   }
 }
