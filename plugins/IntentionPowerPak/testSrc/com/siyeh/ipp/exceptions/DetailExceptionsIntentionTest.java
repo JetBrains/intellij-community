@@ -17,6 +17,8 @@ public class DetailExceptionsIntentionTest extends IPPTestCase {
   public void testPolyadicParentheses() { doTest(); }
   public void testCaretAtParameter() { doTest(); }
   public void testCommonSuperType() { doTest(); }
+  public void testCatchBody() { assertIntentionNotAvailable(); }
+
 
   @Override
   protected String getIntentionName() {
