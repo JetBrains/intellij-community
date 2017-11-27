@@ -472,7 +472,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
 
       fireStateChanged();
-      refreshSelection();
     }
   }
 
