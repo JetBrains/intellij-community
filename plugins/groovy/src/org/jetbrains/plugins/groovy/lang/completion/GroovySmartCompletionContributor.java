@@ -13,8 +13,8 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +26,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -157,7 +158,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                       context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
               }
 
-              final CodeStyleSettings csSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+              final CommonCodeStyleSettings csSettings =
+                CodeStyleSettingsManager.getSettings(context.getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
               final int oldTail = context.getTailOffset();
               context.setTailOffset(GroovyCompletionUtil.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 
