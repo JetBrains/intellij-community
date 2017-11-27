@@ -43,7 +43,7 @@ public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addFileToProject("Bar.groovy", "class Bar { void m() { new Foo(); }}");
     Project project = myFixture.getProject();
     RefManagerImpl refManager =
-      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext(false));    refManager.findAllDeclarations();
+      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext(false));
     refManager.findAllDeclarations();
 
     RefElement refClass = refManager.getReference(aClass);
