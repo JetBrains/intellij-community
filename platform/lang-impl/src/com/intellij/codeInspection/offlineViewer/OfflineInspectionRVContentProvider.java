@@ -53,14 +53,6 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return getCommonFixes(presentation, tree.getSelectedDescriptors());
   }
 
-  @NotNull
-  @Override
-  public QuickFixes getAllQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
-    GlobalInspectionContextImpl context = tree.getContext();
-    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return new QuickFixes.QuickFixesImpl(getAllFixes(presentation, tree.getSelectedDescriptors()));
-  }
-
   @Override
   public boolean isContentLoaded() {
     return false;

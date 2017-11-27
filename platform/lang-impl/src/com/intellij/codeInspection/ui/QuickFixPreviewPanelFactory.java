@@ -5,7 +5,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
-import com.intellij.codeInspection.ex.QuickFixes;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -52,13 +51,13 @@ public class QuickFixPreviewPanelFactory {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
-      QuickFixAction[] fixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
+      QuickFixAction[] commonFixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
       boolean multipleDescriptors = myView.getTree().getSelectedDescriptors(false, null, false, true).length > 1;
-      QuickFixes allFixes = null;
-      if (multipleDescriptors && fixes.length == 0) {
-        allFixes = view.getProvider().getAllQuickFixes(myWrapper, view.getTree());
+      QuickFixAction[] partialFixes = QuickFixAction.EMPTY;
+      if (multipleDescriptors && commonFixes.length == 0) {
+        partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, view.getTree());
       }
-      myEmpty = fillPanel(fixes, allFixes, multipleDescriptors, view);
+      myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
     }
 
     public boolean isEmpty() {
@@ -66,7 +65,7 @@ public class QuickFixPreviewPanelFactory {
     }
 
     private boolean fillPanel(@NotNull QuickFixAction[] fixes,
-                              @Nullable QuickFixes allFixes,
+                              @NotNull QuickFixAction[] partialFixes,
                               boolean multipleDescriptors,
                               @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes.length != 0;
@@ -87,6 +86,11 @@ public class QuickFixPreviewPanelFactory {
       if (suppressionCombo != null) {
         actions.add(suppressionCombo);
       }
+
+      if (partialFixes.length != 0) {
+        actions.add(createPartialFixCombo(partialFixes));
+      }
+
       if (actions.getChildrenCount() != 0) {
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
@@ -101,7 +105,30 @@ public class QuickFixPreviewPanelFactory {
         int bottom = hasFixes ? 0 : 8;
         setBorder(JBUI.Borders.empty(top, left, bottom, 0));
       }
+
+
       return !hasComponents;
+    }
+
+    @NotNull
+    private static AnAction createPartialFixCombo(QuickFixAction[] fixes) {
+      DefaultActionGroup group = new DefaultActionGroup();
+      for (QuickFixAction fix : fixes) {
+        group.add(fix);
+      }
+
+      return new ComboBoxAction() {
+        {
+          getTemplatePresentation().setText("Fix partially");
+          setSmallVariant(false);
+        }
+
+        @NotNull
+        @Override
+        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+          return group;
+        }
+      };
     }
 
     @Nullable
