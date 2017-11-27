@@ -6,7 +6,10 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -851,7 +854,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     @Override
     void cleanUp() {
       if (myCounterVariable != null) {
-        myCounterVariable.delete();
+        new CommentTracker().deleteAndRestoreComments(myCounterVariable);
       }
     }
 
@@ -934,7 +937,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     @Override
     void cleanUp() {
       if (myDeleteVariable) {
-        myVariable.delete();
+        new CommentTracker().deleteAndRestoreComments(myVariable);
       }
     }
 
