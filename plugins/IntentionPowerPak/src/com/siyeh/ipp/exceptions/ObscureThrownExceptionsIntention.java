@@ -46,8 +46,7 @@ public class ObscureThrownExceptionsIntention extends MutablyNamedIntention {
       return;
     }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    final PsiClassType classType = factory.createType(commonSuperClass);
-    final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
+    final PsiJavaCodeReferenceElement referenceElement = factory.createClassReferenceElement(commonSuperClass);
     final PsiReferenceList newReferenceList = factory.createReferenceList(new PsiJavaCodeReferenceElement[]{referenceElement});
     referenceList.replace(newReferenceList);
   }
