@@ -12,8 +12,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,12 +28,12 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
 
   private final Set<VirtualFile> myFilesToProcess = new THashSet<>(); // guarded by myFilesToProcess
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
-  private final MergingUpdateQueue myUpdateQueue;
+  private final Alarm myUpdateQueue;
 
   public InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
-    myUpdateQueue = new MergingUpdateQueue("inspection.view.listener.queue", 200, true, null, view, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, view);
   }
 
   @Override
@@ -105,29 +103,54 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   }
 
   private void invokeQueue() {
-    myUpdateQueue.queue(new Update("inspection.view.update") {
-      @Override
-      public boolean canEat(Update update) {
-        return true;
+    myUpdateQueue.cancelAllRequests();
+    myUpdateQueue.addRequest(() -> {
+      boolean[] needUpdateUI = {false};
+      Processor<InspectionTreeNode> nodeProcessor = null;
+
+      if (myNeedReValidate.compareAndSet(true, false)) {
+        nodeProcessor = (node) -> {
+          if (myView.isDisposed()) {
+            return false;
+          }
+
+          if (node instanceof SuppressableInspectionTreeNode) {
+            RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
+            if (element != null) {
+              VirtualFile vFile = element.getPointer().getVirtualFile();
+              if (vFile == null || !vFile.isValid()) {
+                dropNodeCache((SuppressableInspectionTreeNode)node);
+                if (!needUpdateUI[0]) {
+                  needUpdateUI[0] = true;
+                }
+              }
+            }
+          }
+
+          return true;
+        };
       }
 
-      @Override
-      public void run() {
+      Set<VirtualFile> filesToCheck;
+      synchronized (myFilesToProcess) {
+        filesToCheck = new THashSet<>(myFilesToProcess);
+        myFilesToProcess.clear();
+      }
+      if (!filesToCheck.isEmpty()) {
+        Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
+        Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
+          if (myView.isDisposed()) {
+            return false;
+          }
 
-        boolean[] needUpdateUI = {false};
-        Processor<InspectionTreeNode> nodeProcessor = null;
-
-        if (myNeedReValidate.compareAndSet(true, false)) {
-          nodeProcessor = (node) -> {
-            if (myView.isDisposed()) {
-              return false;
-            }
-
-            if (node instanceof SuppressableInspectionTreeNode) {
-              RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
-              if (element != null) {
-                VirtualFile vFile = element.getPointer().getVirtualFile();
-                if (vFile == null || !vFile.isValid()) {
+          if (node instanceof SuppressableInspectionTreeNode) {
+            RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
+            if (element != null) {
+              SmartPsiElementPointer pointer = element.getPointer();
+              if (pointer != null) {
+                VirtualFile vFile = pointer.getVirtualFile();
+                if (filesToCheck.contains(vFile)) {
+                  unPresentFiles.remove(vFile);
                   dropNodeCache((SuppressableInspectionTreeNode)node);
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
@@ -135,60 +158,27 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
                 }
               }
             }
+          }
 
-            return true;
-          };
-        }
-
-        Set<VirtualFile> filesToCheck;
-        synchronized (myFilesToProcess) {
-          filesToCheck = new THashSet<>(myFilesToProcess);
-          myFilesToProcess.clear();
-        }
-        if (!filesToCheck.isEmpty()) {
-          Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
-          Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
-            if (myView.isDisposed()) {
-              return false;
-            }
-
-            if (node instanceof SuppressableInspectionTreeNode) {
-              RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
-              if (element != null) {
-                SmartPsiElementPointer pointer = element.getPointer();
-                if (pointer != null) {
-                  VirtualFile vFile = pointer.getVirtualFile();
-                  if (filesToCheck.contains(vFile)) {
-                    unPresentFiles.remove(vFile);
-                    dropNodeCache((SuppressableInspectionTreeNode)node);
-                    if (!needUpdateUI[0]) {
-                      needUpdateUI[0] = true;
-                    }
-                  }
-                }
-              }
-            }
-
-            return true;
-          };
-          nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
-          myUnPresentEditedFiles.addAll(unPresentFiles);
-        }
-
-        synchronized (myView.getTreeStructureUpdateLock()) {
-          processNodesIfNeed(myView.getTree().getRoot(), Objects.requireNonNull(nodeProcessor));
-        }
-
-        if (needUpdateUI[0] && !myAlarm.isDisposed()) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
-        }
+          return true;
+        };
+        nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
+        myUnPresentEditedFiles.addAll(unPresentFiles);
       }
 
-      private void dropNodeCache(SuppressableInspectionTreeNode node) {
-        ReadAction.run(() -> node.dropCache());
+      synchronized (myView.getTreeStructureUpdateLock()) {
+        processNodesIfNeed(myView.getTree().getRoot(), Objects.requireNonNull(nodeProcessor));
       }
-    });
+
+      if (needUpdateUI[0] && !myAlarm.isDisposed()) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
+      }
+    }, 200);
+  }
+
+  private static void dropNodeCache(SuppressableInspectionTreeNode node) {
+    ReadAction.run(() -> node.dropCache());
   }
 
   private static void processNodesIfNeed(InspectionTreeNode node, Processor<InspectionTreeNode> processor) {
