@@ -48,9 +48,10 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
         final boolean mayChangeSemantics;
         final CommonPartType type;
         boolean forceInfo = false;
-        if (ImplicitElse.from(thenStatements, elseStatements, ifStatement) != null) {
+        ImplicitElse implicitElse = ImplicitElse.from(thenStatements, elseStatements, ifStatement);
+        if (implicitElse != null) {
           mayChangeSemantics = false;
-          type = CommonPartType.COMPLETE_DUPLICATE;
+          type = implicitElse.getType();
         }
         else {
           ThenElse thenElse = ThenElse.from(ifStatement, thenStatements, elseStatements, isOnTheFly);
@@ -415,7 +416,8 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
     WITH_VARIABLES_EXTRACT("inspection.common.if.parts.message.with.variables.extract"),
     WITHOUT_VARIABLES_EXTRACT("inspection.common.if.parts.message.without.variables.extract"),
     WHOLE_BRANCH("inspection.common.if.parts.message.whole.branch"),
-    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate");
+    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate"),
+    EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect");
 
     private @NotNull final String myBundleKey;
 
@@ -560,6 +562,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       boolean returnsNothing = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
       ImplicitElseData implicitElse = getIfWithImplicitElse(ifStatement, thenBranch, returnsNothing);
       if (implicitElse == null) return null;
+      if (implicitElse.myImplicitElseStatements.isEmpty()) return null;
       if (implicitElse.myImplicitElseStatements.size() == 1) {
         PsiStatement statement = implicitElse.myImplicitElseStatements.get(0);
         if (statement instanceof PsiReturnStatement) {
@@ -573,6 +576,16 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       addLocalVariables(variables, implicitElse.myImplicitElseStatements);
       if (!branchesAreEquivalent(thenBranch, elseStatements, new LocalEquivalenceChecker(variables))) return null;
       return new ImplicitElse(implicitElse.myIfWithImplicitElse);
+    }
+
+    CommonPartType getType() {
+      PsiExpression condition = myIfToDelete.getCondition();
+      if(condition != null) {
+        if (SideEffectChecker.mayHaveSideEffects(condition)) {
+          return CommonPartType.EXTRACT_SIDE_EFFECTS;
+        }
+      }
+      return CommonPartType.COMPLETE_DUPLICATE;
     }
   }
 
@@ -773,10 +786,8 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
           PsiStatement thenStmt = thenBranch[thenLen - i - 1];
           PsiStatement elseStmt = elseBranch[elseLen - i - 1];
           if (equivalence.statementsAreEquivalent(thenStmt, elseStmt)) {
-            boolean canBeExtractedOutOfIf = StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
-              .select(PsiReferenceExpression.class)
-              .map(ref -> ref.resolve())
-              .select(PsiLocalVariable.class)
+            boolean canBeExtractedOutOfIf = VariableAccessUtils.collectUsedVariables(thenStmt).stream()
+              .filter(var -> var instanceof PsiLocalVariable)
               .filter(var -> PsiTreeUtil.isAncestor(ifStatement, var, false))
               .allMatch(var -> extractedVariables.contains(var));
             if (!canBeExtractedOutOfIf) break;
@@ -805,12 +816,10 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
           ExtractionUnit unit = extractHeadCommonStatement(thenStmt, elseStmt, conditionVariables, equivalence);
           if (unit == null) break;
           if (!isOnTheFly && unit.haveSideEffects()) break;
-          boolean dependsOnVariableWithNonEquivalentInitializer =
-            StreamEx.ofTree((PsiElement)thenStmt, stmt -> StreamEx.of(stmt.getChildren()))
-              .select(PsiReferenceExpression.class)
-              .map(ref -> ref.resolve())
-              .select(PsiLocalVariable.class)
-              .anyMatch(var -> notEquivalentVariableDeclarations.contains(var));
+          boolean dependsOnVariableWithNonEquivalentInitializer = VariableAccessUtils.collectUsedVariables(thenStmt).stream()
+            .filter(var -> var instanceof PsiLocalVariable)
+            .anyMatch(var -> notEquivalentVariableDeclarations.contains(var));
+
           if (dependsOnVariableWithNonEquivalentInitializer) {
             break;
           }
@@ -836,10 +845,8 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       if (expressionStatement == null) return false;
       PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return false;
-      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-      String name = call.getMethodExpression().getQualifiedName();
-      for (int i = 1; i < SIMILAR_STATEMENTS_COUNT; i++) {
-        if (isSimilarCall(thenBranch[i], qualifier, name)) return false;
+      for (int i = thenBranch.length - 1; i >= 0; i--) {
+        if (!isSimilarCall(thenBranch[i], call)) return false;
       }
       return true;
     }
@@ -850,24 +857,42 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       if (expressionStatement == null) return false;
       PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return false;
-      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-      String name = call.getMethodExpression().getQualifiedName();
       for (int i = thenBranch.length - 1; i >= 0; i--) {
-        if (isSimilarCall(thenBranch[i], qualifier, name)) return false;
+        if (!isSimilarCall(thenBranch[i], call)) return false;
       }
       return true;
     }
 
-    private static boolean isSimilarCall(PsiStatement statement, PsiExpression firstQualifier, String name) {
+    private static boolean isSimilarCall(PsiStatement statement, PsiMethodCallExpression call) {
       PsiExpressionStatement currentStatement = tryCast(statement, PsiExpressionStatement.class);
-      if (currentStatement == null) return true;
-      PsiMethodCallExpression currentCall = tryCast(currentStatement.getExpression(), PsiMethodCallExpression.class);
-      if (currentCall == null) return true;
-      PsiExpression qualifier = currentCall.getMethodExpression().getQualifierExpression();
-      String currentName = currentCall.getMethodExpression().getQualifiedName();
-      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, firstQualifier)) return true;
-      if (!currentName.equals(name)) return true;
-      return false;
+      if (currentStatement == null) return false;
+      PsiMethodCallExpression otherCall = tryCast(currentStatement.getExpression(), PsiMethodCallExpression.class);
+      if (otherCall == null) return false;
+      return isEqualChain(call, otherCall);
+    }
+
+    /**
+     * equals on chain of methods not considering argument lists, just method names
+     */
+    private static boolean isEqualChain(@Nullable PsiExpression first, @Nullable PsiExpression second) {
+      if(first == null && second == null) return true;
+      if(first == null || second == null) return false;
+      PsiMethodCallExpression firstCall = tryCast(first, PsiMethodCallExpression.class);
+      PsiMethodCallExpression secondCall = tryCast(second, PsiMethodCallExpression.class);
+      PsiExpression firstCurrent = first;
+      PsiExpression secondCurrent = second;
+      while (firstCall != null && secondCall != null) {
+        String firstName = firstCall.getMethodExpression().getReferenceName();
+        String secondName = secondCall.getMethodExpression().getReferenceName();
+        if(firstName == null || !firstName.equals(secondName)) return false;
+
+        firstCurrent = firstCall.getMethodExpression().getQualifierExpression();
+        secondCurrent = secondCall.getMethodExpression().getQualifierExpression();
+        firstCall = tryCast(firstCurrent, PsiMethodCallExpression.class);
+        secondCall = tryCast(secondCurrent, PsiMethodCallExpression.class);
+      }
+      return firstCurrent == null && secondCurrent == null ||
+             EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstCurrent, secondCurrent);
     }
 
     private static boolean uncommonElseStatementsContainsThenNames(@NotNull PsiStatement[] elseBranch,

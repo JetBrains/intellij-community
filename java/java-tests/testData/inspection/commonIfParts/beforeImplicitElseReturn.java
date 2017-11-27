@@ -1,4 +1,4 @@
-// "Collapse if statement " "true"
+// "Collapse if statement " "false"
 
 import java.util.Collection;
 import java.util.List;

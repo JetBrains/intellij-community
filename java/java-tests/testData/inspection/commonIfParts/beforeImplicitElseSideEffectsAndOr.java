@@ -1,4 +1,4 @@
-// "Collapse if statement " "true"
+// "Collapse 'if' statement and extract side effect" "true"
 
 import java.util.Collection;
 import java.util.List;
