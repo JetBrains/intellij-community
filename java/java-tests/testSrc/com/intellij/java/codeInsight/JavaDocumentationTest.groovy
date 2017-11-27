@@ -130,6 +130,21 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       "private void m()")
   }
 
+  void testInnerClass() {
+    doTestCtrlHoverDoc("""\
+      class C {
+        Outer.Inner field;
+        
+        void m() {
+          <caret>field.hashCode();
+        }
+      }
+      class Outer {
+        class Inner {}
+      }""",
+      "C\n Outer.Inner field")
+  }
+
   void testAsterisksFiltering() {
     configure """\
       class C {

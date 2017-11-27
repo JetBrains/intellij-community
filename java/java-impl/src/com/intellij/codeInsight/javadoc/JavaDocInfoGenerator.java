@@ -1886,7 +1886,7 @@ public class JavaDocInfoGenerator {
         return text.length();
       }
 
-      String name = useShortNames ? ((PsiClassType)type).rawType().getPresentableText() : qName;
+      String name = useShortNames ? getClassNameWithOuterClasses(psiClass) : qName;
 
       int length;
       if (generateLink) {
@@ -1961,6 +1961,17 @@ public class JavaDocInfoGenerator {
     }
 
     return 0;
+  }
+
+  private static String getClassNameWithOuterClasses(@NotNull PsiClass cls) {
+    StringBuilder result = new StringBuilder();
+    for (; cls != null; cls = cls.getContainingClass()) {
+      String name = cls.getName();
+      if (name == null) break;
+      if (result.length() > 0) result.insert(0, '.');
+      result.insert(0, name);
+    }
+    return result.toString();
   }
 
   public static String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
