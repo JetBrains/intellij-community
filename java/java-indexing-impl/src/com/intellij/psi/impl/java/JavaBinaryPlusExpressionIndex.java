@@ -6,6 +6,8 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -50,9 +52,8 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
         LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
         if (element == null) continue;
 
-        if (element.getTokenType() == BINARY_EXPRESSION) {
+        if (element.getTokenType() == BINARY_EXPRESSION && !isStringConcatenation(element, tree)) {
           result.add(offset);
-          break;
         }
       }
       THashMap<Boolean, PlusOffsets> resultMap = ContainerUtil.newTroveMap();
@@ -137,5 +138,12 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     public int hashCode() {
       return Arrays.hashCode(offsets);
     }
+  }
+
+  private static boolean isStringConcatenation(@NotNull LighterASTNode binaryExpr, @NotNull LighterAST tree) {
+    return LightTreeUtil
+      .getChildrenOfType(tree, binaryExpr, ElementType.EXPRESSION_BIT_SET)
+      .stream()
+      .allMatch(e -> e.getTokenType() == JavaElementType.LITERAL_EXPRESSION);
   }
 }
