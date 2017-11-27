@@ -62,16 +62,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    try {
-      initTest();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-  }
 
-  private void initTest() throws IOException {
     myRevisions = new ArrayList<>(7);
     myRevisionsAfterRename = new ArrayList<>(4);
 
