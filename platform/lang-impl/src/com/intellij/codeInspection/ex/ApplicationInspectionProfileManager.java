@@ -207,7 +207,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   public InspectionProfileImpl getCurrentProfile() {
     initProfiles();
 
-    InspectionProfileImpl current = mySchemeManager.getCurrentScheme();
+    InspectionProfileImpl current = mySchemeManager.getActiveScheme();
     if (current != null) {
       return current;
     }
