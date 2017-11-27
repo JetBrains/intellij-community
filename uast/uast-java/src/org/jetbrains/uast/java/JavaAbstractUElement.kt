@@ -45,10 +45,10 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
   override val uastParent: UElement? by lz { givenParent ?: convertParent() }
 
   protected open fun convertParent(): UElement? =
-    getPsiParentForLazyConversion()?.
-      let { JavaConverter.unwrapElements(it).toUElement() }?.
-      let { unwrapSwitch(it) }?.
-      also {
+    getPsiParentForLazyConversion()
+      ?.let { JavaConverter.unwrapElements(it).toUElement() }
+      ?.let { unwrapSwitch(it) }
+      ?.also {
         if (it === this) throw IllegalStateException("lazy parent loop for $this")
         if (it.psi != null && it.psi === this.psi)
           throw IllegalStateException("lazy parent loop: psi ${this.psi}(${this.psi?.javaClass}) for $this of ${this.javaClass}")
@@ -66,32 +66,33 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
 
 }
 
-
-private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement = when (uParent) {
-  is JavaUCodeBlockExpression -> uParent.uastParent.let { codeBlockParent ->
-    if (codeBlockParent is JavaUExpressionList && codeBlockParent.kind == JavaSpecialExpressionKinds.SWITCH) {
-      if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatement }) {
-        codeBlockParent
+private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
+  when (uParent) {
+    is JavaUCodeBlockExpression -> {
+      val codeBlockParent = uParent.uastParent
+      if (codeBlockParent is JavaUExpressionList && codeBlockParent.kind == JavaSpecialExpressionKinds.SWITCH) {
+        if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatement }) {
+          return codeBlockParent
+        }
+        val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return uParent
+        val psiElement = psi ?: return uParent
+        return findUSwitchClauseBody(uSwitchExpression, psiElement)
       }
-      else {
-        val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return@let uParent
-        val psiElement = psi ?: return@let uParent
-        findUSwitchClauseBody(uSwitchExpression, psiElement)
+      if (codeBlockParent is JavaUSwitchExpression) {
+        return unwrapSwitch(codeBlockParent)
       }
+      return uParent
     }
-    else if (codeBlockParent is JavaUSwitchExpression) unwrapSwitch(codeBlockParent)
-    else uParent
-  }
 
-  is USwitchExpression -> {
-    val parentPsi = uParent.psi as PsiSwitchStatement
-    if (this === uParent.body || branchHasElement(psi, parentPsi) { it === parentPsi.expression })
-      uParent
-    else
-      uParent.body
+    is USwitchExpression -> {
+      val parentPsi = uParent.psi as PsiSwitchStatement
+      return if (this === uParent.body || branchHasElement(psi, parentPsi) { it === parentPsi.expression })
+        uParent
+      else
+        uParent.body
+    }
+    else -> return uParent
   }
-  else -> uParent
-
 }
 
 private inline fun branchHasElement(child: PsiElement?, parent: PsiElement?, predicate: (PsiElement) -> Boolean): Boolean {
