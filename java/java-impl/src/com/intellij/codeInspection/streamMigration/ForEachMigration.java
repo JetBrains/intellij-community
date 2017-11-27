@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +89,7 @@ class ForEachMigration extends BaseStreamApiMigration {
     String stream = tb.generate(ct, true) + "." + getReplacement() + "(";
     PsiElement block = tb.convertToElement(ct, factory);
 
-    final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
+    final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(ct, block);
     PsiExpressionStatement callStatement =
       (PsiExpressionStatement)ct.replaceAndRestoreComments(loopStatement, stream + functionalExpressionText + ");");
 
@@ -105,20 +104,20 @@ class ForEachMigration extends BaseStreamApiMigration {
       if (typeElement != null) {
         String typedVariable = typeElement.getText() + " " + tb.getVariable().getName();
         callStatement = (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
-          stream + "(" + typedVariable + ") -> " + wrapInBlock(block) + ");", callStatement));
+          stream + "(" + typedVariable + ") -> " + wrapInBlock(ct, block) + ");", callStatement));
       }
     }
     return callStatement;
   }
 
-  @Contract("null -> !null")
-  private static String wrapInBlock(PsiElement block) {
+  @NotNull
+  private static String wrapInBlock(@NotNull CommentTracker ct, @NotNull PsiElement block) {
     if (block instanceof PsiExpressionStatement) {
-      return ((PsiExpressionStatement)block).getExpression().getText();
+      return ct.text(((PsiExpressionStatement)block).getExpression());
     }
     if (block instanceof PsiCodeBlock) {
-      return block.getText();
+      return ct.text(block);
     }
-    return "{" + block.getText() + "}";
+    return "{" + ct.text(block) + "}";
   }
 }

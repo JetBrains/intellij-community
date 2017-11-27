@@ -469,7 +469,7 @@ class TerminalBlock {
    */
   PsiElement convertToElement(CommentTracker ct, PsiElementFactory factory) {
     if (myStatements.length == 1) {
-      return ct.markUnchanged(myStatements[0]);
+      return myStatements[0];
     }
     PsiCodeBlock block = factory.createCodeBlock();
     for (PsiStatement statement : myStatements) {
