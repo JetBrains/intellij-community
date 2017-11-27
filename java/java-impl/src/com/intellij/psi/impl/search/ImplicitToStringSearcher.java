@@ -127,7 +127,11 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
     PsiType strType = stringExpr.getType();
     if (strType == null || !strType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return true;
 
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expr.getType());
+    PsiType type = expr.getType();
+    if (type instanceof PsiPrimitiveType) {
+      type = ((PsiPrimitiveType)type).getBoxedType(expr);
+    }
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass != null && !CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
       PsiMethod implicitlyUsedMethod = aClass.findMethodBySignature(targetMethod, true);
       if (implicitlyUsedMethod != null && (targetMethod == implicitlyUsedMethod || MethodSignatureUtil.isSuperMethod(targetMethod, implicitlyUsedMethod))) {

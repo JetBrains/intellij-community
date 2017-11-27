@@ -11,10 +11,7 @@ import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.*;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
 import javax.lang.model.util.Types;
 import java.util.EnumSet;
 import java.util.List;
@@ -349,24 +346,32 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
                                                                JavacReferenceCollectorListener.ReferenceCollector collector) {
     TypeMirror lTypeMirror = collector.getType(lOp);
     if (lTypeMirror == null) return null;
-    Element lType = collector.getTypeUtility().asElement(lTypeMirror);
-    if (!(lType instanceof TypeElement)) return null;
+    TypeElement lType = asTypeElement(lTypeMirror, collector.getTypeUtility());
+    if (lType == null) return null;
     TypeMirror rTypeMirror = collector.getType(rOp);
     if (rTypeMirror == null) return null;
-    Element rType = collector.getTypeUtility().asElement(rTypeMirror);
-    if (!(rType instanceof TypeElement)) return null;
+    TypeElement rType = asTypeElement(rTypeMirror, collector.getTypeUtility());
+    if (rType == null) return null;
 
-    if (isToStringImplicitCall((TypeElement)lType, (TypeElement)rType, collector)) {
+    if (isToStringImplicitCall(lType, rType, collector)) {
       Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)rType, result, collector.getTypeUtility());
+      visitTypeHierarchy(rType, result, collector.getTypeUtility());
       return result;
     }
-    if (isToStringImplicitCall((TypeElement)rType, (TypeElement)lType, collector)) {
+    if (isToStringImplicitCall(rType, lType, collector)) {
       Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)lType, result, collector.getTypeUtility());
+      visitTypeHierarchy(lType, result, collector.getTypeUtility());
       return result;
     }
     return null;
+  }
+
+  private static TypeElement asTypeElement(TypeMirror typeMirror, Types typeUtility) {
+    if (typeMirror instanceof PrimitiveType) {
+      return typeUtility.boxedClass((PrimitiveType)typeMirror);
+    }
+    Element element = typeUtility.asElement(typeMirror);
+    return element instanceof TypeElement ? (TypeElement)element : null;
   }
 
   private static boolean isToStringImplicitCall(TypeElement strElement, TypeElement element, JavacReferenceCollectorListener.ReferenceCollector collector) {

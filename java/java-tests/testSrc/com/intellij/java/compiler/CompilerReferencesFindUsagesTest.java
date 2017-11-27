@@ -169,6 +169,18 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT).findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
   }
 
+  public void testPrimitiveToStringSearch() {
+    configureByFiles(getName(), getName() + "/Foo.java");
+    searchReferences(getLongToString());
+    myCompilerTester.rebuild();
+    searchReferences(getLongToString());
+  }
+
+  @NotNull
+  protected PsiMethod getLongToString() {
+    return Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_LONG).findMethodsByName("toString", false)).filter(m -> m.getParameters().length == 0).findAny().get();
+  }
+
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
                                                                  int expectedUsagesCount,
                                                                  String... testFiles) {

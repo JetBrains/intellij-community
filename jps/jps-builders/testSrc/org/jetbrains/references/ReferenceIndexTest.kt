@@ -184,7 +184,7 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     assertIndexOnRebuild("Foo.java")
   }
 
-  fun testImplicitToStringLong() {
+  fun testImplicitToStringPrimitives() {
     assertIndexOnRebuild("Foo.java")
   }
 
