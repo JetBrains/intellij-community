@@ -16,10 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -39,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BaseAnalysisActionDialog extends DialogWrapper {
   private JPanel myPanel;
@@ -313,20 +311,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           files = changeListManager.getAffectedFiles();
         }
         else {
-          files = new ArrayList<>();
-          for (ChangeList list : changeListManager.getChangeListsCopy()) {
-            if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
-            final Collection<Change> changes = list.getChanges();
-            for (Change change : changes) {
-              final ContentRevision afterRevision = change.getAfterRevision();
-              if (afterRevision != null) {
-                final VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-                if (vFile != null) {
-                  files.add(vFile);
-                }
-              }
-            }
-          }
+          files = changeListManager
+            .getChangeListsCopy()
+            .stream()
+            .filter(l -> Comparing.strEqual(l.getName(), (String)myChangeLists.getSelectedItem()))
+            .flatMap(l -> ChangesUtil.getAfterRevisionsFiles(l.getChanges().stream()))
+            .collect(Collectors.toList());
         }
         scope = new AnalysisScope(project, new HashSet<>(files));
         uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
