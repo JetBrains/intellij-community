@@ -17,8 +17,10 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
@@ -53,60 +55,60 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
     if (filesToCheck.isEmpty() && !someFilesWereDeletedOrMoved) return;
 
     boolean[] needUpdateUI = {false};
-    if (someFilesWereDeletedOrMoved) {
-      //TODO combine 1
-      synchronized (myView.getTreeStructureUpdateLock()) {
-        InspectionTreeNode root = myView.getTree().getRoot();
-        processNodesIfNeed(root, (node) -> {
-          if (myView.isDisposed()) {
-            return false;
-          }
+    Processor<InspectionTreeNode> nodeProcessor = null;
 
-          if (node instanceof SuppressableInspectionTreeNode) {
-            RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
-            if (element != null) {
-              VirtualFile vFile = element.getPointer().getVirtualFile();
-              if (vFile == null || !vFile.isValid()) {
-                ((SuppressableInspectionTreeNode)node).dropCache();
-                if (!needUpdateUI[0]) {
-                  needUpdateUI[0] = true;
-                }
+    if (someFilesWereDeletedOrMoved) {
+      nodeProcessor = (node) -> {
+        if (myView.isDisposed()) {
+          return false;
+        }
+
+        if (node instanceof SuppressableInspectionTreeNode) {
+          RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
+          if (element != null) {
+            VirtualFile vFile = element.getPointer().getVirtualFile();
+            if (vFile == null || !vFile.isValid()) {
+              ((SuppressableInspectionTreeNode)node).dropCache();
+              if (!needUpdateUI[0]) {
+                needUpdateUI[0] = true;
               }
             }
           }
+        }
 
-          return true;
-        });
-      }
+        return true;
+      };
     }
 
     Set<VirtualFile> unPresentFiles = new HashSet<>(filesToCheck);
     if (!filesToCheck.isEmpty()) {
-      //TODO combine 2
-      synchronized (myView.getTreeStructureUpdateLock()) {
-        InspectionTreeNode root = myView.getTree().getRoot();
-        processNodesIfNeed(root, (node) -> {
-          if (myView.isDisposed()) {
-            return false;
-          }
+      Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
+        if (myView.isDisposed()) {
+          return false;
+        }
 
-          if (node instanceof SuppressableInspectionTreeNode) {
-            RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
-            if (element != null) {
-              VirtualFile vFile = element.getPointer().getVirtualFile();
-              if (filesToCheck.contains(vFile)) {
-                unPresentFiles.remove(vFile);
-                ((SuppressableInspectionTreeNode)node).dropCache();
-                if (!needUpdateUI[0]) {
-                  needUpdateUI[0] = true;
-                }
+        if (node instanceof SuppressableInspectionTreeNode) {
+          RefElement element = ObjectUtils.tryCast(((SuppressableInspectionTreeNode)node).getElement(), RefElement.class);
+          if (element != null) {
+            VirtualFile vFile = element.getPointer().getVirtualFile();
+            if (filesToCheck.contains(vFile)) {
+              unPresentFiles.remove(vFile);
+              ((SuppressableInspectionTreeNode)node).dropCache();
+              if (!needUpdateUI[0]) {
+                needUpdateUI[0] = true;
               }
             }
           }
+        }
 
-          return true;
-        });
-      }
+        return true;
+      };
+      nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
+    }
+
+    synchronized (myView.getTreeStructureUpdateLock()) {
+      InspectionTreeNode root = myView.getTree().getRoot();
+      processNodesIfNeed(root, Objects.requireNonNull(nodeProcessor));
     }
 
     myUnPresentEditedFiles.addAll(unPresentFiles);
@@ -116,7 +118,7 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
     }
   }
 
-  protected boolean isInSourceContent(VirtualFile file) {
+  private boolean isInSourceContent(VirtualFile file) {
     return ReadAction.compute(() -> {
       if (myView.getProject().isDisposed()) {
         return false;
@@ -133,4 +135,34 @@ class InspectionViewPsiTreeChangeAdapter implements AsyncVfsEventsListener {
       }
     }
   }
+
+  private static class CompositeProcessor<X> implements Processor<X> {
+    private final Processor<X> myFirstProcessor;
+    private boolean myFirstFinished;
+    private final Processor<X> mySecondProcessor;
+    private boolean mySecondFinished;
+
+    private CompositeProcessor(@NotNull Processor<X> firstProcessor, @NotNull Processor<X> secondProcessor) {
+      myFirstProcessor = firstProcessor;
+      mySecondProcessor = secondProcessor;
+    }
+
+
+    @Override
+    public boolean process(X x) {
+      if (!myFirstFinished && !myFirstProcessor.process(x)) {
+        myFirstFinished = true;
+      }
+      if (!mySecondFinished && !mySecondProcessor.process(x)) {
+        mySecondFinished = true;
+      }
+      return !myFirstFinished || !mySecondFinished;
+    }
+
+    @NotNull
+    public static <X> Processor<X> combine(@NotNull Processor<X> processor1, @Nullable Processor<X> processor2) {
+      return processor2 == null ? processor1 : new CompositeProcessor<>(processor1, processor2);
+    }
+  }
+
 }
