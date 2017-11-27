@@ -346,4 +346,8 @@ public class ActionUtil {
       }
     };
   }
+
+  public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
+    return e -> invokeAction(action, null, component, place, null);
+  }
 }
