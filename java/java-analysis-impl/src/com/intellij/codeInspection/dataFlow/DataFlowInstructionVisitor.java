@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -33,6 +34,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
   private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
+  private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
+  private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private boolean myAlwaysReturnsNotNull = true;
 
   @Override
@@ -69,6 +72,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   Set<Instruction> getClassCastExceptionInstructions() {
     return myCCEInstructions;
+  }
+
+  Set<PsiElement> getMutabilityViolations(boolean receiver) {
+    return receiver ? myReceiverMutabilityViolation : myArgumentMutabilityViolation;
   }
 
   Stream<PsiArrayAccessExpression> outOfBoundsArrayAccesses() {
@@ -229,6 +236,23 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       else info.normalNpe = true;
     }
     return ok;
+  }
+
+  @Override
+  protected void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
+    if (receiver) {
+      if (anchor instanceof PsiMethodReferenceExpression) {
+        anchor = ((PsiMethodReferenceExpression)anchor).getReferenceNameElement();
+      } else if (anchor instanceof PsiMethodCallExpression) {
+        anchor = ((PsiMethodCallExpression)anchor).getMethodExpression().getReferenceNameElement();
+      }
+      if (anchor != null) {
+        myReceiverMutabilityViolation.add(anchor);
+      }
+    }
+    else {
+      myArgumentMutabilityViolation.add(anchor);
+    }
   }
 
   private static boolean shouldReportConstValue(Object value) {

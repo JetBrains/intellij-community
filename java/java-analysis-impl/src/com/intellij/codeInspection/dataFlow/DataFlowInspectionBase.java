@@ -281,6 +281,22 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull(runner.getInstructions())) {
       reportAlwaysReturnsNotNull(holder, scope);
     }
+
+    reportMutabilityViolations(holder, reportedAnchors, visitor.getMutabilityViolations(true),
+                               InspectionsBundle.message("dataflow.message.immutable.modified"));
+    reportMutabilityViolations(holder, reportedAnchors, visitor.getMutabilityViolations(false),
+                               InspectionsBundle.message("dataflow.message.immutable.passed"));
+  }
+
+  private static void reportMutabilityViolations(ProblemsHolder holder,
+                                                 Set<PsiElement> reportedAnchors,
+                                                 Set<PsiElement> violations,
+                                                 String message) {
+    for (PsiElement violation : violations) {
+      if (reportedAnchors.add(violation)) {
+        holder.registerProblem(violation, message);
+      }
+    }
   }
 
   private void reportNullabilityProblems(ProblemsHolder holder,

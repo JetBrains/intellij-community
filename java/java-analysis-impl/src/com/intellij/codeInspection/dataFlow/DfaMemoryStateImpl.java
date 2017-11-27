@@ -1239,7 +1239,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
-      if (value.isFlushableByCalls()) {
+      if (value.isFlushableByCalls() && (value.getQualifier() == null ||
+          !Boolean.FALSE.equals(getValueFact(value.getQualifier(), DfaFactType.MUTABLE)))) {
         doFlush(value, shouldMarkUnknown(value));
       }
     }

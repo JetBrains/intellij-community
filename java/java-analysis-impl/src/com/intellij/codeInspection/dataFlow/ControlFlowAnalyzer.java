@@ -64,6 +64,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ExceptionTransfer myError;
   private final PsiType myAssertionError;
   private InlinedBlockContext myInlinedBlockContext;
+  private final boolean myThisReadOnly;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
     myInlining = inlining;
@@ -75,6 +76,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myRuntimeException = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION)));
     myError = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_ERROR)));
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
+    PsiElement member = PsiTreeUtil.getParentOfType(codeFragment, PsiMember.class, PsiLambdaExpression.class);
+    myThisReadOnly = member instanceof PsiMethod && MutationSignature.fromMethod((PsiMethod)member).preservesThis();
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
@@ -1486,7 +1489,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
     }
-    else {
+    else if (myThisReadOnly) {
+      addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.MUTABLE, false), null));
+    } else {
       pushUnknown();
     }
 
@@ -1803,7 +1808,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitThisExpression(PsiThisExpression expression) {
     startElement(expression);
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), null));
+    DfaValue value = myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
+    if (myThisReadOnly) {
+      value = myFactory.withFact(value, DfaFactType.MUTABLE, false);
+    }
+    addInstruction(new PushInstruction(value, null));
     finishElement(expression);
   }
 

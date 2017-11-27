@@ -340,8 +340,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                    DataFlowRunner runner,
                                    DfaMemoryState memState,
                                    boolean contractOnly) {
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly);
-    final DfaValue qualifier = popQualifier(instruction, memState);
+    PsiMethod method = instruction.getTargetMethod();
+    MutationSignature sig = MutationSignature.fromMethod(method);
+    DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);
+    final DfaValue qualifier = popQualifier(instruction, memState, sig);
     return new DfaCallArguments(qualifier, argValues);
   }
 
@@ -349,7 +351,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private DfaValue[] popCallArguments(MethodCallInstruction instruction,
                                       DataFlowRunner runner,
                                       DfaMemoryState memState,
-                                      boolean contractOnly) {
+                                      boolean contractOnly, MutationSignature sig) {
     final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
@@ -382,6 +384,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       else if (requiredNullability == Nullness.UNKNOWN) {
         checkNotNullable(memState, arg, NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.problem(anchor));
       }
+      if (sig.mutatesArg(paramIndex) && !memState.applyFact(arg, DfaFactType.MUTABLE, true)) {
+        reportMutabilityViolation(false, anchor);
+        if (arg instanceof DfaVariableValue) {
+          memState.forceVariableFact((DfaVariableValue)arg, DfaFactType.MUTABLE, true);
+        }
+      }
       if (argValues != null && (paramIndex < argValues.length - 1 || !varargCall)) {
         argValues[paramIndex] = arg;
       }
@@ -389,8 +397,20 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return argValues;
   }
 
-  private DfaValue popQualifier(MethodCallInstruction instruction, DfaMemoryState memState) {
-    return dereference(memState, memState.pop(), instruction.getQualifierNullabilityProblem());
+  protected void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
+  }
+
+  private DfaValue popQualifier(MethodCallInstruction instruction,
+                                DfaMemoryState memState,
+                                MutationSignature sig) {
+    DfaValue value = dereference(memState, memState.pop(), instruction.getQualifierNullabilityProblem());
+    if (sig.mutatesThis() && !memState.applyFact(value, DfaFactType.MUTABLE, true)) {
+      reportMutabilityViolation(true, instruction.getContext());
+      if (value instanceof DfaVariableValue) {
+        memState.forceVariableFact((DfaVariableValue)value, DfaFactType.MUTABLE, true);
+      }
+    }
+    return value;
   }
 
   private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callArguments,
@@ -507,10 +527,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullness nullability = instruction.getReturnNullability();
       PsiMethod targetMethod = instruction.getTargetMethod();
+      Boolean mutable = null;
       if (targetMethod != null) {
+        mutable = MutationSignature.getMutabilityFact(targetMethod);
         PsiMethod realMethod = findSpecificMethod(targetMethod, state, qualifierValue);
         if (realMethod != targetMethod) {
           nullability = DfaPsiUtil.getElementNullability(type, realMethod);
+          mutable = MutationSignature.getMutabilityFact(realMethod);
           PsiType returnType = realMethod.getReturnType();
           if (returnType != null && TypeConversionUtil.erasure(type).isAssignableFrom(returnType)) {
             // possibly covariant return type
@@ -521,7 +544,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
         }
       }
-      return factory.createTypeValue(type, nullability);
+      DfaValue value = factory.createTypeValue(type, nullability);
+      return factory.withFact(value, DfaFactType.MUTABLE, mutable);
     }
     LongRangeSet range = LongRangeSet.fromType(type);
     if (range != null) {

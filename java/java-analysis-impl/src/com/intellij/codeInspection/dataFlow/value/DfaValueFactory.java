@@ -84,6 +84,17 @@ public class DfaValueFactory {
   }
 
   @NotNull
+  public <T> DfaValue withFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
+    if(value instanceof DfaUnknownValue) {
+      return getFactFactory().createValue(DfaFactMap.EMPTY.with(factType, factValue));
+    }
+    if(value instanceof DfaFactMapValue) {
+      return ((DfaFactMapValue)value).withFact(factType, factValue);
+    }
+    return DfaUnknownValue.getInstance();
+  }
+
+  @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
     int dimensions = psiType.getArrayDimensions();
     psiType = psiType.getDeepComponentType();
