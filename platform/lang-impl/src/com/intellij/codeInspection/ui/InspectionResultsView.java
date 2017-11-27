@@ -42,10 +42,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -56,7 +53,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +212,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     };
     createActionsToolbar();
-    AsyncVfsEventsPostProcessor.getInstance().addListener(new InspectionViewPsiTreeChangeAdapter(this), this);
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
 
     ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(getProject());
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
