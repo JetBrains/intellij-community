@@ -32,7 +32,7 @@ UFile (package = ) [public final enum EnumSwitchConditionalBreak {...]
                                         UPostfixExpression (operator = ++) [counter++] = (var counter = 0)
                                             USimpleNameReferenceExpression (identifier = counter) [counter] = (var counter = 0)
                                         UBreakExpression (label = null) [break] = Nothing(break)
-                                    UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                                    UastEmptyExpression [UastEmptyExpression] = Undetermined
                                 UPostfixExpression (operator = ++) [counter++] = (var counter = 0)
                                     USimpleNameReferenceExpression (identifier = counter) [counter] = (var counter = 0)
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
