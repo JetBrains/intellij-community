@@ -1,5 +1,5 @@
 class A {
-  void m(Foo f) {
+  void m(FooImpl f) {
     String s = "f = " + f.toString();
   }
 }

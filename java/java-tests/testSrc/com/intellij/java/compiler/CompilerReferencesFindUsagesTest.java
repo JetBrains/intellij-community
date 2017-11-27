@@ -160,9 +160,13 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
 
   public void testImplicitToStringSearch() {
     configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
+    Arrays.stream(findClass("FooImpl").findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
     Arrays.stream(findClass("Foo").findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
+    Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT).findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
     myCompilerTester.rebuild();
+    Arrays.stream(findClass("FooImpl").findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
     Arrays.stream(findClass("Foo").findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
+    Arrays.stream(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT).findMethodsByName("toString", false)).forEach((m) -> assertSize(2, searchReferences(m)));
   }
 
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
