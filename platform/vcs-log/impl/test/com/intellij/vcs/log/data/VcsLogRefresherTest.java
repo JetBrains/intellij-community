@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -209,18 +210,21 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
         LOG.error(message);
       }
     }, myProject);
-    return new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
-                                   new VcsLogProgress(myProject, myLogData),
-                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
-    ) {
-      @Override
-      protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
-        LOG.debug("Starting a background task...");
-        myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
-        LOG.debug(myStartedTasks.size() + " started tasks");
-        return new EmptyProgressIndicator();
-      }
-    };
+    VcsLogRefresherImpl refresher =
+      new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
+                              new VcsLogProgress(myProject, myLogData),
+                              myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
+      ) {
+        @Override
+        protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+          LOG.debug("Starting a background task...");
+          myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
+          LOG.debug(myStartedTasks.size() + " started tasks");
+          return new EmptyProgressIndicator();
+        }
+      };
+    Disposer.register(myLogData, refresher);
+    return refresher;
   }
 
   private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<GraphCommit<Integer>> actualLog) {
