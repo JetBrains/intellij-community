@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,6 +29,7 @@ import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ import java.util.List;
 import static com.intellij.icons.AllIcons.General.CollapseComponent;
 import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static icons.DvcsImplIcons.*;
@@ -101,7 +104,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         return myUserSizeChanged;
       }
     };
-    myRestoreSizeButton.setBorder(JBUI.Borders.empty(0, 2));
+
     mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, AllIcons.General.GearHover, e -> {
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
@@ -112,7 +115,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         return !mySettingsActions.isEmpty();
       }
     };
-    mySettingsButton.setBorder(JBUI.Borders.empty(0, 2));
 
     myTitleToolbarPanel.add(mySettingsButton);
     myTitleToolbarPanel.add(myRestoreSizeButton);
@@ -199,6 +201,14 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     if (mySettingsButton != null && underSettingsPopup) {
       mySettingsActions.add(action);
       mySettingsButton.update();
+    }
+    else {
+      myTitleToolbarPanel.add(new MyToolbarButton(action) {
+        @Override
+        protected boolean isButtonEnabled() {
+          return action.getTemplatePresentation().isEnabled();
+        }
+      });
     }
   }
 
@@ -549,18 +559,33 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static abstract class MyToolbarButton extends JButton {
-    public MyToolbarButton(@NotNull String text, @NotNull Icon icon, @NotNull Icon rolloverIcon, @NotNull ActionListener buttonListener) {
-      super(icon);
-      setToolTipText(text);
-      setBorder(JBUI.Borders.empty());
+
+    private MyToolbarButton(@Nullable String text, @Nullable Icon icon, @Nullable Icon rolloverIcon) {
+      setBorder(JBUI.Borders.empty(0, 2));
       setBorderPainted(false);
       setContentAreaFilled(false);
       setOpaque(false);
       setRolloverEnabled(true);
-      setRolloverIcon(rolloverIcon);
-      addActionListener(buttonListener);
+      Icon regularIcon = chooseNotNull(icon, EmptyIcon.ICON_0);
+      setIcon(regularIcon);
+      setToolTipText(text);
+      setRolloverIcon(chooseNotNull(rolloverIcon, regularIcon));
       update();
       setUI(new BasicButtonUI());
+    }
+
+    public MyToolbarButton(@Nullable String text,
+                           @Nullable Icon icon,
+                           @Nullable Icon rolloverIcon,
+                           @NotNull ActionListener buttonListener) {
+      this(text, icon, rolloverIcon);
+      addActionListener(buttonListener);
+    }
+
+    public MyToolbarButton(AnAction action) {
+      this(action.getTemplatePresentation().getText(), action.getTemplatePresentation().getIcon(),
+           action.getTemplatePresentation().getHoveredIcon());
+      addActionListener(ActionUtil.createActionListener(action, this, BRANCH_POPUP));
     }
 
     public void update() {

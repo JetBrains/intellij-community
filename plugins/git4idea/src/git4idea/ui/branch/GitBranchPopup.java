@@ -20,10 +20,8 @@ import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,6 +98,15 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
           preselectActionCondition, DIMENSION_SERVICE_KEY);
+    AnAction updateBranchInfoWithAuthenticationAction =
+      new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myPopup.cancel();
+        }
+      };
+    updateBranchInfoWithAuthenticationAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.Warning);
+    myPopup.addToolbarAction(updateBranchInfoWithAuthenticationAction, false);
   }
 
   @Override
