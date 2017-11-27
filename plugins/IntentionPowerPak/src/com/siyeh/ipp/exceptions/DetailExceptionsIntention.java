@@ -55,26 +55,37 @@ public class DetailExceptionsIntention extends Intention {
     newTryStatement.append(tryBlockText);
     ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
-    final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<>();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     for (PsiCatchSection catchSection : catchSections) {
       final PsiParameter parameter = catchSection.getParameter();
       final PsiCodeBlock block = catchSection.getCatchBlock();
       if (parameter != null && block != null) {
         final PsiType caughtType = parameter.getType();
-        final List<PsiType> exceptionsToExpand = new ArrayList<>(10);
-        for (Object aExceptionsThrown : exceptionsThrown) {
-          final PsiType thrownType = (PsiType)aExceptionsThrown;
-          if (caughtType.isAssignableFrom(thrownType)) {
-            exceptionsToExpand.add(thrownType);
+        List<PsiClassType> exceptionsToExpand = new ArrayList<>(exceptionsThrown.size());
+        for (PsiClassType aExceptionsThrown : exceptionsThrown) {
+          if (caughtType.isAssignableFrom(aExceptionsThrown)) {
+            exceptionsToExpand.add(aExceptionsThrown);
           }
         }
-        exceptionsToExpand.removeAll(exceptionsAlreadyEmitted);
-        Collections.sort(exceptionsToExpand, comparator);
-        for (PsiType thrownType : exceptionsToExpand) {
+        exceptionsThrown.removeAll(exceptionsToExpand);
+
+        PsiClassType commonSuperType = null;
+        PsiClass commonSuper = ObscureThrownExceptionsIntention.findCommonSuperClass(exceptionsToExpand.toArray(PsiClassType.EMPTY_ARRAY));
+        if (commonSuper != null) {
+          commonSuperType = JavaPsiFacade.getElementFactory(commonSuper.getProject()).createType(commonSuper);
+          if (commonSuperType.equals(caughtType)) {
+            commonSuperType = null;
+          }
+        }
+
+        if (commonSuperType != null) {
+          exceptionsToExpand = Collections.singletonList(commonSuperType);
+        } else {
+          Collections.sort(exceptionsToExpand, comparator);
+        }
+        for (PsiClassType thrownType : exceptionsToExpand) {
           newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');
           newTryStatement.append(commentTracker.markUnchanged(block).getText());
-          exceptionsAlreadyEmitted.add(thrownType);
         }
       }
     }
