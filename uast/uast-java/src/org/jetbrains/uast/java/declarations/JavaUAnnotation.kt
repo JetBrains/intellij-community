@@ -38,13 +38,13 @@ class JavaUAnnotation(
   override fun findAttributeValue(name: String?): UExpression? {
     val context = getUastContext()
     val attributeValue = psi.findAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression
+    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? {
     val context = getUastContext()
     val attributeValue = psi.findDeclaredAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression
+    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   companion object {

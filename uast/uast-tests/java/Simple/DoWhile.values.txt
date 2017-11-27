@@ -22,7 +22,7 @@ UFile (package = ) [public class DoWhile {...]
                             UBlockExpression [{...}] = (var count = Undetermined)
                                 UPostfixExpression (operator = ++) [count++] = (var count = Undetermined)
                                     USimpleNameReferenceExpression (identifier = count) [count] = (var count = Undetermined)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                         UBinaryExpression (operator = =) [number = number / 10] = Undetermined (depending on: (var number = Undetermined))
                             USimpleNameReferenceExpression (identifier = number) [number] = (var number = Undetermined)
                             UBinaryExpression (operator = /) [number / 10] = Undetermined (depending on: (var number = Undetermined))

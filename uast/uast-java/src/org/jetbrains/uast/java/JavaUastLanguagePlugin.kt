@@ -304,7 +304,7 @@ internal object JavaConverter {
         is PsiThrowStatement -> expr<UThrowExpression>(build(::JavaUThrowExpression))
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
-        is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
+        is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
         is PsiSwitchLabelStatement -> expr<UExpression> {
           when {
             givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findUSwitchEntry(givenParent, el)
@@ -335,11 +335,11 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression {
-    return statement?.let { convertStatement(it, parent, null) } ?: UastEmptyExpression
+    return statement?.let { convertStatement(it, parent, null) } ?: UastEmptyExpression(parent)
   }
 
   internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression {
-    return expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression
+    return expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression(parent)
   }
 
   internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? {
@@ -347,6 +347,6 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(block: PsiCodeBlock?, parent: UElement?): UExpression {
-    return if (block != null) convertBlock(block, parent) else UastEmptyExpression
+    return if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
   }
 }

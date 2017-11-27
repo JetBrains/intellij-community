@@ -33,7 +33,7 @@ class JavaUClassInitializer(
     get() = null
 
   override val uastBody by lz {
-    getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression
+    getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }

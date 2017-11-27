@@ -93,7 +93,7 @@ interface UastLanguagePlugin {
 
   fun getInitializerBody(element: PsiClassInitializer): UExpression {
     if (element is UClassInitializer) return element.uastBody
-    return (convertElementWithParent(element, null) as? UClassInitializer)?.uastBody ?: UastEmptyExpression
+    return (convertElementWithParent(element, null) as? UClassInitializer)?.uastBody ?: UastEmptyExpression(null)
   }
 
   fun getInitializerBody(element: PsiVariable): UExpression? {
