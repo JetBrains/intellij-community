@@ -22,7 +22,9 @@ object LogEventFixtures {
     
     val sessionId = "session-id-xxx"
 
-    val completion_started_3_items_shown = CompletionStartedEvent("", "", "", "1", sessionId, "Java", true, 1, Fixtures.lookupList, 0)
+    val completion_started_3_items_shown = CompletionStartedEvent("", "", "",
+            "1", sessionId, "Java", true, 1, Fixtures.lookupList,
+            Fixtures.userFactors, 0)
 
     val completion_cancelled = CompletionCancelledEvent("1", sessionId)
 
