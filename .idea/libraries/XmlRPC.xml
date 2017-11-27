@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="XmlRPC">
+  <library name="XmlRPC" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.ws.xmlrpc:xmlrpc:2.0.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/xmlrpc-2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/xmlrpc2.src.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
