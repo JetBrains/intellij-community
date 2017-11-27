@@ -12,7 +12,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -139,7 +138,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
           myFilesToProcess.clear();
         }
         if (!filesToCheck.isEmpty()) {
-          Set<VirtualFile> unPresentFiles = new HashSet<>(filesToCheck);
+          Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
           Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
             if (myView.isDisposed()) {
               return false;
