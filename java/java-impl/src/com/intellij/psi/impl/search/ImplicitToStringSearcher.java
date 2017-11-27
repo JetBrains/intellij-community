@@ -89,44 +89,31 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
           LOG.error("plusToken shouldn't be null in " + psiFile + " at " + offset);
           continue;
         }
-        PsiBinaryExpression binaryExpr = ObjectUtils.tryCast(plusToken.getParent(), PsiBinaryExpression.class);
-        if (binaryExpr == null) {
-          LOG.error("binaryExpr shouldn't be null for binary op  in " + psiFile + " at " + offset);
-          continue;
-        }
+        PsiElement parent = plusToken.getParent();
 
-        PsiExpression lOperand = binaryExpr.getLOperand();
-        PsiExpression rOperand = binaryExpr.getROperand();
-        if (rOperand == null) {
-          LOG.error("rOperand shouldn't be null for binary op in " + psiFile + " at " + offset);
-          continue;
-        }
-
-        if (!processBinaryExpression(lOperand, rOperand, consumer, targetMethod)) {
-          return false;
+        if (parent instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+          PsiType exprType = polyadicExpression.getType();
+          if (exprType == null || !exprType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            continue;
+          }
+          PsiExpression[] operands = polyadicExpression.getOperands();
+          for (PsiExpression operand : operands) {
+            if (!processPolyadicExprOperand(operand, consumer, targetMethod)) {
+              return false;
+            }
+          }
+        } else {
+          LOG.error(parent + " expected to be polyadic expression");
         }
       }
       return true;
     });
   }
 
-  private static boolean processBinaryExpression(@NotNull PsiExpression lhs,
-                                                 @NotNull PsiExpression rhs,
-                                                 @NotNull Processor<PsiReference> consumer,
-                                                 @NotNull PsiMethod targetMethod) {
-    if (!processBinaryExpressionInOneDirection(lhs, rhs, consumer, targetMethod)) {
-      return false;
-    }
-    return processBinaryExpressionInOneDirection(rhs, lhs, consumer, targetMethod);
-  }
-
-  private static boolean processBinaryExpressionInOneDirection(@NotNull PsiExpression stringExpr,
-                                                               @NotNull PsiExpression expr,
-                                                               @NotNull Processor<PsiReference> consumer,
-                                                               @NotNull PsiMethod targetMethod) {
-    PsiType strType = stringExpr.getType();
-    if (strType == null || !strType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return true;
-
+  private static boolean processPolyadicExprOperand(@NotNull PsiExpression expr,
+                                                    @NotNull Processor<PsiReference> consumer,
+                                                    @NotNull PsiMethod targetMethod) {
     PsiType type = expr.getType();
     if (type instanceof PsiPrimitiveType) {
       type = ((PsiPrimitiveType)type).getBoxedType(expr);

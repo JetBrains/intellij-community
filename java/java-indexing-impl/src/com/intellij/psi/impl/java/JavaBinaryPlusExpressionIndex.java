@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.BINARY_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POLYADIC_EXPRESSION;
 
 public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> implements PsiDependentIndex {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
@@ -52,7 +53,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
         LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
         if (element == null) continue;
 
-        if (element.getTokenType() == BINARY_EXPRESSION && !isStringConcatenation(element, tree)) {
+        if ((element.getTokenType() == BINARY_EXPRESSION || element.getTokenType() == POLYADIC_EXPRESSION) && !isStringConcatenation(element, tree)) {
           result.add(offset);
         }
       }
@@ -140,9 +141,9 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     }
   }
 
-  private static boolean isStringConcatenation(@NotNull LighterASTNode binaryExpr, @NotNull LighterAST tree) {
+  private static boolean isStringConcatenation(@NotNull LighterASTNode concatExpr, @NotNull LighterAST tree) {
     return LightTreeUtil
-      .getChildrenOfType(tree, binaryExpr, ElementType.EXPRESSION_BIT_SET)
+      .getChildrenOfType(tree, concatExpr, ElementType.EXPRESSION_BIT_SET)
       .stream()
       .allMatch(e -> e.getTokenType() == JavaElementType.LITERAL_EXPRESSION);
   }
