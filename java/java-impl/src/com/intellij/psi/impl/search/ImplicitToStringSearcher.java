@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,12 +45,17 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiReference, Me
     DumbService dumbService = DumbService.getInstance(project);
     Map<VirtualFile, int[]> fileOffsets = new THashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
+      GlobalSearchScope scopeWithoutToString = CompilerReferenceService.getInstance(project).getScopeWithoutImplicitToStringCodeReferences(method);
+
+      GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
+                                                                           ? parameters.getEffectiveSearchScope()
+                                                                           : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getEffectiveSearchScope()), project);
       FileBasedIndex.getInstance().processValues(JavaBinaryPlusExpressionIndex.INDEX_ID, Boolean.TRUE, null,
                                                  (file, value) -> {
                                                    ProgressManager.checkCanceled();
                                                    fileOffsets.put(file, value.getOffsets());
                                                    return true;
-                                                 }, GlobalSearchScopeUtil.toGlobalSearchScope(parameters.getEffectiveSearchScope(), project));
+                                                 }, filter);
 
     });
 
