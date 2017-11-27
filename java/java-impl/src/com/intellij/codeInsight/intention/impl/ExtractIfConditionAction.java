@@ -218,14 +218,14 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   private static String createIfString(@NotNull String condition,
                                        @NotNull String thenBranch,
                                        @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? " else " + elseBranch : "";
+    final String elsePart = elseBranch != null ? "\n else " + elseBranch : "";
     return "if (" + condition + ")\n" + thenBranch + elsePart;
   }
 
   @NotNull
   private static String toThenBranchString(@NotNull PsiStatement statement) {
     if (!(statement instanceof PsiBlockStatement)) {
-      return "{ " + statement.getText() + " }";
+      return "{ " + statement.getText() + "\n }";
     }
 
     return statement.getText();
@@ -241,7 +241,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       return statement.getText();
     }
 
-    return "{ " + statement.getText() + " }";
+    return "{ " + statement.getText() + "\n }";
   }
 
   @Nullable
