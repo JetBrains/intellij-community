@@ -1150,6 +1150,7 @@ public class Switcher extends AnAction implements DumbAware {
           files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
         }
+        refreshSelection();
       }
     }
 
