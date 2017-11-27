@@ -10,15 +10,15 @@ import org.jetbrains.annotations.NotNull;
  * @author egor
  */
 public class GeneratedLocation implements Location {
-  private final DebugProcessImpl myDebugProcess;
+  private final VirtualMachine myVirtualMachine;
   private final int myLineNumber;
   private final ReferenceType myReferenceType;
   private final Method myMethod;
 
-  public GeneratedLocation(DebugProcessImpl debugProcess, String className, String methodName, int lineNumber) {
-    myDebugProcess = debugProcess;
+  public GeneratedLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int lineNumber) {
+    myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
     myLineNumber = lineNumber;
-    myReferenceType = ContainerUtil.getFirstItem(myDebugProcess.getVirtualMachineProxy().classesByName(className));
+    myReferenceType = type;
     myMethod = ContainerUtil.getFirstItem(myReferenceType.methodsByName(methodName));
   }
 
@@ -69,7 +69,7 @@ public class GeneratedLocation implements Location {
 
   @Override
   public VirtualMachine virtualMachine() {
-    return myDebugProcess.getVirtualMachineProxy().getVirtualMachine();
+    return myVirtualMachine;
   }
 
   @Override
