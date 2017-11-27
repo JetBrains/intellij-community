@@ -10,7 +10,10 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,8 +54,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @NotNull private final InspectionToolWrapper myToolWrapper;
   @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
-
-  private final Object myLock = new Object();
 
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
@@ -367,13 +368,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
-    synchronized (myLock) {
-      if (getProblemElements().containsKey(refEntity)) {
-        CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-        if (descriptions != null) {
-          exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
-        }
-      }
+    CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
+    if (descriptions != null) {
+      exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
     }
   }
 
