@@ -36,7 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -213,7 +213,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     };
     createActionsToolbar();
-    AsyncVfsEventsPostProcessor.getInstance().addListener(new InspectionViewPsiTreeChangeAdapter(this), this);
+
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(new InspectionViewChangeAdapter(this), this);
 
     ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(getProject());
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
