@@ -34,7 +34,7 @@ public class InsertLineComment extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "LineComment{" + getVirtualFile().getPath() + " " + myInitialStart + " " + getCurrentRange().getStartOffset() + "}";
+    return "LineComment{" + getVirtualFile().getPath() + " " + myInitialStart + " " + getCurrentRange() + "}";
   }
 
   @Override
