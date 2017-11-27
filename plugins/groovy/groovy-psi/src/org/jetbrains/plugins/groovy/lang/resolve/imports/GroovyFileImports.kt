@@ -28,6 +28,8 @@ interface GroovyFileImports {
   fun processDefaultImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean
 
 
+  fun isImplicit(import: GroovyImport): Boolean
+
   fun findUnneecessaryStatements(): Collection<GrImportStatement>
 
   fun findUnresolvedStatements(names: Collection<String>): Collection<GrImportStatement>

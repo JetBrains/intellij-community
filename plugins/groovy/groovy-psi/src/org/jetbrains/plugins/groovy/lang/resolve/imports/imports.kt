@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil
-import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.RegularImportHashingStrategy
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.StarImportHashingStrategy
@@ -38,7 +37,7 @@ private fun GroovyFile.doGetImports(): GroovyFileImports {
   }
 
   for (contributor in GrImportContributor.EP_NAME.extensions) {
-    contributor.getImports(this).forEach(collector::addImportFromContributor)
+    contributor.getFileImports(this).forEach(collector::addImport)
   }
 
   return collector.build()

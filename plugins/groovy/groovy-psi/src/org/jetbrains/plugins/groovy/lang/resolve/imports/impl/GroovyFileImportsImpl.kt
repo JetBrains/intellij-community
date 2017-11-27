@@ -63,6 +63,8 @@ internal class GroovyFileImportsImpl(
     return defaultImports.doProcess(processor, state, place)
   }
 
+  override fun isImplicit(import: GroovyImport): Boolean = !importToStatement.containsKey(import)
+
   override fun findUnneecessaryStatements(): Collection<GrImportStatement> {
     return statementToImport.filterValues { it.isUnnecessary(this) }.keys
   }

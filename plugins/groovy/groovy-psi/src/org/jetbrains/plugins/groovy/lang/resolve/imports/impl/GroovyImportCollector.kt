@@ -1,13 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
-import com.intellij.openapi.util.text.StringUtil.getPackageName
-import com.intellij.openapi.util.text.StringUtil.getShortName
 import com.intellij.util.reverse
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.Import
-import org.jetbrains.plugins.groovy.lang.resolve.ImportType
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 
 class GroovyImportCollector(private val file: GroovyFileBase) {
@@ -50,7 +46,7 @@ class GroovyImportCollector(private val file: GroovyFileBase) {
     getMap(ImportKind.StaticStar)[import.classFqn] = import
   }
 
-  private fun addImport(import: GroovyImport) = when (import) {
+  fun addImport(import: GroovyImport) = when (import) {
     is RegularImport -> addRegularImport(import)
     is StaticImport -> addStaticImport(import)
     is StarImport -> addStarImport(import)
@@ -59,8 +55,6 @@ class GroovyImportCollector(private val file: GroovyFileBase) {
   }
 
   fun addRegularImport(classFqn: String, name: String) = addRegularImport(RegularImport(classFqn, name))
-
-  fun addStaticImport(classFqn: String, memberName: String) = addStaticImport(classFqn, memberName, memberName)
 
   fun addStaticImport(classFqn: String, memberName: String, name: String) = addStaticImport(StaticImport(classFqn, memberName, name))
 
@@ -72,16 +66,6 @@ class GroovyImportCollector(private val file: GroovyFileBase) {
     val import = statement.import ?: return
     statementToImport[statement] = import
     addImport(import)
-  }
-
-  internal fun addImportFromContributor(contributedImport: Import) {
-    val name = contributedImport.name
-    when (contributedImport.type) {
-      ImportType.REGULAR -> addRegularImport(name, getShortName(name))
-      ImportType.STATIC -> addStaticImport(getPackageName(name), getShortName(name))
-      ImportType.STAR -> addStarImport(name)
-      ImportType.STATIC_STAR -> addStaticStarImport(name)
-    }
   }
 
   fun build(): GroovyFileImports = GroovyFileImportsImpl(

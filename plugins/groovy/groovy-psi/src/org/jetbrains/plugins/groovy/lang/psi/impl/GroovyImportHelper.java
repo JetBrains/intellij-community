@@ -7,8 +7,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ImportType;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
 
 import java.util.LinkedHashSet;
 
@@ -43,11 +44,10 @@ public class GroovyImportHelper {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
-    for (GrImportContributor contributor : GrImportContributor.EP_NAME.getExtensions()) {
-      result.addAll(ContainerUtil.mapNotNull(
-        contributor.getImports(file),
-        i -> i.getType() == ImportType.STAR ? i.getName() : null
-      ));
+    final GroovyFileImports fileImports = GroovyImports.getImports(file);
+    for (StarImport starImport : fileImports.getStarImports()) {
+      if (!fileImports.isImplicit(starImport)) continue;
+      result.add(starImport.getPackageFqn());
     }
 
     return result;
