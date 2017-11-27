@@ -350,17 +350,17 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (!(lType instanceof TypeElement)) return null;
     TypeMirror rTypeMirror = collector.getType(rOp);
     if (rTypeMirror == null) return null;
-    Element rType = collector.getTypeUtility().asElement(lTypeMirror);
+    Element rType = collector.getTypeUtility().asElement(rTypeMirror);
     if (!(rType instanceof TypeElement)) return null;
 
     if (isToStringImplicitCall((TypeElement)lType, (TypeElement)rType, collector)) {
       Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)rOp, result, collector.getTypeUtility());
+      visitTypeHierarchy((TypeElement)rType, result, collector.getTypeUtility());
       return result;
     }
     if (isToStringImplicitCall((TypeElement)rType, (TypeElement)lType, collector)) {
       Set<TypeElement> result = new THashSet<TypeElement>();
-      visitTypeHierarchy((TypeElement)lOp, result, collector.getTypeUtility());
+      visitTypeHierarchy((TypeElement)lType, result, collector.getTypeUtility());
       return result;
     }
     return null;

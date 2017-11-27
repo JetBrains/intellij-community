@@ -13,3 +13,7 @@ Class Definitions:
 Foo in Foo
 
 Members Signatures:
+
+
+Implicit toString():
+java.lang.Object in Foo

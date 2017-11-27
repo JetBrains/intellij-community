@@ -178,7 +178,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         }
         if (!callPlaceFiles.isEmpty()) {
           callPlaceFiles.sort()
-          classDefs.add(type.asText(nameEnumerator) + " in " + callPlaceFiles.joinToString(separator = " "))
+          implicitToString.add(type.asText(nameEnumerator) + " in " + callPlaceFiles.joinToString(separator = " "))
         }
         true
       }
