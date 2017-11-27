@@ -3,16 +3,18 @@ package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author shkate@jetbrains.com
@@ -31,7 +33,15 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL)) {
-      return;
+      PsiElement targetElement = getCompleteStringValueExpression(element);
+      if (listOwner instanceof PsiMethod) {
+        if (Arrays.stream(PsiUtil.findReturnStatements(((PsiMethod)listOwner))).map(s -> s.getReturnValue()).anyMatch(e -> e == targetElement)) {
+          return;
+        }
+      }
+      else if (listOwner instanceof PsiVariable && ((PsiVariable)listOwner).getInitializer() == targetElement) {
+        return;
+      }
     }
 
     if (!text.contains("\\")) {
@@ -44,9 +54,13 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
 
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
     StringBuilder unescapedText = new StringBuilder();
-    int[] offsets = new int[text.length()+1];
+    int[] offsets = new int[text.length() + 1];
     PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets);
 
     processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
+  }
+
+  public static PsiElement getCompleteStringValueExpression(PsiExpression expression) {
+    return ExpressionUtils.isStringConcatenationOperand(expression) ? expression.getParent() : expression;
   }
 }
