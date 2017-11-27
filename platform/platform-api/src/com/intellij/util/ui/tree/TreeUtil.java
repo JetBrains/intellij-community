@@ -1091,6 +1091,11 @@ public final class TreeUtil {
     return Comparator.comparingInt(tree::getRowForPath);
   }
 
+  private static void expandPathWithDebug(@NotNull JTree tree, @NotNull TreePath path) {
+    LOG.debug("tree expand path: ", path);
+    tree.expandPath(path);
+  }
+
   /**
    * Expands nodes in the specified tree.
    *
@@ -1110,13 +1115,36 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    return promiseMakeVisible(tree, visitor).done(path -> {
+      if (path != null) expandPathWithDebug(tree, path);
+    });
+  }
+
+  /**
+   * Makes visible nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be made visible
+   * @param visitor  a visitor that controls expanding of tree nodes
+   * @param consumer a path consumer called on done
+   */
+  public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    promiseMakeVisible(tree, visitor).processed(path -> consumer.accept(path));
+  }
+
+  /**
+   * Promises to make visible nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be made visible
+   * @param visitor a visitor that controls expanding of tree nodes
+   */
+  @NotNull
+  public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     return promiseAccept(tree, path -> {
       TreeVisitor.Action action = visitor.visit(path);
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
-        TreePath parent = path.getParentPath();
+        TreePath parent = path.getParentPath(); // do not expand children if parent path is collapsed
         if (parent != null && !tree.isExpanded(parent)) return TreeVisitor.Action.SKIP_SIBLINGS;
-        tree.expandPath(path); // expand current path only if parent path is expanded
-        LOG.debug("tree expand path: ", path);
+        if (action == TreeVisitor.Action.CONTINUE) expandPathWithDebug(tree, path);
       }
       return action;
     });
