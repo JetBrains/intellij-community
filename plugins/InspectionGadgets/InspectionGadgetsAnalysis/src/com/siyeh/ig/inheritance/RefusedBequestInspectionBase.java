@@ -24,10 +24,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CloneUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -130,10 +127,14 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (onlyReportWhenAnnotated && !CloneUtils.isClone(method) && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
+      final boolean isClone = CloneUtils.isClone(method);
+      if (onlyReportWhenAnnotated && !isClone && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
         if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations, 0)) {
           return;
         }
+      }
+      if (isClone && SingletonUtil.isSingleton(method.getContainingClass())) {
+        return;
       }
       if (MethodCallUtils.containsSuperMethodCall(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;

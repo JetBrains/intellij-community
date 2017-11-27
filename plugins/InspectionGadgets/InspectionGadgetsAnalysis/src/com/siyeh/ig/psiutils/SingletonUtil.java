@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +32,8 @@ public class SingletonUtil {
 
   private SingletonUtil() {}
 
-  public static boolean isSingleton(@NotNull PsiClass aClass) {
-    if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+  public static boolean isSingleton(@Nullable PsiClass aClass) {
+    if (aClass == null || aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
       return false;
     }
     if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
