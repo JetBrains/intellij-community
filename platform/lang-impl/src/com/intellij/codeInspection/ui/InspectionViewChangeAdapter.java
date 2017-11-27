@@ -18,6 +18,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final InspectionResultsView myView;
   private final Alarm myAlarm;
-  private final Set<VirtualFile> myUnPresentEditedFiles = ContainerUtil.createWeakSet();
+  private final Set<VirtualFile> myUnPresentEditedFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
 
   private final Set<VirtualFile> myFilesToProcess = new THashSet<>(); // guarded by myFilesToProcess
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
@@ -92,10 +93,12 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     PsiFile file = event.getFile();
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
-      synchronized (myFilesToProcess) {
-        myFilesToProcess.add(vFile);
+      if (!myUnPresentEditedFiles.contains(vFile)) {
+        synchronized (myFilesToProcess) {
+          myFilesToProcess.add(vFile);
+        }
+        invokeQueue();
       }
-      invokeQueue();
       return true;
     }
     return false;
