@@ -11,10 +11,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,6 +120,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
+  @Transient
   public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new THashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;

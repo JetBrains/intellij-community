@@ -1,11 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.versionBrowser;
 
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.SyncDateFormat;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,8 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.packNullables;
 import static com.intellij.util.containers.ContainerUtil.retainAll;
 
-public class ChangeBrowserSettings implements JDOMExternalizable {
+@State(name = "ChangeBrowserSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ChangeBrowserSettings {
   public interface Filter {
     boolean accepts(CommittedChangeList change);
   }
@@ -44,14 +47,6 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @Transient public boolean STRICTLY_AFTER = false;
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
   @Nullable
   private static Date parseDate(@Nullable String dateValue) {
     try {
@@ -74,18 +69,24 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
+  @Nullable
+  @Transient
+  public Date getDateBefore() {
+    return parseDate(DATE_BEFORE);
+  }
+
   public void setDateBefore(@Nullable Date value) {
     DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @Nullable
-  public Date getDateBefore() {
-    return parseDate(DATE_BEFORE);
-  }
-
-  @Nullable
+  @Transient
   public Date getDateAfter() {
     return parseDate(DATE_AFTER);
+  }
+
+  public void setDateAfter(@Nullable Date value) {
+    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @Nullable
@@ -94,6 +95,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   @Nullable
+  @Transient
   public Date getDateBeforeFilter() {
     return USE_DATE_BEFORE_FILTER ? parseDate(DATE_BEFORE) : null;
   }
@@ -106,10 +108,6 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   @Nullable
   public Date getDateAfterFilter() {
     return USE_DATE_AFTER_FILTER ? parseDate(DATE_AFTER) : null;
-  }
-
-  public void setDateAfter(@Nullable Date value) {
-    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
   @NotNull
@@ -150,6 +148,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   @Nullable
+  @Transient
   public String getUserFilter() {
     return USE_USER_FILTER ? USER : null;
   }
@@ -162,6 +161,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
            isNonDateFilterSpecified();
   }
 
+  @Transient
   public boolean isNonDateFilterSpecified() {
     return USE_USER_FILTER;
   }

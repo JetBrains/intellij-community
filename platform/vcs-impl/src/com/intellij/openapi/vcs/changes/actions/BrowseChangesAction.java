@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -30,7 +31,11 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
     AbstractVcs vcs = notNull(getVcsForFile(file, project));
     CommittedChangesProvider provider = notNull(vcs.getCommittedChangesProvider());
     ChangeBrowserSettings settings =
-      vcs.getConfiguration().CHANGE_BROWSER_SETTINGS.computeIfAbsent(vcs.getName(), key -> provider.createDefaultSettings());
+      vcs.getConfiguration().CHANGE_BROWSER_SETTINGS.computeIfAbsent(vcs.getName(), key -> {
+        ChangeBrowserSettings result = provider.createDefaultSettings();
+        ServiceKt.getStateStore(project).initPersistencePlainComponent(result, "VcsManager.ChangeBrowser." + key);
+        return result;
+      });
     CommittedChangesFilterDialog dialog = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
 
     if (dialog.showAndGet()) {
