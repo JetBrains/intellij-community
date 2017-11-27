@@ -7,7 +7,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
@@ -81,16 +80,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 
-    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    final Set<RefModule> moduleProblems = presentation.getModuleProblems();
-    if (!moduleProblems.isEmpty()) {
-      Set<RefEntity> entities = contents.get("");
-      if (entities == null) {
-        entities = new HashSet<>();
-        contents.put("", entities);
-      }
-      entities.addAll(moduleProblems);
-    }
     buildTree(context,
               contents,
               false,

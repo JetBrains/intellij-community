@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -58,7 +60,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
-  private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
 
   private DescriptorComposer myComposer;
   private volatile boolean isDisposed;
@@ -435,13 +436,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public synchronized boolean hasReportedProblems() {
-    return !myContents.isEmpty() || !myModulesProblems.isEmpty();
+    return !myContents.isEmpty();
   }
 
   @Override
   public synchronized void updateContent() {
     myContents.clear();
-    myModulesProblems.clear();
     updateProblemElements();
   }
 
@@ -449,13 +449,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     final Collection<RefEntity> elements = getProblemElements().keys();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element) || isExcluded(element))) continue;
-      if (element instanceof RefModule) {
-        myModulesProblems.add((RefModule)element);
-      }
-      else {
-        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
-        registerContentEntry(element, groupName);
-      }
+      String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
+      registerContentEntry(element, groupName);
     }
   }
 
@@ -468,12 +463,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Override
   public Map<String, Set<RefEntity>> getContent() {
     return myContents;
-  }
-
-  @NotNull
-  @Override
-  public Set<RefModule> getModuleProblems() {
-    return myModulesProblems;
   }
 
   @Override
