@@ -16,6 +16,7 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExceptionUtils;
@@ -36,16 +37,9 @@ public class DetailExceptionsIntention extends Intention {
 
   @Override
   public void processIntention(@NotNull PsiElement element) {
-    final PsiJavaToken token = (PsiJavaToken)element;
-    PsiElement parent = token.getParent();
-    if (parent instanceof PsiCatchSection) {
-      parent = parent.getParent();
-    }
-    if (!(parent instanceof PsiTryStatement)) {
-      return;
-    }
+    final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+    if (tryStatement == null) return;
     CommentTracker commentTracker = new CommentTracker();
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     @NonNls final StringBuilder newTryStatement = new StringBuilder("try");
     final Set<PsiClassType> exceptionsThrown = new HashSet<>();
     final PsiResourceList resourceList = tryStatement.getResourceList();

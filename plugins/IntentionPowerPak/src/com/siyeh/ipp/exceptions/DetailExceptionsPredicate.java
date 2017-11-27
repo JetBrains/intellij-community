@@ -16,7 +16,7 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -26,21 +26,15 @@ class DetailExceptionsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiCatchSection || parent instanceof PsiTryStatement)) {
       return false;
     }
-    final IElementType tokenType = ((PsiJavaToken)element).getTokenType();
-    if (!JavaTokenType.TRY_KEYWORD.equals(tokenType) && !JavaTokenType.CATCH_KEYWORD.equals(tokenType)) {
+    if (element instanceof PsiCodeBlock) {
       return false;
     }
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiCatchSection) {
-      parent = parent.getParent();
-    }
-    if (!(parent instanceof PsiTryStatement)) {
-      return false;
-    }
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+    final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(parent, PsiTryStatement.class, false);
+    if (tryStatement == null) return false;
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
     ExceptionUtils.calculateExceptionsThrown(tryStatement.getResourceList(), exceptionsThrown);
