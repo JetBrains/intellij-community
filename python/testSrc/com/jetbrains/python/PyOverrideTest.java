@@ -188,4 +188,9 @@ public class PyOverrideTest extends PyTestCase {
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), cls, Collections.singletonList(new PyMethodMember(method)), false);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
+
+  // PY-19312
+  public void testAsyncMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest());
+  }
 }
