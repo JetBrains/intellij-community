@@ -47,10 +47,18 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction[] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return getCommonSelectedFixes(presentation, tree.getSelectedDescriptors());
+    return getCommonFixes(presentation, tree.getSelectedDescriptors());
+  }
+
+  @NotNull
+  @Override
+  public QuickFixes getAllQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+    GlobalInspectionContextImpl context = tree.getContext();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    return new QuickFixes.QuickFixesImpl(getAllFixes(presentation, tree.getSelectedDescriptors()));
   }
 
   @Override

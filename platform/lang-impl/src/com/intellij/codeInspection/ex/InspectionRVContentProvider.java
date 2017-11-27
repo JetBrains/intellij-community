@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,8 +124,10 @@ public abstract class InspectionRVContentProvider {
   }
 
   @NotNull
-  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+  public abstract QuickFixAction[] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
+  @NotNull
+  public abstract QuickFixes getAllQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                               @NotNull InspectionNode toolNode,
@@ -397,8 +400,42 @@ public abstract class InspectionRVContentProvider {
   }
 
   @NotNull
-  protected static QuickFixAction[] getCommonSelectedFixes(@NotNull InspectionToolPresentation presentation,
-                                                           @NotNull CommonProblemDescriptor[] descriptors) {
+  protected static FixAndOccurrences[] getAllFixes(@NotNull InspectionToolPresentation presentation,
+                                                   @NotNull CommonProblemDescriptor[] descriptors) {
+    Map<String, FixAndOccurrences> result = new THashMap<>();
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      for (QuickFix fix : fixes) {
+        String familyName = fix.getFamilyName();
+        FixAndOccurrences fixAndOccurrences = result.get(familyName);
+        if (fixAndOccurrences == null) {
+          fixAndOccurrences = new FixAndOccurrences(new LocalQuickFixWrapper(fix, presentation.getToolWrapper()));
+          result.put(familyName, fixAndOccurrences);
+        } else {
+          final LocalQuickFixWrapper quickFixAction = (LocalQuickFixWrapper)fixAndOccurrences.fix;
+          LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
+                         "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
+                         "Please assign reported exception for the inspection \"" + presentation.getToolWrapper().getTool().getClass() + "\" (\"" +
+                         presentation.getToolWrapper().getShortName() + "\") developer");
+          try {
+            quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+          }
+          catch (AbstractMethodError e) {
+            //for plugin compatibility
+            quickFixAction.setText("Name is not available");
+          }
+        }
+        fixAndOccurrences.occurrences++;
+      }
+    }
+
+    return result.values().toArray(new FixAndOccurrences[result.size()]);
+  }
+
+  @NotNull
+  protected static QuickFixAction[] getCommonFixes(@NotNull InspectionToolPresentation presentation,
+                                                   @NotNull CommonProblemDescriptor[] descriptors) {
     Map<String, LocalQuickFixWrapper> result = null;
     for (CommonProblemDescriptor d : descriptors) {
       QuickFix[] fixes = d.getFixes();
@@ -446,5 +483,16 @@ public abstract class InspectionRVContentProvider {
 
   private static Class getFixClass(QuickFix fix) {
     return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
+  }
+
+  public static class FixAndOccurrences {
+    final QuickFixAction fix;
+    int occurrences;
+
+    FixAndOccurrences(QuickFixAction fix) {this(fix, 0);}
+    FixAndOccurrences(QuickFixAction fix, int occurrences) {
+      this.fix = fix;
+      this.occurrences = occurrences;
+    }
   }
 }

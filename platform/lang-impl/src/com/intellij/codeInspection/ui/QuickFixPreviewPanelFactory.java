@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.QuickFixes;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -51,9 +52,13 @@ public class QuickFixPreviewPanelFactory {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
-      QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
+      QuickFixAction[] fixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
       boolean multipleDescriptors = myView.getTree().getSelectedDescriptors(false, null, false, true).length > 1;
-      myEmpty = fillPanel(fixes, multipleDescriptors, view);
+      QuickFixes allFixes = null;
+      if (multipleDescriptors && fixes.length == 0) {
+        allFixes = view.getProvider().getAllQuickFixes(myWrapper, view.getTree());
+      }
+      myEmpty = fillPanel(fixes, allFixes, multipleDescriptors, view);
     }
 
     public boolean isEmpty() {
@@ -61,6 +66,7 @@ public class QuickFixPreviewPanelFactory {
     }
 
     private boolean fillPanel(@NotNull QuickFixAction[] fixes,
+                              @Nullable QuickFixes allFixes,
                               boolean multipleDescriptors,
                               @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes.length != 0;

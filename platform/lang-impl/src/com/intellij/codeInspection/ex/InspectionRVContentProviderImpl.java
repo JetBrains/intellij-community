@@ -20,10 +20,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
   public InspectionRVContentProviderImpl(final Project project) {
@@ -63,10 +65,24 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction[] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    QuickFixAction[] fixes = getCommonSelectedFixes(presentation, tree.getSelectedDescriptors());
+    QuickFixAction[] fixes = getCommonFixes(presentation, tree.getSelectedDescriptors());
     return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(tree.getSelectedElements()), QuickFixAction[]::new);
+  }
+
+  @NotNull
+  @Override
+  public QuickFixes getAllQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+    CommonProblemDescriptor[] selectedDescriptors = tree.getSelectedDescriptors();
+    if (selectedDescriptors.length == 0) return QuickFixes.EMPTY;
+    InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
+
+    int descriptorCount = selectedDescriptors.length;
+    Stream<FixAndOccurrences> inspectionDefinedFixes =
+      Arrays.stream(presentation.getQuickFixes(tree.getSelectedElements())).map(f -> new FixAndOccurrences(f, descriptorCount));
+
+    return new QuickFixes.QuickFixesImpl(ArrayUtil.mergeArrays(getAllFixes(presentation, selectedDescriptors), inspectionDefinedFixes.toArray(FixAndOccurrences[]::new)));
   }
 
 
