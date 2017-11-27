@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.aether;
 import org.eclipse.aether.repository.*;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
 import java.util.List;
@@ -19,12 +20,17 @@ final class JreProxySelector implements ProxySelector {
   }
 
   public Proxy getProxy(RemoteRepository repository) {
+    return getProxy(repository.getUrl());
+  }
+
+  @Nullable
+  public Proxy getProxy(final String url) {
     try {
       final java.net.ProxySelector systemSelector = java.net.ProxySelector.getDefault();
       if (systemSelector == null) {
         return null;
       }
-      final URI uri = new URI(repository.getUrl()).parseServerAuthority();
+      final URI uri = new URI(url).parseServerAuthority();
       final List<java.net.Proxy> selected = systemSelector.select(uri);
       if (selected == null || selected.isEmpty()) {
         return null;
