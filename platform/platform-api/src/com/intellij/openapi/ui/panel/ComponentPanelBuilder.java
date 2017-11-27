@@ -13,41 +13,36 @@
 // limitations under the License.
 package com.intellij.openapi.ui.panel;
 
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public interface ComponentPanelBuilder extends PanelBuilder {
 
   /**
    * @param labelText text for the label. If <code>null</code> or not set then no label is added in the layout.
    */
-  ComponentPanelBuilder setLabelText(String labelText);
+  ComponentPanelBuilder withLabel(String labelText);
 
   /**
    * @param commentText help context styled text written below the owner component.
    */
-  ComponentPanelBuilder setCommentText(String commentText);
+  ComponentPanelBuilder withComment(String commentText);
 
   /**
-   * Set relative location of comment text. Location is relative to the owner component.
-   * @param location possible values: <code>SwingConstants.RIGHT</code> or <code>SwingConstants.BOTTOM</code>
+   * Move comment to the right of the owner component. Default position is below the owner component.
    */
-  ComponentPanelBuilder setCommentLocation(@MagicConstant(intValues = {SwingConstants.RIGHT, SwingConstants.BOTTOM}) int location);
-
+  ComponentPanelBuilder moveCommentRight();
 
   /**
    * Enables the help tooltip label on the right of the owner component and sets the description text for the tooltip.
    * @param description help tooltip description. If <code>null</code> is passed then help tooltip is disabled (default
    *                    behaviour) and no help label is added.
    */
-  ComponentPanelBuilder setHelpTooltipText(String description);
+  ComponentPanelBuilder withTooltip(String description);
 
   /**
    * Sets optional help tooltip link and link action.
    * @param linkText help tooltip link text. If <code>null</code> is passed, no link is added.
    * @param action help tooltip link action.
    */
-  ComponentPanelBuilder setHelpTooltipLink(String linkText, @NotNull Runnable action);
+  ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action);
 }

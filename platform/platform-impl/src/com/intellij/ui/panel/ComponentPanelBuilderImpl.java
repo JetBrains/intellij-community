@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
 
   private String myLabelText;
   private String myComment;
-  private int myLocation;
+  private boolean myCommentBelow = true;
   private String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
@@ -33,31 +32,31 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
   }
 
   @Override
-  public ComponentPanelBuilder setLabelText(String labelText) {
+  public ComponentPanelBuilder withLabel(String labelText) {
     myLabelText = labelText;
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder setCommentText(String comment) {
+  public ComponentPanelBuilder withComment(String comment) {
     myComment = comment;
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder setCommentLocation(int location) {
-    myLocation = location;
+  public ComponentPanelBuilder moveCommentRight() {
+    myCommentBelow = false;
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder setHelpTooltipText(String description) {
+  public ComponentPanelBuilder withTooltip(String description) {
     myHTDescription = description;
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder setHelpTooltipLink(String linkText, @NotNull Runnable action) {
+  public ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -75,7 +74,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
 
   @Override
   public boolean constrainsValid() {
-    return myLocation != SwingConstants.RIGHT || StringUtil.isEmpty(myHTDescription);
+    return myCommentBelow || StringUtil.isEmpty(myHTDescription);
   }
 
   @Override
@@ -125,16 +124,16 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
       ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
                              ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
                              ContextHelpLabel.create(myHTDescription);
-      componentPanel.add(Box.createRigidArea(new JBDimension(7, 0)));
+      componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
       componentPanel.add(lbl);
-    } else if (comment != null && myLocation == SwingConstants.RIGHT) {
-      componentPanel.add(Box.createRigidArea(new JBDimension(14, 0)));
+    } else if (comment != null && !myCommentBelow) {
+      componentPanel.add(Box.createRigidArea(JBUI.size(14, 0)));
       componentPanel.add(comment);
     }
 
     panel.add(componentPanel, gc);
 
-    if (comment != null && myLocation == SwingConstants.BOTTOM) {
+    if (comment != null && myCommentBelow) {
       gc.gridx = 1;
       gc.gridy ++;
       gc.weightx = 0.0;

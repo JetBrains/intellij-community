@@ -27,6 +27,22 @@ public abstract class JBPanelFactory {
     return ServiceManager.getService(JBPanelFactory.class);
   }
 
+  public static ComponentPanelBuilder panel(JComponent component) {
+    return getInstance().createComponentPanelBuilder(component);
+  }
+
+  public static ProgressPanelBuilder panel(JProgressBar progressBar) {
+    return getInstance().createProgressPanelBuilder(progressBar);
+  }
+
+  public static PanelGridBuilder<ComponentPanelBuilder> componentGrid() {
+    return getInstance().createComponentPanelGridBuilder();
+  }
+
+  public static PanelGridBuilder<ProgressPanelBuilder> progressGrid() {
+    return getInstance().createProgressPanelGridBuilder();
+  }
+
   public abstract ComponentPanelBuilder createComponentPanelBuilder(JComponent component);
 
   public abstract ProgressPanelBuilder createProgressPanelBuilder(JProgressBar progressBar);

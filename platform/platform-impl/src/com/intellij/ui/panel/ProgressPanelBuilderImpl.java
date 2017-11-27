@@ -22,7 +22,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
 
   private final JProgressBar myProgressBar;
   private String initialLabelText;
-  private int location;
+  private boolean labelAbove = true;
 
   private Runnable cancelAction;
   private Runnable resumeAction;
@@ -41,39 +41,39 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
   }
 
   @Override
-  public ProgressPanelBuilder setLabelText(String text) {
+  public ProgressPanelBuilder withLabel(String text) {
     initialLabelText = text;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setLabelLocation(int location) {
-    this.location = location;
+  public ProgressPanelBuilder moveLabelLeft() {
+    labelAbove = false;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setCancelAction(@NotNull Runnable cancelAction) {
+  public ProgressPanelBuilder withCancel(@NotNull Runnable cancelAction) {
     this.cancelAction = cancelAction;
     valid = resumeAction == null && pauseAction == null;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setCancelAsButton(boolean asButton) {
-    this.cancelAsButton = asButton;
+  public ProgressPanelBuilder andCancelAsButton() {
+    this.cancelAsButton = true;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setResumeAction(@NotNull Runnable playAction) {
+  public ProgressPanelBuilder withResume(@NotNull Runnable playAction) {
     this.resumeAction = playAction;
     valid = pauseAction != null && cancelAction == null;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setPauseAction(@NotNull Runnable pauseAction) {
+  public ProgressPanelBuilder withPause(@NotNull Runnable pauseAction) {
     this.pauseAction = pauseAction;
     valid = resumeAction != null && cancelAction == null;
     return this;
@@ -81,20 +81,20 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
 
 
   @Override
-  public ProgressPanelBuilder setSmallVariant(boolean smallVariant) {
-    this.smallVariant = smallVariant;
+  public ProgressPanelBuilder andSmallIcons() {
+    this.smallVariant = true;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setCommentEnabled(boolean enabled) {
-    this.commentEnabled = enabled;
+  public ProgressPanelBuilder withoutComment() {
+    this.commentEnabled = false;
     return this;
   }
 
   @Override
-  public ProgressPanelBuilder setTopSeparatorEnabled(boolean enabled) {
-    this.topSeparatorEnabled = enabled;
+  public ProgressPanelBuilder withTopSeparator() {
+    this.topSeparatorEnabled = true;
     return this;
   }
 
@@ -120,7 +120,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
   }
 
   @Override public int gridWidth() {
-    int width = location == SwingConstants.TOP ? 1 : 2;
+    int width = labelAbove ? 1 : 2;
     width += (cancelAction != null || resumeAction != null && pauseAction != null) ? 1 : 0;
     return width;
   }
@@ -237,13 +237,13 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
 
       gc.weightx = 0.0;
       gc.gridwidth = 1;
-      gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 13, 0, location == SwingConstants.TOP ? 13 : 0);
+      gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 13, 0, labelAbove ? 13 : 0);
       panel.add(label, gc);
 
-      if (location == SwingConstants.TOP) {
+      if (labelAbove) {
         gc.insets = JBUI.insets(5, 13, 7, 0);
         gc.gridy++;
-      } else if (location == SwingConstants.LEFT) {
+      } else {
         gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 12, 0, 0);
         gc.gridx++;
       }
@@ -255,7 +255,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
-      gc.insets = JBUI.insets(location == SwingConstants.TOP || topSeparatorEnabled || smallVariant ? 0 : 13, 10, 0, 13);
+      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 0 : 13, 10, 0, 13);
 
       if (cancelAction != null) {
         if (cancelAsButton) {
@@ -297,8 +297,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
 
       if (commentEnabled) {
         gc.gridy++;
-        gc.gridx = location == SwingConstants.TOP ? 0 : 1;
-        gc.insets = location == SwingConstants.TOP ? JBUI.insets(0, 13) : JBUI.insets(-4, 13, 0, 13);
+        gc.gridx = labelAbove ? 0 : 1;
+        gc.insets = labelAbove ? JBUI.insets(0, 13) : JBUI.insets(-4, 13, 0, 13);
         gc.weightx = 1.0;
         gc.anchor = GridBagConstraints.LINE_START;
         gc.fill = GridBagConstraints.HORIZONTAL;

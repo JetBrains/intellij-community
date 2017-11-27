@@ -13,10 +13,7 @@
 // limitations under the License.
 package com.intellij.openapi.ui.panel;
 
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * Builder for standard progressbar panels.
@@ -26,56 +23,51 @@ public interface ProgressPanelBuilder extends PanelBuilder {
    * Set label text.
    * @param text label text
    */
-  ProgressPanelBuilder setLabelText(String text);
+  ProgressPanelBuilder withLabel(String text);
 
   /**
-   * Set relative location of label. Label is relative to the progressbar.
-   * @param location possible values: <code>SwingConstants.LEFT</code> or <code>SwingConstants.BOTTOM</code>
+   * Move comment to the left of the progress bar.
+   * Default position is above the progress bar.
    */
-  ProgressPanelBuilder setLabelLocation(@MagicConstant(intValues = {SwingConstants.LEFT, SwingConstants.TOP}) int location);
+  ProgressPanelBuilder moveLabelLeft();
 
   /**
-   * Enables cancel button (icon styled) and sets action for it. Can't coexist with play and pause actions.
+   * Enables cancel button and sets action for it. Can't coexist with play and pause actions.
    * @param cancelAction <code>Runnable</code> action.
    */
-  ProgressPanelBuilder setCancelAction(@NotNull Runnable cancelAction);
+  ProgressPanelBuilder withCancel(@NotNull Runnable cancelAction);
 
   /**
-   * @param asButton <code>true</code> if an ordinary button should be placed as "Cancel" button
-   *                 instead of an icon, <code>false</code> otherwise. Default is <code>false</code>.
+   * Cancel button will look like an ordinary button rather than as icon.
+   * Default is icon styled cancel button.
    */
-  ProgressPanelBuilder setCancelAsButton(boolean asButton);
+  ProgressPanelBuilder andCancelAsButton();
 
   /**
    * Enables play button (icon styled) and sets action for it. Can't coexist with cancel action.
-   * @param playlAction <code>Runnable</code> action.
+   * @param playAction <code>Runnable</code> action.
    */
-  ProgressPanelBuilder setResumeAction(@NotNull Runnable playAction);
+  ProgressPanelBuilder withResume(@NotNull Runnable playAction);
 
   /**
    * Enables pause button (icon styled) and sets action for it. Can't coexist with cancel action.
    * @param pauseAction <code>Runnable</code> action.
    */
-  ProgressPanelBuilder setPauseAction(@NotNull Runnable pauseAction);
+  ProgressPanelBuilder withPause(@NotNull Runnable pauseAction);
 
   /**
-   * @param smallVariant <code>true</code> if small icons should be used for all kinds of actions.
-   *                     Actual only for icon styled buttons. Default is <code>false</code>.
+   * Switch to small icons version.
    */
-  ProgressPanelBuilder setSmallVariant(boolean smallVariant);
+  ProgressPanelBuilder andSmallIcons();
 
   /**
-   * @param enabled <code>true</code> if there is reserved place for a comment below the progressbar.
-   *                Set it to <code>false</code> when creating compact progressbar panels.
-   *                Default is <code>true</code>.
+   * Switch off the comment and don't reserve place for in th the layout.
+   * This makes overall panel size smaller.
    */
-  ProgressPanelBuilder setCommentEnabled(boolean enabled);
+  ProgressPanelBuilder withoutComment();
 
   /**
-   * @param enabled Enables top separator for this panel. Use it when placing several progressbar
-   *                panels in a grid depending on the design requirements.
-   *                <code>true</code> enables separator above the progressbar panel.
-   *                Default is <code>false</code>.
+   * Enable separator on top of the panel.
    */
-  ProgressPanelBuilder setTopSeparatorEnabled(boolean enabled);
+  ProgressPanelBuilder withTopSeparator();
 }
