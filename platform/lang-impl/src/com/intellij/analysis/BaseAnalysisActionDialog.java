@@ -118,10 +118,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //module scope if applicable
     myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));
-    boolean useModuleScope = false;
     myModuleButton.setVisible(myModuleName != null && ModuleManager.getInstance(myProject).getModules().length > 1);
 
-    boolean useUncommitedFiles = false;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
     myUncommittedFilesButton.setVisible(hasVCS);
