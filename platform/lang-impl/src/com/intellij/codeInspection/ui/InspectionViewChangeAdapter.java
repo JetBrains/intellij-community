@@ -107,6 +107,11 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private void invokeQueue() {
     myUpdateQueue.queue(new Update("inspection.view.update") {
       @Override
+      public boolean canEat(Update update) {
+        return true;
+      }
+
+      @Override
       public void run() {
 
         boolean[] needUpdateUI = {false};
