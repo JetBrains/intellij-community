@@ -47,12 +47,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  @NotNull
-  public Object[] getParametersForDocumentation(Pair<PyCallExpression, PyMarkedCallee> callAndCallee, ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
   @Nullable
   public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final PyArgumentList argumentList = findArgumentList(context, -1);
@@ -144,17 +138,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     context.setCurrentParameter(offset);
-  }
-
-  @NotNull
-  @Override
-  public String getParameterCloseChars() {
-    return ",()"; // lpar may mean a nested tuple param, so it's included
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return false;
   }
 
   @Override
