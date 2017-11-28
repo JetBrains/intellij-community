@@ -45,10 +45,7 @@ import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -69,6 +66,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   }
 
+  @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
@@ -107,10 +105,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         if (getAnnotatedElementsValue().contains(methodName)) {
           return true;
         }
-        if (!annoOnly && getXmlAnnotatedElementsValue().contains(methodName)) {
-          return true;
-        }
-        return false;
+        return !annoOnly && getXmlAnnotatedElementsValue().contains(methodName);
       }
     };
     if (tempLanguage != null) {
@@ -136,7 +131,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    public InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
+    InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;
@@ -147,10 +142,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
       LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
-      ArrayList<PsiElement> places = new ArrayList<>(5);
+      List<PsiElement> places = new ArrayList<>(5);
       places.add(firstOperand);
+      Set<PsiModifierListOwner> visitedVars = new THashSet<>();
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
+        @Override
         public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
           PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
@@ -193,6 +189,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitMethodReturnStatement(PsiElement source, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
@@ -217,6 +214,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
         }
 
+        @Override
         public boolean visitVariable(PsiVariable variable) {
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
@@ -232,6 +230,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
           String paramName = nameValuePair.getName();
           String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
@@ -245,6 +244,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitReference(PsiReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           PsiElement e = expression.resolve();
@@ -276,7 +276,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
           return true;
         }
-      };
+      }
       MyAnnoVisitor visitor = new MyAnnoVisitor();
       if (!visitor.processCommentInjection(firstOperand)) {
         return;
@@ -335,10 +335,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
       processInjectionWithContext(injection, true);
-      if (injection.isTerminal()) {
-        return false;
-      }
-      return true;
+      return !injection.isTerminal();
     }
 
     @NotNull
@@ -377,23 +374,23 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           unparsableRef.set(Boolean.TRUE);
         }
         else {
-          if (!(curHost instanceof PsiLiteralExpression)) {
-            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
-            TextRange.assertProperRange(textRange, injection);
-            result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
-                                      textRange));
-          }
-          else {
+          if (curHost instanceof PsiLiteralExpression) {
             List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
               TextRange.assertProperRange(textRange, injection);
               result.add(Trinity.create(
                 curHost, InjectedLanguage.create(injection.getInjectedLanguageId(),
-                                                 (separateFiles || j == 0 ? curPrefix : ""),
-                                                 (separateFiles || j == injectedAreaSize - 1 ? curSuffix : ""),
+                                                 separateFiles || j == 0 ? curPrefix : "",
+                                                 separateFiles || j == injectedAreaSize - 1 ? curSuffix : "",
                                                  true), textRange));
             }
+          }
+          else {
+            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            TextRange.assertProperRange(textRange, injection);
+            result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
+                                      textRange));
           }
         }
       }
@@ -442,7 +439,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
 
-  public Collection<String> getAnnotatedElementsValue() {
+  private Collection<String> getAnnotatedElementsValue() {
     // note: external annotations not supported
     return InjectionCache.getInstance(myProject).getAnnoIndex();
   }

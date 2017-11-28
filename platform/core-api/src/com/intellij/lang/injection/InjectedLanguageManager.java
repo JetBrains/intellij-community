@@ -35,7 +35,7 @@ import java.util.List;
 
 public abstract class InjectedLanguageManager {
 
-  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+  /** @see MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
   @Deprecated
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
@@ -56,7 +56,7 @@ public abstract class InjectedLanguageManager {
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
 
   /**
-   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
+   * @deprecated use {@link MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
    * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
    */
   @Deprecated
@@ -66,7 +66,7 @@ public abstract class InjectedLanguageManager {
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
+   * @deprecated use {@link MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
    * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
    */
   @Deprecated
