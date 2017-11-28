@@ -81,45 +81,9 @@ public class SpellCheckerSettingsPane implements Disposable {
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
     fillAllDictionaries();
 
-
-    myCustomDictionariesChooserComponent = new PathsChooserComponent(dictionariesFolders, new PathsChooserComponent.PathProcessor() {
-      public boolean addPath(List<String> paths, String path) {
-        if (paths.contains(path)) {
-          final String title = SpellCheckerBundle.message("add.directory.title");
-          final String msg = SpellCheckerBundle.message("directory.is.already.included");
-          Messages.showErrorDialog(root, msg, title);
-          return false;
-        }
-        paths.add(path);
-
-        final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
-        SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
-        myBundledDictionariesChooserComponent.refresh();
-        return true;
-      }
-
-      public boolean removePath(List<String> paths, String path) {
-        if (paths.remove(path)) {
-          final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
-          final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
-          for (Pair<String, Boolean> pair : currentDictionaries) {
-            if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
-              result.add(pair);
-            } else {
-              removedDictionaries.add(pair.first);
-            }
-          }
-          currentDictionaries.clear();
-          currentDictionaries.addAll(result);
-          myBundledDictionariesChooserComponent.refresh();
-          return true;
-        }
-        return false;
-      }
-    }, project);
+    myCustomDictionariesChooserComponent = new CustomDictionariesChooserComponent(project);
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myCustomDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
-    myCustomDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
 
     myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
       @Override
@@ -165,7 +129,6 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     myBundledDictionariesChooserComponent.apply();
     myCustomDictionariesChooserComponent.apply();
-    settings.setCustomDictionariesPaths(myCustomDictionariesChooserComponent.getValues());
 
     final HashSet<String> disabledDictionaries = new HashSet<>();
     final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
@@ -313,5 +276,53 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
   }
 
+
+  private class CustomDictionariesChooserComponent extends PathsChooserComponent {
+    public CustomDictionariesChooserComponent(Project project) {
+      super(dictionariesFolders, new PathProcessor() {
+        public boolean addPath(List<String> paths, String path) {
+          if (paths.contains(path)) {
+            final String title = SpellCheckerBundle.message("add.directory.title");
+            final String msg = SpellCheckerBundle.message("directory.is.already.included");
+            Messages.showErrorDialog(root, msg, title);
+            return false;
+          }
+          paths.add(path);
+
+          final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
+          SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
+          myBundledDictionariesChooserComponent.refresh();
+          return true;
+        }
+
+        public boolean removePath(List<String> paths, String path) {
+          if (paths.remove(path)) {
+            final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
+            final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
+            for (Pair<String, Boolean> pair : currentDictionaries) {
+              if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
+                result.add(pair);
+              }
+              else {
+                removedDictionaries.add(pair.first);
+              }
+            }
+            currentDictionaries.clear();
+            currentDictionaries.addAll(result);
+            myBundledDictionariesChooserComponent.refresh();
+            return true;
+          }
+          return false;
+        }
+      }, project);
+      this.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
+    }
+
+    @Override
+    public void apply() {
+      super.apply();
+      settings.setCustomDictionariesPaths(myCustomDictionariesChooserComponent.getValues());
+    }
+  }
 
 }
