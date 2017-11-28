@@ -85,9 +85,9 @@ public class JavacMain {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
       // and thus usage of symbol file for resolution, when this file is not expected to be used
       fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
+      fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
+      fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     }
-    fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
-    fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
