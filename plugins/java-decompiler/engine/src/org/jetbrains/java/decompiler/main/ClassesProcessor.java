@@ -3,7 +3,6 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
-import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -28,6 +27,7 @@ import java.util.Map.Entry;
 public class ClassesProcessor {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
+  private final StructContext context;
   private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
 
   private static class Inner {
@@ -41,6 +41,10 @@ public class ClassesProcessor {
   }
 
   public ClassesProcessor(StructContext context) {
+    this.context = context;
+  }
+
+  public void loadClasses(IIdentifierRenamer renamer) {
     Map<String, Inner> mapInnerClasses = new HashMap<>();
     Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
     Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<>();
@@ -64,12 +68,11 @@ public class ClassesProcessor {
               if (savedName != null) {
                 simpleName = savedName;
               }
-              else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-                IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassName(innerName, simpleName);
-                  mapNewSimpleNames.put(innerName, simpleName);
-                }
+              else if (simpleName != null &&
+                       renamer != null &&
+                       renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                simpleName = renamer.getNextClassName(innerName, simpleName);
+                mapNewSimpleNames.put(innerName, simpleName);
               }
 
               Inner rec = new Inner();
@@ -223,9 +226,7 @@ public class ClassesProcessor {
     DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
     try {
       ImportCollector importCollector = new ImportCollector(root);
-      DecompilerContext.setImportCollector(importCollector);
-      DecompilerContext.setCounterContainer(new CounterContainer());
-      DecompilerContext.setBytecodeSourceMapper(new BytecodeSourceMapper());
+      DecompilerContext.startClass(importCollector);
 
       new LambdaProcessor().processClass(root);
 

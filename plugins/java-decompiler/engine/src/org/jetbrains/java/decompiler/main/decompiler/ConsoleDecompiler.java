@@ -17,7 +17,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
-
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     if (args.length < 2) {
@@ -101,11 +100,6 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   private final Fernflower fernflower;
   private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
   private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
-
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public ConsoleDecompiler(File destination, Map<String, Object> options) {
-    this(destination, options, new PrintStreamLogger(System.out));
-  }
 
   protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;

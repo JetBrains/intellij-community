@@ -25,23 +25,19 @@ public class MethodProcessorRunnable implements Runnable {
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private final VarProcessor varProc;
-  private final DecompilerContext parentContext;
 
   private volatile RootStatement root;
   private volatile Throwable error;
   private volatile boolean finished = false;
 
-  public MethodProcessorRunnable(StructMethod method, MethodDescriptor methodDescriptor, VarProcessor varProc, DecompilerContext parentContext) {
+  public MethodProcessorRunnable(StructMethod method, MethodDescriptor methodDescriptor, VarProcessor varProc) {
     this.method = method;
     this.methodDescriptor = methodDescriptor;
     this.varProc = varProc;
-    this.parentContext = parentContext;
   }
 
   @Override
   public void run() {
-    DecompilerContext.setCurrentContext(parentContext);
-
     error = null;
     root = null;
 
@@ -53,9 +49,6 @@ public class MethodProcessorRunnable implements Runnable {
     }
     catch (Throwable ex) {
       error = ex;
-    }
-    finally {
-      DecompilerContext.setCurrentContext(null);
     }
 
     finished = true;

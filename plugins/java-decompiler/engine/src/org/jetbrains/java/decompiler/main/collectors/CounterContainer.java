@@ -2,9 +2,8 @@
 package org.jetbrains.java.decompiler.main.collectors;
 
 public class CounterContainer {
-
   public static final int STATEMENT_COUNTER = 0;
-  public static final int EXPRENT_COUNTER = 1;
+  public static final int EXPRESSION_COUNTER = 1;
   public static final int VAR_COUNTER = 2;
 
   private final int[] values = new int[]{1, 1, 1};

@@ -45,7 +45,7 @@ public class Exprent implements IMatchable {
 
   public Exprent(int type) {
     this.type = type;
-    this.id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRENT_COUNTER);
+    this.id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.EXPRESSION_COUNTER);
   }
 
   public int getPrecedence() {

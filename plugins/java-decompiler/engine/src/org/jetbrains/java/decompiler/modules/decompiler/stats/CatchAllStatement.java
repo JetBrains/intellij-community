@@ -10,7 +10,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ public class CatchAllStatement extends Statement {
 
     vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                             new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
-                            (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                            DecompilerContext.getVarProcessor()));
   }
 
 
@@ -165,14 +164,14 @@ public class CatchAllStatement extends Statement {
     if (this.monitor != null) {
       cas.monitor = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                    VarType.VARTYPE_INT,
-                                   (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR));
+                                   DecompilerContext.getVarProcessor());
     }
 
     if (!this.vars.isEmpty()) {
       // FIXME: WTF??? vars?!
       vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                               new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
-                              (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                              DecompilerContext.getVarProcessor()));
     }
 
     return cas;

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 
 public class ClassWrapper {
-
   private final StructClass classStruct;
   private final Set<String> hiddenMembers = new HashSet<>();
   private final VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<>();
@@ -47,15 +46,12 @@ public class ClassWrapper {
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
-      VarNamesCollector vc = new VarNamesCollector();
-      DecompilerContext.setVarNamesCollector(vc);
-
-      CounterContainer counter = new CounterContainer();
-      DecompilerContext.setCounterContainer(counter);
-
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
       VarProcessor varProc = new VarProcessor(mt, md);
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varProc);
+      DecompilerContext.startMethod(varProc);
+
+      VarNamesCollector vc = varProc.getVarNamesCollector();
+      CounterContainer counter = DecompilerContext.getCounterContainer();
 
       RootStatement root = null;
 
@@ -67,7 +63,7 @@ public class ClassWrapper {
             root = MethodProcessorRunnable.codeToJava(mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc);
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000;
@@ -128,9 +124,8 @@ public class ClassWrapper {
         }
       }
       catch (Throwable ex) {
-        DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.",
-                                                   IFernflowerLogger.Severity.WARN,
-                                                   ex);
+        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, ex);
         isError = true;
       }
 

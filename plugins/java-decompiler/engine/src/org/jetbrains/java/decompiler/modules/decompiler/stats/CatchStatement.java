@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
@@ -49,7 +48,7 @@ public class CatchStatement extends Statement {
         vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                 new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                 // FIXME: for now simply the first type. Should get the first common superclass when possible.
-                                (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                                DecompilerContext.getVarProcessor()));
       }
     }
 
@@ -193,7 +192,7 @@ public class CatchStatement extends Statement {
       cs.exctstrings.add(new ArrayList<>(exc));
       cs.vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, exc.get(0)),
-                                 (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                                 DecompilerContext.getVarProcessor()));
     }
 
     return cs;

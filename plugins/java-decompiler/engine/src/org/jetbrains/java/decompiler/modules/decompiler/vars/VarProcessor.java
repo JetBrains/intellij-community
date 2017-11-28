@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class VarProcessor {
+  private final VarNamesCollector varNamesCollector = new VarNamesCollector();
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private Map<VarVersionPair, String> mapVarNames = new HashMap<>();
@@ -83,6 +84,10 @@ public class VarProcessor {
     for (Entry<VarVersionPair, String> ent : tempVarNames.entrySet()) {
       mapVarNames.put(ent.getKey(), vc.getFreeName(ent.getValue()));
     }
+  }
+
+  public VarNamesCollector getVarNamesCollector() {
+    return varNamesCollector;
   }
 
   public VarType getVarType(VarVersionPair pair) {

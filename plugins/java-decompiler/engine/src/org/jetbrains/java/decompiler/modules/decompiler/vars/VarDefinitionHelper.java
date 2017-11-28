@@ -37,7 +37,7 @@ public class VarDefinitionHelper {
 
     this.varproc = varproc;
 
-    VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+    VarNamesCollector vc = varproc.getVarNamesCollector();
 
     boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
@@ -108,8 +108,7 @@ public class VarDefinitionHelper {
 
 
   public void setVarDefinitions() {
-
-    VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+    VarNamesCollector vc = varproc.getVarNamesCollector();
 
     for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
       Statement stat = en.getValue();

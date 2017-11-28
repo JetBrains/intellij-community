@@ -2,12 +2,15 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -115,7 +118,7 @@ public class DecompilerTestFixture {
     private final HashMap<String, ZipFile> zipFiles = new HashMap<>();
 
     public TestConsoleDecompiler(File destination, Map<String, Object> options) {
-      super(destination, options);
+      super(destination, options, new PrintStreamLogger(System.out));
     }
 
     @Override

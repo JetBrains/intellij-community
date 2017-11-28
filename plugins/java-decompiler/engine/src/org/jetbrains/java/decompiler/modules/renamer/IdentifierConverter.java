@@ -2,8 +2,6 @@
 package org.jetbrains.java.decompiler.modules.renamer;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
@@ -18,41 +16,25 @@ import java.io.IOException;
 import java.util.*;
 
 public class IdentifierConverter implements NewClassNameBuilder {
-
-  private StructContext context;
-  private IIdentifierRenamer helper;
-  private PoolInterceptor interceptor;
+  private final StructContext context;
+  private final IIdentifierRenamer helper;
+  private final PoolInterceptor interceptor;
   private List<ClassWrapperNode> rootClasses = new ArrayList<>();
   private List<ClassWrapperNode> rootInterfaces = new ArrayList<>();
   private Map<String, Map<String, String>> interfaceNameMaps = new HashMap<>();
 
-  public void rename(StructContext context) {
+  public IdentifierConverter(StructContext context, IIdentifierRenamer helper, PoolInterceptor interceptor) {
+    this.context = context;
+    this.helper = helper;
+    this.interceptor = interceptor;
+  }
+
+  public void rename() {
     try {
-      this.context = context;
-
-      String user_class = (String)DecompilerContext.getProperty(IFernflowerPreferences.USER_RENAMER_CLASS);
-      if (user_class != null) {
-        try {
-          helper = (IIdentifierRenamer)IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
-        }
-        catch (Exception ignored) { }
-      }
-
-      if (helper == null) {
-        helper = new ConverterHelper();
-      }
-
-      interceptor = new PoolInterceptor(helper);
-
       buildInheritanceTree();
-
       renameAllClasses();
-
       renameInterfaces();
-
       renameClasses();
-
-      DecompilerContext.setPoolInterceptor(interceptor);
       context.reloadContext();
     }
     catch (IOException ex) {

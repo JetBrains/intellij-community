@@ -7,18 +7,17 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class BaseDecompiler {
-
   private final Fernflower fernflower;
 
   public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
     fernflower = new Fernflower(provider, saver, options, logger);
   }
 
-  public void addSpace(File file, boolean isOwn) throws IOException {
+  public void addSpace(File file, boolean isOwn) {
     fernflower.getStructContext().addSpace(file, isOwn);
   }
 
