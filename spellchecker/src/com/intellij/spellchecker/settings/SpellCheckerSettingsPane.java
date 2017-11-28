@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -64,16 +63,14 @@ public class SpellCheckerSettingsPane implements Disposable {
     this.settings = settings;
     manager = SpellCheckerManager.getInstance(project);
     HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
-    link.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
-          if (allSettings != null) {
-            final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
-            if (errorsConfigurable != null) {
-              allSettings.select(errorsConfigurable).doWhenDone(
-                () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
-            }
+    link.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+        if (allSettings != null) {
+          final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
+          if (errorsConfigurable != null) {
+            allSettings.select(errorsConfigurable).doWhenDone(
+              () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
           }
         }
       }
