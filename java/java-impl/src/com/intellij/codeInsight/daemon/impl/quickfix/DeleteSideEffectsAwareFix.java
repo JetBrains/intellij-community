@@ -37,7 +37,7 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
   private final SmartPsiElementPointer<PsiStatement> myStatementPtr;
   private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
   private final String myMessage;
-  private final boolean myNotAvailable;
+  private final boolean myIsAvailable;
 
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression) {
     super(statement);
@@ -58,8 +58,8 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
       }
     }
     // "Remove unnecessary parentheses" action is already present which will do the same
-    myNotAvailable = sideEffects.size() == 1 && statement instanceof PsiExpressionStatement &&
-                     sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression);
+    myIsAvailable = sideEffects.size() != 1 || !(statement instanceof PsiExpressionStatement) ||
+                    sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
   @Nls
@@ -81,7 +81,7 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return !myNotAvailable;
+    return myIsAvailable;
   }
 
   @Override
@@ -101,10 +101,5 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
       statement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiStatement.class));
     }
     statement.delete();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }
