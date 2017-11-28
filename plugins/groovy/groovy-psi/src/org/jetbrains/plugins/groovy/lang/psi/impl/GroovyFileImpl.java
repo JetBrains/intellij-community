@@ -114,10 +114,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    }
+
     if (myContext != null) {
-      if (ResolveUtil.shouldProcessProperties(classHint)) {
-        if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-      }
       return true;
     }
 
@@ -128,12 +129,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (ResolveUtil.shouldProcessProperties(classHint)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-    }
-
     if (ResolveUtil.shouldProcessPackages(classHint)) {
-
       NameHint nameHint = processor.getHint(NameHint.KEY);
       String expectedName = nameHint != null ? nameHint.getName(state) : null;
 
