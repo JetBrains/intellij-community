@@ -6,27 +6,26 @@ iml_module(
     iml_files = ["testng.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/smRunner"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
         "//tools/idea:execution-impl[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
         "//tools/idea/.idea/libraries:JUnit3[test]",
         "//tools/idea/platform/testRunner[module]",

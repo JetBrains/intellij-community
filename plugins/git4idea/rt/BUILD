@@ -10,7 +10,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/platform/util-rt[module]",
-        "//tools/idea/plugins/git4idea/lib:trilead-ssh2",
+        "//tools/idea/.idea/libraries:trilead-ssh2",
         "//tools/idea/.idea/libraries:XmlRPC",
     ],
 )

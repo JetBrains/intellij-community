@@ -6,12 +6,7 @@ iml_module(
     iml_files = ["remote-servers-git.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:json",
-        "//tools/idea:execution-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:spellchecker"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -23,9 +18,14 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [

@@ -44,5 +44,6 @@ iml_module(
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:ini4j",
     ],
 )

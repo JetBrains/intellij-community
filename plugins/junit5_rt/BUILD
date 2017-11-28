@@ -11,6 +11,5 @@ iml_module(
         "//tools/idea/plugins/junit_rt[module]",
         "//tools/idea/java/java-runtime[module]",
         "//tools/idea/.idea/libraries:junit5_rt",
-        "//tools/idea/.idea/libraries:opentest4j",
     ],
 )

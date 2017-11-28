@@ -1,25 +1,4 @@
 java_import(
-    name = "gradle-model-groovy-3.2",
-    jars = ["gradle-model-groovy-3.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-wrapper-3.2",
-    jars = ["gradle-wrapper-3.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-base-services-3.2",
-    jars = ["gradle-base-services-3.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "guava-jdk5-17.0",
     jars = ["guava-jdk5-17.0.jar"],
     tags = ["managed"],
@@ -36,104 +15,6 @@ java_import(
 java_import(
     name = "commons-lang-2.6",
     jars = ["commons-lang-2.6.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-tooling-api-3.5",
-    jars = ["gradle-tooling-api-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-core-3.5",
-    jars = ["gradle-core-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-messaging-3.5",
-    jars = ["gradle-messaging-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-model-core-3.5",
-    jars = ["gradle-model-core-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-model-groovy-3.5",
-    jars = ["gradle-model-groovy-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-wrapper-3.5",
-    jars = ["gradle-wrapper-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-base-services-3.5",
-    jars = ["gradle-base-services-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-base-services-groovy-3.5",
-    jars = ["gradle-base-services-groovy-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-process-services-3.5",
-    jars = ["gradle-process-services-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-resources-3.5",
-    jars = ["gradle-resources-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-cli-3.5",
-    jars = ["gradle-cli-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-logging-3.5",
-    jars = ["gradle-logging-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-version-info-3.5",
-    jars = ["gradle-version-info-3.5.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gradle-native-3.5",
-    jars = ["gradle-native-3.5.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -246,6 +127,104 @@ java_import(
 java_import(
     name = "jansi-1.14",
     jars = ["jansi-1.14.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-base-services-4.0",
+    jars = ["gradle-base-services-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-base-services-groovy-4.0",
+    jars = ["gradle-base-services-groovy-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-cli-4.0",
+    jars = ["gradle-cli-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-core-4.0",
+    jars = ["gradle-core-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-launcher-4.0",
+    jars = ["gradle-launcher-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-logging-4.0",
+    jars = ["gradle-logging-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-messaging-4.0",
+    jars = ["gradle-messaging-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-model-core-4.0",
+    jars = ["gradle-model-core-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-model-groovy-4.0",
+    jars = ["gradle-model-groovy-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-process-services-4.0",
+    jars = ["gradle-process-services-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-resources-4.0",
+    jars = ["gradle-resources-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-tooling-api-4.0",
+    jars = ["gradle-tooling-api-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-wrapper-4.0",
+    jars = ["gradle-wrapper-4.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-native-4.0",
+    jars = ["gradle-native-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

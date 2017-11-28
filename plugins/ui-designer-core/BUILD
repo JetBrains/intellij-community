@@ -6,22 +6,20 @@ iml_module(
     iml_files = ["ui-designer-core.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:images",
-    ],
+    test_runtime_deps = ["//tools/idea:images"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea:lang-impl"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [

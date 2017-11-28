@@ -18,5 +18,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

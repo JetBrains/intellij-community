@@ -7,7 +7,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -17,7 +16,7 @@ iml_module(
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:dom-openapi",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
         "//tools/idea:dom-impl",
@@ -33,6 +32,5 @@ iml_module(
         "//tools/idea/xml/openapi:xml-openapi[module]",
         "//tools/idea:xml[module]",
         "//tools/idea:platform-impl[module]",
-        "//tools/idea/platform/vcs-api[module]",
     ],
 )

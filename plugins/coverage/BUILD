@@ -6,10 +6,7 @@ iml_module(
     iml_files = ["coverage.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -24,11 +21,13 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
@@ -49,6 +48,6 @@ iml_module(
         "//tools/idea:lang-impl[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea:testFramework[module, test]",
-        "//tools/idea:compiler-impl_and_others[module, test]",
+        "//tools/idea:jps-builders_and_others[module, test]",
     ],
 )

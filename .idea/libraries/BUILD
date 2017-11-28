@@ -2,8 +2,8 @@ java_library(
     name = "protobuf",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:protobuf-2.5.0"],
-    runtime_deps = ["//tools/idea/lib:protobuf-2.5.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/2.5.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/2.5.0:jar"],
 )
 
 java_library(
@@ -12,13 +12,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:hamcrest-core-1.3",
-        "//tools/idea/lib:junit-4.12",
+        "//prebuilts/tools/common/m2/repository/junit/junit/4.12:jar",
+        "//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-core/1.3:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:hamcrest-core-1.3",
-        "//tools/idea/lib:junit-4.12",
+        "//prebuilts/tools/common/m2/repository/junit/junit/4.12:jar",
+        "//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-core/1.3:jar",
     ],
 )
 
@@ -70,8 +70,8 @@ java_library(
     name = "gson",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:gson-2.5"],
-    runtime_deps = ["//tools/idea/lib:gson-2.5"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.2:jar"],
 )
 
 java_library(
@@ -112,8 +112,8 @@ java_library(
     name = "commons-compress",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:commons-compress-1.10"],
-    runtime_deps = ["//tools/idea/lib:commons-compress-1.10"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.10:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.10:jar"],
 )
 
 java_library(
@@ -189,6 +189,7 @@ java_library(
         "//tools/idea/lib/ant/lib:ant-apache-oro",
         "//tools/idea/lib/ant/lib:ant-apache-regexp",
         "//tools/idea/lib/ant/lib:ant-apache-resolver",
+        "//tools/idea/lib/ant/lib:ant-apache-xalan2",
         "//tools/idea/lib/ant/lib:ant-commons-logging",
         "//tools/idea/lib/ant/lib:ant-commons-net",
         "//tools/idea/lib/ant/lib:ant-jai",
@@ -197,9 +198,11 @@ java_library(
         "//tools/idea/lib/ant/lib:ant-jmf",
         "//tools/idea/lib/ant/lib:ant-jsch",
         "//tools/idea/lib/ant/lib:ant-junit",
+        "//tools/idea/lib/ant/lib:ant-junit4",
         "//tools/idea/lib/ant/lib:ant-launcher",
         "//tools/idea/lib/ant/lib:ant-netrexx",
         "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant-testutil",
         "//tools/idea/lib/ant/lib:ant",
     ],
     # do not sort: must match IML order
@@ -211,6 +214,7 @@ java_library(
         "//tools/idea/lib/ant/lib:ant-apache-oro",
         "//tools/idea/lib/ant/lib:ant-apache-regexp",
         "//tools/idea/lib/ant/lib:ant-apache-resolver",
+        "//tools/idea/lib/ant/lib:ant-apache-xalan2",
         "//tools/idea/lib/ant/lib:ant-commons-logging",
         "//tools/idea/lib/ant/lib:ant-commons-net",
         "//tools/idea/lib/ant/lib:ant-jai",
@@ -219,9 +223,11 @@ java_library(
         "//tools/idea/lib/ant/lib:ant-jmf",
         "//tools/idea/lib/ant/lib:ant-jsch",
         "//tools/idea/lib/ant/lib:ant-junit",
+        "//tools/idea/lib/ant/lib:ant-junit4",
         "//tools/idea/lib/ant/lib:ant-launcher",
         "//tools/idea/lib/ant/lib:ant-netrexx",
         "//tools/idea/lib/ant/lib:ant-swing",
+        "//tools/idea/lib/ant/lib:ant-testutil",
         "//tools/idea/lib/ant/lib:ant",
     ],
 )
@@ -230,8 +236,8 @@ java_library(
     name = "Guava",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:guava-19.0"],
-    runtime_deps = ["//tools/idea/lib:guava-19.0"],
+    exports = ["//tools/idea/lib:guava-21.0"],
+    runtime_deps = ["//tools/idea/lib:guava-21.0"],
 )
 
 java_library(
@@ -295,15 +301,9 @@ java_library(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/lib:hamcrest-core-1.3",
-        "//tools/idea/lib:hamcrest-library-1.3",
-    ],
+    exports = ["//tools/idea/lib:hamcrest-library-1.3"],
     # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/lib:hamcrest-core-1.3",
-        "//tools/idea/lib:hamcrest-library-1.3",
-    ],
+    runtime_deps = ["//tools/idea/lib:hamcrest-library-1.3"],
 )
 
 java_library(
@@ -421,14 +421,6 @@ java_library(
 )
 
 java_library(
-    name = "xml-apis-ext",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:xml-apis-ext"],
-    runtime_deps = ["//tools/idea/lib:xml-apis-ext"],
-)
-
-java_library(
     name = "XStream",
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -441,15 +433,9 @@ java_library(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/lib:xercesImpl",
-        "//tools/idea/lib:xml-apis",
-    ],
+    exports = ["//tools/idea/lib:xercesImpl"],
     # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/lib:xercesImpl",
-        "//tools/idea/lib:xml-apis",
-    ],
+    runtime_deps = ["//tools/idea/lib:xercesImpl"],
 )
 
 java_library(
@@ -480,16 +466,16 @@ java_library(
     name = "Netty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:netty-all-4.1.9.Final"],
-    runtime_deps = ["//tools/idea/lib:netty-all-4.1.9.Final"],
+    exports = ["//tools/idea/lib:netty-all-4.1.13.Final"],
+    runtime_deps = ["//tools/idea/lib:netty-all-4.1.13.Final"],
 )
 
 java_library(
     name = "proxy-vole",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:proxy-vole_20131209"],
-    runtime_deps = ["//tools/idea/lib:proxy-vole_20131209"],
+    exports = ["//tools/idea/lib:proxy-vole-1.0.3"],
+    runtime_deps = ["//tools/idea/lib:proxy-vole-1.0.3"],
 )
 
 java_library(
@@ -560,16 +546,16 @@ java_library(
     name = "Groovy",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:groovy-all-2.4.6"],
-    runtime_deps = ["//tools/idea/lib:groovy-all-2.4.6"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
 )
 
 java_library(
     name = "assertJ",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib/dev:assertj-core-3.6.1"],
-    runtime_deps = ["//tools/idea/lib/dev:assertj-core-3.6.1"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.6.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/assertj/assertj-core/3.6.1:jar"],
 )
 
 java_library(
@@ -615,14 +601,6 @@ java_library(
 )
 
 java_library(
-    name = "Sanselan",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:sanselan-0.98-snapshot"],
-    runtime_deps = ["//tools/idea/lib:sanselan-0.98-snapshot"],
-)
-
-java_library(
     name = "Velocity",
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -642,8 +620,8 @@ java_library(
     name = "cli-parser",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:cli-parser-1.1"],
-    runtime_deps = ["//tools/idea/lib:cli-parser-1.1"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1:jar"],
 )
 
 java_library(
@@ -666,8 +644,8 @@ java_library(
     name = "winp",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:winp-1.23"],
-    runtime_deps = ["//tools/idea/lib:winp-1.23"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.23:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.23:jar"],
 )
 
 java_library(
@@ -840,32 +818,20 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
+        "//prebuilts/tools/common/m2/repository/org/apiguardian/apiguardian-api/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-commons/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-engine/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-launcher/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/opentest4j/opentest4j/1.0.0:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
+        "//prebuilts/tools/common/m2/repository/org/apiguardian/apiguardian-api/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-commons/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-engine/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-launcher/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/opentest4j/opentest4j/1.0.0:jar",
     ],
-)
-
-java_library(
-    name = "opentest4j",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M2"],
-    runtime_deps = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M2"],
 )
 
 java_library(
@@ -908,6 +874,7 @@ java_library(
     exports = [
         "//tools/idea/lib:jsch.agentproxy.connector-factory",
         "//tools/idea/lib:jsch.agentproxy.core",
+        "//tools/idea/lib:jsch.agentproxy.jsch",
         "//tools/idea/lib:jsch.agentproxy.pageant",
         "//tools/idea/lib:jsch.agentproxy.sshagent",
         "//tools/idea/lib:jsch.agentproxy.usocket-jna",
@@ -917,19 +884,12 @@ java_library(
     runtime_deps = [
         "//tools/idea/lib:jsch.agentproxy.connector-factory",
         "//tools/idea/lib:jsch.agentproxy.core",
+        "//tools/idea/lib:jsch.agentproxy.jsch",
         "//tools/idea/lib:jsch.agentproxy.pageant",
         "//tools/idea/lib:jsch.agentproxy.sshagent",
         "//tools/idea/lib:jsch.agentproxy.usocket-jna",
         "//tools/idea/lib:jsch.agentproxy.usocket-nc",
     ],
-)
-
-java_library(
-    name = "sqlite",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
-    runtime_deps = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
 )
 
 java_library(
@@ -939,13 +899,11 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/lib:cucumber-core-1.2.4",
-        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
         "//tools/idea/lib:gherkin-2.12.2",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/lib:cucumber-core-1.2.4",
-        "//tools/idea/lib:cucumber-jvm-deps-1.0.3",
         "//tools/idea/lib:gherkin-2.12.2",
     ],
 )
@@ -1034,16 +992,16 @@ java_library(
     name = "StreamEx",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:streamex-0.6.2"],
-    runtime_deps = ["//tools/idea/lib:streamex-0.6.2"],
+    exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.5:jar"],
 )
 
 java_library(
     name = "memoryfilesystem",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib/dev:memoryfilesystem-0.8.0"],
-    runtime_deps = ["//tools/idea/lib/dev:memoryfilesystem-0.8.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.0.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/marschall/memoryfilesystem/1.0.0:jar"],
 )
 
 java_library(
@@ -1060,35 +1018,35 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-core-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-core-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-core-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-core-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.0",
     ],
 )
 
@@ -1114,17 +1072,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
+        "//tools/idea/lib:MultithreadedTC-1.01",
         "//tools/idea/lib:fest-assert-1.5.0-SNAPSHOT",
         "//tools/idea/lib:fest-reflect-2.0-SNAPSHOT",
-        "//tools/idea/lib:fest-swing-1.4-SNAPSHOT",
+        "//tools/idea/lib:fest-swing-1.4.1-SNAPSHOT",
         "//tools/idea/lib:fest-util-1.3.0-SNAPSHOT",
+        "//tools/idea/lib:jsr305",
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/lib:MultithreadedTC-1.01",
         "//tools/idea/lib:fest-assert-1.5.0-SNAPSHOT",
         "//tools/idea/lib:fest-reflect-2.0-SNAPSHOT",
-        "//tools/idea/lib:fest-swing-1.4-SNAPSHOT",
+        "//tools/idea/lib:fest-swing-1.4.1-SNAPSHOT",
         "//tools/idea/lib:fest-util-1.3.0-SNAPSHOT",
+        "//tools/idea/lib:jsr305",
     ],
 )
 
@@ -1180,6 +1142,88 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
     runtime_deps = ["//tools/adt/idea/android/lib:juniversalchardet-1.0.3"],
+)
+
+java_library(
+    name = "io.cucumber_cucumber-core_2.0.1",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/info/cukes/cucumber-html/0.2.6:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/2.0.1:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-jvm-deps/1.0.6:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/4.1.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.0.1:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/info/cukes/cucumber-html/0.2.6:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/2.0.1:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-jvm-deps/1.0.6:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/4.1.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.0.1:jar",
+    ],
+)
+
+java_library(
+    name = "trilead-ssh2",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:trilead-ssh2"],
+    runtime_deps = ["//tools/idea/lib:trilead-ssh2"],
+)
+
+java_library(
+    name = "ini4j",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:ini4j-0.5.2-patched"],
+    runtime_deps = ["//tools/idea/lib:ini4j-0.5.2-patched"],
+)
+
+java_library(
+    name = "commons-imaging",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/commons-imaging/1.0-RC:jar"],
+)
+
+java_library(
+    name = "precompiled_jshell-frontend",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:jshell-frontend"],
+    runtime_deps = ["//tools/idea/lib:jshell-frontend"],
+)
+
+java_library(
+    name = "JUnit5",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/org/apiguardian/apiguardian-api/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/jupiter/junit-jupiter-api/5.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-commons/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/opentest4j/opentest4j/1.0.0:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/apiguardian/apiguardian-api/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/jupiter/junit-jupiter-api/5.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-commons/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/opentest4j/opentest4j/1.0.0:jar",
+    ],
+)
+
+java_library(
+    name = "sqlite",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.16.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.16.1:jar"],
 )
 
 java_library(

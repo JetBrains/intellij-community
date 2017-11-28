@@ -10,16 +10,16 @@ iml_module(
     iml_files = ["google-app-engine.iml"],
     resources = ["resources"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["testSource"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
     ],
     # do not sort: must match IML order
@@ -30,7 +30,7 @@ iml_module(
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/java/openapi[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea:xml[module, test]",
         "//tools/idea/plugins/google-app-engine/runtime:appEngine-runtime[module]",

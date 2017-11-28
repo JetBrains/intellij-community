@@ -12,8 +12,8 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:external-system-impl",
         "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
     ],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
@@ -21,11 +21,13 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
@@ -33,7 +35,7 @@ iml_module(
         "//tools/idea/java/openapi[module]",
         "//tools/idea/platform/bootstrap[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/platform/annotations[module]",
         "//tools/idea:java-impl[module]",

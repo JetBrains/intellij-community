@@ -8,23 +8,23 @@ iml_module(
         "gen",
     ],
     iml_files = ["devkit.iml"],
-    package_prefixes = {"src": "org.jetbrains.idea.devkit"},
+    package_prefixes = {
+        "testSources": "org.jetbrains.idea.devkit",
+        "src": "org.jetbrains.idea.devkit",
+    },
     resources = ["resources"],
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_srcs = ["testSources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
+        "//tools/idea:credential-store",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/maven:maven2-server-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -36,10 +36,9 @@ iml_module(
         "//tools/idea:dom-openapi[module]",
         "//tools/idea:execution-impl[module]",
         "//tools/idea:java-impl[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/plugins/properties[module]",
         "//tools/idea:xml[module]",
-        "//tools/idea/jps/jps-builders[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/plugins/devkit/lib:dtdparser113",
@@ -49,41 +48,11 @@ iml_module(
         "//tools/idea:testFramework[module]",
         "//tools/idea:dom-impl[module]",
         "//tools/idea:images[module]",
-    ],
-)
-
-iml_module(
-    name = "devkit-tests",
-    iml_files = ["devkit-tests.iml"],
-    package_prefixes = {"testSources": "org.jetbrains.idea.devkit"},
-    tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:external-system-impl",
-        "//tools/idea:testExtensions",
-    ],
-    test_srcs = ["testSources"],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
-    ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:TestNG[test]",
-        "//tools/idea/.idea/libraries:Groovy[test]",
-        "//tools/idea/xml/dom-tests[module, test]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/uast/uast-common[module]",
+        "//tools/idea/plugins/gradle[module]",
         "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/plugins/devkit[module]",
-        "//tools/idea:dom-impl[module, test]",
+        "//tools/idea/xml/dom-tests[module, test]",
+        "//tools/idea/.idea/libraries:TestNG[test]",
+        "//tools/idea:compiler-tests[module, test]",
     ],
 )

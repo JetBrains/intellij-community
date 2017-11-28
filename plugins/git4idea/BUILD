@@ -12,12 +12,7 @@ iml_module(
     resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:json",
-        "//tools/idea:execution-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:spellchecker"],
     test_srcs = ["tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -29,13 +24,18 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/vcs-api[module]",
-        "//tools/idea/plugins/git4idea/lib:trilead-ssh2",
+        "//tools/idea/.idea/libraries:trilead-ssh2",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea:platform-impl[module]",
         "//tools/idea:vcs-impl[module]",
@@ -43,13 +43,11 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/lvcs-api[module]",
         "//tools/idea:testFramework[module, test]",
-        "//tools/idea/.idea/libraries:TestNG[test]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea:lang-impl[module]",
         "//tools/idea/plugins/git4idea/rt:git4idea-rt[module]",
         "//tools/idea:images[module]",
-        "//tools/idea/plugins/git4idea/lib/ini4j:ini4j-0.5.2-patched",
         "//tools/idea/.idea/libraries:Groovy[test]",
         "//tools/idea/platform/dvcs-impl[module]",
         "//tools/idea/.idea/libraries:cucumber-core[test]",
@@ -66,6 +64,8 @@ iml_module(
         "//tools/idea/platform/vcs-tests[module, test]",
         "//tools/idea/platform/util[module]",
         "//tools/idea/.idea/libraries:cucumber-testing[test]",
-        "//tools/idea/platform/testGuiFramework[module, test]",
+        "//tools/idea/.idea/libraries:ini4j",
+        "//tools/idea:tasks-platform-impl[module]",
+        "//tools/idea:tasks-platform-api[module, test]",
     ],
 )

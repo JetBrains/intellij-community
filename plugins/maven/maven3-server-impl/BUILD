@@ -8,10 +8,10 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/plugins/maven:maven2-server-impl",
-        "//tools/idea:testExtensions",
         "//tools/idea:json",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

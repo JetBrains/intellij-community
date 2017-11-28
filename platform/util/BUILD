@@ -29,9 +29,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Snappy-Java",
         "//tools/idea/.idea/libraries:imgscalr",
         "//tools/idea/.idea/libraries:xmlgraphics-commons",
-        "//tools/idea/.idea/libraries:Xerces",
-        "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:batik",
+        "//tools/idea/.idea/libraries:commons-compress",
     ],
 )
 
@@ -40,6 +39,20 @@ iml_module(
     iml_files = ["testSrc/util-tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:xml-structure-view-impl",
+        "//tools/idea:spellchecker",
+        "//tools/idea:relaxng",
+        "//tools/idea:json",
+        "//tools/idea:images",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+    ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -55,5 +68,9 @@ iml_module(
         "//tools/idea/.idea/libraries:jna[test]",
         "//tools/idea/platform/core-api[module, test]",
         "//tools/idea/platform/projectModel-impl[module, test]",
+        "//tools/idea:jetCheck[module, test]",
+        "//tools/idea/.idea/libraries:commons-compress",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea:testFramework[module, test]",
     ],
 )

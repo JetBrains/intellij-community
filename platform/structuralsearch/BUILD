@@ -7,7 +7,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -15,13 +14,14 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -43,17 +43,18 @@ iml_module(
     name = "structuralsearch-tests",
     iml_files = ["structuralsearch-tests.iml"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["testSource"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea:execution-impl",
         "//tools/idea:external-system-impl",
     ],
@@ -61,7 +62,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/platform/structuralsearch[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea:xml[module]",
         "//tools/idea/java/structuralsearch-java[module]",
         "//tools/idea/plugins/java-i18n[module]",

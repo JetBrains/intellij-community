@@ -8,10 +8,7 @@ iml_module(
     resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     test_srcs = ["tests/src"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -22,16 +19,18 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/java/java-runtime[module]",

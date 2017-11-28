@@ -5,15 +5,21 @@ iml_module(
     srcs = ["src"],
     iml_files = ["antUiTest.iml"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea/plugins/maven:maven2-server-impl"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/plugins/maven:maven2-server-impl",
+        "//tools/vendor/intellij/cidr:doxygen",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [

@@ -8,9 +8,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
         "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -23,11 +23,12 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
     ],
     # do not sort: must match IML order
     deps = [
@@ -41,7 +42,7 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/jsp-base-openapi[module]",
         "//tools/idea/java/jsp-openapi[module]",
-        "//tools/idea:compiler-impl_and_others[module, test]",
+        "//tools/idea:jps-builders_and_others[module, test]",
         "//tools/idea/plugins/properties/properties-psi-api[module]",
         "//tools/idea/plugins/properties/properties-psi-impl[module]",
     ],

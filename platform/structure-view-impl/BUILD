@@ -28,5 +28,6 @@ iml_module(
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/platform/projectModel-api[module]",
+        "//tools/idea/platform/platform-api[module]",
     ],
 )

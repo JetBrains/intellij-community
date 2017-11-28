@@ -8,15 +8,13 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
         "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:relaxng",
         "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
@@ -28,7 +26,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util[module]",
-        "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
         "//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api[module]",
         "//tools/idea:testFramework[module, test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",

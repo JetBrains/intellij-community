@@ -25,5 +25,6 @@ iml_module(
         "//tools/idea/platform/projectModel-impl[module]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

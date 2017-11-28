@@ -27,22 +27,8 @@ java_import(
 )
 
 java_import(
-    name = "assertj-core-3.6.1",
-    jars = ["assertj-core-3.6.1.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "easymock-3.4",
     jars = ["easymock-3.4.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "memoryfilesystem-0.8.0",
-    jars = ["memoryfilesystem-0.8.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

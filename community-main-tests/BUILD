@@ -7,6 +7,7 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:credential-store",
+        "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/vendor/intellij/cidr:doxygen",
         "//tools/idea/jps/javac-ref-scanner-8",

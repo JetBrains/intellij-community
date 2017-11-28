@@ -9,11 +9,13 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea:execution-impl",
         "//tools/idea:external-system-impl",
     ],
@@ -21,7 +23,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea:xml[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:Groovy[test]",
         "//tools/idea:java-impl[module, test]",

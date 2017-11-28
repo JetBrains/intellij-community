@@ -14,5 +14,6 @@ iml_module(
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/editor-ui-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
     ],
 )

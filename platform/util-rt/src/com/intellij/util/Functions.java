@@ -49,7 +49,7 @@ public class Functions {
   public static <A, B, C> Function<A, C> compose(final Function<A, B> f1, final Function<B, ? extends C> f2) {
     if (f1 == Function.ID || f2 == Function.ID) {
       //noinspection RedundantConditionalExpression
-      return f1 == f2 ? Function.ID : f1 == Function.ID ? f2 : f1;
+      return f1 == f2 ? Function.ID : f1 == Function.ID ? (Function<A, C>) f2 : (Function<A, C>) f1;
     } 
     return new Function<A, C>() {
       public C fun(A a) {

@@ -6,12 +6,13 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea:jps-builders_and_others"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:spellchecker",
@@ -19,6 +20,7 @@ iml_module(
         "//tools/idea:configuration-store-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
@@ -26,7 +28,7 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core[module]",
         "//tools/idea/plugins/tasks/tasks-java[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:compiler-impl_and_others[module, test]",
+        "//tools/idea:jps-builders_and_others[module, test]",
         "//tools/idea:vcs-impl[module]",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/plugins/xslt-debugger[module]",
@@ -37,5 +39,7 @@ iml_module(
         "//tools/idea/plugins/git4idea[module, test]",
         "//tools/idea/plugins/hg4idea[module, test]",
         "//tools/idea/platform/vcs-tests[module, test]",
+        "//tools/idea:tasks-platform-api[module, test]",
+        "//tools/idea:tasks-platform-impl[module, test]",
     ],
 )

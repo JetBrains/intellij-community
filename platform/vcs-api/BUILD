@@ -15,6 +15,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/platform-api[module]",
+        "//tools/idea/platform/lang-api[module]",
         "//tools/idea/.idea/libraries:microba",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/diff-api[module]",

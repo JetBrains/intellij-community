@@ -9,6 +9,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/util-rt[module]",
+        "//tools/idea/platform/util[module]",
     ],
 )

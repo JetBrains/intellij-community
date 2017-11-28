@@ -8,7 +8,6 @@ iml_module(
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea:testExtensions"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -19,18 +18,20 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
         "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/plugins/properties[module]",
         "//tools/idea:execution-impl[module]",
@@ -44,7 +45,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/plugins/IntelliLang:IntelliLang-java[module]",
         "//tools/idea/plugins/IntelliLang:IntelliLang-xml[module, test]",
-        "//tools/idea/jps/jps-builders[module]",
         "//tools/idea:spellchecker[module]",
         "//tools/idea/plugins/junit[module, test]",
         "//tools/idea/java/java-indexing-api[module]",
@@ -55,5 +55,6 @@ iml_module(
         "//tools/idea/platform/external-system-api[module]",
         "//tools/idea:RegExpSupport[module]",
         "//tools/idea:external-system-impl[module, test]",
+        "//tools/idea:lang-tests[module, test]",
     ],
 )

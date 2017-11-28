@@ -22,5 +22,6 @@ iml_module(
         "//tools/idea/resources-en[module]",
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:StreamEx",
     ],
 )

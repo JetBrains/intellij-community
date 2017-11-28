@@ -1,34 +1,6 @@
 java_import(
-    name = "protobuf-2.5.0",
-    jars = ["protobuf-2.5.0.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "hamcrest-core-1.3",
-    jars = ["hamcrest-core-1.3.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "junit-4.12",
-    jars = ["junit-4.12.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "guava-19.0",
-    jars = ["guava-19.0.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "gson-2.5",
-    jars = ["gson-2.5.jar"],
+    name = "guava-21.0",
+    jars = ["guava-21.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -50,13 +22,6 @@ java_import(
 java_import(
     name = "junit",
     jars = ["junit.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "commons-compress-1.10",
-    jars = ["commons-compress-1.10.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -237,13 +202,6 @@ java_import(
 )
 
 java_import(
-    name = "xml-apis-ext",
-    jars = ["xml-apis-ext.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "xstream-1.4.8",
     jars = ["xstream-1.4.8.jar"],
     tags = ["managed"],
@@ -260,13 +218,6 @@ java_import(
 java_import(
     name = "xercesImpl",
     jars = ["xercesImpl.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "xml-apis",
-    jars = ["xml-apis.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -295,13 +246,6 @@ java_import(
 java_import(
     name = "commons-codec-1.9",
     jars = ["commons-codec-1.9.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "proxy-vole_20131209",
-    jars = ["proxy-vole_20131209.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -363,13 +307,6 @@ java_import(
 )
 
 java_import(
-    name = "sanselan-0.98-snapshot",
-    jars = ["sanselan-0.98-snapshot.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "velocity",
     jars = ["velocity.jar"],
     tags = ["managed"],
@@ -384,13 +321,6 @@ java_import(
 )
 
 java_import(
-    name = "cli-parser-1.1",
-    jars = ["cli-parser-1.1.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "commons-logging-1.2",
     jars = ["commons-logging-1.2.jar"],
     tags = ["managed"],
@@ -400,13 +330,6 @@ java_import(
 java_import(
     name = "jh",
     jars = ["jh.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "winp-1.23",
-    jars = ["winp-1.23.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -489,13 +412,6 @@ java_import(
 )
 
 java_import(
-    name = "groovy-all-2.4.6",
-    jars = ["groovy-all-2.4.6.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "jsch-0.1.54",
     jars = ["jsch-0.1.54.jar"],
     tags = ["managed"],
@@ -559,13 +475,6 @@ java_import(
 )
 
 java_import(
-    name = "sqlite-jdbc-3.8.11.2",
-    jars = ["sqlite-jdbc-3.8.11.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "minlog-1.2",
     jars = ["minlog-1.2.jar"],
     tags = ["managed"],
@@ -622,13 +531,6 @@ java_import(
 )
 
 java_import(
-    name = "streamex-0.6.2",
-    jars = ["streamex-0.6.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "snakeyaml-1.17",
     jars = ["snakeyaml-1.17.jar"],
     tags = ["managed"],
@@ -657,22 +559,8 @@ java_import(
 )
 
 java_import(
-    name = "fest-swing-1.4-SNAPSHOT",
-    jars = ["fest-swing-1.4-SNAPSHOT.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "fest-util-1.3.0-SNAPSHOT",
     jars = ["fest-util-1.3.0-SNAPSHOT.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "netty-all-4.1.9.Final",
-    jars = ["netty-all-4.1.9.Final.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -685,5 +573,96 @@ exports_files(["src/trove4j_src.jar"])
 filegroup(
     name = "all-libs",
     srcs = ["//tools/idea/lib/ant:ant-all"] + glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "netty-all-4.1.13.Final",
+    jars = ["netty-all-4.1.13.Final.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "trilead-ssh2",
+    jars = ["trilead-ssh2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "proxy-vole-1.0.3",
+    jars = ["proxy-vole-1.0.3.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "ini4j-0.5.2-patched",
+    jars = ["ini4j-0.5.2-patched.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jsch.agentproxy.jsch",
+    jars = ["jsch.agentproxy.jsch.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "aether-1.1.0-all",
+    jars = ["aether-1.1.0-all.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "maven-aether-provider-3.3.9-all",
+    jars = ["maven-aether-provider-3.3.9-all.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "wadl-core",
+    jars = ["wadl-core.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jshell-frontend",
+    jars = ["jshell-frontend.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "MultithreadedTC-1.01",
+    jars = ["MultithreadedTC-1.01.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fest-swing-1.4.1-SNAPSHOT",
+    jars = ["fest-swing-1.4.1-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jaxb-api",
+    jars = ["jaxb-api.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jaxb-impl",
+    jars = ["jaxb-impl.jar"],
+    tags = ["managed"],
     visibility = ["//visibility:public"],
 )

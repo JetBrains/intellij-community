@@ -11,23 +11,21 @@ iml_module(
     resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:images",
-    ],
+    test_runtime_deps = ["//tools/idea:images"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:xdebugger-impl",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
         "//tools/idea:dom-impl",
-        "//tools/idea:lvcs-impl",
     ],
     # do not sort: must match IML order
     deps = [

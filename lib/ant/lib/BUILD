@@ -136,3 +136,24 @@ filegroup(
     srcs = glob(["**"]),
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "ant-apache-xalan2",
+    jars = ["ant-apache-xalan2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "ant-junit4",
+    jars = ["ant-junit4.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "ant-testutil",
+    jars = ["ant-testutil.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)

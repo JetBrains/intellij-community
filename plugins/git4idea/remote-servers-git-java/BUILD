@@ -7,23 +7,23 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:xdebugger-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/git4idea/remote-servers-git[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/java/openapi[module]",
     ],
 )

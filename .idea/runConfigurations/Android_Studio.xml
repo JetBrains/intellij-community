@@ -11,7 +11,7 @@
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="main_AndroidStudio" />
+    <module name="community-main" />
     <envs>
       <env name="IDEA_RUNNERW" value="../community/bin/win/runnerw.exe" />
     </envs>

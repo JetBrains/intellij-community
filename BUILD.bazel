@@ -43,7 +43,6 @@ iml_project(
         "//tools/adt/idea/android-common",
         "//tools/adt/idea/android-debuggers",
         "//tools/adt/idea/android-debuggers:android-debuggers-tests",
-        "//tools/adt/idea/android-gradle-jps",
         "//tools/adt/idea/android-lang",
         "//tools/adt/idea/android-lang:android-lang-tests",
         "//tools/adt/idea/android-plugin",
@@ -122,10 +121,10 @@ iml_project(
         "//tools/data-binding:studio.compilerCommon",
         "//tools/idea/build",
         "//tools/idea/build/cucumber-test-runner",
+        "//tools/idea/build:dependencies",
         "//tools/idea/colorSchemes",
         "//tools/idea/community-main-tests",
         "//tools/idea/community-resources",
-        "//tools/idea/community-tests",
         "//tools/idea/java/compiler/forms-compiler",
         "//tools/idea/java/compiler/instrumentation-util",
         "//tools/idea/java/compiler/instrumentation-util-8",
@@ -152,7 +151,6 @@ iml_project(
         "//tools/idea/jps/antLayout:antlayout",
         "//tools/idea/jps/antUiTest",
         "//tools/idea/jps/javac-ref-scanner-8",
-        "//tools/idea/jps/jps-builders",
         "//tools/idea/jps/jps-builders-6",
         "//tools/idea/jps/jps-launcher",
         "//tools/idea/jps/model-api:jps-model-api",
@@ -166,8 +164,10 @@ iml_project(
         "//tools/idea/platform/analysis-impl",
         "//tools/idea/platform/annotations",
         "//tools/idea/platform/annotations/common:annotations-common",
+        "//tools/idea/platform/annotations:annotations-java8",
         "//tools/idea/platform/boot",
         "//tools/idea/platform/bootstrap",
+        "//tools/idea/platform/build-scripts:images-build-scripts",
         "//tools/idea/platform/build-scripts:platform-build-scripts",
         "//tools/idea/platform/built-in-server-api",
         "//tools/idea/platform/core-api",
@@ -238,7 +238,6 @@ iml_project(
         "//tools/idea/plugins/cvs:smartcvs-src",
         "//tools/idea/plugins/devkit",
         "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
-        "//tools/idea/plugins/devkit:devkit-tests",
         "//tools/idea/plugins/eclipse",
         "//tools/idea/plugins/eclipse/common-eclipse-util",
         "//tools/idea/plugins/eclipse/jps-plugin:eclipse-jps-plugin",
@@ -272,7 +271,6 @@ iml_project(
         "//tools/idea/plugins/junit5_rt_tests",
         "//tools/idea/plugins/junit_rt",
         "//tools/idea/plugins/maven",
-        "//tools/idea/plugins/maven/aether-dependency-resolver",
         "//tools/idea/plugins/maven/artifact-resolver-m2:maven-artifact-resolver-m2",
         "//tools/idea/plugins/maven/artifact-resolver-m31:maven-artifact-resolver-m31",
         "//tools/idea/plugins/maven/artifact-resolver-m3:maven-artifact-resolver-m3",
@@ -320,32 +318,45 @@ iml_project(
         "//tools/idea/xml/xml-psi-api",
         "//tools/idea/xml/xml-structure-view-api",
         "//tools/idea:RegExpSupport",
+        "//tools/idea:aether-dependency-resolver",
         "//tools/idea:built-in-server",
         "//tools/idea:built-in-server-tests",
+        "//tools/idea:community-guitests",
         "//tools/idea:community-main",
-        "//tools/idea:compiler-impl_and_others",
+        "//tools/idea:compiler-tests",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:configuration-store-tests",
         "//tools/idea:credential-store",
+        "//tools/idea:debugger-agent",
+        "//tools/idea:debugger-agent-storage",
         "//tools/idea:diff-impl",
         "//tools/idea:diff-tests",
         "//tools/idea:dom-impl",
         "//tools/idea:dom-openapi",
         "//tools/idea:execution-impl",
         "//tools/idea:external-system-impl",
+        "//tools/idea:idea-ui-tests",
         "//tools/idea:images",
+        "//tools/idea:index-tools",
         "//tools/idea:java-analysis-impl",
         "//tools/idea:java-impl",
         "//tools/idea:java-tests",
+        "//tools/idea:jetCheck",
+        "//tools/idea:jps-builders_and_others",
+        "//tools/idea:jshell-frontend",
+        "//tools/idea:jshell-protocol",
         "//tools/idea:json",
         "//tools/idea:lang-impl",
         "//tools/idea:lang-tests",
+        "//tools/idea:log-events",
         "//tools/idea:lvcs-impl",
         "//tools/idea:platform-impl",
         "//tools/idea:platform-resources",
-        "//tools/idea:python-community-plugin-build-patches",
         "//tools/idea:relaxng",
         "//tools/idea:spellchecker",
+        "//tools/idea:stats-collector",
+        "//tools/idea:stream-debugger",
+        "//tools/idea:tasks-platform-api",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:testExtensions",
         "//tools/idea:testFramework",
         "//tools/idea:usageView",
@@ -363,8 +374,6 @@ iml_project(
         "//tools/studio/google/cloud/tools/google-login-plugin:google-login-as",
         "//tools/studio/google/samples:google-samples",
         "//tools/studio/google/services:google-services",
-        "//tools/vendor/google/android-apk",
-        "//tools/vendor/google/android-ndk",
         "//tools/vendor/google/firebase",
         "//tools/vendor/google/games",
         "//tools/vendor/google/url-assistant",
@@ -377,8 +386,13 @@ iml_project(
         "//tools/vendor/intellij/cidr:doxygen",
         "//tools:fest-swing",
     ],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
+    tags = [
+        "ij2017.3",
+        "managed",
+        "no_linux",
+        "no_mac",
+        "no_windows",
+    ],
 )
 
 filegroup(
@@ -393,16 +407,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     test_srcs = ["platform/lang-impl/testSources"],
     test_tags = ["manual"],
@@ -420,9 +427,17 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -459,16 +474,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     test_srcs = ["platform/diff-impl/tests"],
     test_tags = ["manual"],
@@ -476,9 +484,17 @@ iml_module(
     exports = ["//tools/idea/platform/diff-api"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -491,43 +507,7 @@ iml_module(
         "//tools/idea:diff-impl[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
-    ],
-)
-
-iml_module(
-    name = "configuration-store-tests",
-    iml_files = ["platform/configuration-store-impl/testSrc/configuration-store-tests.iml"],
-    package_prefixes = {"platform/configuration-store-impl/testSrc": "com.intellij.configurationStore"},
-    tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:json",
-        "//tools/idea:external-system-impl",
-        "//tools/idea:execution-impl",
-    ],
-    test_srcs = ["platform/configuration-store-impl/testSrc"],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea:credential-store",
-        "//tools/idea:built-in-server",
-    ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/platform/projectModel-impl[module]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea:testFramework[module, test]",
-        "//tools/idea:platform-impl[module]",
-        "//tools/idea/plugins/eclipse[module, test]",
-        "//tools/idea:configuration-store-impl[module]",
-        "//tools/idea/platform/util:util-tests[module, test]",
-        "//tools/idea:testExtensions[module, test]",
+        "//tools/idea:vcs-impl[module, test]",
     ],
 )
 
@@ -537,24 +517,25 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     test_srcs = ["platform/built-in-server/testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -567,7 +548,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:XmlRPC",
-        "//tools/idea/.idea/libraries:Sanselan",
+        "//tools/idea/.idea/libraries:commons-imaging",
         "//tools/idea:testFramework[module, test]",
         "//tools/idea/platform/built-in-server-api[module]",
         "//tools/idea/platform/vcs-api[module]",
@@ -589,8 +570,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -608,14 +588,14 @@ iml_module(
     runtime_deps = [
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -646,7 +626,6 @@ iml_module(
     iml_files = ["java/java-impl/java-impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea:testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -659,11 +638,12 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
     ],
     # do not sort: must match IML order
     deps = [
@@ -683,7 +663,6 @@ iml_module(
         "//tools/idea:vcs-impl[module]",
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:jcip",
-        "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/java/java-psi-impl[module]",
         "//tools/idea:RegExpSupport[module]",
         "//tools/idea/java/java-indexing-impl[module]",
@@ -691,7 +670,6 @@ iml_module(
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea:java-analysis-impl[module]",
         "//tools/idea/platform/external-system-api[module]",
-        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:Velocity",
@@ -699,12 +677,18 @@ iml_module(
         "//tools/idea:spellchecker[module]",
         "//tools/idea/.idea/libraries:nekohtml",
         "//tools/idea:built-in-server[module]",
+        "//tools/idea/uast/uast-java[module]",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/lib:wadl-core",
     ],
 )
 
 iml_module(
     name = "java-tests",
-    exclude = ["java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala"],
+    exclude = [
+        "java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala",
+        "java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/data/TestConflict.java",
+    ],
     iml_files = ["java/java-tests/java-tests.iml"],
     tags = ["managed"],
     test_srcs = [
@@ -722,18 +706,19 @@ iml_module(
         "//tools/idea/plugins/IntelliLang:IntelliLang-java",
         "//tools/idea/plugins/IntelliLang:IntelliLang-xml",
         "//tools/idea:external-system-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:credential-store",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea:execution-impl[module]",
         "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/.idea/libraries:Velocity",
         "//tools/idea/plugins/java-i18n[module]",
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/java/compiler/instrumentation-util[module]",
@@ -760,91 +745,8 @@ iml_module(
         "//tools/idea:xml-psi-impl[module]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/platform/built-in-server-api[module, test]",
-        "//tools/idea/.idea/libraries:memoryfilesystem[test]",
         "//tools/idea:testExtensions[module, test]",
         "//tools/idea:configuration-store-impl[module, test]",
-    ],
-)
-
-iml_module(
-    name = "compiler-impl_and_others",
-    # do not sort: must match IML order
-    srcs = [
-        "java/idea-ui/src",
-        "java/testFramework/src",
-        "java/debugger/impl/src",
-        "java/compiler/impl/src",
-    ],
-    iml_files = [
-        "java/idea-ui/idea-ui.iml",
-        "java/testFramework/testFramework-java.iml",
-        "java/debugger/impl/debugger-impl.iml",
-        "java/compiler/impl/compiler-impl.iml",
-    ],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
-    tags = ["managed"],
-    test_runtime_deps = ["//tools/idea:testExtensions"],
-    test_srcs = ["java/compiler/impl/testSrc"],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/idea/java/openapi",
-        "//tools/idea/java/compiler/openapi:compiler-openapi",
-        "//tools/idea:java-impl",
-        "//tools/idea/platform/util",
-        "//tools/idea/platform/lang-api",
-        "//tools/idea:testFramework",
-        "//tools/idea:relaxng",
-        "//tools/idea/java/execution/openapi:execution-openapi",
-        "//tools/idea/java/debugger/openapi:debugger-openapi",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea:execution-impl",
-        "//tools/idea:external-system-impl",
-        "//tools/idea:json",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
-    ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/java/openapi[module]",
-        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
-        "//tools/idea:java-impl[module]",
-        "//tools/idea/.idea/libraries:OroMatcher",
-        "//tools/idea:vcs-impl[module]",
-        "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/.idea/libraries:JUnit4",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:Log4J",
-        "//tools/idea/platform/lang-api[module]",
-        "//tools/idea:lang-impl[module]",
-        "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea:testFramework[module]",
-        "//tools/idea:relaxng[module, test]",
-        "//tools/idea/java/execution/openapi:execution-openapi[module]",
-        "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
-        "//tools/idea/resources[module]",
-        "//tools/idea/platform/xdebugger-api[module]",
-        "//tools/idea:xdebugger-impl[module]",
-        "//tools/idea/java/java-runtime[module]",
-        "//tools/idea/java/jsp-openapi[module]",
-        "//tools/idea:platform-impl[module]",
-        "//tools/idea/jps/jps-builders[module]",
-        "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/java/compiler/instrumentation-util[module]",
-        "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/jps/jps-launcher[module]",
-        "//tools/idea/.idea/libraries:Netty",
-        "//tools/idea/jps/model-impl:jps-model-impl[module]",
-        "//tools/idea:java-analysis-impl[module]",
-        "//tools/idea:built-in-server[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )
 
@@ -852,14 +754,6 @@ py_test(
     name = "test_studio",
     srcs = ["test_studio.py"],
     tags = ["manual"],
-)
-
-iml_module(
-    name = "python-community-plugin-build-patches",
-    iml_files = ["python/build/patches/python-community-plugin-build-patches.iml"],
-    resources = ["python/build/patches"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
 )
 
 filegroup(
@@ -877,7 +771,7 @@ iml_module(
     runtime_deps = [
         "//tools/idea/jps/javac-ref-scanner-8",
         "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/vendor/intellij/cidr:doxygen",
     ],
@@ -888,7 +782,7 @@ iml_module(
         "//tools/idea/platform/boot[module]",
         "//tools/idea/platform/bootstrap[module]",
         "//tools/idea/plugins/commander[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
         "//tools/idea/platform/diff-api[module]",
@@ -972,7 +866,6 @@ iml_module(
         "//tools/idea/jps/model-impl:jps-model-tests[module, test]",
         "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
         "//tools/idea/plugins/ui-designer/jps-plugin:ui-designer-jps-plugin[module, test]",
-        "//tools/idea/community-tests[module, test]",
         "//tools/studio/google/cloud/tools/android-studio-plugin:google-cloud-tools-as[module]",
         "//tools/studio/google/cloud/testing/firebase-testing[module]",
         "//tools/studio/google/cloud/testing/test-recorder[module]",
@@ -991,18 +884,13 @@ iml_module(
         "//tools/idea/java/typeMigration[module]",
         "//tools/idea/platform/platform-tests[module]",
         "//tools/adt/idea/sdk-updates[module]",
-        "//tools/vendor/google/android-ndk[module]",
-        "//tools/vendor/google/android-apk[module]",
         "//tools/vendor/google/games[module]",
         "//tools/vendor/google/firebase[module]",
-        "//tools/adt/idea/android-plugin[module]",
         "//tools/adt/idea/android[module]",
-        "//tools/idea/plugins/devkit:devkit-tests[module, test]",
         "//tools/idea:diff-tests[module, test]",
         "//tools/idea:built-in-server-tests[module, test]",
         "//tools/idea/updater[module, test]",
         "//tools/idea/plugins/coverage[module]",
-        "//tools/adt/idea/android-gradle-jps[module, test]",
         "//tools/adt/idea/jps-plugin:android-jps-plugin[module, test]",
         "//tools/idea/platform/script-debugger/debugger-ui:script-debugger-ui[module, test]",
         "//tools/idea/plugins/git4idea/remote-servers-git-java[module]",
@@ -1010,6 +898,11 @@ iml_module(
         "//tools/adt/idea/designer[module]",
         "//tools/adt/idea/smali[module]",
         "//tools/idea/platform/build-scripts:platform-build-scripts[module, test]",
+        "//tools/idea/platform/build-scripts:images-build-scripts[module, test]",
+        "//tools/adt/idea/android-plugin[module]",
+        "//tools/idea:stats-collector[module]",
+        "//tools/idea:stream-debugger[module]",
+        "//tools/idea:jetCheck[module, test]",
         "//tools/adt/idea/gradle-dsl-parser[module]",
     ],
 )
@@ -1021,8 +914,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1034,12 +926,12 @@ iml_module(
         "//tools/idea:RegExpSupport",
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = ["//tools/idea/platform/util[module]"],
@@ -1052,8 +944,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1063,13 +954,14 @@ iml_module(
         "//tools/idea:RegExpSupport",
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1090,16 +982,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1121,6 +1006,14 @@ iml_module(
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:credential-store",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1146,7 +1039,7 @@ iml_module(
         "//tools/idea/platform/projectModel-impl[module]",
         "//tools/idea/.idea/libraries:Snappy-Java",
         "//tools/idea/.idea/libraries:Netty",
-        "//tools/idea/.idea/libraries:Sanselan",
+        "//tools/idea/.idea/libraries:commons-imaging",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea/platform/analysis-impl[module]",
@@ -1178,23 +1071,24 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1211,24 +1105,25 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/diff-api"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1255,16 +1150,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1280,9 +1168,17 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1308,6 +1204,7 @@ iml_module(
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea:diff-impl[module]",
         "//tools/idea/platform/built-in-server-api[module]",
+        "//tools/idea/.idea/libraries:Groovy",
     ],
 )
 
@@ -1319,28 +1216,29 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea:lang-impl[module]",
-        "//tools/idea/.idea/libraries:Sanselan",
+        "//tools/idea/.idea/libraries:commons-imaging",
+        "//tools/idea:xml-psi-impl[module]",
     ],
 )
 
@@ -1352,14 +1250,13 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
         "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:relaxng",
         "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
@@ -1396,23 +1293,25 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     test_srcs = ["platform/credential-store/test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1436,25 +1335,31 @@ iml_module(
     srcs = ["platform/configuration-store-impl/src"],
     iml_files = ["platform/configuration-store-impl/configuration-store-impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    package_prefixes = {"platform/configuration-store-impl/src": "com.intellij.configurationStore"},
+    package_prefixes = {
+        "platform/configuration-store-impl/src": "com.intellij.configurationStore",
+        "platform/configuration-store-impl/testSrc": "com.intellij.configurationStore",
+    },
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
+    test_srcs = ["platform/configuration-store-impl/testSrc"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1481,23 +1386,24 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/built-in-server-api"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1510,7 +1416,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:XmlRPC",
-        "//tools/idea/.idea/libraries:Sanselan",
+        "//tools/idea/.idea/libraries:commons-imaging",
         "//tools/idea:testFramework[module, test]",
         "//tools/idea/platform/built-in-server-api[module]",
         "//tools/idea/platform/vcs-api[module]",
@@ -1526,7 +1432,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1536,12 +1441,13 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1565,8 +1471,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
     ],
     test_srcs = ["platform/testFramework/testSrc"],
@@ -1582,6 +1487,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Mocks",
         "//tools/idea/java/java-runtime",
         "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea:jetCheck",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -1592,12 +1498,12 @@ iml_module(
         "//tools/idea:relaxng",
         "//tools/idea:images",
         "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
     ],
     # do not sort: must match IML order
@@ -1613,6 +1519,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/boot[module]",
+        "//tools/idea:jetCheck[module, test]",
     ],
 )
 
@@ -1624,16 +1531,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     test_srcs = ["platform/vcs-impl/testSrc"],
     test_tags = ["manual"],
@@ -1645,9 +1545,17 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1664,6 +1572,7 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea:diff-impl[module]",
         "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
+        "//tools/idea/.idea/libraries:swingx",
     ],
 )
 
@@ -1675,22 +1584,23 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:RegExpSupport",
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
-        "//tools/idea:relaxng",
-        "//tools/idea:json",
         "//tools/idea:images",
-        "//tools/idea:xdebugger-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1716,20 +1626,18 @@ iml_module(
     resources = ["json/resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:images",
-    ],
+    test_runtime_deps = ["//tools/idea:images"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1755,8 +1663,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:images",
     ],
     test_srcs = ["RegExpSupport/test"],
@@ -1769,12 +1676,12 @@ iml_module(
         "//tools/idea:spellchecker",
         "//tools/idea:xdebugger-impl",
         "//tools/idea:xml-analysis-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1800,8 +1707,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1815,14 +1721,14 @@ iml_module(
     runtime_deps = [
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1835,6 +1741,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea:RegExpSupport[module]",
+        "//tools/idea/platform/lang-api[module]",
     ],
 )
 
@@ -1846,8 +1753,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1856,14 +1761,14 @@ iml_module(
     runtime_deps = [
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1883,8 +1788,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1893,14 +1797,14 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1921,7 +1825,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -1936,14 +1839,14 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -1963,6 +1866,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/platform/xdebugger-api[module]",
         "//tools/idea/platform/built-in-server-api[module]",
+        "//tools/idea:vcs-impl[module]",
     ],
 )
 
@@ -1978,23 +1882,21 @@ iml_module(
     resources = ["spellchecker/resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:images",
-    ],
+    test_runtime_deps = ["//tools/idea:images"],
     test_srcs = ["spellchecker/testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -2017,7 +1919,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -2030,12 +1931,13 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
     ],
     # do not sort: must match IML order
     deps = [
@@ -2060,7 +1962,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -2071,13 +1972,13 @@ iml_module(
     runtime_deps = [
         "//tools/idea:RegExpSupport",
         "//tools/idea:xml-analysis-impl",
-        "//tools/idea:dom-openapi",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
     ],
     # do not sort: must match IML order
     deps = [
@@ -2088,6 +1989,7 @@ iml_module(
         "//tools/idea:dom-impl[module, test]",
         "//tools/idea:xml[module, test]",
         "//tools/idea/platform/diff-api[module]",
+        "//tools/idea:testExtensions[module, test]",
     ],
 )
 
@@ -2098,25 +2000,21 @@ iml_module(
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["platform/external-system-impl/resources"],
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:execution-impl",
-        "//tools/idea:testExtensions",
-    ],
     test_srcs = ["platform/external-system-impl/testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/platform/external-system-api[module]",
         "//tools/idea/platform/projectModel-impl[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
@@ -2131,6 +2029,10 @@ iml_module(
         "//tools/idea:testFramework[module, test]",
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/openapi[module]",
+        "//tools/idea:configuration-store-impl[module]",
+        "//tools/idea:testExtensions[module, test]",
+        "//tools/idea:execution-impl[module]",
+        "//tools/idea:compiler-tests[module, test]",
     ],
 )
 
@@ -2140,10 +2042,7 @@ iml_module(
     iml_files = ["java/execution/impl/execution-impl.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:external-system-impl",
-        "//tools/idea:testExtensions",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -2152,24 +2051,488 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/java-runtime[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/platform/testRunner[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/platform/smRunner[module]",
+        "//tools/idea:jshell-protocol[module]",
         "//tools/idea/.idea/libraries:Coverage",
+    ],
+)
+
+iml_module(
+    name = "log-events",
+    srcs = ["plugins/stats-collector/log-events/src"],
+    iml_files = ["plugins/stats-collector/log-events/log-events.iml"],
+    tags = ["managed"],
+    test_resources = ["plugins/stats-collector/log-events/testResources"],
+    test_srcs = ["plugins/stats-collector/log-events/test"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+    ],
+)
+
+iml_module(
+    name = "jshell-protocol",
+    srcs = ["java/execution/jshell-protocol/src"],
+    iml_files = ["java/execution/jshell-protocol/jshell-protocol.iml"],
+    tags = ["managed"],
+    test_srcs = ["java/execution/jshell-protocol/testStrc"],
+    visibility = ["//visibility:public"],
+    deps = ["//tools/idea/.idea/libraries:JUnit4[test]"],
+)
+
+iml_module(
+    name = "jshell-frontend",
+    srcs = ["java/execution/jshell-frontend/src"],
+    exclude = ["java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java"],
+    iml_files = ["java/execution/jshell-frontend/jshell-frontend.iml"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    deps = ["//tools/idea:jshell-protocol[module]"],
+)
+
+iml_module(
+    name = "debugger-agent-storage",
+    srcs = ["java/debugger/debugger-agent-storage/src"],
+    iml_files = ["java/debugger/debugger-agent-storage/debugger-agent-storage.iml"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "debugger-agent",
+    srcs = ["java/debugger/debugger-agent/src"],
+    iml_files = ["java/debugger/debugger-agent/debugger-agent.iml"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea:debugger-agent-storage[module]",
+    ],
+)
+
+iml_module(
+    name = "jetCheck",
+    srcs = ["jetCheck/src"],
+    iml_files = ["jetCheck/jetCheck.iml"],
+    tags = ["managed"],
+    test_srcs = ["jetCheck/test"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/platform/annotations[module]",
+        "//tools/idea/platform/util[module, test]",
+    ],
+)
+
+iml_module(
+    name = "tasks-platform-api",
+    srcs = ["platform/tasks-platform-api/src"],
+    iml_files = ["platform/tasks-platform-api/tasks-platform-api.iml"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/platform-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
+    ],
+)
+
+iml_module(
+    name = "index-tools",
+    srcs = ["tools/index-tools/src"],
+    iml_files = ["tools/index-tools/index-tools.iml"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:xml-structure-view-impl",
+        "//tools/idea:spellchecker",
+    ],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+        "//tools/idea:images",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea:lang-impl[module]",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea:testFramework[module]",
+    ],
+)
+
+iml_module(
+    name = "aether-dependency-resolver",
+    srcs = ["aether-dependency-resolver/src"],
+    iml_files = ["aether-dependency-resolver/aether-dependency-resolver.iml"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:xml-structure-view-impl",
+        "//tools/idea:spellchecker",
+        "//tools/idea:relaxng",
+        "//tools/idea:json",
+        "//tools/idea:images",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+    ],
+    test_srcs = ["aether-dependency-resolver/testSrc"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/lib:aether-1.1.0-all",
+        "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/.idea/libraries:commons-codec",
+        "//tools/idea/.idea/libraries:commons-logging",
+        "//tools/idea/.idea/libraries:Slf4j",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/annotations[module]",
+        "//tools/idea/lib:aether-1.1.0-all",
+        "//tools/idea/lib:maven-aether-provider-3.3.9-all",
+        "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/.idea/libraries:commons-codec",
+        "//tools/idea/.idea/libraries:commons-logging",
+        "//tools/idea/.idea/libraries:Slf4j",
+        "//tools/idea:testFramework[module, test]",
+    ],
+)
+
+iml_module(
+    name = "tasks-platform-impl",
+    srcs = ["platform/tasks-platform-impl/src"],
+    iml_files = ["platform/tasks-platform-impl/tasks-platform-impl.iml"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:spellchecker",
+        "//tools/idea:images",
+    ],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:tasks-platform-api[module]",
+        "//tools/idea/platform/core-api[module]",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea:platform-impl[module]",
+        "//tools/idea:lang-impl[module]",
+        "//tools/idea:xdebugger-impl[module]",
+        "//tools/idea/platform/xdebugger-api[module]",
+        "//tools/idea/.idea/libraries:http-client-3.1",
+        "//tools/idea:vcs-impl[module]",
+    ],
+)
+
+iml_module(
+    name = "jps-builders_and_others",
+    # do not sort: must match IML order
+    srcs = [
+        "java/idea-ui/src",
+        "jps/jps-builders/src",
+        "java/testFramework/src",
+        "java/debugger/impl/src",
+        "java/compiler/impl/src",
+    ],
+    iml_files = [
+        "java/idea-ui/idea-ui.iml",
+        "jps/jps-builders/jps-builders.iml",
+        "java/testFramework/testFramework-java.iml",
+        "java/debugger/impl/debugger-impl.iml",
+        "java/compiler/impl/compiler-impl.iml",
+    ],
+    javacopts = ["-XepAllErrorsAsWarnings"],
+    tags = ["managed"],
+    test_srcs = ["jps/jps-builders/testSrc"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/java/openapi",
+        "//tools/idea/java/compiler/openapi:compiler-openapi",
+        "//tools/idea:java-impl",
+        "//tools/idea/jps/jps-builders-6",
+        "//tools/idea/platform/util",
+        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/platform/lang-api",
+        "//tools/idea:testFramework",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/execution/openapi:execution-openapi",
+        "//tools/idea/java/debugger/openapi:debugger-openapi",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/java/openapi[module]",
+        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:aether-dependency-resolver[module]",
+        "//tools/idea/.idea/libraries:OroMatcher",
+        "//tools/idea:vcs-impl[module]",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:jna",
+        "//tools/idea/jps/jps-builders-6[module]",
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/java/compiler/forms-compiler[module]",
+        "//tools/idea/java/compiler/instrumentation-util[module]",
+        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:jgoodies-forms",
+        "//tools/idea/.idea/libraries:Netty",
+        "//tools/idea/.idea/libraries:protobuf",
+        "//tools/idea/java/java-runtime[module]",
+        "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/.idea/libraries:JUnit4",
+        "//tools/idea/.idea/libraries:Eclipse[test]",
+        "//tools/idea/jps/model-api:jps-model-api[module]",
+        "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
+        "//tools/idea/jps/model-impl:jps-model-impl[module]",
+        "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:Xerces",
+        "//tools/idea/platform/lang-api[module]",
+        "//tools/idea:lang-impl[module]",
+        "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea:testFramework[module]",
+        "//tools/idea:relaxng[module, test]",
+        "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
+        "//tools/idea/resources[module]",
+        "//tools/idea/platform/xdebugger-api[module]",
+        "//tools/idea:xdebugger-impl[module]",
+        "//tools/idea/java/jsp-openapi[module]",
+        "//tools/idea:platform-impl[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools/idea/jps/jps-launcher[module]",
+        "//tools/idea:java-analysis-impl[module]",
+        "//tools/idea:built-in-server[module]",
+    ],
+)
+
+iml_module(
+    name = "stats-collector",
+    srcs = ["plugins/stats-collector/src"],
+    iml_files = ["plugins/stats-collector/stats-collector.iml"],
+    resources = ["plugins/stats-collector/resources"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+    ],
+    test_srcs = ["plugins/stats-collector/test"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:RegExpSupport",
+        "//tools/idea:xml-analysis-impl",
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools/idea:lang-impl[module]",
+        "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea:jps-builders_and_others[module, test]",
+        "//tools/idea/.idea/libraries:mockito[test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea:log-events[module]",
+    ],
+)
+
+iml_module(
+    name = "idea-ui-tests",
+    iml_files = ["java/idea-ui/idea-ui-tests.iml"],
+    tags = ["managed"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+    ],
+    test_srcs = ["java/idea-ui/testSrc"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:xdebugger-impl",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+    ],
+    deps = ["//tools/idea:jps-builders_and_others[module]"],
+)
+
+iml_module(
+    name = "stream-debugger",
+    srcs = ["plugins/stream-debugger/src"],
+    iml_files = ["plugins/stream-debugger/stream-debugger.iml"],
+    resources = ["plugins/stream-debugger/resources"],
+    tags = ["managed"],
+    test_resources = ["plugins/stream-debugger/testData"],
+    test_srcs = ["plugins/stream-debugger/test"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea:jps-builders_and_others[module]",
+        "//tools/idea/platform/editor-ui-api[module]",
+        "//tools/idea/platform/core-api[module]",
+        "//tools/idea/platform/xdebugger-api[module]",
+        "//tools/idea:xdebugger-impl[module]",
+        "//tools/idea/java/java-psi-api[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea/java/openapi[module]",
+    ],
+)
+
+iml_module(
+    name = "compiler-tests",
+    iml_files = ["java/compiler/compiler-tests.iml"],
+    tags = ["managed"],
+    test_srcs = ["java/compiler/tests"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:spellchecker",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea:execution-impl",
+        "//tools/idea:external-system-impl",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:jps-builders_and_others[module]",
+        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
+        "//tools/idea/java/openapi[module]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/java/compiler/instrumentation-util[module]",
+        "//tools/idea/.idea/libraries:Groovy[test]",
+    ],
+)
+
+iml_module(
+    name = "community-guitests",
+    iml_files = ["community-guitests/community-guitests.iml"],
+    tags = ["managed"],
+    test_srcs = ["community-guitests/testSrc"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:credential-store",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
+        "//tools/idea/plugins/maven:maven2-server-impl",
+        "//tools/vendor/intellij/cidr:doxygen",
+        "//tools/idea/jps/javac-ref-scanner-8",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:community-main[module]",
+        "//tools/idea/platform/testGuiFramework[module]",
+        "//tools/idea:diff-impl[module, test]",
     ],
 )

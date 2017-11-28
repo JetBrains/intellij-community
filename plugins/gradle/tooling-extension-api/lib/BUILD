@@ -1,83 +1,83 @@
 java_import(
-    name = "gradle-build-init-3.5",
-    jars = ["gradle-build-init-3.5.jar"],
+    name = "gradle-build-init-4.0",
+    jars = ["gradle-build-init-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-ide-3.5",
-    jars = ["gradle-ide-3.5.jar"],
+    name = "gradle-dependency-management-4.0",
+    jars = ["gradle-dependency-management-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-dependency-management-3.5",
-    jars = ["gradle-dependency-management-3.5.jar"],
+    name = "gradle-ide-4.0",
+    jars = ["gradle-ide-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-language-java-3.5",
-    jars = ["gradle-language-java-3.5.jar"],
+    name = "gradle-language-java-4.0",
+    jars = ["gradle-language-java-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-language-jvm-3.5",
-    jars = ["gradle-language-jvm-3.5.jar"],
+    name = "gradle-language-jvm-4.0",
+    jars = ["gradle-language-jvm-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-platform-base-3.5",
-    jars = ["gradle-platform-base-3.5.jar"],
+    name = "gradle-language-scala-4.0",
+    jars = ["gradle-language-scala-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-platform-jvm-3.5",
-    jars = ["gradle-platform-jvm-3.5.jar"],
+    name = "gradle-platform-base-4.0",
+    jars = ["gradle-platform-base-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-plugins-3.5",
-    jars = ["gradle-plugins-3.5.jar"],
+    name = "gradle-platform-jvm-4.0",
+    jars = ["gradle-platform-jvm-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-testing-base-3.5",
-    jars = ["gradle-testing-base-3.5.jar"],
+    name = "gradle-plugins-4.0",
+    jars = ["gradle-plugins-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-testing-jvm-3.5",
-    jars = ["gradle-testing-jvm-3.5.jar"],
+    name = "gradle-scala-4.0",
+    jars = ["gradle-scala-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-scala-3.5",
-    jars = ["gradle-scala-3.5.jar"],
+    name = "gradle-testing-base-4.0",
+    jars = ["gradle-testing-base-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "gradle-language-scala-3.5",
-    jars = ["gradle-language-scala-3.5.jar"],
+    name = "gradle-testing-jvm-4.0",
+    jars = ["gradle-testing-jvm-4.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

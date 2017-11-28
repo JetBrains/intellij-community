@@ -6,21 +6,20 @@ iml_module(
     iml_files = ["junit.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/smRunner"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
@@ -36,7 +35,7 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/platform/smRunner[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:opentest4j",
+        "//tools/idea:jps-builders_and_others[module]",
+        "//tools/idea/platform/external-system-api[module]",
     ],
 )

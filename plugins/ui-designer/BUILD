@@ -7,21 +7,20 @@ iml_module(
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:external-system-impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/plugins/java-i18n"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
     deps = [
@@ -33,7 +32,7 @@ iml_module(
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea:execution-impl[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea:jps-builders_and_others[module]",
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/.idea/libraries:ASM",
@@ -41,9 +40,9 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea:spellchecker[module]",
-        "//tools/idea/jps/jps-builders[module]",
         "//tools/idea:xml[module]",
         "//tools/idea/plugins/properties/properties-psi-api[module]",
         "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea:compiler-tests[module, test]",
     ],
 )

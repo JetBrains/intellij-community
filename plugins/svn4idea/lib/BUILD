@@ -6,13 +6,6 @@ java_import(
 )
 
 java_import(
-    name = "trilead",
-    jars = ["trilead.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "sequence-library",
     jars = ["sequence-library.jar"],
     tags = ["managed"],

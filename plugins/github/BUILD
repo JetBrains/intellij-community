@@ -7,10 +7,7 @@ iml_module(
     resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:execution-impl",
-    ],
+    test_runtime_deps = ["//tools/idea:spellchecker"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -21,14 +18,13 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:dom-openapi",
         "//tools/idea:json",
         "//tools/idea:relaxng",
         "//tools/idea:dom-impl",
-        "//tools/idea:lvcs-impl",
     ],
     # do not sort: must match IML order
     deps = [

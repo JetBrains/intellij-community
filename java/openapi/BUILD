@@ -4,11 +4,11 @@ iml_module(
     name = "openapi",
     srcs = ["src"],
     iml_files = ["openapi.iml"],
+    resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
         "//tools/idea:images",
     ],
@@ -33,13 +33,14 @@ iml_module(
         "//tools/idea:RegExpSupport",
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
         "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
+        "//tools/idea:dom-impl",
     ],
     # do not sort: must match IML order
     deps = [

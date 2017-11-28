@@ -7,8 +7,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:testExtensions",
-        "//tools/idea:xml",
+        "//tools/idea:xml-structure-view-impl",
         "//tools/idea:spellchecker",
     ],
     test_srcs = ["testSrc"],
@@ -16,15 +15,14 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:built-in-server",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:platform-resources",
         "//tools/idea:RegExpSupport",
         "//tools/idea:xml-analysis-impl",
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:dom-openapi",
+        "//tools/idea:lvcs-impl",
+        "//tools/idea:credential-store",
+        "//tools/idea:configuration-store-impl",
+        "//tools/idea:built-in-server",
+        "//tools/idea:tasks-platform-impl",
         "//tools/idea:json",
         "//tools/idea:relaxng",
         "//tools/idea:dom-impl",
@@ -40,5 +38,6 @@ iml_module(
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/platform-api[module]",
+        "//tools/idea:diff-tests[module, test]",
     ],
 )

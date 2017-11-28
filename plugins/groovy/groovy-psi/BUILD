@@ -17,24 +17,25 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:external-system-impl",
-        "//tools/idea:testExtensions",
+        "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Groovy"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea:xdebugger-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea:lvcs-impl",
         "//tools/idea:credential-store",
         "//tools/idea:configuration-store-impl",
-        "//tools/idea:lvcs-impl",
+        "//tools/idea:tasks-platform-impl",
+        "//tools/idea:json",
+        "//tools/idea:relaxng",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea:compiler-impl_and_others[module, test]",
+        "//tools/idea:jps-builders_and_others[module, test]",
         "//tools/idea/plugins/junit[module, test]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/java/java-psi-impl[module]",
