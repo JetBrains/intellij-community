@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.lifecycle.PeriodicalTasksCloser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ModalityState
@@ -115,7 +114,7 @@ class LineStatusTrackerManager(
 
   private val isDisabled: Boolean get() = !project.isOpen || project.isDisposed
 
-  override fun getLineStatusTracker(document: Document): LineStatusTracker? {
+  override fun getLineStatusTracker(document: Document): LineStatusTracker<*>? {
     synchronized(LOCK) {
       if (isDisabled) return null
       return trackers[document]?.tracker
@@ -187,7 +186,7 @@ class LineStatusTrackerManager(
     }
   }
 
-  private fun resetTracker(document: Document, virtualFile: VirtualFile, tracker: LineStatusTracker?) {
+  private fun resetTracker(document: Document, virtualFile: VirtualFile, tracker: LineStatusTracker<*>?) {
     val isOpened = !getAllTrackedEditors(document).isEmpty()
     val shouldBeInstalled = isOpened && shouldBeInstalled(virtualFile)
 
@@ -224,7 +223,7 @@ class LineStatusTrackerManager(
     return true
   }
 
-  private fun doRefreshTracker(tracker: LineStatusTracker) {
+  private fun doRefreshTracker(tracker: LineStatusTracker<*>) {
     synchronized(LOCK) {
       if (isDisabled) return
 
@@ -385,15 +384,15 @@ class LineStatusTrackerManager(
   }
 
   private class TrackerData {
-    val tracker: LineStatusTracker
+    val tracker: LineStatusTracker<*>
     private val currentContent: ContentInfo?
 
-    constructor(tracker: LineStatusTracker) {
+    constructor(tracker: LineStatusTracker<*>) {
       this.tracker = tracker
       currentContent = null
     }
 
-    constructor(tracker: LineStatusTracker,
+    constructor(tracker: LineStatusTracker<*>,
                 revision: VcsRevisionNumber,
                 charset: Charset,
                 loadCounter: Long) {

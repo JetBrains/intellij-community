@@ -37,10 +37,10 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
 
-class LineStatusTracker private constructor(override val project: Project,
-                                            document: Document,
-                                            override val virtualFile: VirtualFile,
-                                            mode: Mode
+class LineStatusTracker<R : Range> private constructor(override val project: Project,
+                                                       document: Document,
+                                                       override val virtualFile: VirtualFile,
+                                                       mode: Mode
 ) : LineStatusTrackerBase<Range>(project, document) {
   enum class Mode {
     DEFAULT, SMART, SILENT
@@ -96,7 +96,7 @@ class LineStatusTracker private constructor(override val project: Project,
     renderer.showAfterScroll(editor, range)
   }
 
-  class MyLineStatusMarkerRenderer(val tracker: LineStatusTracker) : LineStatusMarkerPopupRenderer(tracker) {
+  class MyLineStatusMarkerRenderer(val tracker: LineStatusTracker<*>) : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun canDoAction(range: Range, e: MouseEvent?): Boolean {
@@ -137,8 +137,8 @@ class LineStatusTracker private constructor(override val project: Project,
     fun createOn(virtualFile: VirtualFile,
                  document: Document,
                  project: Project,
-                 mode: Mode): LineStatusTracker {
-      return LineStatusTracker(project, document, virtualFile, mode)
+                 mode: Mode): LineStatusTracker<*> {
+      return LineStatusTracker<Range>(project, document, virtualFile, mode)
     }
   }
 }

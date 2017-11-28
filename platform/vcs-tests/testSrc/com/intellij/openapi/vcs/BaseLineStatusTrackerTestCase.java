@@ -46,7 +46,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   protected VirtualFile myFile;
   protected Document myDocument;
   protected Document myUpToDateDocument;
-  protected LineStatusTracker myTracker;
+  protected LineStatusTracker<?> myTracker;
 
   @Override
   public void tearDown() throws Exception {

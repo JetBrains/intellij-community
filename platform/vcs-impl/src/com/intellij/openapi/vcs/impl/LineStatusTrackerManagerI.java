@@ -21,5 +21,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface LineStatusTrackerManagerI {
   @Nullable
-  LineStatusTracker getLineStatusTracker(Document document);
+  LineStatusTracker<?> getLineStatusTracker(Document document);
 }
