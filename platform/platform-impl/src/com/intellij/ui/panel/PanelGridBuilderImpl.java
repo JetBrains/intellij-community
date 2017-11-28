@@ -28,6 +28,7 @@ public class PanelGridBuilderImpl<T extends PanelBuilder> implements PanelGridBu
   }
 
   @Override
+  @NotNull
   public JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
@@ -60,5 +61,4 @@ public class PanelGridBuilderImpl<T extends PanelBuilder> implements PanelGridBu
       panel.add(new JPanel(), gc);
     }
   }
-
 }

@@ -11,7 +11,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,7 +62,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
@@ -126,7 +125,8 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
                              ContextHelpLabel.create(myHTDescription);
       componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
       componentPanel.add(lbl);
-    } else if (comment != null && !myCommentBelow) {
+    }
+    else if (comment != null && !myCommentBelow) {
       componentPanel.add(Box.createRigidArea(JBUI.size(14, 0)));
       componentPanel.add(comment);
     }
@@ -135,25 +135,28 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
 
     if (comment != null && myCommentBelow) {
       gc.gridx = 1;
-      gc.gridy ++;
+      gc.gridy++;
       gc.weightx = 0.0;
       gc.anchor = GridBagConstraints.NORTHWEST;
       gc.insets = getCommentInsets();
       panel.add(comment, gc);
     }
 
-    gc.gridy ++;
+    gc.gridy++;
   }
 
   private Insets getCommentInsets() {
     if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
       return JBUI.insets(0, 24, 0, 0);
-    } else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
-               myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
+    }
+    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
+             myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       return JBUI.insets(2, 6, 0, 0);
-    } else if (myComponent instanceof JButton) {
+    }
+    else if (myComponent instanceof JButton) {
       return JBUI.insets(0, 8, 0, 0);
-    } else {
+    }
+    else {
       return JBUI.insetsTop(9);
     }
   }
