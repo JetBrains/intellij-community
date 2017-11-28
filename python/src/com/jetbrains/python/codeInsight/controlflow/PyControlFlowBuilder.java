@@ -415,12 +415,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyElementType operator = node.getOperator();
     if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
       myBuilder.startNode(node);
-      final PyExpression left = node.getLeftExpression();
       final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(operator == PyTokenTypes.AND_KEYWORD);
+
+      final PyExpression left = node.getLeftExpression();
       if (left != null) {
         left.accept(this);
         left.accept(assertionEvaluator);
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
       }
+
       final PyExpression right = node.getRightExpression();
       if (right != null) {
         InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);

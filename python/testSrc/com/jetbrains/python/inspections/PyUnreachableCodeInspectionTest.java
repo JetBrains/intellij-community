@@ -33,6 +33,11 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
+  // PY-25974
+  public void testExprOrSysExitAssignedToVar() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
