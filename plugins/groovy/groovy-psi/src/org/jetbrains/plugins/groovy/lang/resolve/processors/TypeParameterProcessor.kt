@@ -28,7 +28,7 @@ class TypeParameterProcessor(name: String) : GrScopeProcessorWithHints(name, emp
   override fun <T : Any?> getHint(hintKey: Key<T>): T? {
     return when (hintKey) {
       GroovyResolveKind.HINT_KEY -> this as T
-      else -> super.getHint(hintKey)
+      else -> super<GrScopeProcessorWithHints>.getHint(hintKey)
     }
   }
 

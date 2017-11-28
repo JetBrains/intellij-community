@@ -36,7 +36,7 @@ class ClassProcessor(
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any?> getHint(hintKey: Key<T>): T? {
     if (hintKey == AnnotationHint.HINT_KEY && annotationResolve) return this as T
-    return super.getHint(hintKey)
+    return super<GrScopeProcessorWithHints>.getHint(hintKey)
   }
 
   override fun isAnnotationResolve(): Boolean = annotationResolve
