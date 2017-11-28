@@ -94,20 +94,29 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository) {
     Map<GitLocalBranch, Hash> result = ContainerUtil.newHashMap();
-    GitBranchesCollection branchesCollection = repository.getBranches();
     Map<GitRemote, List<GitBranchTrackInfo>> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
     for (Map.Entry<GitRemote, List<GitBranchTrackInfo>> entry : trackInfoByRemotes.entrySet()) {
-      List<GitBranchTrackInfo> trackInfoList = entry.getValue();
-      final Map<String, Hash> remoteNameWithHash = lsRemote(repository, entry.getKey(), trackInfoList);
-      for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
-        String remoteBranchName = hashEntry.getKey();
-        Hash remoteHash = hashEntry.getValue();
-        of(trackInfoList)
-          .filter(
-            info -> StringUtil.equals(remoteBranchName, addRefsHeadsPrefixIfNeeded(info.getRemoteBranch().getNameForRemoteOperations())))
-          .filter(info -> !Objects.equals(remoteHash, branchesCollection.getHash(info.getRemoteBranch())))
-          .forEach(info -> result.put(info.getLocalBranch(), branchesCollection.getHash(info.getRemoteBranch())));
-      }
+      result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue()));
+    }
+    return result;
+  }
+
+  private Map<GitLocalBranch, Hash> calcBranchesToPullForRemote(@NotNull GitRepository repository,
+                                                                @NotNull GitRemote gitRemote,
+                                                                @NotNull List<GitBranchTrackInfo> trackInfoList) {
+    Map<GitLocalBranch, Hash> result = ContainerUtil.newHashMap();
+    GitBranchesCollection branchesCollection = repository.getBranches();
+    final Map<String, Hash> remoteNameWithHash =
+      lsRemote(repository, gitRemote, ContainerUtil.map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()));
+
+    for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
+      String remoteBranchName = hashEntry.getKey();
+      Hash remoteHash = hashEntry.getValue();
+      of(trackInfoList)
+        .filter(
+          info -> StringUtil.equals(remoteBranchName, addRefsHeadsPrefixIfNeeded(info.getRemoteBranch().getNameForRemoteOperations())))
+        .filter(info -> !Objects.equals(remoteHash, branchesCollection.getHash(info.getRemoteBranch())))
+        .forEach(info -> result.put(info.getLocalBranch(), branchesCollection.getHash(info.getRemoteBranch())));
     }
     return result;
   }
@@ -115,8 +124,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
-                                     @NotNull List<GitBranchTrackInfo> trackInfos) {
-    List<String> branchRefNames = ContainerUtil.map(trackInfos, info -> info.getRemoteBranch().getNameForRemoteOperations());
+                                     @NotNull List<String> branchRefNames) {
     Map<String, Hash> result = ContainerUtil.newHashMap();
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = ContainerUtil.newArrayList("--heads", remote.getName());
