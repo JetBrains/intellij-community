@@ -15,7 +15,6 @@ import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> ALL_CONSUMING_OPERATIONS = new HashSet<>(Arrays.asList(
     "sorted",
-    "distinct",
     "count",
     "reduce",
     "max",
@@ -31,7 +30,13 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
   private static Set<String> NON_LIMITING_OPERATIONS = new HashSet<>(Arrays.asList(
     "filter",
     "map",
+    "distinct",
     "flatMap",
+    "flatMapToInt",
+    "flatMapToLong",
+    "flatMapToDouble",
+    "flatMapToObj",
+    "onClose",
     "peek",
     "skip",
     "dropWhile",
