@@ -70,10 +70,10 @@ public class AppUIUtil {
 
   public static void updateWindowIcon(@NotNull Window window) {
     if (SystemInfo.isWindows &&
-        Integer.getInteger("jbre.win.app.icon.id") != null &&
-        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // set by JBRE
+        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
+        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
     {
-      return; // JBRE will load icon from the exe resource
+      return; // JDK will load icon from the exe resource
     }
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
