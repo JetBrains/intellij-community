@@ -629,32 +629,50 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
-    DfaValue condition = factory.createCondition(dfaLeft, relationType, dfaRight);
-    if (condition instanceof DfaUnknownValue) return null;
 
-    myCanBeNullInInstanceof.add(instruction);
+    RelationType[] relations = splitRelation(relationType);
 
-    ArrayList<DfaInstructionState> states = new ArrayList<>(2);
+    ArrayList<DfaInstructionState> states = new ArrayList<>(relations.length);
 
-    final DfaMemoryState trueCopy = memState.createCopy();
-    if (trueCopy.applyCondition(condition)) {
-      trueCopy.push(factory.getConstFactory().getTrue());
-      instruction.setTrueReachable();
-      states.add(new DfaInstructionState(next, trueCopy));
-    }
-
-    //noinspection UnnecessaryLocalVariable
-    DfaMemoryState falseCopy = memState;
-    if (falseCopy.applyCondition(condition.createNegated())) {
-      falseCopy.push(factory.getConstFactory().getFalse());
-      instruction.setFalseReachable();
-      states.add(new DfaInstructionState(next, falseCopy));
-      if (instruction instanceof InstanceofInstruction && !falseCopy.isNull(dfaLeft)) {
-        myUsefulInstanceofs.add((InstanceofInstruction)instruction);
+    for (int i = 0; i < relations.length; i++) {
+      RelationType relation = relations[i];
+      DfaValue condition = factory.createCondition(dfaLeft, relation, dfaRight);
+      if (condition instanceof DfaUnknownValue) return null;
+      if (condition instanceof DfaConstValue && Boolean.FALSE.equals(((DfaConstValue)condition).getValue())) {
+        continue;
+      }
+      final DfaMemoryState copy = i == relations.length - 1 ? memState : memState.createCopy();
+      if (copy.applyCondition(condition)) {
+        boolean isTrue = relationType.isSubRelation(relation);
+        copy.push(factory.getBoolean(isTrue));
+        if (isTrue) {
+          instruction.setTrueReachable();
+        }
+        else {
+          if (instruction instanceof InstanceofInstruction && !copy.isNull(dfaLeft)) {
+            myUsefulInstanceofs.add((InstanceofInstruction)instruction);
+          }
+          instruction.setFalseReachable();
+        }
+        states.add(new DfaInstructionState(next, copy));
       }
     }
+    myCanBeNullInInstanceof.add(instruction);
 
     return states.toArray(new DfaInstructionState[states.size()]);
+  }
+
+  @NotNull
+  private static RelationType[] splitRelation(RelationType relationType) {
+    switch (relationType) {
+      case LT:
+      case LE:
+      case GT:
+      case GE:
+        return new RelationType[]{RelationType.LT, RelationType.GT, RelationType.EQ};
+      default:
+        return new RelationType[]{relationType, relationType.getNegated()};
+    }
   }
 
   private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {

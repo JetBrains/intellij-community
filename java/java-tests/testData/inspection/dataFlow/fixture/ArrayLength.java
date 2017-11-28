@@ -1,6 +1,28 @@
 import java.util.Arrays;
 
 public final class ArrayLength {
+  void testForSimple2(int[] arr, int[][] arr2) {
+    boolean b = arr2[0].length == arr.length;
+    for(int i=0; i<arr.length; i++) {
+      if(b) {
+        System.out.println(1);
+      } else {
+        System.out.println(2);
+      }
+      if(<warning descr="Condition 'i == arr.length' is always 'false'">i == arr.length</warning>) {
+        System.out.println("impossible");
+      }
+    }
+  }
+
+  void testForSimple(int[] arr) {
+    for(int i=0; i<arr.length; i++) {
+      if(<warning descr="Condition 'i == arr.length' is always 'false'">i == arr.length</warning>) {
+        System.out.println("impossible");
+      }
+    }
+  }
+
   void testEquality(int[] x) {
     int len = x.length;
     for(int i=0; i<100; i++) {
@@ -13,6 +35,7 @@ public final class ArrayLength {
   int[] testFor(int length) {
     int[] x = new int[length];
     for(int i=0; i<=length; i++) {
+      // TODO: warn
       x[i] = 1;
     }
     return x;
