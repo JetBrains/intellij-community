@@ -11,16 +11,20 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
  
     {
-        bar(new I<String>() {
-            @Override
-            public String foo() {
-                A a = new A() {
-                    void foo() {
-                        super.foo();
-                    }
-                }
-                return "sss";
-            }
-        });
+      class Local {
+        {
+          bar(new I<String>() {
+              @Override
+              public String foo() {
+                  A a = new A() {
+                      void foo() {
+                          super.foo();
+                      }
+                  }
+                  return "sss";
+              }
+          });
+        }
+      }
     }
 }
