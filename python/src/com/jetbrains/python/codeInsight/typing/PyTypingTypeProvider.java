@@ -160,18 +160,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return null;
     }
     final PyParameterTypeList list = annotation.getParameterTypeList();
-    final List<PyExpression> params = list.getParameterTypes();
-    if (params.size() == 1) {
-      final PyNoneLiteralExpression noneExpr = as(params.get(0), PyNoneLiteralExpression.class);
+    final List<PyExpression> paramTypes = list.getParameterTypes();
+    if (paramTypes.size() == 1) {
+      final PyNoneLiteralExpression noneExpr = as(paramTypes.get(0), PyNoneLiteralExpression.class);
       if (noneExpr != null && noneExpr.isEllipsis()) {
         return Ref.create();
       }
     }
-    final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
+    final int startOffset = omitFirstParamInTypeComment(func, annotation) ? 1 : 0;
     final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
     final int i = funcParams.indexOf(param) - startOffset;
-    if (i >= 0 && i < params.size()) {
-      return getParameterTypeFromFunctionComment(params.get(i), context);
+    if (i >= 0 && i < paramTypes.size()) {
+      return getParameterTypeFromFunctionComment(paramTypes.get(i), context);
     }
     return null;
   }
@@ -253,8 +253,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return new PyCustomType(PROTOCOL, null, false);
   }
 
-  private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
-    return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD;
+  private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
+    return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD &&
+           annotation.getParameterTypeList().getParameterTypes().size() < func.getParameterList().getParameters().length;
   }
 
   @Nullable
