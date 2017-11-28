@@ -46,6 +46,8 @@ fun PsiScopeProcessor.shouldProcessDynamicProperties(): Boolean {
   return getHint(DynamicMembersHint.KEY)?.shouldProcessProperties() ?: false
 }
 
+fun PsiScopeProcessor.shouldProcessLocals(): Boolean = shouldProcess(GroovyResolveKind.VARIABLE)
+
 fun PsiScopeProcessor.shouldProcessMethods(): Boolean {
   return ResolveUtil.shouldProcessMethods(getHint(ElementClassHint.KEY))
 }
@@ -69,6 +71,16 @@ fun PsiScopeProcessor.shouldProcessTypeParameters(): Boolean {
 
 fun PsiScopeProcessor.shouldProcessProperties(): Boolean {
   return this is GroovyResolverProcessor && isPropertyResolve
+}
+
+fun PsiScopeProcessor.shouldProcessPackages(): Boolean = shouldProcess(GroovyResolveKind.PACKAGE)
+
+private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
+  val resolveKindHint = getHint(GroovyResolveKind.HINT_KEY)
+  if (resolveKindHint != null) return resolveKindHint.shouldProcess(kind)
+
+  val elementClassHint = getHint(ElementClassHint.KEY) ?: return true
+  return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
 
 fun wrapClassType(type: PsiType, context: PsiElement) = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)

@@ -21,7 +21,7 @@ public enum GroovyResolveKind {
   CLASS(DeclarationKind.CLASS),
   PACKAGE(DeclarationKind.PACKAGE);
 
-  final Set<DeclarationKind> declarationKinds;
+  public final Set<DeclarationKind> declarationKinds;
 
   GroovyResolveKind(DeclarationKind kind, DeclarationKind... kinds) {
     declarationKinds = Collections.unmodifiableSet(EnumSet.of(kind, kinds));
