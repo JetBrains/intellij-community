@@ -233,8 +233,8 @@ public class PsiManagerImpl extends PsiManagerEx {
     myTreeChangeListeners.remove(listener);
   }
 
-  private static String logPsi(PsiElement element) {
-    return PsiUtilCore.getElementType(element) + " " + element.getClass();
+  private static String logPsi(@Nullable PsiElement element) {
+    return element == null ? " null" : PsiUtilCore.getElementType(element) + " " + element.getClass();
   }
   
   @Override
