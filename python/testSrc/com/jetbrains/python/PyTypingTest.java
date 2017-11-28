@@ -25,6 +25,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1139,6 +1140,74 @@ public class PyTypingTest extends PyTestCase {
            "class C:\n" +
            "    @classmethod\n" +
            "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D.factory()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationInTypeCommentSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self):\n" +
+           "        # type: (T) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C().method()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationInTypeCommentSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self):\n" +
+           "        # type: (T) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().method()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationInTypeCommentSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls) -> T:\n" +
+           "        # type: (Type[T]) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationInTypeCommentSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls):\n" +
+           "        # type: (Type[T]) -> T\n" +
            "        pass\n" +
            "\n" +
            "class D(C): \n" +
