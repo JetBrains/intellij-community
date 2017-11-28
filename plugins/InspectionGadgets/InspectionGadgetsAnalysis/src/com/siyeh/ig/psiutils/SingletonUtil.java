@@ -33,18 +33,26 @@ public class SingletonUtil {
   private SingletonUtil() {}
 
   public static boolean isSingleton(@Nullable PsiClass aClass) {
-    if (aClass == null || aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+    if (aClass == null ||
+        aClass.isInterface() ||
+        aClass.isAnnotationType() ||
+        aClass instanceof PsiTypeParameter ||
+        aClass instanceof PsiAnonymousClass) {
       return false;
     }
-    if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
-      return false;
+    if (aClass.isEnum()) {
+      if (!ControlFlowUtils.hasChildrenOfTypeCount(aClass, 1, PsiEnumConstant.class)) {
+        return false;
+      }
+      // has at least on accessible instance method
+      return Arrays.stream(aClass.getMethods())
+        .anyMatch(m -> !m.isConstructor() && !m.hasModifierProperty(PsiModifier.PRIVATE) && !m.hasModifierProperty(PsiModifier.STATIC));
     }
-    final PsiMethod[] constructors = getIfOnlyInvisibleConstructors(aClass);
-    if (constructors.length == 0) {
+    if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
       return false;
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
-    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
