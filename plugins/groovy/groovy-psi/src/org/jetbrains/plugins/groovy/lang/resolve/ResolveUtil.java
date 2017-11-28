@@ -68,8 +68,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.count;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
 /**
  * @author ven
@@ -207,7 +206,7 @@ public class ResolveUtil {
                                         @NotNull ResolveState state,
                                         @Nullable PsiElement lastParent,
                                         @NotNull PsiElement place) {
-    if (!shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
+    if (!shouldProcessLocals(processor)) return true;
 
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
@@ -997,10 +996,6 @@ public class ResolveUtil {
   public static boolean shouldProcessProperties(ElementClassHint classHint) {
     return classHint == null || classHint.shouldProcess(DeclarationKind.VARIABLE)
            || classHint.shouldProcess(DeclarationKind.FIELD) || classHint.shouldProcess(DeclarationKind.ENUM_CONST);
-  }
-
-  public static boolean shouldProcessPackages(ElementClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(DeclarationKind.PACKAGE);
   }
 
   public static boolean processStaticImports(@NotNull PsiScopeProcessor resolver,

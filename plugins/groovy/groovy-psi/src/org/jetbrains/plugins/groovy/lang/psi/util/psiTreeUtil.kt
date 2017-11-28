@@ -7,6 +7,8 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
 /**
@@ -25,6 +27,11 @@ fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = Re
     processor.handleEvent(DECLARATION_SCOPE_PASSED, scope)
   }
   return true
+}
+
+fun PsiElement.treeWalkUpAndGetArray(processor: GrResolverProcessor<*>): Array<out GroovyResolveResult> {
+  treeWalkUp(processor, ResolveState.initial(), this)
+  return processor.resultsArray
 }
 
 inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)
