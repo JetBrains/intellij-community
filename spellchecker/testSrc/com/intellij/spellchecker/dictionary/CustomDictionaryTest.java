@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
@@ -52,8 +51,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     super.setUp();
     settings = SpellCheckerSettings.getInstance(getProject());
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
-    oldPaths = settings.getDictionaryFoldersPaths();
-    settings.setDictionaryFoldersPaths(new ArrayList<>(singletonList(getTestDictDirectory())));
+    oldPaths = settings.getCustomDictionariesPaths();
+    settings.setCustomDictionariesPaths(new ArrayList<>(singletonList(getTestDictDirectory())));
     spellCheckerManager.fullConfigurationReload();
   }
 
@@ -61,7 +60,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   protected void tearDown() throws Exception {
     //noinspection SuperTearDownInFinally
     super.tearDown();
-    settings.setDictionaryFoldersPaths(oldPaths);
+    settings.setCustomDictionariesPaths(oldPaths);
   }
 
   @Override

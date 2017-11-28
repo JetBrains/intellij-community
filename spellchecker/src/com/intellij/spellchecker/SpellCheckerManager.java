@@ -37,7 +37,6 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AggregatedDictionaryState;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,9 +104,9 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : settings.getDictionaryFoldersPaths()) {
+      for (String folder : settings.getCustomDictionariesPaths()) {
         SPFileUtil.processFilesRecursively(folder, s -> {
           boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
           boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
@@ -155,9 +154,9 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : settings.getDictionaryFoldersPaths()) {
+      for (String folder : settings.getCustomDictionariesPaths()) {
         SPFileUtil.processFilesRecursively(folder, s -> {
           if (!disabledDictionaries.contains(s)) {
             loadDictionary(s);
@@ -321,7 +320,7 @@ public class SpellCheckerManager implements Disposable {
       final String systemDependentPath = toSystemDependentName(path);
       if (locatedInDictFolders(path)) {
         spellChecker.removeDictionariesRecursively(systemDependentPath);
-        mySettings.getDictionaryFoldersPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
+        mySettings.getCustomDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
         mySettings.getDisabledDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
         restartInspections();
       }
@@ -350,7 +349,7 @@ public class SpellCheckerManager implements Disposable {
     }
     
     private boolean locatedInDictFolders(@NotNull String path) {
-      return mySettings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, false));
+      return mySettings.getCustomDictionariesPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, false));
     }
   }
 }
