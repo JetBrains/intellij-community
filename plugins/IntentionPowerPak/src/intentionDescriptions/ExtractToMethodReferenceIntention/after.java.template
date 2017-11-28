@@ -1,0 +1,10 @@
+class X {
+    {
+        JButton b = new JButton();
+        b.addActionListener(this::clicked);
+    }
+
+    private void clicked(ActionEvent e) {
+        System.out.println("clicked");
+    }
+}

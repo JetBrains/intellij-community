@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ref;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -90,6 +91,15 @@ public class DebugReflectionUtil {
       catch (NoClassDefFoundError e) {
         cached = EMPTY_FIELD_ARRAY;
       }
+      catch (@ReviseWhenPortedToJDK("9") RuntimeException e) {
+        // field.setAccessible() can now throw this exception when accessing unexported module 
+        if (e.getClass().getName().equals("java.lang.reflect.InaccessibleObjectException")) {
+          cached = EMPTY_FIELD_ARRAY;
+        }
+        else {
+          throw e;
+        }
+      }
 
       allFields.put(aClass, cached);
     }
@@ -138,7 +148,7 @@ public class DebugReflectionUtil {
       }
     }
   }
-  
+
   private static void queueStronglyReferencedValues(Queue<BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Condition<Object> shouldExamineValue,
@@ -146,7 +156,7 @@ public class DebugReflectionUtil {
     Class rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
-      if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
+      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs
       Object value;
       try {
         value = field.get(root);
@@ -213,7 +223,7 @@ public class DebugReflectionUtil {
     @Override
     public String toString() {
       String result = "";
-      BackLink backLink = BackLink.this;
+      BackLink backLink = this;
       while (backLink != null) {
         String valueStr;
         Object value = backLink.value;

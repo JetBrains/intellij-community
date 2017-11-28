@@ -83,21 +83,10 @@ public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
     return myIncludedUnversionedFilesCount;
   }
 
-  private static final Processor<Change> MODIFIED_FILTER = new Processor<Change>() {
-    public boolean process(@NotNull Change item) {
-      return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
-    }
-  };
-  private static final Processor<Change> NEW_FILTER = new Processor<Change>() {
-    public boolean process(@NotNull Change item) {
-      return item.getType() == Change.Type.NEW;
-    }
-  };
-  private static final Processor<Change> DELETED_FILTER = new Processor<Change>() {
-    public boolean process(@NotNull Change item) {
-      return item.getType() == Change.Type.DELETED;
-    }
-  };
+  private static final Processor<Change> MODIFIED_FILTER =
+    item -> item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
+  private static final Processor<Change> NEW_FILTER = item -> item.getType() == Change.Type.NEW;
+  private static final Processor<Change> DELETED_FILTER = item -> item.getType() == Change.Type.DELETED;
 
   private static <T> int countMatchingItems(@NotNull List<T> items, @NotNull Processor<T> filter) {
     int count = 0;

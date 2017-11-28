@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,18 +59,6 @@ public class CloneUtils {
       }
       javaLangObject = null;
     }
-    return MethodUtils.methodMatches(method, null, javaLangObject,
-                                     HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
-  }
-
-  public static boolean onlyThrowsException(@NotNull PsiMethod method) {
-    if (!method.hasModifierProperty(PsiModifier.FINAL)) {
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return false;
-      }
-    }
-    final PsiStatement statement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
-    return statement instanceof PsiThrowStatement;
+    return MethodUtils.methodMatches(method, null, javaLangObject, HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
   }
 }

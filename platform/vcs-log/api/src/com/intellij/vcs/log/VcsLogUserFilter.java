@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * Filters commmits by one or several users.
+ * Filters commits by one or several users.
  */
 public interface VcsLogUserFilter extends VcsLogDetailsFilter {
 

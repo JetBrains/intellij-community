@@ -17,14 +17,13 @@
 package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.impl.SettingsImpl;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -40,7 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -187,7 +185,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (isDisposed) return null;
     Project project = psiFile.getProject();
 
-    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor);
+    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor, EditorKind.PREVIEW);
 
     EditorSettings settings = editor.getSettings();
     customizeEditorSettings(settings);
@@ -197,14 +195,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   protected void customizeEditorSettings(EditorSettings settings) {
-    settings.setLineMarkerAreaShown(false);
+    settings.setLineMarkerAreaShown(myIsEditor);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setAnimatedScrolling(false);
-    if (settings instanceof SettingsImpl) {
-      ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
-    }
   }
 
   @Override
@@ -226,15 +221,35 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-
+  @Nullable
+  public final String getCannotPreviewMessage(@Nullable final List<UsageInfo> infos) {
+    if (infos == null || infos.isEmpty()) {
+      return UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord());
+    } else {
+      PsiFile psiFile = null;
+      for (UsageInfo info : infos) {
+        PsiElement element = info.getElement();
+        if (element == null) continue;
+        PsiFile file = element.getContainingFile();
+        if (psiFile == null) {
+          psiFile = file;
+        } else {
+          if (psiFile != file) {
+            return UsageViewBundle.message("several.occurrences.selected");
+          }
+        }
+      }
+    }
+    return null;
+  }
 
   @Override
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
-    if (infos == null) {
+    String cannotPreviewMessage = getCannotPreviewMessage(infos);
+    if (cannotPreviewMessage != null) {
       releaseEditor();
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
-      add(titleComp, BorderLayout.CENTER);
+      getEmptyText().setText(cannotPreviewMessage);
       revalidate();
     }
     else {

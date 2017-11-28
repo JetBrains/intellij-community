@@ -79,6 +79,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final boolean myForceModelLoading;
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
+  private final boolean myLoadUnloadedModules;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -86,8 +87,7 @@ final class BuildSession implements Runnable, CanceledStatus {
                @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta, @Nullable PreloadedData preloaded) {
     mySessionId = sessionId;
     myChannel = channel;
-    myPreloadedData = preloaded;
-    
+
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
@@ -99,11 +99,24 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    if (preloaded == null || preloaded.getRunner() == null) {
-      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null));
+    myLoadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
+    if (myLoadUnloadedModules && preloaded != null) {
+      myPreloadedData = null;
+      ProjectDescriptor projectDescriptor = preloaded.getProjectDescriptor();
+      if (projectDescriptor != null) {
+        projectDescriptor.release();
+        preloaded.setProjectDescriptor(null);
+      }
     }
     else {
-      myBuildRunner = preloaded.getRunner();
+      myPreloadedData = preloaded;
+    }
+
+    if (myPreloadedData == null || myPreloadedData.getRunner() == null) {
+      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, myLoadUnloadedModules, null));
+    }
+    else {
+      myBuildRunner = myPreloadedData.getRunner();
     }
     myBuildRunner.setFilePaths(filePaths);
     myBuildRunner.setBuilderParams(builderParams);
@@ -204,7 +217,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
     final DataInputStream fsStateStream = 
-      storageFilesAbsent || preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+      storageFilesAbsent || preloadedProject != null || myLoadUnloadedModules || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build

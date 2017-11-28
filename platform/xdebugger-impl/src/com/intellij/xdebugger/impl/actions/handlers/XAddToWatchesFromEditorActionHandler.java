@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
     Promise<String> textPromise = getTextToEvaluate(dataContext, session);
     // in the case of async expression evaluation just enable the action
-    if (textPromise.getState() != Promise.State.PENDING) {
+    if (textPromise.getState() == Promise.State.PENDING) {
       return true;
     }
     // or disable on rejected

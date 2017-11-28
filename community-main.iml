@@ -101,7 +101,6 @@
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
-    <orderEntry type="module" module-name="community-tests" scope="TEST" />
     <orderEntry type="module" module-name="google-cloud-tools-as" />
     <orderEntry type="module" module-name="firebase-testing" />
     <orderEntry type="module" module-name="test-recorder" />
@@ -124,14 +123,11 @@
     <orderEntry type="module" module-name="android-apk" />
     <orderEntry type="module" module-name="games" />
     <orderEntry type="module" module-name="firebase" />
-    <orderEntry type="module" module-name="android-plugin" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="devkit-tests" scope="TEST" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
     <orderEntry type="module" module-name="updater" scope="TEST" />
     <orderEntry type="module" module-name="coverage" />
-    <orderEntry type="module" module-name="android-gradle-jps" scope="TEST" />
     <orderEntry type="module" module-name="android-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="script-debugger-ui" scope="TEST" />
     <orderEntry type="module" module-name="remote-servers-git-java" />
@@ -140,6 +136,11 @@
     <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="smali" />
     <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
+    <orderEntry type="module" module-name="images-build-scripts" scope="TEST" />
+    <orderEntry type="module" module-name="android-plugin" />
+    <orderEntry type="module" module-name="stats-collector" />
+    <orderEntry type="module" module-name="stream-debugger" />
+    <orderEntry type="module" module-name="jetCheck" scope="TEST" />
     <orderEntry type="module" module-name="gradle-dsl-parser" />
   </component>
 </module>

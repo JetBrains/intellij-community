@@ -21,8 +21,8 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UThrowExpression
 
 class JavaUThrowExpression(
-        override val psi: PsiThrowStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UThrowExpression {
-    override val thrownExpression by lz { JavaConverter.convertOrEmpty(psi.exception, this) }
+  override val psi: PsiThrowStatement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UThrowExpression {
+  override val thrownExpression by lz { JavaConverter.convertOrEmpty(psi.exception, this) }
 }

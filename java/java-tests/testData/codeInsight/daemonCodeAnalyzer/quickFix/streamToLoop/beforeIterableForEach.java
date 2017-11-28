@@ -19,6 +19,10 @@ public class Main {
     return collection;
   }
 
+  void testRawTypeSupport(List<List> list) {
+    list.forEach(l -> System.out.println(l.size()));
+  }
+
   public interface SomeInterface {
 
     Set<? extends SomeInterface> nodes();

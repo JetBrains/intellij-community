@@ -41,9 +41,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 22/03/14
- */
 public class InjectionCache {
   private final CachedValue<Set<String>> myAnnoIndex;
   private final CachedValue<Collection<String>> myXmlIndex;

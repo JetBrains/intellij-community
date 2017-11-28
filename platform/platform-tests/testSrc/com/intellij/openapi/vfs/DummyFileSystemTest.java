@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class DummyFileSystemTest extends BareTestFixtureTestCase {
   @Test
-  public void testDeletionEvents() throws Exception {
+  public void testDeletionEvents() {
     DummyFileSystem fs = new DummyFileSystem();
 
     Pair<VirtualFile, VirtualFile> pair = new WriteAction<Pair<VirtualFile, VirtualFile>>() {
@@ -47,7 +47,7 @@ public class DummyFileSystemTest extends BareTestFixtureTestCase {
 
     VirtualFileEvent[] events = new VirtualFileEvent[2];
 
-    VirtualFileAdapter listener = new VirtualFileAdapter() {
+    VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
         events[0] = e;

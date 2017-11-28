@@ -17,9 +17,6 @@ package com.intellij.openapi.wm;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: spLeaner
- */
 public interface StatusBarInfo {
 
   /**

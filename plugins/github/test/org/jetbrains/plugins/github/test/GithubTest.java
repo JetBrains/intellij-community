@@ -201,7 +201,7 @@ public abstract class GithubTest extends GitPlatformTest {
     }
   }
 
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
   }
 
   protected void afterTest() throws Exception {

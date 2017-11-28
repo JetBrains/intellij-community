@@ -31,12 +31,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Jul 26, 2010
- */
 public class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
-  private static final Logger LOG = Logger.getInstance("#" + RefactoringScopeElementListenerProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(RefactoringScopeElementListenerProvider.class);
 
   @Override
   public RefactoringElementListener getListener(PsiElement element) {

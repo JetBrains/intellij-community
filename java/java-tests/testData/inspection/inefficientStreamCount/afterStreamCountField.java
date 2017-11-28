@@ -3,6 +3,6 @@
 import java.util.Arrays;
 
 class Test {
-  /*count*/
+    /*count*/
     long cnt = (long) Arrays.asList('d', 'e', 'f')./*stream*/size()/*after*/;
 }

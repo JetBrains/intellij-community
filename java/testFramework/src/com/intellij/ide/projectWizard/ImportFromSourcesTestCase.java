@@ -51,6 +51,12 @@ public abstract class ImportFromSourcesTestCase extends PlatformTestCase {
   }
 
   @Override
+  protected void tearDown() throws Exception {
+    myBuilder = null;
+    super.tearDown();
+  }
+
+  @Override
   protected void setUpProject() throws Exception {
   }
 

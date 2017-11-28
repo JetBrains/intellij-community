@@ -22,17 +22,20 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +49,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class NewRecentProjectPanel extends RecentProjectPanel {
-  public NewRecentProjectPanel(Disposable parentDisposable) {
+  public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
     setBorder(null);
     setBackground(FlatWelcomeFrame.getProjectsBackground());
@@ -110,7 +113,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               if (policy != null) {
                 Component next = policy.getComponentAfter(frame, list);
                 if (next != null) {
-                  next.requestFocus();
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                    IdeFocusManager.getGlobalInstance().requestFocus(next, true);
+                  });
                 }
               }
             }
@@ -250,7 +255,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getProjectName());
-              final String realPath = ((ReopenProjectAction)value).getProjectPath();
+              if (!isSelected && !isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
+                name.setForeground(UIUtil.getInactiveTextColor());
+              }
+              final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPathes.add((ReopenProjectAction)value);

@@ -38,7 +38,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
   protected final Condition<PsiElement> myAdditionalCondition;
 
   public PostfixTemplateExpressionSelectorBase(@Nullable Condition<PsiElement> condition) {
-    myAdditionalCondition = condition != null ? condition : Conditions.<PsiElement>alwaysTrue();
+    myAdditionalCondition = condition != null ? condition : Conditions.alwaysTrue();
   }
 
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,20 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+  public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  public int FIELDS_ORDER_WEIGHT = 2;
+  public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  public int METHODS_ORDER_WEIGHT = 5;
+  public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  public int INNER_CLASSES_ORDER_WEIGHT = 7;
+
   /**
    * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like
    * <p/>
@@ -40,6 +49,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
    */
   public boolean USE_FLYING_GEESE_BRACES = false;
 
+  public boolean SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON = false;
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = true;
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
@@ -149,5 +159,16 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
-  
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
+    STATIC_FIELDS_ORDER_WEIGHT = rootSettings.STATIC_FIELDS_ORDER_WEIGHT;
+    FIELDS_ORDER_WEIGHT = rootSettings.FIELDS_ORDER_WEIGHT;
+    CONSTRUCTORS_ORDER_WEIGHT = rootSettings.CONSTRUCTORS_ORDER_WEIGHT;
+    STATIC_METHODS_ORDER_WEIGHT = rootSettings.STATIC_METHODS_ORDER_WEIGHT;
+    METHODS_ORDER_WEIGHT = rootSettings.METHODS_ORDER_WEIGHT;
+    STATIC_INNER_CLASSES_ORDER_WEIGHT = rootSettings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
+    INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
+  }
 }

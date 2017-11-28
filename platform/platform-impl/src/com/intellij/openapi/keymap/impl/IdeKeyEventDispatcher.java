@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -97,9 +99,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private KeyState myState = KeyState.STATE_INIT;
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private boolean myDisposed = false;
-  private boolean myLeftCtrlPressed = false;
-  private boolean myRightAltPressed = false;
+  private boolean myDisposed;
+  private boolean myLeftCtrlPressed;
+  private boolean myRightAltPressed;
 
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
@@ -128,8 +130,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if and only if the passed event is already dispatched by the
-   * <code>IdeKeyEventDispatcher</code> and there is no need for any other processing of the event.
+   * @return {@code true} if and only if the passed event is already dispatched by the
+   * {@code IdeKeyEventDispatcher} and there is no need for any other processing of the event.
    */
   public boolean dispatchKeyEvent(final KeyEvent e){
     if (myDisposed) return false;
@@ -244,9 +246,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if and only if the <code>component</code> represents
+   * @return {@code true} if and only if the {@code component} represents
    * modal context.
-   * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
+   * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
     Window window = UIUtil.getWindow(component);
@@ -521,6 +523,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
         final JLabel label = (JLabel)component;
         if (label.getDisplayedMnemonic() == keyCode) return true;
       }
+      if (component instanceof ActionButtonWithText) {
+        if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
+      }
       if (component instanceof Container) {
         if (hasMnemonic((Container)component, keyCode)) return true;
       }
@@ -558,6 +563,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
+      ShortcutsCollector.record(actionEvent);
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -639,7 +645,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * This method fills <code>myActions</code> list.
+   * This method fills {@code myActions} list.
    * @return true if there is a shortcut with second stroke found.
    */
   public KeyProcessorContext updateCurrentContext(Component component, Shortcut sc, boolean isModalContext){
@@ -723,7 +729,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return myContext;
   }
 
-  private static KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
+  private static final KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
   private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
     return CONTROL_ENTER.equals(sc)
            && !IdeEventQueue.getInstance().isPopupActive() //avoid Control+Enter in completion
@@ -779,11 +785,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     setPressedWasProcessed(false);
   }
 
-  public boolean isPressedWasProcessed() {
+  private boolean isPressedWasProcessed() {
     return myPressedWasProcessed;
   }
 
-  public void setPressedWasProcessed(boolean pressedWasProcessed) {
+  private void setPressedWasProcessed(boolean pressedWasProcessed) {
     myPressedWasProcessed = pressedWasProcessed;
   }
 

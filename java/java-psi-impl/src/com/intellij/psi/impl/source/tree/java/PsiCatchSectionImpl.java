@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -123,16 +124,21 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
         }
         return thrownType;
       });
+      if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      boolean passed = true;
+      List<PsiType> types = new ArrayList<>();
       for (PsiType type : uncaughtTypes) {
-        if (!declaredType.isAssignableFrom(type) && !(type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type))) {
-          passed = false;
-          break;
+        if (declaredType.isAssignableFrom(type) ||
+            // from 11.2.3 exception checking
+            // It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case that the try block corresponding to the catch clause can
+            // throw a checked exception class that is a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception.
+            // so here unchecked exception can sneak throw Exception or Throwable catch type only
+            ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
+          types.add(type);
         }
       }
       // ... the throw statement throws precisely the set of exception types T.
-      if (passed) return uncaughtTypes;
+      if (!types.isEmpty()) return types;
     }
 
     return Collections.singletonList(declaredType);

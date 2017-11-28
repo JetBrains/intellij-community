@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -276,7 +273,9 @@ public class GridCellImpl implements GridCell {
   }
 
   public void processAlert(final Content content, final boolean activate) {
-    if (myMinimizedContents.contains(content)) return;
+    if (myMinimizedContents.contains(content)) {
+      content.fireAlert();
+    }
 
     TabInfo tab = getTabFor(content);
     if (tab == null) return;
@@ -338,6 +337,10 @@ public class GridCellImpl implements GridCell {
 
   public void setToolbarHorizontal(final boolean horizontal) {
     myTabs.getPresentation().setSideComponentVertical(!horizontal);
+  }
+
+  public void setToolbarBefore(final boolean before) {
+    myTabs.getPresentation().setSideComponentBefore(before);
   }
 
   public ActionCallback restoreLastUiState() {
@@ -414,7 +417,15 @@ public class GridCellImpl implements GridCell {
     View state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
-    state.assignTab(myContainer.getTabIndex());
+    final List<Content> contents = myContainer.getContents();
+    final Tab tab = myContainer.getTabIndex();
+    if (minimized && contents.size() == 1 && contents.get(0).equals(content)) {
+      state.setTabIndex(-1);
+      if (tab instanceof TabImpl) {
+        ((TabImpl)tab).setIndex(-1);
+      }
+    }
+    state.assignTab(tab);
     state.setWindow(myContext.getWindow());
   }
 
@@ -449,14 +460,15 @@ public class GridCellImpl implements GridCell {
     for (final Content each : contents) {
       myMinimizedContents.add(each);
       remove(each);
+      saveState(each, true);
       boolean isShowing = myTabs.getComponent().getRootPane() != null;
-      updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
           return restore(each);
         }
       });
+      updateSelection(isShowing);
     }
   }
 

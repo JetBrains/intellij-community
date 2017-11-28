@@ -35,7 +35,9 @@ class JavaSoftKeywordHighlightingPassFactory(project: Project, registrar: TextEd
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    val visit = file is PsiJavaFile && file.name == PsiJavaModule.MODULE_INFO_FILE && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9)
+    val visit = file is PsiJavaFile &&
+                (file.name == PsiJavaModule.MODULE_INFO_FILE && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9) ||
+                 file.languageLevel.isAtLeast(LanguageLevel.JDK_X))
     return if (visit) JavaSoftKeywordHighlightingPass(file as PsiJavaFile, editor.document) else null
   }
 }

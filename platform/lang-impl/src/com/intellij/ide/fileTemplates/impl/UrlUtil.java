@@ -19,6 +19,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -42,17 +43,15 @@ public class UrlUtil {
   private static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
   private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
 
-  public static String loadText(URL url) throws IOException {
-    final InputStream stream = new BufferedInputStream(URLUtil.openStream(url));
-    try {
+  @NotNull
+  public static String loadText(@NotNull URL url) throws IOException {
+    try (InputStream stream = new BufferedInputStream(URLUtil.openStream(url))) {
       return new String(FileUtil.loadBytes(stream), FileTemplate.ourEncoding);
-    }
-    finally {
-      stream.close();
     }
   }
 
-  public static List<String> getChildrenRelativePaths(URL root) throws IOException {
+  @NotNull
+  public static List<String> getChildrenRelativePaths(@NotNull URL root) throws IOException {
     final String protocol = root.getProtocol();
     if ("jar".equalsIgnoreCase(protocol)) {
       return getChildPathsFromJar(root);
@@ -63,7 +62,8 @@ public class UrlUtil {
     return Collections.emptyList();
   }
 
-  private static List<String> getChildPathsFromFile(URL root) {
+  @NotNull
+  private static List<String> getChildPathsFromFile(@NotNull URL root) {
     final List<String> paths = new ArrayList<>();
     final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
@@ -71,7 +71,7 @@ public class UrlUtil {
         final File[] list = fromFile.listFiles();
         if (list != null) {
           for (File file : list) {
-            final String childRelativePath = prefix.length() == 0 ? file.getName() : prefix + URL_PATH_SEPARATOR + file.getName();
+            final String childRelativePath = prefix.isEmpty() ? file.getName() : prefix + URL_PATH_SEPARATOR + file.getName();
             if (file.isDirectory()) {
               collectFiles(file, childRelativePath);
             }
@@ -85,8 +85,8 @@ public class UrlUtil {
     return paths;
   }
 
-  private static List<String> getChildPathsFromJar(URL root) throws IOException {
-    final List<String> paths = new ArrayList<>();
+  @NotNull
+  private static List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
     String file = root.getFile();
     file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
     final int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
@@ -96,9 +96,9 @@ public class UrlUtil {
     if (!rootDirName.endsWith(URL_PATH_SEPARATOR)) {
       rootDirName += URL_PATH_SEPARATOR;
     }
-    final ZipFile zipFile = new ZipFile(FileUtil.unquote(file.substring(0, jarSeparatorIndex)));
-    try {
+    try (ZipFile zipFile = new ZipFile(FileUtil.unquote(file.substring(0, jarSeparatorIndex)))) {
       final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      final List<String> paths = new ArrayList<>();
       while (entries.hasMoreElements()) {
         final ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
@@ -109,9 +109,6 @@ public class UrlUtil {
         }
       }
       return paths;
-    }
-    finally {
-      zipFile.close();
     }
   }
 }

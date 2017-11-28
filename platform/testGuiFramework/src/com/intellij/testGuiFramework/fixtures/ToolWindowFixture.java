@@ -28,6 +28,8 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.fest.swing.util.TextMatcher;
@@ -35,6 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
@@ -65,20 +71,30 @@ public abstract class ToolWindowFixture {
   protected Content getContent(@NotNull final String displayName) {
     activateAndWaitUntilIsVisible();
     final Ref<Content> contentRef = new Ref<>();
-    pause(new Condition("finding content '" + displayName + "'") {
-      @Override
-      public boolean test() {
-        Content[] contents = getContents();
-        for (Content content : contents) {
-          if (displayName.equals(content.getDisplayName())) {
-            contentRef.set(content);
-            return true;
+    try {
+      pause(new Condition("finding content '" + displayName + "'") {
+        @Override
+        public boolean test() {
+          Content[] contents = getContents();
+          for (Content content : contents) {
+            if (displayName.equals(content.getDisplayName())) {
+              contentRef.set(content);
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+      }, GuiTestUtil.SHORT_TIMEOUT);
+    } catch (WaitTimedOutError e) {
+      throw new ComponentLookupException("Cannot find content with " + displayName);
+    }
     return contentRef.get();
+  }
+
+  @Nullable
+  protected Content getSelectedContent() {
+    activateAndWaitUntilIsVisible();
+    return myToolWindow.getContentManager().getSelectedContent();
   }
 
   @Nullable
@@ -209,6 +225,21 @@ public abstract class ToolWindowFixture {
         }
         JComponent component = myToolWindow.getComponent();
         return component.isVisible() && component.isShowing();
+      }
+    });
+  }
+
+  public void selectContent(String tabName) {
+    execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() throws Throwable {
+        Stream<Content> contentStream = Arrays.stream(myToolWindow.getContentManager().getContents());
+        Optional<Content> contentOptional = contentStream.filter(content -> content.getTabName().equals(tabName)).findAny();
+        if (!contentOptional.isPresent()) throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
+                                                                             "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
+        Content content = contentOptional.get();
+        if(Objects.equals(myToolWindow.getContentManager().getSelectedContent(), content)) return; // no need to select already selected content
+        myToolWindow.getContentManager().setSelectedContent(content);
       }
     });
   }

@@ -44,7 +44,7 @@ public class MyClass {
   void 'test regular import'() {
     PlatformTestUtil.registerExtension(GrImportContributor.EP_NAME, {
       [new Import("foo.bar.MyClass", ImportType.REGULAR)]
-    } as GrImportContributor, testRootDisposable)
+    } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'new MyClass()')
       checkHighlighting()
@@ -54,7 +54,7 @@ public class MyClass {
   void 'test static import method'() {
     PlatformTestUtil.registerExtension(GrImportContributor.EP_NAME, {
       [new Import("foo.bar.MyClass.foo", ImportType.STATIC)]
-    } as GrImportContributor, testRootDisposable)
+    } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'foo()')
       checkHighlighting()
@@ -64,7 +64,7 @@ public class MyClass {
   void 'test static import field'() {
     PlatformTestUtil.registerExtension(GrImportContributor.EP_NAME, {
       [new Import("foo.bar.MyClass.BAR", ImportType.STATIC)]
-    } as GrImportContributor, testRootDisposable)
+    } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'println BAR')
       checkHighlighting()
@@ -74,7 +74,7 @@ public class MyClass {
   void 'test star import'() {
     PlatformTestUtil.registerExtension(GrImportContributor.EP_NAME, {
       [new Import("foo.bar", ImportType.STAR)]
-    } as GrImportContributor, testRootDisposable)
+    } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'new MyClass()')
       checkHighlighting()
@@ -84,7 +84,7 @@ public class MyClass {
   void 'test static star import'() {
     PlatformTestUtil.registerExtension(GrImportContributor.EP_NAME, {
       [new Import("foo.bar.MyClass", ImportType.STATIC_STAR)]
-    } as GrImportContributor, testRootDisposable)
+    } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', '''\
 println foo()

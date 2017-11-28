@@ -21,16 +21,16 @@ import org.jetbrains.uast.test.env.assertEqualsToFile
 import java.io.File
 
 interface RenderLogTestBase {
-    fun getTestFile(testName: String, ext: String): File
+  fun getTestFile(testName: String, ext: String): File
 
-    private fun getRenderFile(testName: String) = getTestFile(testName, "render.txt")
-    private fun getLogFile(testName: String) = getTestFile(testName, "log.txt")
+  private fun getRenderFile(testName: String) = getTestFile(testName, "render.txt")
+  private fun getLogFile(testName: String) = getTestFile(testName, "log.txt")
 
-    fun check(testName: String, file: UFile) {
-        val renderFile = getRenderFile(testName)
-        val logFile = getLogFile(testName)
+  fun check(testName: String, file: UFile) {
+    val renderFile = getRenderFile(testName)
+    val logFile = getLogFile(testName)
 
-        assertEqualsToFile("Render string", renderFile, file.asRenderString())
-        assertEqualsToFile("Log string", logFile, file.asRecursiveLogString())
-    }
+    assertEqualsToFile("Render string", renderFile, file.asRenderString())
+    assertEqualsToFile("Log string", logFile, file.asRecursiveLogString())
+  }
 }

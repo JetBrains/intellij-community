@@ -80,7 +80,12 @@ public class MinifiedFilesUtil {
     if (startOffset <= 0) {
       return true;
     }
-    lexer.start(fileContent, startOffset, fileContent.length());
+    
+    while (lexer.getTokenType() != null && lexer.getTokenStart() < startOffset) lexer.advance();
+    if (lexer.getTokenType() == null || (fileContent.length() - lexer.getTokenStart() < MIN_SIZE * 2)) {
+      return true;
+    }
+
     return isMinified(lexer, parserDefinition, noWSRequireBeforeTokenSet, noWSRequireAfterTokenSet, stringsTokenSet);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -82,8 +83,8 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
 
   public static String getAnnotationValue(PsiField psiField, Class annotationClass) {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
-    final PsiMethod getter = PropertyUtil.findGetterForField(psiField);
-    final PsiMethod setter = PropertyUtil.findSetterForField(psiField);
+    final PsiMethod getter = PropertyUtilBase.findGetterForField(psiField);
+    final PsiMethod setter = PropertyUtilBase.findSetterForField(psiField);
     final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(annotationClass, psiField, getter, setter);
     if (attrAnno != null) {
       return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
@@ -101,8 +102,6 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   private static PsiClass getEPBeanClass(ConvertContext context) {
     ExtensionPoint ep = context.getInvocationElement().getParentOfType(ExtensionPoint.class, true);
     if (ep == null) return null;
-    PsiClass value = ep.getBeanClass().getValue();
-    if (value == null) return null;
-    return value;
+    return ep.getBeanClass().getValue();
   }
 }

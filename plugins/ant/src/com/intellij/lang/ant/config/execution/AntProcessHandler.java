@@ -42,7 +42,7 @@ public class AntProcessHandler extends KillableColoredProcessHandler {
     myErr = new Extractor(getProcess().getErrorStream(), commandLine.getCharset());
     addProcessListener(new ProcessAdapter(){
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         Disposer.dispose(myOut);
         Disposer.dispose(myErr);
       }

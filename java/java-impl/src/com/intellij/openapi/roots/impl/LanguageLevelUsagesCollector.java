@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesCollector {
+public class LanguageLevelUsagesCollector extends AbstractProjectsUsagesCollector {
   public static final String GROUP_ID = "module-language-level";
 
   @NotNull

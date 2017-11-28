@@ -99,6 +99,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     return CompilerBundle.message("java.compiler.description");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.javacompiler";
   }

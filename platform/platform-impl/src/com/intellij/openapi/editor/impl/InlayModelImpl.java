@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -42,12 +42,17 @@ import java.util.List;
 public class InlayModelImpl implements InlayModel, Disposable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
-                                                                     .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
+    .thenComparing(i -> i.isRelatedToPrecedingText())
+    .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  
+  final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  boolean myStickToLargerOffsetsOnUpdate;
+  
+  boolean myMoveInProgress;
+  private List<Inlay> myInlaysAtCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -55,8 +60,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
       @NotNull
       @Override
       protected RMNode<InlayImpl> createNewNode(@NotNull InlayImpl key, int start, int end,
-                                                boolean greedyToLeft, boolean greedyToRight, int layer) {
-        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight) {
+                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
           @Override
           protected Getter<InlayImpl> createGetter(@NotNull InlayImpl interval) {
             return interval;
@@ -67,11 +72,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
       @Override
       void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
         if (markerEx.myOffsetBeforeDisposal == -1) {
-          notifyRemoved(markerEx);
+          if (myMoveInProgress) {
+            // delay notification about invalidated inlay - folding model is not consistent at this point
+            // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
+            myInlaysInvalidatedOnMove.add(markerEx);
+          }
+          else {
+            notifyRemoved(markerEx);
+          }
         }
       }
     };
-    myEditor.getDocument().addDocumentListener(new PrioritizedDocumentListener() {
+    myEditor.getDocument().addDocumentListener(new PrioritizedInternalDocumentListener() {
       @Override
       public int getPriority() {
         return EditorDocumentPriorities.INLAY_MODEL;
@@ -81,23 +93,45 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 &&
-            offset == myEditor.getCaretModel().getOffset() &&
-            hasInlineElementAt(offset) &&
-            myEditor.getCaretModel().getVisualPosition().equals(myEditor.offsetToVisualPosition(offset, false, false))) {
-          myStickToLargerOffsetsOnUpdate = true;
+        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+          List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+          int inlayCount = inlays.size();
+          if (inlayCount > 0) {
+            VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+            VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+            if (inlaysStartPosition.line == caretPosition.line && 
+                caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+              myInlaysAtCaret = inlays;
+              for (int i = 0; i < inlayCount; i++) {
+                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= (caretPosition.column - inlaysStartPosition.column));
+              }
+            }
+          }
         }
       }
 
       @Override
       public void documentChanged(DocumentEvent event) {
-        myStickToLargerOffsetsOnUpdate = false;
+        if (myInlaysAtCaret != null) {
+          for (Inlay inlay : myInlaysAtCaret) {
+            ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
+          }
+          myInlaysAtCaret = null;
+        }
+      }
+
+      @Override
+      public void moveTextHappened(int start, int end, int base) {
+        for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
+          notifyRemoved(inlay);
+        }
+        myInlaysInvalidatedOnMove.clear();
       }
     }, this);
   }
 
   void reinitSettings() {
-    myInlayTree.process(inlay -> {
+    myInlayTree.processAll(inlay -> {
       inlay.updateSize();
       return true;
     });
@@ -110,12 +144,12 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
+  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentEx document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlayImpl(myEditor, offset, renderer);
+    InlayImpl inlay = new InlayImpl(myEditor, offset, relatesToPrecedingText, renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -140,9 +174,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
-    if (!hasInlineElementAt(offset)) return false;
+    int inlayCount = getInlineElementsInRange(offset, offset).size();
+    if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.equals(inlayStartPosition);
+    return visualPosition.line == inlayStartPosition.line && 
+           visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
   }
 
   @Nullable

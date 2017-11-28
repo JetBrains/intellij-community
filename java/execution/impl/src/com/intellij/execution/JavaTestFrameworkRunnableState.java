@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -66,21 +67,20 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
+  & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
-  private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
 
   private RemoteConnectionCreator remoteConnectionCreator;
+  private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -123,12 +123,27 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return module != null;
   }
 
+  protected boolean isIdBasedTestTree() {
+    return false;
+  }
+
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    GeneralCommandLine commandLine = super.createCommandLine();
+    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    if (content != null) {
+      content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
+    }
+    return commandLine;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
@@ -137,6 +152,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final OSProcessHandler handler = createHandler(executor);
 
+    for (ArgumentFileFilter filter : myArgumentFileFilters) {
+      consoleView.addMessageFilter(filter);
+    }
+
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -144,7 +163,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
           final File file = OutputFileUtil.getOutputFile(getConfiguration());
           root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
@@ -152,7 +171,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         Runnable runnable = () -> {
           root.flushOutputFile();
           deleteTempFiles();
@@ -184,15 +203,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return result;
   }
 
-  protected abstract void configureRTClasspath(JavaParameters javaParameters);
+  protected abstract void configureRTClasspath(JavaParameters javaParameters) throws CantRunException;
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.setUseClasspathJar(true);
+    Project project = getConfiguration().getProject();
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
-    Project project = getConfiguration().getProject();
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     
@@ -280,7 +299,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {

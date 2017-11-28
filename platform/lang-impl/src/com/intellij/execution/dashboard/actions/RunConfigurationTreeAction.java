@@ -15,20 +15,27 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author konstantin.aleev
  */
-public abstract class RunConfigurationTreeAction extends RunDashboardTreeAction<DashboardRunConfigurationNode> {
+public abstract class RunConfigurationTreeAction extends RunDashboardTreeActionImpl<RunDashboardRunConfigurationNode> {
   protected RunConfigurationTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
-  protected Class<DashboardRunConfigurationNode> getTargetNodeClass() {
-    return DashboardRunConfigurationNode.class;
+  protected Class<RunDashboardRunConfigurationNode> getTargetNodeClass() {
+    return RunDashboardRunConfigurationNode.class;
+  }
+
+  @Override
+  protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
+    return false;
   }
 }

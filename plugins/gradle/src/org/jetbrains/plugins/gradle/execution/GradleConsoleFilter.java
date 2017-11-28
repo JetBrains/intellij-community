@@ -102,7 +102,7 @@ public class GradleConsoleFilter implements Filter {
       return null;
     }
 
-    int textStartOffset = entireLength - line.trim().length() + filePrefix.length() - 1;
+    int textStartOffset = entireLength - line.length() + filePrefix.length() + filePrefixIndex;
     int highlightEndOffset = textStartOffset + fileName.length();
     OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, file, Math.max(lineNumber - 1, 0));
     TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();

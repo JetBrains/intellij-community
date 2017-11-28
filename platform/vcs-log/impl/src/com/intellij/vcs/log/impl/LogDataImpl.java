@@ -27,9 +27,9 @@ import java.util.Set;
 
 public class LogDataImpl implements VcsLogProvider.DetailedLogData, VcsLogProvider.LogData {
 
-  private static final LogDataImpl EMPTY = new LogDataImpl(Collections.<VcsRef>emptySet(),
-                                                           Collections.<VcsUser>emptySet(),
-                                                           Collections.<VcsCommitMetadata>emptyList());
+  private static final LogDataImpl EMPTY = new LogDataImpl(Collections.emptySet(),
+                                                           Collections.emptySet(),
+                                                           Collections.emptyList());
 
   @NotNull private final List<VcsCommitMetadata> myCommits;
   @NotNull private final Set<VcsRef> myRefs;
@@ -41,11 +41,11 @@ public class LogDataImpl implements VcsLogProvider.DetailedLogData, VcsLogProvid
   }
 
   public LogDataImpl(@NotNull Set<VcsRef> refs, @NotNull Set<VcsUser> users) {
-    this(refs, users, Collections.<VcsCommitMetadata>emptyList());
+    this(refs, users, Collections.emptyList());
   }
 
   public LogDataImpl(@NotNull Set<VcsRef> refs, @NotNull List<VcsCommitMetadata> metadatas) {
-    this(refs, Collections.<VcsUser>emptySet(), metadatas);
+    this(refs, Collections.emptySet(), metadatas);
   }
 
   private LogDataImpl(@NotNull Set<VcsRef> refs, @NotNull Set<VcsUser> users, @NotNull List<VcsCommitMetadata> commits) {

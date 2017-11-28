@@ -30,7 +30,7 @@ public final class KeyboardShortcut extends Shortcut {
   private final KeyStroke mySecondKeyStroke;
 
   /**
-   * @throws IllegalArgumentException if <code>firstKeyStroke</code> is <code>null</code>
+   * @throws IllegalArgumentException if {@code firstKeyStroke} is {@code null}
    */
   public KeyboardShortcut(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke) {
     myFirstKeyStroke = firstKeyStroke;

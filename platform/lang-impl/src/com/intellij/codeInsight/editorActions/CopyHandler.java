@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class CopyHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){

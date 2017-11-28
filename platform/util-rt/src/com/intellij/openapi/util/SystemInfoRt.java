@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,17 @@ public class SystemInfoRt {
 
   private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.US);
   public static final boolean isWindows = _OS_NAME.startsWith("windows");
-  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
   public static final boolean isMac = _OS_NAME.startsWith("mac");
   public static final boolean isLinux = _OS_NAME.startsWith("linux");
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
-  public static final boolean isUnix = !isWindows && !isOS2;
+  public static final boolean isUnix = !isWindows;
 
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated outdated (to be removed in IDEA 2018) */
+  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
+  //</editor-fold>
 }

@@ -92,6 +92,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     myElementDecl = (XmlElementDecl) element;
   }
 
+  @NotNull
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public Object[] getDependences(){

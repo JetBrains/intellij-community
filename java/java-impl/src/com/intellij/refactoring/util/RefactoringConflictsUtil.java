@@ -273,7 +273,7 @@ public class RefactoringConflictsUtil {
                                                              RefactoringUIUtil.getDescription(resolved, true),
                                                              scopeDescription,
                                                              CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
-            conflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));
+            conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message));
             reported.add(resolved);
           }
         }
@@ -359,7 +359,7 @@ public class RefactoringConflictsUtil {
                                                     scopeDescription,
                                                     CommonRefactoringUtil.htmlEmphasize(module.getName()));
               }
-              conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
             }
           }
         }

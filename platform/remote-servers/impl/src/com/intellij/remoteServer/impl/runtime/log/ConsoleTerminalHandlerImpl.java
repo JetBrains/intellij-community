@@ -27,7 +27,7 @@ import java.io.*;
 
 public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
 
-  private static final Logger LOG = Logger.getInstance("#" + ConsoleTerminalHandlerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(ConsoleTerminalHandlerImpl.class);
 
   private final LoggingHandlerImpl myLoggingHandler;
 

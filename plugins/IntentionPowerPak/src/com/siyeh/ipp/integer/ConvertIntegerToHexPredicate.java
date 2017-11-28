@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,16 @@ class ConvertIntegerToHexPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    if (expression.getValue() == null) {
+      return false;
+    }
     final PsiType type = expression.getType();
+    @NonNls final String text = expression.getText();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      @NonNls final String text = expression.getText();
-      return !(text.startsWith("0x") || text.startsWith("0X"));
+      return !text.startsWith("0x") && !text.startsWith("0X");
     }
     if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return false;
-      }
-      @NonNls final String text = expression.getText();
-      if (text == null) {
         return false;
       }
       return !text.startsWith("0x") && !text.startsWith("0X");

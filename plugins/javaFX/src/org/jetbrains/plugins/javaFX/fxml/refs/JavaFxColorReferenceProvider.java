@@ -26,10 +26,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
-/**
-* User: anna
-* Date: 3/7/13
-*/
 class JavaFxColorReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override

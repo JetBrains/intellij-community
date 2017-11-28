@@ -1,7 +1,7 @@
 import java.util.*;
 class TestData<K> {}
 interface TerminalOp<L, M> extends IntermediateOp<L, M> {}
-interface IntermediateOp<L1, M1> { boolean _(L1 l, M1 m);}
+interface IntermediateOp<L1, M1> { boolean m(L1 l, M1 m);}
 
 
 class Test1 {
@@ -52,7 +52,7 @@ class Test4 {
 
   }
   public interface BiPredicate1<T, U> extends IntermediateOp1<T, U>{
-    boolean _(T t, U u);
+    boolean m(T t, U u);
   }
 
   public interface TerminalOp1<T, U> extends IntermediateOp1<T, U> {}

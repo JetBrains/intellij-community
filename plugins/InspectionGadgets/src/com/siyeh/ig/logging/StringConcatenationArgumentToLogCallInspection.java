@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -33,7 +32,7 @@ public class StringConcatenationArgumentToLogCallInspection extends StringConcat
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    final ComboBox comboBox = new ComboBox(new Object[]{
+    final ComboBox<String> comboBox = new ComboBox<>(new String[]{
       InspectionGadgetsBundle.message("all.levels.option"),
       InspectionGadgetsBundle.message("warn.level.and.lower.option"),
       InspectionGadgetsBundle.message("info.level.and.lower.option"),
@@ -47,10 +46,10 @@ public class StringConcatenationArgumentToLogCallInspection extends StringConcat
         warnLevel = comboBox.getSelectedIndex();
       }
     });
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(FormBuilder.createFormBuilder().addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox).getPanel(),
-              BorderLayout.NORTH);
-    return panel;
+    return new FormBuilder()
+      .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
+      .addVerticalGap(-1)
+      .getPanel();
   }
 
 }

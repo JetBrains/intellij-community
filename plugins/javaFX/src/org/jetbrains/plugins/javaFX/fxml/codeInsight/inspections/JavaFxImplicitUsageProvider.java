@@ -23,7 +23,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger;
 import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
@@ -47,8 +49,11 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
     return isImplicitWrite(element);
   }
 
-  public boolean isImplicitMethodUsage(PsiMethod method) {
+  private static boolean isImplicitMethodUsage(@NotNull PsiMethod method) {
     if (!isImplicitFxmlAccess(method)) return false;
+    if (isInvokedByFxmlLoader(method)) {
+      return true;
+    }
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
     final GlobalSearchScope fxmlScope = new JavaFxScopeEnlarger.GlobalFxmlSearchScope(projectScope);
     return isFxmlUsage(method, fxmlScope);
@@ -87,6 +92,9 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
       final String qualifiedName = containingClass.getQualifiedName();
       if (qualifiedName == null) return false;
       final Project project = element.getProject();
+      if (isInjectedByFxmlLoader(field)) {
+        return true;
+      }
       final Collection<VirtualFile> containingFiles = JavaFxIdsIndex.getContainingFiles(project, fieldName);
       if (containingFiles.isEmpty()) return false;
       // is the field declared in a controller class?
@@ -98,6 +106,27 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
       return isFxmlUsage(field, GlobalSearchScope.filesScope(project, containingFiles));
     }
     return false;
+  }
+
+  private static boolean isInvokedByFxmlLoader(@NotNull PsiMethod method) {
+    return "initialize".equals(method.getName()) &&
+           method.getParameterList().getParametersCount() == 0 &&
+           isDeclaredInControllerClass(method);
+  }
+
+  private static boolean isInjectedByFxmlLoader(@NotNull PsiField field) {
+    final String fieldName = field.getName();
+    final PsiType fieldType = field.getType();
+    return fieldName != null &&
+           ("resources".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.util.ResourceBundle") ||
+            "location".equals(fieldName) && InheritanceUtil.isInheritor(fieldType, "java.net.URL")) &&
+           isDeclaredInControllerClass(field);
+  }
+
+  private static boolean isDeclaredInControllerClass(@NotNull PsiMember member) {
+    final PsiClass containingClass = member.getContainingClass();
+    final String qualifiedName = containingClass != null ? containingClass.getQualifiedName() : null;
+    return qualifiedName != null && !JavaFxControllerClassIndex.findFxmlsWithController(member.getProject(), qualifiedName).isEmpty();
   }
 
   private static boolean isImplicitFxmlAccess(PsiModifierListOwner member) {

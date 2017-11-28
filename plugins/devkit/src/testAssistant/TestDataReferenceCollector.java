@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,20 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension;
+import org.jetbrains.uast.evaluation.UEvaluationContextKt;
+import org.jetbrains.uast.values.UBooleanConstant;
+import org.jetbrains.uast.values.UConstant;
+import org.jetbrains.uast.values.UStringConstant;
+import org.jetbrains.uast.values.UValue;
+import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.io.File;
 import java.util.*;
@@ -45,15 +54,20 @@ public class TestDataReferenceCollector {
     myTestName = testName;
   }
 
-  @Nullable
+  @NotNull
   List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
+    return collectTestDataReferences(method, true);
+  }
+
+  @NotNull
+  List<String> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
     myContainingClass = method.getContainingClass();
     List<String> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
 
-    if (result.isEmpty()) {
+    if (collectByExistingFiles && result.isEmpty()) {
       result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
     }
     return result;
@@ -61,28 +75,35 @@ public class TestDataReferenceCollector {
 
   @NotNull
   private List<String> collectTestDataReferences(final PsiMethod method,
-                                                 final Map<String, Computable<String>> argumentMap,
-                                                 final HashSet<PsiMethod> proceed) {
+                                                 final Map<String, Computable<UValue>> argumentMap,
+                                                 final HashSet<Pair<PsiMethod, Set<UExpression>>> proceed) {
     final List<String> result = new ArrayList<>();
     if (myTestDataPath == null) {
       return result;
     }
-    method.accept(new JavaRecursiveElementVisitor() {
+    UMethod uMethod = (UMethod)UastContextKt.toUElement(method);
+    if (uMethod == null) {
+      return result;
+    }
+    uMethod.accept(new AbstractUastVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        String callText = expression.getMethodExpression().getReferenceName();
-        if (callText == null) return;
-        PsiMethod callee = expression.resolveMethod();
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        String callText = expression.getMethodName();
+        if (callText == null) return true;
+
+        UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
         if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final PsiClass calleeContainingClass = callee.getContainingClass();
           if (calleeContainingClass != null && myContainingClass.isInheritor(calleeContainingClass, true)) {
-            final PsiMethod implementation = myContainingClass.findMethodBySignature(callee, true);
+            final UMethod implementation = UastContextKt.toUElement(myContainingClass.findMethodBySignature(callee, true), UMethod.class);
             if (implementation != null) {
               callee = implementation;
             }
           }
         }
-        if (callee != null && proceed.add(callee)) {
+
+        Pair<PsiMethod, Set<UExpression>> methodWithArguments = new Pair<>(callee, new HashSet<>(expression.getValueArguments()));
+        if (callee != null && proceed.add(methodWithArguments)) {
           boolean haveAnnotatedParameters = false;
           final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
           for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
@@ -90,95 +111,98 @@ public class TestDataReferenceCollector {
             final PsiModifierList modifierList = psiParameter.getModifierList();
             if (modifierList != null && modifierList.findAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME) != null) {
               myFoundTestDataParameters = true;
-              processCallArgument(expression, argumentMap, result, i);
+              if (psiParameter.isVarArgs()) {
+                processVarargCallArgument(expression, argumentMap, result);
+              }
+              else {
+                processCallArgument(expression, argumentMap, result, i);
+              }
               haveAnnotatedParameters = true;
             }
           }
-          if (expression.getMethodExpression().getQualifierExpression() == null && !haveAnnotatedParameters) {
+          if (expression.getReceiver() == null && !haveAnnotatedParameters) {
             result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
           }
         }
+        return true;
+      }
+
+      private void processCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                       Collection<String> result, int index) {
+        List<UExpression> arguments = expression.getValueArguments();
+        if (arguments.size() > index) {
+          handleArgument(arguments.get(index), argumentMap, result);
+        }
+      }
+
+      private void processVarargCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                             Collection<String> result) {
+        List<UExpression> arguments = expression.getValueArguments();
+        for (UExpression argument : arguments) {
+          handleArgument(argument, argumentMap, result);
+        }
+      }
+
+      private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<String> result) {
+        UValue testDataFileValue = UEvaluationContextKt.uValueOf(argument, new TestDataEvaluatorExtension(argumentMap));
+        if (testDataFileValue instanceof UStringConstant) {
+          result.add(myTestDataPath + ((UStringConstant) testDataFileValue).getValue());
+        }
       }
     });
+
     return result;
   }
 
-  private void processCallArgument(PsiMethodCallExpression expression, Map<String, Computable<String>> argumentMap, List<String> result, final int index) {
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    if (arguments.length > index) {
-      String testDataFile = evaluate(arguments [index], argumentMap);
-      if (testDataFile != null) {
-        result.add(myTestDataPath + testDataFile);
-      }
-    }
-  }
-
-  private Map<String, Computable<String>> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
-    Map<String, Computable<String>> result = new HashMap<>();
+  private Map<String, Computable<UValue>> buildArgumentMap(UCallExpression expression, PsiMethod method) {
+    Map<String, Computable<UValue>> result = new HashMap<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    for (int i = 0; i < arguments.length && i < parameters.length; i++) {
+    final List<UExpression> arguments = expression.getValueArguments();
+    for (int i = 0; i < arguments.size() && i < parameters.length; i++) {
       final int finalI = i;
       result.put(parameters [i].getName(),
-                 (NullableComputable<String>)() -> evaluate(arguments [finalI], Collections.<String, Computable<String>>emptyMap()));
+                 (NullableComputable<UValue>)() -> UEvaluationContextKt.uValueOf(arguments.get(finalI),
+                                                                                 new TestDataEvaluatorExtension(Collections.emptyMap())));
     }
     return result;
-  }
-
-  @Nullable
-  private String evaluate(PsiExpression expression, Map<String, Computable<String>> arguments) {
-    if (expression instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
-      if (binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
-        String r = "";
-        for (PsiExpression op : binaryExpression.getOperands()) {
-          String lhs = evaluate(op, arguments);
-          if (lhs == null) return null;
-          r += lhs;
-        }
-        return r;
-      }
-    }
-    else if (expression instanceof PsiLiteralExpression) {
-      final Object value = ((PsiLiteralExpression)expression).getValue();
-      if (value instanceof String) {
-        return (String) value;
-      }
-    }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiElement result = ((PsiReferenceExpression)expression).resolve();
-      if (result instanceof PsiParameter) {
-        final String name = ((PsiParameter)result).getName();
-        final Computable<String> arg = arguments.get(name);
-        return arg == null ? null : arg.compute();
-      }
-      if (result instanceof PsiVariable) {
-        final PsiExpression initializer = ((PsiVariable)result).getInitializer();
-        if (initializer != null) {
-          return evaluate(initializer, arguments);
-        }
-      }
-    }
-    else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-      final String callText = methodCall.getMethodExpression().getText();
-      if (callText.equals("getTestName")) {
-        final PsiExpression[] psiExpressions = methodCall.getArgumentList().getExpressions();
-        if (psiExpressions.length == 1) {
-          if ("true".equals(psiExpressions[0].getText()) && !StringUtil.isEmpty(myTestName)) {
-            return PlatformTestUtil.lowercaseFirstLetter(myTestName, true);
-          }
-          return myTestName;
-        }
-      }
-    }
-    if (expression != null) {
-      myLogMessages.add("Failed to evaluate " + expression.getText());
-    }
-    return null;
   }
 
   public String getLog() {
     return StringUtil.join(myLogMessages, "\n");
+  }
+
+  private class TestDataEvaluatorExtension extends SimpleEvaluatorExtension {
+    private final Map<String, Computable<UValue>> myArguments;
+
+    private TestDataEvaluatorExtension(Map<String, Computable<UValue>> arguments) {
+      myArguments = arguments;
+    }
+
+    @Override
+    public Object evaluateMethodCall(@NotNull PsiMethod target, @NotNull List<? extends UValue> argumentValues) {
+      if (target.getName().equals("getTestName") && argumentValues.size() == 1) {
+        UValue lowercaseArg = argumentValues.get(0);
+        boolean lowercaseArgValue = lowercaseArg instanceof UBooleanConstant && ((UBooleanConstant) lowercaseArg).getValue();
+        if (lowercaseArgValue && !StringUtil.isEmpty(myTestName)) {
+          return PlatformTestUtil.lowercaseFirstLetter(myTestName, true);
+        }
+        return myTestName;
+
+      }
+      return super.evaluateMethodCall(target, argumentValues);
+    }
+
+    @Override
+    public Object evaluateVariable(@NotNull UVariable variable) {
+      if (variable instanceof UParameter) {
+        Computable<UValue> value = myArguments.get(variable.getName());
+        if (value != null) {
+          UValue computedValue = value.compute();
+          UConstant constant = computedValue.toConstant();
+          return constant != null ? constant.getValue() : super.evaluateVariable(variable);
+        }
+      }
+      return super.evaluateVariable(variable);
+    }
   }
 }

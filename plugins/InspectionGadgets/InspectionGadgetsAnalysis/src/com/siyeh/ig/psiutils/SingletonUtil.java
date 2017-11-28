@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,7 @@ import java.util.stream.Stream;
 
 public class SingletonUtil {
 
-  private SingletonUtil() {
-  }
+  private SingletonUtil() {}
 
   public static boolean isSingleton(@NotNull PsiClass aClass) {
     if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
@@ -43,19 +43,15 @@ public class SingletonUtil {
       return false;
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
-    if (selfInstance == null) {
-      return false;
-    }
-    return newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
-    List<PsiField> fields = Stream.concat(Arrays.stream(aClass.getFields()),
-                                          Arrays.stream(aClass.getInnerClasses())
-                                            .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
-                                            .flatMap(innerClass -> Arrays.stream(innerClass.getFields())))
-      .filter(field -> resolveToSingletonField(aClass, field))
-      .limit(2).collect(Collectors.toList());
+    final Stream<PsiField> fieldStream = Stream.concat(Arrays.stream(aClass.getFields()),
+                                                       Arrays.stream(aClass.getInnerClasses())
+                                                         .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
+                                                         .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
     return fields.size() == 1 ? fields.get(0) : null;
   }
 
@@ -63,18 +59,11 @@ public class SingletonUtil {
     if (!field.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
-    final PsiType type = field.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass targetClass = classType.resolve();
-    if (!aClass.equals(targetClass)) {
-      return false;
-    }
-    return true;
+    final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+    return aClass.equals(targetClass);
   }
 
+  @NotNull
   private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
@@ -99,8 +88,7 @@ public class SingletonUtil {
     return processor.isNewOnlyAssignedToField();
   }
 
-  private static class NewOnlyAssignedToFieldProcessor
-    implements Processor<PsiReference> {
+  private static class NewOnlyAssignedToFieldProcessor implements Processor<PsiReference> {
 
     private boolean newOnlyAssignedToField = true;
     private final PsiField field;
@@ -125,15 +113,13 @@ public class SingletonUtil {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)grandParent;
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)grandParent;
       final PsiExpression lhs = assignmentExpression.getLExpression();
       if (!(lhs instanceof PsiReferenceExpression)) {
         newOnlyAssignedToField = false;
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lhs;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!field.equals(target)) {
         newOnlyAssignedToField = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
@@ -38,12 +38,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -126,13 +123,11 @@ public class SetPropertyDialog extends DialogWrapper {
     else {
       myPropertyNameBox.getEditor().setItem("");
     }
-    myPropertyNameBox.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          String name = getPropertyName();
-          updatePropertyValue(name);
-          getOKAction().setEnabled(name != null && !"".equals(name.trim()));
-        }
+    myPropertyNameBox.addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        String name = getPropertyName();
+        updatePropertyValue(name);
+        getOKAction().setEnabled(name != null && !"".equals(name.trim()));
       }
     });
     Component editor = myPropertyNameBox.getEditor().getEditorComponent();
@@ -174,7 +169,7 @@ public class SetPropertyDialog extends DialogWrapper {
       PropertyClient client = myVCS.getFactory(file).createPropertyClient();
       result = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
     }
-    catch (VcsException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
       result = null;
     }
@@ -188,14 +183,12 @@ public class SetPropertyDialog extends DialogWrapper {
       myPropertyNameBox.getEditor().setItem(myPropertyName);
       myPropertyNameBox.getEditor().selectAll();
     }
-    mySetPropertyButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        if (mySetPropertyButton.isSelected()) {
-          myValueText.setEnabled(true);
-        }
-        else {
-          myValueText.setEnabled(false);
-        }
+    mySetPropertyButton.addChangeListener(e -> {
+      if (mySetPropertyButton.isSelected()) {
+        myValueText.setEnabled(true);
+      }
+      else {
+        myValueText.setEnabled(false);
       }
     });
     myRecursiveButton.setEnabled(myIsRecursionAllowed);
@@ -225,7 +218,7 @@ public class SetPropertyDialog extends DialogWrapper {
         PropertyClient client = myVCS.getFactory(file).createPropertyClient();
         client.list(SvnTarget.fromFile(file, SVNRevision.WORKING), SVNRevision.WORKING, Depth.EMPTY, handler);
       }
-      catch (VcsException e) {
+      catch (SvnBindException e) {
         LOG.info(e);
       }
     }

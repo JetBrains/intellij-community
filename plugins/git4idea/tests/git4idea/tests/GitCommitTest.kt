@@ -17,16 +17,12 @@ package git4idea.tests
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitUtil
-import git4idea.changes.GitChangeUtils
 import git4idea.checkin.GitCheckinEnvironment
-import git4idea.history.GitHistoryUtils
 import git4idea.test.*
-import git4idea.test.createFileStructure
 import java.io.File
 import java.util.*
 
@@ -68,12 +64,12 @@ class GitCommitTest : GitSingleRepoTest() {
   fun `test commit case rename`() {
     generateCaseRename("a.java", "A.java")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
     }
     commit(changes)
     assertNoChanges()
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
   }
@@ -83,7 +79,7 @@ class GitCommitTest : GitSingleRepoTest() {
     touch("s.java")
     git("add s.java")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       added("s.java")
     }
@@ -91,7 +87,7 @@ class GitCommitTest : GitSingleRepoTest() {
     commit(changes)
 
     assertNoChanges()
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
       added("s.java")
     }
@@ -102,7 +98,7 @@ class GitCommitTest : GitSingleRepoTest() {
     generateCaseRename("a.java", "A.java")
     echo("m.java", "unstaged")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       modified("m.java")
     }
@@ -110,7 +106,7 @@ class GitCommitTest : GitSingleRepoTest() {
     commit(changes)
 
     assertNoChanges()
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
       modified("m.java")
     }
@@ -121,17 +117,17 @@ class GitCommitTest : GitSingleRepoTest() {
     generateCaseRename("a.java", "A.java")
     echo("m.java", "unstaged")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       modified("m.java")
     }
 
     commit(listOf(changes[0]))
 
-    assertChanges() {
+    assertChanges {
       modified("m.java")
     }
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
   }
@@ -142,20 +138,20 @@ class GitCommitTest : GitSingleRepoTest() {
     echo("s.java", "staged")
     git("add s.java")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       modified("s.java")
     }
 
     commit(listOf(changes[0]))
 
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
-    assertChanges() {
+    assertChanges {
       modified("s.java")
     }
-    assertStagedChanges() {
+    myRepo.assertStagedChanges {
       modified("s.java")
     }
   }
@@ -166,20 +162,20 @@ class GitCommitTest : GitSingleRepoTest() {
     generateCaseRename("a.java", "A.java")
     git("mv before.txt after.txt")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       rename("before.txt", "after.txt")
     }
 
     commit(listOf(changes[0]))
 
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
-    assertChanges() {
+    assertChanges {
       rename("before.txt", "after.txt")
     }
-    assertStagedChanges() {
+    myRepo.assertStagedChanges {
       rename("before.txt", "after.txt")
     }
   }
@@ -192,7 +188,7 @@ class GitCommitTest : GitSingleRepoTest() {
     echo("m.java", "unstaged")
     git("add s.java m.java")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       modified("s.java")
       modified("m.java")
@@ -200,14 +196,14 @@ class GitCommitTest : GitSingleRepoTest() {
 
     commit(listOf(changes[0], changes[2]))
 
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
       modified("m.java")
     }
-    assertChanges() {
+    assertChanges {
       modified("s.java")
     }
-    assertStagedChanges() {
+    myRepo.assertStagedChanges {
       modified("s.java")
     }
   }
@@ -219,20 +215,20 @@ class GitCommitTest : GitSingleRepoTest() {
     git("add c.java")
     overwrite("c.java", "unstaged")
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
       modified("c.java")
     }
 
     commit(listOf(changes[0]))
 
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
-    assertChanges() {
+    assertChanges {
       modified("c.java")
     }
-    assertStagedChanges() {
+    myRepo.assertStagedChanges {
       modified("c.java")
     }
     // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
@@ -258,13 +254,13 @@ class GitCommitTest : GitSingleRepoTest() {
     val additionalContent = "non-staged content"
     append("A.java", additionalContent)
 
-    val changes = assertChanges() {
+    val changes = assertChanges {
       rename("a.java", "A.java")
     }
 
     commit(changes)
 
-    assertCommitted() {
+    myRepo.assertCommitted {
       rename("a.java", "A.java")
     }
     assertNoChanges()
@@ -311,66 +307,5 @@ class GitCommitTest : GitSingleRepoTest() {
     }
     assertTrue(actualChanges.isEmpty())
     return allChanges
-  }
-
-  private fun assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
-    val cb = ChangesBuilder()
-    cb.changes()
-
-    val actualChanges = GitChangeUtils.getStagedChanges(myProject, myProjectRoot)
-    for (change in cb.changes) {
-      val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] is not staged", found)
-      actualChanges.remove(found)
-    }
-    assertTrue(actualChanges.isEmpty())
-  }
-
-  private fun assertCommitted(changes: ChangesBuilder.() -> Unit) {
-    val cb = ChangesBuilder()
-    cb.changes()
-
-    val actualChanges = GitHistoryUtils.history(myProject, myProjectRoot, "-1")[0].changes
-    for (change in cb.changes) {
-      val found = actualChanges.find(change.matcher)
-      assertNotNull("The change [$change] wasn't committed", found)
-      actualChanges.remove(found)
-    }
-    assertTrue(actualChanges.isEmpty())
-  }
-
-  class ChangesBuilder {
-    data class AChange(val type: FileStatus, val nameBefore: String?, val nameAfter: String, val matcher: (Change) -> Boolean) {
-      constructor(type: FileStatus, nameAfter: String, matcher: (Change) -> Boolean) : this(type, null, nameAfter, matcher)
-
-      override fun toString(): String {
-        when (type) {
-          Change.Type.NEW -> return "A: $nameAfter"
-          Change.Type.DELETED -> return "D: $nameAfter"
-          Change.Type.MOVED -> return "M: $nameBefore -> $nameAfter"
-          else -> return "M: $nameAfter"
-        }
-      }
-    }
-
-    val changes = linkedSetOf<AChange>()
-
-    fun added(name: String) {
-      assertTrue(changes.add(AChange(FileStatus.ADDED, name) {
-        it.fileStatus == FileStatus.ADDED && it.beforeRevision == null && it.afterRevision!!.file.name == name
-      }))
-    }
-
-    fun modified(name:String) {
-      assertTrue(changes.add(AChange(FileStatus.MODIFIED, name) {
-        it.fileStatus == FileStatus.MODIFIED && it.beforeRevision!!.file.name == name &&  it.afterRevision!!.file.name == name
-      }))
-    }
-
-    fun rename(from: String, to: String) {
-      assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
-        it.isRenamed && from == it.beforeRevision!!.file.name && to == it.afterRevision!!.file.name
-      }))
-    }
   }
 }

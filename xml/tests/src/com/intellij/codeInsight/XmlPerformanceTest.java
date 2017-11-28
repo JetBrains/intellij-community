@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Sep 8, 2006
- * Time: 3:40:30 PM
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -56,11 +50,11 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     Class clazz = IdeaTestUtil.class;
   }
 
-  public void testIndentUnindent() throws Exception {
+  public void testIndentUnindent() {
     doIndentTest(2000);
   }
 
-  public void testIndentUnindent2() throws Exception {
+  public void testIndentUnindent2() {
     doIndentTest(2001);
   }
 
@@ -74,11 +68,11 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     doHighlighting();
     myEditor.getSelectionModel().setSelection(0,myEditor.getDocument().getTextLength());
 
-    PlatformTestUtil.startPerformanceTest("Fix long indent/unindent "+time, time, () -> {
+    PlatformTestUtil.startPerformanceTest("indent/unindent "+time, time, () -> {
       EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
 
       EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
     final int startOffset = myEditor.getCaretModel().getOffset();
     myEditor.getSelectionModel().setSelection(startOffset,startOffset);
     checkResultByFile(getBasePath() + getTestName(false)+".xml");

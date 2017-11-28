@@ -4,11 +4,12 @@ Reports the ternary condition operator. Some coding standards prohibit the use o
 the condition operator, in favor of <b>if-else</b> statements.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore simple assignments and returns and thus allow constructs like this:
+Use the first checkbox below to ignore simple assignments and returns and thus allow constructs like this:
 <pre>
     String s = (foo == null) ? "" : foo.toString();
 </pre>
 <p>
-
+Use the second checkbox below to ignore conditional expression in contexts where an if statement is not allowed.
+For example when the conditional expression is used as an argument to a <b>super()</b> constructor call, or inside a field initializer.
 </body>
 </html>

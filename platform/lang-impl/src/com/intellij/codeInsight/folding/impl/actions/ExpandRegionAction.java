@@ -31,7 +31,7 @@ public class ExpandRegionAction extends EditorAction {
   public ExpandRegionAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         expandRegionAtCaret(editor.getProject(), editor);
       }
     });

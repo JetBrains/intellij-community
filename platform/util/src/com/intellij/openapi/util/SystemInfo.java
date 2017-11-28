@@ -18,9 +18,9 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -31,24 +31,29 @@ public class SystemInfo extends SystemInfoRt {
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
-  public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
+  private static String getRtVersion(String fallback) {
+    String rtVersion = System.getProperty("java.runtime.version");
+    return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
+  }
+
   public static final boolean isWindows = SystemInfoRt.isWindows;
   public static final boolean isMac = SystemInfoRt.isMac;
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
   public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  public static final boolean isAppleJvm = isAppleJvm();
-  public static final boolean isOracleJvm = isOracleJvm();
-  public static final boolean isSunJvm = isSunJvm();
-  public static final boolean isIbmJvm = isIbmJvm();
-  public static final boolean isJetbrainsJvm = isJetbrainsJvm();
+  public static final boolean isAppleJvm = vendorContains("Apple");
+  public static final boolean isOracleJvm = vendorContains("Oracle");
+  public static final boolean isSunJvm = vendorContains("Sun") && vendorContains("Microsystems");
+  public static final boolean isIbmJvm = vendorContains("IBM");
+  public static final boolean isJetBrainsJvm = vendorContains("JetBrains");
   public static final boolean isStudioJvm = isStudioJvm();
+  public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -62,38 +67,12 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
-  /* https://msdn.microsoft.com/en-us/commandline/wsl/about */
-  private static final AtomicNullableLazyValue<File> ourWSLBashFile = new AtomicNullableLazyValue<File>() {
-    @Nullable
-    @Override
-    protected File compute() {
-      if (isWin10OrNewer) {
-        String windir = System.getenv().get("windir");
-        if (!StringUtil.isEmpty(windir)) {
-          File bashFile = new File(windir + "\\System32\\bash.exe");
-          if (bashFile.exists()) {
-            return bashFile;
-          }
-        }
-      }
-
-      return null;
-    }
-  };
-
-  @Nullable
-  public static File getWSLBashFile() {
-    return ourWSLBashFile.getValue();
-  }
-
-  public static boolean hasWSL() {
-    return getWSLBashFile() != null;
-  }
-
   public static final boolean isXWindow = isUnix && !isMac;
-  public static final boolean isWayland = !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
+  public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
+  /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
+  public static final boolean isGNOME = isXWindow && ObjectUtils.notNull(System.getenv("GDMSESSION"), "").startsWith("gnome");
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
-  public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
+  public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -123,6 +102,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
+  public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -196,29 +176,9 @@ public class SystemInfo extends SystemInfoRt {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  private static boolean isOracleJvm() {
+  private static boolean vendorContains(String s) {
     final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle");
-  }
-
-  private static boolean isSunJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Sun") && StringUtil.containsIgnoreCase(vendor, "Microsystems");
-  }
-
-  private static boolean isIbmJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "IBM");
-  }
-
-  private static boolean isAppleJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
-  }
-
-  private static boolean isJetbrainsJvm() {
-    final String vendor = SystemProperties.getJavaVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "JetBrains");
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, s);
   }
 
   private static boolean isStudioJvm() {
@@ -227,6 +187,7 @@ public class SystemInfo extends SystemInfoRt {
     return "Google Inc.".equals(vendor) && "http://developer.android.com/sdk/index.html".equals(url);
   }
 
+  // Android Studio: added by Change Ia9fc708c / commit b9214e0
   public static boolean bundles32BitJDK() {
     return new File(PathManager.getHomePath(), "jre/jre/lib/i386").exists();
   }
@@ -247,5 +208,11 @@ public class SystemInfo extends SystemInfoRt {
   public static String getUnixReleaseVersion() {
     return null;
   }
+
+  /** @deprecated outdated (to be removed in IDEA 2018) */
+  public static final boolean isOS2 = SystemInfoRt.isOS2;
+
+  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
+  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

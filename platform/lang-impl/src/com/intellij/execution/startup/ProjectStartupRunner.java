@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.execution.startup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -29,7 +28,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +46,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
     if (projectStartupTaskManager.isEmpty()) return;
 
-    RunManagerImpl.getInstanceImpl(project).addRunManagerListener(new RunManagerListener() {
+    project.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
         projectStartupTaskManager.delete(settings.getUniqueID());
@@ -72,7 +70,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
 
   private static void scheduleRunActivities(@NotNull Project project) {
     JobScheduler.getScheduler().schedule(() -> {
-      if (!((StartupManagerEx)StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
+      if (!((StartupManagerEx)StartupManager.getInstance(project)).postStartupActivityPassed()) {
         scheduleRunActivities(project);
       }
       else {

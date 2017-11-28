@@ -178,18 +178,15 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
    * @param skippedCommits the skipped commits
    */
   public static void showSkipped(final Project project, final SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> skippedCommits) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
-        if (contentManager == null) {
-          return;
-        }
-        GitSkippedCommits skipped = new GitSkippedCommits(contentManager, project, skippedCommits);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(skipped, "Skipped Commits", true);
-        ContentsUtil.addContent(contentManager, content, true);
-        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
+      if (contentManager == null) {
+        return;
       }
+      GitSkippedCommits skipped = new GitSkippedCommits(contentManager, project, skippedCommits);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(skipped, "Skipped Commits", true);
+      ContentsUtil.addContent(contentManager, content, true);
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
     });
   }
 

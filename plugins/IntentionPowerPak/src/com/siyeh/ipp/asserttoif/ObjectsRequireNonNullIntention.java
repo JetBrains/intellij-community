@@ -53,9 +53,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
     final PsiVariable variable = (PsiVariable)target;
     final List<String> notNulls = NullableNotNullManager.getInstance(element.getProject()).getNotNulls();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(variable, notNulls);
-    if (annotation != null) {
-      annotation.delete();
-    } else {
+    if (annotation == null) {
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
       if (referenceStatement == null) {
         return;
@@ -82,8 +80,8 @@ public class ObjectsRequireNonNullIntention extends Intention {
       }
       statementToDelete.delete();
     }
-    PsiReplacementUtil
-      .replaceExpressionAndShorten(referenceExpression, "java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")");
+    PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression,
+                                                   "java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")");
   }
 
   private static class NullCheckedAssignmentPredicate implements PsiElementPredicate {
@@ -130,7 +128,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
       return false;
     }
 
-    private static boolean isIfStatementNullCheck(PsiStatement statement, @NotNull PsiVariable variable) {
+    static boolean isIfStatementNullCheck(PsiStatement statement, @NotNull PsiVariable variable) {
       if (!(statement instanceof PsiIfStatement)) {
         return false;
       }
@@ -147,7 +145,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
       return ComparisonUtils.isNullComparison(condition, variable, true);
     }
 
-    private static boolean isNotNullAssertion(PsiStatement statement, @NotNull PsiVariable variable) {
+    static boolean isNotNullAssertion(PsiStatement statement, @NotNull PsiVariable variable) {
       if (!(statement instanceof PsiAssertStatement)) {
         return false;
       }

@@ -88,8 +88,7 @@ public class ParametersList implements Cloneable {
       return Collections.unmodifiableList(myParameters);
     }
 
-    final List<String> params = new ArrayList<>();
-    params.addAll(myParameters);
+    final List<String> params = new ArrayList<>(myParameters);
     for (ParamsGroup group : myGroups) {
       params.addAll(group.getParameters());
     }
@@ -221,6 +220,11 @@ public class ParametersList implements Cloneable {
     return myParameters.get(ind);
   }
 
+  @Nullable
+  public String getLast() {
+    return myParameters.size() > 0 ? myParameters.get(myParameters.size() - 1) : null;
+  }
+
   public void add(@NonNls final String name, @NonNls final String value) {
     add(name);
     add(value);
@@ -255,7 +259,7 @@ public class ParametersList implements Cloneable {
   }
 
   /**
-   * @see ParametersListUtil#join(java.util.List)
+   * @see ParametersListUtil#join(List)
    */
   @NotNull
   public static String join(@NotNull final List<String> parameters) {
@@ -263,7 +267,7 @@ public class ParametersList implements Cloneable {
   }
 
   /**
-   * @see ParametersListUtil#join(java.util.List)
+   * @see ParametersListUtil#join(List)
    */
   @NotNull
   public static String join(final String... parameters) {

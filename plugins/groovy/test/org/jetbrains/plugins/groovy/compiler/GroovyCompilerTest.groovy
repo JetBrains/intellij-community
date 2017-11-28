@@ -40,14 +40,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-
 /**
  * @author peter
  */
@@ -721,7 +719,7 @@ public class Main {
   }
 
   private excludeFromCompilation(ExcludesConfiguration configuration, PsiFile foo) {
-    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
+    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, myFixture.testRootDisposable))
   }
 
   void "test make stub-level error and correct it"() {
@@ -884,7 +882,7 @@ class AppTest {
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE)
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-       void onTextAvailable(ProcessEvent event, Key outputType) {
+       void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
@@ -902,7 +900,7 @@ class AppTest {
     def anotherModule = addModule("another", true)
     addGroovyLibrary(anotherModule)
 
-    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar")
+    PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
 
     def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
     PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")
@@ -952,8 +950,8 @@ class AppTest {
 
   static class GroovycTest extends GroovyCompilerTest {
     void "test navigate from stub to source"() {
-      GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
-      myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+      myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
+      myFixture.addClass("class Java4 extends Groovy3 {}")
 
       def msg = make().find { it.message.contains('InvalidType') }
       assert msg?.virtualFile
@@ -963,7 +961,7 @@ class AppTest {
       assert messages
       def error = messages.find { it.message.contains('InvalidType') }
       assert error?.virtualFile
-      assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
+      assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
     void "test config script"() {

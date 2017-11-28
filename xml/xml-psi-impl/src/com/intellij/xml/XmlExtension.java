@@ -48,6 +48,18 @@ public abstract class XmlExtension {
     return CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
+  public interface AttributeValuePresentation {
+    @NotNull
+    String getPrefix();
+
+    @NotNull
+    String getPostfix();
+    
+    default boolean showAutoPopup() {
+      return true;
+    }
+  }
+
   private static XmlExtension calcExtension(PsiFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
       if (extension.isAvailable(file)) {
@@ -158,6 +170,24 @@ public abstract class XmlExtension {
 
   public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
     return descriptor.isRequired();
+  }
+
+  @NotNull
+  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
+                                                                  @NotNull String defaultAttributeQuote) {
+    return new AttributeValuePresentation() {
+      @NotNull
+      @Override
+      public String getPrefix() {
+        return defaultAttributeQuote;
+      }
+
+      @NotNull
+      @Override
+      public String getPostfix() {
+        return defaultAttributeQuote;
+      }
+    };
   }
 
   public boolean isCustomTagAllowed(final XmlTag tag) {

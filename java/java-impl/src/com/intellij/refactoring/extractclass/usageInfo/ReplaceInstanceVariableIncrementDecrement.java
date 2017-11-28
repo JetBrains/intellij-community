@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo {
-  private final PsiExpression reference;
+  private final PsiUnaryExpression reference;
   private final @Nullable String setterName;
   private final @Nullable String getterName;
   private final String delegateName;
@@ -39,27 +39,13 @@ public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo 
     this.setterName = setterName;
     this.delegateName = delegateName;
     fieldName = name;
-    final PsiPrefixExpression prefixExpr = PsiTreeUtil.getParentOfType(reference, PsiPrefixExpression.class);
-    if (prefixExpr != null) {
-      this.reference = prefixExpr;
-    }
-    else {
-      this.reference = PsiTreeUtil.getParentOfType(reference, PsiPostfixExpression.class);
-    }
+    this.reference = PsiTreeUtil.getParentOfType(reference, PsiUnaryExpression.class);
   }
 
   public void fixUsage() throws IncorrectOperationException {
 
-    final PsiReferenceExpression lhs;
-    final PsiJavaToken sign;
-    if (reference instanceof PsiPrefixExpression) {
-      lhs = (PsiReferenceExpression)((PsiPrefixExpression)reference).getOperand();
-      sign = ((PsiPrefixExpression)reference).getOperationSign();
-    }
-    else {
-      lhs = (PsiReferenceExpression)((PsiPostfixExpression)reference).getOperand();
-      sign = ((PsiPostfixExpression)reference).getOperationSign();
-    }
+    final PsiReferenceExpression lhs = (PsiReferenceExpression)reference.getOperand();
+    final PsiJavaToken sign = reference.getOperationSign();
     final PsiElement qualifier = lhs.getQualifier();
     final String operator = sign.getText();
     final String newExpression;

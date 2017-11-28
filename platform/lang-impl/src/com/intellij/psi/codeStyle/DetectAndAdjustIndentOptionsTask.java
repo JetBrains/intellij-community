@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -36,31 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
 
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.scheduleWithWriteActionPriority;
-
-
-class TimeStampedIndentOptions extends IndentOptions {
-  private long myTimeStamp;
-  private int myOriginalIndentOptionsHash;
-
-  public TimeStampedIndentOptions(IndentOptions toCopyFrom, long timeStamp) {
-    copyFrom(toCopyFrom);
-    myTimeStamp = timeStamp;
-  }
-  
-  void setTimeStamp(long timeStamp) {
-    myTimeStamp = timeStamp;
-  }
-
-  public void setOriginalIndentOptionsHash(int originalIndentOptionsHash) {
-    myOriginalIndentOptionsHash = originalIndentOptionsHash;
-  }
-
-  public boolean isOutdated(@NotNull Document document, @NotNull IndentOptions defaultForFile) {
-    return document.getModificationStamp() != myTimeStamp 
-           || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
-  }
-}
 
 class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);
@@ -139,7 +115,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private void logTooLongComputation() {
     PsiFile file = getFile();
     String fileName = file != null ? file.getName() : "";
-    LOG.warn("Indent detection is too long for: " + fileName);
+    LOG.debug("Indent detection is too long for: " + fileName);
   }
 
   private boolean isComputingForTooLong() {
@@ -158,7 +134,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     }
     else {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
-      manager.performForCommittedDocument(myDocument, () -> scheduleWithWriteActionPriority(myExecutor, this));
+      manager.performForCommittedDocument(myDocument, () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(myExecutor, this));
     }
   }
 

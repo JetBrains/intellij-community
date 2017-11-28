@@ -26,17 +26,12 @@ import org.jetbrains.idea.svn.SvnVcs;
  * @author yole
  */
 public class SvnRepositoryBinaryContentRevision extends SvnRepositoryContentRevision implements BinaryContentRevision {
-  private byte[] myBinaryContent;
-
   public SvnRepositoryBinaryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath remotePath, @Nullable FilePath localPath, long revision) {
     super(vcs, remotePath, localPath, revision);
   }
 
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
-    if (myBinaryContent == null) {
-      myBinaryContent = loadContent().toByteArray();
-    }
-    return myBinaryContent;    
+    return getContentAsBytes();
   }
 }

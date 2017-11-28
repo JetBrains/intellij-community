@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author yole
@@ -36,7 +35,7 @@ public abstract class DefaultVcsRootPolicy {
   }
 
   @NotNull
-  public abstract List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName);
+  public abstract Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName);
 
   public abstract boolean matchesDefaultMapping(@NotNull VirtualFile file, final Object matchContext);
 

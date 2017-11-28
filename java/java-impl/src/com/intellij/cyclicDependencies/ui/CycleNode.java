@@ -19,10 +19,6 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CycleNode extends PackageDependenciesNode{
   public CycleNode(Project project) {
     super(project);

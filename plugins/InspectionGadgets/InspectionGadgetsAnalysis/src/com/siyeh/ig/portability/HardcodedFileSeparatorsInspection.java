@@ -51,7 +51,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
    * media types.
    */
   @NonNls private static final String EXAMPLE_MIME_MEDIA_TYPE_PATTERN =
-    "example/\\p{Alnum}+(?:[\\.\\-\\\\+]\\p{Alnum}+)*";
+    "example/\\p{Alnum}+(?:[.\\-\\\\+]\\p{Alnum}+)*";
   /**
    * A regular expression pattern that matches strings which start with a URL
    * protocol, as they're likely to actually be URLs.

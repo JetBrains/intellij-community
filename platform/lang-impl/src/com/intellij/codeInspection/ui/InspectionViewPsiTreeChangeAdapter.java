@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,8 +77,8 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                 InspectionTreeNode root = myView.getTree().getRoot();
                 boolean[] needUpdateUI = {false};
                 processNodesIfNeed(root, (node) -> {
-                  if (node instanceof CachedInspectionTreeNode) {
-                    RefEntity element = ((CachedInspectionTreeNode)node).getElement();
+                  if (node instanceof SuppressableInspectionTreeNode) {
+                    RefEntity element = ((SuppressableInspectionTreeNode)node).getElement();
                     if (element instanceof RefElement) {
                       final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
                       VirtualFile strictVirtualFile = pointer.getVirtualFile();
@@ -89,7 +89,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                         }
                       }
                       if (strictVirtualFile == null || files.contains(strictVirtualFile)) {
-                        ((CachedInspectionTreeNode)node).dropCache(project);
+                        ((SuppressableInspectionTreeNode)node).dropCache(project);
                         if (!needUpdateUI[0]) {
                           needUpdateUI[0] = true;
                         }
@@ -97,7 +97,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                       return false;
                     }
                     else {
-                      ((CachedInspectionTreeNode)node).dropCache(project);
+                      ((SuppressableInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
                       }
@@ -106,7 +106,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                   }
                   return true;
                 });
-                if (needUpdateUI[0]) {
+                if (needUpdateUI[0] && !myAlarm.isDisposed()) {
                   myAlarm.cancelAllRequests();
                   myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
                 }

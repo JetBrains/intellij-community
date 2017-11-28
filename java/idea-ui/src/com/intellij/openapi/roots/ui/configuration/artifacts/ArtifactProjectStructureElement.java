@@ -17,10 +17,13 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
@@ -54,7 +57,22 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public void check(final ProjectStructureProblemsHolder problemsHolder) {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final ArtifactProblemsHolderImpl artifactProblemsHolder = new ArtifactProblemsHolderImpl(myArtifactsStructureContext, myOriginalArtifact, problemsHolder);
+    if (myArtifactsStructureContext instanceof ArtifactsStructureConfigurableContextImpl) {
+      ArtifactEditorImpl artifactEditor = ((ArtifactsStructureConfigurableContextImpl)myArtifactsStructureContext).getArtifactEditor(artifact);
+      if (artifactEditor != null && (artifactEditor.isModified() || isArtifactModified(artifact))) {
+        ProjectModelExternalSource externalSource = artifact.getExternalSource();
+        if (externalSource != null) {
+          String message = ModificationOfImportedModelWarningComponent.getWarningText("Artifact '" + artifact.getName() + "'", externalSource);
+          artifactProblemsHolder.registerWarning(message, "modification-of-imported-element", null);
+        }
+      }
+    }
     artifact.getArtifactType().checkRootElement(myArtifactsStructureContext.getRootElement(myOriginalArtifact), artifact, artifactProblemsHolder);
+  }
+
+  private boolean isArtifactModified(Artifact artifact) {
+    ModifiableArtifactModel modifiableModel = ((ArtifactsStructureConfigurableContextImpl)myArtifactsStructureContext).getActualModifiableModel();
+    return modifiableModel != null && artifact != modifiableModel.getOriginalArtifact(artifact);
   }
 
   public Artifact getOriginalArtifact() {

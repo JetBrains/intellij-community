@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.console;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
-import java.util.Arrays;
+import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getApplicableModules;
+import static org.jetbrains.plugins.groovy.util.ModuleChooserUtil.formatModuleVersion;
 
 public class GroovyConsoleUtil {
-
-  public static final Condition<Module> APPLICABLE_MODULE = module -> GroovyFacetUtil.isSuitableModule(module);
 
   private static final Function<Module, String> MODULE_VERSION = module -> {
     final String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
@@ -61,19 +55,12 @@ public class GroovyConsoleUtil {
 
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer) {
     ModuleChooserUtil.selectModule(project,
-                                   ModuleChooserUtil.filterGroovyCompatibleModules(
-                                     Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE),
-                                   MODULE_VERSION, consumer);
+                                   getApplicableModules(project),
+                                   GroovyConsoleUtil::getTitle, consumer);
   }
 
-  public static void selectModuleAndRun(Project project, Consumer<Module> consumer, DataContext context) {
-    ModuleChooserUtil.selectModule(project, ModuleChooserUtil.filterGroovyCompatibleModules(
-                                     Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE),
-                                   MODULE_VERSION, consumer, context);
-  }
-
-  @Contract("null -> null; !null -> !null")
-  public static String getTitle(@Nullable Module module) {
-    return module == null ? null : String.format("%s (%s)", module.getName(), MODULE_VERSION.fun(module));
+  @NotNull
+  public static String getTitle(@NotNull Module module) {
+    return formatModuleVersion(module, MODULE_VERSION.fun(module));
   }
 }

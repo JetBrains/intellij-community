@@ -21,13 +21,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,10 +68,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
     final int value = aChar.getValue();
     final String hex = Integer.toHexString(value);
     final String result = (hex.length() == 1 ? "\\x0" : "\\x") + hex;
-    if (RegExpElementImpl.isLiteralExpression(aChar.getContainingFile().getContext())) {
-      return StringUtil.escapeStringCharacters(result);
-    }
-    return result;
+    return RegExpReplacementUtil.escapeForContext(result, aChar);
   }
 
   private static class ReplaceWithHexEscapeFix implements LocalQuickFix {

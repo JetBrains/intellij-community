@@ -15,13 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyArgumentListInspectionTest extends PyTestCase {
+public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testBadarglist() {
     doTest();
   }
@@ -97,7 +98,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19412
   public void testReassignedViaClassMethodInAnotherModule() {
-    doMultiFileTest();
+    doMultiFileTest("b.py");
   }
 
   // PY-2294
@@ -157,10 +158,10 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyArgumentListInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyArgumentListInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyArgumentListInspection.class;
   }
 
   // PY-9664
@@ -205,12 +206,12 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19716
   public void testMethodsForLoggingExceptions() {
-    doMultiFileTest();
+    doMultiFileTest("b.py");
   }
 
   // PY-19522
   public void testCsvRegisterDialect() {
-    doMultiFileTest();
+    doMultiFileTest("b.py");
   }
 
   // PY-21083
@@ -260,7 +261,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-22507
   public void testTimetupleOnAssertedDate() {
-    doMultiFileTest();
+    doMultiFileTest("b.py");
   }
 
   // PY-23069
@@ -273,12 +274,57 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doMultiFileTest() {
-    final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
+  // PY-19293, PY-22102
+  public void testInitializingTypingNamedTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
 
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("b.py");
-    myFixture.enableInspections(PyArgumentListInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-24099
+  public void testInitializingTypingNamedTupleWithDefaultValues() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-4344, PY-8422, PY-22269, PY-22740
+  public void testInitializingCollectionsNamedTuple() {
+    doTest();
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("b.py"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("b.py"));
+  }
+
+  public void testTypingCallableCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-24286
+  public void testBuiltinLong() {
+    doTest();
+  }
+
+  // PY-24930
+  public void testCallOperator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-16968
+  public void testKwargsAgainstKeywordOnly() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 }

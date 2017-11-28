@@ -24,7 +24,9 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-      <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.python.edu.PyStudyInstructionPainter" overrides="true"/>
+    <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
       <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
   </extensions>

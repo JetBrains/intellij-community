@@ -24,7 +24,7 @@ public final class TableCell {
     column = columnIndex;
   }
 
-  public boolean equals(Object o) {
+  @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof TableCell)) return false;
 
@@ -36,7 +36,11 @@ public final class TableCell {
     return true;
   }
 
-  public int hashCode() {
+  public boolean at(int row, int column) {
+    return row == this.row && column == this.column;
+  }
+
+  @Override public int hashCode() {
     int result;
     result = row;
     result = 29 * result + column;

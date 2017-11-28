@@ -92,7 +92,7 @@ public class Extensions {
   @NotNull
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     // keep it until 1.7 JDK
-    return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
+    return Extensions.getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull

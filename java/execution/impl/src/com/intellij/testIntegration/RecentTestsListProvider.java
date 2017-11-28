@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,7 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
 
   private void initRunConfigurationsMap() {
     RunManagerEx manager = RunManagerEx.getInstanceEx(myProject);
-    ConfigurationType[] types = manager.getConfigurationFactories();
-
-    for (ConfigurationType type : types) {
+    for (ConfigurationType type : manager.getConfigurationFactories()) {
       Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> e : structure.entrySet()) {
         for (RunnerAndConfigurationSettings settings : e.getValue()) {
@@ -62,7 +60,6 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
       }
     }
   }
-  
 }
 
 

@@ -15,9 +15,8 @@
  */
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,12 +37,7 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(element instanceof PyNamedParameter)) {
       return;
     }
-    final ScopeOwner owner = ApplicationManager.getApplication().runReadAction(new Computable<ScopeOwner>() {
-      @Override
-      public ScopeOwner compute() {
-        return ScopeUtil.getScopeOwner(element);
-      }
-    });
+    final ScopeOwner owner = ReadAction.compute(() -> ScopeUtil.getScopeOwner(element));
     if (!(owner instanceof PyFunction)) {
       return;
     }

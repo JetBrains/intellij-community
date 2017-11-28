@@ -24,15 +24,13 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: ksafonov
- */
 public class ConfigImportSettings {
 
   public String getExecutableName() {
     return getProductName(ThreeState.NO);
   }
 
+  @NotNull
   public String[] getMainJarNames() {
     return new String[]{getProductName(ThreeState.NO)};
   }

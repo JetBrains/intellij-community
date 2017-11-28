@@ -2,6 +2,6 @@
 public class X {
   int i;
   {
-    (i)=<caret>0;
+    (<caret>i)=0;
   }
 }

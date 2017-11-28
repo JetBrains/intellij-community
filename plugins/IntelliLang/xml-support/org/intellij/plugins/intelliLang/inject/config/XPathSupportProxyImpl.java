@@ -26,7 +26,6 @@ import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.plugins.xpathView.support.XPathSupport;
-import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +92,7 @@ public class XPathSupportProxyImpl extends XPathSupportProxy {
   @Override
   @NotNull
   public XPath createXPath(String expression) throws JaxenException {
-    return mySupport.createXPath(null, expression, Collections.<Namespace>emptyList());
+    return mySupport.createXPath(null, expression, Collections.emptyList());
   }
 
   @Override

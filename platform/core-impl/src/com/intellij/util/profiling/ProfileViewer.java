@@ -23,9 +23,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 30/03/15
- */
 class ProfileViewer {
   private class Ref {
     private final String text;

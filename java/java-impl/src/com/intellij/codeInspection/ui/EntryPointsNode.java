@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.util.containers.FactoryMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,12 +48,12 @@ public class EntryPointsNode extends InspectionNode {
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
+  public String getTailText() {
     return "";
   }
 
   @Override
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+  protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
     //do nothing here
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
   public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
-    final List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverriden));
+    final List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
 
     final SearchScope scope = p.getScope();
 

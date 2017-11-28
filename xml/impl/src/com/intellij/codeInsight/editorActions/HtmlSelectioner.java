@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 18, 2002
- * Time: 10:30:17 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -36,6 +28,7 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,12 +41,7 @@ import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
 
-  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = new SelectWordUtil.CharCondition() {
-    @Override
-    public boolean value(char ch) {
-      return Character.isJavaIdentifierPart(ch) || ch == '-';
-    }
-  };
+  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
 
   @Override
   public boolean canSelect(PsiElement e) {
@@ -61,8 +49,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   static boolean canSelectElement(final PsiElement e) {
-    if (e instanceof XmlToken) {
-      return HtmlUtil.hasHtml(e.getContainingFile());
+    if (e instanceof XmlToken || PsiTreeUtil.getParentOfType(e, HtmlTagImpl.class, true) != null) {
+      return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
     }
     return false;
   }
@@ -125,7 +113,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
   }
 
-  private static void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
+  private void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
                                             @NotNull CharSequence editorText, @Nullable PsiElement e) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
 
@@ -134,7 +122,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttributeValue value = attribute.getValueElement();
 
       if (value != null) {
-        if (HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
+        if (getClassAttributeName().equalsIgnoreCase(attribute.getName())) {
           addClassAttributeRanges(result, editor, cursorOffset, editorText, value);
         }
         final TextRange range = value.getTextRange();
@@ -153,7 +141,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
       final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
       if (attribute != null && attributeValue != null) {
-        if (HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
+        if (getClassAttributeName().equalsIgnoreCase(attribute.getName())) {
           final TextRange valueTextRange = attributeValue.getValueTextRange();
           if (!valueTextRange.isEmpty()) {
             int start = cursorOffset;
@@ -179,7 +167,12 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return super.getMinimalTextRangeLength(element, text, cursorOffset);
   }
 
-  private static void addClassAttributeRanges(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
+  @NotNull
+  protected String getClassAttributeName() {
+    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
+  }
+
+  public static void addClassAttributeRanges(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
                                               @NotNull CharSequence editorText, @NotNull XmlAttributeValue attributeValue) {
     final TextRange attributeValueTextRange = attributeValue.getTextRange();
     final LinkedList<TextRange> wordRanges = ContainerUtil.newLinkedList();

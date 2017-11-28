@@ -23,7 +23,7 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     Integer foo2(String foo, int bar) {
-        return foo == null ? Integer.valueOf(0) : bar;
+        return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
     }
 
     void noUnboxing(Object val) {

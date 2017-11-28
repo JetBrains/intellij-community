@@ -74,7 +74,7 @@ def try_activate_instance(args):
     while True:
         try:
             path_len = struct.unpack('>h', s.recv(2))[0]
-            path = s.recv(path_len)
+            path = s.recv(path_len).decode('utf-8')
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
                 break
@@ -83,6 +83,7 @@ def try_activate_instance(args):
 
     if found:
         cmd = 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args)
+        if sys.version_info.major >= 3: cmd = cmd.encode('utf-8')
         encoded = struct.pack('>h', len(cmd)) + cmd
         s.send(encoded)
         time.sleep(0.5)  # don't close the socket immediately

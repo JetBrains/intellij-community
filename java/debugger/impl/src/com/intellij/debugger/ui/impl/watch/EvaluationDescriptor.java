@@ -34,6 +34,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -105,6 +106,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       setLvalue(myModifier != null);
 
       return value;
+    }
+    catch (IndexNotReadyException ex) {
+      throw new EvaluateException("Evaluation is not possible during indexing", ex);
     }
     catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getLocalizedMessage(), ex);

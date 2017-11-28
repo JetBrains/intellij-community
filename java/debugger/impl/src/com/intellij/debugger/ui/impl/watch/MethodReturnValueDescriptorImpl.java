@@ -28,11 +28,6 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: lex
- * Date: Oct 8, 2003
- * Time: 5:08:07 PM
- */
 public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
   private final Method myMethod;
 

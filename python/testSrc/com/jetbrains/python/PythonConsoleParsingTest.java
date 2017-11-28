@@ -40,6 +40,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override

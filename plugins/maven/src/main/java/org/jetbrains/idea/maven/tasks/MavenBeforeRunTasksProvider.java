@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,11 +101,11 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return true;
   }
 
-  public MavenBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public MavenBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new MavenBeforeRunTask();
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MavenBeforeRunTask task) {
     MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
     dialog.setTitle(TasksBundle.message("maven.tasks.select.goal.title"));
@@ -142,14 +142,14 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MavenBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull MavenBeforeRunTask task) {
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 
   public boolean executeTask(final DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             final MavenBeforeRunTask task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull final MavenBeforeRunTask task) {
     final Semaphore targetDone = new Semaphore();
     final boolean[] result = new boolean[]{true};
     try {

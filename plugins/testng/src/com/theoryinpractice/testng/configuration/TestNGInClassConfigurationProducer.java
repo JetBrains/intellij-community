@@ -15,8 +15,44 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-public class TestNGInClassConfigurationProducer extends AbstractTestNGInClassConfigurationProducer {
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
+  private TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate(TestNGConfigurationType.getInstance());
   protected TestNGInClassConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
+  }
+
+  @Override
+  public void onFirstRun(@NotNull ConfigurationFromContext configuration,
+                         @NotNull ConfigurationContext fromContext,
+                         @NotNull Runnable performRunnable) {
+    myDelegate.onFirstRun(configuration, fromContext, performRunnable);
+  }
+
+  @Override
+  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    return myDelegate.setupConfigurationFromContext(configuration, context, sourceElement);
+  }
+
+  private static class TestNGInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<TestNGConfiguration> {
+    protected TestNGInClassConfigurationProducerDelegate(ConfigurationType configurationType) {
+      super(configurationType);
+    }
+
+    @Override
+    protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+                                                    ConfigurationContext context,
+                                                    Ref<PsiElement> sourceElement) {
+      return super.setupConfigurationFromContext(configuration, context, sourceElement);
+    }
   }
 }

@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -41,11 +40,11 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
-  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
   }
 
 
-  public void addMessage(CompilerMessageCategory category,
+  public void addMessage(@NotNull CompilerMessageCategory category,
                          String message,
                          @Nullable String url,
                          int lineNum,
@@ -53,7 +52,8 @@ public class DummyCompileContext implements CompileContext {
                          Navigatable navigatable) {
   }
 
-  public CompilerMessage[] getMessages(CompilerMessageCategory category) {
+  @NotNull
+  public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
     return CompilerMessage.EMPTY_ARRAY;
   }
 
@@ -86,7 +86,7 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
-  public Module getModuleByFile(VirtualFile file) {
+  public Module getModuleByFile(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -94,12 +94,8 @@ public class DummyCompileContext implements CompileContext {
     return false;
   }
 
-  public VirtualFile getModuleOutputDirectory(final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-      }
-    });
+  public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
+    return ReadAction.compute(() -> CompilerModuleExtension.getInstance(module).getCompilerOutputPath());
   }
 
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {

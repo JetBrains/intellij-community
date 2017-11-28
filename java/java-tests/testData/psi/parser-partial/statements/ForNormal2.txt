@@ -1,0 +1,24 @@
+PsiJavaFile:ForNormal2.java
+  PsiForStatement
+    PsiKeyword:for('for')
+    PsiJavaToken:LPARENTH('(')
+    PsiDeclarationStatement
+      PsiLocalVariable:x
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:var
+          PsiKeyword:var('var')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:x('x')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:EQ('=')
+        PsiWhiteSpace(' ')
+        PsiLiteralExpression:0
+          PsiJavaToken:INTEGER_LITERAL('0')
+        PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:SEMICOLON(';')
+    PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiEmptyStatement
+      PsiJavaToken:SEMICOLON(';')

@@ -28,6 +28,7 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +42,8 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, List<DfaVariableValue>> myClosureReads = new FactoryMap<PsiElement, List<DfaVariableValue>>() {
-    @Nullable
-    @Override
-    protected List<DfaVariableValue> create(PsiElement closure) {
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
+    FactoryMap.create(closure -> {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
@@ -59,8 +58,7 @@ public class LiveVariablesAnalyzer {
         }
       });
       return ContainerUtil.newArrayList(result);
-    }
-  };
+    });
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;
@@ -148,9 +146,10 @@ public class LiveVariablesAnalyzer {
         BitSet set = result.get(instruction);
         if (set != null) {
           set.or(liveVars);
-          return set;
-        } else {
-          result.put((FinishElementInstruction)instruction, liveVars);
+          return (BitSet)set.clone();
+        }
+        else if (!liveVars.isEmpty()) {
+          result.put((FinishElementInstruction)instruction, (BitSet)liveVars.clone());
         }
       }
 
@@ -208,7 +207,11 @@ public class LiveVariablesAnalyzer {
 
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
-        instruction.getVarsToFlush().addAll(toFlush.get(instruction));
+        Collection<DfaVariableValue> values = toFlush.get(instruction);
+        // Do not flush special values as they could be used implicitly
+        values.removeIf(var -> var.getQualifier() != null &&
+                               StreamEx.of(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(var.getPsiVariable())));
+        instruction.getVarsToFlush().addAll(values);
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package com.intellij.openapi.ui.playback.util;
 
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -49,22 +50,12 @@ public class ProjectPlaybackCall {
 
   public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {
     final AsyncResult<String> result = new AsyncResult<>();
-    final ProjectManager pm = ProjectManager.getInstance();
-    final Ref<ProjectManagerListener> listener = new Ref<>();
-    listener.set(new ProjectManagerAdapter() {
-      @Override
-      public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-          pm.removeProjectManagerListener(listener.get());
-          DumbService.getInstance(project).runWhenSmart(() -> result.setDone("Opened successfully: " + project.getPresentableUrl()));
-        });
-      }
-    });
-    pm.addProjectManagerListener(listener.get());
-
+    ProjectUtil.runWhenProjectOpened(project -> StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+      DumbService.getInstance(project).runWhenSmart(() -> result.setDone("Opened successfully: " + project.getPresentableUrl()));
+    }));
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
-        pm.loadAndOpenProject(path);
+        ProjectManager.getInstance().loadAndOpenProject(path);
       }
       catch (Exception e) {
         context.error(e.getMessage(), context.getCurrentLine());

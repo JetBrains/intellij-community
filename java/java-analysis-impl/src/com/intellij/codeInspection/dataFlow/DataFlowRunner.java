@@ -14,30 +14,24 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 10:16:39 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,26 +39,21 @@ import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
-  private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
-  // Closures which were registered for previous instruction and can be queried by visitor
-  // to adjust them somehow
-  private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
-  private final boolean myShouldCheckLimitTime;
+  private boolean myInlining = true;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
 
   protected DataFlowRunner() {
-    this(false, true, false);
+    this(false, true);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
-    myShouldCheckLimitTime = shouldCheckLimitTime;
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
     myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
@@ -79,7 +68,14 @@ public class DataFlowRunner {
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
       PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
-        final RunnerResult result = analyzeMethod(block, visitor);
+        final RunnerResult result;
+        try {
+          myInlining = false;
+          result = analyzeMethod(block, visitor);
+        }
+        finally {
+          myInlining = true;
+        }
         if (result == RunnerResult.OK) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (!closureStates.isEmpty()) {
@@ -91,10 +87,6 @@ public class DataFlowRunner {
     }
 
     return Collections.singletonList(createMemoryState());
-  }
-
-  List<DfaMemoryState> getStackTopClosures() {
-    return new ArrayList<>(myStackTopClosures);
   }
 
   @NotNull
@@ -109,15 +101,20 @@ public class DataFlowRunner {
                                    boolean ignoreAssertions,
                                    @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions).buildControlFlow();
+      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
+
+      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(flow.accessedVariables())
+        .mapToEntry(var -> makeInitialValue(var, psiBlock)).nonNullValues().toMap();
+      for (DfaMemoryState state : initialStates) {
+        initialValues.forEach(state::setVarValue);
+      }
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myNestedClosures.clear();
-      myStackTopClosures.clear();
-      
+
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
       for (int index = 0; index < myInstructions.length; index++) {
         Instruction instruction = myInstructions[index];
@@ -139,12 +136,6 @@ public class DataFlowRunner {
         }
       }
 
-      Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
-      if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
-        LOG.trace("Too complex because hasn't changed since being too complex already");
-        return RunnerResult.TOO_COMPLEX;
-      }
-
       final StateQueue queue = new StateQueue();
       for (final DfaMemoryState initialState : initialStates) {
         queue.offer(new DfaInstructionState(myInstructions[0], initialState));
@@ -153,15 +144,17 @@ public class DataFlowRunner {
       MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
       MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      long msLimit = Registry.intValue(shouldCheckTimeLimit() ? "ide.dfa.time.limit.online" : "ide.dfa.time.limit.offline");
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
+      int stateLimit = Registry.intValue("ide.dfa.state.limit");
       int count = 0;
       while (!queue.isEmpty()) {
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
+        if (states.size() > MAX_STATES_PER_BRANCH) {
+          LOG.trace("Too complex because too many different possible states");
+          return RunnerResult.TOO_COMPLEX;
+        }
         for (DfaInstructionState instructionState : states) {
-          if (count++ % 1024 == 0 && measurer.isTimeOver()) {
-            LOG.trace("Too complex because the analysis took too long");
-            psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
+          if (count++ > stateLimit) {
+            LOG.trace("Too complex data flow: too many instruction states processed");
             return RunnerResult.TOO_COMPLEX;
           }
           ProgressManager.checkCanceled();
@@ -177,12 +170,12 @@ public class DataFlowRunner {
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
             Collection<DfaMemoryState> processed = processedStates.get(branching);
-            if (processed.contains(instructionState.getMemoryState())) {
+            if (containsState(processed, instructionState)) {
               continue;
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.trace("Too complex because too many different possible states");
-              return RunnerResult.TOO_COMPLEX; // Too complex :(
+              return RunnerResult.TOO_COMPLEX;
             }
             if (loopNumber[branching.getIndex()] != 0) {
               processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
@@ -190,6 +183,15 @@ public class DataFlowRunner {
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+          if (LOG.isDebugEnabled() && instruction instanceof ControlTransferInstruction && after.length == 0) {
+            DfaMemoryState memoryState = instructionState.getMemoryState();
+            if (!memoryState.isEmptyStack()) {
+              DfaValue topValue = memoryState.pop();
+              if (!(topValue instanceof DfaControlTransferValue || psiBlock instanceof PsiCodeFragment && memoryState.isEmptyStack())) {
+                LOG.error("Stack is corrupted at " + instructionState);
+              }
+            }
+          }
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
             if (nextInstruction.getIndex() >= endOffset) {
@@ -198,8 +200,8 @@ public class DataFlowRunner {
             handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
             if (nextInstruction instanceof BranchingInstruction) {
               BranchingInstruction branching = (BranchingInstruction)nextInstruction;
-              if (processedStates.get(branching).contains(state.getMemoryState()) ||
-                  incomingStates.get(branching).contains(state.getMemoryState())) {
+              if (containsState(processedStates.get(branching), state) ||
+                  containsState(incomingStates.get(branching), state)) {
                 continue;
               }
               if (loopNumber[branching.getIndex()] != 0) {
@@ -211,7 +213,6 @@ public class DataFlowRunner {
         }
       }
 
-      psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
       LOG.trace("Analysis ok");
       return RunnerResult.OK;
     }
@@ -219,6 +220,27 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  @Nullable
+  private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
+    if(var.getQualifier() != null) return null;
+    PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
+    if (field == null || DfaUtil.hasInitializationHacks(field)) return null;
+    return DfaUtil.getPossiblyNonInitializedValue(var.getFactory(), field, block);
+  }
+
+  private static boolean containsState(Collection<DfaMemoryState> processed,
+                                       DfaInstructionState instructionState) {
+    if (processed.contains(instructionState.getMemoryState())) {
+      return true;
+    }
+    for (DfaMemoryState state : processed) {
+      if (((DfaMemoryStateImpl)state).isSuperStateOf((DfaMemoryStateImpl)instructionState.getMemoryState())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void handleStepOutOfLoop(@NotNull final Instruction prevInstruction,
@@ -271,16 +293,11 @@ public class DataFlowRunner {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
-  protected boolean shouldCheckTimeLimit() {
-    return myShouldCheckLimitTime && !ApplicationManager.getApplication().isUnitTestMode();
-  }
-
   @NotNull
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     DfaInstructionState[] states = instruction.accept(this, instructionState.getMemoryState(), visitor);
 
-    myStackTopClosures.clear();
     PsiElement closure = DfaUtil.getClosureInside(instruction);
     if (closure instanceof PsiClass) {
       registerNestedClosures(instructionState, (PsiClass)closure);
@@ -296,14 +313,14 @@ public class DataFlowRunner {
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        myNestedClosures.putValue(body, createClosureState(state));
+        createClosureState(body, state);
       }
     }
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      myNestedClosures.putValue(initializer.getBody(), createClosureState(state));
+      createClosureState(initializer.getBody(), state);
     }
     for (PsiField field : nestedClass.getFields()) {
-      myNestedClosures.putValue(field, createClosureState(state));
+      createClosureState(field, state);
     }
   }
   
@@ -311,15 +328,12 @@ public class DataFlowRunner {
     DfaMemoryState state = instructionState.getMemoryState();
     PsiElement body = expr.getBody();
     if (body != null) {
-      myNestedClosures.putValue(body, createClosureState(state));
+      createClosureState(body, state);
     }
   }
 
-  @NotNull
-  private DfaMemoryState createClosureState(DfaMemoryState state) {
-    DfaMemoryState closureState = state.createClosureState();
-    myStackTopClosures.add(closureState);
-    return closureState;
+  private void createClosureState(PsiElement anchor, DfaMemoryState state) {
+    myNestedClosures.putValue(anchor, state.createClosureState());
   }
 
   @NotNull

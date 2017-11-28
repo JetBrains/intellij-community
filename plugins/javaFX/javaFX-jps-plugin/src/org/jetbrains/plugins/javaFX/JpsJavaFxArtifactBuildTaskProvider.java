@@ -42,10 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   public static final String COMPILER_NAME = "Java FX Packager";

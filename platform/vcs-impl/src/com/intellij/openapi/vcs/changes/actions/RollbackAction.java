@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2006
- * Time: 22:12:19
- */
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -33,7 +27,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -121,12 +114,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
 
     if (modifiedWithoutEditing != null) {
-      changes = ContainerUtil.filter(changes, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return !modifiedWithoutEditing.contains(change.getVirtualFile());
-        }
-      });
+      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
     }
 
     if (!changes.isEmpty()) {
@@ -191,44 +179,40 @@ public class RollbackAction extends AnAction implements DumbAware {
     final List<VcsException> exceptions = new ArrayList<>();
 
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Runnable action = new Runnable() {
-      public void run() {
-        final ProgressIndicator indicator = progressManager.getProgressIndicator();
-        try {
-          ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, (vcs, items) -> {
-            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-            if (rollbackEnvironment != null) {
-              if (indicator != null) {
-                indicator.setText(vcs.getDisplayName() +
-                                  ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
-                indicator.setIndeterminate(false);
-              }
-              rollbackEnvironment
-                .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
-              if (indicator != null) {
-                indicator.setText2("");
-              }
+    final Runnable action = () -> {
+      final ProgressIndicator indicator = progressManager.getProgressIndicator();
+      try {
+        ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, (vcs, items) -> {
+          final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+          if (rollbackEnvironment != null) {
+            if (indicator != null) {
+              indicator.setText(vcs.getDisplayName() +
+                                ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
+              indicator.setIndeterminate(false);
             }
-          });
-        }
-        catch (ProcessCanceledException e) {
-          // for files refresh  
-        }
-        if (!exceptions.isEmpty()) {
-          AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
-                                                                                          operationName));
-        }
-
-        VfsUtil.markDirty(true, false, VfsUtilCore.toVirtualFileArray(modifiedWithoutEditing));
-
-        VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-          public void run() {
-            for (VirtualFile virtualFile : modifiedWithoutEditing) {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
+            rollbackEnvironment
+              .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
+            if (indicator != null) {
+              indicator.setText2("");
             }
           }
         });
       }
+      catch (ProcessCanceledException e) {
+        // for files refresh
+      }
+      if (!exceptions.isEmpty()) {
+        AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
+                                                                                        operationName));
+      }
+
+      VfsUtil.markDirty(true, false, VfsUtilCore.toVirtualFileArray(modifiedWithoutEditing));
+
+      VirtualFileManager.getInstance().asyncRefresh(() -> {
+        for (VirtualFile virtualFile : modifiedWithoutEditing) {
+          VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
+        }
+      });
     };
     progressManager.runProcessWithProgressSynchronously(action, operationName, true, project);
   }

@@ -17,13 +17,14 @@ package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -50,7 +51,6 @@ import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
@@ -66,8 +66,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.any;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
@@ -78,9 +80,20 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     dialog.show();
   }
 
+  @Deprecated // Required for compatibility with external plugins.
   public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final SVNRevision revision,
                                 final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
-    if (! target.exists()) {
+    doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
+  }
+
+  public static void doCheckout(@NotNull Project project,
+                                @NotNull File target,
+                                @NotNull SVNURL url,
+                                SVNRevision revision,
+                                Depth depth,
+                                boolean ignoreExternals,
+                                @Nullable Listener listener) {
+    if (!target.exists()) {
       target.mkdirs();
     }
 
@@ -101,17 +114,31 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return settingsFactoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? settingsFactory : otherFactory;
   }
 
+
+  @Deprecated // Required for compatibility with external plugins.
   public static void checkout(final Project project,
-                               final File target,
-                               final String url,
-                               final SVNRevision revision,
-                               final Depth depth,
-                               final boolean ignoreExternals,
-                               final Listener listener, final WorkingCopyFormat selectedFormat) {
+                              final File target,
+                              final String url,
+                              final SVNRevision revision,
+                              final Depth depth,
+                              final boolean ignoreExternals,
+                              final Listener listener, final WorkingCopyFormat selectedFormat) {
+    checkout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener, selectedFormat);
+  }
+
+  public static void checkout(Project project,
+                              File target,
+                              @NotNull SVNURL url,
+                              SVNRevision revision,
+                              Depth depth,
+                              boolean ignoreExternals,
+                              Listener listener,
+                              WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                     message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
+                                                                               message("message.title.check.out"), true,
+                                                                               VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         final WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
 
@@ -122,13 +149,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           getFactory(vcs, format).createCheckoutClient()
-            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, true, format, handler);
+            .checkout(SvnTarget.fromURL(url), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
-        catch (SVNCancelException ignore) {
-        }
-        catch (SVNException | VcsException e) {
+        catch (VcsException e) {
           exception[0] = e;
         }
         finally {
@@ -170,11 +195,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   private static void notifyRootManagerIfUnderProject(final Project project, final File directory) {
     if (project.isDefault()) return;
     final ProjectLevelVcsManagerEx plVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
-    final SvnVcs vcs = (SvnVcs) plVcsManager.findVcsByName(SvnVcs.VCS_NAME);
+    final SvnVcs vcs = (SvnVcs)plVcsManager.findVcsByName(SvnVcs.VCS_NAME);
 
     final VirtualFile[] files = vcs.getSvnFileUrlMapping().getNotFilteredRoots();
     for (VirtualFile file : files) {
-      if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
+      if (FileUtil.isAncestor(virtualToIoFile(file), directory, false)) {
         // todo: should be done like auto detection
         plVcsManager.fireDirectoryMappingsChanged();
         return;
@@ -194,20 +219,18 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       final VcsException[] exception = new VcsException[1];
       final SvnVcs vcs = SvnVcs.getInstance(project);
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          ProgressTracker handler = new CheckoutEventHandler(vcs, true, progressIndicator);
-          try {
-            progressIndicator.setText(message("progress.text.export", target.getAbsolutePath()));
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        ProgressTracker handler = new CheckoutEventHandler(vcs, true, progressIndicator);
+        try {
+          progressIndicator.setText(message("progress.text.export", target.getAbsolutePath()));
 
-            SvnTarget from = SvnTarget.fromURL(url);
-            ExportClient client = vcs.getFactoryFromSettings().createExportClient();
-            client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
-          }
-          catch (VcsException e) {
-            exception[0] = e;
-          }
+          SvnTarget from = SvnTarget.fromURL(url);
+          ExportClient client = vcs.getFactoryFromSettings().createExportClient();
+          client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
+        }
+        catch (VcsException e) {
+          exception[0] = e;
         }
       }, message("message.title.export"), true, project);
       if (exception[0] != null) {
@@ -225,46 +248,36 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
-    ExclusiveBackgroundVcsAction.run(project, new Runnable() {
-      public void run() {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
-            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            try {
-              progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
+    ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      try {
+        progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
 
-              final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
-              if (targetVf == null) {
-                errorMessage.set("Can not find file: " + targetPath);
-              } else {
-                final boolean isInContent = getApplication().runReadAction(new Computable<Boolean>() {
-                  @Override
-                  public Boolean compute() {
-                    return facade.isInContent(targetVf);
-                  }
-                });
-                CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
-                boolean useFileFilter = !project.isDefault() && isInContent;
-                ISVNCommitHandler commitHandler =
-                  useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
-                long revision = vcs.getFactoryFromSettings().createImportClient()
-                  .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
+        final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
+        if (targetVf == null) {
+          errorMessage.set("Can not find file: " + targetPath);
+        }
+        else {
+          final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));
+          CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
+          boolean useFileFilter = !project.isDefault() && isInContent;
+          ISVNCommitHandler commitHandler =
+            useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
+          long revision = vcs.getFactoryFromSettings().createImportClient()
+            .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
 
-                if (revision > 0) {
-                  StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
-                }
-              }
-            }
-            catch (VcsException e) {
-              errorMessage.set(e.getMessage());
-            }
+          if (revision > 0) {
+            StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
           }
-        }, message("message.title.import"), true, project);
+        }
       }
-    });
-    
-    if (! errorMessage.isNull()) {
+      catch (VcsException e) {
+        errorMessage.set(e.getMessage());
+      }
+    }, message("message.title.import"), true, project));
+
+    if (!errorMessage.isNull()) {
       showErrorDialog(message("message.text.cannot.import", errorMessage.get()), message("message.title.import"));
     }
   }
@@ -278,7 +291,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       myFilter = filter;
     }
 
-    public boolean accept(final File file) throws SVNException {
+    public boolean accept(final File file) {
       final VirtualFile vf = myLfs.findFileByIoFile(file);
       return vf != null && myFilter.accept(vf);
     }
@@ -312,7 +325,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       final WorkingCopyFormat result = displayUpgradeDialog();
 
-      getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
+      BackgroundTaskUtil.syncPublisher(SvnVcs.WC_CONVERTED).run();
 
       return result;
     }
@@ -323,29 +336,23 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       final ModalityState dialogState = any();
 
       dialog.startLoading();
-      getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final List<WorkingCopyFormat> formats = loadSupportedFormats();
+      getApplication().executeOnPooledThread(() -> {
+        final List<WorkingCopyFormat> formats = loadSupportedFormats();
 
-          getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final String errorMessage = error.get();
+        getApplication().invokeLater(() -> {
+          final String errorMessage = error.get();
 
-              if (errorMessage != null) {
-                dialog.doCancelAction();
-                showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
-                                message("message.title.check.out"));
-              }
-              else {
-                dialog.setSupported(formats);
-                dialog.setData(getFirstItem(formats, UNKNOWN));
-                dialog.stopLoading();
-              }
-            }
-          }, dialogState);
-        }
+          if (errorMessage != null) {
+            dialog.doCancelAction();
+            showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
+                            message("message.title.check.out"));
+          }
+          else {
+            dialog.setSupported(formats);
+            dialog.setData(getFirstItem(formats, UNKNOWN));
+            dialog.stopLoading();
+          }
+        }, dialogState);
       });
 
       return dialog.showAndGet() ? dialog.getUpgradeMode() : UNKNOWN;

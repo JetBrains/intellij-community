@@ -9,17 +9,13 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 31.07.2007
- */
 public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "overriding/";
   }
 
-  public void doTest() throws Throwable {
+  public void doTest() {
     final String testFile = getTestName(true) + ".test";
     final List<String> strings = TestUtils.readInput(getTestDataPath() + "/" + testFile);
     GroovyFileBase psiFile = (GroovyFileBase) myFixture.addFileToProject("foo.groovy", strings.get(0));

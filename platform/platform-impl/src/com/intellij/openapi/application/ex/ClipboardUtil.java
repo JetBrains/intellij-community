@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,38 +18,45 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.util.function.Supplier;
 
 public class ClipboardUtil {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
 
-  public static <E> E handleClipboardSafely(final Supplier<E> supplier, final Supplier<E> onFail) {
-      try {
-        return useLegacyMergeSort(supplier);
+  public static <E> E handleClipboardSafely(@NotNull Supplier<E> supplier, @NotNull Supplier<E> onFail) {
+    try {
+      return useLegacyMergeSort(supplier);
+    }
+    catch (IllegalStateException e) {
+      if (SystemInfo.isWindows) {
+        LOG.debug("Clipboard is busy");
       }
-      catch (IllegalStateException e) {
-        if (SystemInfo.isWindows) {
-          LOG.debug("Clipboard is busy");
-        }
-        else {
-          LOG.warn(e);
-        }
-        return onFail.get();
+      else {
+        LOG.warn(e);
       }
+    }
+    catch (NullPointerException e) {
+      LOG.warn("Java bug #6322854", e);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn("Java bug #7173464", e);
+    }
+    return onFail.get();
   }
 
   private static final String USE_LEGACY_MERGE_SORT_PROPERTY_NAME = "java.util.Arrays.useLegacyMergeSort";
 
-  public static <T> T useLegacyMergeSort(Supplier<T> supplier) {
+  private static <T> T useLegacyMergeSort(Supplier<T> supplier) {
     String originalValue = System.getProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME);
     System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, "true");
     try {
       return supplier.get();
-    } finally {
+    }
+    finally {
       if (originalValue != null) {
         System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -135,16 +134,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final Project project = mySvnVcs.getProject();
     final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
     if (feedback == null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                                        public void run() {
-                                                          new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
-                                                        }
-                                                      }, new Condition<Object>() {
-        @Override
-        public boolean value(Object o) {
-          return (! project.isOpen()) || project.isDisposed();
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
+                                                      o -> (!project.isOpen()) || project.isDisposed());
     } else {
       feedback.add("Subversion: " + message);
     }
@@ -152,9 +143,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
-    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY);
+    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
 
-    ChangesUtil.getAllPaths(changes.stream()).forEach(path -> {
+    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }
@@ -207,11 +198,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       doCommit(committables, preparedComment, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          doCommit(committables, preparedComment, exception, feedback);
-        }
-      }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> doCommit(committables, preparedComment, exception, feedback), SvnBundle.message("progress.title.commit"), false,
+        mySvnVcs.getProject());
     }
     else {
       doCommit(committables, preparedComment, exception, feedback);
@@ -253,7 +242,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     ProgressTracker eventHandler = new SvnProgressCanceller() {
       @Override
-      public void consume(ProgressEvent event) throws SVNException {
+      public void consume(ProgressEvent event) {
         // TODO: indicator is null here when invoking "Add" action
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         File file = event.getFile();

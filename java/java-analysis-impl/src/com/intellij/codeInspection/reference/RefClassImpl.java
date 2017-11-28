@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 21, 2001
- * Time: 4:29:19 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -58,15 +50,15 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_LOCAL_MASK     = 0x1000000;
   private static final int IS_ANDROID_MASK   = 0x2000000;
 
-  private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet
-  private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet
-  private List<RefMethod> myConstructors;
-  private RefMethodImpl myDefaultConstructor;
-  private List<RefMethod> myOverridingMethods;
-  private Set<RefElement> myInTypeReferences;
-  private Set<RefElement> myInstanceReferences;
-  private List<RefJavaElement> myClassExporters;
-  private RefModule myRefModule;
+  private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet. guarded by this
+  private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet. guarded by this
+  private List<RefMethod> myConstructors; // guarded by this
+  private RefMethodImpl myDefaultConstructor; //guarded by this
+  private List<RefMethod> myOverridingMethods; //guarded by this
+  private Set<RefElement> myInTypeReferences; //guarded by this
+  private Set<RefElement> myInstanceReferences;//guarded by this
+  private List<RefJavaElement> myClassExporters;//guarded by this
+  private final RefModule myRefModule;
 
   RefClassImpl(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
@@ -75,7 +67,9 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   protected void initialize() {
-    myDefaultConstructor = null;
+    synchronized (this) {
+      myDefaultConstructor = null;
+    }
 
     final PsiClass psiClass = getElement();
 
@@ -87,12 +81,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(getJspFile(psiClass));
         LOG.assertTrue(refFile != null);
         refFile.add(this);
-      } else if (psiParent instanceof PsiJavaFile) {
-        PsiJavaFile psiFile = (PsiJavaFile) psiParent;
+      }
+      else if (psiParent instanceof PsiJavaFile) {
+        PsiJavaFile psiFile = (PsiJavaFile)psiParent;
         String packageName = psiFile.getPackageName();
-        if (!"".equals(packageName)) {
+        if (!packageName.isEmpty()) {
           ((RefPackageImpl)getRefJavaManager().getPackage(packageName)).add(this);
-        } else {
+        }
+        else {
           ((RefPackageImpl)getRefJavaManager().getDefaultPackage()).add(this);
         }
       }
@@ -101,14 +97,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       final RefModuleImpl refModule = (RefModuleImpl)getRefManager().getRefModule(module);
       LOG.assertTrue(refModule != null);
       refModule.add(this);
-    } else {
+    }
+    else {
       while (!(psiParent instanceof PsiClass || psiParent instanceof PsiMethod || psiParent instanceof PsiField)) {
         psiParent = psiParent.getParent();
       }
       RefElement refParent = getRefManager().getReference(psiParent);
-      LOG.assertTrue (refParent != null);
+      LOG.assertTrue(refParent != null);
       ((RefElementImpl)refParent).add(this);
-
     }
 
     setAbstract(psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
@@ -283,7 +279,9 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    myDefaultConstructor = defaultConstructor;
+    synchronized (this) {
+      myDefaultConstructor = defaultConstructor;
+    }
   }
 
   @NotNull
@@ -339,12 +337,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   @NotNull
-  public Set<RefClass> getBaseClasses() {
+  public synchronized Set<RefClass> getBaseClasses() {
     if (myBases == null) return EMPTY_CLASS_SET;
     return myBases;
   }
 
-  private void addBaseClass(RefClass refClass){
+  private synchronized void addBaseClass(RefClass refClass){
     if (myBases == null) {
       myBases = Collections.singleton(refClass);
       return;
@@ -358,12 +356,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   @NotNull
-  public Set<RefClass> getSubClasses() {
+  public synchronized Set<RefClass> getSubClasses() {
     if (mySubClasses == null) return EMPTY_CLASS_SET;
     return mySubClasses;
   }
 
-  private void addSubClass(@NotNull RefClass refClass){
+  private synchronized void addSubClass(@NotNull RefClass refClass){
     if (mySubClasses == null) {
       mySubClasses = Collections.singleton(refClass);
       return;
@@ -374,7 +372,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     mySubClasses.add(refClass);
   }
-  private void removeSubClass(RefClass refClass){
+  private synchronized void removeSubClass(RefClass refClass){
     if (mySubClasses == null) return;
     if (mySubClasses.size() == 1) {
       mySubClasses = null;
@@ -386,37 +384,39 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   @NotNull
-  public List<RefMethod> getConstructors() {
+  public synchronized List<RefMethod> getConstructors() {
     if (myConstructors == null) return EMPTY_METHOD_LIST;
     return myConstructors;
   }
 
   @Override
   @NotNull
-  public Set<RefElement> getInTypeReferences() {
+  public synchronized Set<RefElement> getInTypeReferences() {
     if (myInTypeReferences == null) return EMPTY_SET;
     return myInTypeReferences;
   }
 
-  public void addTypeReference(RefJavaElement from) {
+  void addTypeReference(RefJavaElement from) {
     if (from != null) {
-      if (myInTypeReferences == null){
-        myInTypeReferences = new THashSet<>(1);
+      synchronized (this) {
+        if (myInTypeReferences == null){
+          myInTypeReferences = new THashSet<>(1);
+        }
+        myInTypeReferences.add(from);
       }
-      myInTypeReferences.add(from);
-      ((RefJavaElementImpl)from).addOutTypeRefernce(this);
+      ((RefJavaElementImpl)from).addOutTypeReference(this);
       getRefManager().fireNodeMarkedReferenced(this, from, false, false, false);
     }
   }
 
   @Override
   @NotNull
-  public Set<RefElement> getInstanceReferences() {
+  public synchronized Set<RefElement> getInstanceReferences() {
     if (myInstanceReferences == null) return EMPTY_SET;
     return myInstanceReferences;
   }
 
-  public void addInstanceReference(RefElement from) {
+  synchronized void addInstanceReference(RefElement from) {
     if (myInstanceReferences == null){
       myInstanceReferences = new THashSet<>(1);
     }
@@ -424,18 +424,18 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public RefMethod getDefaultConstructor() {
+  public synchronized RefMethod getDefaultConstructor() {
     return myDefaultConstructor;
   }
 
-  private void addConstructor(RefMethod refConstructor) {
+  private synchronized void addConstructor(RefMethod refConstructor) {
     if (myConstructors == null){
       myConstructors = new ArrayList<>(1);
     }
     myConstructors.add(refConstructor);
   }
 
-  public void addLibraryOverrideMethod(RefMethod refMethod) {
+  synchronized void addLibraryOverrideMethod(RefMethod refMethod) {
     if (myOverridingMethods == null){
       myOverridingMethods = new ArrayList<>(2);
     }
@@ -444,7 +444,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   @NotNull
-  public List<RefMethod> getLibraryMethods() {
+  public synchronized List<RefMethod> getLibraryMethods() {
     if (myOverridingMethods == null) return EMPTY_METHOD_LIST;
     return myOverridingMethods;
   }
@@ -482,7 +482,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
 
   @Nullable
-  public static RefClass classFromExternalName(RefManager manager, String externalName) {
+  static RefClass classFromExternalName(RefManager manager, String externalName) {
     return (RefClass) manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
@@ -499,7 +499,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
-  private void removeBase(RefClass superClass) {
+  private synchronized void removeBase(RefClass superClass) {
     final Set<RefClass> baseClasses = getBaseClasses();
     if (baseClasses.contains(superClass)) {
       if (baseClasses.size() == 1) {
@@ -510,7 +510,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
-  protected void methodRemoved(RefMethod method) {
+  void methodRemoved(RefMethod method) {
     getConstructors().remove(method);
     getLibraryMethods().remove(method);
 
@@ -572,13 +572,13 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return false;
   }
 
-  public void addClassExporter(RefJavaElement exporter) {
+  synchronized void addClassExporter(RefJavaElement exporter) {
     if (myClassExporters == null) myClassExporters = new ArrayList<>(1);
     if (myClassExporters.contains(exporter)) return;
     myClassExporters.add(exporter);
   }
 
-  public List<RefJavaElement> getClassExporters() {
+  public synchronized List<RefJavaElement> getClassExporters() {
     return myClassExporters;
   }
 

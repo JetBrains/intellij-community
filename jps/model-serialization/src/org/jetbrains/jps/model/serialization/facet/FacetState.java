@@ -32,6 +32,7 @@ import java.util.ArrayList;
 public class FacetState {
   private String myFacetType;
   private String myName;
+  private String myExternalSystemId;
   private Element myConfiguration;
   private List<FacetState> mySubFacets = new ArrayList<>();
 
@@ -48,6 +49,11 @@ public class FacetState {
   @Tag(JpsFacetSerializer.CONFIGURATION_TAG)
   public Element getConfiguration() {
     return myConfiguration;
+  }
+
+  @Attribute("external-system-id")
+  public String getExternalSystemId() {
+    return myExternalSystemId;
   }
 
   @Property(surroundWithTag = false)
@@ -70,5 +76,9 @@ public class FacetState {
 
   public void setFacetType(final String type) {
     myFacetType = type;
+  }
+
+  public void setExternalSystemId(String externalSystemId) {
+    myExternalSystemId = externalSystemId;
   }
 }

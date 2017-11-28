@@ -3,7 +3,6 @@ Support for a tag that allows skipping over functions while debugging.
 '''
 import linecache
 import re
-from _pydevd_bundle.pydevd_constants import dict_contains
 
 # To suppress tracing a method, add the tag @DontTrace
 # to a comment either preceding or on the same line as
@@ -78,8 +77,8 @@ def default_should_trace_hook(frame, filename):
 
     func_line = frame.f_code.co_firstlineno - 1 # co_firstlineno is 1-based, so -1 is needed
     return not (
-        dict_contains(ignored_lines, func_line - 1) or #-1 to get line before method 
-        dict_contains(ignored_lines, func_line)) #method line
+        func_line - 1 in ignored_lines or #-1 to get line before method 
+        func_line in ignored_lines) #method line
 
 
 should_trace_hook = None

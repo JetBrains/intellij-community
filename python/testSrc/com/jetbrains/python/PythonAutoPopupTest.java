@@ -40,7 +40,7 @@ public class PythonAutoPopupTest extends PyTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     myTester.runWithAutoPopupEnabled(runnable);
   }
 

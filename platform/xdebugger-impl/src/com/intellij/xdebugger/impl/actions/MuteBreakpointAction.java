@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,6 +72,6 @@ public class MuteBreakpointAction extends ToggleAction {
 
   @Override
   public boolean isDumbAware() {
-    return Registry.is("dumb.aware.run.configurations");
+    return true;
   }
 }

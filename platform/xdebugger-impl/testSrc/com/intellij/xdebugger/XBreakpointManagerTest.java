@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.JdomKt;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author nik
@@ -88,9 +90,9 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testDoNotSaveUnmodifiedDefaultBreakpoint() {
     reload();
 
-    assertEquals("default", getSingleBreakpoint().getProperties().myOption);
+    assertThat(getSingleBreakpoint().getProperties().myOption).isEqualTo("default");
     Element element = save();
-    assertEquals(0, element.getContent().size());
+    assertThat(element).isNull();
   }
 
   public void testSaveChangedDefaultBreakpoint() {
@@ -114,7 +116,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testListener() {
     final StringBuilder out = new StringBuilder();
-    XBreakpointAdapter<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointAdapter<XLineBreakpoint<MyBreakpointProperties>>() {
+    XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>>() {
       @Override
       public void breakpointAdded(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("added[").append(breakpoint.getProperties().myOption).append("];");

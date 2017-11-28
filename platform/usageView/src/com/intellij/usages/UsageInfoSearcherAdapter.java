@@ -16,10 +16,10 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -41,12 +41,7 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
       DumbService.getInstance(project).showDumbModeNotification("Usage search is not available until indices are ready");
       return;
     }
-    final Usage[] usages = ApplicationManager.getApplication().runReadAction(new Computable<Usage[]>() {
-      @Override
-      public Usage[] compute() {
-        return UsageInfo2UsageAdapter.convert(refUsages.get());
-      }
-    });
+    final Usage[] usages = ReadAction.compute(() -> UsageInfo2UsageAdapter.convert(refUsages.get()));
 
     for (final Usage usage : usages) {
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -55,5 +50,6 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
     }
   }
 
+  @NotNull
   protected abstract UsageInfo[] findUsages();
 }

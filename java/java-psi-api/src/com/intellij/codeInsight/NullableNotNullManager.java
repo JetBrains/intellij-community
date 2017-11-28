@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -34,7 +33,8 @@ import java.util.*;
  * @since 25.01.2011
  */
 public abstract class NullableNotNullManager {
-  protected static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
+  protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);
+  protected final Project myProject;
 
   public String myDefaultNullable = "android.support.annotation.Nullable";
   public String myDefaultNotNull = "android.support.annotation.NonNull";
@@ -42,13 +42,15 @@ public abstract class NullableNotNullManager {
   public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
 
   private static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
-  private static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
+  protected static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
 
-  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, JAVAX_ANNOTATION_NULLABLE,
+  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, 
+    JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull",
     "edu.umd.cs.findbugs.annotations.Nullable", "android.support.annotation.Nullable"
   };
 
-  public NullableNotNullManager() {
+  public NullableNotNullManager(Project project) {
+    myProject = project;
     Collections.addAll(myNullables, DEFAULT_NULLABLES);
   }
 
@@ -201,7 +203,7 @@ public abstract class NullableNotNullManager {
       String qName = annotation.getQualifiedName();
       if (qName == null) return null;
 
-      List<String> contradictory = nullable ? getNotNulls() : getNullables();
+      List<String> contradictory = nullable ? getNotNullsWithNickNames() : getNullablesWithNickNames();
       if (contradictory.contains(qName)) return null;
 
       return annotation;
@@ -240,11 +242,45 @@ public abstract class NullableNotNullManager {
   }
 
   private PsiAnnotation findPlainNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
-    Set<String> qNames = ContainerUtil.newHashSet(getNullables());
-    qNames.addAll(getNotNulls());
-    return checkBases && owner instanceof PsiMethod
-           ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
-           : AnnotationUtil.findAnnotation(owner, qNames);
+    Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
+    qNames.addAll(getNotNullsWithNickNames());
+    PsiAnnotation memberAnno = checkBases && owner instanceof PsiMethod
+                               ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
+                               : AnnotationUtil.findAnnotation(owner, qNames);
+    PsiType type = getOwnerType(owner);
+    if (memberAnno != null) {
+      return preferTypeAnnotation(memberAnno, type);
+    } 
+    if (type != null) {
+      return ContainerUtil.find(type.getAnnotations(), a -> qNames.contains(a.getQualifiedName()));
+    }
+    return null;
+  }
+
+  private static PsiAnnotation preferTypeAnnotation(@NotNull PsiAnnotation memberAnno, @Nullable PsiType type) {
+    if (type != null) {
+      for (PsiAnnotation typeAnno : type.getApplicableAnnotations()) {
+        if (areDifferentNullityAnnotations(memberAnno, typeAnno)) {
+          return typeAnno;
+        }
+      }
+    }
+    return memberAnno;
+  }
+
+  private static boolean areDifferentNullityAnnotations(@NotNull PsiAnnotation memberAnno, PsiAnnotation typeAnno) {
+    return isNullableAnnotation(typeAnno) && isNotNullAnnotation(memberAnno) ||
+        isNullableAnnotation(memberAnno) && isNotNullAnnotation(typeAnno);
+  }
+
+  @NotNull
+  protected List<String> getNullablesWithNickNames() {
+    return getNullables();
+  }
+
+  @NotNull
+  protected List<String> getNotNullsWithNickNames() {
+    return getNotNulls();
   }
 
   protected boolean hasHardcodedContracts(PsiElement element) {
@@ -357,4 +393,12 @@ public abstract class NullableNotNullManager {
   }
 
   public abstract List<String> getPredefinedNotNulls();
+
+  public static boolean isNullableAnnotation(@NotNull PsiAnnotation annotation) {
+    return getInstance(annotation.getProject()).getNullablesWithNickNames().contains(annotation.getQualifiedName());
+  }
+
+  public static boolean isNotNullAnnotation(@NotNull PsiAnnotation annotation) {
+    return getInstance(annotation.getProject()).getNotNullsWithNickNames().contains(annotation.getQualifiedName());
+  }
 }

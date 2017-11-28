@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,15 +113,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       if (cause instanceof ProcessCanceledException) {
         LOG.debug("Task cancelled via progress indicator");
       }
-      else if (cause instanceof RuntimeException) {
-        throw (RuntimeException)cause;
-      }
-      else if (cause instanceof Error) {
-        throw (Error)cause;
-      }
-      else {
-        throw new RuntimeException("Unknown checked exception", cause);
-      }
+      ExceptionUtil.rethrow(cause);
     }
     return false;
   }
@@ -148,17 +141,13 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       limit = GotoTaskAction.PAGE_SIZE;
       myCurrentOffset += GotoTaskAction.PAGE_SIZE;
     }
-    List<Task> tasks = TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(myProject),
-                                                              pattern, offset, limit, true, everywhere, cancelled);
+    List<Task> tasks = TaskSearchSupport.getRepositoriesTasks(myProject, pattern, offset, limit, true, everywhere, cancelled);
     myOldEverywhere = everywhere;
     myOldPattern = pattern;
     return tasks;
   }
 
   private boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
-    if (!tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) {
-      return false;
-    }
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (Task task : tasks) {
       cancelled.checkCanceled();

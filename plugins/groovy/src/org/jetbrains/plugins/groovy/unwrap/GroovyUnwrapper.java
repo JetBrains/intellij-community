@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import java.util.List;
 
 public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.Context> {
-  public GroovyUnwrapper(String description) {
+  public GroovyUnwrapper(@NotNull String description) {
     super(description);
   }
 
@@ -47,8 +48,9 @@ public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.
     return parent instanceof GrIfStatement && element == ((GrIfStatement)parent).getElseBranch();
   }
 
+  @NotNull
   @Override
-  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     List<PsiElement> res = super.unwrap(editor, element);
 
     for (PsiElement e : res) {

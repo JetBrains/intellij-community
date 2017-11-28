@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ public final class TextEditorState implements FileEditorState {
     int   LINE;
     int   COLUMN;
     boolean LEAN_FORWARD;
+    int   VISUAL_COLUMN_ADJUSTMENT;
     int   SELECTION_START_LINE;
     int   SELECTION_START_COLUMN;
     int   SELECTION_END_LINE;
@@ -135,6 +136,7 @@ public final class TextEditorState implements FileEditorState {
       if (COLUMN != caretState.COLUMN) return false;
       if (LINE != caretState.LINE) return false;
       if (LEAN_FORWARD != caretState.LEAN_FORWARD) return false;
+      if (VISUAL_COLUMN_ADJUSTMENT != caretState.VISUAL_COLUMN_ADJUSTMENT) return false;
       if (SELECTION_START_LINE != caretState.SELECTION_START_LINE) return false;
       if (SELECTION_START_COLUMN != caretState.SELECTION_START_COLUMN) return false;
       if (SELECTION_END_LINE != caretState.SELECTION_END_LINE) return false;

@@ -28,7 +28,6 @@ import com.intellij.openapi.options.newEditor.SettingsDialogFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -58,34 +57,38 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return SettingsDialogFactory.getInstance().create(project, filteredGroups, toSelect, null);
   }
 
+  /**
+   * @param project         a project used to load project settings or {@code null}
+   * @param withIdeSettings specifies whether to load application settings or not
+   * @return an array with the root configurable group
+   */
   @NotNull
   public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
-    if (!withIdeSettings) {
-      project = getProject(project);
-    }
-    return new ConfigurableGroup[]{ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings)};
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
+    return new ConfigurableGroup[]{group};
   }
 
+  /**
+   * @param project         a project used to load project settings or {@code null}
+   * @param withIdeSettings specifies whether to load application settings or not
+   * @return all configurables as a plain list except the root configurable group
+   */
   @NotNull
-  public static Configurable[] getConfigurables(@Nullable Project project, boolean withGroupReverseOrder) {
-    return getConfigurables(getConfigurableGroups(project, true), withGroupReverseOrder);
+  public static Configurable[] getConfigurables(@Nullable Project project, boolean withIdeSettings) {
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
+    List<Configurable> list = new ArrayList<>();
+    collect(list, group.getConfigurables());
+    return list.toArray(new Configurable[0]);
   }
 
-  @NotNull
-  private static Configurable[] getConfigurables(@NotNull ConfigurableGroup[] groups, boolean withGroupReverseOrder) {
-    Configurable[][] arrays = new Configurable[groups.length][];
-    int length = 0;
-    for (int i = 0; i < groups.length; i++) {
-      arrays[i] = groups[withGroupReverseOrder ? groups.length - 1 - i : i].getConfigurables();
-      length += arrays[i].length;
+  private static void collect(List<Configurable> list, Configurable... configurables) {
+    for (Configurable configurable : configurables) {
+      list.add(configurable);
+      if (configurable instanceof Configurable.Composite) {
+        Configurable.Composite composite = (Configurable.Composite)configurable;
+        collect(list, composite.getConfigurables());
+      }
     }
-    Configurable[] configurables = new Configurable[length];
-    int offset = 0;
-    for (Configurable[] array : arrays) {
-      System.arraycopy(array, 0, configurables, offset, array.length);
-      offset += array.length;
-    }
-    return configurables;
   }
 
   @Override
@@ -240,7 +243,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   public static String createDimensionKey(@NotNull Configurable configurable) {
-    return '#' + StringUtil.replaceChar(StringUtil.replaceChar(configurable.getDisplayName(), '\n', '_'), ' ', '_');
+    return '#' + configurable.getDisplayName().replace('\n', '_').replace(' ', '_');
   }
 
   @Override

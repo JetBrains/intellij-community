@@ -36,14 +36,14 @@ public class ConstExprent extends Exprent {
   private static final Map<Integer, String> CHAR_ESCAPES;
   static {
     CHAR_ESCAPES = new HashMap<>();
-    CHAR_ESCAPES.put(new Integer(0x8), "\\b");   /* \u0008: backspace BS */
-    CHAR_ESCAPES.put(new Integer(0x9), "\\t");   /* \u0009: horizontal tab HT */
-    CHAR_ESCAPES.put(new Integer(0xA), "\\n");   /* \u000a: linefeed LF */
-    CHAR_ESCAPES.put(new Integer(0xC), "\\f");   /* \u000c: form feed FF */
-    CHAR_ESCAPES.put(new Integer(0xD), "\\r");   /* \u000d: carriage return CR */
-    //CHAR_ESCAPES.put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
-    CHAR_ESCAPES.put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
-    CHAR_ESCAPES.put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
+    CHAR_ESCAPES.put(0x8, "\\b");   /* \u0008: backspace BS */
+    CHAR_ESCAPES.put(0x9, "\\t");   /* \u0009: horizontal tab HT */
+    CHAR_ESCAPES.put(0xA, "\\n");   /* \u000a: linefeed LF */
+    CHAR_ESCAPES.put(0xC, "\\f");   /* \u000c: form feed FF */
+    CHAR_ESCAPES.put(0xD, "\\r");   /* \u000d: carriage return CR */
+    //CHAR_ESCAPES.put(0x22, "\\\""); /* \u0022: double quote " */
+    CHAR_ESCAPES.put(0x27, "\\\'"); /* \u0027: single quote ' */
+    CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
   }
 
   private VarType constType;
@@ -51,7 +51,7 @@ public class ConstExprent extends Exprent {
   private final boolean boolPermitted;
 
   public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
-    this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
+    this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
   }
 
   public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
@@ -133,7 +133,7 @@ public class ConstExprent extends Exprent {
         String ret = CHAR_ESCAPES.get(val);
         if (ret == null) {
           char c = (char)val.intValue();
-          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
+          if (isPrintableAscii(c) || !ascii && TextUtil.isPrintableUnicode(c)) {
             ret = String.valueOf(c);
           }
           else {
@@ -278,7 +278,7 @@ public class ConstExprent extends Exprent {
         //  buffer.append("\\\'");
         //  break;
         default:
-          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
+          if (isPrintableAscii(c) || !ascii && TextUtil.isPrintableUnicode(c)) {
             buffer.append(c);
           }
           else {
@@ -298,6 +298,13 @@ public class ConstExprent extends Exprent {
     ConstExprent cn = (ConstExprent)o;
     return InterpreterUtil.equalObjects(constType, cn.getConstType()) &&
            InterpreterUtil.equalObjects(value, cn.getValue());
+  }
+
+  @Override
+  public int hashCode() {
+    int result = constType != null ? constType.hashCode() : 0;
+    result = 31 * result + (value != null ? value.hashCode() : 0);
+    return result;
   }
 
   public boolean hasBooleanValue() {
@@ -340,13 +347,13 @@ public class ConstExprent extends Exprent {
   public static ConstExprent getZeroConstant(int type) {
     switch (type) {
       case CodeConstants.TYPE_INT:
-        return new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null);
+        return new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(0), null);
       case CodeConstants.TYPE_LONG:
-        return new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
+        return new ConstExprent(VarType.VARTYPE_LONG, Long.valueOf(0), null);
       case CodeConstants.TYPE_DOUBLE:
-        return new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
+        return new ConstExprent(VarType.VARTYPE_DOUBLE, Double.valueOf(0), null);
       case CodeConstants.TYPE_FLOAT:
-        return new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
+        return new ConstExprent(VarType.VARTYPE_FLOAT, Float.valueOf(0), null);
     }
 
     throw new RuntimeException("Invalid argument: " + type);
@@ -359,6 +366,27 @@ public class ConstExprent extends Exprent {
   public void setConstType(VarType constType) {
     this.constType = constType;
   }
+
+  public void adjustConstType(VarType expectedType) {
+    // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
+    if ((expectedType.equals(VarType.VARTYPE_CHAR) || expectedType.equals(VarType.VARTYPE_CHARACTER)) &&
+            (constType.equals(VarType.VARTYPE_BYTECHAR) || constType.equals(VarType.VARTYPE_SHORTCHAR))) {
+      int intValue = getIntValue();
+      if (isPrintableAscii(intValue) || CHAR_ESCAPES.containsKey(intValue)) {
+        setConstType(VarType.VARTYPE_CHAR);
+      }
+    }
+    // BYTE, BYTECHAR, SHORTCHAR, SHORT, CHAR => INT in the INT context
+    else if ((expectedType.equals(VarType.VARTYPE_INT) || expectedType.equals(VarType.VARTYPE_INTEGER)) &&
+            constType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+      setConstType(VarType.VARTYPE_INT);
+    }
+  }
+
+  private static boolean isPrintableAscii(int c) {
+    return c >= 32 && c < 127;
+  }
+
 
   public Object getValue() {
     return value;

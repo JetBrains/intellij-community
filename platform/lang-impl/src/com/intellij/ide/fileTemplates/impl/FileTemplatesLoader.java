@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.UriUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,14 +42,13 @@ import java.util.*;
  *
  * @author Rustam Vishnyakov
  */
-public class FileTemplatesLoader {
-  private static final Logger LOG = Logger.getInstance("#" + FileTemplatesLoader.class.getName());
+class FileTemplatesLoader {
+  private static final Logger LOG = Logger.getInstance(FileTemplatesLoader.class);
 
   static final String TEMPLATES_DIR = "fileTemplates";
   private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
-  public static final String DESCRIPTION_FILE_EXTENSION = "html";
+  private static final String DESCRIPTION_FILE_EXTENSION = "html";
   private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
-  //static final String DESCRIPTION_FILE_NAME = "default." + DESCRIPTION_FILE_EXTENSION;
 
   private final FTManager myDefaultTemplatesManager;
   private final FTManager myInternalTemplatesManager;
@@ -68,11 +68,11 @@ public class FileTemplatesLoader {
   private URL myDefaultTemplateDescription;
   private URL myDefaultIncludeDescription;
 
-  protected FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
+  FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     myTypeManager = typeManager;
     File configDir = project == null || project.isDefault()
                      ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
-                     : new File(ProjectKt.getStateStore(project).getDirectoryStorePath(true) + "/" + TEMPLATES_DIR);
+                     : new File(UriUtil.trimTrailingSlashes(ProjectKt.getStateStore(project).getDirectoryStorePath(true)) + "/" + TEMPLATES_DIR);
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
     myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, new File(configDir, INTERNAL_DIR), true);
     myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, new File(configDir, INCLUDES_DIR));
@@ -98,7 +98,7 @@ public class FileTemplatesLoader {
   }
 
   @NotNull
-  protected FTManager[] getAllManagers() {
+  FTManager[] getAllManagers() {
     return myAllManagers;
   }
 
@@ -124,11 +124,11 @@ public class FileTemplatesLoader {
     return new FTManager(myJ2eeTemplatesManager);
   }
 
-  public URL getDefaultTemplateDescription() {
+  URL getDefaultTemplateDescription() {
     return myDefaultTemplateDescription;
   }
 
-  public URL getDefaultIncludeDescription() {
+  URL getDefaultIncludeDescription() {
     return myDefaultIncludeDescription;
   }
 
@@ -168,10 +168,10 @@ public class FileTemplatesLoader {
     final Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
-        myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+        myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
       }
       else if (path.equals("includes/default.html")) {
-        myDefaultIncludeDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+        myDefaultIncludeDescription = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
@@ -185,9 +185,10 @@ public class FileTemplatesLoader {
             final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
             final String extension = myTypeManager.getExtension(filename);
             final String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-            final URL templateUrl = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+            final URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm())+ "/" + path));
             final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath != null ? UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + descriptionPath)) : null;
+            final URL descriptionUrl = descriptionPath == null ? null :
+                                       UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
             assert templateUrl != null;
             entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           }
@@ -198,7 +199,7 @@ public class FileTemplatesLoader {
   }
 
   private static boolean matchesPrefix(String path, String prefix) {
-    if (prefix.length() == 0) {
+    if (prefix.isEmpty()) {
       return !path.contains("/");
     }
     return FileUtil.startsWith(path, prefix) && !path.substring(prefix.length()).contains("/");
@@ -212,19 +213,19 @@ public class FileTemplatesLoader {
     String descName = MessageFormat
       .format("{0}.{1}_{2}_{3}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension,
               locale.getLanguage(), locale.getCountry());
-    String descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    String descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }

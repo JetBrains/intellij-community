@@ -75,7 +75,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     }
     if (myConditions instanceof PatternCondition) {
       PatternCondition<? super T> singleCondition = (PatternCondition)myConditions;
-      return new ElementPatternCondition<>(myInitialCondition, Collections.<PatternCondition<? super T>>singletonList(singleCondition));
+      return new ElementPatternCondition<>(myInitialCondition, Collections.singletonList(singleCondition));
     }
     return new ElementPatternCondition<>(myInitialCondition, (List)myConditions);
   }

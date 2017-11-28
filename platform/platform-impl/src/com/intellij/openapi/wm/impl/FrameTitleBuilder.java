@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public abstract class FrameTitleBuilder {
     return ServiceManager.getService(FrameTitleBuilder.class);
   }
 
-  public abstract String getProjectTitle(@NotNull final Project project);
+  public abstract String getProjectTitle(@NotNull Project project);
 
-  public abstract String getFileTitle(@NotNull final Project project, @NotNull final VirtualFile file);
+  public abstract String getFileTitle(@NotNull Project project, @NotNull VirtualFile file);
 }

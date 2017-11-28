@@ -30,17 +30,17 @@ class JavaFxColorProviderTest : AbstractJavaFXTestCase() {
       val element = myFixture.file.findElementAt(caret.offset)
       assertNotNull("Element at caret:$caret", element)
 
-      val expression = PsiTreeUtil.findFirstParent(element, { it?.parent !is PsiExpression }) as? PsiExpression
+      val expression = PsiTreeUtil.findFirstParent(element?.parent, { it?.parent !is PsiExpression }) as? PsiExpression
       assertNotNull("Expression at caret:${element?.text}", expression)
 
       val type = expression?.type?.canonicalText
       assertEquals("Expression type:${expression?.text}", "javafx.scene.paint.Color", type)
 
-      val color = JavaFxColorProvider().getColorFrom(expression ?: return)
+      val color = JavaFxColorProvider().getColorFrom(element ?: return)
       if (isNotNull)
-        assertNotNull("Color expected:${expression.text}", color)
+        assertNotNull("Color expected:${expression?.text}", color)
       else
-        assertNull("Color is not expected:${expression.text}", color)
+        assertNull("Color is not expected:${expression?.text}", color)
     }
   }
 }

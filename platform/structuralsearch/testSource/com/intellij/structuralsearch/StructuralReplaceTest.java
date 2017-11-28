@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -24,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
@@ -1097,11 +1083,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void testClassReplacement3() {
-    if (true) return;
+  public void _testClassReplacement3() {
     String s37 = "class A { int a = 1; void B() {} int C(char ch) { int z = 1; } int b = 2; }";
 
-    String s38 = "class 'A { 'T* 'M*('PT* 'PN*) { 'S*; } 'O* }";
+    String s38 = "class 'A { '_T* '_M*('_PT* '_PN*) { '_S*; } '_O* }";
     String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
 
     String expectedResult14 = "class A { int a = 1; void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } int b = 2;}";
@@ -1110,7 +1095,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(
       "Multiple methods replacement",
       expectedResult14,
-      replacer.testReplace(s37,s38,s39,options, true)
+      replacer.testReplace(s37, s38, s39, options, true)
     );
   }
 
@@ -1729,12 +1714,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToShortenFQN(true);
 
     try {
-      PlatformTestUtil.startPerformanceTest("SSR should work fast", 3500, new ThrowableRunnable() {
+      PlatformTestUtil.startPerformanceTest("SSR", 3500, new ThrowableRunnable() {
                                               public void run() {
                                                 doTest(testName, ext, message);
                                               }
                                             }
-      ).cpuBound().useLegacyScaling().assertTiming();
+      ).useLegacyScaling().assertTiming();
     } finally {
       options.setToReformatAccordingToStyle(false);
       options.setToShortenFQN(false);
@@ -1932,6 +1917,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(expected, replacer.testReplace(s1,s2,s3,options));
   }
 
+  public void testKeepUnmatchedModifiers() {
+    final String in = "class X {" +
+                      "  private static final int foo = 1;" +
+                      "}";
+    final String expected = "class X {" +
+                            "  protected static final int foo = 1;" +
+                            "}";
+
+    assertEquals(expected, replacer.testReplace(in, "private '_Type '_field = '_init;", "protected $Type$ $field$ = $init$;", options));
+  }
+
   public void testRemovingRedundancy() throws Exception {
     String s1 = "int a = 1;\n" +
                 "a = 2;\n" +
@@ -2022,6 +2018,16 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
     assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
                  "public class A {}", replacer.testReplace(in, what, by2, options, false));
+
+    final String in2 = "class X {" +
+                 "  @SuppressWarnings(\"unused\") String s;" +
+                 "}";
+    final String what2 = "@SuppressWarnings(\"unused\") String '_s;";
+    final String by3 = "@SuppressWarnings({\"unused\", \"other\"}) String $s$;";
+    assertEquals("class X {" +
+                 "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
+                 "}", replacer.testReplace(in2, what2, by3, options, false));
+
   }
 
   public void testReplacePolyadicExpression() {
@@ -2150,6 +2156,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  abstract void a(int i);\n" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+
+    final String what2 = "abstract void '_a('_T '_p*);";
+    final String by2 = "void $a$($T$ $p$) {}";
+    assertEquals("abstract class A {\n" +
+                 "  void a() {}\n" +
+                 "}",
+                 replacer.testReplace(in, what2, by2, options));
   }
 
   public void testReplaceParameterWithComment() {
@@ -2162,6 +2175,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  void a(final long /*!*/ b) {}\n" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+
+    final String in2 = "class X {" +
+                       "  void m() {" +
+                       "    for (int x : new int[]{1, 2, 3}) {}" +
+                       "  }" +
+                       "}";
+    final String what2 = "'_T '_v = '_i{0,1};";
+    final String by2 = "final $T$ /*!*/ $v$ = $i$;";
+    assertEquals("foreach parameter replaced incorrectly",
+                 "class X {" +
+                 "  void m() {" +
+                 "    for (final int /*!*/ x : new int[]{1, 2, 3}) {}" +
+                 "  }" +
+                 "}",
+                 replacer.testReplace(in2, what2, by2, options));
   }
 
   public void testReplaceInnerClass() {
@@ -2224,5 +2252,35 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+  }
+
+  public void testReplaceExpressionStatement() {
+    String in = "class A {" +
+                "  void m() {" +
+                "    new Object();" +
+                "  }" +
+                "}";
+    String what = "'_expr;";
+    String by = "$expr$.toString();";
+    assertEquals("too many semicolons",
+                 "class A {" +
+                 "  void m() {" +
+                 "    new Object().toString();" +
+                 "  }" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
+  }
+
+  public void testReplaceVariableInitializer() {
+    String in = "class X {" +
+                "  private final int i = 1;" +
+                "}";
+    String what = "int '_v;";
+    String by = "long $v$;";
+    assertEquals("initializer should remain",
+                 "class X {" +
+                 "  private final long i=1;" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
   }
 }

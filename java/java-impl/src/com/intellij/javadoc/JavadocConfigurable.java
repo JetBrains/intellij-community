@@ -160,6 +160,7 @@ public final class JavadocConfigurable implements Configurable {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propJavaDoc";
   }

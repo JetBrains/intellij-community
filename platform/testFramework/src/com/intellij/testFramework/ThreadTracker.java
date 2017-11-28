@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -37,12 +38,14 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author cdr
  */
 public class ThreadTracker {
+  private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Collection<Thread> before;
   private final boolean myDefaultProjectInitialized;
 
@@ -84,7 +87,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
     wellKnownOffenders.add("Netty ");
-    wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
@@ -174,7 +176,7 @@ public class ThreadTracker {
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+  private static boolean isIdleApplicationPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     if (!isWellKnownOffender(thread)) return false;
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
@@ -183,16 +185,22 @@ public class ThreadTracker {
     return insideTPEGetTask;
   }
 
-  private static boolean isIdleCommonPoolThread(Thread thread, StackTraceElement[] stackTrace) {
-    if (!thread.getName().startsWith("ForkJoinPool.commonPool"))
+  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
+    }
     boolean insideAwaitWork = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("awaitWork")
                            && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
   }
 
-  public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
+  public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
+    awaitThreadTerminationWithParentParentGroup("JDI main", timeout, unit);
+  }
+  private static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup,
+                                                                  int timeout,
+                                                                  @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {
@@ -205,7 +213,7 @@ public class ThreadTracker {
       }
       try {
         long timeLeft = start + unit.toMillis(timeout) - System.currentTimeMillis();
-        System.out.println("Waiting for the "+jdiThread+" for " + timeLeft+"ms");
+        LOG.debug("Waiting for the "+jdiThread+" for " + timeLeft+"ms");
         jdiThread.join(timeLeft);
       }
       catch (InterruptedException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +43,7 @@ public interface RecentTestRunner {
 class RecentTestRunnerImpl implements RecentTestRunner {
   private static AnAction RUN = ActionManager.getInstance().getAction("RunClass");
   private static AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
-  
-  private final Project myProject;
+
   private final TestLocator myTestLocator;
 
   protected AnAction myCurrentAction = RUN;
@@ -61,8 +59,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     }
   }
 
-  public RecentTestRunnerImpl(Project project, TestLocator testLocator) {
-    myProject = project;
+  public RecentTestRunnerImpl(TestLocator testLocator) {
     myTestLocator = testLocator;
   }
 
@@ -90,7 +87,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance() 
                                                : DefaultDebugExecutor.getDebugExecutorInstance();
     
-    ProgramRunnerUtil.executeConfiguration(myProject, configuration, executor);
+    ProgramRunnerUtil.executeConfiguration(configuration, executor);
   }
 
   private void run(@NotNull String url) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ public final class ImportUtils {
     importList.add(importStatement);
   }
 
-  private static boolean hasAccessibleMemberWithName(PsiClass containingClass, @NotNull String memberName, @NotNull PsiElement context) {
+  private static boolean hasAccessibleMemberWithName(@NotNull PsiClass containingClass,
+                                                     @NotNull String memberName, @NotNull PsiElement context) {
     final PsiField field = containingClass.findFieldByName(memberName, true);
     if (field != null && PsiUtil.isAccessible(field, context, null)) {
       return true;
@@ -95,40 +96,39 @@ public final class ImportUtils {
   }
 
   public static boolean nameCanBeImported(@NotNull String fqName, @NotNull PsiElement context) {
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (containingClass != null) {
-      if (fqName.equals(containingClass.getQualifiedName())) {
-        return true;
-      }
-      final String shortName = ClassUtil.extractClassName(fqName);
-      final PsiClass[] innerClasses = containingClass.getAllInnerClasses();
-      for (PsiClass innerClass : innerClasses) {
-        if (innerClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-          continue;
-        }
-        if (innerClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-          if (!ClassUtils.inSamePackage(innerClass, containingClass)) {
-            continue;
-          }
-        }
-        final String className = innerClass.getName();
-        if (shortName.equals(className)) {
-          return false;
-        }
-      }
-      PsiField field = containingClass.findFieldByName(shortName, false);
-      if (field != null) {
-        return false;
-      }
-      field = containingClass.findFieldByName(shortName, true);
-      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
-        return false;
-      }
-    }
-    final PsiJavaFile file = PsiTreeUtil.getParentOfType(context, PsiJavaFile.class);
-    if (file == null) {
+    final PsiFile containingFile = context.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) {
       return false;
     }
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    if (containingClass != null) {
+      final String shortName = ClassUtil.extractClassName(fqName);
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+      if (resolveHelper.resolveAccessibleReferencedVariable(shortName, context) != null) {
+        return false;
+      }
+      final PsiClass[] innerClasses = containingClass.getAllInnerClasses();
+      for (PsiClass innerClass : innerClasses) {
+        if (innerClass.hasModifierProperty(PsiModifier.PRIVATE) && !containingClass.equals(innerClass.getContainingClass())) {
+          // private inner class from super class
+          continue;
+        }
+        if (innerClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !ClassUtils.inSamePackage(innerClass, containingClass)) {
+          // package local inner class from super class in a different package
+          continue;
+        }
+        if (shortName.equals(innerClass.getName())) {
+          return fqName.equals(innerClass.getQualifiedName());
+        }
+      }
+      while (containingClass != null) {
+        if (shortName.equals(containingClass.getName())) {
+          return fqName.equals(containingClass.getQualifiedName());
+        }
+        containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+      }
+    }
+    final PsiJavaFile file = (PsiJavaFile) containingFile;
     if (hasExactImportConflict(fqName, file)) {
       return false;
     }
@@ -136,9 +136,6 @@ public final class ImportUtils {
       return false;
     }
     if (containsConflictingReference(file, fqName)) {
-      return false;
-    }
-    if (containsConflictingClass(fqName, file)) {
       return false;
     }
     if (containsConflictingClassName(fqName, file)) {
@@ -164,11 +161,10 @@ public final class ImportUtils {
   }
 
   private static boolean containsConflictingClassName(String fqName, PsiJavaFile file) {
-    final int lastDotIndex = fqName.lastIndexOf((int)'.');
-    final String shortName = fqName.substring(lastDotIndex + 1);
+    final String shortName = ClassUtil.extractClassName(fqName);
     final PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
-      if (shortName.equals(aClass.getName())) {
+      if (shortName.equals(aClass.getName()) && !fqName.equals(aClass.getQualifiedName())) {
         return true;
       }
     }
@@ -181,8 +177,7 @@ public final class ImportUtils {
       return false;
     }
     final PsiImportStatement[] importStatements = imports.getImportStatements();
-    final int lastDotIndex = fqName.lastIndexOf((int)'.');
-    final String shortName = fqName.substring(lastDotIndex + 1);
+    final String shortName = ClassUtil.extractClassName(fqName);
     final String dottedShortName = '.' + shortName;
     for (final PsiImportStatement importStatement : importStatements) {
       if (importStatement.isOnDemand()) {
@@ -313,10 +308,7 @@ public final class ImportUtils {
     final Project project = file.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiPackage filePackage = psiFacade.findPackage(filePackageName);
-    if (filePackage == null) {
-      return false;
-    }
-    return filePackage.containsClassNamed(shortName);
+    return filePackage != null && filePackage.containsClassNamed(shortName);
   }
 
   private static boolean hasJavaLangImportConflict(String fqName, PsiJavaFile file) {
@@ -328,50 +320,21 @@ public final class ImportUtils {
     final Project project = file.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiPackage javaLangPackage = psiFacade.findPackage(HardcodedMethodConstants.JAVA_LANG);
-    if (javaLangPackage == null) {
-      return false;
-    }
-    return javaLangPackage.containsClassNamed(shortName);
-  }
-
-  private static boolean containsConflictingClass(String fqName, PsiJavaFile file) {
-    final PsiClass[] classes = file.getClasses();
-    for (PsiClass aClass : classes) {
-      if (containsConflictingInnerClass(fqName, aClass)) {
-        return true;
-      }
-    }
-    return false;
+    return javaLangPackage != null && javaLangPackage.containsClassNamed(shortName);
   }
 
   /**
-   * ImportUtils currently checks all inner classes, even those that are
-   * contained in inner classes themselves, because it doesn't know the
-   * location of the original fully qualified reference. It should really only
-   * check if the containing class of the fully qualified reference has any
-   * conflicting inner classes.
+   * @return true, if a static import was created or already present. False, if a static import is not possible.
    */
-  private static boolean containsConflictingInnerClass(String fqName, PsiClass aClass) {
-    final String shortName = ClassUtil.extractClassName(fqName);
-    if (shortName.equals(aClass.getName()) && !fqName.equals(aClass.getQualifiedName())) {
-      return true;
-    }
-    final PsiClass[] classes = aClass.getInnerClasses();
-    for (PsiClass innerClass : classes) {
-      if (containsConflictingInnerClass(fqName, innerClass)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static boolean addStaticImport(@NotNull String qualifierClass, @NonNls @NotNull String memberName, @NotNull PsiElement context) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
-      return true;
-    }
-    if (hasAccessibleMemberWithName(containingClass, memberName, context)) {
-      return false;
+    if (containingClass != null) {
+      if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
+        return true;
+      }
+      if (hasAccessibleMemberWithName(containingClass, memberName, context)) {
+        return false;
+      }
     }
     final PsiFile contextFile = context.getContainingFile();
     if (!(contextFile instanceof PsiJavaFile)) {
@@ -511,7 +474,7 @@ public final class ImportUtils {
     private final PsiMember[] members;
     private boolean referenceFound;
 
-    private MemberReferenceVisitor(PsiMember member) {
+    MemberReferenceVisitor(PsiMember member) {
       members = new PsiMember[]{member};
     }
 
@@ -533,7 +496,7 @@ public final class ImportUtils {
       }
     }
 
-    private boolean isReferenceFound() {
+    boolean isReferenceFound() {
       return referenceFound;
     }
   }
@@ -543,8 +506,7 @@ public final class ImportUtils {
    */
   private static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
     final Map<String, Boolean> cachedValue =
-      CachedValuesManager.getCachedValue(element, () -> new CachedValueProvider.Result<>(Collections.synchronizedMap(
-        new HashMap<>()),
+      CachedValuesManager.getCachedValue(element, () -> new CachedValueProvider.Result<>(Collections.synchronizedMap(new HashMap<>()),
                                                                                          PsiModificationTracker.MODIFICATION_COUNT));
     Boolean conflictingRef = cachedValue.get(fullyQualifiedName);
     if (conflictingRef != null) {
@@ -565,7 +527,7 @@ public final class ImportUtils {
     private final String fullyQualifiedName;
     private boolean referenceFound;
 
-    private ConflictingClassReferenceVisitor(String fullyQualifiedName) {
+    ConflictingClassReferenceVisitor(String fullyQualifiedName) {
       name = ClassUtil.extractClassName(fullyQualifiedName);
       this.fullyQualifiedName = fullyQualifiedName;
     }
@@ -599,7 +561,7 @@ public final class ImportUtils {
       referenceFound = true;
     }
 
-    private boolean isConflictingReferenceFound() {
+    boolean isConflictingReferenceFound() {
       return referenceFound;
     }
   }

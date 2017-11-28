@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.Time
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import java.nio.file.Path
 
@@ -110,7 +110,7 @@ class ReadonlySource(var url: String? = null, var active: Boolean = true) {
           fileName = fileName.substring(0, fileName.length - suffix.length)
         }
         // the convention is that the .git extension should be used for bare repositories
-        return "${FileUtil.sanitizeFileName(fileName, false)}.${Integer.toHexString(url!!.hashCode())}.git"
+        return "${sanitizeFileName(fileName)}.${Integer.toHexString(url!!.hashCode())}.git"
       }
     }
 }

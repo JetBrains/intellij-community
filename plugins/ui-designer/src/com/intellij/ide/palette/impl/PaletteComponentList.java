@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
@@ -196,7 +197,9 @@ public class PaletteComponentList extends JBList {
     else if (getModel().getSize() == 0) {
       indexToSelect = -1;
     }
-    requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
+    });
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
@@ -296,7 +299,9 @@ public class PaletteComponentList extends JBList {
                        : policy.getComponentBefore(container, PaletteComponentList.this);
       if (null != next && next instanceof PaletteGroupHeader) {
         clearSelection();
-        next.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
+        });
         ((PaletteGroupHeader)next).scrollRectToVisible(next.getBounds());
       }
     }

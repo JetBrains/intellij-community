@@ -21,7 +21,6 @@ import com.intellij.history.core.Content;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -44,7 +43,7 @@ public class SelectionCalculator {
     myToLine = toLine;
   }
 
-  public boolean canCalculateFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  public boolean canCalculateFor(Revision r, Progress p) {
     try {
       doGetSelectionFor(r, p);
     }
@@ -54,16 +53,16 @@ public class SelectionCalculator {
     return true;
   }
 
-  public Block getSelectionFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  public Block getSelectionFor(Revision r, Progress p) {
     return doGetSelectionFor(r, p);
   }
 
-  private Block doGetSelectionFor(Revision r, Progress p) throws FilesTooBigForDiffException {
+  private Block doGetSelectionFor(Revision r, Progress p) {
     int target = myRevisions.indexOf(r);
     return getSelectionFor(target, target + 1, p);
   }
 
-  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) throws FilesTooBigForDiffException {
+  private Block getSelectionFor(int revisionIndex, int totalRevisions, Progress p) {
     Block cached = myCache.get(revisionIndex);
     if (cached != null) return cached;
 

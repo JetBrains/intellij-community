@@ -2,11 +2,13 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,6 +37,8 @@ import java.util.*;
 
 /**
  * @author traff
+ *
+*  All inhertors must be in {@link com.jetbrains.env.}.*
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
@@ -136,7 +140,7 @@ public abstract class PyEnvTestCase {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
       Assume.assumeThat(
         "Can't find some tags between all available interpreter, test (all methods) will be skipped",
@@ -159,13 +163,9 @@ public abstract class PyEnvTestCase {
     return allAvailableTags;
   }
 
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(runnable);
-        }
-      });
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
     }
     else {
       runnable.run();
@@ -190,11 +190,7 @@ public abstract class PyEnvTestCase {
   }
 
   public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
-    if (notEnvConfiguration()) {
-      Assert.fail("Running under teamcity but not by Env configuration. Skipping.");
-      return;
-    }
-
+    Assume.assumeFalse("Running under teamcity but not by Env configuration. Skipping.", notEnvConfiguration());
     if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
       checkStaging();
     }
@@ -351,13 +347,20 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
+  private Disposable myDisposable = Disposer.newDisposable();
+
+  public Disposable getTestRootDisposable() {
+    return myDisposable;
+  }
+
   /**
    * Always call parrent when overwrite
    */
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
+    Disposer.dispose(myDisposable);
   }
 
   /**

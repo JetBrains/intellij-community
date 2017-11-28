@@ -34,13 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspection {
 
-  @Override
-  @Nls
-    @NotNull
-    public String getGroupDisplayName() {
-        return CONTROL_FLOW;
-    }
-
     @Override
     @Nls
     @NotNull

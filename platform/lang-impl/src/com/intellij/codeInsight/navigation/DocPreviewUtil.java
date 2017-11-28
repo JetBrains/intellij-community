@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,12 +136,7 @@ public class DocPreviewUtil {
     StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
     for (String replaceFrom : sortedReplacements) {
-      String visibleName = replaceFrom;
-      int i = visibleName.lastIndexOf('.');
-      if (i > 0 && i < visibleName.length() - 1) {
-        visibleName = visibleName.substring(i + 1);
-      }
-      replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), visibleName), modifiedRanges);
+      replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), replaceFrom), modifiedRanges);
     }
     return buffer.toString();
   }
@@ -185,7 +180,7 @@ public class DocPreviewUtil {
                               @NotNull String replaceTo,
                               @NotNull List<TextRange> readOnlyChanges)
   {
-    for (int i = text.indexOf(replaceFrom); i >= 0 && i < text.length() - 1; i = text.indexOf(replaceFrom, i + 1)) {
+    for (int i = text.indexOf(replaceFrom); i >= 0; i = text.indexOf(replaceFrom, i + 1)) {
       int end = i + replaceFrom.length();
       if (intersects(readOnlyChanges, i, end)) {
         continue;

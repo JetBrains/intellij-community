@@ -170,6 +170,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return GrClassImplUtil.getSuperClass(this);
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return PsiClass.EMPTY_ARRAY;

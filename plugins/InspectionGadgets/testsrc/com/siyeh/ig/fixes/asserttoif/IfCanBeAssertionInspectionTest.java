@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,41 @@ public class IfCanBeAssertionInspectionTest extends IGQuickFixesTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new IfCanBeAssertionInspection());
+    myFixture.addClass("package java.util;\n" +
+                       "public class Objects {\n" +
+                       "    public static <T> T requireNonNull(T obj) {\n" +
+                       "        if (obj == null)\n" +
+                       "            throw new NullPointerException();\n" +
+                       "        return obj;\n" +
+                       "    }\n" +
+                       "    public static <T> T requireNonNull(T obj, String msg) {\n" +
+                       "        if (obj == null)\n" +
+                       "            throw new NullPointerException();\n" +
+                       "        return obj;\n" +
+                       "    }\n" +
+                       "}");
+    myFixture.addClass("package com.google.common.base;\n" +
+                       "public class Preconditions {\n" +
+                       "    public static <T> T checkNotNull(T obj) {\n" +
+                       "        if (obj == null)\n" +
+                       "            throw new NullPointerException();\n" +
+                       "        return obj;\n" +
+                       "    }\n" +
+                       "    public static <T> T checkNotNull(T obj, Object msg) {\n" +
+                       "        if (obj == null)\n" +
+                       "            throw new NullPointerException();\n" +
+                       "        return obj;\n" +
+                       "    }\n" +
+                       "}");
     myRelativePath = "asserttoif/if_to_assert";
-    myDefaultHint = InspectionGadgetsBundle.message("if.can.be.assertion.quickfix");
+    myDefaultHint = InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.assertion.quickfix");
   }
 
   public void testRandomThrowable() { doTest(); }
   public void testParentheses() { doTest(); }
+  public void testPreconditions1() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  public void testPreconditions2() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  public void testPreconditions3() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  public void testObjectsRequireNonNull() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  public void testNoCondition() { assertQuickfixNotAvailable(); }
 }

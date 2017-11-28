@@ -18,13 +18,13 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class PresentationFactory {
-  private final Map<AnAction,Presentation> myAction2Presentation = new WeakHashMap<>();
+  private final Map<AnAction,Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
 
   @NotNull
   public final Presentation getPresentation(@NotNull AnAction action){

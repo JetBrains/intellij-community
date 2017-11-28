@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lexer.Lexer;
+import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.ICompositeElementType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IErrorCounterReparseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -49,24 +48,8 @@ public abstract class GrCodeBlockElementType extends IErrorCounterReparseableEle
 
   @Override
   public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
-    final Lexer lexer = new GroovyLexer();
-
-    lexer.start(seq);
-    if (lexer.getTokenType() != GroovyTokenTypes.mLCURLY) return FATAL_ERROR;
-    lexer.advance();
-    int balance = 1;
-    while (true) {
-      IElementType type = lexer.getTokenType();
-      if (type == null) break;
-      if (balance == 0) return FATAL_ERROR;
-      if (type == GroovyTokenTypes.mLCURLY) {
-        balance++;
-      }
-      else if (type == GroovyTokenTypes.mRCURLY) {
-        balance--;
-      }
-      lexer.advance();
-    }
-    return balance;
+    return PsiBuilderUtil.hasProperBraceBalance(seq, new GroovyLexer(), GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY)
+           ? NO_ERRORS
+           : FATAL_ERROR;
   }
 }

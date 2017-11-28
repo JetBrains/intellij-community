@@ -87,7 +87,7 @@ public class BuildResult implements MessageHandler {
       List<String> sourcesList = new ArrayList<>(map.getSources());
       Collections.sort(sourcesList);
       for (String source : sourcesList) {
-        List<String> outputs = new ArrayList<>(ObjectUtils.notNull(map.getOutputs(source), Collections.<String>emptySet()));
+        List<String> outputs = new ArrayList<>(ObjectUtils.notNull(map.getOutputs(source), Collections.emptySet()));
         Collections.sort(outputs);
         for (String output : outputs) {
           hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);

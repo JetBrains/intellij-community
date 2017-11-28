@@ -53,24 +53,14 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   @NotNull
   @Override
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup(ContainerUtil.map(collectStrategies(), new NotNullFunction<ChangeListFilteringStrategy, AnAction>() {
-      @NotNull
-      @Override
-      public AnAction fun(@NotNull ChangeListFilteringStrategy strategy) {
-        return new SetFilteringAction(strategy);
-      }
-    }));
+    return new DefaultActionGroup(ContainerUtil.map(collectStrategies(),
+                                                    (NotNullFunction<ChangeListFilteringStrategy, AnAction>)strategy -> new SetFilteringAction(strategy)));
   }
 
   @NotNull
   @Override
   protected Condition<AnAction> getPreselectCondition() {
-    return new Condition<AnAction>() {
-      @Override
-      public boolean value(@NotNull AnAction action) {
-        return ((SetFilteringAction)action).myStrategy.getKey().equals(myPreviousSelection.getKey());
-      }
-    };
+    return action -> ((SetFilteringAction)action).myStrategy.getKey().equals(myPreviousSelection.getKey());
   }
 
   @NotNull

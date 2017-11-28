@@ -67,7 +67,7 @@ public class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingEl
       return new ArrayList<>(rootElement.getChildren());
     }
     else {
-      return Collections.<JpsPackagingElement>singletonList(rootElement);
+      return Collections.singletonList(rootElement);
     }
   }
 }

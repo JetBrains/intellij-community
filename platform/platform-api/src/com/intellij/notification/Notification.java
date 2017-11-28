@@ -67,6 +67,7 @@ public class Notification {
   private NotificationListener myListener;
   private String myDropDownText;
   private List<AnAction> myActions;
+  private AnAction myContextHelpAction;
 
   private AtomicReference<Boolean> myExpired = Atomics.newReference(false);
   private Runnable myWhenExpired;
@@ -74,7 +75,7 @@ public class Notification {
   private WeakReference<Balloon> myBalloonRef;
   private final long myTimestamp;
 
-  public Notification(@NotNull String groupDisplayId, @NotNull Icon icon, @NotNull NotificationType type) {
+  public Notification(@NotNull String groupDisplayId, @Nullable Icon icon, @NotNull NotificationType type) {
     this(groupDisplayId, icon, null, null, null, type, null);
   }
 
@@ -89,7 +90,7 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull Icon icon,
+                      @Nullable Icon icon,
                       @Nullable String title,
                       @Nullable String subtitle,
                       @Nullable String content,
@@ -105,8 +106,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(hasTitle() || hasContent(),
-                   "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+    assertHasTitleOrContent();
     id = calculateId(this);
   }
 
@@ -134,7 +134,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(hasContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    assertHasTitleOrContent();
     id = calculateId(this);
   }
 
@@ -230,11 +230,18 @@ public class Notification {
   }
 
   public static void fire(@NotNull final Notification notification, @NotNull AnAction action) {
+    fire(notification, action, null);
+  }
+
+  public static void fire(@NotNull final Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        return KEY.getName().equals(dataId) ? notification : null;
+        if (KEY.is(dataId)) {
+          return notification;
+        }
+        return context == null ? null : context.getData(dataId);
       }
     });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
@@ -276,6 +283,15 @@ public class Notification {
     }
     myActions.add(action);
     return this;
+  }
+
+  public Notification setContextHelpAction(AnAction action) {
+    myContextHelpAction = action;
+    return this;
+  }
+
+  public AnAction getContextHelpAction() {
+    return myContextHelpAction;
   }
 
   @NotNull
@@ -350,5 +366,10 @@ public class Notification {
   @NotNull
   private static String calculateId(@NotNull Object notification) {
     return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
+  }
+
+  private void assertHasTitleOrContent() {
+    LOG.assertTrue(hasTitle() || hasContent(),
+                   "Notification should have title: [" + myTitle + "] and/or content: [" + myContent + "]; groupId: " + myGroupId);
   }
 }

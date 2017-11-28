@@ -331,6 +331,7 @@ public class PsiImplUtil {
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
+  @NotNull
   public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);
   }
@@ -560,6 +561,7 @@ public class PsiImplUtil {
     return null;
   }
 
+  @NotNull
   public static PsiStatement[] getChildStatements(@NotNull CompositeElement psiCodeBlock) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     // no lock is needed because all chameleons are expanded already
@@ -713,6 +715,7 @@ public class PsiImplUtil {
     return multiResolveImpl(manager.getProject(), psiFile, element, incompleteCode, resolver);
   }
 
+  @NotNull
   public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(@NotNull Project project,
                                                                                              @NotNull PsiFile psiFile,
                                                                                              @NotNull T element,

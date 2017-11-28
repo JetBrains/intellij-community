@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 30.04.2006
- * Time: 16:52:31
- */
 package org.intellij.lang.xpath.validation.inspections;
 
 import com.intellij.codeInspection.InspectionManager;

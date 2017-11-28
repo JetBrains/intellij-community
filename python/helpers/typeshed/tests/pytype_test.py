@@ -70,7 +70,7 @@ def pytype_test(args):
         print("Cannot run pytd. Did you install pytype?")
         return 0, 0
 
-    wanted = re.compile(r"stdlib/(2|2\.7|2and3)/.*\.pyi$")
+    wanted = re.compile(r"stdlib/.*\.pyi$")
     skipped = re.compile("(%s)$" % "|".join(load_blacklist()))
     files = []
 

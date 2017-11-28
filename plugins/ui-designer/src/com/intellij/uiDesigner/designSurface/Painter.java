@@ -131,8 +131,8 @@ public final class Painter {
   /**
    * Paints container border. For grids the method also paints vertical and
    * horizontal lines that indicate bounds of the rows and columns.
-   * Method does nothing if the <code>component</code> is not an instance
-   * of <code>RadContainer</code>.
+   * Method does nothing if the {@code component} is not an instance
+   * of {@code RadContainer}.
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g) {
     if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragBorder()) {
@@ -235,7 +235,7 @@ public final class Painter {
   }
 
   /**
-   * Paints selection for the specified <code>component</code>.
+   * Paints selection for the specified {@code component}.
    */
   public static void paintSelectionDecoration(@NotNull RadComponent component, Graphics g,
                                               boolean focused) {

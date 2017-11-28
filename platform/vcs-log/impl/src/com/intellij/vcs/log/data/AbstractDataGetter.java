@@ -60,7 +60,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private long myCurrentTaskIndex = 0;
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
-  @NotNull private VcsLogIndex myIndex;
+  @NotNull private final VcsLogIndex myIndex;
 
   AbstractDataGetter(@NotNull VcsLogStorage storage,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -220,6 +220,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoader.queue(new TaskDescriptor(toLoad));
   }
 
+  @SuppressWarnings("unchecked")
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query

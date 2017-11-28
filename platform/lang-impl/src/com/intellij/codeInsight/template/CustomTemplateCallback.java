@@ -52,7 +52,7 @@ public class CustomTemplateCallback {
   private final int myOffset;
   @NotNull private final Project myProject;
   private final boolean myInInjectedFragment;
-  private Set<TemplateContextType> myApplicableContextTypes;
+  protected Set<TemplateContextType> myApplicableContextTypes;
 
   public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file) {
     myProject = file.getProject();

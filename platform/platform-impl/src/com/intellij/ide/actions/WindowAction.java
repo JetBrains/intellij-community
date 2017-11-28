@@ -63,7 +63,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   public final void update(AnActionEvent event) {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     boolean enabled = isEnabledFor(window);
-    if (enabled) {
+    if (enabled && Registry.is("no.window.actions.in.editor")) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       enabled = editor == null || !editor.getContentComponent().hasFocus();
     }

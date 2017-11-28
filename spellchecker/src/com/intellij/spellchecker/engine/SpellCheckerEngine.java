@@ -43,4 +43,6 @@ public interface SpellCheckerEngine {
   boolean isDictionaryLoad(@NotNull String name);
 
   void removeDictionary(@NotNull String name);
+
+  void removeDictionariesRecursively(@NotNull String directory);
 }

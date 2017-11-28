@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class EqualsWhichDoesntCheckParameterClassInspectionTest extends LightInspectionTestCase {
 
-  public void testEqualsWhichDoesntCheckParameterClass() throws Exception {
+  public void testEqualsWhichDoesntCheckParameterClass() {
     doTest();
   }
 

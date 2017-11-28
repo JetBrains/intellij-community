@@ -15,10 +15,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: evgeny.zakrevsky
- * Date: 10/26/12
- */
 public class ManageTemplateVariablesDialog extends DialogWrapper {
   private final TemplateVariablesTable myTemplateVariableTable;
 

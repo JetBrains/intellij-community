@@ -27,10 +27,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 4/2/13
- */
 public class JavaFxRenameAttributeProcessor extends RenameXmlAttributeProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

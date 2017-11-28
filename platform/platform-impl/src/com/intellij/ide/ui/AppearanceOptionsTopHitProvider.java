@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,30 +32,30 @@ import java.util.Collection;
 public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
   public static final String ID = "appearance";
 
-  private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
-    appearance2("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "cycleScrolling"),
-    appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "SHOW_ICONS_IN_QUICK_NAVIGATION"),
-    appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
-    appearance("UI: Hide navigation popups on focus loss", "HIDE_NAVIGATION_ON_FOCUS_LOSS"),
-    appearance("UI: Drag-n-Drop with ALT pressed only", "DND_WITH_PRESSED_ALT_ONLY"),
+  private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
+    appearance("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "cycleScrolling"),
+    appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "showIconInQuickNavigation"),
+    appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "moveMouseOnDefaultButton"),
+    appearance("UI: Hide navigation popups on focus loss", "hideNavigationOnFocusLoss"),
+    appearance("UI: Drag-n-Drop with ALT pressed only", "dndWithPressedAltOnly"),
     notifications("UI: Display balloon notifications", "SHOW_BALLOONS"),
-    appearance2("Window: " + messageIde("checkbox.animate.windows"), "animateWindows"),
-    appearance2("Window: " + messageIde("checkbox.show.memory.indicator"), "showMemoryIndicator"),
-    appearance("Window: " + messageKeyMap("disable.mnemonic.in.menu.check.box"), "DISABLE_MNEMONICS"),
-    appearance("Window: " + messageKeyMap("disable.mnemonic.in.controls.check.box"), "DISABLE_MNEMONICS_IN_CONTROLS"),
-    appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "SHOW_ICONS_IN_MENUS"),
-    appearance2("Window: " + messageIde("checkbox.left.toolwindow.layout"), "leftHorizontalSplit"),
-    appearance2("Window: " + messageIde("checkbox.show.editor.preview.popup"), "showEditorToolTip"),
-    appearance2("Window: " + messageIde("checkbox.show.tool.window.numbers"), "showToolWindowsNumbers"),
-    appearance2("Window: Allow merging buttons on dialogs", "allowMergeButtons"),
-    appearance("Window: Small labels in editor tabs", "USE_SMALL_LABELS_ON_TABS"),
-    appearance2("Window: " + messageIde("checkbox.widescreen.tool.window.layout"), "wideScreenSupport"),
-    appearance2("Window: " + messageIde("checkbox.right.toolwindow.layout"), "rightHorizontalSplit"),
-    appearance("Window: " + messageIde("checkbox.use.preview.window"), "NAVIGATE_TO_PREVIEW"));
+    appearance("Window: " + messageIde("checkbox.animate.windows"), "animateWindows"),
+    appearance("Window: " + messageIde("checkbox.show.memory.indicator"), "showMemoryIndicator"),
+    appearance("Window: " + messageKeyMap("disable.mnemonic.in.menu.check.box"), "disableMnemonics"),
+    appearance("Window: " + messageKeyMap("disable.mnemonic.in.controls.check.box"), "disableMnemonicsInControls"),
+    appearance("Window: " + messageIde("checkbox.show.icons.in.menu.items"), "showIconsInMenus"),
+    appearance("Window: " + messageIde("checkbox.left.toolwindow.layout"), "leftHorizontalSplit"),
+    appearance("Window: " + messageIde("checkbox.show.editor.preview.popup"), "showEditorToolTip"),
+    appearance("Window: " + messageIde("checkbox.show.tool.window.numbers"), "showToolWindowsNumbers"),
+    appearance("Window: Allow merging buttons on dialogs", "allowMergeButtons"),
+    appearance("Window: Small labels in editor tabs", "useSmallLabelsOnTabs"),
+    appearance("Window: " + messageIde("checkbox.widescreen.tool.window.layout"), "wideScreenSupport"),
+    appearance("Window: " + messageIde("checkbox.right.toolwindow.layout"), "rightHorizontalSplit"),
+    appearance("Window: " + messageIde("checkbox.use.preview.window"), "navigateToPreview"));
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     return ourOptions;
   }
 
@@ -63,26 +64,12 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
     return ID;
   }
 
-  static BooleanOptionDescription appearance(String option, String field) {
-    return option(option, field, "preferences.lookFeel");
+  static BooleanOptionDescription appearance(String option, String propertyName) {
+    return option(option, propertyName, "preferences.lookFeel");
   }
 
-  static BooleanOptionDescription appearance2(@NotNull String option, @NotNull String field) {
-    return new PublicMethodBasedOptionDescription(option, "preferences.lookFeel", "get" + StringUtil.capitalize(field), "set" + StringUtil.capitalize(field)) {
-      @Override
-      public Object getInstance() {
-        return UISettings.getInstance();
-      }
-
-      @Override
-      protected void fireUpdated() {
-        UISettings.getInstance().fireUISettingsChanged();
-      }
-    };
-  }
-
-  static BooleanOptionDescription option(String option, String field, String configurableId) {
-    return new PublicFieldBasedOptionDescription(option, configurableId, field) {
+  static BooleanOptionDescription option(String option, String propertyName, String configurableId) {
+    return new PublicMethodBasedOptionDescription(option, configurableId, "get" + StringUtil.capitalize(propertyName), "set" + StringUtil.capitalize(propertyName)) {
       @Override
       public Object getInstance() {
         return UISettings.getInstance();
@@ -105,16 +92,16 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
   }
 
   public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
-    private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
-      appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
-      appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),
-      appearance("View: Show Status Bar", "SHOW_STATUS_BAR"),
-      appearance("View: Show Navigation Bar", "SHOW_NAVIGATION_BAR")
+    private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
+      appearance("Window: " + "Hide Tool Window Bars", "hideToolStripes"),
+      appearance("View: Show Main Toolbar", "showMainToolbar"),
+      appearance("View: Show Status Bar", "showStatusBar"),
+      appearance("View: Show Navigation Bar", "showNavigationBar")
     );
 
     @NotNull
     @Override
-    public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    public Collection<OptionDescription> getOptions(@Nullable Project project) {
       return ourOptions;
     }
 

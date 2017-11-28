@@ -32,9 +32,6 @@ import com.intellij.util.Function;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsHighlightingUtil {
   private DomElementsHighlightingUtil() {
   }
@@ -92,11 +89,10 @@ public class DomElementsHighlightingUtil {
   }
 
   @Nullable
-  private static <T> T createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor,
-                                                      final Function<Pair<TextRange, PsiElement>, T> creator) {
+  private static <T> T createProblemDescriptors(DomElementProblemDescriptor problemDescriptor, Function<Pair<TextRange, PsiElement>, T> creator) {
 
     final Pair<TextRange, PsiElement> range = ((DomElementProblemDescriptorImpl)problemDescriptor).getProblemRange();
-    return range == DomElementProblemDescriptorImpl.NO_PROBLEM ? null : creator.fun(range);
+    return range == DomElementProblemDescriptorImpl.NO_PROBLEM || !range.second.isPhysical() ? null : creator.fun(range);
   }
 
 }

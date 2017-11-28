@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -34,7 +35,6 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
 import com.intellij.ui.PathsChooserComponent;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -229,7 +229,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   public void dispose() {
     if (wordsPanel != null) {
-      wordsPanel.dispose();
+      Disposer.dispose(wordsPanel);
     }
   }
 
@@ -246,19 +246,14 @@ public class SpellCheckerSettingsPane implements Disposable {
         return new ArrayList<>();
       }
       Set<String> words = this.dictionary.getEditableWords();
-      if (words == null) {
-        return new ArrayList<>();
-      }
       List<String> result = new ArrayList<>();
-      for (String word : words) {
-        result.add(word);
-      }
+      result.addAll(words);
       Collections.sort(result);
       return result;
     }
   }
 
-  private static final class WordsPanel extends AddDeleteListPanel implements Disposable {
+  private static final class WordsPanel extends AddDeleteListPanel<String> implements Disposable {
     private final SpellCheckerManager manager;
 
     private WordsPanel(SpellCheckerManager manager) {
@@ -268,7 +263,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
 
 
-    protected Object findItemToAdd() {
+    protected String findItemToAdd() {
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {
@@ -312,10 +307,10 @@ public class SpellCheckerSettingsPane implements Disposable {
     public boolean isModified() {
       List<String> newWords = getWords();
       Set<String> words = manager.getUserDictionary().getEditableWords();
-      if (words == null && newWords == null) {
+      if (newWords == null) {
         return false;
       }
-      if (words == null || newWords == null || newWords.size() != words.size()) {
+      if (newWords.size() != words.size()) {
         return true;
       }
       return !(words.containsAll(newWords) && newWords.containsAll(words));

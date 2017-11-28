@@ -81,24 +81,20 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return null;
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     throw new UnsupportedOperationException();
   }
 
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       RepositoryLocation location, final int maxCount) throws VcsException {
+                                                       RepositoryLocation location, final int maxCount) {
     throw new UnsupportedOperationException();
   }
 
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 
@@ -144,11 +140,9 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     if (tabbedPane != null) {
       final JPanel panel = new JPanel();
       panel.add(tabbedPane);
-      return new VcsCommittedViewAuxiliary(actions, new Runnable() {
-        public void run() {
-          for (Runnable runnable : calledOnDispose) {
-            runnable.run();
-          }
+      return new VcsCommittedViewAuxiliary(actions, () -> {
+        for (Runnable runnable : calledOnDispose) {
+          runnable.run();
         }
       }, toolbarActions);
     }

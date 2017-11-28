@@ -18,17 +18,13 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ConcurrentMap;
 
 public class ScopeAttributesUtil {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentFactoryMap<String, TextAttributesKey> ourCache = new ConcurrentFactoryMap<String, TextAttributesKey>() {
-    @Nullable
-    @Override
-    protected TextAttributesKey create(String scope) {
-      return TextAttributesKey.find("SCOPE_KEY_" + scope);
-    }
-  };
+  private static final ConcurrentMap<String, TextAttributesKey> ourCache =
+    ConcurrentFactoryMap.createMap(scope -> TextAttributesKey.find("SCOPE_KEY_" + scope));
   @NotNull
   public static TextAttributesKey getScopeTextAttributeKey(@NotNull String scope) {
     return ourCache.get(scope);

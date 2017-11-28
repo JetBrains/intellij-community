@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,38 +17,19 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.RunnableScriptFilter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * @author Ilya.Kazakevich
  */
-public class PythonUnitTestRunnableScriptFilter implements RunnableScriptFilter {
-  public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location, @Nullable final TypeEvalContext context) {
-    return script instanceof PyFile && PythonUnitTestUtil.getTestCaseClassesFromFile(script, context).size() > 0
-           && !isIfNameMain(location) && TestRunnerService.getInstance(module).getProjectConfiguration().
-      equals(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
-  }
+public class PythonUnitTestRunnableScriptFilter {
 
+  /**
+   * @deprecated Use {@link RunnableUnitTestFilter#isRunnableUnitTest(PsiFile, Module)} instead. Delete after 2017.2
+   */
+  @Deprecated
   public static boolean isIfNameMain(Location location) {
-    PsiElement element = location.getPsiElement();
-    while (true) {
-      final PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
-      if (ifStatement == null) {
-        break;
-      }
-      element = ifStatement;
-    }
-    if (element instanceof PyIfStatement) {
-      PyIfStatement ifStatement = (PyIfStatement)element;
-      return PyUtil.isIfNameEqualsMain(ifStatement);
-    }
-    return false;
+    return RunnableScriptFilter.isIfNameMain(location);
   }
 }

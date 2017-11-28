@@ -16,16 +16,12 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
@@ -33,24 +29,32 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
+import com.intellij.util.messages.Topic;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
  */
 public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
-  public static void startListening(@NotNull Project project, @NotNull final JsonSchemaServiceEx service) {
+  public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
+
+  public static void startListening(@NotNull Project project, @NotNull final JsonSchemaService service) {
     final MyUpdater updater = new MyUpdater(project, service);
     ApplicationManager.getApplication().getMessageBus().connect(project)
       .subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(updater), project);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeAnyChangeAbstractAdapter() {
+      @Override
+      protected void onChange(@Nullable PsiFile file) {
+        if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile());
+      }
+    });
   }
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
@@ -68,31 +72,17 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     });
   }
 
-  private static class MyDocumentListener extends DocumentAdapter {
-    private final MyUpdater myUpdater;
-
-    private MyDocumentListener(MyUpdater updater) {
-      myUpdater = updater;
-    }
-
-    @Override
-    public void documentChanged(DocumentEvent e) {
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
-      if (file != null) myUpdater.onFileChange(file);
-    }
-  }
-
   private static class MyUpdater {
-    @NotNull private final JsonSchemaServiceEx myService;
-    private JsonSchemaMappingsProjectConfiguration myMappingsProjectConfiguration;
+    @NotNull private final Project myProject;
     private final ZipperUpdater myUpdater;
+    @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
 
-    protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaServiceEx service) {
-      myService = service;
-      myMappingsProjectConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
+      myProject = project;
       myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
+      myService = service;
       myRunnable = () -> {
         final Set<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
@@ -101,33 +91,21 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         final Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        for (Editor editor : editors) {
-          if (editor instanceof EditorEx) {
-            final VirtualFile file = ((EditorEx)editor).getVirtualFile();
-            if (file != null && file.isValid() && JsonFileType.INSTANCE.equals(file.getFileType())) {
-              final Collection<Pair<VirtualFile, String>> collection = myService.getSchemaFilesByFile(file);
-              if (collection != null && !collection.isEmpty()) {
-                for (Pair<VirtualFile, String> pair : collection) {
-                  if (scope.contains(pair.getFirst())) {
-                    ApplicationManager.getApplication().runReadAction(() -> {
-                      final PsiFile psiFile = psiManager.findFile(file);
-                      if (psiFile != null) {
-                        analyzer.restart(psiFile);
-                      }
-                    });
-                    break;
-                  }
-                }
-              }
+        Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
+          .map(editor -> ((EditorEx)editor).getVirtualFile())
+          .filter(file -> file != null && file.isValid())
+          .forEach(file -> {
+            final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+            if (schemaFiles.stream().anyMatch(scope::contains)) {
+              ReadAction.run(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart));
             }
-          }
-        }
+          });
       };
     }
 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
-      if (myMappingsProjectConfiguration.isRegisteredSchemaFile(schemaFile)) {
-        myService.dropProviderFromCache(schemaFile);
+      if (myService.isSchemaFile(schemaFile)) {
+        myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
         myDirtySchemas.add(schemaFile);
         myUpdater.queue(myRunnable);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiRowFlowPanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
   private void init(@Nullable List<CompositeArrangementSettingsToken> tokens) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(5));
+    setBorder(JBUI.Borders.empty(5));
 
     if (tokens != null) {
       for (CompositeArrangementSettingsToken token : tokens) {

@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -29,22 +17,29 @@ import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,6 +63,8 @@ import java.util.*;
  */
 public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
+  public static final DummyMessageValueNode LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE =
+    new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final DebugProcessImpl myDebugProcess;
   @Nullable private final XSourcePosition myXSourcePosition;
@@ -76,6 +73,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
+  private CapturePoint myInsertCapturePoint;
 
   public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
     myDescriptor = descriptor;
@@ -123,6 +121,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     }
     FRAME_RENDERER.customizePresentation(myDescriptor, component, selectedDescriptor);
+    if (myInsertCapturePoint != null) {
+      component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+    }
   }
 
   @Override
@@ -135,8 +136,14 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
 
       @Override
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
+        if (myInsertCapturePoint != null) {
+          node.setMessage("Async stacktrace from " +
+                          myInsertCapturePoint.myClassName + "." + myInsertCapturePoint.myMethodName +
+                          " could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
+                          SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
+        }
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
@@ -287,12 +294,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
-          usedVars = ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
-            @Override
-            public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition);
-            }
-          });
+          usedVars = ReadAction.compute(() -> findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
         }
           // add locals
         if (myAutoWatchMode) {
@@ -306,8 +308,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         else {
           superBuildVariables(evaluationContext, children);
         }
-        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
-        evalContextCopy.setAutoLoadClasses(false);
+        final EvaluationContextImpl evalContextCopy = evaluationContext.withAutoLoadClasses(false);
 
         if (sourcePosition != null) {
           Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);
@@ -321,7 +322,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
     catch (EvaluateException e) {
       if (e.getCause() instanceof AbsentInformationException) {
-        children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+        children.add(LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
         // trying to collect values from variable slots
         try {
           for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy(), debugProcess, true).entrySet()) {
@@ -388,6 +389,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           renderer.renderValue(myMessage);
         }
       }, false);
+    }
+
+    @Override
+    public String toString() {
+      return myMessage;
     }
   }
 
@@ -564,8 +570,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
 
         if (_elem instanceof PsiJavaCodeReferenceElement) {
-          final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
-          if (resolved instanceof PsiVariable) {
+          try {
+            final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+            if (resolved instanceof PsiVariable) {
+              return false;
+            }
+          }
+          catch (IndexNotReadyException e) {
             return false;
           }
         }
@@ -669,6 +680,10 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return rangeRef.get();
   }
 
+  public void setInsertCapturePoint(CapturePoint insertCapturePoint) {
+    myInsertCapturePoint = insertCapturePoint;
+  }
+
   @Override
   public boolean isSynthetic() {
     return myDescriptor.isSynthetic();
@@ -677,5 +692,22 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Override
   public boolean isInLibraryContent() {
     return myDescriptor.isInLibraryContent();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JavaStackFrame frame = (JavaStackFrame)o;
+
+    if (!myDescriptor.getFrameProxy().equals(frame.myDescriptor.getFrameProxy())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.getFrameProxy().hashCode();
   }
 }

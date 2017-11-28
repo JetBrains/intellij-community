@@ -54,7 +54,7 @@ public class DataPack extends DataPackBase {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), storage, providers);
+      refsModel = new RefsModel(refs, ContainerUtil.newHashSet(), storage, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
@@ -110,8 +110,8 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogStorageImpl.EMPTY, ContainerUtil.newHashMap());
-    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
+      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), VcsLogStorageImpl.EMPTY, ContainerUtil.newHashMap());
+    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
   }
 
   @NotNull

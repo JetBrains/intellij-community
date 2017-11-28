@@ -24,6 +24,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
@@ -34,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -42,16 +44,12 @@ import org.jetbrains.annotations.Nullable;
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return null;
-
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return editor;
 
-    editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor != null) return editor;
-
-    return null;
+    Project project = e.getProject();
+    if (project == null) return null;
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   @Nullable
@@ -79,7 +77,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   @Override
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     Editor editor = getEditor(e);
     FileType editorFileType = getEditorFileType(e);
     assert editor != null;
@@ -93,6 +91,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     String title = DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+    request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editor.getCaretModel().getLogicalPosition().line));
     if (editor.isViewer()) {
       request.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{false, true});
     }
@@ -100,7 +99,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   }
 
   @NotNull
-  private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor, @Nullable FileType type) {
+  private static DocumentContent createContent(@Nullable Project project, @NotNull Editor editor, @Nullable FileType type) {
     DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
 
     SelectionModel selectionModel = editor.getSelectionModel();

@@ -46,6 +46,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
     new BracePair(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_BEGIN, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END, false),
   };
 
+  @NotNull
   @Override
   public BracePair[] getPairs() {
     return PAIRS;

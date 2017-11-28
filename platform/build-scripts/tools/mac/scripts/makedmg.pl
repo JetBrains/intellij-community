@@ -6,15 +6,16 @@ use Mac::Files qw( NewAliasMinimal );
 
 $name = $ARGV[0];
 $bg_pic = $ARGV[1];
+$mountName = $ARGV[2];
 
-&writeDSDBEntries("/Volumes/$name/.DS_Store",
+&writeDSDBEntries("/Volumes/$mountName/.DS_Store",
     &makeEntries(".background", Iloc_xy => [ 560, 170 ]),
     &makeEntries(".DS_Store", Iloc_xy => [ 610, 170 ]),
     &makeEntries(".fseventsd", Iloc_xy => [ 660, 170 ]),
     &makeEntries(".Trashes", Iloc_xy => [ 710, 170 ]),
     &makeEntries(" ", Iloc_xy => [ 335, 120 ]),
     &makeEntries(".",
-        BKGD_alias => NewAliasMinimal("/Volumes/$name/.background/$bg_pic"),
+        BKGD_alias => NewAliasMinimal("/Volumes/$mountName/.background/$bg_pic"),
         ICVO => 1,
         fwi0_flds => [ 100, 400, 396, 855, "icnv", 0, 0 ],
         fwsw => 170,

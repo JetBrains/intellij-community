@@ -19,10 +19,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiReferenceExpression;
 
-/**
- * User: anna
- * Date: 15-Nov-2005
- */
 public class AccessStaticViaInstance extends AccessStaticViaInstanceBase {
   @Override
   protected AccessStaticViaInstanceFix createAccessStaticViaInstanceFix(PsiReferenceExpression expr,

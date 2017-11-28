@@ -18,10 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.psi.PsiFile;
 
-/**
- * User: anna
- * Date: 11/27/13
- */
 public class RedundantSuppressInspection extends RedundantSuppressInspectionBase {
   @Override
   protected GlobalInspectionContextBase createContext(PsiFile file) {

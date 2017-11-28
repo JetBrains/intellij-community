@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -35,12 +36,8 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescr
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxExpandAttributeIntention.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxExpandAttributeIntention.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
@@ -51,7 +48,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
     String value = attr.getValue();
     final PsiElement declaration = descriptor.getDeclaration();
     if (declaration instanceof PsiMember) {
-      final PsiType propertyType = PropertyUtil.getPropertyType((PsiMember)declaration);
+      final PsiType propertyType = PropertyUtilBase.getPropertyType((PsiMember)declaration);
       final PsiType itemType = JavaGenericsUtil.getCollectionItemType(propertyType, declaration.getResolveScope());
       if (itemType != null) {
         final String typeNode = itemType.getPresentableText();
@@ -76,7 +73,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
           PsiType tagType = null;
           final PsiElement declaration = descriptor.getDeclaration();
           if (declaration instanceof PsiMember) {
-            tagType = PropertyUtil.getPropertyType((PsiMember)declaration);
+            tagType = PropertyUtilBase.getPropertyType((PsiMember)declaration);
           }
           PsiClass tagClass = PsiUtil.resolveClassInType(tagType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)tagType).getBoxedType(parent) : tagType);
           if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass)) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {

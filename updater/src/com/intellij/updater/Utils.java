@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -38,22 +24,35 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  private static File getTempDir() throws IOException {
-    if (myTempDir == null) {
-      myTempDir = Files.createTempDirectory(Paths.get(Runner.getDir(REQUIRED_FREE_SPACE)), "idea.updater.files").toFile();
-      Runner.logger().info("created working directory: " + myTempDir);
+  public static String findDirectory(long requiredFreeSpace) {
+    String dir = System.getProperty("idea.updater.log");
+    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
+      dir = System.getProperty("java.io.tmpdir");
+      if (!isValidDir(dir, requiredFreeSpace)) {
+        dir = System.getProperty("user.home");
+      }
     }
-    return myTempDir;
+    return dir;
+  }
+
+  private static boolean isValidDir(String path, long space) {
+    File dir = new File(path);
+    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
   }
 
   public static File getTempFile(String name) throws IOException {
-    return Files.createTempFile(getTempDir().toPath(), "temp", name).toFile();
-  }
+    if (myTempDir == null) {
+      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
+      Runner.logger().info("created working directory: " + myTempDir);
+    }
 
-  public static File createTempDir() throws IOException {
-    File tempDir = Files.createTempDirectory(getTempDir().toPath(), "temp").toFile();
-    Runner.logger().info("created temp directory: " + tempDir.getPath());
-    return tempDir;
+    File myTempFile;
+    int index = 0;
+    do {
+      myTempFile = new File(myTempDir, name + ".tmp." + index++);
+    }
+    while (myTempFile.exists());
+    return myTempFile;
   }
 
   public static void cleanup() throws IOException {
@@ -103,8 +102,7 @@ public class Utils {
       }
       catch (IOException ignore) { }
 
-      try { Thread.sleep(10); }
-      catch (InterruptedException ignore) { }
+      pause(10);
     }
 
     throw new IOException("Cannot delete: " + path);
@@ -121,7 +119,7 @@ public class Utils {
     }
   }
 
-  public static boolean isLink(File file) throws IOException {
+  public static boolean isLink(File file) {
     return Files.isSymbolicLink(file.toPath());
   }
 
@@ -133,14 +131,6 @@ public class Utils {
     Path path = link.toPath();
     Files.deleteIfExists(path);
     Files.createSymbolicLink(path, Paths.get(target));
-  }
-
-  public static boolean isEmptyDirectory(File file) {
-    if (file.isDirectory()) {
-      String[] children = file.list();
-      return children != null && children.length == 0;
-    }
-    return false;
   }
 
   public static void copy(File from, File to) throws IOException {
@@ -337,5 +327,10 @@ public class Utils {
     public synchronized void writeTo(OutputStream out) throws IOException {
       writeBytes(buf, count, out);
     }
+  }
+
+  public static void pause(long millis) {
+    try { Thread.sleep(millis); }
+    catch (InterruptedException ignore) { }
   }
 }

@@ -33,7 +33,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.HgUpdater;
@@ -204,12 +203,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @NotNull
   @CalledInAny
   private List<String> getPatchNames(int[] rows) {
-    return ContainerUtil.map(Ints.asList(rows), new Function<Integer, String>() {
-      @Override
-      public String fun(Integer integer) {
-        return getPatchName(integer);
-      }
-    });
+    return ContainerUtil.map(Ints.asList(rows), integer -> getPatchName(integer));
   }
 
   @NotNull
@@ -236,12 +230,9 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project != null && !project.isDisposed()) {
-          refreshAll();
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project != null && !project.isDisposed()) {
+        refreshAll();
       }
     });
   }
@@ -256,12 +247,9 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
                                         .format("You are going to delete selected %s. Would you like to continue?",
                                                 StringUtil.pluralize("patch", names.size())),
                                       "Delete Confirmation", Messages.getWarningIcon()) == Messages.OK) {
-        Runnable deleteTask = new Runnable() {
-          @Override
-          public void run() {
-            ProgressManager.getInstance().getProgressIndicator().setText("Deleting patches...");
-            new HgQDeleteCommand(myRepository).executeInCurrentThread(names);
-          }
+        Runnable deleteTask = () -> {
+          ProgressManager.getInstance().getProgressIndicator().setText("Deleting patches...");
+          new HgQDeleteCommand(myRepository).executeInCurrentThread(names);
         };
         updatePatchSeriesInBackground(deleteTask);
       }
@@ -394,12 +382,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
       final int editingRow = getEditingRow();
       final String oldName = getModel().getPatchName(editingRow);
       super.editingStopped(e);
-      updatePatchSeriesInBackground(new Runnable() {
-        @Override
-        public void run() {
-          HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow));
-        }
-      });
+      updatePatchSeriesInBackground(() -> HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow)));
     }
   }
 }

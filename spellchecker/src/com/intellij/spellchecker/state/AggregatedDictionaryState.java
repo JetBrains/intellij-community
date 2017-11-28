@@ -24,13 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class AggregatedDictionaryState {
   private AggregatedDictionary dictionary;
+  private final ProjectDictionaryState myProjectDictionaryState;
 
   public AggregatedDictionaryState(@NotNull Project project) {
     CachedDictionaryState cachedDictionaryState = ServiceManager.getService(CachedDictionaryState.class);
-    ProjectDictionaryState projectDictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
+    myProjectDictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
     String currentUser = System.getProperty("user.name");
 
-    ProjectDictionary projectDictionary = projectDictionaryState.getProjectDictionary();
+    ProjectDictionary projectDictionary = myProjectDictionaryState.getProjectDictionary();
     projectDictionary.setActiveName(currentUser);
 
     if (cachedDictionaryState.getDictionary() == null) {
@@ -38,7 +39,8 @@ public class AggregatedDictionaryState {
     }
     dictionary = new AggregatedDictionary(projectDictionary, cachedDictionaryState.getDictionary());
     cachedDictionaryState.setDictionary(dictionary.getCachedDictionary());
-    projectDictionaryState.setProjectDictionary(dictionary.getProjectDictionary());
+    myProjectDictionaryState.setProjectDictionary(dictionary.getProjectDictionary());
+    myProjectDictionaryState.addProjectDictListener((dict) -> getDictionary().replaceAll(dict.getWords()));
   }
 
   @NotNull
@@ -49,5 +51,9 @@ public class AggregatedDictionaryState {
   @Override
   public String toString() {
     return "AggregatedDictionaryState{" + "dictionary=" + dictionary + '}';
+  }
+
+  public void addDictStateListener(DictionaryStateListener listener) {
+    myProjectDictionaryState.addProjectDictListener(listener);
   }
 }

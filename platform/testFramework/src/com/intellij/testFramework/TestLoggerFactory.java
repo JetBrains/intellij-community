@@ -159,7 +159,7 @@ public class TestLoggerFactory implements Logger.Factory {
   static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
   // inserted unicode whitespace to be able to tell these failed tests log lines from the others and fold them
   private static final WriterAppender APPENDER = new WriterAppender(new PatternLayout("%d{HH:mm:ss,SSS} %p %.30c - %m%n"), STRING_WRITER);
-  private static final int MAX_BUFFER_LENGTH = 100000;
+  private static final int MAX_BUFFER_LENGTH = 10_000_000;
   private static final String CFQN = Category.class.getName();
   static void log(@NotNull org.apache.log4j.Logger logger, @NotNull Level level, @Nullable String message, @Nullable Throwable t) {
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {

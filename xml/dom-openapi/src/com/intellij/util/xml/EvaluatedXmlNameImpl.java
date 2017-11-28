@@ -24,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,7 @@ import java.util.Map;
  * @author peter
  */
 public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
-  private static final Key<CachedValue<FactoryMap<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
+  private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
     ContainerUtil.newConcurrentMap();
 
@@ -105,17 +104,15 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
 
   @NotNull
   private List<String> getAllowedNamespaces(final XmlFile file) {
-    CachedValue<FactoryMap<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
+    CachedValue<Map<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
     if (value == null) {
       file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
-        final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
-          @Override
-          protected List<String> create(final String key) {
+        Map<String, List<String>> map = ConcurrentFactoryMap.createMap(key-> {
             final DomFileDescription<?> description = DomManager.getDomManager(file.getProject()).getDomFileDescription(file);
             if (description == null) return Collections.emptyList();
             return description.getAllowedNamespaces(key, file);
           }
-        };
+        );
         return CachedValueProvider.Result.create(map, file);
       }, false));
     }

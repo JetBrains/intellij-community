@@ -31,7 +31,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   protected final PsiExpressionList myArgList;
   protected final int myIndex;
-  private final ArgumentFixerActionFactory myArgumentFixerActionFactory;
+  protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
   protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {

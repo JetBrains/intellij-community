@@ -214,7 +214,8 @@ public class IncProjectBuilder {
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
           cause instanceof IOException ||
-          cause instanceof BuildDataCorruptedException) {
+          cause instanceof BuildDataCorruptedException ||
+          (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
       }
       else {
@@ -604,11 +605,7 @@ public class IncProjectBuilder {
     // check that output and source roots are not overlapping
     final CompileScope compileScope = context.getScope();
     final List<File> filesToDelete = new ArrayList<>();
-    final Predicate<BuildTarget<?>> forcedBuild = new Predicate<BuildTarget<?>>() {
-      public boolean apply(BuildTarget<?> input) {
-        return compileScope.isBuildForced(input);
-      }
-    };
+    final Predicate<BuildTarget<?>> forcedBuild = input -> compileScope.isBuildForced(input);
     for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
       final File outputRoot = entry.getKey();
@@ -1238,7 +1235,7 @@ public class IncProjectBuilder {
             if (!files.isEmpty()) {
               final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
               for (File srcFile : files) {
-                mapping.setOutputs(srcFile.getPath(), Collections.<String>emptyList());
+                mapping.setOutputs(srcFile.getPath(), Collections.emptyList());
               }
             }
           }

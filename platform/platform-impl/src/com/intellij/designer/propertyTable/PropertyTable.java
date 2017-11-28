@@ -1136,7 +1136,7 @@ public abstract class PropertyTable extends JBTable {
           ComboBox.registerTableCellEditor((JComboBox)component, this);
         }
         else if (component instanceof JCheckBox) {
-          component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+          if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
         }
 
         return component;
@@ -1307,7 +1307,7 @@ public abstract class PropertyTable extends JBTable {
           component.setFont(table.getFont());
 
           if (component instanceof JCheckBox) {
-            component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+            if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
           }
 
           return component;

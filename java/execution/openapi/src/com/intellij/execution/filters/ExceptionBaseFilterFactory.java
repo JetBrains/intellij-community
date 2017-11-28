@@ -17,12 +17,6 @@ package com.intellij.execution.filters;
 
 import com.intellij.psi.search.GlobalSearchScope;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/8/11
- * Time: 12:11 PM
- */
 public class ExceptionBaseFilterFactory implements ExceptionFilterFactory {
   @Override
   public Filter create(GlobalSearchScope searchScope) {

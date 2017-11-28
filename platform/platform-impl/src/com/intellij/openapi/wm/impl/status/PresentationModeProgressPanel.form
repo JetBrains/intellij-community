@@ -26,7 +26,7 @@
           <text value=""/>
         </properties>
       </component>
-      <component id="94f42" class="com.intellij.ui.JBProgressBar" binding="myProgressBar" default-binding="true">
+      <component id="94f42" class="javax.swing.JProgressBar" binding="myProgressBar" default-binding="true">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <minimum-size width="225" height="-1"/>
@@ -36,14 +36,6 @@
         </constraints>
         <properties>
           <indeterminate value="true"/>
-          <opaque value="false"/>
-        </properties>
-      </component>
-      <component id="38c03" class="com.intellij.ui.InplaceButton" binding="myCancelButton" custom-create="true">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
           <opaque value="false"/>
         </properties>
       </component>
@@ -64,6 +56,16 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
+      <grid id="b44d4" binding="myButtonPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <opaque value="false"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
     </children>
   </grid>
 </form>

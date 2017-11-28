@@ -197,7 +197,9 @@ public class SingleRowLayout extends TabLayout {
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {
     data.insets = myTabs.getLayoutInsets();
-    data.insets.left += myTabs.getFirstTabOffset();
+    if (myTabs.isHorizontalTabs()) {
+      data.insets.left += myTabs.getFirstTabOffset();
+    }
 
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
     data.hToolbar =

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,7 +12,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -42,26 +28,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return "Plugin DevKit";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Incorrect dialog title capitalization";
-  }
-
+public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
@@ -133,7 +100,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiMethodCallExpression) {
       PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
-      PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(psiMethod);
+      PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(psiMethod);
       if (arg == returnValue) {
         return null;
       }
@@ -191,16 +158,18 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     List<String> words = StringUtil.split(value, " ");
     if (words.size() == 0) return true;
     if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    if (words.size() == 1) return true;
+    int capitalized = 1;
     for (int i = 1, size = words.size(); i < size; i++) {
       String word = words.get(i);
       if (isCapitalizedWord(word)) {
         // check for abbreviations like SQL or I18n
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
           continue;
-        return false;
+        capitalized++;
       }
     }
-    return true;
+    return capitalized / words.size() < 0.2; // allow reasonable amount of capitalized words
   }
 
   private static boolean isCapitalizedWord(String word) {
@@ -257,7 +226,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiMethod method = methodCallExpression.resolveMethod();
-        final PsiExpression returnValue = PropertyUtil.getGetterReturnExpression(method);
+        final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
         if (returnValue != null) {
           doFix(project, returnValue);
         }

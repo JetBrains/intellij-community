@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 
 import java.util.*;
 
@@ -66,11 +65,10 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
   @Nullable
   @Override
-  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull final DependencyScope scope) {
+  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     final MavenProject toProject = myProjectsManager.findProject(to);
     if (toProject == null) return null;
     MavenId mavenId = toProject.getMavenId();
-
     return addDependency(Collections.singletonList(from), mavenId, scope);
   }
 
@@ -169,12 +167,12 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
   @Nullable
   @Override
-  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     String name = library.getName();
     if (name != null && name.startsWith(MavenArtifact.MAVEN_LIB_PREFIX)) {
       //it would be better to use RepositoryLibraryType for libraries imported from Maven and fetch mavenId from the library properties instead
       String mavenCoordinates = StringUtil.trimStart(name, MavenArtifact.MAVEN_LIB_PREFIX);
-      return addDependency(Collections.singletonList(from), RepositoryAttachHandler.getMavenId(mavenCoordinates), scope);
+      return addDependency(Collections.singletonList(from), new MavenId(mavenCoordinates), scope);
     }
     return null;
   }

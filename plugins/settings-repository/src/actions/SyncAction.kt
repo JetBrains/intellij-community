@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = true
     }
     else {
-      val provider = (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider
-      e.presentation.isEnabledAndVisible = provider == null || !provider.enabled
+      e.presentation.isEnabledAndVisible = !(application.stateStore.stateStorageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
     }
     e.presentation.icon = null
   }

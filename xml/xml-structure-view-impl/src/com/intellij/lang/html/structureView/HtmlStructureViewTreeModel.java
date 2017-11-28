@@ -89,7 +89,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   public HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
     super(file, editor);
 
-    myNodeProviders = Arrays.<NodeProvider>asList(new Html5SectionsNodeProvider());
+    myNodeProviders = Arrays.asList(new Html5SectionsNodeProvider());
   }
 
   @Override

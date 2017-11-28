@@ -26,10 +26,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
-* User: anna
-* Date: 3/14/13
-*/
 public class FxmlDataExternalizer implements DataExternalizer<Set<String>> {
   @Override
   public void save(@NotNull DataOutput out, Set<String> value) throws IOException {

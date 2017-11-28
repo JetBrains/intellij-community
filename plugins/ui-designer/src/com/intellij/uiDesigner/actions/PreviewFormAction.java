@@ -358,7 +358,7 @@ public final class PreviewFormAction extends AnAction{
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
               @Override
-              public void processTerminated(ProcessEvent event) {
+              public void processTerminated(@NotNull ProcessEvent event) {
                 FileUtil.asyncDelete(new File(myTempPath));
               }
             });

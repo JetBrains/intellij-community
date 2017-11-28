@@ -51,7 +51,7 @@ public class TestFileStructure {
   }
 
   @NotNull
-  public PsiFile addTestFile(@NotNull String name, @NotNull String content) throws IOException {
+  public PsiFile addTestFile(@NotNull String name, @NotNull String content) {
     PsiFile createdFile = createFile(myModule, myCurrentLevelDirectory.getVirtualFile(), name, content);
     getCurrentDirectoryFiles().add(createdFile);
     return createdFile;
@@ -68,7 +68,7 @@ public class TestFileStructure {
   }
 
   @NotNull
-  public PsiDirectory createDirectoryAndMakeItCurrent(String name) throws IOException {
+  public PsiDirectory createDirectoryAndMakeItCurrent(String name) {
     myLevel++;
     myFilesForLevel.add(new ArrayList<>());
     myCurrentLevelDirectory = createDirectory(myProject, myCurrentLevelDirectory.getVirtualFile(), name);
@@ -98,7 +98,7 @@ public class TestFileStructure {
     }.execute().getResultObject();
   }
 
-  public static PsiDirectory createDirectory(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) throws IOException {
+  public static PsiDirectory createDirectory(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
     final VirtualFile[] dir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {

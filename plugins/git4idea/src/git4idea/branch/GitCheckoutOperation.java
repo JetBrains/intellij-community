@@ -27,8 +27,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
-import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +40,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.containers.UtilKt.getIfSingle;
+import static git4idea.GitUtil.*;
+import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
+import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
+import static git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH;
 import static git4idea.util.GitUIUtil.code;
-import static java.util.Arrays.stream;
 
 /**
  * Represents {@code git checkout} operation.
@@ -78,12 +81,15 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
+    branchWillChange();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
-
         VirtualFile root = repository.getRoot();
+
+        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myStartPointReference, false);
+
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
         GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
@@ -94,7 +100,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach,
                                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
         if (result.success()) {
-          refresh(repository);
+          updateAndRefreshVfs(repository, changes);
           markSuccessful(repository);
         }
         else if (unmergedFiles.hasHappened()) {
@@ -128,7 +134,6 @@ class GitCheckoutOperation extends GitBranchOperation {
       if (wereSuccessful()) {
         if (!wereSkipped()) {
           notifySuccess();
-          updateRecentBranch();
         }
         else {
           String mentionSuccess = getSuccessMessage() + GitUtil.mention(getSuccessfulRepositories(), 4);
@@ -139,8 +144,8 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                            mentionSkipped +
                                                            "<br><a href='rollback'>Rollback</a>",
                                                            new RollbackOperationNotificationListener());
-          updateRecentBranch();
         }
+        updateRecentBranch(myStartPointReference);
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
@@ -158,14 +163,14 @@ class GitCheckoutOperation extends GitBranchOperation {
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
-                                                                     "&Force Checkout");
-    if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
+    GitSmartOperationDialog.Choice decision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
+                                                                                   "&Force Checkout");
+    if (decision == SMART) {
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {
         for (GitRepository conflictingRepository : allConflictingRepositories) {
           markSuccessful(conflictingRepository);
-          refresh(conflictingRepository);
+          updateAndRefreshVfs(conflictingRepository);
         }
         return true;
       }
@@ -174,11 +179,11 @@ class GitCheckoutOperation extends GitBranchOperation {
         return false;
       }
     }
-    else if (smartCheckoutDecision == GitSmartOperationDialog.FORCE_EXIT_CODE) {
+    else if (decision == FORCE) {
       boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
       if (forceCheckoutSucceeded) {
         markSuccessful(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
-        refresh(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
+        updateAndRefreshVfs(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
       }
       return forceCheckoutSucceeded;
     }
@@ -220,7 +225,7 @@ class GitCheckoutOperation extends GitBranchOperation {
          */
         deleteResult.append(repository, myGit.branchDelete(repository, myNewBranch, true));
       }
-      refresh(repository);
+      updateAndRefreshVfs(repository);
     }
     if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
       StringBuilder message = new StringBuilder();
@@ -254,16 +259,10 @@ class GitCheckoutOperation extends GitBranchOperation {
   // stash - checkout - unstash
   private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
-    final AtomicBoolean result = new AtomicBoolean();
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit,
-                                                                      GitUtil.getRootsFromRepositories(repositories), "checkout", reference,
-                                                                      GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
-                                                                      new Runnable() {
-      @Override
-      public void run() {
-        result.set(checkoutOrNotify(repositories, reference, newBranch, false));
-      }
-    });
+    AtomicBoolean result = new AtomicBoolean();
+    GitPreservingProcess preservingProcess =
+      new GitPreservingProcess(myProject, myGit, getRootsFromRepositories(repositories), "checkout", reference, STASH, indicator,
+                               () -> result .set(checkoutOrNotify(repositories, reference, newBranch, false)));
     preservingProcess.execute();
     return result.get();
   }
@@ -282,15 +281,6 @@ class GitCheckoutOperation extends GitBranchOperation {
     }
     notifyError("Couldn't checkout " + reference, compoundResult.getErrorOutputWithReposIndication());
     return false;
-  }
-
-  private void refresh(GitRepository... repositories) {
-    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
-    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
-    stream(repositories).forEach(GitRepository::update);
-    for (GitRepository repository : repositories) {
-      refreshRoot(repository);
-    }
   }
 
   private class RollbackOperationNotificationListener implements NotificationListener {

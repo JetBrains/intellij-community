@@ -155,7 +155,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
 
-  public void _testWithKeyword() throws Exception {
+  public void _testWithKeyword() {
     // processing of 'from __future__ import' is now done on parser level, so a pure lexer test won't handle
     // this correctly
     doTest("from __future__ import with_statement\nwith x as y", new String[] { "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
@@ -211,8 +211,8 @@ public class PythonLexerTest extends PyLexerTestCase {
            "def foo(sender):\n" +
            "    pass",
            "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:DEDENT", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK",
+           "Py:DEDENT", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
            "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
   }

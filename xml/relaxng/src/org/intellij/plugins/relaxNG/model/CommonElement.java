@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.model;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.09.2007
- */
 public interface CommonElement<E extends PsiElement> {
   void accept(Visitor visitor);
 

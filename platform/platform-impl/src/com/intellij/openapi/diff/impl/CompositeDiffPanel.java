@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/13/12
- * Time: 1:59 PM
- */
 public class CompositeDiffPanel implements DiffViewer {
   private final static String FICTIVE_KEY = "FICTIVE_KEY";
   private final static int ourBadHackMagicContentsNumber = 101;
@@ -106,7 +98,7 @@ public class CompositeDiffPanel implements DiffViewer {
       content.setPinned(true);
       content.setDisposer(myParentDisposable);
       myUi.addContent(content);
-      myMap.put(FICTIVE_KEY, Pair.<DiffViewer, Content>create(errorDiffViewer, content));
+      myMap.put(FICTIVE_KEY, Pair.create(errorDiffViewer, content));
     }
 
     for (Pair<DiffViewer, Content> pair : mapCopy.values()) {

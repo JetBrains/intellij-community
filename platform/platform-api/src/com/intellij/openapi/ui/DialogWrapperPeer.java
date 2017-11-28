@@ -59,7 +59,7 @@ public abstract class DialogWrapperPeer {
   /**
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
    * more efficient garbage collection. You should never invoke this method twice or
-   * invoke any method of the wrapper after invocation of <code>dispose</code>.
+   * invoke any method of the wrapper after invocation of {@code dispose}.
    */
   protected abstract void dispose();
 

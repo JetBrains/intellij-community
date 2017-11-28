@@ -17,34 +17,38 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class HeadlessLafManagerImpl extends LafManager {
+  @NotNull
+  @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 
+  @Override
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 
-  public boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    return true;
-  }
+  @Override
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) { }
 
-  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-  }
+  @Override
+  public void updateUI() { }
 
-  public void updateUI() {
-  }
+  @Override
+  public void repaintUI() { }
 
-  public void repaintUI() {
-  }
+  @Override
+  public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
-  public void addLafManagerListener(LafManagerListener l) {
-  }
+  @Override
+  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) { }
 
-  public void removeLafManagerListener(LafManagerListener l) {
-  }
+  @Override
+  public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
 }

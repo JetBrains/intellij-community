@@ -24,14 +24,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.CommitId;
@@ -54,12 +52,8 @@ public class VcsCherryPickManager {
   }
 
   public void cherryPick(@NotNull VcsLog log) {
-    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
-      @Override
-      public void consume(List<VcsFullCommitDetails> details) {
-        ProgressManager.getInstance().run(new CherryPickingTask(myProject, ContainerUtil.reverse(details)));
-      }
-    }, null);
+    log.requestSelectedDetails(
+      details -> ProgressManager.getInstance().run(new CherryPickingTask(myProject, ContainerUtil.reverse(details))));
   }
 
   public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {
@@ -81,12 +75,8 @@ public class VcsCherryPickManager {
 
   @Nullable
   public VcsCherryPicker getCherryPickerFor(@NotNull final VcsKey key) {
-    return ContainerUtil.find(Extensions.getExtensions(VcsCherryPicker.EXTENSION_POINT_NAME, myProject), new Condition<VcsCherryPicker>() {
-      @Override
-      public boolean value(VcsCherryPicker picker) {
-        return picker.getSupportedVcs().equals(key);
-      }
-    });
+    return ContainerUtil.find(Extensions.getExtensions(VcsCherryPicker.EXTENSION_POINT_NAME, myProject),
+                              picker -> picker.getSupportedVcs().equals(key));
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
@@ -147,12 +137,10 @@ public class VcsCherryPickManager {
         }
       }
       finally {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myChangeListManager.unblockModalNotifications();
-            for (VcsFullCommitDetails details : myAllDetailsInReverseOrder) {
-              myIdsInProgress.remove(new CommitId(details.getId(), details.getRoot()));
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myChangeListManager.unblockModalNotifications();
+          for (VcsFullCommitDetails details : myAllDetailsInReverseOrder) {
+            myIdsInProgress.remove(new CommitId(details.getId(), details.getRoot()));
           }
         });
       }

@@ -43,7 +43,7 @@ public class RenameModuleTest extends ModuleTestCase {
     }
   }
 
-  public void testRename() throws Exception {
+  public void testRename() {
     String moduleName = "module";
     String newModuleName = "moduleA";
     Module module = createModule(moduleName);

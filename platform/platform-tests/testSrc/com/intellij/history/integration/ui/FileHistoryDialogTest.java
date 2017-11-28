@@ -28,18 +28,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 
-import java.io.IOException;
 import java.util.Date;
 
 public class FileHistoryDialogTest extends LocalHistoryUITestCase {
-  public void testDialogWorks() throws IOException {
+  public void testDialogWorks() {
     VirtualFile file = createChildData(myRoot, "f.txt");
 
     FileHistoryDialog d = new FileHistoryDialog(myProject, myGateway, file);
     Disposer.dispose(d);
   }
 
-  public void testTitles() throws IOException {
+  public void testTitles() {
     long leftTime = new Date(2001 - 1900, 1, 3, 12, 0).getTime();
     long rightTime = new Date(2002 - 1900, 2, 4, 14, 0).getTime();
 
@@ -61,7 +60,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
                  m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
-  public void testContent() throws IOException {
+  public void testContent() {
     VirtualFile f = createChildData(myRoot, "f.txt");
     setBinaryContent(f, "old".getBytes());
     setBinaryContent(f, "new".getBytes());
@@ -72,7 +71,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertDiffContents("old", "new", m);
   }
 
-  public void testContentWhenOnlyOneRevisionSelected() throws IOException {
+  public void testContentWhenOnlyOneRevisionSelected() {
     VirtualFile f = createChildData(myRoot, "f.txt");
     setBinaryContent(f, "old".getBytes());
     setBinaryContent(f, "new".getBytes());
@@ -82,7 +81,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertDiffContents("old", "new", m);
   }
 
-  public void testContentForCurrentRevision() throws IOException {
+  public void testContentForCurrentRevision() {
     VirtualFile f = createChildData(myRoot, "f.txt");
     setBinaryContent(f, "old".getBytes());
     setBinaryContent(f, "current".getBytes());
@@ -107,7 +106,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertEquals("newDir", dir.getName());
   }
 
-  private void assertDiffContents(String leftContent, String rightContent, FileHistoryDialogModel m) throws IOException {
+  private void assertDiffContents(String leftContent, String rightContent, FileHistoryDialogModel m) {
     DiffContent left = getLeftDiffContent(m);
     DiffContent right = getRightDiffContent(m);
 

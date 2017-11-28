@@ -35,9 +35,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 27/02/14
- */
 public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
 
   @Nullable

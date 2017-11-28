@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -84,6 +85,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
@@ -212,16 +215,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private void registerActions() {
     //control+tab switches editors
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (getEditor1() != null && getEditor2() != null) {
-          Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
-          IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
-          focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
+    DumbAwareAction.create(e -> {
+      if (getEditor1() != null && getEditor2() != null) {
+        Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
+        IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
+        focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
+    }).registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
@@ -758,10 +758,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void focusOppositeSide() {
     if (myCurrentSide == myLeftSide) {
-      myRightSide.getEditor().getContentComponent().requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(myRightSide.getEditor().getContentComponent(), true);
+      });
     }
     else {
-      myLeftSide.getEditor().getContentComponent().requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(myLeftSide.getEditor().getContentComponent(), true);
+      });
     }
   }
 

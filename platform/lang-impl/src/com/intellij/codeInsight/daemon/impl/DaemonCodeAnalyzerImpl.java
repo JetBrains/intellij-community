@@ -288,17 +288,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return result;
   }
 
-  @NotNull
-  @TestOnly
-  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                       @NotNull Document document,
-                                       @NotNull TextEditor textEditor,
-                                       @NotNull int[] toIgnore,
-                                       boolean canChangeDocument,
-                                       @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
-    return runPasses(file, document, Collections.singletonList(textEditor), toIgnore, canChangeDocument, callbackWhileWaiting);
-  }
-
   private volatile boolean mustWaitForSmartMode = true;
   @TestOnly
   public void mustWaitForSmartMode(final boolean mustWait, @NotNull Disposable parent) {
@@ -309,12 +298,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                @NotNull Document document,
-                                @NotNull List<TextEditor> textEditors,
-                                @NotNull int[] toIgnore,
-                                boolean canChangeDocument,
-                                @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
+  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
+                                       @NotNull Document document,
+                                       @NotNull List<TextEditor> textEditors,
+                                       @NotNull int[] toIgnore,
+                                       boolean canChangeDocument,
+                                       @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -391,8 +380,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new RuntimeException("Highlighting still running after "+(System.currentTimeMillis()-start)/1000+" seconds.\n"+ ThreadDumper.dumpThreadsToString());
       }
 
-      final HighlightingSessionImpl session =
-        (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, textEditors.get(0).getEditor(), progress, null);
+      HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, progress, null);
       wrap(() -> {
         if (!waitInOtherThread(60000, canChangeDocument)) {
           throw new TimeoutException("Unable to complete in 60s");
@@ -459,7 +447,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @TestOnly
-  void waitForTermination() {
+  public void waitForTermination() {
     myPassExecutorService.cancelAll(true);
   }
 
@@ -576,7 +564,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @NotNull
-  List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
+  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<>(allPasses.size());
     for (TextEditorHighlightingPass pass : allPasses) {
@@ -610,7 +598,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return myFileStatusMap;
   }
 
-  synchronized boolean isRunning() {
+  public synchronized boolean isRunning() {
     return !myUpdateProgress.isCanceled();
   }
   
@@ -863,8 +851,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     public void run() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       Project project = myProject;
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-      if (project == null || !project.isInitialized() || project.isDisposed() || PowerSaveMode.isEnabled() || daemonCodeAnalyzer.myDisposed) {
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer;
+      if (project == null ||
+          !project.isInitialized() ||
+          project.isDisposed() ||
+          PowerSaveMode.isEnabled() ||
+          (daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
         return;
       }
 
@@ -917,7 +909,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @TestOnly
   @NotNull
-  synchronized DaemonProgressIndicator getUpdateProgress() {
+  public synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }
 

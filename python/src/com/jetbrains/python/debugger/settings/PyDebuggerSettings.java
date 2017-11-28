@@ -40,6 +40,7 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   public static final String FILTERS_DIVIDER = ";";
   private boolean myWatchReturnValues = false;
   private boolean mySimplifiedView = true;
+  private boolean myLoadValuesAsync = true;
 
   public PyDebuggerSettings() {
     super("python");
@@ -60,6 +61,14 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
 
   public void setSimplifiedView(boolean simplifiedView) {
     mySimplifiedView = simplifiedView;
+  }
+
+  public boolean isLoadValuesAsync() {
+    return myLoadValuesAsync;
+  }
+
+  public void setLoadValuesAsync(boolean loadValuesAsync) {
+    myLoadValuesAsync = loadValuesAsync;
   }
 
   public static PyDebuggerSettings getInstance() {

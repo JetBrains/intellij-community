@@ -60,17 +60,17 @@ public class EntryTest extends LocalHistoryTestCase {
     }
 
     @Override
-    public void collectDifferencesWith(Entry e, List<Difference> result) {
+    public void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void collectCreatedDifferences(List<Difference> result) {
+    protected void collectCreatedDifferences(@NotNull List<Difference> result) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void collectDeletedDifferences(List<Difference> result) {
+    protected void collectDeletedDifferences(@NotNull List<Difference> result) {
       throw new UnsupportedOperationException();
     }
   }

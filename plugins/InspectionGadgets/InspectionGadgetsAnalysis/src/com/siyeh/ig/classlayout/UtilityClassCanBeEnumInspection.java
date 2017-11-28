@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,12 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
       if (keywords.isEmpty()) {
         return;
       }
+      final PsiModifierList modifierList = aClass.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.FINAL, false);
+        modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+        modifierList.setModifierProperty(PsiModifier.STATIC, false); // remove redundant modifier because nested enum is implicitly static
+      }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiStatement statement = factory.createStatementFromText(";", element);
       final PsiElement token = statement.getChildren()[0];
@@ -108,7 +114,7 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
       if (aClass.isEnum()) {
         return;
       }
-      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+      if (!UtilityClassUtil.isUtilityClass(aClass) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
         return;
       }
       registerClassError(aClass);

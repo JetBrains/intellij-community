@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -31,25 +32,28 @@ import java.util.Collection;
 public interface LibraryEditor {
   String getName();
 
-  String[] getUrls(OrderRootType rootType);
+  @NotNull
+  String[] getUrls(@NotNull OrderRootType rootType);
 
-  VirtualFile[] getFiles(OrderRootType rootType);
+  @NotNull
+  VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
+  @NotNull
   String[] getExcludedRootUrls();
 
   void setName(String name);
 
-  void addRoot(VirtualFile file, OrderRootType rootType);
+  void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType);
 
-  void addRoot(String url, OrderRootType rootType);
+  void addRoot(@NotNull String url, @NotNull OrderRootType rootType);
 
-  void addJarDirectory(VirtualFile file, boolean recursive, OrderRootType rootType);
+  void addJarDirectory(@NotNull VirtualFile file, boolean recursive, @NotNull OrderRootType rootType);
 
-  void addJarDirectory(String url, boolean recursive, OrderRootType rootType);
+  void addJarDirectory(@NotNull String url, boolean recursive, @NotNull OrderRootType rootType);
 
   void addExcludedRoot(@NotNull String url);
 
-  void removeRoot(String url, OrderRootType rootType);
+  void removeRoot(@NotNull String url, @NotNull OrderRootType rootType);
 
   void removeExcludedRoot(@NotNull String url);
 
@@ -57,14 +61,17 @@ public interface LibraryEditor {
 
   boolean hasChanges();
 
-  boolean isJarDirectory(String url, OrderRootType rootType);
+  boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType);
 
-  boolean isValid(String url, OrderRootType orderRootType);
+  boolean isValid(@NotNull String url, @NotNull OrderRootType orderRootType);
 
   LibraryProperties getProperties();
 
   @Nullable
   LibraryType<?> getType();
 
-  void addRoots(Collection<? extends OrderRoot> roots);
+  void addRoots(@NotNull Collection<? extends OrderRoot> roots);
+
+  @Nullable
+  ProjectModelExternalSource getExternalSource();
 }

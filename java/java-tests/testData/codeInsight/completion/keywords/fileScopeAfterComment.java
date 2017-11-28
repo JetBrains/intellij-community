@@ -1,0 +1,2 @@
+//comment
+<caret>package

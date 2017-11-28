@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executors[i].getId(), settings.getConfiguration());
-      AnAction action = new ExecuteMavenRunConfigurationAction(executors[i], runner != null, project, settings);
+      AnAction action = new ExecuteMavenRunConfigurationAction(executors[i], runner != null, settings);
       addAction(action, Constraints.FIRST);
     }
 
@@ -58,24 +58,21 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
   private static class ExecuteMavenRunConfigurationAction extends AnAction {
     private final Executor myExecutor;
     private final boolean myEnabled;
-    private final Project myProject;
     private final RunnerAndConfigurationSettings mySettings;
 
     public ExecuteMavenRunConfigurationAction(Executor executor,
                                               boolean enabled,
-                                              Project project,
                                               RunnerAndConfigurationSettings settings) {
       super(executor.getActionName(), null, executor.getIcon());
       myExecutor = executor;
       myEnabled = enabled;
-      myProject = project;
       mySettings = settings;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
-        ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
+        ProgramRunnerUtil.executeConfiguration(mySettings, myExecutor);
       }
     }
 

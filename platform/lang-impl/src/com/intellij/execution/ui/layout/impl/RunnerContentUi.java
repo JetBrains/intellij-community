@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private int myAttractionCount;
   private ActionGroup myLeftToolbarActions;
 
+  private boolean myContentToolbarBefore = true;
+
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
@@ -197,6 +199,24 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myComponent.repaint();
   }
 
+  public void setLeftToolbarVisible(boolean value) {
+    myToolbar.setVisible(value);
+    myTabs.getComponent().setBorder(new EmptyBorder(0, value ? 1 : 0, 0, 0));
+
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
+  public void setContentToolbarBefore(boolean value) {
+    myContentToolbarBefore = value;
+    for (GridImpl each : getGrids()) {
+      each.setToolbarBefore(value);
+    }
+
+    myContextActions.clear();
+    updateTabsUI(false);
+  }
+
   public void initUi() {
     if (myTabs != null) return;
 
@@ -221,14 +241,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getPresentation().setPaintBorder(0, 0, 0, 0).setPaintFocus(false)
       .setRequestFocusOnLastFocusedComponent(true);
     myTabs.getComponent().setBackground(myToolbar.getBackground());
+    //noinspection UseDPIAwareBorders
     myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
-    final NonOpaquePanel wrappper = new MyComponent(new BorderLayout(0, 0));
-    wrappper.add(myToolbar, BorderLayout.WEST);
-    wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
-    wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
+    myToolbar.setBorder(JBUI.Borders.emptyTop(1)); // Compensate negative insets below
 
-    myComponent = wrappper;
+    NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    wrapper.add(myToolbar, BorderLayout.WEST);
+    wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
+    wrapper.setBorder(JBUI.Borders.emptyTop(-1));
+
+    myComponent = wrapper;
 
     myTabs.addListener(new TabsListener.Adapter() {
 
@@ -371,13 +394,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
 
-    final GridCellImpl cell = grid.findCell(content);
-    if (cell == null) return;
-
-
     final TabInfo tab = myTabs.findInfo(grid);
     if (tab == null) return;
-
 
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
@@ -714,6 +732,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
+    grid.setToolbarBefore(myContentToolbarBefore);
 
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
@@ -833,8 +852,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Wrapper eachPlaceholder = entry.getValue();
       List<Content> contentList = entry.getKey().getContents();
 
-      Set<Content> contents = new HashSet<>();
-      contents.addAll(contentList);
+      Set<Content> contents = new HashSet<>(contentList);
 
       DefaultActionGroup groupToBuild;
       JComponent contextComponent = null;
@@ -955,8 +973,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       setStateIsBeingRestored(true, this);
 
-      List<TabInfo> tabs = new ArrayList<>();
-      tabs.addAll(myTabs.getTabs());
+      List<TabInfo> tabs = new ArrayList<>(myTabs.getTabs());
 
       final ActionCallback result = new ActionCallback(tabs.size());
 

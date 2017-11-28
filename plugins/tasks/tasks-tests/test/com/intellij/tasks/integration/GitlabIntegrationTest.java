@@ -22,7 +22,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   private static final String SERVER_URL = "http://trackers-tests.labs.intellij.net:8045";
   private GitlabRepository myRepository;
 
-  public void testCommitMessageFormat() throws Exception {
+  public void testCommitMessageFormat() {
     String issueJson = "{\n" +
                        "    \"id\": 1,\n" +
                        "    \"iid\": 2,\n" +
@@ -49,7 +49,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     String changeListComment = TaskUtil.getChangeListComment(localTask);
     assertEquals("project-1 2 #2 Sample title", changeListComment);
 
-    myRepository.setProjects(Collections.<GitlabProject>emptyList());
+    myRepository.setProjects(Collections.emptyList());
     localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     changeListComment = TaskUtil.getChangeListComment(localTask);
     // Project is unknown, so "" is substituted instead

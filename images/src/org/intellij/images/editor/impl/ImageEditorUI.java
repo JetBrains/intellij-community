@@ -25,17 +25,19 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
+import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
@@ -96,6 +98,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   ImageEditorUI(@Nullable ImageEditor editor) {
     this.editor = editor;
 
+    imageComponent.addPropertyChangeListener(ZOOM_FACTOR_PROP, e -> imageComponent.setZoomFactor(getZoomModel().getZoomFactor()));
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();
     options.addPropertyChangeListener(optionsChangeListener);
@@ -173,7 +176,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(toolbarPanel, BorderLayout.WEST);
     infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-    infoLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    infoLabel.setBorder(JBUI.Borders.emptyRight(2));
     topPanel.add(infoLabel, BorderLayout.EAST);
 
     add(topPanel, BorderLayout.NORTH);
@@ -252,11 +255,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return zoomModel;
   }
 
-  public void setImage(BufferedImage image, String format) {
+  public void setImageProvider(ScaledImageProvider imageProvider, String format) {
     ImageDocument document = imageComponent.getDocument();
     BufferedImage previousImage = document.getValue();
-    document.setValue(image);
-    if (image == null) return;
+    document.setValue(imageProvider);
+    if (imageProvider == null) return;
     document.setFormat(format);
     ImageZoomModel zoomModel = getZoomModel();
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
@@ -267,6 +270,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       zoomModel.setZoomFactor(1.0d);
 
       if (zoomOptions.isSmartZooming()) {
+        BufferedImage image = imageProvider.apply(zoomModel.getZoomFactor());
         Dimension prefferedSize = zoomOptions.getPrefferedSize();
         if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
           // Resize to preffered size
@@ -368,11 +372,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public double getZoomFactor() {
       Dimension size = imageComponent.getCanvasSize();
       BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? size.getWidth() / (double)image.getWidth() : 0.0d;
+      return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
+
+      if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
 
       // Change current size
       Dimension size = imageComponent.getCanvasSize();
@@ -462,7 +468,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class FocusRequester extends MouseAdapter {
     public void mousePressed(@NotNull MouseEvent e) {
-      requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true);
+      });
     }
   }
 

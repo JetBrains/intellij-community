@@ -15,12 +15,9 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
-import javax.swing.*;
+import com.intellij.openapi.ui.ComboBox;
 
-/**
-* User: anna
-*/
-public abstract class IgnoringComboBox extends JComboBox {
+public abstract class IgnoringComboBox extends ComboBox {
 
   @Override
   public void setSelectedItem(final Object item) {

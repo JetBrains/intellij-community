@@ -20,9 +20,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyExceptionInheritInspection;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyAddExceptionSuperClassQuickFixTest/")
 public class PyAddExceptionSuperClassQuickFixTest extends PyQuickFixTestCase {
 

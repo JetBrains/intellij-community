@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class WithStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
 
   @Override

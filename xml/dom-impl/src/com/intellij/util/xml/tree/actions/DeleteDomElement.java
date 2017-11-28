@@ -32,9 +32,6 @@ import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DeleteDomElement extends BaseDomTreeAction {
 
   public DeleteDomElement() {

@@ -100,7 +100,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
-    assertTrue(ref.type.equalsToText("java.lang.Integer"))
+    assertTrue(ref.type.equalsToText("int"))
   }
 
   void testGrvy1209() {
@@ -140,7 +140,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testParameterWithBuiltinType() {
     GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy")
-    assertEquals("java.lang.Integer", refExpr.type.canonicalText)
+    assertEquals("int", refExpr.type.canonicalText)
   }
 
   void testRawTypeInReturnExpression() {
@@ -597,6 +597,22 @@ class Any {
 ''', 'java.lang.Object')
   }
 
+  void testRange() {
+    doTest('''\
+        def m = new int[3]
+        for (ii in 0..<m.length) {
+         print i<caret>i
+        }
+''', 'java.lang.Integer')
+
+    doTest('''\
+        def m = new int[3]
+        for (ii in m.size()..< m[0]) {
+         print i<caret>i
+        }
+''', 'java.lang.Integer')
+  }
+
   void testUnary() {
     doExprTest('~/abc/', 'java.util.regex.Pattern')
   }
@@ -693,6 +709,51 @@ def foo(List list) {
 ''', 'java.util.List<java.util.List>')
   }
 
+  void testReturnNullWithGeneric() {
+    doTest('''
+     import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class SomeClass {
+      protected List foo(String text) {
+        return null
+      }
+
+      def bar() {
+        fo<caret>o("")
+      }
+    }
+  }
+''', 'java.util.List')
+  }
+
+
+  void testClassExpressions() {
+    doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
+    doExprTest 'Class[]', 'java.lang.Class<java.lang.Class[]>'
+    doExprTest 'int[]', 'java.lang.Class<int[]>'
+    doExprTest 'float[][]', 'java.lang.Class<float[][]>'
+    doExprTest 'Integer[][]', 'java.lang.Class<java.lang.Integer[][]>'
+    doExprTest 'boolean[][][]', 'java.lang.Class<boolean[][][]>'
+
+    doExprTest 'String.class', 'java.lang.Class<java.lang.String>'
+    doExprTest 'byte.class', 'java.lang.Class<byte>'
+
+    doExprTest 'String[].class', 'java.lang.Class<java.lang.String[]>'
+    doExprTest 'Class[].class', 'java.lang.Class<java.lang.Class[]>'
+    doExprTest 'int[].class', 'java.lang.Class<int[]>'
+    doExprTest 'float[][]', 'java.lang.Class<float[][]>'
+    doExprTest 'Integer[][].class', 'java.lang.Class<java.lang.Integer[][]>'
+    doExprTest 'double[][][].class', 'java.lang.Class<double[][][]>'
+  }
+
+  void testClassExpressionsWithArguments() {
+    doExprTest 'String[1]', 'java.lang.Object'
+    doExprTest 'String[1][]', 'java.lang.Object'
+    doExprTest 'String[1][].class', 'java.lang.Class<java.lang.Object>'
+    doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'
@@ -716,5 +777,27 @@ def foo(List list) {
     doExprTest "1..10", "groovy.lang.IntRange"
     doExprTest "'a'..'z'", "groovy.lang.Range<java.lang.String>"
     doExprTest "'b'..1", "groovy.lang.Range<java.io.Serializable>"
+  }
+
+  void 'test list with spread'() {
+    doExprTest 'def l = [1, 2]; [*l]', 'java.util.List<java.lang.Integer>'
+    doExprTest 'def l = [1, 2]; [*[*[*l]]]', 'java.util.List<java.lang.Integer>'
+  }
+
+  void 'test map spread dot access'() {
+    doExprTest '[foo: 2, bar: 4]*.key', 'java.util.ArrayList<java.lang.String>'
+    doExprTest '[foo: 2, bar: 4]*.value', 'java.util.ArrayList<java.lang.Integer>'
+    doExprTest '[foo: 2, bar: 4]*.undefined', 'java.util.List'
+  }
+
+  void 'test instanceof does not interfere with outer if'() {
+    doTest '''\
+def bar(CharSequence xx) {
+  if (xx instanceof String) {
+    1 instanceof Object
+    <caret>xx
+  }  
+}
+''', 'java.lang.String'
   }
 }

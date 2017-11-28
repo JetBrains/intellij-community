@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
@@ -24,13 +25,16 @@ public class StringFactory {
   private static final Constructor<String> ourConstructor;
 
   static {
-    Constructor<String> constructor;
-    try {
-      constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
-      constructor.setAccessible(true);
-    }
-    catch (Throwable ignored) {
-      constructor = null; // setAccessible fails without explicit permission on Java 9
+    Constructor<String> constructor = null;
+    // makes no sense in JDK9 because new String(char[],boolean) there parses and copies array too.
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+      try {
+        constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
+        constructor.setAccessible(true);
+      }
+      catch (Throwable ignored) {
+        constructor = null; // setAccessible fails without explicit permission on Java 9
+      }
     }
     ourConstructor = constructor;
   }

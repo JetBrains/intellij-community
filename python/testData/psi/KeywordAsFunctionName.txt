@@ -1,5 +1,5 @@
 PyFile:KeywordAsFunctionName.py
-  PyFunction('null')
+  PyFunction('from')
     PsiElement(Py:DEF_KEYWORD)('def')
     PsiWhiteSpace(' ')
     PsiErrorElement:Identifier expected

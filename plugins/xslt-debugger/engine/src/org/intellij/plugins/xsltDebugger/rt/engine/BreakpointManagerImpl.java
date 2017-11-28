@@ -23,11 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.05.2007
- */
 public class BreakpointManagerImpl implements BreakpointManager {
   private final TIntObjectHashMap<Map<String, Breakpoint>> myBreakpoints =
     new TIntObjectHashMap<Map<String, Breakpoint>>();

@@ -12,10 +12,6 @@ import com.intellij.psi.PsiElement;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 09-Jan-2006
- */
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");
 
@@ -25,12 +21,19 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     myManager = manager;
   }
 
-
+  @Override
+  public void onMarkReferenced(PsiElement what, PsiElement from, boolean referencedFromClassInitializer) {
+    onReferenced(what, from);
+  }
 
   @Override
   public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
     final PsiElement onElement = refWhat.getElement();
     final PsiElement fromElement = refFrom.getElement();
+    onReferenced(onElement, fromElement);
+  }
+
+  private void onReferenced(PsiElement onElement, PsiElement fromElement) {
     if (onElement != null && fromElement!= null){
       final Module onModule = ModuleUtilCore.findModuleForPsiElement(onElement);
       final Module fromModule = ModuleUtilCore.findModuleForPsiElement(fromElement);

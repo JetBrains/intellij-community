@@ -25,11 +25,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
-/**
- * User: lex
- * Date: Aug 29, 2003
- * Time: 2:49:27 PM
- */
 @Tag("instance-filter")
 public class InstanceFilter implements JDOMExternalizable{
   public static final InstanceFilter[] EMPTY_ARRAY = new InstanceFilter[0];

@@ -43,10 +43,10 @@ public class PyPackagesUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    final PyPackageService service = PyPackageService.getInstance();
-    if (checkNeeded(project, service)) {
+    if (checkNeeded(project)) {
       application.executeOnPooledThread(() -> {
         try {
+          final PyPackageService service = PyPackageService.getInstance();
           PyPIPackageUtil.INSTANCE.updatePyPICache(service);
           service.LAST_TIME_CHECKED = System.currentTimeMillis();
         }
@@ -78,8 +78,9 @@ public class PyPackagesUpdater implements StartupActivity {
     return false;
   }
 
-  private static boolean checkNeeded(Project project, PyPackageService service) {
+  private static boolean checkNeeded(Project project) {
     if (!hasPython(project)) return false;
+    final PyPackageService service = PyPackageService.getInstance();
     final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
     if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
     LOG.debug("Updating outdated PyPI package cache");

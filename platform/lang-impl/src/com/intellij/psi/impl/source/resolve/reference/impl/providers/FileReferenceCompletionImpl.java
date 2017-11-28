@@ -65,6 +65,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
     }
   };
 
+  @NotNull
   @Override
   public Object[] getFileReferenceCompletionVariants(final FileReference reference) {
     final String s = reference.getText();

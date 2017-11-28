@@ -18,8 +18,8 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -59,22 +59,24 @@ public class HgLocalIgnoredHolder implements Disposable {
   }
 
   public void startRescan() {
-    myUpdateQueue.queue(new Update("hgRescanIgnored") {
-      @Override
-      public boolean canEat(Update update) {
-        return true;
-      }
-
-      @Override
-      public void run() {
-        if (myInUpdateMode.compareAndSet(false, true)) {
-          fireUpdateStarted();
-          rescanAllIgnored();
-          myInUpdateMode.set(false);
-          fireUpdateFinished();
+    if (Registry.is("hg4idea.process.ignored")) {
+      myUpdateQueue.queue(new Update("hgRescanIgnored") {
+        @Override
+        public boolean canEat(Update update) {
+          return true;
         }
-      }
-    });
+
+        @Override
+        public void run() {
+          if (myInUpdateMode.compareAndSet(false, true)) {
+            fireUpdateStarted();
+            rescanAllIgnored();
+            myInUpdateMode.set(false);
+            fireUpdateFinished();
+          }
+        }
+      });
+    }
   }
 
   private void fireUpdateStarted() {
@@ -87,14 +89,8 @@ public class HgLocalIgnoredHolder implements Disposable {
 
   private void rescanAllIgnored() {
     Set<VirtualFile> ignored = ContainerUtil.newHashSet();
-    try {
-      ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(myRepository.getProject())
-                       .getFiles(myRepository.getRoot(), null));
-    }
-    catch (VcsException e) {
-      LOG.error("Can't reload ignored files for: " + myRepository.getPresentableUrl(), e);
-      return;
-    }
+    ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(myRepository.getProject())
+                     .getFiles(myRepository.getRoot(), null));
     try {
       SET_LOCK.writeLock().lock();
       myIgnoredSet.clear();

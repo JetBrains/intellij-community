@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class WhileCanBeForeachInspectionBase extends BaseInspection {
   @Nullable
   static PsiStatement getPreviousStatement(PsiElement context) {
-    final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(context, PsiWhiteSpace.class, PsiComment.class);
+    final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(context);
     if (!(prevStatement instanceof PsiStatement)) {
       return null;
     }

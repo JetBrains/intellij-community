@@ -19,6 +19,8 @@ Groovy script
       PsiWhiteSpace('\n  ')
       Enumeration constants
         Enumeration constant
+          Modifiers
+            <empty list>
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
           Arguments

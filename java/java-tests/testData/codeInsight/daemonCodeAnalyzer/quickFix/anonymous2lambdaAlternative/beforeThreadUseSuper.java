@@ -1,4 +1,4 @@
-// "Replace with constructor accepting lambda" "false"
+// "Replace with new Thread(() -> {…})" "false"
 public class Main {
   public void testThread() {
     new <caret>Thread() {

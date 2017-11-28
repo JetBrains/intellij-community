@@ -21,7 +21,8 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,7 +37,7 @@ import java.io.File;
  * @author dsl
  */
 public class ExportingModulesTest extends IdeaTestCase {
-  public void test1() throws Exception {
+  public void test1() {
     final String rootPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
     final VirtualFile testRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath);
     assertNotNull(testRoot);

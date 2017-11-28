@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public interface ConstructorCallInfo<T extends GroovyPsiElement> extends CallInfo<T> {
   GroovyResolveResult[] multiResolveClass();
 }

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
-* Created by Max Medvedev on 25/03/14
-*/
 class AliasedAnnotationHolder implements AnnotationHolder {
   private final AnnotationHolder myHolder;
   private final GrAnnotation myAlias;

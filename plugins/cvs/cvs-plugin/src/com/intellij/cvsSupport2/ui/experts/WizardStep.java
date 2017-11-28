@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.border.IdeaTitledBorder;
 
@@ -71,6 +72,8 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   public void focus() {
-    SwingUtilities.invokeLater(() -> getPreferredFocusedComponent().requestFocus());
+    SwingUtilities.invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true);
+    }));
   }
 }

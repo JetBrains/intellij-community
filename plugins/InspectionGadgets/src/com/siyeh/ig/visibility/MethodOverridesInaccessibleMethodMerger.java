@@ -16,18 +16,22 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodOverridesInaccessibleMethodMerger extends InspectionElementsMerger {
+  @NotNull
   @Override
   public String getMergedToolName() {
     return "MethodOverridesInaccessibleMethodOfSuper";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] { "MethodOverridesPackageLocalMethod", "MethodOverridesPrivateMethod"};
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[] {"MethodOverridesPrivateMethodOfSuperclass", "MethodOverridesPrivateMethodOfSuperclass" };

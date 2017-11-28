@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 15.03.2006
- * Time: 18:26:09
- */
 package org.intellij.lang.xpath;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;

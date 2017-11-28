@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:29:03 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -50,7 +42,7 @@ public class LineEndWithSelectionAction extends TextComponentEditorAction {
     }
 
     @Override
-    protected void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineEnd(editor, true, !(editor instanceof TextComponentEditor));
     }
   }

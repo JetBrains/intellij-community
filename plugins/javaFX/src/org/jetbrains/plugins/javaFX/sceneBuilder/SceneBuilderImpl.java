@@ -2,12 +2,13 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -104,6 +105,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
+    Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
     myEditorController = new EditorController();
     updateCustomLibrary();
@@ -134,6 +136,12 @@ public class SceneBuilderImpl implements SceneBuilder {
       return;
     }
     UsageTrigger.trigger("scene-builder.open");
+  }
+
+  private static void logUncaughtException(Thread t, Throwable e) {
+    if (!(e instanceof ControlFlowException)) {
+      LOG.error("Uncaught exception in JavaFX " + t, e);
+    }
   }
 
   private void updateCustomLibrary() {
@@ -222,12 +230,9 @@ public class SceneBuilderImpl implements SceneBuilder {
       jdk = ProjectRootManager.getInstance(project).getProjectSdk();
     }
     if (jdk == null) return true;
-    final String versionString = jdk.getVersionString();
-    if (versionString != null) {
-      final JavaSdkVersion jdkVersion = JdkVersionUtil.getVersion(versionString);
-      if (jdkVersion != null) {
-        return targetLevel.isAtLeast(jdkVersion.getMaxLanguageLevel());
-      }
+    final JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    if (jdkVersion != null) {
+      return targetLevel.isAtLeast(jdkVersion.getMaxLanguageLevel());
     }
     return true;
   }

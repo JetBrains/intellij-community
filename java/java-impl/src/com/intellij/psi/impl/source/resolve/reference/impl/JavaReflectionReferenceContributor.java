@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -25,24 +26,27 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.or;
-import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaReflectionReferenceContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteral> PATTERN =
-    psiLiteral().methodCallParameter(psiMethod().withName(string().oneOf("getDeclaredField",
-                                                                         "getField",
-                                                                         "getMethod",
-                                                                         "getDeclaredMethod"))
-                                                     .definedInClass(JAVA_LANG_CLASS));
+    psiLiteral().methodCallParameter(psiMethod().withName(GET_FIELD, GET_DECLARED_FIELD, GET_METHOD, GET_DECLARED_METHOD)
+                                       .definedInClass(JAVA_LANG_CLASS));
 
   public static final PsiJavaElementPattern.Capture<PsiLiteral> CLASS_PATTERN =
-    psiLiteral().methodCallParameter(or(
-      psiMethod().withName(string().equalTo("forName")).definedInClass(JAVA_LANG_CLASS),
-      psiMethod().withName(string().equalTo("loadClass")).definedInClass("java.lang.ClassLoader")));
+    psiLiteral().methodCallParameter(0, or(
+      psiMethod().withName(FOR_NAME).definedInClass(JAVA_LANG_CLASS),
+      psiMethod().withName(LOAD_CLASS).definedInClass(JAVA_LANG_CLASS_LOADER),
+      psiMethod().withName(FIND_CLASS).definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)));
+
+  private static final ElementPattern<? extends PsiElement> METHOD_HANDLE_PATTERN = psiLiteral()
+    .methodCallParameter(1, psiMethod()
+      .withName(HANDLE_FACTORY_METHOD_NAMES)
+      .definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP));
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -53,24 +57,21 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                                      @NotNull PsiReferenceExpression methodReference,
                                                      @NotNull ProcessingContext context) {
 
-        PsiExpression qualifier = methodReference.getQualifierExpression();
+        final PsiExpression qualifier = methodReference.getQualifierExpression();
         return qualifier != null ? new PsiReference[]{new JavaLangClassMemberReference(literalArgument, qualifier)} : null;
       }
     });
 
     registrar.registerReferenceProvider(CLASS_PATTERN, new JavaReflectionReferenceProvider() {
-      @Nullable
       @Override
       protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
                                                      @NotNull PsiReferenceExpression methodReference,
                                                      @NotNull ProcessingContext context) {
 
-        String referenceName = methodReference.getReferenceName();
-        if ("forName".equals(referenceName) || "loadClass".equals(referenceName)) {
-          return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
-        }
-        return null;
+        return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
       }
     });
+
+    registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReference.JavaLangInvokeHandleReferenceProvider());
   }
 }

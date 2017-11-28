@@ -41,6 +41,7 @@ class CommunityRepositoryModules {
     "projectModel-api",
     "remote-servers-agent-rt",
     "remote-servers-api",
+    "tasks-platform-api",
     "usageView",
     "vcs-api-core",
     "vcs-api",
@@ -80,6 +81,7 @@ class CommunityRepositoryModules {
     "smRunner",
     "spellchecker",
     "structure-view-impl",
+    "tasks-platform-impl",
     "testRunner",
     "vcs-impl",
     "vcs-log-graph",
@@ -153,13 +155,12 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
     },
-    plugin("student-python") {
+    plugin("Edu-Python") {
       withResource("resources/courses", "lib/courses")
-      excludeFromModule("student-python", "courses/**")
+      excludeFromModule("Edu-Python", "courses/**")
     },
     plugin("maven") {
       withModule("maven-jps-plugin")
-      withModule("aether-dependency-resolver")
       withModule("maven-server-api")
       withModule("maven2-server-impl")
       withModule("maven3-server-common")
@@ -200,9 +201,6 @@ class CommunityRepositoryModules {
       mainJarName = "idea-junit.jar"
       withModule("junit_rt", "junit-rt.jar")
       withModule("junit5_rt", "junit5-rt.jar")
-      withProjectLibrary("junit5_rt")
-      withProjectLibrary("opentest4j")
-      withModuleLibrary("junit-jupiter-api-5.0.0-M4.jar", "junit5_rt_tests", "")
     },
     plugin("ByteCodeViewer") {
       mainJarName = "byteCodeViewer.jar"
@@ -268,7 +266,6 @@ class CommunityRepositoryModules {
       withModule("instant-run-common", "sdk-tools.jar")
       withModule("instant-run-client", "sdk-tools.jar")
       withModule("instant-run-runtime", "sdk-tools.jar")
-      withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
       withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("builder-model") //todo[nik] move to module libraries

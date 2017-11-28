@@ -24,12 +24,12 @@ public class IdeaPicoContainerTest {
   private MutablePicoContainer myContainer;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myContainer = new DefaultPicoContainer();
   }
 
   @Test
-  public void testUnregister() throws Exception {
+  public void testUnregister() {
     String key = "myObject";
     MyComponentClass instance = new MyComponentClass();
     myContainer.registerComponentInstance(key, instance);

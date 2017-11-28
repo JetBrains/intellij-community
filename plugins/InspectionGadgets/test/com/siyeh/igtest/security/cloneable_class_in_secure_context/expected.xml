@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>CloneableClassInSecureContext.java</file>
-    <line>3</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cloneable class in secure context</problem_class>
-    <description>Class &lt;code&gt;CloneableClassInSecureContext&lt;/code&gt; may be cloned, compromising security #loc</description>
-  </problem>
-</problems>

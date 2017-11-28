@@ -32,7 +32,10 @@ import java.util.Map;
  * Use this class if you need custom TObjectHashingStrategy.
  * Do not use this class if you have null keys (shame on you).
  * Otherwise it's the same as java.util.WeakHashMap, you are free to use either.
+ *
+ * @deprecated use {@link ContainerUtil#createWeakMap()} instead
  */
+@Deprecated
 public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   public WeakHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);

@@ -16,24 +16,20 @@
 package com.intellij.project.model.impl.library;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.roots.impl.libraries.JarDirectories;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -46,13 +42,11 @@ import java.util.*;
 public class JpsLibraryDelegate implements LibraryEx {
   private final JpsLibrary myJpsLibrary;
   private final JpsLibraryTableImpl myLibraryTable;
-  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private final RootProviderBaseImpl myRootProvider = new MyRootProvider();
 
   public JpsLibraryDelegate(JpsLibrary library, JpsLibraryTableImpl table) {
     myJpsLibrary = library;
     myLibraryTable = table;
-    myRoots = new HashMap<>();
   }
 
   @Override
@@ -73,47 +67,19 @@ public class JpsLibraryDelegate implements LibraryEx {
   @NotNull
   @Override
   public String[] getUrls(@NotNull OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myRoots.get(rootType);
-    if (container == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return container.getUrls();
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
   @Override
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myRoots.get(rootType);
-    if (container == null) return VirtualFile.EMPTY_ARRAY;
-    final List<VirtualFile> expanded = new ArrayList<>();
-    for (JpsLibraryRoot root : myJpsLibrary.getRoots(getJpsRootType(rootType))) {
-      final VirtualFilePointer pointer = container.findByUrl(root.getUrl());
-      if (pointer == null) continue;
-      VirtualFile file = pointer.getFile();
-      if (file == null) continue;
-
-      if (file.isDirectory() && root.getInclusionOptions() != JpsLibraryRoot.InclusionOptions.ROOT_ITSELF) {
-        LibraryImpl.collectJarFiles(file, expanded, root.getInclusionOptions() == JpsLibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY);
-        continue;
-      }
-      expanded.add(file);
-    }
-    return VfsUtilCore.toVirtualFileArray(expanded);
+    return VirtualFile.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public List<String> getInvalidRootUrls(OrderRootType type) {
-    final VirtualFilePointerContainer container = myRoots.get(type);
-    if (container == null) return Collections.emptyList();
-    final List<VirtualFilePointer> pointers = container.getList();
-    List<String> invalidPaths = null;
-    for (VirtualFilePointer pointer : pointers) {
-      if (!pointer.isValid()) {
-        if (invalidPaths == null) {
-          invalidPaths = new SmartList<>();
-        }
-        invalidPaths.add(pointer.getUrl());
-      }
-    }
-    return invalidPaths == null ? Collections.<String>emptyList() : invalidPaths;
+  public List<String> getInvalidRootUrls(@NotNull OrderRootType type) {
+    return Collections.emptyList();
   }
 
   @Override
@@ -130,6 +96,12 @@ public class JpsLibraryDelegate implements LibraryEx {
   @Override
   public RootProvider getRootProvider() {
     return myRootProvider;
+  }
+
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return null;
   }
 
   @Override
@@ -166,7 +138,7 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @Override
   public boolean isJarDirectory(@NotNull String url) {
-    return isJarDirectory(url, JarDirectories.DEFAULT_JAR_DIRECTORY_TYPE);
+    return isJarDirectory(url, OrderRootType.CLASSES);
   }
 
   @Override
@@ -181,10 +153,7 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @Override
   public boolean isValid(@NotNull String url, @NotNull OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myRoots.get(rootType);
-    if (container == null) return false;
-    final VirtualFilePointer fp = container.findByUrl(url);
-    return fp != null && fp.isValid();
+    return false;
   }
 
   private static JpsOrderRootType getJpsRootType(OrderRootType type) {

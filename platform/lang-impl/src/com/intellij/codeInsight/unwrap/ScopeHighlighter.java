@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Sep-2008
- */
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     // However, we don't want to un-escape literal content if it's copied completely.
     // Example:
     //     String s = <selection>"my string"</selection>;
-    
+
     StringBuilder buffer = new StringBuilder();
     int givenTextOffset = 0;
     boolean textWasChanged = false;
@@ -67,51 +66,24 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       // Calculate offsets offsets of the selection interval being processed now.
       final int fileStartOffset = startOffsets[i];
       final int fileEndOffset = endOffsets[i];
-      int givenTextStartOffset = Math.min(givenTextOffset, text.length());
-      final int givenTextEndOffset = Math.min(givenTextOffset + (fileEndOffset - fileStartOffset), text.length());
+      int givenTextStartOffset = givenTextOffset;
+      final int givenTextEndOffset = givenTextOffset + (fileEndOffset - fileStartOffset);
       givenTextOffset = givenTextEndOffset;
-      for (
-        PsiElement element = file.findElementAt(fileStartOffset);
-        givenTextStartOffset < givenTextEndOffset;
-        element = PsiTreeUtil.nextLeaf(element)) {
-        if (element == null) {
-          buffer.append(text.substring(givenTextStartOffset, givenTextEndOffset));
-          break;
-        }
-        TextRange elementRange = element.getTextRange();
-        int escapedStartOffset;
-        int escapedEndOffset;
-        if ((isStringLiteral(element) || isCharLiteral(element))
-            // We don't want to un-escape if complete literal is copied.
-            && (elementRange.getStartOffset() < fileStartOffset || elementRange.getEndOffset() > fileEndOffset)) {
-          escapedStartOffset = elementRange.getStartOffset() + 1 /* String/char literal quote */;
-          escapedEndOffset = elementRange.getEndOffset() - 1 /* String/char literal quote */;
-        }
-        else {
-          escapedStartOffset = escapedEndOffset = elementRange.getStartOffset();
-        }
-
-        // Process text to the left of the escaped fragment (if any).
-        int numberOfSymbolsToCopy = escapedStartOffset - Math.max(fileStartOffset, elementRange.getStartOffset());
-        if (numberOfSymbolsToCopy > 0) {
-          buffer.append(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy));
-          givenTextStartOffset += numberOfSymbolsToCopy;
-        }
-
-        // Process escaped text (un-escape it).
-        numberOfSymbolsToCopy = Math.min(escapedEndOffset, fileEndOffset) - Math.max(fileStartOffset, escapedStartOffset);
-        if (numberOfSymbolsToCopy > 0) {
-          textWasChanged = true;
-          buffer.append(unescape(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy), element));
-          givenTextStartOffset += numberOfSymbolsToCopy;
-        }
-
-        // Process text to the right of the escaped fragment (if any).
-        numberOfSymbolsToCopy = Math.min(fileEndOffset, elementRange.getEndOffset()) - Math.max(fileStartOffset, escapedEndOffset);
-        if (numberOfSymbolsToCopy > 0) {
-          buffer.append(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy));
-          givenTextStartOffset += numberOfSymbolsToCopy;
-        }
+      if (givenTextOffset > text.length()) {
+        // This can happen e.g. line terminators were normalized in copied text, and it became shorter
+        // than corresponding fragment in the original document.
+        // We don't implement escaping/unescaping logic for documents with non-normalized line terminators currently.
+        return null;
+      }
+      String fragment = text.substring(givenTextStartOffset, givenTextEndOffset);
+      PsiElement element = file.findElementAt(fileStartOffset);
+      TextRange escapedRange = element == null ? null : getEscapedRange(element);
+      if (escapedRange == null || escapedRange.getStartOffset() > fileStartOffset || escapedRange.getEndOffset() < fileEndOffset) {
+        buffer.append(fragment);
+      }
+      else {
+        textWasChanged = true;
+        buffer.append(unescape(fragment, element));
       }
       int blockSelectionPadding = deducedBlockSelectionWidth - (fileEndOffset - fileStartOffset);
       for (int j = 0; j < blockSelectionPadding; j++) {
@@ -231,6 +203,17 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   protected boolean isStringLiteral(@NotNull PsiElement token) {
     ASTNode node = token.getNode();
     return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
+  }
+
+  @Nullable
+  protected TextRange getEscapedRange(@NotNull PsiElement token) {
+    if (isCharLiteral(token) || isStringLiteral(token)) {
+      TextRange tokenRange = token.getTextRange();
+      return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
+    }
+    else {
+      return null;
+    }
   }
 
   @NotNull

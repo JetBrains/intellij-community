@@ -38,7 +38,7 @@ import java.io.PrintWriter;
 public class FormatterStarter extends ApplicationStarterEx {
 
   public static final String FORMAT_COMMAND_NAME = "format";
-  private static final Logger LOG = Logger.getInstance("#" + FormatterStarter.class.getName());
+  private static final Logger LOG = Logger.getInstance(FormatterStarter.class);
 
   @Override
   public boolean isHeadless() {

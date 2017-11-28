@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 public interface IProjectStore extends IComponentStore {
-  /**
-   * System-independent path.
-   */
-  @Nullable
+  @SystemIndependent
+  @NotNull
   String getProjectBasePath();
 
   @NotNull
@@ -34,9 +33,7 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   StorageScheme getStorageScheme();
 
-  /**
-   * System-independent path.
-   */
+  @SystemIndependent
   @NotNull
   String getProjectFilePath();
 
@@ -63,15 +60,18 @@ public interface IProjectStore extends IComponentStore {
   VirtualFile getDirectoryStoreFile();
 
   @Nullable
+  @SystemIndependent
   String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
 
   /**
    * Directory of project configuration files for directory-based project. Or null.
    */
+  @SystemIndependent
   default String getDirectoryStorePath() {
     return getDirectoryStorePath(false);
   }
 
   @NotNull
+  @SystemIndependent
   String getDirectoryStorePathOrBase();
 }

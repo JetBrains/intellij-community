@@ -49,7 +49,7 @@ public class PyBlockEvaluator {
    * @see com.jetbrains.python.psi.impl.blockEvaluator.PyEvaluationContext
    */
   public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
-    this(Sets.<PyFile>newHashSet(), evaluationContext);
+    this(Sets.newHashSet(), evaluationContext);
   }
 
   /**

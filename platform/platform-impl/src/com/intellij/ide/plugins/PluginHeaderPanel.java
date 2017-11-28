@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -224,11 +224,11 @@ public class PluginHeaderPanel {
       private Paint getBackgroundPaint() {
         switch (myActionId) {
           case UPDATE: return new JBGradientPaint(this,
-                                                  new JBColor(new Color(98, 158, 225), new Color(98, 158, 225)),
-                                                  new JBColor(new Color(58, 91, 181), new Color(58, 91, 181)));
+                                                  new JBColor(0x629ee1, 0x629ee1),
+                                                  new JBColor(0x3a5bb5, 0x3a5bb5));
           case INSTALL: return new JBGradientPaint(this,
-                                                   new JBColor(new Color(96, 204, 105), new Color(81, 149, 87)),
-                                                   new JBColor(new Color(50, 101, 41), new Color(40, 70, 47)));
+                                                   new JBColor(0x60cc69, 0x519557),
+                                                   new JBColor(0x326529, 0x28462f));
           case RESTART:
           case UNINSTALL: return UIUtil.isUnderDarcula()
                                  ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.color1"), UIManager.getColor("Button.darcula.color2"))
@@ -239,7 +239,7 @@ public class PluginHeaderPanel {
 
       private Paint getBackgroundBorderPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBColor(new Color(166, 180, 205), Gray._85);
+          case UPDATE: return new JBColor(new Color(0xa6b4cd), Gray._85);
           case INSTALL: return new JBColor(new Color(201, 223, 201), Gray._70);
           case RESTART:
           case UNINSTALL: return new JBColor(Gray._220, Gray._100.withAlpha(180));
@@ -292,13 +292,13 @@ public class PluginHeaderPanel {
             if (dialog != null && dialog.isModal()) {
               dialog.close(DialogWrapper.OK_EXIT_CODE);
             }
-            TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
               DialogWrapper settings = DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
               if (settings instanceof SettingsDialog) {
                 ((SettingsDialog)settings).doOKAction();
               }
               ApplicationManager.getApplication().restart();
-            });
+            }, ModalityState.current());
             break;
         }
         setPlugin(myPlugin);

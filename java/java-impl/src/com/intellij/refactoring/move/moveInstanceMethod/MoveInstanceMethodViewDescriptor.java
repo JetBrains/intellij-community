@@ -31,10 +31,9 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   private final PsiVariable myTargetVariable;
   private final PsiClass myTargetClass;
 
-  public MoveInstanceMethodViewDescriptor(
-    PsiMethod method,
-    PsiVariable targetVariable,
-    PsiClass targetClass) {
+  public MoveInstanceMethodViewDescriptor(PsiMethod method,
+                                          PsiVariable targetVariable,
+                                          PsiClass targetClass) {
     super();
     myMethod = method;
     myTargetVariable = targetVariable;
@@ -43,7 +42,7 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
 
   @NotNull
   public PsiElement[] getElements() {
-    return new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
+    return myTargetVariable == null ? new PsiElement[] {myTargetClass} : new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
   }
 
   public String getProcessedElementsHeader() {

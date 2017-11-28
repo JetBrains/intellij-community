@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
  */
 public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
 
-  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION};
+  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
 
   public GradleProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
     super(builder);
@@ -50,7 +50,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @NotNull
   @Override
   public String[] getSupportedExtensions() {
-    return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME};
+    return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME, GradleConstants.KOTLIN_DSL_SCRIPT_NAME};
   }
 
   @Override
@@ -61,11 +61,6 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
         if (fileName.endsWith(extension)) {
           return true;
         }
-      }
-    }
-    else {
-      for (String supported : getSupportedExtensions()) {
-        if (file.findChild(supported) != null) return true;
       }
     }
     return super.canOpenProject(file);
@@ -87,17 +82,22 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     getBuilder().getControl(null).setLinkedProjectPath(pathToUse);
 
     final boolean result;
+    WizardContext dialogWizardContext = null;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       result = setupGradleProjectSettingsInHeadlessMode(projectImportProvider, wizardContext);
     }
     else {
       AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), projectImportProvider);
-      dialog.getWizardContext().setProjectBuilder(getBuilder());
+      dialogWizardContext = dialog.getWizardContext();
+      dialogWizardContext.setProjectBuilder(getBuilder());
       dialog.navigateToStep(step -> step instanceof SelectExternalProjectStep);
       result = dialog.showAndGet();
     }
     if (result && getBuilder().getExternalProjectNode() != null) {
       wizardContext.setProjectName(getBuilder().getExternalProjectNode().getData().getInternalName());
+    }
+    if(result && dialogWizardContext != null) {
+      wizardContext.setProjectStorageFormat(dialogWizardContext.getProjectStorageFormat());
     }
     return result;
   }

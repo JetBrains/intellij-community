@@ -1,36 +1,20 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public abstract class UsagesCollector {
-  private static final Logger LOG = Logger.getInstance(UsagesCollector.class);
-
-  private static final Object LOCK = new Object();
 
   public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
 
@@ -40,38 +24,53 @@ public abstract class UsagesCollector {
   @NotNull
   public abstract GroupDescriptor getGroupId();
 
-  public static void doPersistProjectUsages(@NotNull Project project) {
-    if (StatisticsUploadAssistant.isSendAllowed()) {
-      synchronized (LOCK) {
-        if (!project.isInitialized() || DumbService.isDumb(project)) {
-          return;
-        }
+  private static Pair<Double, Double> findBucket(double value, double... ranges) {
+    if (ranges.length == 0) throw new IllegalArgumentException("Constrains are empty");
+    if (value < ranges[0]) return Pair.create(null, ranges[0]);
+    for (int i = 1; i < ranges.length; i++) {
+      if (ranges[i] <= ranges[i - 1])
+        throw new IllegalArgumentException("Constrains are unsorted");
 
-        for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
-          if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-            ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
-          }
-        }
+      if (value < ranges[i]) {
+        return Pair.create(ranges[i - 1], ranges[i]);
       }
     }
+
+    return Pair.create(ranges[ranges.length - 1], null);
   }
 
-  @NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
-    synchronized (LOCK) {
-      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
-      for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
-        GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
-        if (!disabledGroups.contains(groupDescriptor.getId())) {
-          try {
-            usageDescriptors.put(groupDescriptor, usagesCollector.getUsages());
-          }
-          catch (CollectUsagesException e) {
-            LOG.info(e);
-          }
+  public static boolean isNotBundledPluginClass(@NotNull Class clazz) {
+    ClassLoader loader = clazz.getClassLoader();
+    if (loader instanceof PluginClassLoader) {
+      PluginId id = ((PluginClassLoader)loader).getPluginId();
+      if (id != null) {
+        IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+        if (plugin != null && !plugin.isBundled()) {
+          return true;
         }
       }
-      return usageDescriptors;
     }
+    return false;
+  }
+
+  protected static String findBucket(long value, Function<Long, String> valueConverter, long...ranges) {
+    double[] dRanges = new double[ranges.length];
+    for (int i = 0; i < dRanges.length; i++) {
+      dRanges[i] = ranges[i];
+    }
+    return findBucket((double)value, (d) -> valueConverter.apply(d.longValue()), dRanges);
+  }
+
+  protected static String findBucket(double value, Function<Double, String> valueConverter, double...ranges) {
+    for (double range : ranges) {
+      if (range == value) {
+        return valueConverter.apply(value);
+      }
+    }
+
+    Pair<Double, Double> bucket = findBucket(value, ranges);
+    if (bucket.first == null) return "(*, " + valueConverter.apply(bucket.second) + ")";
+    if (bucket.second == null) return "(" + valueConverter.apply(bucket.first) + ", *)";
+    return "(" + valueConverter.apply(bucket.first) + ", " + valueConverter.apply(bucket.second) + ")";
   }
 }

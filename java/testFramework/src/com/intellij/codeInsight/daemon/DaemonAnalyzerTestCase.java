@@ -152,7 +152,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
-      profile.disableTool(shortName, getProject());
+      profile.setToolEnabled(shortName, false);
     }
   }
 
@@ -355,12 +355,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     List<IntentionAction> actions = getIntentionActions(infos, editor, file);
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
-    String message = String.format("Could not find action by name %s.\n" +
-                                   "Actions: [%s]\n" +
-                                   "HighlightInfos: [%s]", intentionActionName,
-                                   StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                                   StringUtil.join(infos, ", "));
-    assertNotNull(message, intentionAction);
+    if (intentionAction == null) {
+      fail(String.format("Could not find action by name %s.\n" +
+                         "Actions: [%s]\n" +
+                         "HighlightInfos: [%s]", intentionActionName,
+                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
+                         StringUtil.join(infos, ", ")));
+    }
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }
 

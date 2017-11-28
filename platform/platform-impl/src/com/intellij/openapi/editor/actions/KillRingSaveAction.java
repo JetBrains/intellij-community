@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.ide.KillRingTransferable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Other-Kill-Commands.html">kill-ring-save</a> command.
@@ -49,7 +50,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void execute(final Editor editor, final DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, final DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
         return;

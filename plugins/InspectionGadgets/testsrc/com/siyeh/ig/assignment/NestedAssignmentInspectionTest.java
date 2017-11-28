@@ -20,7 +20,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class NestedAssignmentInspectionTest extends LightInspectionTestCase {
 
-  public void testLambda() throws Exception {
+  public void testLambda() {
     doTest("class Test {" +
            " {" +
            "    int[] array = new int[1];" +

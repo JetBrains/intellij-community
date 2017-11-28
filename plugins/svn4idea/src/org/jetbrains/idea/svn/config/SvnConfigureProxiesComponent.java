@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -76,6 +75,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return "HTTP proxies configuration";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -87,7 +87,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", ContainerUtil.<String, String>newHashMap());
+      group = new ProxyGroup(getNewName(), "", ContainerUtil.newHashMap());
     } else {
       group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
     }
@@ -163,17 +163,15 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
 
     });
-    result.add(new MyDeleteAction(forAll(new Condition<Object>(){
-      public boolean value(final Object o) {
-        if (o instanceof MyNode) {
-          final MyNode node = (MyNode) o;
-          if (node.getConfigurable() instanceof GroupConfigurable) {
-            final ProxyGroup group = ((GroupConfigurable) node.getConfigurable()).getEditableObject();
-            return ! group.isDefault();
-          }
+    result.add(new MyDeleteAction(forAll(o -> {
+      if (o instanceof MyNode) {
+        final MyNode node = (MyNode)o;
+        if (node.getConfigurable() instanceof GroupConfigurable) {
+          final ProxyGroup group = ((GroupConfigurable)node.getConfigurable()).getEditableObject();
+          return !group.isDefault();
         }
-        return false;
       }
+      return false;
     })) {
       public void actionPerformed(final AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
@@ -259,7 +257,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     myRoot.removeAllChildren();
 
     DefaultProxyGroup defaultProxyGroup = myManager.getDefaultGroup();
-    defaultProxyGroup = (defaultProxyGroup == null) ? new DefaultProxyGroup(Collections.<String, String>emptyMap()) : defaultProxyGroup;
+    defaultProxyGroup = (defaultProxyGroup == null) ? new DefaultProxyGroup(Collections.emptyMap()) : defaultProxyGroup;
     final Map<String, ProxyGroup> userGroups = myManager.getGroups();
 
     myRoot.add(createNodeForObject(defaultProxyGroup));

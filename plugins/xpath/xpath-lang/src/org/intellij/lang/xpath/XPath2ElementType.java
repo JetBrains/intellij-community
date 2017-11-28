@@ -15,11 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.01.11
-*/
 public class XPath2ElementType extends XPathElementType {
   public XPath2ElementType(String s) {
     super(s, XPathFileType.XPATH2.getLanguage());

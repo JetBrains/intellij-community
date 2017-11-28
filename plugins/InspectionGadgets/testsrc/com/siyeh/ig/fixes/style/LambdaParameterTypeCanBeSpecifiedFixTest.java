@@ -41,19 +41,19 @@ public class LambdaParameterTypeCanBeSpecifiedFixTest extends IGQuickFixesTestCa
     doTest("Expand lambda to (Integer o) -> {...}");
   }
 
-  public void testAlreadyExist() throws Exception {
+  public void testAlreadyExist() {
     assertQuickfixNotAvailable("Expand lambda to (String o) -> {...}");
   }
 
-  public void testCyclicInference() throws Exception {
+  public void testCyclicInference() {
     assertQuickfixNotAvailable("Expand lambda to (Object x) -> {...}");
   }
 
-  public void testNoParams() throws Exception {
+  public void testNoParams() {
     assertQuickfixNotAvailable("Expand lambda to () -> {...}");
   }
 
-  public void testCapturedWildcardParams() throws Exception {
+  public void testCapturedWildcardParams() {
     assertQuickfixNotAvailable("Expand lambda to (capture of ?) -> {...}");
   }
 

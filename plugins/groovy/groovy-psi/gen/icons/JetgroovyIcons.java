@@ -21,7 +21,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class JetgroovyIcons {
   private static Icon load(String path) {
@@ -30,7 +30,6 @@ public class JetgroovyIcons {
 
   
   public static class Griffon {
-    public static final Icon Griffon_icon_24x24 = load("/icons/griffon/griffon-icon-24x24.png"); // 24x24
     public static final Icon Griffon = load("/icons/griffon/griffon.png"); // 16x16
     public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.png"); // 13x13
 
@@ -58,7 +57,6 @@ public class JetgroovyIcons {
     public static final Icon Groovy_outsideSources = load("/icons/groovy/groovy_outsideSources.png"); // 16x16
     public static final Icon GroovyDoc = load("/icons/groovy/GroovyDoc.png"); // 16x16
     public static final Icon GroovyFile = load("/icons/groovy/groovyFile.png"); // 16x16
-    public static final Icon GroovyModule = load("/icons/groovy/groovyModule.png"); // 24x24
     public static final Icon Interface = load("/icons/groovy/interface.png"); // 16x16
     public static final Icon Method = load("/icons/groovy/method.png"); // 16x16
     public static final Icon Property = load("/icons/groovy/property.png"); // 16x16

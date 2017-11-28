@@ -18,17 +18,13 @@ package com.intellij.codeInspection.java18StreamApi;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListDataListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -53,12 +49,15 @@ public class StaticPseudoFunctionalStyleMethodOptions {
 
   private static void restoreDefault(final List<PipelineElement> elements) {
     elements.clear();
-    final String guavaIterables = "com.google.common.collect.Iterables";
+    String guavaIterables = "com.google.common.collect.Iterables";
     elements.add(new PipelineElement(guavaIterables, "transform", PseudoLambdaReplaceTemplate.MAP));
     elements.add(new PipelineElement(guavaIterables, "filter", PseudoLambdaReplaceTemplate.FILTER));
     elements.add(new PipelineElement(guavaIterables, "find", PseudoLambdaReplaceTemplate.FIND));
     elements.add(new PipelineElement(guavaIterables, "all", PseudoLambdaReplaceTemplate.ALL_MATCH));
     elements.add(new PipelineElement(guavaIterables, "any", PseudoLambdaReplaceTemplate.ANY_MATCH));
+
+    String guavaLists = "com.google.common.collect.Lists";
+    elements.add(new PipelineElement(guavaLists, "transform", PseudoLambdaReplaceTemplate.MAP));
   }
 
   @NotNull

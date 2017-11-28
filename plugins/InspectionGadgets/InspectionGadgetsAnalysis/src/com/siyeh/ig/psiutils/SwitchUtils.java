@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,28 @@ public class SwitchUtils {
 
   private SwitchUtils() {}
 
+  /**
+   * Does not count the default statement, but returns a negative number when it is present.
+   * So for example if a switch statement contains 4 cases and a default case, it will return -4
+   * @param statement  the statement to count the cases of.
+   * @return a negative number if a default case was encountered.
+   */
   public static int calculateBranchCount(@NotNull PsiSwitchStatement statement) {
     final PsiCodeBlock body = statement.getBody();
     if (body == null) {
       return 0;
     }
-    final PsiStatement[] statements = body.getStatements();
     int branches = 0;
-    for (final PsiStatement child : statements) {
-      if (child instanceof PsiSwitchLabelStatement) {
+    boolean defaultFound = false;
+    for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+      if (child.isDefaultCase()) {
+        defaultFound = true;
+      }
+      else {
         branches++;
       }
     }
-    return branches;
+    return defaultFound ? -branches : branches;
   }
 
   @Nullable
@@ -109,7 +118,7 @@ public class SwitchUtils {
   }
 
   private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
-    if (expression == null || SideEffectChecker.mayHaveSideEffects(expression)) {
+    if (expression == null) {
       return false;
     }
     final PsiType type = expression.getType();
@@ -160,8 +169,8 @@ public class SwitchUtils {
       return determinePossibleSwitchExpressions(operands[0], languageLevel, nullSafe, stringEquality);
     }
     else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
-      final PsiExpression lhs = operands[0];
-      final PsiExpression rhs = operands[1];
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
       if (canBeCaseLabel(lhs, languageLevel, stringEquality)) {
         return rhs;
       }

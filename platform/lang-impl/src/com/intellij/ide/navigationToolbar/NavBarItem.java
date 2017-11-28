@@ -17,14 +17,17 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -40,7 +43,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarItem extends SimpleColoredComponent implements Disposable {
+public class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -79,6 +82,8 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
       setMyBorder(null);
       setBorder(null);
       setPaintFocusBorder(false);
+
+      // Android Studio: added by Change Ic9d9c9a0 / commit bb3b09b
       if (myPanel.allowNavItemsFocus()) {
         // Take ownership of Tab/Shift-Tab navigation (to move focus out of nav bar panel), as
         // navigation between items is handled by the Left/Right cursor keys. This is similar
@@ -189,10 +194,12 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   }
 
   public boolean isFocused() {
+
+    // Android Studio: modified by Change Ic9d9c9a0 / commit bb3b09b
     if (myPanel.allowNavItemsFocus()) {
-      return UIUtil.isFocusAncestor(myPanel) && !myPanel.isNodePopupShowing();
+      return UIUtil.isFocusAncestor(myPanel) && !myPanel.isNodePopupActive();
     } else {
-      return myPanel.hasFocus() && !myPanel.isNodePopupShowing();
+      return myPanel.hasFocus() && !myPanel.isNodePopupActive();
     }
   }
 
@@ -223,6 +230,13 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;
   }
 
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    return myPanel.getDataImpl(dataId, () -> JBIterable.of(myObject));
+  }
+
+  // Android Studio: added by Change Ic9d9c9a0 / commit bb3b09b
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {

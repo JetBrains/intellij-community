@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
-import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
+import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,8 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-public class IfStatementWithIdenticalBranchesInspection
-  extends BaseInspection {
+public class IfStatementWithIdenticalBranchesInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -71,9 +70,7 @@ public class IfStatementWithIdenticalBranchesInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project,
-                      ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiIfStatement statement =
         (PsiIfStatement)identifier.getParent();
@@ -188,49 +185,32 @@ public class IfStatementWithIdenticalBranchesInspection
       }
     }
 
-    private boolean isDuplicate(@NotNull PsiStatement element1, @NotNull PsiStatement element2) {
+    private static boolean isDuplicate(@NotNull PsiStatement element1, @NotNull PsiStatement element2) {
       element1 = unwrap(element1);
       element2 = unwrap(element2);
+      final Match match1 = findMatch(element1, element2);
+      if (match1 == null) {
+        return false;
+      }
+      final Match match2 = findMatch(element2, element1);
+      if (match2 == null) {
+        return false;
+      }
+      final ReturnValue matchReturnValue1 = match1.getReturnValue();
+      final ReturnValue matchReturnValue2 = match2.getReturnValue();
+      if (matchReturnValue1 == null) {
+        return matchReturnValue2 == null;
+      }
+      else {
+        return matchReturnValue1.isEquivalent(matchReturnValue2);
+      }
+    }
+
+    private static Match findMatch(@NotNull PsiStatement element1, @NotNull PsiStatement element2) {
       final InputVariables inputVariables =
         new InputVariables(Collections.emptyList(), element1.getProject(), new LocalSearchScope(element1), false);
       final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{element1}, inputVariables, null, Collections.emptyList());
-      final Match match = finder.isDuplicate(element2, true);
-      if (match == null) {
-        return false;
-      }
-      final ReturnValue matchReturnValue = match.getReturnValue();
-      if (matchReturnValue instanceof ConditionalReturnStatementValue && !matchReturnValue.isEquivalent(buildReturnValue(element1))) {
-        return false;
-      }
-      else if (matchReturnValue instanceof ExpressionReturnValue) {
-        return false;
-      }
-      return true;
-    }
-
-    @Nullable
-    private ReturnValue buildReturnValue(PsiElement element) {
-      final Ref<PsiReturnStatement> result = Ref.create(null);
-      element.accept(new JavaRecursiveElementWalkingVisitor() {
-        public void visitClass(PsiClass aClass) {}
-
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
-
-        @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
-          super.visitReturnStatement(statement);
-          result.set(statement);
-        }
-      });
-      final PsiReturnStatement returnStatement = result.get();
-      if (returnStatement == null) {
-        return null;
-      }
-      final PsiExpression expression = returnStatement.getReturnValue();
-      if (expression == null) {
-        return null;
-      }
-      return new ConditionalReturnStatementValue(expression);
+      return finder.isDuplicate(element2, true);
     }
 
     private void checkIfStatementWithoutElseBranch(
@@ -259,15 +239,13 @@ public class IfStatementWithIdenticalBranchesInspection
             }
             return;
           }
-          else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
-            statement, nextStatement)) {
+          else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(statement, nextStatement)) {
             return;
           }
           nextStatement = getNextStatement(nextStatement);
         }
       }
-      else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
-        thenBranch, nextStatement)) {
+      else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(thenBranch, nextStatement)) {
         return;
       }
       registerStatementError(ifStatement);

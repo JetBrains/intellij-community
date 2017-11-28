@@ -37,7 +37,7 @@ public class PropertyExpander {
   }
   
   public PropertyExpander(final @NotNull String str) {
-    this(str, Collections.<String>emptySet());
+    this(str, Collections.emptySet());
   }
 
   private PropertyExpander(final @NotNull String str, Set<String> namesToSkip) {

@@ -21,20 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 
-/**
-* Created by Maxim.Mossienko on 8/14/13.
-*/
 public abstract class IdFilter {
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
@@ -53,15 +48,12 @@ public abstract class IdFilter {
     long started = System.currentTimeMillis();
     final BitSet idSet = new BitSet();
 
-    ContentIterator iterator = new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        int id = ((VirtualFileWithId)fileOrDir).getId();
-        if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
-        idSet.set(id);
-        ProgressManager.checkCanceled();
-        return true;
-      }
+    ContentIterator iterator = fileOrDir -> {
+      int id = ((VirtualFileWithId)fileOrDir).getId();
+      if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
+      idSet.set(id);
+      ProgressManager.checkCanceled();
+      return true;
     };
 
     if (!includeNonProjectItems) {

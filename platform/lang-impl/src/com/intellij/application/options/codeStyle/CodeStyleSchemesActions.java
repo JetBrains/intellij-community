@@ -18,12 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -31,12 +26,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.OutputStream;
 
 abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleScheme> {
 
@@ -52,8 +44,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
           .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
                               ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
         Messages.OK) {
-      scheme.resetToDefaults();
-      getModel().fireSchemeChanged(scheme);
+      getModel().restoreDefaults(scheme);
     }
   }
 
@@ -75,12 +66,14 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   @Override
   protected void copyToIDE(@NotNull CodeStyleScheme scheme) {
-    String name =
-      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName, false));
-    CodeStyleScheme newScheme = getModel().exportProjectScheme(name);
-    getModel().setUsePerProjectSettings(false);
-    getModel().selectScheme(newScheme, null);
-    getSchemesPanel().startEdit();
+    getSchemesPanel().editNewSchemeName(
+      getProjectName(),
+      false,
+      newName -> {
+        CodeStyleScheme newScheme = getModel().exportProjectScheme(newName);
+        getModel().selectScheme(newScheme, null);
+      }
+    );
   }
 
   @NotNull
@@ -177,53 +170,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
                        Messages.getQuestionIcon());
     if (copyToProjectConfirmation == Messages.YES) {
       getModel().copyToProject(scheme);
-      getModel().setUsePerProjectSettings(true, true);
-    }
-  }
-
-  @SuppressWarnings("Duplicates")
-  @Override
-  protected void exportScheme(@NotNull CodeStyleScheme scheme, @NotNull String exporterName) {
-    SchemeExporter<CodeStyleScheme> exporter = SchemeExporterEP.getExporter(exporterName, CodeStyleScheme.class);
-    if (exporter != null) {
-      String ext = exporter.getExtension();
-      FileSaverDialog saver =
-        FileChooserFactory.getInstance()
-          .createSaveFileDialog(new FileSaverDescriptor(
-            ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
-            ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
-            ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(null, scheme.getName() + "." + ext);
-      if (target != null) {
-        VirtualFile targetFile = target.getVirtualFile(true);
-        String message;
-        MessageType messageType;
-        if (targetFile != null) {
-          try {
-            WriteAction.run(() -> {
-              OutputStream outputStream = targetFile.getOutputStream(this);
-              try {
-                exporter.exportScheme(scheme, outputStream);
-              }
-              finally {
-                outputStream.close();
-              }
-            });
-            message = ApplicationBundle
-              .message("scheme.exporter.ui.code.style.exported.message", scheme.getName(), targetFile.getPresentableUrl());
-            messageType = MessageType.INFO;
-          }
-          catch (Exception e) {
-            message = ApplicationBundle.message("scheme.exporter.ui.export.failed", e.getMessage());
-            messageType = MessageType.ERROR;
-          }
-        }
-        else {
-          message = ApplicationBundle.message("scheme.exporter.ui.cannot.write.message");
-          messageType = MessageType.ERROR;
-        }
-        getSchemesPanel().showStatus(message, messageType);
-      }
     }
   }
 

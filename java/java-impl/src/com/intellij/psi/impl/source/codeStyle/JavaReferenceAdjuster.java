@@ -136,7 +136,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    return process(element, addImports, incompleteCode, javaSettings.useFqNamesInJavadocAlways(), settings.USE_FQ_CLASS_NAMES);
+    return process(element, addImports, incompleteCode, javaSettings.useFqNamesInJavadocAlways(), javaSettings.USE_FQ_CLASS_NAMES);
   }
 
   private static boolean isAnnotated(ASTNode element) {
@@ -179,7 +179,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    processRange(element, startOffset, endOffset, javaSettings.useFqNamesInJavadocAlways(), settings.USE_FQ_CLASS_NAMES);
+    processRange(element, startOffset, endOffset, javaSettings.useFqNamesInJavadocAlways(), javaSettings.USE_FQ_CLASS_NAMES);
   }
 
   private static void addReferencesInRange(List<ASTNode> array, ASTNode parent, int startOffset, int endOffset) {
@@ -239,7 +239,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         return reference;
       }
 
-      if (!CodeStyleSettingsManager.getSettings(reference.getProject()).INSERT_INNER_CLASS_IMPORTS) {
+      if (!CodeStyleSettingsManager.getSettings(reference.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
         final PsiElement qualifier = reference.getQualifier();
         if (qualifier instanceof PsiQualifiedReferenceElement) {
           return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReferenceElement)qualifier);

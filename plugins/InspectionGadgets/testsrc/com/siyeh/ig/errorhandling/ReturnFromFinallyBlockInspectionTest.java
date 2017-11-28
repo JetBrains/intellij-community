@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ReturnFromFinallyBlockInspectionTest extends LightInspectionTestCase {
 
-  public void testReturnFromFinallyBlock() throws Exception {
+  public void testReturnFromFinallyBlock() {
     doTest();
   }
 

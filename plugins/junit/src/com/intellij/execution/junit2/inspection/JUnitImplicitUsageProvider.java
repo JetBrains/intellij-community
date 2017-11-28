@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +36,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(PsiElement element) {
-    return isImplicitWrite(element);
+    return false;
   }
 
   @Override
@@ -49,5 +50,10 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
       return AnnotationUtil.isAnnotated((PsiParameter)element, MOCK, false);
     }
     return element instanceof PsiField && AnnotationUtil.isAnnotated((PsiField) element, INJECTED_FIELD_ANNOTATIONS);
+  }
+
+  @Override
+  public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
+    return isImplicitWrite(element);
   }
 }

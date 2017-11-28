@@ -94,7 +94,7 @@ abstract class Operation {
     }
     if ((name.equals("flatMap") || name.equals("flatMapToInt") || name.equals("flatMapToLong") || name.equals("flatMapToDouble")) &&
         args.length == 1) {
-      return FlatMapOperation.from(outVar, args[0], inType, supportUnknownSources);
+      return FlatMapOperation.from(outVar, args[0], supportUnknownSources);
     }
     if ((name.equals("map") ||
          name.equals("mapToInt") ||
@@ -289,7 +289,7 @@ abstract class Operation {
       if (myCondition != null) {
         String conditionText = myCondition.getText();
         if (myInverted) {
-          conditionText = BoolUtils.getNegatedExpressionText(context.createExpression(conditionText));
+          conditionText = BoolUtils.getNegatedExpressionText(myCondition);
         }
         return "if(" + conditionText + "){\n" + replacement + "}\n";
       }
@@ -297,10 +297,10 @@ abstract class Operation {
     }
 
     @Nullable
-    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType, boolean supportUnknownSources) {
+    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, boolean supportUnknownSources) {
       FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
-      String varName = fn.tryLightTransform(inType);
+      String varName = fn.tryLightTransform();
       if(varName == null) return null;
       PsiExpression body = fn.getExpression();
       PsiExpression condition = null;
@@ -332,7 +332,8 @@ abstract class Operation {
     @Override
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String set =
-        context.declare("uniqueValues", "java.util.Set<" + PsiTypesUtil.boxIfPossible(inVar.getType()) + ">", "new java.util.HashSet<>()");
+        context.declare("uniqueValues", "java.util.Set<" + PsiTypesUtil.boxIfPossible(inVar.getType().getCanonicalText()) + ">",
+                        "new java.util.HashSet<>()");
       return "if(" + set + ".add(" + inVar + ")) {\n" + code + "}\n";
     }
   }
@@ -407,7 +408,7 @@ abstract class Operation {
       String list = context.registerVarName(Arrays.asList("toSort", "listToSort"));
       context.addAfterStep(new SourceOperation.ForEachSource(context.createExpression(list)).wrap(null, outVar, code, context));
       context.addAfterStep(list + ".sort(" + (myComparator == null ? "null" : myComparator.getText()) + ");\n");
-      String listType = CommonClassNames.JAVA_UTIL_LIST + "<" + inVar.getType() + ">";
+      String listType = CommonClassNames.JAVA_UTIL_LIST + "<" + inVar.getType().getCanonicalText() + ">";
       String initializer = "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()";
       context.addBeforeStep(listType + " " + list + "=" + initializer + ";");
       return list+".add("+inVar+");\n";

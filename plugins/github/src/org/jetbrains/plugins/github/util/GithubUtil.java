@@ -387,7 +387,7 @@ public class GithubUtil {
     }
 
     if (!version.isSupported()) {
-      GithubNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+      GithubNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
                                             GitBundle.getString("find.git.success.title"));
       return false;
     }

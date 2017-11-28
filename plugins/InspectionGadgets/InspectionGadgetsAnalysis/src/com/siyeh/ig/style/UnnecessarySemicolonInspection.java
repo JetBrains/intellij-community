@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
     private void findTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
+        if (sibling instanceof PsiErrorElement) return;
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
           registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
@@ -186,12 +187,12 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
     @Nullable
     private static PsiElement skipForwardWhiteSpacesAndComments(PsiElement element) {
-      return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
+      return PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
     }
 
     @Nullable
     private static PsiElement skipBackwardWhiteSpacesAndComments(PsiElement element) {
-      return PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class, PsiComment.class);
+      return PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
     }
 
     @Override
@@ -211,9 +212,9 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     public void visitResourceList(final PsiResourceList resourceList) {
       super.visitResourceList(resourceList);
       final PsiElement last = resourceList.getLastChild();
-      if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH) {
+      if (PsiUtil.isJavaToken(last, JavaTokenType.RPARENTH)) {
         final PsiElement prev = skipBackwardWhiteSpacesAndComments(last);
-        if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.SEMICOLON) {
+        if (PsiUtil.isJavaToken(prev, JavaTokenType.SEMICOLON)) {
           registerError(prev, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
       }

@@ -1,21 +1,21 @@
 # Stubs for bz2
 
-from typing import Any, BinaryIO, TextIO, IO, Union
+from typing import Any, BinaryIO, TextIO, IO, Optional, Union
 
 def compress(data: bytes, compresslevel: int = ...) -> bytes: ...
 def decompress(data: bytes) -> bytes: ...
 
 def open(filename: Union[str, bytes, IO[Any]],
          mode: str = 'rb',
-         encoding: str = None,
-         errors: str = None,
-         newline: str = None) -> IO[Any]: ...
+         encoding: Optional[str] = None,
+         errors: Optional[str] = None,
+         newline: Optional[str] = None) -> IO[Any]: ...
 
 class BZ2File(BinaryIO):
     def __init__(self,
                  filename: Union[str, bytes, IO[Any]],
                  mode: str = "r",
-                 buffering: Any = None,
+                 buffering: Optional[Any] = None,
                  compresslevel: int = 9) -> None: ...
 
 class BZ2Compressor(object):

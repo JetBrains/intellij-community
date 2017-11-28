@@ -1,7 +1,7 @@
 from asyncio import transports
-from typing import AnyStr
+from typing import AnyStr, List
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 
 class BaseProtocol:

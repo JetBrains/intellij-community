@@ -22,9 +22,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by Max Medvedev on 09/04/16
- */
 public class PsiIntroduceTarget<T extends PsiElement> implements IntroduceTarget {
   @NotNull protected final SmartPsiElementPointer<T> myPointer;
 

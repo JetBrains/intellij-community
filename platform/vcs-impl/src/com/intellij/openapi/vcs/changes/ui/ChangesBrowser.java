@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
-public class ChangesBrowser extends ChangesBrowserBase<Change> {
+public class ChangesBrowser extends OldChangesBrowserBase<Change> {
 
   public ChangesBrowser(@NotNull Project project,
                         @Nullable List<? extends ChangeList> changeLists,
@@ -50,12 +50,12 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
   }
 
   @NotNull
-  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<Change> node) {
+  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
     return node.getAllChangesUnder();
   }
 
   @Nullable
-  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode node) {
+  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
     final Object o = node.getUserObject();
     if (o instanceof Change) {
       return (Change)o;

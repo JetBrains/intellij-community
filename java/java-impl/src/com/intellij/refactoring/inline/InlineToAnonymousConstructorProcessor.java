@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,6 +26,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,10 +37,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
@@ -159,7 +158,15 @@ class InlineToAnonymousConstructorProcessor {
     }
     PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
     superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
-    JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
+    PsiAnonymousClass newExpressionAnonymousClass = superNewExpression.getAnonymousClass();
+    if (newExpressionAnonymousClass != null && 
+        AnonymousCanBeLambdaInspection.canBeConvertedToLambda(newExpressionAnonymousClass, false, Collections.emptySet())) {
+      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(superNewExpression, newExpressionAnonymousClass.getBaseClassType());
+      JavaCodeStyleManager.getInstance(newExpressionAnonymousClass.getProject()).shortenClassReferences(superNewExpression.replace(lambda));
+    }
+    else {
+      JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
+    }
   }
 
   private void insertInitializerBefore(final PsiClassInitializer initializerBlock, final PsiClass anonymousClass, final PsiElement token)
@@ -266,7 +273,8 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) ||
+          CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
         PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
       }
       final PsiElement parent = myNewStatement.getParent();

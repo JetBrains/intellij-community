@@ -44,12 +44,9 @@ public class SvnChangelistListener implements ChangeListListener {
 
   public SvnChangelistListener(@NotNull SvnVcs vcs) {
     myVcs = vcs;
-    myUnderSvnCondition = new Condition<FilePath>() {
-      @Override
-      public boolean value(@NotNull FilePath path) {
-        final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(path);
-        return vcs != null && SvnVcs.VCS_NAME.equals(vcs.getName());
-      }
+    myUnderSvnCondition = path -> {
+      final AbstractVcs vcs1 = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(path);
+      return vcs1 != null && SvnVcs.VCS_NAME.equals(vcs1.getName());
     };
   }
 

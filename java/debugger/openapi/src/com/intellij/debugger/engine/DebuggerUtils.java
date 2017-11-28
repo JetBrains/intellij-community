@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -42,7 +40,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -73,20 +70,19 @@ public abstract class DebuggerUtils {
         return ((StringReference)value).value();
       }
       if (isInteger(value)) {
-        long v = ((PrimitiveValue)value).longValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).longValue());
       }
-      if (isNumeric(value)) {
-        double v = ((PrimitiveValue)value).doubleValue();
-        return String.valueOf(v);
+      if (value instanceof FloatValue) {
+        return String.valueOf(((FloatValue)value).floatValue());
+      }
+      if (value instanceof DoubleValue) {
+        return String.valueOf(((DoubleValue)value).doubleValue());
       }
       if (value instanceof BooleanValue) {
-        boolean v = ((PrimitiveValue)value).booleanValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).booleanValue());
       }
       if (value instanceof CharValue) {
-        char v = ((PrimitiveValue)value).charValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).charValue());
       }
       if (value instanceof ObjectReference) {
         if (value instanceof ArrayReference) {
@@ -201,17 +197,9 @@ public abstract class DebuggerUtils {
 
   public static String translateStringValue(final String str) {
     int length = str.length();
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.escapeStringCharacters(length, str, buffer);
-      if (str.length() > length) {
-        buffer.append("...");
-      }
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    final StringBuilder buffer = new StringBuilder();
+    StringUtil.escapeStringCharacters(length, str, buffer);
+    return buffer.toString();
   }
 
   @Nullable
@@ -493,7 +481,7 @@ public abstract class DebuggerUtils {
 
   public abstract String findAvailableDebugAddress(boolean useSockets) throws ExecutionException;
 
-  public static boolean isSynthetic(TypeComponent typeComponent) {
+  public static boolean isSynthetic(@Nullable TypeComponent typeComponent) {
     if (typeComponent == null) {
       return false;
     }

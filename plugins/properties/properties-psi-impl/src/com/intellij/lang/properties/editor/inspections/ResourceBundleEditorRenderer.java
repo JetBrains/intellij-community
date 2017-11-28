@@ -15,22 +15,17 @@
  */
 package com.intellij.lang.properties.editor.inspections;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
 
 /**
  * @author Dmitry Batkovich
@@ -38,7 +33,7 @@ import java.awt.*;
 public class ResourceBundleEditorRenderer extends NodeRenderer {
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (customize(value)) {
       return;
     }

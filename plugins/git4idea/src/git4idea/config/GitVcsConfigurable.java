@@ -16,7 +16,6 @@
 package git4idea.config;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +64,7 @@ public class GitVcsConfigurable implements Configurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     panel.save(mySettings, mySharedSettings);
   }
 

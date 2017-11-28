@@ -33,7 +33,9 @@ import java.awt.*;
 @SuppressWarnings({"PointlessBitwiseExpression"})
 public final class SimpleTextAttributes {
 
-  @MagicConstant(flags = {STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE, STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE})
+  @MagicConstant(flags = {
+    STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
+    STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE, STYLE_CLICKABLE})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -47,6 +49,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_SEARCH_MATCH = STYLE_BOLD_DOTTED_LINE << 1;
   public static final int STYLE_SMALLER = STYLE_SEARCH_MATCH << 1;
   public static final int STYLE_OPAQUE = STYLE_SMALLER << 1;
+  public static final int STYLE_CLICKABLE = STYLE_OPAQUE << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -102,7 +105,8 @@ public final class SimpleTextAttributes {
            STYLE_BOLD_DOTTED_LINE |
            STYLE_SEARCH_MATCH |
            STYLE_SMALLER |
-           STYLE_OPAQUE) & style) != 0) {
+           STYLE_OPAQUE |
+           STYLE_CLICKABLE) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -176,12 +180,17 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_OPAQUE);
   }
 
+  public boolean isClickable() {
+    return BitUtil.isSet(myStyle, STYLE_CLICKABLE);
+  }
+
   @NotNull
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 
-    Color foregroundColor = attributes.getForegroundColor();
-    if (foregroundColor == null) foregroundColor = REGULAR_ATTRIBUTES.getFgColor();
+    Color fgColor = attributes.getForegroundColor();
+    if (fgColor == null) fgColor = REGULAR_ATTRIBUTES.getFgColor();
+    Color bgColor = attributes.getBackgroundColor();
 
     int style = attributes.getFontType();
     if (attributes.getEffectColor() != null) {
@@ -204,7 +213,8 @@ public final class SimpleTextAttributes {
         // not supported
       }
     }
-    return new SimpleTextAttributes(attributes.getBackgroundColor(), foregroundColor, attributes.getEffectColor(), style);
+    //noinspection MagicConstant
+    return new SimpleTextAttributes(bgColor, fgColor, attributes.getEffectColor(), style);
   }
 
   @JdkConstants.FontStyle

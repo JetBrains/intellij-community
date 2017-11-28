@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,39 @@ import org.jetbrains.annotations.NotNull;
 public class SingleAlarm extends Alarm {
   private final Runnable task;
   private final int delay;
+  private final ModalityState myModalityState;
 
   public SingleAlarm(@NotNull Runnable task, int delay) {
     this.task = task;
     this.delay = delay;
+    myModalityState = ModalityState.NON_MODAL;
   }
 
   public SingleAlarm(@NotNull Runnable task, int delay, @NotNull Disposable parentDisposable) {
     this(task, delay, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
+  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ModalityState modalityState, @NotNull Disposable parentDisposable) {
+    this(task, delay, Alarm.ThreadToUse.SWING_THREAD, modalityState, parentDisposable);
+  }
+
   public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
+    this(task, delay, threadToUse, threadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null, parentDisposable);
+  }
+
+  private SingleAlarm(@NotNull Runnable task,
+                      int delay,
+                      @NotNull ThreadToUse threadToUse,
+                      ModalityState modalityState,
+                      @NotNull Disposable parentDisposable) {
     super(threadToUse, parentDisposable);
 
     this.task = task;
     this.delay = delay;
+    if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
+      throw new IllegalArgumentException("modalityState must be not null");
+    }
+    myModalityState = modalityState;
   }
 
   public void request() {
@@ -61,6 +79,6 @@ public class SingleAlarm extends Alarm {
   }
 
   private void addRequest(int delay) {
-    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null);
+    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? myModalityState : null);
   }
 }

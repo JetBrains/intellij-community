@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,4 +124,32 @@ def <warning descr="Method f2 is unused">f2</warning>(String foo, int mode) {
 def <warning descr="Variable is not used">abc</warning>
 ''')
   }
+
+  void 'test method referenced via incapplicable call is used'() {
+    testHighlighting '''\
+static boolean fsdasdfsgsdsfadfgs(a, b) { a == b }
+def bar() { fsdasdfsgsdsfadfgs("s") }
+bar()
+'''
+  }
+
+  void 'test delegate'() {
+    fixture.addClass '''
+package groovy.lang;
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Delegate {}
+'''
+
+    testHighlighting '''\
+class Foo {
+  @Delegate
+  Integer i
+  @Delegate
+  String bar() {}
+}
+
+new Foo()
+'''
+  }
+
 }

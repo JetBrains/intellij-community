@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -339,14 +340,12 @@ public class BreakpointsDialog extends DialogWrapper {
         }
       }).
       setToolbarPosition(ActionToolbarPosition.TOP).
-      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+      setToolbarBorder(JBUI.Borders.empty());
 
-    for (ToggleActionButton action : myToggleRuleActions) {
-      decorator.addExtraAction(action);
-    }
+    myToggleRuleActions.forEach(decorator::addExtraAction);
 
     JPanel decoratedTree = decorator.createPanel();
-    decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
+    decoratedTree.setBorder(JBUI.Borders.empty());
 
     JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
     if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
@@ -357,25 +356,13 @@ public class BreakpointsDialog extends DialogWrapper {
 
     initSelection(myBreakpointItems);
 
-    final BreakpointPanelProvider.BreakpointsListener listener = new BreakpointPanelProvider.BreakpointsListener() {
-      @Override
-      public void breakpointsChanged() {
-        myRebuildAlarm.cancelAndRequest();
-      }
-    };
-
-    for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      provider.addListener(listener, myProject, myListenerDisposable);
-    }
+    myBreakpointsPanelProviders.forEach(provider -> provider.addListener(myRebuildAlarm::cancelAndRequest, myProject, myListenerDisposable));
 
     return decoratedTree;
   }
 
   private void navigate(final boolean requestFocus) {
-    List<BreakpointItem> breakpoints = myTreeController.getSelectedBreakpoints(false);
-    if (!breakpoints.isEmpty()) {
-      breakpoints.get(0).navigate(requestFocus);
-    }
+    myTreeController.getSelectedBreakpoints(false).stream().findFirst().ifPresent(b -> b.navigate(requestFocus));
   }
 
   @Nullable

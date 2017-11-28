@@ -31,11 +31,6 @@ import org.intellij.lang.xpath.xslt.quickfix.RenameVariableFix;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.01.2008
-*/
 public class VariableShadowingInspection extends XsltInspection {
 
   @NotNull
@@ -55,6 +50,7 @@ public class VariableShadowingInspection extends XsltInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(final XmlTag tag) {

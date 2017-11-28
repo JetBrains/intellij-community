@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 
 public class CheckoutDialog extends RepositoryBrowserDialog {
   private final CheckoutProvider.Listener myListener;
@@ -36,11 +34,9 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     super.init();
     setTitle(SvnBundle.message("checkout.dialog.title"));
     setOKButtonText(SvnBundle.message("checkout.dialog.button"));
-    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        if (getOKAction() != null) {
-          getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
-        }
+    getRepositoryBrowser().addChangeListener(e -> {
+      if (getOKAction() != null) {
+        getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
       }
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);

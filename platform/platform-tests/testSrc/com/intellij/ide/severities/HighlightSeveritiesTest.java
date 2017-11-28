@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 20-Jul-2006
- * Time: 18:26:01
- */
 package com.intellij.ide.severities;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -27,7 +21,7 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 
 public class HighlightSeveritiesTest extends TestCase {
-  public void testSeveritiesMigration() throws Exception{
+  public void testSeveritiesMigration() {
     final Element element = new Element("temp");
     new HighlightSeverity(HighlightSeverity.ERROR.myName, 500).writeExternal(element);
     HighlightSeverity newSeverity = new HighlightSeverity(element);

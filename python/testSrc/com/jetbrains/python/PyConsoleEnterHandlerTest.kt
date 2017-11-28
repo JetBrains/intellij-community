@@ -40,7 +40,7 @@ class PyConsoleEnterHandlerTest : PyTestCase() {
   }
 
   private fun resetEditor() {
-    myEditor = disposeOnTearDown(PythonConsoleView(myFixture.project, "Console", projectDescriptor?.sdk)).consoleEditor
+    myEditor = disposeOnTearDown(PythonConsoleView(myFixture.project, "Console", projectDescriptor?.sdk, false)).consoleEditor
   }
 
   fun push(text: String): Boolean {

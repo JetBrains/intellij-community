@@ -42,17 +42,20 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ActionPopupMenuImpl extends ApplicationActivationListener.Adapter implements ActionPopupMenu {
-
-  private final MyMenu myMenu;
-  private final ActionManagerImpl myManager;
-  private MessageBusConnection myConnection;
+public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
 
   private final Application myApp;
-  private IdeFrame myFrame;
-  @Nullable private Getter<DataContext> myDataContextProvider;
+  private final MyMenu myMenu;
+  private final ActionManagerImpl myManager;
 
-  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
+  private Getter<DataContext> myDataContextProvider;
+  private MessageBusConnection myConnection;
+
+  private IdeFrame myFrame;
+
+  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group,
+                             ActionManagerImpl actionManager,
+                             @Nullable PresentationFactory factory) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
     myApp = ApplicationManager.getApplication();
@@ -65,6 +68,12 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
 
   public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
+  }
+
+  @Override
+  public void setTargetComponent(@Nullable JComponent component) {
+    myDataContextProvider = component == null ? null :
+                            () -> DataManager.getInstance().getDataContext(component);
   }
 
   private class MyMenu extends JBPopupMenu {
@@ -146,10 +155,6 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
-  }
-
-  @Override
-  public void applicationActivated(IdeFrame ideFrame) {
   }
 
   @Override

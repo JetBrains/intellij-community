@@ -23,12 +23,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.*
 
-class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
+class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
   companion object {
     private val LANGUAGES = arrayOf(PythonLanguage.getInstance())
@@ -74,7 +74,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     if (e !is PyElement) return null
 
     @Suppress("UNCHECKED_CAST")
-    return HELPERS.firstOrNull { it.type.isInstance(e) && (it as Helper<in PyElement>).accepts(e) } as Helper<in PyElement>?
+    return HELPERS.firstOrNull { it.type.isInstance(e) } as Helper<in PyElement>?
   }
 
   private fun currentOffset(e: PsiElement): Int? {
@@ -101,30 +101,23 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
   }
 
   private abstract class Helper<T : PyElement>(val type: Class<T>) {
-    abstract fun accepts(e: T): Boolean
-    abstract fun elementInfo(e: T): String
-    abstract fun elementTooltip(e: T): String
-  }
-
-  private abstract class AbstractHelper<T : PyElement>(type: Class<T>) : Helper<T>(type) {
-    override fun accepts(e: T): Boolean = true
-    override fun elementInfo(e: T): String = getTruncatedPresentation(e, 16)
-    override fun elementTooltip(e: T): String = getTruncatedPresentation(e, 96)
+    fun elementInfo(e: T): String = getTruncatedPresentation(e, 32)
+    fun elementTooltip(e: T): String = getTruncatedPresentation(e, 96)
 
     abstract fun getPresentation(e: T): String
 
     private fun getTruncatedPresentation(e: T, maxLength: Int) = StringUtil.shortenTextWithEllipsis(getPresentation(e), maxLength, 0, true)
   }
 
-  private class SimpleHelper<T : PyElement>(type: Class<T>, val representation: String) : AbstractHelper<T>(type) {
+  private class SimpleHelper<T : PyElement>(type: Class<T>, val representation: String) : Helper<T>(type) {
     override fun getPresentation(e: T) = representation
   }
 
-  private object LambdaHelper : AbstractHelper<PyLambdaExpression>(PyLambdaExpression::class.java) {
+  private object LambdaHelper : Helper<PyLambdaExpression>(PyLambdaExpression::class.java) {
     override fun getPresentation(e: PyLambdaExpression) = "lambda ${e.parameterList.getPresentableText(false)}"
   }
 
-  private object ExceptHelper : AbstractHelper<PyExceptPart>(PyExceptPart::class.java) {
+  private object ExceptHelper : Helper<PyExceptPart>(PyExceptPart::class.java) {
     override fun getPresentation(e: PyExceptPart): String {
       val exceptClass = e.exceptClass ?: return "except"
       val target = e.target ?: return "except ${exceptClass.text}"
@@ -133,7 +126,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object IfHelper : AbstractHelper<PyIfPart>(PyIfPart::class.java) {
+  private object IfHelper : Helper<PyIfPart>(PyIfPart::class.java) {
     override fun getPresentation(e: PyIfPart): String {
       val prefix = if (e.isElif) "elif" else "if"
       val condition = e.condition ?: return prefix
@@ -142,7 +135,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object ForHelper : AbstractHelper<PyForPart>(PyForPart::class.java) {
+  private object ForHelper : Helper<PyForPart>(PyForPart::class.java) {
     override fun getPresentation(e: PyForPart): String {
       val parent = e.parent
       val prefix = if (parent is PyForStatement && parent.isAsync) "async for" else "for"
@@ -154,7 +147,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object WhileHelper : AbstractHelper<PyWhilePart>(PyWhilePart::class.java) {
+  private object WhileHelper : Helper<PyWhilePart>(PyWhilePart::class.java) {
     override fun getPresentation(e: PyWhilePart): String {
       val condition = e.condition ?: return "while"
 
@@ -162,7 +155,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object WithHelper : AbstractHelper<PyWithStatement>(PyWithStatement::class.java) {
+  private object WithHelper : Helper<PyWithStatement>(PyWithStatement::class.java) {
     override fun getPresentation(e: PyWithStatement): String {
       val getItemPresentation = fun(item: PyWithItem): String? {
         val expression = item.expression ?: return null
@@ -181,11 +174,11 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object ClassHelper : AbstractHelper<PyClass>(PyClass::class.java) {
+  private object ClassHelper : Helper<PyClass>(PyClass::class.java) {
     override fun getPresentation(e: PyClass) = e.name ?: "class"
   }
 
-  private object FunctionHelper : AbstractHelper<PyFunction>(PyFunction::class.java) {
+  private object FunctionHelper : Helper<PyFunction>(PyFunction::class.java) {
     override fun getPresentation(e: PyFunction): String {
       val prefix = if (e.isAsync) "async " else ""
       val name = e.name ?: return "function"
@@ -194,7 +187,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
   }
 
-  private object KeyValueHelper : AbstractHelper<PyKeyValueExpression>(PyKeyValueExpression::class.java) {
+  private object KeyValueHelper : Helper<PyKeyValueExpression>(PyKeyValueExpression::class.java) {
     override fun getPresentation(e: PyKeyValueExpression): String = e.key.text ?: "key"
   }
 }

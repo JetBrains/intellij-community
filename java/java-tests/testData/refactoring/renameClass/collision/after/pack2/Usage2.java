@@ -1,6 +1,5 @@
 package pack2;
-
-import java.util.List;
+import java.util.*;
 
 public class Usage2 {
     int method() {

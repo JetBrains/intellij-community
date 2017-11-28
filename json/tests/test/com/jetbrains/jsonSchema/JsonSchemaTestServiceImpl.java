@@ -5,7 +5,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +28,9 @@ public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
   protected JsonSchemaProviderFactory[] getProviderFactories() {
     return new JsonSchemaProviderFactory[]{
       new JsonSchemaProviderFactory() {
+        @NotNull
         @Override
-        public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
+        public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
           return provider == null ? Collections.emptyList() : Collections.singletonList(provider);
         }
       }

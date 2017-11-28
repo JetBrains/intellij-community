@@ -52,7 +52,7 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
     }
   }
 
-  public void testRerunSingleton() throws Exception {
+  public void testRerunSingleton() {
     Project project = getProject();
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
 

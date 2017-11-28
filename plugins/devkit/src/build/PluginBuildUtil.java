@@ -15,17 +15,16 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -36,10 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Nov 24, 2004
- */
 public class PluginBuildUtil {
   private PluginBuildUtil() {
   }
@@ -71,17 +66,15 @@ public class PluginBuildUtil {
   }
 
   public static Module[] getWrongSetDependencies(final Module module) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      public Module[] compute() {
-        ArrayList<Module> result = new ArrayList<>();
-        final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
-        for (Module projectModule : projectModules) {
-          if (ArrayUtil.find(ModuleRootManager.getInstance(projectModule).getDependencies(), module) > -1) {
-            result.add(projectModule);
-          }
+    return ReadAction.compute(() -> {
+      ArrayList<Module> result = new ArrayList<>();
+      final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
+      for (Module projectModule : projectModules) {
+        if (ArrayUtil.find(ModuleRootManager.getInstance(projectModule).getDependencies(), module) > -1) {
+          result.add(projectModule);
         }
-        return result.toArray(new Module[result.size()]);
       }
+      return result.toArray(new Module[result.size()]);
     });
   }
 

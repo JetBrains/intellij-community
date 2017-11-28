@@ -25,11 +25,6 @@ import com.intellij.util.SmartList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Maxim.Mossienko
- * Date: 08.10.2009
- * Time: 21:06:04
- */
 public class XPathStringLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     ASTNode astNode = e.getNode();

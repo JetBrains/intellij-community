@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,24 +58,22 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
     try {
-      List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
-        public void run(List<VcsException> exceptions) {
-          VirtualFile badFile = null;
-          try {
-            if (isBatchAction()) {
-              batchExecute(vcs, files, e.getDataContext());
-            }
-            else {
-              for (VirtualFile file : files) {
-                badFile = file;
-                execute(vcs, file, e.getDataContext());
-              }
+      List<VcsException> exceptions = helper.runTransactionRunnable(vcs, exceptionList -> {
+        VirtualFile badFile = null;
+        try {
+          if (isBatchAction()) {
+            batchExecute(vcs, files, e.getDataContext());
+          }
+          else {
+            for (VirtualFile file : files) {
+              badFile = file;
+              execute(vcs, file, e.getDataContext());
             }
           }
-          catch (VcsException ex) {
-            ex.setVirtualFile(badFile);
-            exceptions.add(ex);
-          }
+        }
+        catch (VcsException ex) {
+          ex.setVirtualFile(badFile);
+          exceptionList.add(ex);
         }
       }, null);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.ResourceFileUtil;
@@ -113,7 +114,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     }
     updateEnabledTextField();
 
-    myTfClassName.getChildComponent().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myTfClassName.getChildComponent().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         updateOKAction();

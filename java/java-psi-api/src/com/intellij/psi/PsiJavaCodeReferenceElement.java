@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualif
   /**
    * Returns the list of type arguments specified on the reference.
    *
-   * @return the type argument list, or null if the reference does not have any type arguments.
+   * @return the type argument list, or null if the reference may not have any type arguments (like PsiImportStaticReferenceElement).
    */
   @Nullable
   PsiReferenceParameterList getParameterList();

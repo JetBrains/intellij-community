@@ -61,14 +61,11 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       }
     }
 
-    if (javaSliceUsage != null) {
-      for (int i = 0; i < javaSliceUsage.indexNesting; i++) {
-        append(
-          " (Tracking container contents" +
-          (javaSliceUsage.syntheticField.isEmpty() ? "" : " '" + javaSliceUsage.syntheticField + "'") +
-          ")",
-          SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      }
+    if (javaSliceUsage != null && javaSliceUsage.indexNesting != 0) {
+      append(
+        " (Tracking container '" + getContainerName(javaSliceUsage) +
+        (javaSliceUsage.syntheticField.isEmpty() ? "" : "." + javaSliceUsage.syntheticField) + "' contents)",
+        SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     PsiElement element = sliceUsage.getElement();
@@ -100,6 +97,29 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
         append(" (in " + language.getDisplayName()+" file - stopped here)", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
       }
     }
+  }
+
+  @NotNull
+  private static String getContainerName(@NotNull JavaSliceUsage usage) {
+    String result = "";
+    JavaSliceUsage prev = usage;
+    String name = "";
+    while (usage != null) {
+      if (usage.indexNesting != prev.indexNesting) {
+        result = name + (result.isEmpty() ? "" : ".") + result;
+        if (usage.indexNesting == 0) break;
+      }
+      PsiElement element = usage.getElement();
+      if (element instanceof PsiNamedElement) {
+        name = ((PsiNamedElement)element).getName();
+      }
+      else if (element instanceof PsiReference) {
+        name = ((PsiReference)element).getCanonicalText();
+      }
+      prev = usage;
+      usage = (JavaSliceUsage)usage.getParent();
+    }
+    return result;
   }
 }
 

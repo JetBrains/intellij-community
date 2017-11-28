@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.TextFieldAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -38,7 +37,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JavaReferenceEditorUtil;
@@ -49,7 +47,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -65,7 +62,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -141,14 +137,12 @@ public class PackageChooserDialog extends PackageChooser {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      public String convert(TreePath path) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-        Object object = node.getUserObject();
-        if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
-        else
-          return "";
-      }
+    new TreeSpeedSearch(myTree, path -> {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      Object object = node.getUserObject();
+      if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
+      else
+        return "";
     });
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -170,7 +164,7 @@ public class PackageChooserDialog extends PackageChooser {
 
     final JPanel northPanel = new JPanel(new BorderLayout());
     panel.add(northPanel, BorderLayout.NORTH);
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(PackageChooserDialog.class.getSimpleName(), group, true);
     northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     setupPathComponent(northPanel);
     return panel;
@@ -184,7 +178,7 @@ public class PackageChooserDialog extends PackageChooser {
       }
     }, BorderLayout.EAST);
     myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, StdFileTypes.JAVA);
-    myPathEditor.addDocumentListener(new DocumentAdapter() {
+    myPathEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
@@ -275,18 +269,16 @@ public class PackageChooserDialog extends PackageChooser {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileIndex fileIndex = myModule != null ? ModuleRootManager.getInstance(myModule).getFileIndex() : ProjectRootManager.getInstance(myProject).getFileIndex();
     fileIndex.iterateContent(
-      new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
-            final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
-            LOG.assertTrue(psiDirectory != null);
-            PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-            if (aPackage != null){
-              addPackage(aPackage);
-            }
+      fileOrDir -> {
+        if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
+          final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
+          LOG.assertTrue(psiDirectory != null);
+          PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+          if (aPackage != null){
+            addPackage(aPackage);
           }
-          return true;
         }
+        return true;
       }
     );
 

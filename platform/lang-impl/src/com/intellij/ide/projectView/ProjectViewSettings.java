@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,4 +20,12 @@ package com.intellij.ide.projectView;
  */
 public interface ProjectViewSettings extends ViewSettings {
   boolean isShowExcludedFiles();
+
+  /**
+   * If {@code true} then {@link com.intellij.ide.projectView.impl.NestingTreeStructureProvider} will modify the tree presentation
+   * according to the rules managed by {@link com.intellij.ide.projectView.impl.ProjectViewFileNestingService}: some peer files will be
+   * shown as nested, for example generated {@code foo.js} and {@code foo.js.map} file nodes will be shown as children of the
+   * original {@code foo.ts} node in the Project View.
+   */
+  default boolean isUseFileNestingRules() {return true;}
 }

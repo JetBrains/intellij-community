@@ -18,7 +18,10 @@ package git4idea.merge;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -27,7 +30,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -231,6 +233,7 @@ public class GitConflictResolver {
   }
 
   private void showMergeDialog(@NotNull final Collection<VirtualFile> initiallyUnmergedFiles) {
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
       myVcsHelper.showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
@@ -257,11 +260,8 @@ public class GitConflictResolver {
     @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
         notification.expire();
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override public void run() {
-            mergeNoProceed();
-          }
-        });
+        Runnable task = () -> mergeNoProceed();
+        BackgroundTaskUtil.executeOnPooledThread(myProject, task);
       }
     }
   }
@@ -322,12 +322,7 @@ public class GitConflictResolver {
       return Collections.emptyList();
     }
     else {
-      List<File> files = ContainerUtil.map(unmergedPaths, new Function<String, File>() {
-        @Override
-        public File fun(String path) {
-          return new File(root.getPath(), path);
-        }
-      });
+      List<File> files = ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
       return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
     }
   }

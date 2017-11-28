@@ -18,6 +18,7 @@ package com.intellij.openapi.module.impl
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
@@ -27,18 +28,17 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.project.rootManager
 import com.intellij.util.PathUtilRt
 import gnu.trove.THashSet
 
 /**
  * Why this class is required if we have StorageVirtualFileTracker?
- * Because StorageVirtualFileTracker doesn't detect (intentionally) parent file changes —
+ * Because StorageVirtualFileTracker doesn't detect (intentionally) parent file changes -
  *
  * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path.
  * And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
  */
-internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener.Adapter() {
+internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
     for (event in events) {
       when (event) {
@@ -114,7 +114,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
   }
 
   private fun setModuleFilePath(module: Module, newFilePath: String) {
-    ClasspathStorage.modulePathChanged(module, newFilePath)
+    ClasspathStorage.modulePathChanged(module)
     module.stateStore.setPath(newFilePath)
   }
 }

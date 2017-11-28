@@ -40,7 +40,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
   /**
    * Checks class field depends on class field
    */
-  public void testClassMemberDependencies() throws Exception {
+  public void testClassMemberDependencies() {
     checkMembers("CLASS_FIELD_DEPENDS_ON_CLASS_FIELD_FOO");
     Assert.assertThat("Class member dependencies failed", getErrorMemberNames(), Matchers.containsInAnyOrder("CLASS_FIELD_FOO"));
   }
@@ -48,7 +48,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
   /**
    * Checks instance field depends on class field
    */
-  public void testInstanceMemberDependencies() throws Exception {
+  public void testInstanceMemberDependencies() {
     checkMembers("self.depends_on_class_field_foo");
     Assert.assertThat("Instance member dependencies failed", getErrorMemberNames(), Matchers.containsInAnyOrder("CLASS_FIELD_FOO"));
   }
@@ -56,7 +56,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
   /**
    * Checks method depends on another class field
    */
-  public void testMethodMemberDependencies() throws Exception {
+  public void testMethodMemberDependencies() {
     checkMembers("method_depends_on_normal_method(self)");
     Assert.assertThat("Method dependencies failed", getErrorMemberNames(), Matchers.containsInAnyOrder("normal_method(self)"));
   }
@@ -64,7 +64,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
   /**
    * Checks method depends on method
    */
-  public void testMethodOnInstanceMemberDependencies() throws Exception {
+  public void testMethodOnInstanceMemberDependencies() {
     checkMembers("method_depends_on_instance_field_bar(self)");
     Assert.assertThat("Instance on member dependencies failed", getErrorMemberNames(), Matchers.containsInAnyOrder("self.instance_field_bar"));
   }
@@ -73,7 +73,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
    * Check dependnecies for properties, declared in old-style
    *
    */
-  public void testOldProperty() throws Exception {
+  public void testOldProperty() {
     checkMembers("method_depends_on_old_property(self)");
     Assert.assertThat("Method on old property dependency failed", getErrorMemberNames(), Matchers.containsInAnyOrder(
       "old_property",
@@ -85,7 +85,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
    *
    * Check dependnecies for properties, declared in new-style
    */
-  public void testNewProperty() throws Exception {
+  public void testNewProperty() {
     checkMembers("method_depends_on_new_property(self)");
     Assert.assertThat("Method on new property dependency failed", getErrorMemberNames(), Matchers.containsInAnyOrder("new_property", "new_property_2"));
   }
@@ -94,7 +94,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
   /**
    * All dependencies are met: new (destination) class has all of them
    */
-  public void testParentDependenciesOk() throws Exception {
+  public void testParentDependenciesOk() {
     checkMembers("CLASS_FIELD_DEPENDS_ON_PARENT_FIELD",
                  "method_depends_on_parent_method(self)",
                  "method_depends_on_parent_field(self)");
@@ -106,7 +106,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
    * New (destination) class has no members, required by member under refactoring.
    * Error should be displayed.
    */
-  public void testNoParentDependenciesOk() throws Exception {
+  public void testNoParentDependenciesOk() {
     mySut.setSuperClass(getClassByName("EmptyParent"));
     checkMembers("CLASS_FIELD_DEPENDS_ON_PARENT_FIELD",
                  "method_depends_on_parent_method(self)",

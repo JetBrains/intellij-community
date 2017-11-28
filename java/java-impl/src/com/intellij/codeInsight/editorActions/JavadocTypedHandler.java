@@ -31,7 +31,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.text.CharArrayUtil.*;
+import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
 
 /**
  * Advises typing in javadoc if necessary.
@@ -105,7 +105,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
    * @return                tag name if the one is parsed; {@code null} otherwise
    */
   @Nullable
-  static String getTagName(@NotNull CharSequence text, int afterTagOffset) {
+  public static String getTagName(@NotNull CharSequence text, int afterTagOffset) {
     if (afterTagOffset > text.length()) {
       return null;
     }

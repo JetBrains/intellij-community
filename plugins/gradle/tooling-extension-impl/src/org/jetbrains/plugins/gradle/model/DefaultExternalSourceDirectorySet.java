@@ -18,10 +18,7 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -35,7 +32,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @NotNull
   private Set<File> mySrcDirs;
   private File myOutputDir;
-  private File myGradleOutputDir;
+  private List<File> myGradleOutputDirs;
   @NotNull
   private Set<String> myExcludes;
   @NotNull
@@ -50,6 +47,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     myExcludes = new HashSet<String>();
     myIncludes = new HashSet<String>();
     myFilters = new ArrayList<ExternalFilter>();
+    myGradleOutputDirs = new ArrayList<File>();
   }
 
   public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
@@ -57,7 +55,8 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     myName = sourceDirectorySet.getName();
     mySrcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
     myOutputDir = sourceDirectorySet.getOutputDir();
-    myGradleOutputDir = sourceDirectorySet.getGradleOutputDir();
+    myGradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
+
     myExcludes = new HashSet<String>(sourceDirectorySet.getExcludes());
     myIncludes = new HashSet<String>(sourceDirectorySet.getIncludes());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
@@ -99,14 +98,18 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @NotNull
   @Override
   public File getGradleOutputDir() {
-    return myGradleOutputDir;
+    assert myGradleOutputDirs.size() > 0;
+    return myGradleOutputDirs.get(0);
   }
 
-  public void setGradleOutputDir(@NotNull File outputDir) {
-    myGradleOutputDir = outputDir;
-    if (myOutputDir == null) {
-      myOutputDir = outputDir;
-    }
+  @NotNull
+  @Override
+  public Collection<File> getGradleOutputDirs() {
+    return myGradleOutputDirs;
+  }
+
+  public void addGradleOutputDir(@NotNull File outputDir) {
+    myGradleOutputDirs.add(outputDir);
   }
 
   @Override

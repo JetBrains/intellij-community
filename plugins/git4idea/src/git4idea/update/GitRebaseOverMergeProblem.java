@@ -20,34 +20,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.EmptyConsumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsUser;
 import git4idea.DialogManager;
-import git4idea.history.GitHistoryUtils;
+import git4idea.GitCommit;
+import git4idea.history.GitLogUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class GitRebaseOverMergeProblem {
   private static final Logger LOG = Logger.getInstance(GitRebaseOverMergeProblem.class);
   public static final String DESCRIPTION =
-    "You are about to rebase merge commits. \n" +
-    "This can lead to duplicate commits in history, or even data loss.\n" +
-    "It is recommended to merge instead of rebase in this case.";
+    "You are about to rebase a merge commit with conflicts.\n\n" +
+    "Choose 'Merge' if you don't want to resolve conflicts again, " +
+    "or you still can rebase if you want to linearize the history.";
 
   public enum Decision {
     MERGE_INSTEAD("Merge"),
-    REBASE_ANYWAY("Rebase Anyway"),
+    REBASE_ANYWAY("Rebase"),
     CANCEL_OPERATION(CommonBundle.getCancelButtonText());
 
     private final String myButtonText;
@@ -58,22 +53,12 @@ public class GitRebaseOverMergeProblem {
 
     @NotNull
     private static String[] getButtonTitles() {
-      return ContainerUtil.map2Array(values(), String.class, new Function<Decision, String>() {
-        @Override
-        public String fun(Decision decision) {
-          return decision.myButtonText;
-        }
-      });
+      return ContainerUtil.map2Array(values(), String.class, decision -> decision.myButtonText);
     }
 
     @NotNull
     public static Decision getOption(final int index) {
-      return ObjectUtils.assertNotNull(ContainerUtil.find(values(), new Condition<Decision>() {
-        @Override
-        public boolean value(Decision decision) {
-          return decision.ordinal() == index;
-        }
-      }));
+      return ObjectUtils.assertNotNull(ContainerUtil.find(values(), decision -> decision.ordinal() == index));
     }
 
     private static int getDefaultButtonIndex() {
@@ -81,7 +66,7 @@ public class GitRebaseOverMergeProblem {
     }
 
     private static int getFocusedButtonIndex() {
-      return CANCEL_OPERATION.ordinal();
+      return REBASE_ANYWAY.ordinal();
     }
   }
 
@@ -89,23 +74,15 @@ public class GitRebaseOverMergeProblem {
                                    @NotNull VirtualFile root,
                                    @NotNull String baseRef,
                                    @NotNull String currentRef) {
-    final Ref<Boolean> mergeFound = Ref.create(Boolean.FALSE);
-    Consumer<TimedVcsCommit> detectingConsumer = new Consumer<TimedVcsCommit>() {
-      @Override
-      public void consume(TimedVcsCommit commit) {
-        mergeFound.set(true);
-      }
-    };
-
     String range = baseRef + ".." + currentRef;
     try {
-      GitHistoryUtils.readCommits(project, root, Arrays.asList(range, "--merges"),
-                                  EmptyConsumer.<VcsUser>getInstance(), EmptyConsumer.<VcsRef>getInstance(), detectingConsumer);
+      List<GitCommit> commits = GitLogUtil.collectFullDetails(project, root, range, "--merges");
+      return StreamEx.of(commits).anyMatch(commit -> !commit.getChanges().isEmpty());
     }
     catch (VcsException e) {
       LOG.warn("Couldn't get git log --merges " + range, e);
+      return false;
     }
-    return mergeFound.get();
   }
 
   @NotNull

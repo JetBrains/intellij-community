@@ -79,6 +79,7 @@ public class GuessManagerImpl extends GuessManager {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
     HashSet<PsiType> typesSet = new HashSet<>();
@@ -117,6 +118,7 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
+  @NotNull
   @Override
   public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
     LinkedHashSet<PsiType> types = new LinkedHashSet<>();
@@ -396,8 +398,13 @@ public class GuessManagerImpl extends GuessManager {
     private Map<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInstructionVisitor(PsiElement forPlace) {
-      myForPlace = forPlace;
+    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(forPlace.getParent());
+      if (forPlace instanceof PsiThisExpression && parent instanceof PsiReferenceExpression) {
+        myForPlace = parent.getParent() instanceof PsiMethodCallExpression ? parent.getParent() : parent;
+      } else {
+        myForPlace = forPlace;
+      }
     }
 
     public Map<PsiExpression, PsiType> getResult() {

@@ -60,7 +60,7 @@ public class ClipboardTextPerCaretSplitter {
           result.add(input);
         }
         else {
-          result.add(i < sourceCaretCount ? new String(input.substring(caretData.startOffsets[i], caretData.endOffsets[i])) : "");
+          result.add(i < sourceCaretCount ? input.substring(caretData.startOffsets[i], caretData.endOffsets[i]) : "");
         }
       }
     }

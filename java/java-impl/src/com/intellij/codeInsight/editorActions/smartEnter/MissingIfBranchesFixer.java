@@ -43,7 +43,7 @@ public class MissingIfBranchesFixer implements Fixer {
   }
 
   private static void handleBranch(@NotNull Document doc, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement beforeBranch, @Nullable PsiStatement branch) {
-    if (branch instanceof PsiBlockStatement) return;
+    if (branch instanceof PsiBlockStatement || beforeBranch.textMatches(PsiKeyword.ELSE) && branch instanceof PsiIfStatement) return;
     boolean transformingOneLiner = branch != null && (startLine(doc, beforeBranch) == startLine(doc, branch) ||
                                                       startCol(doc, ifStatement) < startCol(doc, branch));
 

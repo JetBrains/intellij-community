@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="9" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="378" height="417"/>
+      <xy x="20" y="20" width="392" height="417"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -14,15 +14,7 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.rainbow"/>
-          <verticalTextPosition value="1"/>
-        </properties>
-      </component>
-      <component id="5556e" class="javax.swing.JTextPane" binding="myGradientLabel">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.override.gradient"/>
+          <verticalTextPosition value="0"/>
         </properties>
       </component>
       <vspacer id="1f6f2">
@@ -81,14 +73,21 @@
               <text resource-bundle="messages/ApplicationBundle" key="label.inherit.attributes"/>
             </properties>
           </component>
-          <component id="6fbd2" class="javax.swing.JTextPane" binding="myInheritanceLabel">
+          <scrollpane id="b44f" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <text value="labl"/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="empty"/>
+            <children>
+              <component id="6fbd2" class="javax.swing.JTextPane" binding="myInheritanceLabel">
+                <constraints/>
+                <properties>
+                  <text value="labl"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
         </children>
       </grid>
       <component id="203c3" class="com.intellij.ui.components.JBLabel" binding="myLStop1">
@@ -129,6 +128,14 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.5"/>
+        </properties>
+      </component>
+      <component id="d03ac" class="com.intellij.ui.components.JBLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/ApplicationBundle" key="rainbow.option.description"/>
         </properties>
       </component>
     </children>

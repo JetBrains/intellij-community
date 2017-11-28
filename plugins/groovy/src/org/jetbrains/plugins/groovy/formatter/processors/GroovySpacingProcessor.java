@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.formatter.processors;
 
+import com.intellij.formatting.Block;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.ParameterListBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
@@ -317,7 +319,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
-    manageSpaceBeforeCallLParenth();
+    if (myType1 == GroovyElementTypes.MODIFIERS) {
+      createSpaceInCode(true);
+    } else  {
+      manageSpaceBeforeCallLParenth();
+    }
   }
 
   @Override
@@ -327,7 +333,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   @Override
-  public void visitTupleExpression(@NotNull GrTupleExpression tupleExpression) {
+  public void visitTuple(@NotNull GrTuple tuple) {
     manageSpaceInTuple();
   }
 
@@ -548,14 +554,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (TokenSets.TYPE_DEFINITIONS.contains(myType1) || isSemiAfter(TokenSets.TYPE_DEFINITIONS) || TokenSets.TYPE_DEFINITIONS.contains((myType2)) ) {
       if (myType1 == GroovyDocElementTypes.GROOVY_DOC_COMMENT) {
         createLF(true);
-        return;
       }
       else {
         final int minBlankLines = mySettings.BLANK_LINES_AROUND_CLASS;
         myResult = Spacing.createSpacing(0, 0, minBlankLines + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
-        return;
       }
-
     }
   }
 
@@ -862,7 +865,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitNamedArgument(@NotNull GrNamedArgument argument) {
-    if (myType1 == GroovyTokenTypes.mCOLON) {
+    if (myType1 == GroovyElementTypes.ARGUMENT_LABEL && myType2 == GroovyTokenTypes.mCOLON) {
+      createSpaceInCode(myGroovySettings.SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON);
+    }
+    else if (myType1 == GroovyTokenTypes.mCOLON) {
       createSpaceInCode(myGroovySettings.SPACE_IN_NAMED_ARGUMENT);
     }
   }
@@ -1076,6 +1082,24 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   static boolean isWhiteSpace(final ASTNode node) {
     return node != null && (PsiImplUtil.isWhiteSpaceOrNls(node) || node.getTextLength() == 0);
+  }
+
+  public static Spacing getSpacing(@Nullable Block child1, @NotNull Block child2, FormattingContext context) {
+    if (child1 instanceof SyntheticGroovyBlock) return getSpacing(((SyntheticGroovyBlock)child1).getLastChild(), child2, context);
+    if (child2 instanceof SyntheticGroovyBlock) return getSpacing(child1, ((SyntheticGroovyBlock)child2).getFirstChild(), context);
+
+    if (child1 instanceof GroovyBlock && child2 instanceof GroovyBlock) {
+      if (((GroovyBlock)child1).getNode() == ((GroovyBlock)child2).getNode()) {
+        return Spacing.getReadOnlySpacing();
+      }
+
+      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child1), (GroovyBlock)child2, context).getSpacing();
+      if (spacing != null) {
+        return spacing;
+      }
+      return GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), context);
+    }
+    return null;
   }
 }
 

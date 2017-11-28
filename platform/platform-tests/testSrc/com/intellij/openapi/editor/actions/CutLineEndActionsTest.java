@@ -18,15 +18,13 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author Denis Zhdanov
  * @since 4/18/11 2:47 PM
  */
 public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   
-  public void testNonEmptyLineEnd() throws IOException {
+  public void testNonEmptyLineEnd() {
     doTest(
       "class Test {\n" +
       "    // This is a <caret>comment string\n" +
@@ -37,7 +35,7 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testEmptyLineEnd() throws IOException {
+  public void testEmptyLineEnd() {
     doTest(
       "class Test {\n" +
       "    <caret>   \n" +
@@ -49,7 +47,7 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
     );
   }
   
-  public void testAtLineEnd() throws IOException {
+  public void testAtLineEnd() {
     doTest(
       "class Test {\n" +
       "    // This is a comment string1<caret>\n" +
@@ -61,14 +59,14 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
     );
   }
   
-  public void testAtDocumentEnd() throws IOException {
+  public void testAtDocumentEnd() {
     String text = 
       "class Test{\n" +
       "}<caret>";
     doTest(text, text);
   }
   
-  public void testEmptyLastLineEnd() throws IOException {
+  public void testEmptyLastLineEnd() {
     doTest(
       "class Test {\n" +
       "}<caret>         ",
@@ -77,7 +75,7 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
     );
   }
   
-  private void doTest(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTest(@NotNull String before, @NotNull String after) {
     configureFromFileText(getTestName(false) + ".txt", before);
     cutToLineEnd();
     checkResultByText(after);

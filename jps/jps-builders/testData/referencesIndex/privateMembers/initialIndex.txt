@@ -2,10 +2,10 @@ Backward Hierarchy:
 java.lang.Object -> PrivateMembers PrivateMembers$PrivateInnerClass
 
 Backward References:
-PrivateMembers in PrivateMembers
-PrivateMembers.<init>(0) in PrivateMembers
-java.lang.Object.<init>(0) in PrivateMembers
+PrivateMembers in PrivateMembers occurrences = 1
 
 Class Definitions:
 PrivateMembers in PrivateMembers
 PrivateMembers$PrivateInnerClass in PrivateMembers
+
+Members Signatures:

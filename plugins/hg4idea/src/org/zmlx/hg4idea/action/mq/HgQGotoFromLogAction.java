@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -34,7 +32,6 @@ import org.zmlx.hg4idea.command.mq.HgQGotoCommand;
 import org.zmlx.hg4idea.command.mq.HgQPopCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-import java.util.Set;
 import java.util.List;
 
 public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
@@ -44,12 +41,8 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
     List<Hash> parents = commit.getParents();
     final Hash parentHash = parents.isEmpty() ? null : parents.get(0);
 
-    final HgNameWithHashInfo parentPatchName = ContainerUtil.find(repository.getMQAppliedPatches(), new Condition<HgNameWithHashInfo>() {
-      @Override
-      public boolean value(HgNameWithHashInfo info) {
-        return info.getHash().equals(parentHash);
-      }
-    });
+    final HgNameWithHashInfo parentPatchName = ContainerUtil.find(repository.getMQAppliedPatches(),
+                                                                  info -> info.getHash().equals(parentHash));
     new Task.Backgroundable(repository.getProject(), parentPatchName != null
                                                      ? HgVcsMessages.message("hg4idea.mq.progress.goto", parentPatchName)
                                                      : HgVcsMessages.message("hg4idea.mq.progress.pop")) {
@@ -81,17 +74,14 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
 
-    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
-      @Override
-      public void consume(List<VcsFullCommitDetails> selectedDetails) {
-        VcsFullCommitDetails fullCommitDetails = ContainerUtil.getFirstItem(selectedDetails);
+    log.requestSelectedDetails(selectedDetails -> {
+      VcsFullCommitDetails fullCommitDetails = ContainerUtil.getFirstItem(selectedDetails);
 
-        assert fullCommitDetails != null;
-        final HgRepository repository = getRepositoryForRoot(project, fullCommitDetails.getRoot());
-        assert repository != null;
+      assert fullCommitDetails != null;
+      final HgRepository repository = getRepositoryForRoot(project, fullCommitDetails.getRoot());
+      assert repository != null;
 
-        actionPerformed(repository, fullCommitDetails);
-      }
-    }, null);
+      actionPerformed(repository, fullCommitDetails);
+    });
   }
 }

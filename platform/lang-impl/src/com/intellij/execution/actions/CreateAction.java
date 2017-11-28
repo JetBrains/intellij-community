@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -122,14 +121,9 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     @Override
     public void perform(final ConfigurationContext context) {
-      final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
-      final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(configuration.getFactory());
-      final RunConfiguration templateConfiguration = template.getConfiguration();
-      runManager.addConfiguration(configuration,
-                                  runManager.isConfigurationShared(template),
-                                  runManager.getBeforeRunTasks(templateConfiguration),
-                                  false);
+      RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
+      RunnerAndConfigurationSettings configuration = context.getConfiguration();
+      runManager.addConfiguration(configuration, runManager.getConfigurationTemplate(configuration.getFactory()).isShared());
       runManager.setSelectedConfiguration(configuration);
     }
   }
@@ -146,9 +140,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettings configuration = context.getConfiguration();
       if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-        runManager.addConfiguration(configuration,
-                                    runManager.isConfigurationShared(configuration),
-                                    runManager.getBeforeRunTasks(configuration.getConfiguration()), false);
+        runManager.addConfiguration(configuration);
         runManager.setSelectedConfiguration(configuration);
       }
     }

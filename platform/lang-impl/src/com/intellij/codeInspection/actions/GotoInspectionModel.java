@@ -35,7 +35,6 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class GotoInspectionModel extends SimpleChooseByNameModel {
-  private static final InspectionToolWrapper[] EMPTY_WRAPPERS_ARRAY = new InspectionToolWrapper[0];
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;
   private final InspectionListCellRenderer myListCellRenderer = new InspectionListCellRenderer();
@@ -69,7 +68,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   public Object[] getElementsByName(final String name, final String pattern) {
     final InspectionToolWrapper tool = myToolNames.get(name);
     if (tool == null) {
-      return EMPTY_WRAPPERS_ARRAY;
+      return InspectionToolWrapper.EMPTY_ARRAY;
     }
     return new InspectionToolWrapper[] {tool};
   }

@@ -40,7 +40,7 @@ final class Two {
   }
 }
 class Three {
-  public Three <warning descr="Method 'clone()' does not call 'super.clone()'">clone</warning>() throws CloneNotSupportedException {
+  public Three clone() throws CloneNotSupportedException {
     throw new CloneNotSupportedException();
   }
 }

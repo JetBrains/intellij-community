@@ -119,7 +119,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
         if (pathsElement != null) {
           VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(this, null);
           myOrderRootPointerContainers.put(orderRootType, container);
-          container.readExternal(pathsElement, ROOT_ELEMENT);
+          container.readExternal(pathsElement, ROOT_ELEMENT, false);
         }
       }
     }
@@ -131,7 +131,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
       if (container != null && container.size() > 0) {
         final Element javaDocPaths = new Element(((PersistentOrderRootType)orderRootType).getModulePathsName());
-        container.writeExternal(javaDocPaths, ROOT_ELEMENT);
+        container.writeExternal(javaDocPaths, ROOT_ELEMENT, false);
         element.addContent(javaDocPaths);
       }
     }

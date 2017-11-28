@@ -1,14 +1,14 @@
+import sys
 from typing import Any, Union, Callable, TypeVar, List, Generic, Iterable, Generator, Awaitable
 from .events import AbstractEventLoop
-from concurrent.futures._base import (
-    Error as Error,
-)
 from concurrent.futures import (
     CancelledError as CancelledError,
     TimeoutError as TimeoutError,
+    Future as _ConcurrentFuture,
+    Error,
 )
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 _T = TypeVar('_T')
 
@@ -21,6 +21,9 @@ class _TracebackLogger:
     def activate(self) -> None: ...
     def clear(self) -> None: ...
     def __del__(self) -> None: ...
+
+if sys.version_info >= (3, 5):
+    def isfuture(obj: object) -> bool: ...
 
 class Future(Iterable[_T], Awaitable[_T], Generic[_T]):
     _state = ...  # type: str
@@ -44,3 +47,5 @@ class Future(Iterable[_T], Awaitable[_T], Generic[_T]):
     def _copy_state(self, other: Any) -> None: ...
     def __iter__(self) -> Generator[Any, None, _T]: ...
     def __await__(self) -> Generator[Any, None, _T]: ...
+
+def wrap_future(f: Union[_ConcurrentFuture[_T], Future[_T]]) -> Future[_T]: ...

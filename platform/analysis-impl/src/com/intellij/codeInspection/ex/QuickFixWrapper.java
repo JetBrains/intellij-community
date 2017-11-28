@@ -40,8 +40,7 @@ public class QuickFixWrapper implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ex.QuickFixWrapper");
 
   private final ProblemDescriptor myDescriptor;
-  private final int myFixNumber;
-
+  private final LocalQuickFix myFix;
 
   @NotNull
   public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
@@ -50,12 +49,12 @@ public class QuickFixWrapper implements IntentionAction {
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix fix = fixes[fixNumber];
-    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, fixNumber);
+    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
 
-  private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, int fixNumber) {
+  private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
     myDescriptor = descriptor;
-    myFixNumber = fixNumber;
+    myFix = fix;
   }
 
   @Override
@@ -67,7 +66,7 @@ public class QuickFixWrapper implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return myDescriptor.getFixes()[myFixNumber].getName();
+    return getFix().getName();
   }
 
   @Override
@@ -104,8 +103,9 @@ public class QuickFixWrapper implements IntentionAction {
     return getFix().getElementToMakeWritable(file);
   }
 
+  @NotNull
   public LocalQuickFix getFix() {
-    return (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
+    return myFix;
   }
 
   @TestOnly

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -146,7 +146,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
             PsiField field = psiClass.findFieldByName(fieldName, true);
             if(field != null) {
               final int line = document.getLineNumber(field.getTextOffset());
-              ApplicationManager.getApplication().runWriteAction(() -> {
+              WriteAction.run(() -> {
                 XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
                   .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
                 result.set(fieldBreakpoint);

@@ -30,7 +30,7 @@ import java.util.Set;
 public class FilteredController extends CascadeController {
   @NotNull private final CollapsedGraph myCollapsedGraph;
 
-  protected FilteredController(@NotNull CascadeController delegateLinearGraphController,
+  protected FilteredController(@NotNull LinearGraphController delegateLinearGraphController,
                                @NotNull PermanentGraphInfo permanentGraphInfo,
                                @NotNull Set<Integer> matchedIds) {
     super(delegateLinearGraphController, permanentGraphInfo);

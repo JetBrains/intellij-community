@@ -22,9 +22,9 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -57,8 +57,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -92,7 +90,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
-  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
+  private final Map<Disposable, List<Balloon>> myStorage = ContainerUtil.createWeakMap();
 
   @NotNull
   @Override
@@ -1030,13 +1028,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
   return IdeEventQueue.getInstance().isPopupActive();
   }
 
-  private static class ActionStepBuilder {
+  private static class ActionStepBuilder extends PresentationFactory {
     private final List<ActionItem>                myListModel;
     private final DataContext                     myDataContext;
     private final boolean                         myShowNumbers;
     private final boolean                         myUseAlphaAsNumbers;
     private final boolean                         myShowDisabled;
-    private final HashMap<AnAction, Presentation> myAction2presentation;
     private       int                             myCurrentNumber;
     private       boolean                         myPrependWithSeparator;
     private       String                          mySeparatorText;
@@ -1054,7 +1051,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myDataContext = dataContext;
       myShowNumbers = showNumbers;
       myShowDisabled = showDisabled;
-      myAction2presentation = new HashMap<>();
       myCurrentNumber = 0;
       myPrependWithSeparator = false;
       mySeparatorText = null;
@@ -1118,8 +1114,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
-      for (AnAction action : actions) {
+      List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(100);
+      Utils.expandActionGroup(false, actionGroup, newVisibleActions, this, myDataContext, myActionPlace, ActionManager.getInstance());
+      for (AnAction action : newVisibleActions) {
         if (action == null) {
           LOG.error("null action in group " + actionGroup);
           continue;
@@ -1129,18 +1126,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
           mySeparatorText = ((Separator)action).getText();
         }
         else {
-          if (action instanceof ActionGroup) {
-            ActionGroup group = (ActionGroup)action;
-            if (group.isPopup()) {
-              appendAction(group);
-            }
-            else {
-              appendActionsFromGroup(group);
-            }
-          }
-          else {
-            appendAction(action);
-          }
+          appendAction(action);
         }
       }
     }
@@ -1235,14 +1221,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return new IconWrapper(icon, null, myMaxIconWidth, myMaxIconHeight);
     }
 
-    private Presentation getPresentation(@NotNull AnAction action) {
-      Presentation presentation = myAction2presentation.get(action);
-      if (presentation == null) {
-        presentation = action.getTemplatePresentation().clone();
-        myAction2presentation.put(action, presentation);
-      }
-      return presentation;
-    }
   }
 
   @NotNull

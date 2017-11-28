@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +36,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
@@ -50,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class SvnMergeSourceDetails extends MasterDetailsComponent {
   private final Project myProject;
@@ -78,7 +78,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     Disposer.register(project, dialog.getDisposable());
 
     Content content = ContentFactory.SERVICE.getInstance().createContent(dialog.createCenterPanel(),
-        SvnBundle.message("merge.source.details.title", (file == null) ? revision.getURL() : file.getName(), revision.getRevisionNumber().asString()), true);
+        SvnBundle.message("merge.source.details.title", (file == null) ? revision.getURL().toDecodedString() : file.getName(), revision.getRevisionNumber().asString()), true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
     toolWindow.activate(null);
@@ -100,6 +100,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -137,12 +138,11 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       }
 
       final String revisonNumber = revision.getRevisionNumber().asString();
-      final Pair<String,Boolean> info = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
-      String description = info.getFirst();
+      String description = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
       int width = metrics.stringWidth(description);
       int dotsWidth = metrics.stringWidth(ourDots);
-      boolean descriptionTruncated = info.getSecond();
-      if ((descriptionTruncated && (ourMaxWidth - dotsWidth < width)) || (! descriptionTruncated) && (ourMaxWidth < width)) {
+      boolean descriptionTruncated = false;
+      if (ourMaxWidth < width) {
         description = CommittedChangeListRenderer.truncateDescription(description, metrics, ourMaxWidth - dotsWidth);
         descriptionTruncated = true;
       }
@@ -152,11 +152,9 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
 
       final String date = CommittedChangeListRenderer.getDateOfChangeList(revision.getRevisionDate());
 
-      final String author = revision.getAuthor();
-
       append(revisonNumber + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(description + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(author, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      append(notNullize(revision.getAuthor()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(", " + date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -205,7 +203,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       SvnChangeList list = myListsMap.get(myRevision);
       if (list == null) {
         list = (SvnChangeList)SvnVcs.getInstance(myProject).loadRevisions(myFile, myRevision.getRevisionNumber());
-        myListsMap.put(((SvnRevisionNumber) myRevision.getRevisionNumber()).getRevision().getNumber(), list);
+        myListsMap.put(myRevision.getRevision().getNumber(), list);
       }
       return list;
     }
@@ -230,6 +228,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return getBannerSlogan();  
     }
 
+    @Override
     public String getHelpTopic() {
       return null;
     }
@@ -238,7 +237,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return false;
     }
 
-    public void apply() throws ConfigurationException {
+    public void apply() {
     }
 
     public void reset() {
@@ -262,7 +261,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       myProject = project;
       myRevision = revision;
       myFile = file;
-      setTitle(SvnBundle.message("merge.source.details.title", (myFile == null) ? myRevision.getURL() : myFile.getName(), myRevision.getRevisionNumber().asString()));
+      setTitle(SvnBundle.message("merge.source.details.title", (myFile == null) ? myRevision.getURL().toDecodedString() : myFile.getName(), myRevision.getRevisionNumber().asString()));
       init();
     }
 

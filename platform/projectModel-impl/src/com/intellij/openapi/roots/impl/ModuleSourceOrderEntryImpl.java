@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *  @author dsl
@@ -38,11 +39,11 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.SOURCE_FOLDER_TYPE;
   @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 
-  ModuleSourceOrderEntryImpl(RootModelImpl rootModel) {
+  ModuleSourceOrderEntryImpl(@NotNull RootModelImpl rootModel) {
     super(rootModel);
   }
 
-  ModuleSourceOrderEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
+  ModuleSourceOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     super(rootModel);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException();
@@ -69,7 +70,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
@@ -82,7 +83,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @Override
   @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
@@ -91,9 +92,9 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @Override
   @NotNull
-  public String[] getUrls(OrderRootType type) {
-    final ArrayList<String> result = new ArrayList<>();
+  public String[] getUrls(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
+      List<String> result = new ArrayList<>();
       for (ContentEntry contentEntry : getRootModel().getContentEntries()) {
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
           result.add(sourceFolder.getUrl());
@@ -104,10 +105,11 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @NotNull
   @Override
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     return new ModuleSourceOrderEntryImpl(rootModel);
   }
 

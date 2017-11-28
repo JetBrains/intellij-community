@@ -22,12 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.NotNullList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,7 +45,7 @@ public abstract class CachedValueBase<T> {
     }
 
     TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-    List<Object> deps = new ArrayList<>(dependencies.length);
+    List<Object> deps = new NotNullList<>(dependencies.length);
     collectDependencies(timeStamps, deps, dependencies);
 
     return new Data<>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());

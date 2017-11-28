@@ -1,6 +1,5 @@
 package com.jetbrains.env.python;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +8,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class IPythonConsoleTest extends PyEnvTestCase {
   @Test
-  public void testQuestion() throws Exception {
+  public void testQuestion() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
@@ -39,8 +37,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
-  public void testParsing() throws Exception {
+  public void testParsing() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {
@@ -62,16 +59,11 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       return Collections.emptyList();
     }
 
-    return Collections2.transform(PsiTreeUtil.findChildrenOfType(psi, PsiErrorElement.class), new Function<PsiErrorElement, String>() {
-      @Override
-      public String apply(PsiErrorElement input) {
-        return input.getErrorDescription();
-      }
-    });
+    return Collections2.transform(PsiTreeUtil.findChildrenOfType(psi, PsiErrorElement.class), input -> input.getErrorDescription());
   }
 
   @Test
-  public void testParsingNoIPython() throws Exception {
+  public void testParsingNoIPython() {
     runPythonTest(new IPythonTask() {
       @Override
       public void testing() throws Exception {

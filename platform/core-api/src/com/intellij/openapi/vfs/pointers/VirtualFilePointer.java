@@ -35,4 +35,12 @@ public interface VirtualFilePointer {
   String getPresentableUrl();
 
   boolean isValid();
+
+  /**
+   * @return true if {@link VirtualFilePointerListener#validityChanged(VirtualFilePointer[])}
+   * should fired for every change beneath this directory (Used for jar directories in libraries)
+   */
+  default boolean isRecursive() {
+    return false;
+  }
 }

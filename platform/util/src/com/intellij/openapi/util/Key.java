@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -75,6 +76,11 @@ public class Key<T> {
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     final T t = get(holder);
     return t == null ? defaultValue : t;
+  }
+
+  @NotNull
+  public T getRequired(@NotNull UserDataHolder holder) {
+    return ObjectUtils.notNull(holder.getUserData(this));
   }
 
   /**

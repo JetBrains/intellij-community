@@ -137,10 +137,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
   }
 
   protected void layoutEditor(@NotNull JComponent editor) {
-    if (editor != null) {
-      final Rectangle bounds = editor.getBounds();
+      Rectangle bounds = editor.getBounds();
       editor.setBounds(bounds.x, bounds.y, bounds.width - 6, bounds.height);
-    }
   }
 
   protected void paintArrowButton(Graphics g,

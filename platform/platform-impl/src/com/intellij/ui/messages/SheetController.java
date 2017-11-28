@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.messages;
 
 import com.google.common.html.HtmlEscapers;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -43,10 +44,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 /**
  * Created by Denis Fokin
  */
-public class SheetController {
+public class SheetController implements Disposable {
 
   private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
@@ -189,11 +192,24 @@ public class SheetController {
   void requestFocus() {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       if (myFocusedComponent != null) {
-        myFocusedComponent.requestFocus();
+        getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          getGlobalInstance().requestFocus(myFocusedComponent, true);
+        });
       } else {
         LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
       }
     });
+  }
+
+  void setDefaultResult () {
+     myResult = myDefaultButton.getName();
+  }
+
+  void setFocusedResult () {
+    if (myFocusedComponent instanceof JButton) {
+      JButton focusedButton = (JButton)myFocusedComponent;
+      myResult = focusedButton.getName();
+    }
   }
 
   JPanel getPanel(final JDialog w) {
@@ -446,6 +462,7 @@ public class SheetController {
 
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
     doNotAskCheckBox.setText(myDoNotAskOption.getDoNotShowMessage());
+    doNotAskCheckBox.setVisible(myDoNotAskOption.canBeHidden());
     doNotAskCheckBox.setSelected(!myDoNotAskOption.isToBeShown());
     doNotAskCheckBox.setOpaque(false);
     doNotAskCheckBox.addItemListener(new ItemListener() {

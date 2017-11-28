@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -23,9 +9,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,6 +110,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return name != null ? name.hashCode() : 0;
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement[] getChildren() {
     final PyElement element = getValue();
@@ -135,7 +124,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     }
     PyPsiUtils.assertValid(element);
     if (element instanceof PyClass) {
-      for (PyClass c : ((PyClass)element).getAncestorClasses(null)) {
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
+      for (PyClass c : ((PyClass)element).getAncestorClasses(context)) {
         for (PyElement e: getElementChildren(c)) {
           final StructureViewTreeElement inherited = createChild(e, getElementVisibility(e), true, elementIsField(e));
           if (!children.contains(inherited)) {
@@ -161,7 +151,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
-    final Collection<PyElement> children = new ArrayList<>();
+    Collection<PyElement> children = ContainerUtil.newLinkedHashSet();
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override
@@ -207,7 +197,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   private static Visibility getVisibilityByName(@Nullable String name) {
     if (name != null) {
       if (name.startsWith("__")) {
-        if (PyNames.UnderscoredAttributes.contains(name)) {
+        if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name)) {
           return Visibility.PREDEFINED;
         }
         else {

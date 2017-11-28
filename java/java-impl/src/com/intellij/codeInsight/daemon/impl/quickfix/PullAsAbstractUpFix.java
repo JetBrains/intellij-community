@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#" + PullAsAbstractUpFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(PullAsAbstractUpFix.class);
   private final String myName;
 
   public PullAsAbstractUpFix(PsiMethod psiMethod, final String name) {

@@ -400,7 +400,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
         public Iterator<T> iterator() {
           FlyweightCapableTreeStructure<T> structure = getStructure();
           Ref<T[]> ref = Ref.create();
-          int count = structure.getChildren(structure.prepareForGetChildren(node), ref);
+          int count = structure.getChildren(node, ref);
           if (count == 0) return ContainerUtil.emptyIterator();
           T[] array = ref.get();
           LinkedList<T> list = ContainerUtil.newLinkedList();

@@ -23,12 +23,16 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class RemoteServersViewContribution extends RemoteServersViewContributor {
+
+  @NonNls
+  private static final String HELP_ID = "Application_Servers_tool_window";
 
   public abstract List<RemoteServer<?>> getRemoteServers();
 
@@ -70,5 +74,9 @@ public abstract class RemoteServersViewContribution extends RemoteServersViewCon
   protected static List<RemoteServer<?>> getRemoteServersByToolWindowId(@Nullable String toolWindowId) {
     return ContainerUtil.filter(RemoteServersManager.getInstance().getServers(),
                                 server -> getRemoteServerToolWindowId(server) == toolWindowId);
+  }
+
+  protected String getContextHelpId() {
+    return HELP_ID;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
 import com.intellij.uiDesigner.inspections.StringDescriptorInspection;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +46,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
-    super("HardCodedStringLiteral");
+    super("I18nForm");
   }
 
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "HardCodedStringLiteral";
+  }
+
+  @Override
   protected void checkStringDescriptor(final Module module,
                                        final IComponent component,
                                        final IProperty prop,
@@ -68,29 +73,17 @@ public class I18nFormInspection extends StringDescriptorInspection {
       EditorQuickFixProvider provider;
 
       if (prop.getName().equals(BorderProperty.NAME)) {
-        provider = new EditorQuickFixProvider() {
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
-                                                 (RadContainer)component);
-          }
-        };
+        provider = (editor, component12) -> new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
+                                                                      (RadContainer)component12);
       }
-      else if (prop.getName().equals(RadTabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(RadTabbedPane.TAB_TOOLTIP_PROPERTY)) {
-        provider = new EditorQuickFixProvider() {
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
-                                               component, prop.getName());
-          }
-        };
+      else if (prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
+        provider = (editor, component1) -> new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
+                                                                       component1, prop.getName());
       }
       else {
-        provider = new EditorQuickFixProvider() {
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
-                                                   component,
-                                                   (IntrospectedProperty)prop);
-          }
-        };
+        provider = (editor, component13) -> new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
+                                                                            component13,
+                                                                        (IntrospectedProperty)prop);
       }
 
       collector.addError(getID(), component, prop,
@@ -100,15 +93,13 @@ public class I18nFormInspection extends StringDescriptorInspection {
   }
 
   private static boolean isPropertyDescriptor(final IProperty prop) {
-    return !prop.getName().equals(BorderProperty.NAME) && !prop.getName().equals(RadTabbedPane.TAB_TITLE_PROPERTY) &&
-           !prop.getName().equals(RadTabbedPane.TAB_TOOLTIP_PROPERTY);
+    return !prop.getName().equals(BorderProperty.NAME) && !prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) &&
+           !prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY);
   }
 
   private static boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
-    if (descriptor.isNoI18n()) {
-      return false;
-    }
-    return descriptor.getBundleName() == null &&
+    return !descriptor.isNoI18n() &&
+           descriptor.getBundleName() == null &&
            descriptor.getKey() == null &&
            StringUtil.containsAlphaCharacters(descriptor.getValue());
   }
@@ -119,7 +110,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     if (componentClass == null) {
       return false;
     }
-    PsiMethod setter = PropertyUtil.findPropertySetter(componentClass, propertyName, false, true);
+    PsiMethod setter = PropertyUtilBase.findPropertySetter(componentClass, propertyName, false, true);
     if (setter != null) {
       PsiParameter[] parameters = setter.getParameterList().getParameters();
       if (parameters.length == 1 &&
@@ -132,6 +123,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     return false;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {

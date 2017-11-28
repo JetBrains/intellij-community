@@ -39,6 +39,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
     return "GitHub";
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "settings.github";
@@ -56,7 +57,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
     return mySettingsPane != null && mySettingsPane.isModified();
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     if (mySettingsPane != null) {
       mySettingsPane.apply();
     }

@@ -24,6 +24,7 @@ import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
+import groovy.transform.CompileStatic
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
+@CompileStatic
 class CustomFileTypeLexerTest extends TestCase {
 
   private static void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
@@ -392,10 +394,12 @@ CHARACTER (')')
     SyntaxTable table = new SyntaxTable()
     table.addKeyword1("a*")
     table.addKeyword1("b-c")
+    table.addKeyword1(":")
     table.addKeyword2("d#")
     table.addKeyword2("e")
     table.addKeyword2("foo{}")
-    doTest table, 'a* b-c d# e- e foo{}', '''\
+    table.addKeyword3("foldl'")
+    doTest table, "a* b-c d# e- e foo{} : foldl' foo", '''\
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -408,6 +412,12 @@ WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
+WHITESPACE (' ')
+KEYWORD_1 (':')
+WHITESPACE (' ')
+KEYWORD_3 ('foldl'')
+WHITESPACE (' ')
+IDENTIFIER ('foo')
 '''
   }
 
@@ -464,7 +474,7 @@ NUMBER ('0yabc0')
     int count = 3000
     List<String> keywords = []
     for (i in 0..<count) {
-      char start = ('a' as char) + (i % 7)
+      char start = (('a' as char) + (i % 7)).intValue()
       keywords.add((start as String) * i)
     }
     SyntaxTable table = new SyntaxTable()
@@ -482,9 +492,8 @@ NUMBER ('0yabc0')
     
     CharSequence bombed = new SlowCharSequence(text)
     ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).cpuBound().useLegacyScaling().assertTiming()
+    PlatformTestUtil.startPerformanceTest(name, 4500, cl).assertTiming()
   }
-
 
 }
 

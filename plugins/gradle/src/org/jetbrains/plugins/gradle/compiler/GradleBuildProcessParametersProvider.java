@@ -52,8 +52,8 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   @NotNull
   public List<String> getClassPath() {
     List<String> result = ContainerUtil.newArrayList();
-    addGradleClassPath(result);
     if (!GradleSettings.getInstance(myProject).getLinkedProjectsSettings().isEmpty()) {
+      addGradleClassPath(result);
       addOtherClassPath(result);
     }
     return result;

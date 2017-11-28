@@ -84,7 +84,7 @@ public interface DataConstants {
   /**
    * Returns Boolean.TRUE if action is executed in modal context and
    * Boolean.FALSE if action is executed not in modal context. If context
-   * is unknown then the value of this data constant is <code>null</code>.
+   * is unknown then the value of this data constant is {@code null}.
    *
    * @deprecated use {@link PlatformDataKeys#IS_MODAL_CONTEXT} instead
    */

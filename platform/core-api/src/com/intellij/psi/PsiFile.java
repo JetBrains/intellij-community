@@ -101,8 +101,18 @@ public interface PsiFile extends PsiFileSystemItem {
   FileASTNode getNode();
 
   /**
-   * Called by the PSI framework when the contents of the file changes. Can be used to invalidate
-   * file-level caches. If you override this method, you <b>must</b> call the base class implementation.
+   * Called by the PSI framework when the contents of the file changes.
+   * If you override this method, you <b>must</b> call the base class implementation.
+   * While this method can be used to invalidate file-level caches, it is more much safe to invalidate them in  {@link #clearCaches()}
+   * since file contents can be reloaded completely (without any specific subtree change) without this method being called.
    */
   void subtreeChanged();
+
+  /**
+   * Invalidate any file-specific cache in this method. It is called on file file content change.
+   * If you override this method, you <b>must</b> call the base class implementation.
+   */
+  default void clearCaches() {
+
+  }
 }

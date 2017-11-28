@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jun 29, 2006
- * Time: 6:09:35 PM
- */
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;

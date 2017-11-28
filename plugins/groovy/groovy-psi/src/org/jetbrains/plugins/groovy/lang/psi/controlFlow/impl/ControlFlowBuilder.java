@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -428,6 +428,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
+    GrExpression rValue = expression.getRValue();
+    if (rValue != null) {
+      rValue.accept(this);
+    }
+    expression.getLValue().accept(this);
+  }
+
+  @Override
   public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand != null) operand.accept(this);
@@ -623,6 +632,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void processInstanceOf(GrExpression expression) {
+    FList<ConditionInstruction> conditionsBefore = myConditions;
     ConditionInstruction cond = registerCondition(expression);
     addNodeAndCheckPending(cond);
 
@@ -634,6 +644,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
+    myConditions = conditionsBefore;
   }
 
   /**

@@ -21,10 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class TryCatchFinallySurrounder extends TryCatchSurrounder {
 
   @Override

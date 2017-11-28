@@ -98,7 +98,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     new WriteCommandAction.Simple(project, getText(), file) {
 
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         try {
           myVariable.normalizeDeclaration();
           final PsiTypeElement typeElement = myVariable.getTypeElement();

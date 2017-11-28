@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
@@ -85,8 +86,9 @@ public class GradleProjectResolverUtil {
       relativePath = String.valueOf(FileUtil.pathHashCode(mainModuleConfigPath));
     }
     final String mainModuleFileDirectoryPath =
-      ideProjectPath == null ? mainModuleConfigPath : ideProjectPath + "/.idea/modules/" +
-                                                      (relativePath == null || relativePath.equals(".") ? "" : relativePath);
+      ideProjectPath == null
+      ? mainModuleConfigPath
+      : ideProjectPath + '/' + (relativePath == null || relativePath.equals(".") ? "" : relativePath);
     if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format(
         "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), mainModuleConfigPath
@@ -100,15 +102,51 @@ public class GradleProjectResolverUtil {
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
+      moduleData.setInternalName(getInternalModuleName(gradleModule, externalProject, resolverCtx));
       moduleData.setGroup(externalProject.getGroup());
       moduleData.setVersion(externalProject.getVersion());
       moduleData.setDescription(externalProject.getDescription());
       if (!resolverCtx.isResolveModulePerSourceSet()) {
         moduleData.setArtifacts(externalProject.getArtifacts());
+        moduleData.setPublication(new ProjectId(externalProject.getGroup(),
+                                                externalProject.getName(),
+                                                externalProject.getVersion()));
       }
     }
 
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  @NotNull
+  static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject,
+                                      @NotNull ProjectResolverContext resolverCtx) {
+    return getInternalModuleName(gradleModule, externalProject, null, resolverCtx);
+  }
+
+  @NotNull
+  static String getInternalModuleName(@NotNull IdeaModule gradleModule,
+                                      @NotNull ExternalProject externalProject,
+                                      @Nullable String sourceSetName,
+                                      @NotNull ProjectResolverContext resolverCtx) {
+    String delimiter;
+    StringBuilder moduleName = new StringBuilder();
+    if (resolverCtx.isUseQualifiedModuleNames()) {
+      delimiter = ".";
+      if (StringUtil.isNotEmpty(externalProject.getGroup())) {
+        moduleName.append(externalProject.getGroup()).append(delimiter);
+      }
+      moduleName.append(externalProject.getName());
+    }
+    else {
+      delimiter = "_";
+      moduleName.append(gradleModule.getName());
+    }
+    if (sourceSetName != null) {
+      assert !sourceSetName.isEmpty();
+      moduleName.append(delimiter);
+      moduleName.append(sourceSetName);
+    }
+    return PathUtilRt.suggestFileName(moduleName.toString(), true, false);
   }
 
   @NotNull
@@ -268,7 +306,19 @@ public class GradleProjectResolverUtil {
                                             @NotNull final File gradleHomeDir,
                                             @NotNull final GradleVersion gradleVersion) {
     if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
-    if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) return;
+    if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) {
+      File libFileParent = libFile.getParentFile();
+      if (libFileParent == null || !StringUtil.equals("generated-gradle-jars", libFileParent.getName())) return;
+      if (("gradle-api-" + gradleVersion.getVersion() + ".jar").equals(libFile.getName())) {
+        File gradleSrc = new File(gradleHomeDir, "src");
+        File[] gradleSrcRoots = gradleSrc.listFiles();
+        if (gradleSrcRoots == null) return;
+        for (File srcRoot : gradleSrcRoots) {
+          library.addPath(LibraryPathType.SOURCE, srcRoot.getAbsolutePath());
+        }
+      }
+      return;
+    }
 
     File libOrPluginsFile = libFile.getParentFile();
     if (libOrPluginsFile != null && ("plugins".equals(libOrPluginsFile.getName()))) {
@@ -288,6 +338,45 @@ public class GradleProjectResolverUtil {
 
       if (srcDir.isDirectory()) {
         library.addPath(LibraryPathType.SOURCE, srcDir.getAbsolutePath());
+      }
+    }
+  }
+
+  public static void attachSourcesAndJavadocFromGradleCacheIfNeeded(File gradleUserHomeDir, LibraryData libraryData) {
+    if (!libraryData.getPaths(LibraryPathType.SOURCE).isEmpty() && !libraryData.getPaths(LibraryPathType.DOC).isEmpty()) {
+      return;
+    }
+
+    for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
+      final File file = new File(path);
+      if (!file.isFile()) continue;
+      if (!FileUtil.isAncestor(gradleUserHomeDir, file, true)) continue;
+      File binaryFileParent = file.getParentFile();
+      if (binaryFileParent == null) continue;
+      File grandParentFile = binaryFileParent.getParentFile();
+      if (grandParentFile == null) continue;
+      File[] sourceParentCandidates = grandParentFile.listFiles();
+      if (sourceParentCandidates == null || sourceParentCandidates.length < 2) continue;
+
+      boolean sourceFound = false;
+      boolean docFound = false;
+      for (File sourceParentCandidate : sourceParentCandidates) {
+        if (!sourceParentCandidate.isDirectory() || FileUtil.filesEqual(binaryFileParent, sourceParentCandidate)) continue;
+        File[] sourceCandidates = sourceParentCandidate.listFiles();
+        if (sourceCandidates != null && sourceCandidates.length == 1) {
+          File sourceCandidate = sourceCandidates[0];
+          if (sourceCandidate.isFile()) {
+            if (StringUtil.endsWith(sourceCandidate.getName(), "-sources.jar")) {
+              libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.getAbsolutePath());
+              sourceFound = true;
+            }
+            else if (StringUtil.endsWith(sourceCandidate.getName(), "-javadoc.jar")) {
+              libraryData.addPath(LibraryPathType.DOC, sourceCandidate.getAbsolutePath());
+              docFound = true;
+            }
+            if (sourceFound && docFound) break;
+          }
+        }
       }
     }
   }
@@ -498,6 +587,9 @@ public class GradleProjectResolverUtil {
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        library.setArtifactId(mergedDependency.getId().getName());
+        library.setGroup(mergedDependency.getId().getGroup());
+        library.setVersion(mergedDependency.getId().getVersion());
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
@@ -522,6 +614,9 @@ public class GradleProjectResolverUtil {
         final LibraryLevel level = LibraryLevel.MODULE;
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        library.setArtifactId(mergedDependency.getId().getName());
+        library.setGroup(mergedDependency.getId().getGroup());
+        library.setVersion(mergedDependency.getId().getVersion());
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());

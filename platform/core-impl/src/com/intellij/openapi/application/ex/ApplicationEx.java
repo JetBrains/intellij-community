@@ -124,9 +124,6 @@ public interface ApplicationEx extends Application {
 
   void assertTimeConsuming();
 
-  @Deprecated // todo to be removed in IDEA 17
-  void runEdtSafeAction(@NotNull Runnable runnable);
-
   /**
    * Tries to acquire the read lock and run the {@code action}
    *

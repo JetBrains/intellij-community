@@ -66,7 +66,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
   }
 
   @Override
-  boolean getCredentials(String errText) throws SvnBindException {
+  boolean getCredentials(String errText) {
     myAuthentication = myAuthenticationService.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText), getType());
 
     return myAuthentication != null;

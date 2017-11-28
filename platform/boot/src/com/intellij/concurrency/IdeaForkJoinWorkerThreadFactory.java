@@ -21,11 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 // must be accessible via "ClassLoader.getSystemClassLoader().loadClass(fp).newInstance()" from java.util.concurrent.ForkJoinPool.makeCommonPool()
 public class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
-  private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
 
   // must be called in the earliest possible moment on startup
   public static void setupForkJoinCommonPool() {
-    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", String.valueOf(PARALLELISM));
     System.setProperty("java.util.concurrent.ForkJoinPool.common.threadFactory", IdeaForkJoinWorkerThreadFactory.class.getName());
   }
 
@@ -40,7 +38,7 @@ public class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWor
         super.onTermination(exception);
       }
     };
-    thread.setName("JobScheduler FJ pool " + n + "/" + PARALLELISM);
+    thread.setName("JobScheduler FJ pool " + n + "/" + pool.getParallelism());
     thread.setPriority(Thread.NORM_PRIORITY - 1);
     return thread;
   }

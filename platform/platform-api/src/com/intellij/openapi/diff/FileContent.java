@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,12 +46,7 @@ public class FileContent extends DiffContent {
   @Override
   public Document getDocument() {
     if (myDocument == null && DiffContentUtil.isTextFile(myFile)) {
-      myDocument = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-        @Override
-        public Document compute() {
-          return FileDocumentManager.getInstance().getDocument(myFile);
-        }
-      });
+      myDocument = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
     }
     return myDocument;
   }

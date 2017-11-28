@@ -16,14 +16,22 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import jetCheck.Generator;
+import jetCheck.PropertyChecker;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -33,21 +41,33 @@ import static org.junit.Assert.*;
  */
 public class StringUtilTest {
   @Test
-  public void testTrimLeadingChar() throws Exception {
-    assertEquals("", StringUtil.trimLeading("", ' '));
-    assertEquals("", StringUtil.trimLeading(" ", ' '));
-    assertEquals("", StringUtil.trimLeading("    ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("a  ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("  a  ", ' '));
+  public void testTrimLeadingChar() {
+    doTestTrimLeading("", "");
+    doTestTrimLeading("", " ");
+    doTestTrimLeading("", "    ");
+    doTestTrimLeading("a  ", "a  ");
+    doTestTrimLeading("a  ", "  a  ");
   }
 
   @Test
-  public void testTrimTrailingChar() throws Exception {
-    assertEquals("", StringUtil.trimTrailing("", ' '));
-    assertEquals("", StringUtil.trimTrailing(" ", ' '));
-    assertEquals("", StringUtil.trimTrailing("    ", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a  ", ' '));
+  public void testTrimTrailingChar() {
+    doTestTrimTrailing("", "");
+    doTestTrimTrailing("", " ");
+    doTestTrimTrailing("", "    ");
+    doTestTrimTrailing("  a", "  a");
+    doTestTrimTrailing("  a", "  a  ");
+  }
+
+  private static void doTestTrimLeading(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimLeading(string));
+    assertEquals(expected, StringUtil.trimLeading(string, ' '));
+    assertEquals(expected, StringUtil.trimLeading(new StringBuilder(string), ' ').toString());
+  }
+
+  private static void doTestTrimTrailing(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimTrailing(string));
+    assertEquals(expected, StringUtil.trimTrailing(string, ' '));
+    assertEquals(expected, StringUtil.trimTrailing(new StringBuilder(string), ' ').toString());
   }
 
   @Test
@@ -75,7 +95,7 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testIsEmptyOrSpaces() throws Exception {
+  public void testIsEmptyOrSpaces() {
     assertTrue(StringUtil.isEmptyOrSpaces(null));
     assertTrue(StringUtil.isEmptyOrSpaces(""));
     assertTrue(StringUtil.isEmptyOrSpaces("                   "));
@@ -116,6 +136,8 @@ public class StringUtilTest {
     assertEquals("process", StringUtil.unpluralize("process"));
     assertEquals("PROPERTY", StringUtil.unpluralize("PROPERTIES"));
     assertEquals("THIS", StringUtil.unpluralize("THESE"));
+    assertEquals("database", StringUtil.unpluralize("databases"));
+    assertEquals("basis", StringUtil.unpluralize("bases"));
   }
 
   @Test
@@ -138,6 +160,9 @@ public class StringUtilTest {
     assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
     assertEquals("PROPERTIES", StringUtil.pluralize("PROPERTY"));
     assertEquals("THESE", StringUtil.pluralize("THIS"));
+    assertEquals("databases", StringUtil.pluralize("database"));
+    assertEquals("bases", StringUtil.pluralize("base"));
+    assertEquals("bases", StringUtil.pluralize("basis"));
   }
 
   @Test
@@ -151,25 +176,67 @@ public class StringUtilTest {
   }
 
   @Test
+  public void testNaturalCompareTransitivity() {
+    String s1 = "#";
+    String s2 = "0b";
+    String s3 = " 0b";
+    assertTrue(StringUtil.naturalCompare(s1, s2) < 0);
+    assertTrue(StringUtil.naturalCompare(s2, s3) < 0);
+    assertTrue("non-transitive", StringUtil.naturalCompare(s1, s3) < 0);
+  }
+
+  @Test
+  public void testNaturalCompareTransitivityProperty() {
+    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# "))).shouldHold(l -> {
+      List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
+      for (int i = 0; i < sorted.size(); i++) {
+        for (int j = i + 1; j < sorted.size(); j++) {
+          if (StringUtil.naturalCompare(sorted.get(i), sorted.get(j)) > 0) return false;
+          if (StringUtil.naturalCompare(sorted.get(j), sorted.get(i)) < 0) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  @Test
+  public void testNaturalCompareStability() {
+    assertTrue(StringUtil.naturalCompare("01a1", "1a01") != StringUtil.naturalCompare("1a01", "01a1"));
+    assertTrue(StringUtil.naturalCompare("#01A", "# 1A") != StringUtil.naturalCompare("# 1A", "#01A"));
+    assertTrue(StringUtil.naturalCompare("aA", "aa") != StringUtil.naturalCompare("aa", "aA"));
+  }
+
+  @Test
   public void testNaturalCompare() {
-    assertEquals(1, StringUtil.naturalCompare("test011", "test10"));
-    assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
-    final List<String> strings = new ArrayList<>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
-                                                               "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
-    final Comparator<String> c = (o1, o2) -> StringUtil.naturalCompare(o1, o2);
-    strings.sort(c);
+
+    final List<String> numbers = Arrays.asList("1a000001", "000001a1", "001a0001", "0001A001" , "00001a01", "01a00001");
+    numbers.sort(NaturalComparator.INSTANCE);
+    assertEquals(Arrays.asList("1a000001", "01a00001", "001a0001", "0001A001" , "00001a01", "000001a1"), numbers);
+
+    final List<String> test = Arrays.asList("test011", "test10", "test10a", "test010");
+    test.sort(NaturalComparator.INSTANCE);
+    assertEquals(Arrays.asList("test10", "test10a", "test010", "test011"), test);
+
+    final List<String> strings = Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
+                    "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1");
+    strings.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
-    final List<String> strings2 = new ArrayList<>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
-    strings2.sort(c);
+
+    final List<String> strings2 = Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2");
+    strings2.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
-    final List<String> strings3 = new ArrayList<>(
-      Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"));
-    strings3.sort(c);
+    final List<String> strings3 =
+      Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain");
+    strings3.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);
+
+    final List<String> l = Arrays.asList("a0002", "a0 2", "a001");
+    l.sort(NaturalComparator.INSTANCE);
+    assertEquals(Arrays.asList("a0 2", "a001", "a0002"), l);
   }
 
   @Test
@@ -533,5 +600,23 @@ public class StringUtilTest {
     assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+  }
+
+  @Test
+  public void testSubstringBeforeLast() {
+    assertEquals("a", StringUtil.substringBeforeLast("abc", "b"));
+    assertEquals("abab", StringUtil.substringBeforeLast("ababbccc", "b"));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", ""));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1"));
+    assertEquals("", StringUtil.substringBeforeLast("", "1"));
+  }
+
+  @Test
+  public void testSubstringAfterLast() {
+    assertEquals("c", StringUtil.substringAfterLast("abc", "b"));
+    assertEquals("ccc", StringUtil.substringAfterLast("ababbccc", "b"));
+    assertEquals("", StringUtil.substringAfterLast("abc", ""));
+    assertNull(StringUtil.substringAfterLast("abc", "1"));
+    assertNull(StringUtil.substringAfterLast("", "1"));
   }
 }

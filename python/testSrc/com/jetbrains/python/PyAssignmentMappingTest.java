@@ -40,7 +40,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
   }
 
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(2, marks.size());
     PsiElement src = marks.get("<src>").getParent(); // const -> expr;
@@ -54,7 +54,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     Assert.assertEquals(src, pair.getSecond());
   }
 
-  public void testSubscribedSource() throws Exception {
+  public void testSubscribedSource() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(2, marks.size());
     PsiElement src = marks.get("<src>").getParent().getParent(); // const -> ref foo -> subscr expr;
@@ -68,7 +68,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     Assert.assertEquals(src, pair.getSecond());
   }
 
-  public void testSubscribedTarget() throws Exception {
+  public void testSubscribedTarget() {
     Map<String, PsiElement> marks = loadTest();
     Assert.assertEquals(2, marks.size());
     PsiElement src = marks.get("<src>").getParent(); // const -> expr;
@@ -83,7 +83,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
   }
 
 
-  public void testMultiple() throws Exception {
+  public void testMultiple() {
     Map<String, PsiElement> marks = loadTest();
     final int TARGET_NUM = 3;
     Assert.assertEquals(TARGET_NUM + 1, marks.size());
@@ -104,7 +104,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     }
   }
 
-  public void testTupleMapped() throws Exception {
+  public void testTupleMapped() {
     Map<String, PsiElement> marks = loadTest();
     final int PAIR_NUM = 2;
     Assert.assertEquals(PAIR_NUM * 2, marks.size());
@@ -128,7 +128,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     }
   }
 
-  public void testParenthesizedTuple() throws Exception { //PY-2648
+  public void testParenthesizedTuple() { //PY-2648
     Map<String, PsiElement> marks = loadTest();
     final int PAIR_NUM = 2;
     Assert.assertEquals(PAIR_NUM * 2, marks.size());
@@ -152,7 +152,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     }
   }
 
-  public void testTuplePack() throws Exception {
+  public void testTuplePack() {
     Map<String, PsiElement> marks = loadTest();
     final int SRC_NUM = 2;
     Assert.assertEquals(SRC_NUM + 1, marks.size());
@@ -174,7 +174,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
   }
 
 
-  public void testTupleUnpack() throws Exception {
+  public void testTupleUnpack() {
     Map<String, PsiElement> marks = loadTest();
     final int DST_NUM = 2;
     Assert.assertEquals(DST_NUM + 3, marks.size());

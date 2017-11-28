@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -157,7 +158,7 @@ public class Alarm implements Disposable {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
       final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
       final MessageBusConnection connection = bus.connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           connection.disconnect();
@@ -205,7 +206,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
+  void _addRequest(@Debugger.Capture @NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -377,9 +378,7 @@ public class Alarm implements Disposable {
             }
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(() -> {
-                runSafely(task);
-              });
+              EdtInvocationManager.getInstance().invokeLater(() -> runSafely(task));
             }
             else {
               runSafely(task);
@@ -421,7 +420,7 @@ public class Alarm implements Disposable {
       finally {
         // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
         synchronized (LOCK) {
-          myRequests.remove(Request.this);
+          myRequests.remove(this);
           myFuture = null;
         }
       }

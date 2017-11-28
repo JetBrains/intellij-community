@@ -23,6 +23,7 @@ import java.util.Comparator;
 /**
  * @author max
  */
+@FunctionalInterface
 public interface PrioritizedDocumentListener extends DocumentListener {
   /**
    * Comparator that sorts {@link DocumentListener} objects by their {@link PrioritizedDocumentListener#getPriority() priorities} (if any).
@@ -38,11 +39,7 @@ public interface PrioritizedDocumentListener extends DocumentListener {
   Comparator<? super DocumentListener> COMPARATOR = new Comparator<Object>() {
     @Override
     public int compare(Object o1, Object o2) {
-      return integerCompare(getPriority(o1), getPriority(o2));
-    }
-
-    private int integerCompare(int x, int y) {
-        return x < y ? -1 : x == y ? 0 : 1;
+      return Integer.compare(getPriority(o1), getPriority(o2));
     }
 
     private int getPriority(@NotNull Object o) {

@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
-  private static final Pattern newlines = Pattern.compile("\\\\n|\\\\r|\\\\0{0,1}12|\\\\0{0,1}15");
+  private static final Pattern newlines = Pattern.compile("\\\\n|\\\\r|\\\\0?12|\\\\0?15");
 
   @Override
   @NotNull

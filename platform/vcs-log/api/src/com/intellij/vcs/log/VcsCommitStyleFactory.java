@@ -32,6 +32,7 @@ public class VcsCommitStyleFactory {
    * @param background background color or null if unspecified.
    * @return new instance of VcsCommitStyle with specified text and background color.
    */
+  @NotNull
   public static VcsLogHighlighter.VcsCommitStyle createStyle(@Nullable Color foreground,
                                                              @Nullable Color background,
                                                              @Nullable VcsLogHighlighter.TextStyle textStyle) {

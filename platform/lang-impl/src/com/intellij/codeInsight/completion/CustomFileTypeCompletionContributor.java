@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +55,11 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
                }
 
                SyntaxTable syntaxTable = ((CustomSyntaxTableFileType)fileType).getSyntaxTable();
-               String prefix = findPrefix(parameters.getPosition(), parameters.getOffset());
+               String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
+               if (prefix.isEmpty() && parameters.isAutoPopup()) {
+                 return;
+               }
+
                CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
 
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords1());
@@ -64,7 +67,7 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords3());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords4());
                
-               WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.<String>emptySet());
+               WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.emptySet());
              }
            });
   }
@@ -88,17 +91,6 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
     for (String keyword : keywords) {
       resultSet.addElement(LookupElementBuilder.create(keyword).bold());
     }
-  }
-
-  private static String findPrefix(PsiElement insertedElement, int offset) {
-    String text = insertedElement.getText();
-    int offsetInElement = offset - insertedElement.getTextOffset();
-    int start = offsetInElement - 1;
-    while(start >=0 ) {
-      if(!Character.isJavaIdentifierStart(text.charAt(start))) break;
-      --start;
-    }
-    return text.substring(start+1, offsetInElement).trim();
   }
 
 }

@@ -23,6 +23,9 @@ import com.intellij.codeInspection.ex.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.ReflectionUtil
@@ -34,21 +37,21 @@ import java.util.*
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
-  runInInitMode {
-    val profile = createSimple(UUID.randomUUID().toString(), project, tools.mapSmart { InspectionToolRegistrar.wrapTool(it) })
-    val profileManager = ProjectInspectionProfileManager.getInstance(project)
-    // we don't restore old project profile because in tests it must be in any case null - app default profile
-    Disposer.register(parentDisposable, Disposable {
-      profileManager.deleteProfile(profile)
-      profileManager.setCurrentProfile(null)
-      clearAllToolsIn(BASE_PROFILE)
-    })
+  val profile = InspectionProfileImpl(UUID.randomUUID().toString(),
+                                      { tools.mapSmart { InspectionToolRegistrar.wrapTool(it) } }, 
+                                      InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  val profileManager = ProjectInspectionProfileManager.getInstance(project)
+  // we don't restore old project profile because in tests it must be in any case null - app default profile
+  Disposer.register(parentDisposable, Disposable {
+    profileManager.deleteProfile(profile)
+    profileManager.setCurrentProfile(null)
+    clearAllToolsIn(BASE_PROFILE)
+  })
 
-    profileManager.addProfile(profile)
-    profile.initInspectionTools(project)
-    profileManager.setCurrentProfile(profile)
-    return profile
-  }
+  profileManager.addProfile(profile)
+  profileManager.setCurrentProfile(profile)
+  enableInspectionTools(project, parentDisposable, *tools)
+  return profile
 }
 
 @JvmOverloads
@@ -112,7 +115,7 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     }
     profile.enableTool(shortName, project)
   }
-  Disposer.register(disposable, Disposable { profile.disableTool(shortName, project) })
+  Disposer.register(disposable, Disposable { profile.setToolEnabled(shortName, false) })
 }
 
 inline fun <T> runInInitMode(runnable: () -> T): T {
@@ -123,5 +126,18 @@ inline fun <T> runInInitMode(runnable: () -> T): T {
   }
   finally {
     InspectionProfileImpl.INIT_INSPECTIONS = old
+  }
+}
+
+fun disableInspections(project: Project, vararg inspections: InspectionProfileEntry) {
+  val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+  for (inspection in inspections) {
+    profile.setToolEnabled(inspection.shortName, false)
+  }
+}
+
+fun InspectionProfileImpl.disableAllTools() {
+  for (entry in getInspectionTools(null)) {
+    setToolEnabled(entry.shortName, false)
   }
 }

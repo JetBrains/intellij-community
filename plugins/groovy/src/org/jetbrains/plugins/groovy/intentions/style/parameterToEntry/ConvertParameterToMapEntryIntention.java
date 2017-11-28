@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -438,19 +438,10 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           return true;
         };
         ReferencesSearch.search(namedElem).forEach(consumer);
-        boolean isProperty = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return namedElem instanceof GrField && ((GrField)namedElem).isProperty();
-          }
-        });
+        boolean isProperty =
+          ReadAction.compute(() -> namedElem instanceof GrField && ((GrField)namedElem).isProperty());
         if (isProperty) {
-          final GrAccessorMethod[] getters = ApplicationManager.getApplication().runReadAction(new Computable<GrAccessorMethod[]>() {
-            @Override
-            public GrAccessorMethod[] compute() {
-              return ((GrField)namedElem).getGetters();
-            }
-          });
+          final GrAccessorMethod[] getters = ReadAction.compute(() -> ((GrField)namedElem).getGetters());
           for (GrAccessorMethod getter : getters) {
             MethodReferencesSearch.search(getter).forEach(consumer);
           }
@@ -493,7 +484,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static class MyPsiElementPredicate implements PsiElementPredicate {
     @Override
-    public boolean satisfiedBy(final PsiElement element) {
+    public boolean satisfiedBy(@NotNull final PsiElement element) {
       GrParameter parameter = null;
       if (element instanceof GrParameter) {
         parameter = (GrParameter)element;

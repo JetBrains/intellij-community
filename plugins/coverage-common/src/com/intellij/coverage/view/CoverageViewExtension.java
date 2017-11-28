@@ -24,6 +24,7 @@ public abstract class CoverageViewExtension {
   protected final CoverageViewManager myCoverageViewManager;
 
   public CoverageViewExtension(Project project, CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean) {
+    assert !project.isDefault() : "Should not run coverage for default project";
     myProject = project;
     mySuitesBundle = suitesBundle;
     myStateBean = stateBean;

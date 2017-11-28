@@ -3,22 +3,23 @@ Foo -> FooImpl
 java.lang.Object -> Bar FooImpl
 
 Backward References:
-Bar in Bar
-Bar.<init>(0) in Bar
-Bar.m(1) in Bar
-Foo in Foo FooImpl
-Foo.getSomeText(0) in Foo
-FooImpl in Bar FooImpl
-FooImpl.<init>(0) in FooImpl
-FooImpl.TITLE in Bar FooImpl
-FooImpl.getSomeText(0) in Bar FooImpl
-java.io.PrintStream.println(1) in Bar
-java.lang.Object.<init>(0) in Bar FooImpl
-java.lang.String in Foo FooImpl
-java.lang.System in Bar
-java.lang.System.out in Bar
+Bar in Bar occurrences = 1
+Bar.m(1) in Bar occurrences = 1
+Foo in Foo FooImpl occurrences = 2
+Foo.getSomeText(0) in Foo occurrences = 1
+FooImpl in Bar FooImpl occurrences = 3
+FooImpl.TITLE in Bar FooImpl occurrences = 2
+FooImpl.getSomeText(0) in Bar FooImpl occurrences = 2
+java.io.PrintStream.println(1) in Bar occurrences = 2
+java.lang.String in Foo FooImpl occurrences = 3
+java.lang.System in Bar occurrences = 2
+java.lang.System.out in Bar occurrences = 2
 
 Class Definitions:
 Bar in Bar
 Foo in Foo
 FooImpl in FooImpl
+
+Members Signatures:
+java.lang.String <- Foo.getSomeText(0) FooImpl.getSomeText(0)
+static java.lang.String <- FooImpl.TITLE

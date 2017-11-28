@@ -30,7 +30,8 @@ import java.util.List;
  *  @author dsl
  */
 public interface LibraryEx extends Library {
-  List<String> getInvalidRootUrls(OrderRootType type);
+  @NotNull
+  List<String> getInvalidRootUrls(@NotNull OrderRootType type);
 
   boolean isDisposed();
 
@@ -63,7 +64,7 @@ public interface LibraryEx extends Library {
 
     LibraryProperties getProperties();
 
-    void setKind(PersistentLibraryKind<?> type);
+    void setKind(@NotNull PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
 

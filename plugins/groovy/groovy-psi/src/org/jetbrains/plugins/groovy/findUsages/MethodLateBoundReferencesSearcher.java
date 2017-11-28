@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
@@ -55,7 +56,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
       getUseScope(method));
     orderSearching(searchScope, method.getName(), method, queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
 
-    final String propName = PropertyUtil.getPropertyName(method);
+    final String propName = PropertyUtilBase.getPropertyName(method);
     if (propName != null) {
       orderSearching(searchScope, propName, method, queryParameters.getOptimizer(), -1);
     }

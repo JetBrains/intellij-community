@@ -6,7 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class InterfaceNeverImplementedInspectionTest extends IGInspectionTestCase {
-  public void test() throws Exception {
+  public void test() {
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel level = levelProjectExtension.getLanguageLevel();
     try {

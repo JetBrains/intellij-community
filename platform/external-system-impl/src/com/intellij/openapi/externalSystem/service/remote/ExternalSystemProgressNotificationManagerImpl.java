@@ -55,7 +55,7 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
         ids = myListeners.get(listener);
       }
       else {
-        ids = myListeners.putIfAbsent(listener, ContainerUtil.<ExternalSystemTaskId>newConcurrentSet());
+        ids = myListeners.putIfAbsent(listener, ContainerUtil.newConcurrentSet());
       }
     }
     return ids.add(taskId);
@@ -67,23 +67,13 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
   }
 
   @Override
-  public void onQueued(@NotNull ExternalSystemTaskId id, @NotNull String workingDir) {
+  public void onStart(@NotNull ExternalSystemTaskId id, @NotNull String workingDir) {
     for (Map.Entry<ExternalSystemTaskNotificationListener, Set<ExternalSystemTaskId>> entry : myListeners.entrySet()) {
       final Set<ExternalSystemTaskId> ids = entry.getValue();
       if (Collections.EMPTY_SET == ids || ids.contains(id)) {
-        entry.getKey().onQueued(id, workingDir);
+        entry.getKey().onStart(id, workingDir);
       }
     }
-  }
-
-  @Override
-  public void onStart(@NotNull ExternalSystemTaskId id) {
-    for (Map.Entry<ExternalSystemTaskNotificationListener, Set<ExternalSystemTaskId>> entry : myListeners.entrySet()) {
-      final Set<ExternalSystemTaskId> ids = entry.getValue();
-      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
-        entry.getKey().onStart(id);
-      }
-    } 
   }
 
   @Override

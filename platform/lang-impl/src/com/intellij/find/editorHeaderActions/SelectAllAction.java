@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ import java.util.List;
 public class SelectAllAction extends OccurrenceAction {
   public SelectAllAction() {
     super(IdeActions.ACTION_SELECT_ALL_OCCURRENCES, AllIcons.Actions.CheckMulticaret);
+  }
+
+  @Override
+  protected boolean availableForReplace() {
+    return true;
   }
 
   @Override

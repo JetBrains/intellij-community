@@ -36,20 +36,19 @@ public class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
 
-  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
+  public static int writeCompressed(@NotNull DataOutput out, @NotNull byte[] bytes, int start, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD) {
-      final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
-
-      int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
-      DataInputOutputUtil.writeINT(out, -compressedSize);
-      out.write(compressedOutputBuffer, 0, compressedSize);
-      return compressedSize;
+      byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
+      int compressedSize = Snappy.compress(bytes, start, length, compressedOutputBuffer, 0);
+      if (compressedSize < length) {
+        DataInputOutputUtil.writeINT(out, -compressedSize);
+        out.write(compressedOutputBuffer, 0, compressedSize);
+        return compressedSize;
+      }
     }
-    else {
-      DataInputOutputUtil.writeINT(out, length);
-      out.write(bytes, 0, length);
-      return length;
-    }
+    DataInputOutputUtil.writeINT(out, length);
+    out.write(bytes, start, length);
+    return length;
   }
 
   private static final AtomicInteger myCompressionRequests = new AtomicInteger();

@@ -25,17 +25,17 @@ import com.intellij.xml.util.CollapseTagIntention;
  */
 public class CollapseTagTest extends LightPlatformCodeInsightFixtureTestCase{
 
-  public void testAvailable() throws Exception {
+  public void testAvailable() {
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>    <caret>   </a>");
     assertTrue(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
   }
 
-  public void testNotAvailable() throws Exception {
+  public void testNotAvailable() {
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>    <caret>   <b/> </a>");
     assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
   }
 
-  public void testAlreadyCollapsed() throws Exception {
+  public void testAlreadyCollapsed() {
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a/>");
     assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
   }

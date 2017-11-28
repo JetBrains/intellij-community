@@ -16,7 +16,6 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
-import com.intellij.dvcs.push.PrePushHandler;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -153,11 +152,11 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   private boolean canPush() {
-    return myController.isPushAllowed(false);
+    return myController.isPushAllowed();
   }
 
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed(true);
+    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed();
   }
 
   @Nullable
@@ -254,8 +253,8 @@ public class VcsPushDialog extends DialogWrapper {
     }
   }
 
-  public void disableOkActions() {
-    myPushAction.setEnabled(false);
+  public void enableOkActions(boolean value) {
+    myPushAction.setEnabled(value);
   }
 
   @Nullable

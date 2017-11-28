@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -132,12 +131,7 @@ public class GitExecutableDetector {
     List<File> distrs = new ArrayList<>();
     for (String programFiles : PROGRAM_FILES) {
       File pf = new File(WIN_ROOT, programFiles);
-      File[] children = pf.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File pathname) {
-          return pathname.isDirectory() && pathname.getName().toLowerCase().startsWith("git");
-        }
-      });
+      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && pathname.getName().toLowerCase().startsWith("git"));
       if (!pf.exists() || children == null) {
         continue;
       }

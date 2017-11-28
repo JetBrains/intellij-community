@@ -4,6 +4,6 @@ import com.intellij.find.FindModel;
 
 public class ToggleInCommentsAction extends EditorHeaderSetSearchContextAction {
   public ToggleInCommentsAction() {
-    super("In &Comments Only", FindModel.SearchContext.IN_COMMENTS);
+    super("In &Comments", FindModel.SearchContext.IN_COMMENTS);
   }
 }

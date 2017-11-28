@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 
 import java.io.IOException;
@@ -106,7 +107,9 @@ class ReturnValueBeanBuilder {
     final String parameterName = JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
     final String fieldName = getFieldName(name);
     out.append("\tpublic ").append(myClassName).append('(');
-    out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
+    out.append(
+      CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
+      "final " : "");
     out.append(typeText).append(' ').append(parameterName);
     out.append(") {\n");
     if (fieldName.equals(parameterName)) {

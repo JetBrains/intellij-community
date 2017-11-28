@@ -19,23 +19,24 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
+import com.intellij.util.toBufferExposingByteArray
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
+import java.io.FileNotFoundException
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
-                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                                       private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
-                                                       provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
-  private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED) null else provider
+                                                       private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
+  val roamingType = roamingType ?: RoamingType.DEFAULT
 
   protected abstract fun loadLocalData(): Element?
 
@@ -51,19 +52,26 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
-    LOG.catchAndLog {
-      if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
+    try {
+      if (!useStreamProvider || provider?.read(fileSpec, roamingType) {
         it?.let {
           element = loadElement(it)
+          providerDataStateChanged(element, DataStateChanged.LOADED)
         }
-      } ?: false)) {
+      } != true) {
         element = loadLocalData()
       }
+    }
+    catch (e: FileNotFoundException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
     return element
   }
 
-  protected open fun dataLoadedFromProvider(element: Element?) {
+  protected open fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
   }
 
   private fun loadState(element: Element): StateMap {
@@ -126,9 +134,11 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         storage.beforeElementSaved(element)
       }
 
+      var isSavedLocally = false
       val provider = storage.provider
       if (element == null) {
         if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          isSavedLocally = true
           saveLocally(null)
         }
       }
@@ -137,8 +147,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
       }
       else {
+        isSavedLocally = true
         saveLocally(element)
       }
+
+      if (!isSavedLocally) {
+        storage.providerDataStateChanged(element, DataStateChanged.SAVED)
+      }
+
       storage.setStates(originalStates, stateMap)
     }
 
@@ -169,7 +185,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       return
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       val newElement = if (deleted) null else loadElement(useStreamProvider)
       val states = storageDataRef.get()
       if (newElement == null) {
@@ -256,4 +272,8 @@ private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> 
     compare(componentName, newStates, diffs)
   }
   return diffs
+}
+
+enum class DataStateChanged {
+  LOADED, SAVED
 }

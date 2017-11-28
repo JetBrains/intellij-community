@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
@@ -94,8 +97,8 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   }
 
   @CalledInAwt
-  public boolean isSilentMode() {
-    return myMode == Mode.SILENT;
+  public boolean isAvailableAt(@NotNull Editor editor) {
+    return myMode != Mode.SILENT && editor.getSettings().isLineMarkerAreaShown() && !DiffUtil.isDiffEditor(editor);
   }
 
   @CalledInAwt
@@ -171,15 +174,17 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   @Override
   @CalledInAwt
   protected void fireFileUnchanged() {
-    // later to avoid saving inside document change event processing.
-    TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
-      List<Range> ranges = getRanges();
-      if (ranges == null || ranges.isEmpty()) {
-        // file was modified, and now it's not -> dirty local change
-        myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-      }
-    });
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+      // later to avoid saving inside document change event processing.
+      TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
+        FileDocumentManager.getInstance().saveDocument(myDocument);
+        List<Range> ranges = getRanges();
+        if (ranges == null || ranges.isEmpty()) {
+          // file was modified, and now it's not -> dirty local change
+          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+        }
+      });
+    }
   }
 
   @Override

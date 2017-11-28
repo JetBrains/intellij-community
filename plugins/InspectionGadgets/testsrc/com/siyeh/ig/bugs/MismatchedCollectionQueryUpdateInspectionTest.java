@@ -47,10 +47,10 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, getTestRootDisposable());
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, myFixture.getTestRootDisposable());
   }
 
-  public void testMismatchedCollectionQueryUpdate() throws Exception {
+  public void testMismatchedCollectionQueryUpdate() {
     doTest();
   }
 

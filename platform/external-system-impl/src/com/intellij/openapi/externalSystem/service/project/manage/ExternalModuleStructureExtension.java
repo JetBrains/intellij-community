@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -106,7 +106,7 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   @Override
   public boolean addModuleNodeChildren(Module module, MasterDetailsComponent.MyNode moduleNode, Runnable treeNodeNameUpdater) {
-    String systemIdString = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    String systemIdString = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
     if (StringUtil.isNotEmpty(systemIdString)) {
       isExternalSystemsInvolved = true;
       String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
@@ -119,7 +119,7 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   @Override
   public void moduleRemoved(Module module) {
-    String systemIdString = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    String systemIdString = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
     if (StringUtil.isEmpty(systemIdString)) return;
 
     String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
@@ -176,6 +176,6 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
   private static void unlinkProject(@NotNull Project project, ProjectSystemId systemId, String rootProjectPath) {
     ExternalSystemApiUtil.getLocalSettings(project, systemId).forgetExternalProjects(Collections.singleton(rootProjectPath));
     ExternalSystemApiUtil.getSettings(project, systemId).unlinkExternalProject(rootProjectPath);
-    ExternalProjectsManager.getInstance(project).forgetExternalProjectData(systemId, rootProjectPath);
+    ExternalProjectsManagerImpl.getInstance(project).forgetExternalProjectData(systemId, rootProjectPath);
   }
 }

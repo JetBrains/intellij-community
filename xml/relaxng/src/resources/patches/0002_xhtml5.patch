@@ -1,8 +1,8 @@
 --- /Users/denofevil/Code/sandbox/checker/syntax/relaxng/xhtml5full-xhtml-rdfa.rnc	2014-01-24 12:19:52.000000000 +0400
 +++ html5/xhtml5full-xhtml-rdfa.rnc	2014-01-25 11:13:41.000000000 +0400
 @@ -4,13 +4,17 @@
- 		HTMLonly = notAllowed
- 		v5only = empty
+         HTMLonly = notAllowed
+         v5only = empty
  }
 +include "common-ext.rnc"
 +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,18 @@ public class JavaSurroundWithStatementRangeAdjuster implements SurroundWithRange
       int startOffset = selectedRange.getStartOffset();
       int endOffset = selectedRange.getEndOffset();
       if (CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset).length == 0) {
-        PsiElement elementAtLineStart = PsiTreeUtil.skipSiblingsForward(file.findElementAt(startOffset), PsiWhiteSpace.class);
-        if (elementAtLineStart instanceof PsiStatement) {
-          return elementAtLineStart.getTextRange();
+        PsiElement elementAtLineStart = findNonWhiteSpaceElement(file, startOffset);
+        PsiElement statement = PsiTreeUtil.getParentOfType(elementAtLineStart, PsiStatement.class, false);
+        if (statement != null && statement.getTextRange().getStartOffset() == elementAtLineStart.getTextRange().getStartOffset()) {
+          return statement.getTextRange();
         }
       }
     }
     return selectedRange;
+  }
+
+  private static PsiElement findNonWhiteSpaceElement(PsiFile file, int startOffset) {
+    PsiElement leaf = file.findElementAt(startOffset);
+    return leaf instanceof PsiWhiteSpace ? PsiTreeUtil.skipWhitespacesForward(leaf) : leaf;
   }
 }

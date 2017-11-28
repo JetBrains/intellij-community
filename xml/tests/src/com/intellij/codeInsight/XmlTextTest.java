@@ -33,11 +33,11 @@ import org.jetbrains.annotations.NotNull;
  * @author mike
  */
 public class XmlTextTest extends LightCodeInsightTestCase {
-  public void testInsertAtOffset() throws Exception {
+  public void testInsertAtOffset() {
     new WriteCommandAction(getProject()) {
 
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         String xml = "<root>0123456789</root>";
         XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
           .createFileFromText("foo.xml", StdFileTypes.XML, xml, (long)1, true, false);
@@ -57,7 +57,7 @@ public class XmlTextTest extends LightCodeInsightTestCase {
     }.execute();
   }
 
-  public void testPhysicalToDisplayIfHasGaps2() throws Exception {
+  public void testPhysicalToDisplayIfHasGaps2() {
     String xml = "<div>&amp;abc</div>";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", xml);
     XmlTag root = file.getDocument().getRootTag();
@@ -71,7 +71,7 @@ public class XmlTextTest extends LightCodeInsightTestCase {
     assertEquals(4, text.physicalToDisplay(8));
   }
 
-  public void testDisplayToPhysical() throws Exception {
+  public void testDisplayToPhysical() {
     String xml = "<div>&amp;abc</div>";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", xml);
     XmlTag root = file.getDocument().getRootTag();
@@ -85,7 +85,7 @@ public class XmlTextTest extends LightCodeInsightTestCase {
     assertEquals(8, text.displayToPhysical(4));
   }
 
-  public void testDisplayToPhysical2() throws Exception {
+  public void testDisplayToPhysical2() {
     String xml = "<div><![CDATA[ ]]></div>";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", xml);
     XmlTag root = file.getDocument().getRootTag();

@@ -20,9 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 
-/**
- * Created by Max Medvedev on 10/24/13
- */
 public class GrClassInitializerDeclarationRangeHandler implements DeclarationRangeHandler<GrClassInitializer> {
   @NotNull
   @Override

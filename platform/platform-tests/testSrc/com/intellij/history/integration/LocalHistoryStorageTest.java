@@ -16,6 +16,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryStorage;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
@@ -34,7 +35,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
     super.tearDown();
   }
 
@@ -51,7 +52,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   public void testWritingAfterClose() throws Exception {
     createRecord();
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
 
     try {
       createRecord();
@@ -93,7 +94,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
     myStorage.deleteRecordsUpTo(r2);
 
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
     myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r3, r4);
@@ -102,7 +103,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
     myStorage.deleteRecordsUpTo(r3);
 
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
     myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r4, r4);
@@ -110,7 +111,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
     int r5 = createRecord();
 
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
     myStorage = new LocalHistoryStorage(myRoot.getPath() + "/storage");
 
     assertFirstAndLast(r4, r5);

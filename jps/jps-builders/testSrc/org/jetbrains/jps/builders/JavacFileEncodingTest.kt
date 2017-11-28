@@ -15,15 +15,15 @@
  */
 package org.jetbrains.jps.builders
 
+import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
-import org.jetbrains.jps.builders.rebuild.fs
 
 /**
  * @author nik
  */
 class JavacFileEncodingTest: JpsRebuildTestCase() {
   fun test() {
-    doTest("javacFileEncoding/javacFileEncoding.ipr", fs {
+    doTest("javacFileEncoding/javacFileEncoding.ipr", directoryContent {
       dir("production") {
         dir("javacFileEncoding") {
           file("MyClass.class")

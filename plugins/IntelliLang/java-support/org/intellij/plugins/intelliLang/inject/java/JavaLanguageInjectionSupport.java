@@ -18,7 +18,6 @@ package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
@@ -194,7 +193,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         parent instanceof PsiNameValuePair) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, host, languageId);
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), findParameterIndex(target, (PsiExpressionList)parent), host, languageId);
     }
     else if (parent instanceof PsiAssignmentExpression) {
@@ -341,8 +340,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       }
     }
     final PsiMethod first;
-    if (parent.getParent() instanceof PsiCallExpression) {
-      first = ((PsiCallExpression)parent.getParent()).resolveMethod();
+    if (parent.getParent() instanceof PsiCall) {
+      first = ((PsiCall)parent.getParent()).resolveMethod();
     }
     else {
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
@@ -394,7 +393,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static void collectInjections(PsiLiteralExpression host,

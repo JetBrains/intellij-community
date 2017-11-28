@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -77,11 +80,9 @@ public abstract class GenericNotifierImpl<T, Key> {
       myState.clear();
     }
     final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        for (MyNotification notification : notifications) {
-          notification.expire();
-        }
+    final Runnable runnable = () -> {
+      for (MyNotification notification : notifications) {
+        notification.expire();
       }
     };
     if (application.isDispatchThread()) {
@@ -92,11 +93,7 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   private void expireNotification(final MyNotification notification) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        notification.expire();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> notification.expire());
   }
 
   public boolean ensureNotify(final T obj) {

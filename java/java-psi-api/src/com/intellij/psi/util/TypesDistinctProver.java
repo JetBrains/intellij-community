@@ -21,10 +21,6 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Aug 12, 2010
- */
 public class TypesDistinctProver {
   public static final Set<String> ARRAY_SUPER_CLASSES = new HashSet<>();
   static {

@@ -28,12 +28,6 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/27/13
- * Time: 10:41 PM
- */
 public class PrimitivePool implements ISVNRepositoryPool, ISVNSession {
   private final ISVNAuthenticationManager myManager;
   private final ISVNTunnelProvider myTunnelProvider;

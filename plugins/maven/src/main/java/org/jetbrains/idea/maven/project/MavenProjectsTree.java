@@ -1244,7 +1244,13 @@ public class MavenProjectsTree {
       String baseDir = entry.getKey().getPath();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
       try {
-        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
+        Properties userProperties = new Properties();
+        for (MavenProject mavenProject : mavenProjects) {
+          for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
+            mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
+          }
+        }
+        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
       finally {

@@ -129,7 +129,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
       if (applyContent != null) {
         new WriteCommandAction.Simple(null) {
           @Override
-          protected void run() throws Throwable {
+          protected void run() {
             try {
               VirtualFile file = myFile.getFile();
               if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());

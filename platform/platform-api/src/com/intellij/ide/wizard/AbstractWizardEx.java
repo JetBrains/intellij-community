@@ -19,8 +19,8 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBCardLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,7 +76,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
 
     myCurrentStep = getPreviousStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.BACKWARD);
   }
 
   protected void doNextAction() {
@@ -98,7 +98,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       return;
     }
     myCurrentStep = getNextStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.FORWARD);
   }
 
   protected int getNextStep(final int step) {

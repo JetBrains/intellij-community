@@ -18,7 +18,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,8 +54,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
                               "The encoding you've chosen ('" + charset.displayName() + "') may change the contents of '" + virtualFile.getName() + "'.<br>" +
-                              "Do you want to reload the file from disk or<br>" +
-                              "convert the text and save in the new encoding?"));
+                              "Do you want to<br>" +
+                              "1. <b>Reload</b> the file from disk in the new encoding '" + charset.displayName() + "' and overwrite editor contents or<br>" +
+                              "2. <b>Convert</b> the text and overwrite file in the new encoding" + "?"));
     label.setIcon(Messages.getQuestionIcon());
     label.setIconTextGap(10);
     return label;
@@ -68,9 +69,9 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToReload == EncodingUtil.Magic8.NO_WAY) {
-          Pair<Charset,String> detected = EncodingUtil.checkCanReload(virtualFile);
-          String failReason = detected.second;
-          Charset autoDetected = detected.first;
+          Ref<Charset> current = Ref.create();
+          EncodingUtil.FailReason failReason = EncodingUtil.checkCanReload(virtualFile, current);
+          Charset autoDetected = current.get();
           int res;
           byte[] bom = virtualFile.getBOM();
           if (bom != null) {
@@ -109,12 +110,15 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
       @Override
       protected void doAction(ActionEvent e) {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
-          String error = EncodingUtil.checkCanConvert(virtualFile);
-          int res = Messages.showDialog(XmlStringUtil.wrapInHtml(
-                                        "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
-                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : "Because "+error)),
-                                        "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
-                                        AllIcons.General.WarningDialog);
+          EncodingUtil.FailReason error = EncodingUtil.checkCanConvert(virtualFile);
+          int res = Messages.showDialog(
+            XmlStringUtil.wrapInHtml(
+              "Please do not convert to '" + charset.displayName() + "'.<br><br>" +
+              (error == null
+               ? "Encoding '" + charset.displayName() + "' does not support some characters from the text."
+               : EncodingUtil.reasonToString(error, virtualFile))),
+            "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
+            AllIcons.General.WarningDialog);
           if (res != 0) {
             doCancelAction();
             return;

@@ -39,6 +39,10 @@ public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTe
     highlightTest("|||");
   }
 
+  public void testNoWarn() {
+    highlightTest("([aeiou][^aeiou])*|([^aeiou][aeiou])*");
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {

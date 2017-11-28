@@ -54,6 +54,12 @@ public class LoadingDetails implements VcsFullCommitDetails {
 
   @NotNull
   @Override
+  public Collection<Change> getChanges(int parent) {
+    return ContainerUtil.emptyList();
+  }
+
+  @NotNull
+  @Override
   public String getFullMessage() {
     return "";
   }

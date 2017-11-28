@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +46,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
@@ -65,7 +67,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         if (project == myProject) {
@@ -100,12 +102,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     final FileEditorProvider fileEditorProvider = getProvider();
     Pair<FileEditor[], FileEditorProvider[]> result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider));
 
     return result;
   }
@@ -125,12 +122,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
     final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    notifyPublisher(new Runnable() {
-      @Override
-      public void run() {
-        publisher.selectionChanged(event);
-      }
-    });
+    notifyPublisher(() -> publisher.selectionChanged(event));
   }
 
   @NotNull
@@ -238,7 +230,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    for (VirtualFile file : new LinkedList<VirtualFile>(myVirtualFile2Editor.keySet())) {
+    for (VirtualFile file : new LinkedList<>(myVirtualFile2Editor.keySet())) {
       closeFile(file);
     }
   }
@@ -317,7 +309,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public EditorWindow[] getWindows() {
-    return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new EditorWindow[0];
   }
 
   @Override
@@ -368,12 +360,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myActiveFile = null;
     }
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.closeFile(file);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.closeFile(file));
   }
 
   @Override

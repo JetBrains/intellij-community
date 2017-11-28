@@ -35,20 +35,21 @@ import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.zmlx.hg4idea.log.HgHistoryUtil.getObjectsFactoryWithDisposeCheck;
+import static org.zmlx.hg4idea.log.HgHistoryUtil.getOriginalHgFile;
 import static org.zmlx.hg4idea.util.HgUtil.HEAD_REFERENCE;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
@@ -73,7 +74,7 @@ public class HgLogProvider implements VcsLogProvider {
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
                                         @NotNull Requirements requirements) throws VcsException {
     List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                                                 Collections.<String>emptyList());
+                                                                 Collections.emptyList());
     return new LogDataImpl(readAllRefs(root), commits);
   }
 
@@ -82,7 +83,7 @@ public class HgLogProvider implements VcsLogProvider {
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
     List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
-                                                               Collections.<String>emptyList());
+                                                               Collections.emptyList());
     for (TimedVcsCommit commit : commits) {
       commitConsumer.consume(commit);
     }
@@ -97,20 +98,31 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast)
     throws VcsException {
-    // this method currently is very slow and time consuming
-    // so indexing is not to be used for mercurial for now
+    // parameter fast is currently not used
+    // since this method is not called from index yet, fast always is false
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
+
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
-    final HgVersion version = hgvcs.getVersion();
-    final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+    String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, hgvcs.getVersion());
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(myProject);
+    if (factory == null) {
+      return;
+    }
 
-    HgCommandResult logResult = HgHistoryUtil.getLogResult(myProject, root, version, -1,
-                                                           HgHistoryUtil.prepareHashes(hashes), HgChangesetUtil.makeTemplate(templates));
-    if (logResult == null) return;
-    if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
-    HgHistoryUtil.createFullCommitsFromResult(myProject, root, logResult, version, false).forEach(commitConsumer::consume);
+    HgFileRevisionLogParser parser = new HgFileRevisionLogParser(myProject, getOriginalHgFile(myProject, root), hgvcs.getVersion());
+    HgHistoryUtil.readLog(myProject, root, hgvcs.getVersion(), -1,
+                          HgHistoryUtil.prepareHashes(hashes),
+                          HgChangesetUtil.makeTemplate(templates),
+                          stringBuilder -> {
+                            HgFileRevision revision = parser.convert(stringBuilder.toString());
+                            if (revision != null) {
+                              commitConsumer.consume(HgHistoryUtil.createDetails(myProject, root, factory, revision));
+                            }
+                          });
   }
 
   @NotNull
@@ -121,13 +133,7 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   @NotNull
-  @Override
-  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    return HgHistoryUtil.history(myProject, root, -1, HgHistoryUtil.prepareHashes(hashes));
-  }
-
-  @NotNull
-  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) {
     if (myProject.isDisposed()) {
       return Collections.emptySet();
     }
@@ -302,7 +308,7 @@ public class HgLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
     String userName = HgConfig.getInstance(myProject, root).getNamedConfig("ui", "username");
     //order of variables to identify hg username see at mercurial/ui.py
     if (userName == null) {
@@ -333,6 +339,12 @@ public class HgLogProvider implements VcsLogProvider {
     HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) return null;
     return repository.getCurrentBranchName();
+  }
+
+  @Nullable
+  @Override
+  public VcsLogDiffHandler getDiffHandler() {
+    return null;
   }
 
   @Nullable

@@ -81,15 +81,17 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     proc.communicate()
     return result
 
-def remove_binaries():
+
+def remove_binaries(suffixes):
     for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
-        if f.endswith('.pyd'):
-            remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
+        for suffix in suffixes:
+            if f.endswith(suffix):
+                remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
+
 
 def build():
     if '--no-remove-binaries' not in sys.argv:
-        remove_binaries()
-
+        remove_binaries(['.pyd', '.so'])
 
     os.chdir(root_dir)
 
@@ -159,7 +161,7 @@ if __name__ == '__main__':
     if use_cython == 'YES':
         build()
     elif use_cython == 'NO':
-        remove_binaries()
+        remove_binaries(['.pyd', '.so'])
     elif use_cython is None:
         # Regular process
         if '--no-regenerate-files' not in sys.argv:

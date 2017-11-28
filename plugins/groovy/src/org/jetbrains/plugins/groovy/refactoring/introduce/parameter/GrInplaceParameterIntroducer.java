@@ -49,9 +49,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 9/1/13
- */
 public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
   private final IntroduceParameterInfo myInfo;
   private final TIntArrayList myParametersToRemove;

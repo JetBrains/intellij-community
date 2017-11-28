@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -27,19 +26,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class ServersToolWindowManager extends AbstractProjectComponent {
-
+public abstract class ServersToolWindowManager {
+  @NotNull private final Project myProject;
   private final String myWindowId;
   private final Icon myIcon;
 
-  public ServersToolWindowManager(final Project project, String windowId, Icon icon) {
-    super(project);
+  public ServersToolWindowManager(@NotNull Project project, String windowId, Icon icon) {
+    myProject = project;
     myWindowId = windowId;
     myIcon = icon;
-  }
 
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(() -> setupListeners());
+    StartupManager.getInstance(project).registerPostStartupActivity(() -> setupListeners());
   }
 
   public void setupListeners() {
@@ -72,18 +69,22 @@ public abstract class ServersToolWindowManager extends AbstractProjectComponent 
         return;
       }
 
-      boolean doShow = !toolWindow.isAvailable() && available;
-      if (toolWindow.isAvailable() && !available) {
-        toolWindow.hide(null);
-      }
-      toolWindow.setAvailable(available, null);
-      if (showIfAvailable && doShow) {
-        toolWindow.show(null);
-      }
+      doUpdateWindowAvailable(toolWindow, showIfAvailable, available);
     });
   }
 
-  private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+  protected void doUpdateWindowAvailable(@NotNull ToolWindow toolWindow, boolean showIfAvailable, boolean available) {
+    boolean doShow = !toolWindow.isAvailable() && available;
+    if (toolWindow.isAvailable() && !available) {
+      toolWindow.hide(null);
+    }
+    toolWindow.setAvailable(available, null);
+    if (showIfAvailable && doShow) {
+      toolWindow.show(null);
+    }
+  }
+
+  protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(myIcon);
     getFactory().createToolWindowContent(project, toolWindow);
@@ -92,4 +93,9 @@ public abstract class ServersToolWindowManager extends AbstractProjectComponent 
 
   @NotNull
   protected abstract ServersToolWindowFactory getFactory();
+
+  @NotNull
+  protected final Project getProject() {
+    return myProject;
+  }
 }

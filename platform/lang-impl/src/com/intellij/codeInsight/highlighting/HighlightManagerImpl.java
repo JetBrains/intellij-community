@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -41,6 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public class HighlightManagerImpl extends HighlightManager {
     myProject = project;
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), myProject);
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         Document document = event.getDocument();
@@ -139,7 +140,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
     int oldOffset = editor.getCaretModel().getOffset();
     int horizontalScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
@@ -215,7 +216,7 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_ANY_KEY;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
     addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
   }
@@ -232,7 +233,7 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
@@ -254,9 +255,12 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   @Nullable
-  private static Color getScrollMarkColor(@NotNull TextAttributes attributes) {
+  private static Color getScrollMarkColor(@NotNull TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
     if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
-    if (attributes.getBackgroundColor() != null) return attributes.getBackgroundColor().darker();
+    if (attributes.getBackgroundColor() != null) {
+      boolean isDark = ColorUtil.isDark(colorScheme.getDefaultBackground());
+      return isDark ? attributes.getBackgroundColor().brighter() : attributes.getBackgroundColor().darker();
+    }
     return null;
   }
 

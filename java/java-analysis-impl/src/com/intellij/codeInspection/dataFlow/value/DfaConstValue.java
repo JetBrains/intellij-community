@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 6:31:23 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,9 +64,12 @@ public class DfaConstValue extends DfaValue {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
-        PsiExpression initializer = variable.getInitializer();
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
+        }
+        if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+          return createFromValue(variable, type, variable);
         }
         return null;
       }
@@ -92,6 +89,7 @@ public class DfaConstValue extends DfaValue {
     public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
+      if (value == null) return dfaNull;
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);

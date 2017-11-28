@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
   }
 
   private static PsiAssignmentExpression getAssignmentStatement(PsiDeclarationStatement statement) {
-    final PsiElement element = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class);
+    final PsiElement element = PsiTreeUtil.skipWhitespacesForward(statement);
     if (element instanceof PsiExpressionStatement) {
       final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
       if (expression instanceof PsiAssignmentExpression) {
@@ -89,11 +89,11 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
     }
     return null;
   }
- 
+
   private static PsiDeclarationStatement getDeclarationStatement(PsiAssignmentExpression assignmentExpression) {
     final PsiElement parent = assignmentExpression.getParent();
     if (parent instanceof PsiExpressionStatement) {
-      final PsiElement element = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class);
+      final PsiElement element = PsiTreeUtil.skipWhitespacesBackward(parent);
       if (element instanceof PsiDeclarationStatement) {
         return (PsiDeclarationStatement)element;
       }

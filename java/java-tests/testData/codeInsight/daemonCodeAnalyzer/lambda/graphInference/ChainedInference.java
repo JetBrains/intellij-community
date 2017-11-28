@@ -21,6 +21,6 @@ class Main {
 
 
     public interface Fun<T, R> {
-        public R _(T t);
+        public R f(T t);
     }
-} 
+}

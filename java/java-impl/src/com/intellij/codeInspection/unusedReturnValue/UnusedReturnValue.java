@@ -20,20 +20,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,13 +50,16 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       if (refMethod.isConstructor()) return null;
       if (!refMethod.getSuperMethods().isEmpty()) return null;
       if (refMethod.getInReferences().size() == 0) return null;
+      if (refMethod.isEntry()) return null;
 
       if (!refMethod.isReturnValueUsed()) {
         final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-        if (IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(psiMethod)) return null;
+        if (psiMethod == null) return null;
+        if (IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(psiMethod)) return null;
 
         final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
         if (refMethod.isExternalOverride() && !isNative) return null;
+        if (RefUtil.isImplicitRead(psiMethod)) return null;
         return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative)};
       }
     }
@@ -149,96 +143,5 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                            isNative ? null : new MakeVoidQuickFix(processor),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                            false);
-  }
-
-  private static class MakeVoidQuickFix implements LocalQuickFix {
-    private final ProblemDescriptionsProcessor myProcessor;
-    private static final Logger LOG = Logger.getInstance(MakeVoidQuickFix.class);
-
-    public MakeVoidQuickFix(@Nullable final ProblemDescriptionsProcessor processor) {
-      myProcessor = processor;
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethod psiMethod = null;
-      if (myProcessor != null) {
-        RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-        if (refElement instanceof RefMethod && refElement.isValid()) {
-          RefMethod refMethod = (RefMethod)refElement;
-          psiMethod = (PsiMethod) refMethod.getElement();
-        }
-      } else {
-        psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
-      }
-      if (psiMethod == null) return;
-      makeMethodHierarchyVoid(project, psiMethod);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-      return currentFile;
-    }
-
-    private static void makeMethodHierarchyVoid(Project project, @NotNull PsiMethod psiMethod) {
-      replaceReturnStatements(psiMethod);
-      for (final PsiMethod oMethod : OverridingMethodsSearch.search(psiMethod)) {
-        replaceReturnStatements(oMethod);
-      }
-      final PsiParameter[] params = psiMethod.getParameterList().getParameters();
-      final ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
-      for (int i = 0; i < params.length; i++) {
-        PsiParameter param = params[i];
-        infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
-      }
-
-      final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
-                                                                  psiMethod,
-                                                                  false, null, psiMethod.getName(),
-                                                                  PsiType.VOID,
-                                                                  infos);
-
-      csp.run();
-    }
-
-    private static void replaceReturnStatements(@NotNull final PsiMethod method) {
-      final PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
-      for (int i = statements.length - 1; i >= 0; i--) {
-        final PsiReturnStatement returnStatement = statements[i];
-        try {
-          final PsiExpression expression = returnStatement.getReturnValue();
-          if (expression != null) {
-            WriteAction.run(() -> {
-              final boolean mayHaveSideEffects = SideEffectChecker.mayHaveSideEffects(expression);
-              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-              final PsiReturnStatement ret =
-                (PsiReturnStatement)returnStatement.replace(factory.createStatementFromText("return;", returnStatement));
-              if (mayHaveSideEffects) {
-                final PsiStatement statement = factory.createStatementFromText(expression.getText() + ";", method);
-                ret.getParent().addBefore(statement, ret);
-              }
-              if (UnnecessaryReturnInspection.isReturnRedundant(ret, false, null)) {
-                ret.delete();
-              }
-            });
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    }
   }
 }

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class InjectedLanguageBlockWrapper implements BlockEx {
+public class InjectedLanguageBlockWrapper implements BlockEx {
   private final           Block       myOriginal;
   private final           int         myOffset;
   private final           TextRange   myRange;

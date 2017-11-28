@@ -18,13 +18,13 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
@@ -62,9 +62,9 @@ open class DefaultKeymap {
           else -> fileName
         }
 
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = provider.load(key) { JDOMUtil.load(it) }
+            override fun read() = provider.load(key) { loadElement(it) }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
@@ -88,7 +88,7 @@ open class DefaultKeymap {
       return when (name) {
         KeymapManager.DEFAULT_IDEA_KEYMAP -> SystemInfo.isWindows
         KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> SystemInfo.isMac
-        KeymapManager.X_WINDOW_KEYMAP, "Default for GNOME", KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
+        KeymapManager.X_WINDOW_KEYMAP, KeymapManager.GNOME_KEYMAP, KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
         else -> true
       }
     }
@@ -109,7 +109,9 @@ open class DefaultKeymap {
   open val defaultKeymapName: String
     get() = when {
       SystemInfo.isMac -> KeymapManager.MAC_OS_X_KEYMAP
-      SystemInfo.isXWindow -> if (SystemInfo.isKDE) KeymapManager.KDE_KEYMAP else KeymapManager.X_WINDOW_KEYMAP
+      SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
+      SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
+      SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 

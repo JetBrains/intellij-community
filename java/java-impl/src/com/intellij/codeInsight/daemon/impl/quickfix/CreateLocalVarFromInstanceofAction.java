@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,17 +366,43 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         anchorAfter = ((PsiBlockStatement)whileStatement.getBody()).getCodeBlock().getLBrace();
       }
     }
+
     if (anchorAfter == null) {
       return null;
     }
-    PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(anchorAfter, PsiWhiteSpace.class);
-    anchorAfter = nextSibling instanceof PsiComment ? PsiTreeUtil.skipSiblingsForward(nextSibling, PsiComment.class) : anchorAfter;
-    nextSibling = PsiTreeUtil.getNextSiblingOfType(anchorAfter, PsiStatement.class);
-    while (nextSibling instanceof PsiDeclarationStatement) {
+    PsiElement nextSibling = anchorAfter.getNextSibling();
+    while (nextSibling != null) {
+      if (nextSibling instanceof PsiWhiteSpace) {
+        final String text = nextSibling.getText();
+        if (StringUtil.countNewLines(text) > 1) {
+          final PsiElement newWhitespace = PsiParserFacade.SERVICE.getInstance(nextSibling.getProject())
+            .createWhiteSpaceFromText(text.substring(0, text.lastIndexOf('\n')));
+          nextSibling.replace(newWhitespace);
+          break;
+        }
+        nextSibling = nextSibling.getNextSibling();
+        continue;
+      }
+      else if (!isValidDeclarationStatement(nextSibling) && !(nextSibling instanceof PsiComment)) {
+        break;
+      }
       anchorAfter = nextSibling;
-      nextSibling = PsiTreeUtil.getNextSiblingOfType(anchorAfter, PsiStatement.class);
+      nextSibling = anchorAfter.getNextSibling();
     }
     return anchorAfter.getParent().addAfter(toInsert, anchorAfter);
+  }
+
+  private static boolean isValidDeclarationStatement(PsiElement nextSibling) {
+    if (!(nextSibling instanceof PsiDeclarationStatement)) {
+      return false;
+    }
+    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)nextSibling;
+    final PsiElement[] elements = declarationStatement.getDeclaredElements();
+    if (elements.length == 0) {
+      return false;
+    }
+    final PsiElement lastElement = elements[elements.length - 1];
+    return !(lastElement instanceof PsiClass) && PsiUtil.isJavaToken(lastElement.getLastChild(), JavaTokenType.SEMICOLON);
   }
 
   private static void reformatNewCodeBlockBraces(final PsiElement start, final PsiBlockStatement end)

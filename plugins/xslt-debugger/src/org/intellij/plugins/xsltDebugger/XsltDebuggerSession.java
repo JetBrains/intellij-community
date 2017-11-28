@@ -175,7 +175,7 @@ public class XsltDebuggerSession implements Disposable {
 
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } catch (MalformedURLException | URISyntaxException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      e.printStackTrace();
       return null;
     }
   }

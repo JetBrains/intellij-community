@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -42,7 +57,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"),"if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}", OPERATOR_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_Argument*);",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( \"statement in if\" )]LOG.debug('_Argument*);", OPERATOR_TYPE),
+      createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(
@@ -245,24 +261,26 @@ class JavaPredefinedConfigurations {
                                "  private void '_SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;\n" +
                                "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;\n" +
                                "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;\n" +
-                               "}",MISC_TYPE),
+                               "}", MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.cloneable.implementations"),
                                "class '_Class implements '_Interface:*Cloneable {\n" +
                                "  Object 'CloningMethod:*clone ();\n" +
-                               "}",MISC_TYPE),
-      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.]junit.test.cases"),"public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
-                                                                                                     "  public void '_testMethod+:test.* ();\n" +
-                                                                                                     "}", MISC_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.singletons"),"class 'Class {\n" +
-                                                                                        "  private 'Class('_ParameterType '_Parameter*) {\n" +
-                                                                                        "   '_ConstructorStatement*;\n" +
-                                                                                        "  }\n"+
-                                                                                        "  private static '_Class '_Instance;\n" +
-                                                                                        "  static '_Class '_GetInstance() {\n" +
-                                                                                        "    '_SomeStatement*;\n" +
-                                                                                        "    return '_Instance;\n" +
-                                                                                        "  }\n"+
-                                                                                        "}",MISC_TYPE),
+                               "}", MISC_TYPE),
+      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.]junit.test.cases"),
+                                     "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
+                                     "  public void '_testMethod+:test.* ();\n" +
+                                     "}", MISC_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.singletons"),
+                               "class 'Class {\n" +
+                               "  private 'Class('_ParameterType '_Parameter*) {\n" +
+                               "   '_ConstructorStatement*;\n" +
+                               "  }\n"+
+                               "  private static '_Class '_Instance;\n" +
+                               "  static '_Class '_GetInstance() {\n" +
+                               "    '_SomeStatement*;\n" +
+                               "    return '_Instance;\n" +
+                               "  }\n"+
+                               "}", MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),
                                "'_RetType '_Method('_ParameterType '_Parameter*) throws 'ExceptionType {\n" +
                                "  try {\n" +
@@ -272,18 +290,26 @@ class JavaPredefinedConfigurations {
                                "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
                                "  }\n" +
                                "}", MISC_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.bean.info.classes"),"class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
-                                                                                               "}",MISC_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.bean.info.classes"),
+                               "class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
+                               "}", MISC_TYPE),
 
       // interesting types
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"),"'Symbol",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),"'Symbol:[read]",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),"'Symbol:[regex( name ) && write]",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*[regex( Base )]) '_Expr",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"),"'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),
+                               "'Symbol:[ script( \"import com.intellij.psi.*\n" +
+                               "import static com.intellij.psi.util.PsiUtil.*\n" +
+                               "Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)\" ) ]", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),
+                               "'Symbol:[regex( name ) && script( \"import com.intellij.psi.*\n" +
+                               "import static com.intellij.psi.util.PsiUtil.*\n" +
+                               "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
+                               "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\" )]", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*[regex( Base )]) '_Expr", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"),"'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.unboxing"), "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),

@@ -28,16 +28,16 @@ import com.intellij.util.PathUtil;
 @TestDataPath("$CONTENT_ROOT/testData/inspections/inspectionMappingConsistency")
 public class InspectionMappingConsistencyInspectionTest extends JavaCodeInsightFixtureTestCase {
 
-  public void testInspectionMappings() throws Throwable {
+  public void testInspectionMappings() {
     myFixture.testHighlighting("inspectionMapping.xml", "bundle.properties");
   }
 
-  public void testInspectionMappingsWithDefaultBundle() throws Throwable {
+  public void testInspectionMappingsWithDefaultBundle() {
     myFixture.testHighlighting("inspectionMappingWithDefaultBundle.xml", "bundle.properties");
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
     moduleBuilder.addLibrary("lang-api", pathForClass);
   }

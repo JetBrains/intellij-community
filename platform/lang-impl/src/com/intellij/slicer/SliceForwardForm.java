@@ -17,9 +17,6 @@ package com.intellij.slicer;
 
 import javax.swing.*;
 
-/**
- * User: cdr
- */
 public class SliceForwardForm {
   private JCheckBox myShowDerefs;
   private JPanel myPanel;

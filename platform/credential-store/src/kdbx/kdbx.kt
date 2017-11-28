@@ -15,10 +15,10 @@
  */
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.loadElement
+import com.intellij.util.write
 import org.bouncycastle.crypto.engines.Salsa20Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -82,7 +82,7 @@ internal fun save(rootElement: Element, outputStream: OutputStream, encryption: 
       }
     }
   }
-  JDOMUtil.writeElement(rootElement, outputStream.writer(), "\n")
+  rootElement.write(outputStream)
 }
 
 private fun load(inputStream: InputStream, encryption: KdbxEncryption): Element {

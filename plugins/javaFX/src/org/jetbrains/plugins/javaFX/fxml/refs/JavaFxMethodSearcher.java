@@ -28,6 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -79,7 +80,7 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
       }
     }
     else if (scope instanceof GlobalSearchScope) {
-      final String propertyName = ReadAction.compute(() -> PropertyUtil.getPropertyName(psiMethod.getName()));
+      final String propertyName = ReadAction.compute(() -> PropertyUtilBase.getPropertyName(psiMethod.getName()));
       if (propertyName == null) return;
 
       final String className = ReadAction.compute(() -> {

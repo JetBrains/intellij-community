@@ -20,11 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 03.01.11
-*/
 public class XPath2Parser extends XPathParser {
   @Override
   protected boolean parseExpr(PsiBuilder builder) {

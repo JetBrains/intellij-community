@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 14-Aug-2006
- * Time: 12:13:18
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.ChooseElementsDialog;
@@ -42,7 +36,7 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
     super(parent, items, title, description, true);
   }
 
-  public ChooseModulesDialog(final Project project, final List<? extends Module> items, final String title, final String description) {
+  public ChooseModulesDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
     super(project, items, title, description, true);
   }
 

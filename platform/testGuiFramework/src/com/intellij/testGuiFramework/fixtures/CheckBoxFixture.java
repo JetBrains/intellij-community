@@ -61,6 +61,11 @@ public class CheckBoxFixture extends org.fest.swing.fixture.JCheckBoxFixture {
     return new CheckBoxFixture(robot, (JCheckBox)component);
   }
 
+  //checks a status of the checkbox
+  public boolean isSelected() {
+    return target().isSelected();
+  }
+
 
   @NotNull
   @Override

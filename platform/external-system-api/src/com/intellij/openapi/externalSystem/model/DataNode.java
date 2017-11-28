@@ -275,6 +275,17 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     myUserData = new UserDataHolderBase();
   }
 
+  public void checkIsSerializable() throws IOException {
+    if (myRawData != null) return;
+    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
+    try {
+      oOut.writeObject(myData);
+    }
+    finally {
+      oOut.close();
+    }
+  }
+
   public byte[] getDataBytes() throws IOException {
     if (myRawData != null) return myRawData;
 
@@ -282,9 +293,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     ObjectOutputStream oOut = new ObjectOutputStream(bOut);
     try {
       oOut.writeObject(myData);
-      final byte[] bytes = bOut.toByteArray();
-      myRawData = bytes;
-      return bytes;
+      return bOut.toByteArray();
     }
     finally {
       oOut.close();
@@ -342,7 +351,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @NotNull
   public DataNode<T> graphCopy() {
-    return сopy(this, null);
+    return copy(this, null);
   }
 
   @NotNull
@@ -399,12 +408,27 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   }
 
   @NotNull
-  private static <T> DataNode<T> сopy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
+  private static <T> DataNode<T> copy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
     DataNode<T> copy = nodeCopy(dataNode);
     copy.myParent = newParent;
     for (DataNode<?> child : dataNode.myChildren) {
-      copy.addChild(сopy(child, copy));
+      copy.addChild(copy(child, copy));
     }
     return copy;
+  }
+
+  private static class NoopOutputStream extends OutputStream {
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private static NoopOutputStream ourInstance = new NoopOutputStream();
+
+    public static NoopOutputStream getInstance() {
+      return ourInstance;
+    }
+
+    private NoopOutputStream() {}
+
+    @Override
+    public void write(int b) throws IOException {}
   }
 }

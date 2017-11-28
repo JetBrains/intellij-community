@@ -20,9 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 
-/**
-* Created by Max Medvedev on 29/01/14
-*/
 public class IntroduceOccurrencesChooser extends OccurrencesChooser<Object> {
   public IntroduceOccurrencesChooser(Editor editor) {
     super(editor);

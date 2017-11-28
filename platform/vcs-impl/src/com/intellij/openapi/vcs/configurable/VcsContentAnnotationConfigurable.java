@@ -51,7 +51,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     settings.setShow(myHighlightRecentlyChanged.isSelected());
     settings.setLimit(((Number)myHighlightInterval.getValue()).intValue());

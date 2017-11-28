@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
@@ -56,7 +57,7 @@ import java.io.IOException;
  * @author Eugene Belyaev
  */
 public class ProjectUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
+  private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   private ProjectUtil() { }
 
@@ -80,7 +81,7 @@ public class ProjectUtil {
       LOG.info(e);
       return;
     }
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(path.replace(File.separatorChar, '/'));
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
   /**
@@ -178,7 +179,7 @@ public class ProjectUtil {
       }
     }
 
-    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(PathUtil.toSystemIndependentName(path))) {
       if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
@@ -245,9 +246,9 @@ public class ProjectUtil {
   }
 
   /**
-   * @return {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
-   *         {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
-   *         {@link com.intellij.openapi.ui.Messages#CANCEL} - if user canceled the dialog
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
+   *         {@link Messages#CANCEL} - if user canceled the dialog
    * @param isNewProject
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
@@ -257,8 +258,8 @@ public class ProjectUtil {
       if (isNewProject) {
         int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                                 IdeBundle.message("title.new.project"),
-                                                IdeBundle.message("button.existingframe"),
-                                                IdeBundle.message("button.newframe"),
+                                                IdeBundle.message("button.existing.frame"),
+                                                IdeBundle.message("button.new.frame"),
                                                 Messages.getQuestionIcon(),
                                                 new ProjectNewWindowDoNotAskOption());
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
@@ -266,8 +267,8 @@ public class ProjectUtil {
       else {
         int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                                       IdeBundle.message("title.open.project"),
-                                                      IdeBundle.message("button.existingframe"),
-                                                      IdeBundle.message("button.newframe"),
+                                                      IdeBundle.message("button.existing.frame"),
+                                                      IdeBundle.message("button.new.frame"),
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());
@@ -283,11 +284,6 @@ public class ProjectUtil {
 
     IProjectStore projectStore = ProjectKt.getStateStore(project);
     String existingBaseDirPath = projectStore.getProjectBasePath();
-    if (existingBaseDirPath == null) {
-      // could be null if not yet initialized
-      return false;
-    }
-
     File projectFile = new File(projectFilePath);
     if (projectFile.isDirectory()) {
       return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);

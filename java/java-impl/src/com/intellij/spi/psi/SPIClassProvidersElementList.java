@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- */
 public class SPIClassProvidersElementList extends ASTWrapperPsiElement {
   public SPIClassProvidersElementList(@NotNull ASTNode node) {
     super(node);

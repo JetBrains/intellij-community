@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class AnnotationInitializerBlocksBuilder {
       .setNoAlignment(JavaTokenType.COMMA)
       .setNoAlignment(JavaTokenType.LPARENTH)
       .setNoAlignmentIf(JavaTokenType.RPARENTH, node -> {
-        PsiElement prev = PsiTreeUtil.skipSiblingsBackward(node.getPsi(), PsiWhiteSpace.class);
+        PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(node.getPsi());
         if (prev == null) return false;
         return prev instanceof PsiNameValuePair && !PsiTreeUtil.hasErrorElements(prev);
       });

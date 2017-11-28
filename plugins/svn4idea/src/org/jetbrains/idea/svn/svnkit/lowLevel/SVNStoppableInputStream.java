@@ -121,7 +121,7 @@ public class SVNStoppableInputStream extends InputStream {
       }
 
       @Override
-      public int available() throws IOException {
+      public int available() {
         return 1;
       }
     };

@@ -24,6 +24,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -33,7 +34,8 @@ public interface MavenServerEmbedder extends Remote {
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenServerConsole console,
                  @NotNull MavenServerProgressIndicator indicator,
-                 boolean alwaysUpdateSnapshots) throws RemoteException;
+                 boolean alwaysUpdateSnapshots,
+                 @Nullable Properties userProperties) throws RemoteException;
 
   void customizeComponents() throws RemoteException;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -74,12 +75,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     }
 
     private static boolean couldBeAssertSameArgument(PsiExpression expression) {
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass argumentClass = classType.resolve();
+      final PsiClass argumentClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (argumentClass == null) {
         return false;
       }

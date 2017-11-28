@@ -17,9 +17,6 @@ package com.intellij.openapi.util;
 
 import java.util.Comparator;
 
-/**
- * User: cdr
- */
 public interface Segment {
   Segment[] EMPTY_ARRAY = new Segment[0];
   int getStartOffset();

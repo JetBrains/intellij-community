@@ -26,11 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.01.11
-*/
 @SuppressWarnings({"UnusedDeclaration"})
 public class XPath2Type extends XPathType {
   public static final String XMLSCHEMA_NS = "http://www.w3.org/2001/XMLSchema";

@@ -64,11 +64,6 @@
           </component>
         </children>
       </grid>
-      <vspacer id="af30">
-        <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
       <component id="4eacb" class="javax.swing.JCheckBox" binding="myCbProceedOnErrors">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -76,6 +71,12 @@
         <properties>
           <text value="Proceed on errors"/>
         </properties>
+      </component>
+      <component id="33e05" class="com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent" binding="myOptionsOverride" custom-create="true" default-binding="true">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
       </component>
     </children>
   </grid>

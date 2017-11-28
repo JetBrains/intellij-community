@@ -90,7 +90,7 @@ public class SingleElementAnnotationInspection extends BaseInspection {
     public void visitNameValuePair(PsiNameValuePair pair) {
       super.visitNameValuePair(pair);
 
-      if (pair.getName() == null) {
+      if (pair.getName() == null && pair.getValue() != null) {
         final PsiElement parent = pair.getParent();
         if (parent instanceof PsiAnnotationParameterList) {
           final Set<String> usedNames = AddAnnotationAttributeNameFix.getUsedAttributeNames((PsiAnnotationParameterList)parent);

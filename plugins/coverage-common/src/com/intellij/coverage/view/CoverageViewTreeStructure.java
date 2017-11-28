@@ -11,10 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   final CoverageSuitesBundle myData;

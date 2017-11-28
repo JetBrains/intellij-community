@@ -16,6 +16,9 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUI.ScaleContextSupport;
+import com.intellij.util.ui.JBUI.ScaleContextAware;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +28,7 @@ import java.awt.image.BufferedImage;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShadowPainter {
+public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
   private final Icon myTop;
   private final Icon myTopRight;
   private final Icon myRight;
@@ -34,18 +37,27 @@ public class ShadowPainter {
   private final Icon myBottomLeft;
   private final Icon myLeft;
   private final Icon myTopLeft;
+
+  private Icon myCroppedTop = null;
+  private Icon myCroppedRight = null;
+  private Icon myCroppedBottom = null;
+  private Icon myCroppedLeft = null;
+
   @Nullable
   private Color myBorderColor;
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
-    myTop = IconUtil.cropIcon(top, 1, Integer.MAX_VALUE);
+    super(ScaleContext.create());
+    myTop = top;
     myTopRight = topRight;
-    myRight = IconUtil.cropIcon(right, Integer.MAX_VALUE, 1);
+    myRight = right;
     myBottomRight = bottomRight;
-    myBottom = IconUtil.cropIcon(bottom, 1, Integer.MAX_VALUE);
+    myBottom = bottom;
     myBottomLeft = bottomLeft;
-    myLeft = IconUtil.cropIcon(left, Integer.MAX_VALUE, 1);
+    myLeft = left;
     myTopLeft = topLeft;
+
+    updateIcons(null);
   }
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, @Nullable Color borderColor) {
@@ -58,10 +70,7 @@ public class ShadowPainter {
   }
 
   public BufferedImage createShadow(final JComponent c, final int width, final int height) {
-    final GraphicsConfiguration graphicsConfiguration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-      getDefaultScreenDevice().getDefaultConfiguration();
-
-    final BufferedImage image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT);
+    final BufferedImage image = c.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
     final Graphics2D g = image.createGraphics();
 
     paintShadow(c, g, 0, 0, width, height);
@@ -70,12 +79,31 @@ public class ShadowPainter {
     return image;
   }
 
-  public void paintShadow(Component c, Graphics2D g, int x, int y, int width, int height) {
-    final int leftSize = myLeft.getIconWidth();
-    final int rightSize = myRight.getIconWidth();
-    final int bottomSize = myBottom.getIconHeight();
-    final int topSize = myTop.getIconHeight();
+  private void updateIcons(ScaleContext ctx) {
+    updateIcon(myTop, ctx, () -> myCroppedTop = IconUtil.cropIcon(myTop, 1, Integer.MAX_VALUE));
+    updateIcon(myTopRight, ctx, null);
+    updateIcon(myRight, ctx, () -> myCroppedRight = IconUtil.cropIcon(myRight, Integer.MAX_VALUE, 1));
+    updateIcon(myBottomRight, ctx, null);
+    updateIcon(myBottom, ctx, () -> myCroppedBottom = IconUtil.cropIcon(myBottom, 1, Integer.MAX_VALUE));
+    updateIcon(myBottomLeft, ctx, null);
+    updateIcon(myLeft, ctx, () -> myCroppedLeft = IconUtil.cropIcon(myLeft, Integer.MAX_VALUE, 1));
+    updateIcon(myTopLeft, ctx, null);
+  }
 
+  private void updateIcon(Icon icon, ScaleContext ctx, Runnable r) {
+    if (icon instanceof ScaleContextAware) ((ScaleContextAware)icon).updateScaleContext(ctx);
+    if (r != null) r.run();
+  }
+
+  public void paintShadow(Component c, Graphics2D g, int x, int y, int width, int height) {
+    ScaleContext ctx = ScaleContext.create(c);
+    if (updateScaleContext(ctx)) {
+      updateIcons(ctx);
+    }
+    final int leftSize = myCroppedLeft.getIconWidth();
+    final int rightSize = myCroppedRight.getIconWidth();
+    final int bottomSize = myCroppedBottom.getIconHeight();
+    final int topSize = myCroppedTop.getIconHeight();
 
     myTopLeft.paintIcon(c, g, x, y);
     myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
@@ -83,16 +111,16 @@ public class ShadowPainter {
     myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
 
     for (int _x = myTopLeft.getIconWidth(); _x < width - myTopRight.getIconWidth(); _x++) {
-      myTop.paintIcon(c, g, _x + x, y);
+      myCroppedTop.paintIcon(c, g, _x + x, y);
     }
     for (int _x = myBottomLeft.getIconWidth(); _x < width - myBottomLeft.getIconWidth(); _x++) {
-      myBottom.paintIcon(c, g, _x + x, y + height - bottomSize);
+      myCroppedBottom.paintIcon(c, g, _x + x, y + height - bottomSize);
     }
     for (int _y = myTopLeft.getIconHeight(); _y < height - myBottomLeft.getIconHeight(); _y++) {
-      myLeft.paintIcon(c, g, x, _y + y);
+      myCroppedLeft.paintIcon(c, g, x, _y + y);
     }
     for (int _y = myTopRight.getIconHeight(); _y < height - myBottomRight.getIconHeight(); _y++) {
-      myRight.paintIcon(c, g, x + width - rightSize, _y + y);
+      myCroppedRight.paintIcon(c, g, x + width - rightSize, _y + y);
     }
 
     if (myBorderColor != null) {

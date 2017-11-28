@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * User: Sergey.Vasiliev
- */
 public interface SimpleModelFactory<T extends DomElement, M extends DomModel<T>> {
 
   @Nullable

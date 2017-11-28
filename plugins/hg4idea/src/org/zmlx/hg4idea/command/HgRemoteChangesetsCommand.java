@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
       projectSettings.setCheckIncomingOutgoing(false);
-      project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
+      BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
     return result;
   }

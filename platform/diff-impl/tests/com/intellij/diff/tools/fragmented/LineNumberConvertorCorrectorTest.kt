@@ -16,9 +16,9 @@
 package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.util.Side
-import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 
-class LineNumberConvertorCorrectorTest : UsefulTestCase() {
+class LineNumberConvertorCorrectorTest : TestCase() {
   fun testUnmodified() {
     doTest(
       {

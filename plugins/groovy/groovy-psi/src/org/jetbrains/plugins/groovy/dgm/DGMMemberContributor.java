@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,13 +80,13 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     for (String category : extensions.getFirst()) {
       PsiClass clazz = facade.findClass(category, resolveScope);
       if (clazz != null) {
-        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, false, resolveScope));
+        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, false));
       }
     }
     for (String category : extensions.getSecond()) {
       PsiClass clazz = facade.findClass(category, resolveScope);
       if (clazz != null) {
-        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, true, resolveScope));
+        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, true));
       }
     }
     return gdkMethods;

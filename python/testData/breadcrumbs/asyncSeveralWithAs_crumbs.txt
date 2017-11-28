@@ -3,6 +3,6 @@ async foo()
 Tooltip:
 async foo()
 Crumb:
-async with open…
+async with open("file.txt") as …
 Tooltip:
 async with open("file.txt") as f, open("file2.txt") as f2

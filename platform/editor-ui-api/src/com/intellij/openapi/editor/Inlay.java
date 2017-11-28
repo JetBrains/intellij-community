@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,20 @@ public interface Inlay extends Disposable, UserDataHolderEx {
   int getOffset();
 
   /**
+   * Tells whether this element is associated with preceding or following text. This relation defines certain aspects of inlay's behaviour
+   * with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text if the
+   * returned value is {@code false} and after the text, if the returned value is {@code true}. The value is determined at element's
+   * creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)}.
+   */
+  boolean isRelatedToPrecedingText();
+  
+  /**
+   * Returns current visual position of the inlay's left boundary.
+   */
+  @NotNull
+  VisualPosition getVisualPosition();
+
+  /**
    * Returns renderer, which defines size and representation for this inlay.
    */
   @NotNull
@@ -59,4 +73,9 @@ public interface Inlay extends Disposable, UserDataHolderEx {
    * @see EditorCustomElementRenderer#calcWidthInPixels(Editor)
    */
   void updateSize();
+
+  /**
+   * Causes repaint of inlay in editor.
+   */
+  void repaint();
 }

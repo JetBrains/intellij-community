@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
+import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -37,7 +38,7 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
         add("content", content).
         add("uuid", PermanentInstallationID.get()).
         add("patch", String.valueOf(false)).
-        add("ide", ApplicationNamesInfo.getInstance().getProductName()).build()).execute();
+        add("ide", ApplicationNamesInfo.getInstance().getProductName()).build(), Consts.UTF_8).execute();
 
       final HttpResponse httpResponse = response.returnResponse();
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {

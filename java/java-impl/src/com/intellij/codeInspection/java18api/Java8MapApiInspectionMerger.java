@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 public class Java8MapApiInspectionMerger extends InspectionElementsMerger {
   private static final String COLLECTION_API_INSPECTION = "Java8CollectionsApi";
   private static final String REPLACE_MAP_GET_INSPECTION = "Java8ReplaceMapGet";
 
+  @NotNull
   @Override
   public String getMergedToolName() {
     return Java8MapApiInspection.SHORT_NAME;
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {COLLECTION_API_INSPECTION, REPLACE_MAP_GET_INSPECTION};

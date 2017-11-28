@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.patterns.XmlTagPattern;
 import com.intellij.psi.*;
@@ -37,10 +37,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/7/11
- */
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static final String[] EXTENSION_TAG_NAMES = new String[]{
@@ -60,12 +56,12 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
-    ElementPattern pattern = createPattern(EXTENSION_TAG_NAMES, "key", "groupKey");
+    XmlAttributeValuePattern pattern = createPattern(EXTENSION_TAG_NAMES, "key", "groupKey");
     registrar.registerReferenceProvider(pattern,
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    ElementPattern typeNameKeyPattern = createPattern(TYPE_NAME_TAG, "resourceKey");
+    XmlAttributeValuePattern typeNameKeyPattern = createPattern(TYPE_NAME_TAG, "resourceKey");
     registrar.registerReferenceProvider(typeNameKeyPattern,
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
@@ -91,11 +87,11 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
       XmlPatterns.xmlTag().withName("resource-bundle").withParent(XmlPatterns.xmlTag().withName("idea-plugin"));
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
-    ElementPattern bundlePattern = createPattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
+    XmlAttributeValuePattern bundlePattern = createPattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
     registrar.registerReferenceProvider(bundlePattern, bundleReferenceProvider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    ElementPattern typeNameBundlePattern = createPattern(TYPE_NAME_TAG, "resourceBundle");
+    XmlAttributeValuePattern typeNameBundlePattern = createPattern(TYPE_NAME_TAG, "resourceBundle");
     registrar.registerReferenceProvider(typeNameBundlePattern, bundleReferenceProvider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
@@ -107,10 +103,10 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static ElementPattern createPattern(String[] tagNames, String... attributeNames) {
+  private static XmlAttributeValuePattern createPattern(String[] tagNames, String... attributeNames) {
     return XmlPatterns.xmlAttributeValue(attributeNames)
       .withSuperParent(2, XmlPatterns.xmlTag().withName(tagNames)
-                                  .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
+        .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
   }
 
 

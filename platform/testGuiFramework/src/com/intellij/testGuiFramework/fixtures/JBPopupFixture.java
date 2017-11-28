@@ -22,6 +22,8 @@ import com.intellij.util.ArrayUtil;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
+import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,13 +48,17 @@ public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMen
 
   public static JBPopupFixture findContextMenu(Robot robot) {
 
-    pause(new Condition("Find context menu") {
-      @Override
-      public boolean test() {
-        final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
-        return contextMenu != null;
-      }
-    }, SHORT_TIMEOUT);
+    try {
+      pause(new Condition("Find context menu") {
+        @Override
+        public boolean test() {
+          final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
+          return contextMenu != null;
+        }
+      }, SHORT_TIMEOUT);
+    } catch (WaitTimedOutError e) {
+      throw new ComponentLookupException("Unable to find context menu for JBPopupFixture");
+    }
 
     final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
     assertNotNull(contextMenu);

@@ -26,12 +26,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 27, 2009
- * Time: 8:49:16 PM
- */
 public class PyWithWhileSurrounder extends PyStatementSurrounder{
   @Override
   @Nullable

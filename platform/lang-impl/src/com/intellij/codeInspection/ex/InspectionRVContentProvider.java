@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -28,6 +24,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,7 +32,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +40,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public abstract class InspectionRVContentProvider {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionRVContentProvider.class);
   private final Project myProject;
 
   public InspectionRVContentProvider(@NotNull Project project) {
@@ -132,7 +129,7 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  @Nullable
+  @NotNull
   public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
 
@@ -144,8 +141,8 @@ public abstract class InspectionRVContentProvider {
     InspectionToolWrapper wrapper = toolNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
-    Map<RefEntity, CommonProblemDescriptor[]> problems = presentation.getProblemElements();
-    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems);
+    SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problems = presentation.getProblemElements();
+    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems::get);
   }
 
   public abstract InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
@@ -154,7 +151,7 @@ public abstract class InspectionRVContentProvider {
                                                            final boolean showStructure,
                                                            boolean groupBySeverity,
                                                            @NotNull Map<String, Set<RefEntity>> contents,
-                                                           @NotNull Map<RefEntity, CommonProblemDescriptor[]> problems);
+                                                           @NotNull Function<RefEntity, CommonProblemDescriptor[]> problems);
 
   protected abstract void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                            @NotNull InspectionToolWrapper toolWrapper,
@@ -179,7 +176,7 @@ public abstract class InspectionRVContentProvider {
     for (String packageName : packageContents.keySet()) {
       final Set<T> elements = packageContents.get(packageName);
       for (T userObject : elements) {
-        final RefEntityContainer container = computeContainer.fun(userObject);
+        final RefEntityContainer container = computeContainer.apply(userObject);
         supportStructure &= container.supportStructure();
         final String moduleName = showStructure ? container.getModule() : null;
         Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);

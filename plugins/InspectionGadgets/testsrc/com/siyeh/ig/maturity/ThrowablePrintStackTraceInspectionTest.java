@@ -37,7 +37,7 @@ public class ThrowablePrintStackTraceInspectionTest extends LightInspectionTestC
                  "}");
   }
 
-  public void testPrintStacktraceOverridden() throws Exception {
+  public void testPrintStacktraceOverridden() {
     addEnvironmentClass("public class FException extends Exception {\n" +
                         "    @Override\n" +
                         "    public void printStackTrace() {\n" +

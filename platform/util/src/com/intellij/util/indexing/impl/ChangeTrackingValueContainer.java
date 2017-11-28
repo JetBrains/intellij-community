@@ -104,9 +104,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       final ValueContainerImpl<Value> newMerged;
 
       if (fromDisk instanceof ValueContainerImpl) {
-        newMerged = ((ValueContainerImpl<Value>)fromDisk).copy();
+        newMerged = ((ValueContainerImpl<Value>)fromDisk).clone();
       } else {
-        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
+        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
       }
 
       if ((myAdded != null || myInvalidated != null) &&

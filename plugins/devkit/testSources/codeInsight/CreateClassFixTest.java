@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Jun-2007
- */
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -83,7 +79,6 @@ public class CreateClassFixTest extends UsefulTestCase {
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @After
   public void tearDown() throws Exception {
     final Ref<Exception> ex = new Ref<>();

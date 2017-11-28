@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -62,11 +59,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DragSource;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static java.lang.Math.ceil;
 
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public static final Icon DEFAULT_ICON = new MyCheckedIcon();
@@ -386,12 +387,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return scaleVal(DEFAULT_ICON.getIconWidth(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(DEFAULT_ICON.getIconWidth(), OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(DEFAULT_ICON.getIconHeight(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(DEFAULT_ICON.getIconHeight(), OBJ_SCALE));
     }
 
     @Override
@@ -414,22 +415,22 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     @Nullable
     @Override
     public Icon retrieveIcon() {
-      return IconUtil.scale(PlatformIcons.CHECK_ICON, getScale(), true);
+      return IconUtil.scale(PlatformIcons.CHECK_ICON, null, getScale());
     }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      IconUtil.scale((darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack), getScale(), true).paintIcon(c, g, x, y);
+      IconUtil.scale((darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack), c, getScale()).paintIcon(c, g, x, y);
     }
 
     @Override
     public int getIconWidth() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), Scale.INSTANCE);
+      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), OBJ_SCALE));
     }
 
     @NotNull
@@ -463,6 +464,24 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     @Override
     public String getTooltipText() {
       return myBookmark.getBookmarkTooltip();
+    }
+
+    @Nullable
+    @Override
+    public GutterDraggableObject getDraggableObject() {
+      return new GutterDraggableObject() {
+        @Override
+        public boolean copy(int line, VirtualFile file, int actionId) {
+          myBookmark.myTarget = new OpenFileDescriptor(myBookmark.myProject, file, line, -1, true);
+          myBookmark.updateHighlighter();
+          return true;
+        }
+
+        @Override
+        public Cursor getCursor(int line, int actionId) {
+          return DragSource.DefaultMoveDrop;
+        }
+      };
     }
 
     @Override

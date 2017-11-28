@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Highlights class definitions, functrion definitions, and decorators.
@@ -34,8 +35,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   public void visitPyClass(PyClass node) {
     final ASTNode name_node = node.getNameNode();
     if (name_node != null) {
-      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
-      ann.setTextAttributes(PyHighlighter.PY_CLASS_DEFINITION);
+      addHighlightingAnnotation(name_node, PyHighlighter.PY_CLASS_DEFINITION);
     }
   }
 
@@ -43,10 +43,9 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   public void visitPyFunction(PyFunction node) {
     ASTNode name_node =  node.getNameNode();
     if (name_node != null) {
-      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
       final String name = node.getName();
       LanguageLevel languageLevel = LanguageLevel.forElement(node);
-      if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
+      if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
         PyClass cls = node.getContainingClass();
         if (PyNames.NEW.equals(name)) {
           boolean new_style_class = false;
@@ -56,14 +55,14 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
           catch (IndexNotReadyException ignored) {
           }
           if (new_style_class) {
-            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+            addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
           }
         }
         else {
-          ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+          addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
         }
       }
-      else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);
+      else addHighlightingAnnotation(name_node, PyHighlighter.PY_FUNC_DEFINITION);
     }
   }
 
@@ -75,14 +74,13 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
     }
   }
 
-  private void highlightDecorator(PyDecorator node) {
-    // highlight only the identifier
-    PsiElement mk = node.getFirstChild(); // the '@'
-    if (mk != null) {
-      mk = mk.getNextSibling(); // ref
-      if (mk != null) {
-        Annotation ann = getHolder().createInfoAnnotation(mk, null);
-        ann.setTextAttributes(PyHighlighter.PY_DECORATOR);
+  private void highlightDecorator(@NotNull PyDecorator node) {
+    final PsiElement atSign = node.getFirstChild();
+    if (atSign != null) {
+      addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);
+      final PsiElement refExpression = PyPsiUtils.getNextNonWhitespaceSibling(atSign);
+      if (refExpression != null) {
+        addHighlightingAnnotation(refExpression, PyHighlighter.PY_DECORATOR);
       }
     }
   }

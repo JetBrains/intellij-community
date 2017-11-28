@@ -33,10 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 11/9/11
- */
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
   protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {

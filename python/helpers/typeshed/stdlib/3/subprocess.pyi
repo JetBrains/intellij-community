@@ -2,10 +2,10 @@
 
 # Based on http://docs.python.org/3.6/library/subprocess.html
 import sys
-from typing import Sequence, Any, AnyStr, Mapping, Callable, Tuple, IO, Optional, Union, List, Type, Text
+from typing import Sequence, Any, Mapping, Callable, Tuple, IO, Optional, Union, List, Type, Text
 from types import TracebackType
 
-_FILE = Union[int, IO[Any]]
+_FILE = Union[None, int, IO[Any]]
 _TXT = Union[bytes, Text]
 _CMD = Union[_TXT, Sequence[_TXT]]
 _ENV = Union[Mapping[bytes, _TXT], Mapping[Text, _TXT]]
@@ -27,8 +27,8 @@ if sys.version_info >= (3, 5):
     if sys.version_info >= (3, 6):
         # Nearly same args as Popen.__init__ except for timeout, input, and check
         def run(args: _CMD,
-                timeout: float = ...,
-                input: _TXT = ...,
+                timeout: Optional[float] = ...,
+                input: Optional[_TXT] = ...,
                 check: bool = ...,
                 bufsize: int = ...,
                 executable: _TXT = ...,
@@ -38,8 +38,8 @@ if sys.version_info >= (3, 5):
                 preexec_fn: Callable[[], Any] = ...,
                 close_fds: bool = ...,
                 shell: bool = ...,
-                cwd: _TXT = ...,
-                env: _ENV = ...,
+                cwd: Optional[_TXT] = ...,
+                env: Optional[_ENV] = ...,
                 universal_newlines: bool = ...,
                 startupinfo: Any = ...,
                 creationflags: int = ...,
@@ -52,8 +52,8 @@ if sys.version_info >= (3, 5):
     else:
         # Nearly same args as Popen.__init__ except for timeout, input, and check
         def run(args: _CMD,
-                timeout: float = ...,
-                input: _TXT = ...,
+                timeout: Optional[float] = ...,
+                input: Optional[_TXT] = ...,
                 check: bool = ...,
                 bufsize: int = ...,
                 executable: _TXT = ...,
@@ -63,8 +63,8 @@ if sys.version_info >= (3, 5):
                 preexec_fn: Callable[[], Any] = ...,
                 close_fds: bool = ...,
                 shell: bool = ...,
-                cwd: _TXT = ...,
-                env: _ENV = ...,
+                cwd: Optional[_TXT] = ...,
+                env: Optional[_ENV] = ...,
                 universal_newlines: bool = ...,
                 startupinfo: Any = ...,
                 creationflags: int = ...,
@@ -84,8 +84,8 @@ if sys.version_info >= (3, 3):
              preexec_fn: Callable[[], Any] = ...,
              close_fds: bool = ...,
              shell: bool = ...,
-             cwd: _TXT = ...,
-             env: _ENV = ...,
+             cwd: Optional[_TXT] = ...,
+             env: Optional[_ENV] = ...,
              universal_newlines: bool = ...,
              startupinfo: Any = ...,
              creationflags: int = ...,
@@ -103,8 +103,8 @@ else:
              preexec_fn: Callable[[], Any] = ...,
              close_fds: bool = ...,
              shell: bool = ...,
-             cwd: _TXT = ...,
-             env: _ENV = ...,
+             cwd: Optional[_TXT] = ...,
+             env: Optional[_ENV] = ...,
              universal_newlines: bool = ...,
              startupinfo: Any = ...,
              creationflags: int = ...,
@@ -124,8 +124,8 @@ if sys.version_info >= (3, 3):
                    preexec_fn: Callable[[], Any] = ...,
                    close_fds: bool = ...,
                    shell: bool = ...,
-                   cwd: _TXT = ...,
-                   env: _ENV = ...,
+                   cwd: Optional[_TXT] = ...,
+                   env: Optional[_ENV] = ...,
                    universal_newlines: bool = ...,
                    startupinfo: Any = ...,
                    creationflags: int = ...,
@@ -143,8 +143,8 @@ else:
                    preexec_fn: Callable[[], Any] = ...,
                    close_fds: bool = ...,
                    shell: bool = ...,
-                   cwd: _TXT = ...,
-                   env: _ENV = ...,
+                   cwd: Optional[_TXT] = ...,
+                   env: Optional[_ENV] = ...,
                    universal_newlines: bool = ...,
                    startupinfo: Any = ...,
                    creationflags: int = ...,
@@ -162,8 +162,8 @@ if sys.version_info >= (3, 6):
                      preexec_fn: Callable[[], Any] = ...,
                      close_fds: bool = ...,
                      shell: bool = ...,
-                     cwd: _TXT = ...,
-                     env: _ENV = ...,
+                     cwd: Optional[_TXT] = ...,
+                     env: Optional[_ENV] = ...,
                      universal_newlines: bool = ...,
                      startupinfo: Any = ...,
                      creationflags: int = ...,
@@ -186,8 +186,8 @@ elif sys.version_info >= (3, 4):
                      preexec_fn: Callable[[], Any] = ...,
                      close_fds: bool = ...,
                      shell: bool = ...,
-                     cwd: _TXT = ...,
-                     env: _ENV = ...,
+                     cwd: Optional[_TXT] = ...,
+                     env: Optional[_ENV] = ...,
                      universal_newlines: bool = ...,
                      startupinfo: Any = ...,
                      creationflags: int = ...,
@@ -207,8 +207,8 @@ elif sys.version_info >= (3, 3):
                      preexec_fn: Callable[[], Any] = ...,
                      close_fds: bool = ...,
                      shell: bool = ...,
-                     cwd: _TXT = ...,
-                     env: _ENV = ...,
+                     cwd: Optional[_TXT] = ...,
+                     env: Optional[_ENV] = ...,
                      universal_newlines: bool = ...,
                      startupinfo: Any = ...,
                      creationflags: int = ...,
@@ -227,8 +227,8 @@ else:
                      preexec_fn: Callable[[], Any] = ...,
                      close_fds: bool = ...,
                      shell: bool = ...,
-                     cwd: _TXT = ...,
-                     env: _ENV = ...,
+                     cwd: Optional[_TXT] = ...,
+                     env: Optional[_ENV] = ...,
                      universal_newlines: bool = ...,
                      startupinfo: Any = ...,
                      creationflags: int = ...,
@@ -238,11 +238,10 @@ else:
                      ) -> Any: ...  # morally: -> _TXT
 
 
-# TODO types
-PIPE = ...  # type: Any
-STDOUT = ...  # type: Any
+PIPE = ...  # type: int
+STDOUT = ...  # type: int
 if sys.version_info >= (3, 3):
-    DEVNULL = ...  # type: Any
+    DEVNULL = ...  # type: int
     class SubprocessError(Exception): ...
     class TimeoutExpired(SubprocessError): ...
 
@@ -266,6 +265,8 @@ class CalledProcessError(Exception):
                  stderr: Optional[_TXT] = ...) -> None: ...
 
 class Popen:
+    if sys.version_info >= (3, 3):
+        args = ...  # type: _CMD
     stdin = ...  # type: IO[Any]
     stdout = ...  # type: IO[Any]
     stderr = ...  # type: IO[Any]

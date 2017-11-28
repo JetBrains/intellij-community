@@ -19,6 +19,6 @@ import com.intellij.find.FindModel;
 
 public class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptCommentsAndLiteralsAction() {
-    super("Except Comments and Li&terals", FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS);
+    super("Except Comments and String Li&terals", FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS);
   }
 }

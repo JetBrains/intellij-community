@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.actions.migrate;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
@@ -39,16 +38,15 @@ public class MigrateDiffTool implements DiffTool {
 
   @Override
   public void show(DiffRequest request) {
-    DiffRequestChain newChain = MigrateToNewDiffUtil.convertRequestChain(request);
+    com.intellij.diff.requests.DiffRequest newRequest = MigrateToNewDiffUtil.convertRequest(request);
     WindowWrapper.Mode mode = FrameDiffTool.shouldOpenDialog(request.getHints()) ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
-    DiffManager.getInstance().showDiff(request.getProject(), newChain, new DiffDialogHints(mode));
+    DiffManager.getInstance().showDiff(request.getProject(), newRequest, new DiffDialogHints(mode));
   }
 
   @Override
   public boolean canShow(DiffRequest request) {
     if (request instanceof MergeRequest) return false;
     if (request.getContents().length != 2) return false;
-    if (request.getHints().contains(MigrateToNewDiffUtil.DO_NOT_TRY_MIGRATE)) return false;
     if (request.getOnOkRunnable() != null) return false;
     if (!DiffManagerImpl.INTERNAL_DIFF.canShow(request) && !BinaryDiffTool.INSTANCE.canShow(request)) return false;
     for (DiffTool tool : DiffManagerImpl.getInstanceEx().getAdditionTools()) {

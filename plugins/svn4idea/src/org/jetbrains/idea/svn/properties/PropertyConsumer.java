@@ -27,7 +27,7 @@ public interface PropertyConsumer {
 
   void handleProperty(File path, PropertyData property) throws SVNException;
 
-  void handleProperty(SVNURL url, PropertyData property) throws SVNException;
+  void handleProperty(SVNURL url, PropertyData property);
 
-  void handleProperty(long revision, PropertyData property) throws SVNException;
+  void handleProperty(long revision, PropertyData property);
 }

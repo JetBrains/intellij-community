@@ -51,31 +51,27 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
-  private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
-    @NotNull
-    @Override
-    protected MultiMap<String, ArchivedProjectTemplate> compute() {
-      try {
-        return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
-          .connect(request -> {
-            try {
-              return create(JdomKt.loadElement(request.getReader()));
-            }
-            catch (JDOMException e) {
-              LOG.error(e);
-              return MultiMap.emptyInstance();
-            }
-          });
-      }
-      catch (IOException e) {  // timeouts, lost connection etc
-        LOG.info(e);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return MultiMap.emptyInstance();
+  private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = ClearableLazyValue.create(() -> {
+    try {
+      return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
+        .connect(request -> {
+          try {
+            return create(JdomKt.loadElement(request.getReader()));
+          }
+          catch (JDOMException e) {
+            LOG.error(e);
+            return MultiMap.emptyInstance();
+          }
+        });
     }
-  };
+    catch (IOException e) {  // timeouts, lost connection etc
+      LOG.info(e);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return MultiMap.emptyInstance();
+  });
 
   @NotNull
   @Override
@@ -98,7 +94,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @NotNull
-  private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) throws IOException, JDOMException {
+  private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) {
     MultiMap<String, ArchivedProjectTemplate> map = MultiMap.create();
     for (ArchivedProjectTemplate template : createGroupTemplates(element)) {
       map.putValue(template.getCategory(), template);

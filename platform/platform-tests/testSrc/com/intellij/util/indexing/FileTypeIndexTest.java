@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testAddFileType() throws Exception {
+  public void testAddFileType() {
     addAndRemoveFileType();
   }
 

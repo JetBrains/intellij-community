@@ -40,7 +40,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -76,9 +79,7 @@ public class RenameUtil {
         continue;
       }
       PsiElement referenceElement = ref.getElement();
-      result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
-                                         ref.getRangeInElement().getEndOffset(), element,
-                                         ref.resolve() == null && !(ref instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref).multiResolve(true).length > 0)));
+      result.add(processor.createUsageInfo(element, ref, referenceElement));
     }
 
     processor.findCollisions(element, newName, allRenames, result);

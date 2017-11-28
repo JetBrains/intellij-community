@@ -24,7 +24,7 @@ class FileChangesTracker(object):
             for file in map(lambda f: os.path.join(tmp_folder, f), files):
                 try:
                     result.update({file: os.path.getmtime(file)})
-                except FileNotFoundError:  # on Windows long path may lead to it: PY-23386
+                except OSError:  # on Windows long path may lead to it: PY-23386
                     message = "PyCharm can't check if the following file been updated: {0}\n".format(str(file))
                     sys.stderr.write(message)
         return result

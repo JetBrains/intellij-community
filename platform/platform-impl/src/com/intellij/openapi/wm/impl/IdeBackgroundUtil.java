@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -54,8 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -101,6 +101,8 @@ public class IdeBackgroundUtil {
            component instanceof JList ? "list" :
            component instanceof JTable ? "table" :
            component instanceof JViewport ? "viewport" :
+           component instanceof JTabbedPane ? "tabs" :
+           component instanceof JButton ? "button" :
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
@@ -208,6 +210,10 @@ public class IdeBackgroundUtil {
       return new MyGraphics(gg != null ? gg.myDelegate : g, helper, helper.computeOffsets(g, component), gg != null ? gg.preserved : null);
     }
 
+    static Graphics2D unwrap(Graphics g) {
+      return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
+    }
+
     MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Set<Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
@@ -231,6 +237,39 @@ public class IdeBackgroundUtil {
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
       runAllPainters(x, y, width, height, null, getColor());
+    }
+
+    @Override
+    public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
+      super.fillArc(x, y, width, height, startAngle, arcAngle);
+      runAllPainters(x, y, width, height, new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.PIE), getColor());
+    }
+
+    @Override
+    public void fillOval(int x, int y, int width, int height) {
+      super.fillOval(x, y, width, height);
+      runAllPainters(x, y, width, height, new Ellipse2D.Double(x, y, width, height), getColor());
+    }
+
+    @Override
+    public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+      super.fillPolygon(xPoints, yPoints, nPoints);
+      Polygon s = new Polygon(xPoints, yPoints, nPoints);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillPolygon(Polygon s) {
+      super.fillPolygon(s);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+      super.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
+      runAllPainters(x, y, width, height, new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight), getColor());
     }
 
     @Override
@@ -302,6 +341,8 @@ public class IdeBackgroundUtil {
 
   private static final JBIterable<Object> ourPreservedKeys = JBIterable.of(
     EditorColors.SELECTION_BACKGROUND_COLOR,
+    EditorColors.ADDED_LINES_COLOR, EditorColors.MODIFIED_LINES_COLOR, EditorColors.DELETED_LINES_COLOR,
+    EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, EditorColors.BORDER_LINES_COLOR,
     DiffColors.DIFF_INSERTED, DiffColors.DIFF_DELETED, DiffColors.DIFF_MODIFIED, DiffColors.DIFF_CONFLICT);
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
@@ -316,6 +357,7 @@ public class IdeBackgroundUtil {
                         c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
         if (editor != null) {
           if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+          if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
           Graphics2D gg = withEditorBackground(g, c);
           if (gg instanceof MyGraphics) {
             EditorColorsScheme scheme = editor.getColorsScheme();

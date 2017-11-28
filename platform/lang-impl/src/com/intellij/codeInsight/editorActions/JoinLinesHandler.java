@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 20, 2002
- * Time: 6:21:42 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
@@ -73,6 +65,9 @@ public class JoinLinesHandler extends EditorActionHandler {
   @Override
   public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
     assert caret != null;
+
+    if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
+
     if (!(editor.getDocument() instanceof DocumentEx)) {
       myOriginalHandler.execute(editor, caret, dataContext);
       return;
@@ -149,7 +144,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     CharSequence text = doc.getCharsSequence();
     JoinLinesOffsets offsets = calcJoinLinesOffsets(psiFile, doc, startLine);
 
-    if (offsets.isStartLineEndsWithComment && !offsets.isNextLineStartsWithComment) {
+    if (offsets.isStartLineEndsWithComment() && !offsets.isNextLineStartsWithComment()) {
       tryConvertEndOfLineComment(doc, offsets.elementAtStartLineEnd);
       offsets = calcJoinLinesOffsets(psiFile, doc, startLine);
     }
@@ -210,26 +205,36 @@ public class JoinLinesHandler extends EditorActionHandler {
       return;
     }
 
+    int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
+    if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);
 
-    if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(start == offsets.lineEndOffset ? start : start + 1);
 
-
-    if (offsets.isStartLineEndsWithComment && offsets.isNextLineStartsWithComment) {
+    if (offsets.isStartLineEndsWithComment() && offsets.isNextLineStartsWithComment()) {
+      boolean adjacentLineComments = false;
       if (text.charAt(end) == '*' && end < text.length() && text.charAt(end + 1) != '/') {
         end++;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
-      else if (text.charAt(end) == '/') {
+      else if (!offsets.isJoiningSameComment() && 
+               !(replaceStart >= 2 && text.charAt(replaceStart - 2) == '*' && text.charAt(replaceStart - 1) == '/') &&
+               text.charAt(end) == '/' && (end + 1) < text.length() && text.charAt(end + 1) == '/') {
+        adjacentLineComments = true;
         end += 2;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
 
-      doc.replaceString(start == offsets.lineEndOffset ? start : start + 1, end, " ");
+      doc.replaceString(replaceStart, end, adjacentLineComments || offsets.isJoiningSameComment() ? " " : "");
       return;
     }
 
     while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-    doc.replaceString(start == offsets.lineEndOffset ? start : start + 1, end, " ");
+
+    int spacesToCreate = CodeStyleManager.getInstance(project).getSpacing(psiFile, end);
+    if (spacesToCreate < 0) spacesToCreate = 1;
+    String spacing = StringUtil.repeatSymbol(' ', spacesToCreate);
+
+    doc.replaceString(replaceStart, end, spacing);
+    docManager.commitDocument(doc);
 
     if (start <= doc.getLineStartOffset(startLine)) {
       try {
@@ -241,29 +246,6 @@ public class JoinLinesHandler extends EditorActionHandler {
       }
     }
 
-    int prevLineCount = doc.getLineCount();
-
-    docManager.commitDocument(doc);
-    try {
-      CodeStyleManager.getInstance(project).reformatRange(psiFile, start + 1, end, true);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-
-    if (prevLineCount < doc.getLineCount()) {
-      docManager.doPostponedOperationsAndUnblockDocument(doc);
-      end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
-      start = end - doc.getLineSeparatorLength(startLine);
-      int addedLinesCount = doc.getLineCount() - prevLineCount - 1;
-      while (end < doc.getTextLength() &&
-             (text.charAt(end) == ' ' || text.charAt(end) == '\t' || text.charAt(end) == '\n' && addedLinesCount > 0)) {
-        if (text.charAt(end) == '\n') addedLinesCount--;
-        end++;
-      }
-      doc.replaceString(start, end, " ");
-    }
-
     docManager.commitDocument(doc);
   }
 
@@ -271,8 +253,11 @@ public class JoinLinesHandler extends EditorActionHandler {
     int lineEndOffset;
     int lastNonSpaceOffsetInStartLine;
     int firstNonSpaceOffsetInNextLine;
-    boolean isStartLineEndsWithComment;
-    boolean isNextLineStartsWithComment;
+    PsiComment commentAtLineEnd;
+    PsiComment commentAtLineStart;
+    boolean isStartLineEndsWithComment() { return commentAtLineEnd != null; }
+    boolean isNextLineStartsWithComment() { return commentAtLineStart != null; }
+    boolean isJoiningSameComment() { return commentAtLineStart == commentAtLineEnd; }
     PsiElement elementAtStartLineEnd;
   }
 
@@ -287,7 +272,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       offsets.firstNonSpaceOffsetInNextLine++;
     }
     PsiElement elementAtNextLineStart = psiFile.findElementAt(offsets.firstNonSpaceOffsetInNextLine);
-    offsets.isNextLineStartsWithComment = isCommentElement(elementAtNextLineStart);
+    offsets.commentAtLineStart = getCommentElement(elementAtNextLineStart);
 
     offsets.lastNonSpaceOffsetInStartLine = offsets.lineEndOffset;
     while (offsets.lastNonSpaceOffsetInStartLine > 0 &&
@@ -296,7 +281,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
     int elemOffset = offsets.lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine) ? offsets.lastNonSpaceOffsetInStartLine - 1 : -1;
     offsets.elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
-    offsets.isStartLineEndsWithComment = isCommentElement(offsets.elementAtStartLineEnd);
+    offsets.commentAtLineEnd = getCommentElement(offsets.elementAtStartLineEnd);
     return offsets;
 
   }
@@ -325,7 +310,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
   }
 
-  private static boolean isCommentElement(@Nullable final PsiElement element) {
-    return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
+  private static PsiComment getCommentElement(@Nullable final PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
   }
 }

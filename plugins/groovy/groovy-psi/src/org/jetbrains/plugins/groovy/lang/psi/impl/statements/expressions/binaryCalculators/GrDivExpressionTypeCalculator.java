@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrDivExpressionTypeCalculator extends GrNumericBinaryExpressionTypeCalculator {
   public static final GrDivExpressionTypeCalculator INSTANCE = new GrDivExpressionTypeCalculator();
 

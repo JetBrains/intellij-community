@@ -15,39 +15,16 @@
  */
 package com.siyeh.ipp.increment;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExtractIncrementPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiPrefixExpression) &&
-        !(element instanceof PsiPostfixExpression)) {
-      return false;
-    }
-    final IElementType tokenType;
-    if (element instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression =
-        (PsiPostfixExpression)element;
-      final PsiExpression operand = postfixExpression.getOperand();
-      if (!(operand instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      tokenType = postfixExpression.getOperationTokenType();
-    }
-    else {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)element;
-      final PsiExpression operand = prefixExpression.getOperand();
-      if (!(operand instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      tokenType = prefixExpression.getOperationTokenType();
-    }
-    if (!JavaTokenType.PLUSPLUS.equals(tokenType) &&
-        !JavaTokenType.MINUSMINUS.equals(tokenType)) {
+    if (IncrementUtil.getIncrementOrDecrementOperand(element) == null) {
       return false;
     }
     final PsiElement parent = element.getParent();

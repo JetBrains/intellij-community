@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,11 +216,10 @@ public class GroovyWrappingProcessor {
       return Wrap.createWrap(mySettings.BINARY_OPERATION_WRAP, false);
     }
 
-
-    if (myParentType == GroovyElementTypes.ASSIGNMENT_EXPRESSION) {
+    if (myParentType == GroovyElementTypes.ASSIGNMENT_EXPRESSION ||
+        myParentType == GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION) {
       return Wrap.createWrap(mySettings.ASSIGNMENT_WRAP, false);
     }
-
 
     if (myParentType == GroovyElementTypes.CONDITIONAL_EXPRESSION || myParentType == GroovyElementTypes.ELVIS_EXPRESSION) {
       return Wrap.createWrap(mySettings.TERNARY_OPERATION_WRAP, false);

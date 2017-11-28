@@ -51,8 +51,8 @@ public class TodoFilter implements Cloneable {
   }
 
   /**
-   * @return <code>true</code> if and only if specified <code>psiFile</code> has
-   * <code>TodoItem</code>s accepted by the filter.
+   * @return {@code true} if and only if specified {@code psiFile} has
+   * {@code TodoItem}s accepted by the filter.
    */
   public boolean accept(PsiTodoSearchHelper searchHelper, PsiFile psiFile) {
     for (Iterator<TodoPattern> i = iterator(); i.hasNext(); ) {
@@ -65,7 +65,7 @@ public class TodoFilter implements Cloneable {
   }
 
   /**
-   * @return filter's name. That is not <code>null</code> string.
+   * @return filter's name. That is not {@code null} string.
    */
   public String getName() {
     return myName;
@@ -76,14 +76,14 @@ public class TodoFilter implements Cloneable {
   }
 
   /**
-   * @return <code>true</code> if and only if filters contains specified <code>pattern</code>.
+   * @return {@code true} if and only if filters contains specified {@code pattern}.
    */
   public boolean contains(TodoPattern pattern) {
     return myTodoPatterns.contains(pattern);
   }
 
   /**
-   * Adds specified <code>pattern</code> to the set of containing patterns.
+   * Adds specified {@code pattern} to the set of containing patterns.
    */
   public void addTodoPattern(TodoPattern pattern) {
     LOG.assertTrue(!myTodoPatterns.contains(pattern));
@@ -91,7 +91,7 @@ public class TodoFilter implements Cloneable {
   }
 
   /**
-   * Adds specified <code>pattern</code> from the set of containing patterns.
+   * Adds specified {@code pattern} from the set of containing patterns.
    */
   public void removeTodoPattern(TodoPattern pattern) {
     LOG.assertTrue(myTodoPatterns.contains(pattern));
@@ -106,7 +106,7 @@ public class TodoFilter implements Cloneable {
   }
 
   /**
-   * @return <code>true</code> if and only if filter contains no <code>TodoPattern</code>s.
+   * @return {@code true} if and only if filter contains no {@code TodoPattern}s.
    */
   public boolean isEmpty() {
     return myTodoPatterns.isEmpty();

@@ -1,9 +1,6 @@
 package com.intellij.json;
 
 import com.intellij.json.formatter.JsonCodeStyleSettings;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,12 +12,7 @@ public class JsonEditingTest extends JsonTestCase {
   private void doTest(@NotNull final String characters) {
     final String testName = "editing/" + getTestName(false);
     myFixture.configureByFile(testName + ".json");
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, (Computable<PsiFile>)() -> {
-      myFixture.getEditor().getCaretModel().moveToOffset(offset);
-      myFixture.type(characters);
-      return myFixture.getFile();
-    });
+    myFixture.type(characters);
     myFixture.checkResultByFile(testName + ".after.json");
   }
 

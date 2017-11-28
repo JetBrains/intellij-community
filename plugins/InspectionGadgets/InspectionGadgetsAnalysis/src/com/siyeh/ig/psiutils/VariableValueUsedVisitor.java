@@ -63,43 +63,18 @@ class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitPrefixExpression(
-    @NotNull PsiPrefixExpression prefixExpression) {
+  public void visitUnaryExpression(
+    @NotNull PsiUnaryExpression unaryExpression) {
     if (read || written) {
       return;
     }
-    super.visitPrefixExpression(prefixExpression);
-    final IElementType tokenType = prefixExpression.getOperationTokenType();
+    super.visitUnaryExpression(unaryExpression);
+    final IElementType tokenType = unaryExpression.getOperationTokenType();
     if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
         !tokenType.equals(JavaTokenType.MINUSMINUS)) {
       return;
     }
-    final PsiExpression operand = prefixExpression.getOperand();
-    if (!(operand instanceof PsiReferenceExpression)) {
-      return;
-    }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)operand;
-    final PsiElement target = referenceExpression.resolve();
-    if (!variable.equals(target)) {
-      return;
-    }
-    written = true;
-  }
-
-  @Override
-  public void visitPostfixExpression(
-    @NotNull PsiPostfixExpression postfixExpression) {
-    if (read || written) {
-      return;
-    }
-    super.visitPostfixExpression(postfixExpression);
-    final IElementType tokenType = postfixExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-      return;
-    }
-    final PsiExpression operand = postfixExpression.getOperand();
+    final PsiExpression operand = unaryExpression.getOperand();
     if (!(operand instanceof PsiReferenceExpression)) {
       return;
     }

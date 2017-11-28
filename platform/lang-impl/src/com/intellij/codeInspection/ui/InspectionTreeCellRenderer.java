@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   }
 
   private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
-    if (node.isExcluded(myView.getExcludedManager())) {
+    if (node.isExcluded()) {
       return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
     }
     if (node instanceof SuppressableInspectionTreeNode && ((SuppressableInspectionTreeNode)node).isQuickFixAppliedFromView()) {
@@ -90,11 +90,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
           foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.blue);
         }
       }
-    }
-    final FileStatus nodeStatus = node.getNodeStatus();
-    if (nodeStatus != FileStatus.NOT_CHANGED) {
-      foreground =
-        new SimpleTextAttributes(foreground.getBgColor(), nodeStatus.getColor(), foreground.getWaveColor(), foreground.getStyle());
     }
     return foreground;
   }

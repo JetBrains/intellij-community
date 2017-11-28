@@ -57,7 +57,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     ComparisonPolicy comparisonPolicy = ignorePolicy.getComparisonPolicy();
 
     List<CharSequence> sequences = ContainerUtil.list(text1, text2, text3);
-    List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsets::create);
+    List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
 
     indicator.checkCanceled();
     List<MergeLineFragment> lineFragments = ComparisonManager.getInstance().compareLines(text1, text2, text3, comparisonPolicy, indicator);

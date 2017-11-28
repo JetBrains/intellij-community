@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -136,7 +137,7 @@ public class PsiUtil {
     return flag;
   }
 
-  public static boolean isPluginProject(final Project project) {
+  public static boolean isPluginProject(@NotNull final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       boolean foundMarkerClass =
         JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
@@ -145,12 +146,21 @@ public class PsiUtil {
     });
   }
 
+  public static boolean isPluginModule(@NotNull final Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      boolean foundMarkerClass = JavaPsiFacade.getInstance(module.getProject())
+                                   .findClass(IDE_PROJECT_MARKER_CLASS,
+                                              GlobalSearchScope.moduleRuntimeScope(module, false)) != null;
+      return CachedValueProvider.Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(module.getProject()));
+    });
+  }
+
   private static boolean isIntelliJBasedDir(VirtualFile baseDir) {
     if (baseDir == null) {
       return false;
     }
 
-    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community")}) {
+    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community"), baseDir.findChild("ultimate")}) {
       if (dir == null || !dir.isDirectory()) {
         continue;
       }

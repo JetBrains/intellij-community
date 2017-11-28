@@ -22,11 +22,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -54,19 +51,19 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (!isLeaf()) {
         appendCount(renderer);
       }
-      renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
     else {
       if (renderer.isShowFlatten()) {
         renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         FilePath parentPath = path.getParentPath();
-        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendParentPath(renderer, parentPath.getPresentableUrl());
       }
       else {
         renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      renderer.setIcon(path.getFileType().getIcon());
     }
+
+    renderer.setIcon(path.getFileType(), path.isDirectory() || !isLeaf());
   }
 
   @NotNull

@@ -27,9 +27,6 @@ import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
 public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
                                           implements PythonDocTestRunConfigurationParams {
   protected String myPluralTitle = "Doctests";

@@ -16,7 +16,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -30,16 +32,27 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class OrderRootsCache {
+class OrderRootsCache {
   private final Map<CacheKey, VirtualFilePointerContainer> myRoots = ContainerUtil.newConcurrentMap();
   private final Disposable myParentDisposable;
+  private Disposable myRootsDisposable; // accessed in EDT
 
-  public OrderRootsCache(@NotNull Disposable parentDisposable) {
+  OrderRootsCache(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
+    disposePointers();
   }
 
-  public VirtualFilePointerContainer setCachedRoots(OrderRootType rootType, int flags, Collection<String> urls) {
-    final VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myParentDisposable);
+  private void disposePointers() {
+    if (myRootsDisposable != null) {
+      Disposer.dispose(myRootsDisposable);
+    }
+    if (!Disposer.isDisposing(myParentDisposable)) {
+      Disposer.register(myParentDisposable, myRootsDisposable = Disposer.newDisposable());
+    }
+  }
+
+  VirtualFilePointerContainer setCachedRoots(@NotNull OrderRootType rootType, int flags, @NotNull Collection<String> urls) {
+    final VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
     for (String url : urls) {
       container.add(url);
     }
@@ -48,21 +61,20 @@ public class OrderRootsCache {
   }
 
   @Nullable
-  public VirtualFile[] getCachedRoots(OrderRootType rootType, int flags) {
+  public VirtualFile[] getCachedRoots(@NotNull OrderRootType rootType, int flags) {
     final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
     return cached == null ? null : cached.getFiles();
   }
 
   @Nullable
-  public String[] getCachedUrls(OrderRootType rootType, int flags) {
+  public String[] getCachedUrls(@NotNull OrderRootType rootType, int flags) {
     final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
     return cached != null ? cached.getUrls() : null;
   }
 
   public void clearCache() {
-    for (VirtualFilePointerContainer container : myRoots.values()) {
-      container.killAll();
-    }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    disposePointers();
     myRoots.clear();
   }
 
@@ -70,7 +82,7 @@ public class OrderRootsCache {
     private final OrderRootType myRootType;
     private final int myFlags;
 
-    private CacheKey(OrderRootType rootType, int flags) {
+    private CacheKey(@NotNull OrderRootType rootType, int flags) {
       myRootType = rootType;
       myFlags = flags;
     }

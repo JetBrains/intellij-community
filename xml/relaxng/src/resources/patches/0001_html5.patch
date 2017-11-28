@@ -1,8 +1,8 @@
 --- /Users/denofevil/Code/sandbox/checker/syntax/relaxng/html5full-rdfa.rnc	2014-01-24 12:19:52.000000000 +0400
 +++ html5/html5full-rdfa.rnc	2014-01-24 13:28:00.000000000 +0400
 @@ -6,13 +6,17 @@
- 		nonHTMLizable = notAllowed
- 		nonRoundtrippable = notAllowed
+         nonHTMLizable = notAllowed
+         nonRoundtrippable = notAllowed
  }
 +include "common-ext.rnc"
 +
@@ -19,8 +19,8 @@
  include "ruby.rnc"
  include "media.rnc"
 @@ -33,5 +37,6 @@
- 				)
- 			)
+                  )
+             )
  }
 +include "meta-ext.rnc"
  include "microdata.rnc"

@@ -16,11 +16,9 @@
 package com.intellij.uiDesigner.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.MultiFileTestCase;
@@ -39,15 +37,15 @@ public class MoveFileTest extends MultiFileTestCase {
     return "/move/";
   }
 
-  public void testMoveIcon() throws Exception {
+  public void testMoveIcon() {
     doTest("to", "from/addmodulewizard.png");
   }
 
   //Both names are relative to root directory
-  private void doTest(final String targetDirName, final String fileToMove) throws Exception {
+  private void doTest(final String targetDirName, final String fileToMove) {
     doTest(new PerformAction() {
       @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
         final VirtualFile child = rootDir.findFileByRelativePath(fileToMove);
         assertNotNull("File " + fileToMove + " not found", child);
         PsiFile file = myPsiManager.findFile(child);

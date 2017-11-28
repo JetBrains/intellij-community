@@ -53,6 +53,8 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
@@ -107,9 +109,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getToolbarActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyReadOnlyLockAction());
@@ -124,9 +124,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getPopupActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
 
@@ -736,7 +734,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (!helper.process(diffChange.getStartLine(Side.LEFT), diffChange.getStartLine(Side.RIGHT))) return;
         if (!helper.process(diffChange.getEndLine(Side.LEFT), diffChange.getEndLine(Side.RIGHT))) return;
       }
-      helper.process(getEditor1().getDocument().getLineCount(), getEditor2().getDocument().getLineCount());
+      helper.process(getLineCount(getEditor1().getDocument()), getLineCount(getEditor2().getDocument()));
     }
   }
 
@@ -748,7 +746,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor(getEditor1()));
       gg.fill(gg.getClipBounds());
 
-      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
 
       myFoldingModel.paintOnDivider(gg, divider);
@@ -819,7 +816,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     public MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
-      super(editors.toArray(new EditorEx[2]), disposable);
+      super(toObjectArray(editors, EditorEx.class), disposable);
     }
 
     public void install(@Nullable final List<LineFragment> fragments,

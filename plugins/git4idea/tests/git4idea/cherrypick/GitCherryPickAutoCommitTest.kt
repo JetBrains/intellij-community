@@ -15,7 +15,10 @@
  */
 package git4idea.cherrypick
 
-import git4idea.test.*
+import git4idea.test.branch
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.file
 
 class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
@@ -68,7 +71,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
   fun `test resolve conflicts but cancel commit`() {
     val commit = prepareConflict()
-    vcsHelper.onMerge { git("add -u .") }
+    `mark as resolved on merge`()
     vcsHelper.onCommit { msg -> false }
 
     cherryPick(commit)
@@ -111,7 +114,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2, commit3)
 
-    assertErrorNotification("Cherry-pick failed", """
+    assertErrorNotification("Cherry-pick Failed", """
       ${shortHash(commit2)} appended common
       Your local changes would be overwritten by cherry-pick.
       Commit your changes or stash them to proceed.
@@ -172,6 +175,6 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
-      ${shortHash(emptyCommit)} wasn't picked, because all changes from it have already been applied.""")
+      ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
   }
 }

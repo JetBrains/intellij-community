@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector {
+public class PyPackageUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "py-packages";
 
   @NotNull

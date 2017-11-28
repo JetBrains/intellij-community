@@ -41,13 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.01.2003
- * Time: 16:13:27
- * To change this template use Options | File Templates.
- */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
 
   private final boolean myInJavaDoc;
@@ -253,15 +246,28 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
     // compiled element can't be changed so we don't pollute the completion with them. In Javadoc, everything is allowed.
     if (!myOptions.checkAccess && myInJavaDoc) return true;
-    if (!(element instanceof PsiMember)) return true;
 
-    PsiMember member = (PsiMember)element;
-    PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
-    if (JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
-                                                                                        accessObjectClass, myDeclarationHolder)) {
+    if (isAccessibleForResolve(element)) {
       return true;
     }
     return !myOptions.checkAccess && !(element instanceof PsiCompiledElement);
+  }
+
+  private boolean isAccessibleForResolve(@Nullable PsiElement element) {
+    if (element instanceof PsiMember) {
+      PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
+      PsiMember member = (PsiMember)element;
+      return getResolveHelper().isAccessible(member, member.getModifierList(), myElement, accessObjectClass, myDeclarationHolder);
+    }
+    if (element instanceof PsiPackage) {
+      return getResolveHelper().isAccessible((PsiPackage)element, myElement);
+    }
+    return true;
+  }
+
+  @NotNull
+  private PsiResolveHelper getResolveHelper() {
+    return JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

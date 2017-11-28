@@ -33,9 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
@@ -86,9 +87,11 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   @NotNull
   private static Pair<FilePath, VirtualFile> getPathAndParentFile(@NotNull VcsContext context) {
-    if (context.getSelectedFilesStream().findAny().isPresent()) {
-      VirtualFile file = getIfSingle(context.getSelectedFilesStream());
-      return file != null ? Pair.create(VcsUtil.getFilePath(file), file) : Pair.empty();
+    List<VirtualFile> selectedFiles = context.getSelectedFilesStream().limit(2).collect(Collectors.toList());
+    if (selectedFiles.size() > 0) {
+      if (selectedFiles.size() != 1) return Pair.empty();
+      VirtualFile file = selectedFiles.get(0);
+      return Pair.create(VcsUtil.getFilePath(file), file);
     }
 
     File[] ioFiles = context.getSelectedIOFiles();
@@ -131,6 +134,6 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {
     VcsHistoryProvider provider = assertNotNull(vcs.getVcsHistoryProvider());
-    AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, null, vcs);
+    AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, vcs);
   }
 }

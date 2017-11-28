@@ -73,8 +73,6 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
-
   protected static Editor myEditor;
   protected static PsiFile myFile;
   protected static VirtualFile myVFile;
@@ -196,7 +194,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
-    return new WriteCommandAction<Editor>(null) {
+    return new WriteCommandAction<Editor>(getProject()) {
       @Override
       protected void run(@NotNull Result<Editor> result) throws Throwable {
         final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
@@ -204,7 +202,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
         String newFileText = fakeDocument.getText();
         Document document = EditorFactory.getInstance().createDocument(newFileText);
-        final Editor editor = EditorFactory.getInstance().createEditor(document);
+        final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
         ((EditorImpl)editor).setCaretActive();
 
         EditorTestUtil.setCaretsAndSelection(editor, caretsState);
@@ -239,26 +237,23 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
-    return WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Editor, IOException>() {
-      @Override
-      public Editor compute() throws IOException {
-        VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
-        VfsUtil.saveText(myVFile, fileText);
-        final FileDocumentManager manager = FileDocumentManager.getInstance();
-        final Document document = manager.getDocument(myVFile);
-        assertNotNull("Can't create document for '" + relativePath + "'", document);
-        manager.reloadFromDisk(document);
-        document.insertString(0, " ");
-        document.deleteString(0, 1);
-        PsiFile myFile = getPsiManager().findFile(myVFile);
-        assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
-        assertTrue(myFile.isPhysical());
-        Editor myEditor = createEditor(myVFile);
-        myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Editor, IOException>)() -> {
+      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
+      VfsUtil.saveText(myVFile, fileText);
+      final FileDocumentManager manager = FileDocumentManager.getInstance();
+      final Document document = manager.getDocument(myVFile);
+      assertNotNull("Can't create document for '" + relativePath + "'", document);
+      manager.reloadFromDisk(document);
+      document.insertString(0, " ");
+      document.deleteString(0, 1);
+      PsiFile myFile = getPsiManager().findFile(myVFile);
+      assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
+      assertTrue(myFile.isPhysical());
+      Editor myEditor = createEditor(myVFile);
+      myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        return myEditor;
-      }
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return myEditor;
     });
   }
 

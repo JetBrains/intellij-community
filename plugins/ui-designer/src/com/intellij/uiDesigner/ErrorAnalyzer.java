@@ -17,11 +17,14 @@ package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -68,7 +71,7 @@ public final class ErrorAnalyzer {
   private ErrorAnalyzer() {
   }
 
-  public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
+  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
     analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer, progress);
   }
 
@@ -204,35 +207,33 @@ public final class ErrorAnalyzer {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<>();
         final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
         for (FormInspectionTool formInspectionTool : registeredFormInspections) {
-          if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
+          if (formInspectionTool.isActive(formPsiFile) && !isSuppressed(rootContainer, formInspectionTool, null)) {
             formInspectionTools.add(formInspectionTool);
           }
         }
 
-        if (formInspectionTools.size() > 0 && editor != null) {
+        if (!formInspectionTools.isEmpty() && editor != null) {
           for (FormInspectionTool tool : formInspectionTools) {
             tool.startCheckForm(rootContainer);
           }
           FormEditingUtil.iterate(
             rootContainer,
-            new FormEditingUtil.ComponentVisitor<RadComponent>() {
-              public boolean visit(final RadComponent component) {
-                if (progress != null && progress.isCanceled()) return false;
+            (FormEditingUtil.ComponentVisitor<RadComponent>)(RadComponent component) -> {
+              if (progress != null && progress.isCanceled()) return false;
 
-                for (FormInspectionTool tool : formInspectionTools) {
-                  if (rootContainer.isInspectionSuppressed(tool.getShortName(), component.getId())) continue;
-                  ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
-                  if (errorInfos != null) {
-                    ArrayList<ErrorInfo> errorList = getErrorInfos(component);
-                    if (errorList == null) {
-                      errorList = new ArrayList<>();
-                      component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
-                    }
-                    Collections.addAll(errorList, errorInfos);
+              for (FormInspectionTool tool : formInspectionTools) {
+                if (isSuppressed(rootContainer, tool, component.getId())) continue;
+                ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
+                if (errorInfos != null) {
+                  ArrayList<ErrorInfo> errorList = getErrorInfos(component);
+                  if (errorList == null) {
+                    errorList = new ArrayList<>();
+                    component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                   }
+                  Collections.addAll(errorList, errorInfos);
                 }
-                return true;
               }
+              return true;
             }
           );
           for (FormInspectionTool tool : formInspectionTools) {
@@ -241,9 +242,25 @@ public final class ErrorAnalyzer {
         }
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  public static boolean isSuppressed(@NotNull IRootContainer rootContainer,
+                                     @NotNull FormInspectionTool formInspectionTool, String componentId) {
+    String shortName = formInspectionTool.getShortName();
+    if (rootContainer.isInspectionSuppressed(shortName, componentId)) return true;
+    if (formInspectionTool instanceof LocalInspectionTool) {
+      String alternativeID = ((LocalInspectionTool)formInspectionTool).getAlternativeID();
+      if (!Comparing.equal(alternativeID, shortName)) {
+        return rootContainer.isInspectionSuppressed(alternativeID, componentId);
+      }
+    }
+    return false;
   }
 
   private static boolean validateFieldInClass(final IComponent component, final String fieldName, final String fieldClassName,
@@ -305,7 +322,7 @@ public final class ErrorAnalyzer {
         return true;
       }
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
     }
 
     if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
@@ -335,7 +352,7 @@ public final class ErrorAnalyzer {
 
   /**
    * @return first ErrorInfo for the specified component. If component doesn't contain
-   * any error then the method returns <code>null</code>.
+   * any error then the method returns {@code null}.
    */
   @Nullable
   public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){

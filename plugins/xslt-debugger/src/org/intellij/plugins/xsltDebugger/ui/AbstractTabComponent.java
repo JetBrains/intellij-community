@@ -5,11 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.03.11
-*/
 abstract class AbstractTabComponent extends AdditionalTabComponent {
   private final String myTabTitle;
 

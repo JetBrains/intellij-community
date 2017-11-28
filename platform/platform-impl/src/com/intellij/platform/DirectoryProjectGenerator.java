@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +34,11 @@ import javax.swing.*;
 public interface DirectoryProjectGenerator<T> {
   ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
-  @NotNull
-  @Nls
-  String getName();
+  @Deprecated
+  @Nullable
+  default Integer getPreferredDescriptionWidth() {
+    return null;
+  }
 
   /**
    * @deprecated todo[vokin]: delete in 2016.3
@@ -45,14 +48,55 @@ public interface DirectoryProjectGenerator<T> {
     return null;
   }
 
+  @Nullable
+  default String getDescription() {
+    return null;
+  }
+
+  @Nullable
+  default String getHelpId() {
+    return null;
+  }
+
+  // to be removed in 2017.3
+  @Deprecated
+  default boolean isPrimaryGenerator() {
+    return true;
+  }
+
+  @NotNull
+  @Nls
+  String getName();
+
+  @NotNull
+  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
+      @NotNull
+      @Override
+      protected ProjectGeneratorPeer<T> compute() {
+        return createPeer();
+      }
+    };
+  }
+
+  /**
+   * Creates new peer - new project settings and UI for them
+   */
+  @NotNull
+  default ProjectGeneratorPeer<T> createPeer() {
+    return new GeneratorPeerImpl<>();
+  }
+
   /**
    * @return 16x16 icon or null, if no icon is available
    */
   @Nullable
   Icon getLogo();
 
-  void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                       @Nullable final T settings, @NotNull final Module module);
+  void generateProject(@NotNull final Project project,
+                       @NotNull final VirtualFile baseDir,
+                       @NotNull final T settings,
+                       @NotNull final Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

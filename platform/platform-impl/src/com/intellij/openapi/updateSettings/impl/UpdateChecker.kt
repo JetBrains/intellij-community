@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -55,7 +53,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.nio.charset.Charset
 import java.util.*
 
@@ -72,7 +69,6 @@ object UpdateChecker {
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val DISABLED_UPDATE = "disabled_update.txt"
-  private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
@@ -112,7 +108,8 @@ object UpdateChecker {
     })
   }
 
-  private fun doUpdateAndShowResult(project: Project?,
+  @JvmStatic
+  fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
                                     manualCheck: Boolean,
                                     updateSettings: UpdateSettings,
@@ -123,11 +120,7 @@ object UpdateChecker {
     indicator?.text = IdeBundle.message("updates.checking.platform")
 
     val result = checkPlatformUpdate(updateSettings)
-
-    if (manualCheck && result.state == UpdateStrategy.State.LOADED) {
-      UpdateSettings.getInstance().saveLastCheckedInfo()
-    }
-    else if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
+    if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
       val e = result.error
       if (e != null) LOG.debug(e)
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
@@ -155,6 +148,8 @@ object UpdateChecker {
 
     // show result
 
+    UpdateSettings.getInstance().saveLastCheckedInfo()
+
     ApplicationManager.getApplication().invokeLater({
       showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
@@ -162,7 +157,7 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (SystemProperties.getBooleanProperty(NO_PLATFORM_UPDATE, false)) {
+    if (!settings.isPlatformUpdateEnabled) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
@@ -209,7 +204,8 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
-  private fun checkPluginsUpdate(updateSettings: UpdateSettings,
+  @JvmStatic
+  fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  apiVersion: BuildNumber?,
@@ -227,7 +223,7 @@ object UpdateChecker {
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
-        val list = RepositoryHelper.loadPlugins(host, apiVersion, buildNumber, null, forceHttps, indicator)
+        val list = RepositoryHelper.loadPlugins(host, apiVersion, buildNumber, forceHttps, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
@@ -472,7 +468,7 @@ object UpdateChecker {
 
   private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", PermanentInstallationID.get())
+    addUpdateRequestParameter("uid", PermanentInstallationIDImpl.INSTALLATION_ID)
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -487,7 +483,7 @@ object UpdateChecker {
   @JvmStatic
   //@Suppress("unused", "UNUSED_PARAMETER")
   // TODO: Replace this custom Studio code with an upgraded PermanentInstallationID!
-  //fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
+  //fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationIDImpl.INSTALLATION_ID
   fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
     // Android Studio: we'd like a single user id across various versions of Studio.
     // The existing IntelliJ implementation (see getIntelliJInstallationUID below) used a single location on Windows, but on Mac and Linux,

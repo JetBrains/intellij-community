@@ -39,7 +39,7 @@ public class TreeList extends JBList implements TreeModelListener {
   private final DefaultListModel myListModel = new DefaultListModel();
 
   /**
-   * Constructs a <code>JList</code> with an empty model.
+   * Constructs a {@code JList} with an empty model.
    */
   public TreeList(TreeModel treeModel) {
     super.setModel(myListModel);
@@ -70,14 +70,14 @@ public class TreeList extends JBList implements TreeModelListener {
   /**
    * Sets the model that represents the contents or "value" of the
    * list and clears the list selection after notifying
-   * <code>PropertyChangeListeners</code>.
+   * {@code PropertyChangeListeners}.
    * <p>
    * This is a JavaBeans bound property.
    *
-   * @param model  the <code>ListModel</code> that provides the
+   * @param model  the {@code ListModel} that provides the
    *						list of items for display
-   * @exception IllegalArgumentException  if <code>model</code> is
-   *						<code>null</code>
+   * @exception IllegalArgumentException  if {@code model} is
+   *						{@code null}
    * @see #getModel
    * @beaninfo
    *       bound: true
@@ -98,9 +98,9 @@ public class TreeList extends JBList implements TreeModelListener {
    * <p>To indicate the root has changed, childIndices and children
    * will be null. </p>
    *
-   * <p>Use <code>e.getPath()</code>
+   * <p>Use {@code e.getPath()}
    * to get the parent of the changed node(s).
-   * <code>e.getChildIndices()</code>
+   * {@code e.getChildIndices()}
    * returns the index(es) of the changed node(s).</p>
    */
   public void treeNodesChanged(TreeModelEvent e) {
@@ -110,9 +110,9 @@ public class TreeList extends JBList implements TreeModelListener {
   /**
    * <p>Invoked after nodes have been inserted into the tree.</p>
    *
-   * <p>Use <code>e.getPath()</code>
+   * <p>Use {@code e.getPath()}
    * to get the parent of the new node(s).
-   * <code>e.getChildIndices()</code>
+   * {@code e.getChildIndices()}
    * returns the index(es) of the new node(s)
    * in ascending order.</p>
    */
@@ -126,9 +126,9 @@ public class TreeList extends JBList implements TreeModelListener {
    * invoked once for the root of the removed subtree, not once for
    * each individual set of siblings removed.</p>
    *
-   * <p>Use <code>e.getPath()</code>
+   * <p>Use {@code e.getPath()}
    * to get the former parent of the deleted node(s).
-   * <code>e.getChildIndices()</code>
+   * {@code e.getChildIndices()}
    * returns, in ascending order, the index(es)
    * the node(s) had before being deleted.</p>
    */
@@ -142,9 +142,9 @@ public class TreeList extends JBList implements TreeModelListener {
    * one and the first element does not identify the current root node
    * the first element should become the new root of the tree.<p>
    *
-   * <p>Use <code>e.getPath()</code>
+   * <p>Use {@code e.getPath()}
    * to get the path to the node.
-   * <code>e.getChildIndices()</code>
+   * {@code e.getChildIndices()}
    * returns null.</p>
    */
   public void treeStructureChanged(TreeModelEvent e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "reference.idesettings.debugger";
   }
 
+  @NotNull
   @Override
   public Configurable[] getConfigurables() {
     compute();
@@ -142,11 +143,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public boolean hasOwnContent() {
     compute();
     return myRootConfigurable != null;
-  }
-
-  @Override
-  public boolean isVisible() {
-    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions().length != 0;
   }
 
   @Override

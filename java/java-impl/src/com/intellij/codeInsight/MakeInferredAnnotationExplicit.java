@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,8 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull final Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    if (leaf == null) return false;
+    final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
@@ -82,7 +84,8 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    assert leaf != null;
+    final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
     final PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;

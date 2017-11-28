@@ -38,6 +38,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
   private ChangeListManager clManager;
   //private static final Logger LOG = Logger.getInstance("#SvnChangesCorrectlyRefreshedTest");
@@ -64,7 +66,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
     private static final String ourS1Contents = "123";
     private static final String ourS2Contents = "abc";
 
-    private SubTree(final VirtualFile base) throws Exception {
+    private SubTree(final VirtualFile base) {
       myRootDir = createDirInCommand(base, "root");
       mySourceDir = createDirInCommand(myRootDir, "source");
       myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
@@ -91,7 +93,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
     Assert.assertEquals("new content", text1.toString());
 
     sleep(100);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();
@@ -235,7 +237,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
   }
   
   @Test
-  public void testAddDirEditFileAndAfterRevert() throws Throwable {
+  public void testAddDirEditFileAndAfterRevert() {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();

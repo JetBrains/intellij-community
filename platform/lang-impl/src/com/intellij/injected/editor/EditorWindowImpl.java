@@ -60,8 +60,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author Alexey
@@ -73,7 +73,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final List<EditorWindowImpl> allEditors = new WeakList<>();
+  private static final Collection<EditorWindowImpl> allEditors = new WeakList<>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
@@ -308,6 +308,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public InlayModel getInlayModel() {
     return myInlayModel;
+  }
+
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return myDelegate.getEditorKind();
   }
 
   @Override
@@ -568,6 +574,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myDelegate.setBackgroundColor(color);
   }
 
+  @NotNull
   @Override
   public Color getBackgroundColor() {
     return myDelegate.getBackgroundColor();

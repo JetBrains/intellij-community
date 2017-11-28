@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -46,7 +47,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TreePopupImpl extends WizardPopup implements TreePopup {
+public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.tree.TreePopupImpl");
   private MyTree myWizardTree;
 
@@ -382,7 +383,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     }
   }
 
-  private void handleNextStep(PopupStep nextStep, Object parentValue) {
+  public void handleNextStep(PopupStep nextStep, Object parentValue) {
     final Rectangle pathBounds = myWizardTree.getPathBounds(myWizardTree.getSelectionPath());
     final Point point = new RelativePoint(myWizardTree, new Point(getContent().getWidth() + 2, (int) pathBounds.getY())).getScreenPoint();
     myChild = createPopup(this, nextStep, parentValue);

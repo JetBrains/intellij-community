@@ -19,12 +19,6 @@ import com.intellij.openapi.project.Project;
 
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 1:55 PM
- */
 public interface WorkingSetSerializable<Valid, Invalid> {
   String getId();
 

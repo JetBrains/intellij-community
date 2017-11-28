@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author irengrig
@@ -47,12 +45,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(JBUI.insets(2));
-    myLoadMoreBtn.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        MoreAction.this.actionPerformed(null);
-      }
-    });
+    myLoadMoreBtn.addActionListener(e -> this.actionPerformed(null));
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel("Loading...");
     myLabel.setForeground(UIUtil.getInactiveTextColor());

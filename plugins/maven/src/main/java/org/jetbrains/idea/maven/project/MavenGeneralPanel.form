@@ -40,7 +40,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="83fac" class="com.intellij.ui.components.JBLabel" binding="myMultiprojectBuildFailPolicyLabel">
+      <component id="83fac" class="com.intellij.ui.components.JBLabel" binding="myMultiProjectBuildFailPolicyLabel">
         <constraints>
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

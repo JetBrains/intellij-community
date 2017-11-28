@@ -173,7 +173,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
     final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
     if (scriptFile == null) return null;
 
@@ -189,7 +189,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         if (scriptRunner.shouldRefreshAfterFinish()) {
           handler.addProcessListener(new ProcessAdapter() {
             @Override
-            public void processTerminated(ProcessEvent event) {
+            public void processTerminated(@NotNull ProcessEvent event) {
               if (!ApplicationManager.getApplication().isDisposed()) {
                 VirtualFileManager.getInstance().asyncRefresh(null);
               }

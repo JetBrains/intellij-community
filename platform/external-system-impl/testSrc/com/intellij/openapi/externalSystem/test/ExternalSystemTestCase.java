@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.test;
 
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -38,7 +38,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
@@ -47,6 +50,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +64,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -75,15 +80,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
-
   protected Project myProject;
-
   protected File myTestDir;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
-
-  private List<String> myAllowedRoots = new ArrayList<>();
 
   @Before
   @Override
@@ -115,13 +116,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots);
     if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
+      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
     }
-
-    CompilerTestUtil.enableExternalCompiler();
   }
 
-  protected void collectAllowedRoots(List<String> roots) throws IOException {
+  protected void collectAllowedRoots(List<String> roots) {
   }
 
   public static Collection<String> collectRootsInside(String root) {
@@ -168,7 +167,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   public void tearDown() throws Exception {
     try {
       EdtTestUtil.runInEdtAndWait(() -> {
-        CompilerTestUtil.disableExternalCompiler(myProject);
         tearDownFixtures();
       });
       myProject = null;
@@ -254,7 +252,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -289,11 +287,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(root.getPath() + "/" + relPath);
   }
 
-  protected Module createModule(String name) throws IOException {
+  protected Module createModule(String name) {
     return createModule(name, StdModuleTypes.JAVA);
   }
 
-  protected Module createModule(final String name, final ModuleType type) throws IOException {
+  protected Module createModule(final String name, final ModuleType type) {
     return new WriteCommandAction<Module>(myProject) {
       @Override
       protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
@@ -305,11 +303,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }.execute().getResultObject();
   }
 
-  protected VirtualFile createProjectConfig(@NonNls String config) throws IOException {
+  protected VirtualFile createProjectConfig(@NonNls String config) {
     return myProjectConfig = createConfigFile(myProjectRoot, config);
   }
 
-  protected VirtualFile createConfigFile(final VirtualFile dir, String config) throws IOException {
+  protected VirtualFile createConfigFile(final VirtualFile dir, String config) {
     final String configFileName = getExternalSystemConfigFileName();
     VirtualFile f = dir.findChild(configFileName);
     if (f == null) {
@@ -453,19 +451,23 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected Sdk setupJdkForModule(final String moduleName) {
-    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
+    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk();
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }
 
-  protected static Sdk createJdk(String versionName) {
-    return IdeaTestUtil.getMockJdk17(versionName);
+  protected static Sdk createJdk() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   protected Module getModule(final String name) {
+    return getModule(myProject, name);
+  }
+
+  protected Module getModule(Project project, String name) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+      Module m = ModuleManager.getInstance(project).findModuleByName(name);
       assertNotNull("Module " + name + " not found", m);
       return m;
     }
@@ -499,7 +501,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     fs.assertFileEqual(file);
   }
 
-  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
+  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -559,6 +561,22 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected boolean ignore() {
     printIgnoredMessage(null);
     return true;
+  }
+
+  public static void deleteBuildSystemDirectory() {
+    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    try {
+      PathKt.delete(buildSystemDirectory);
+      return;
+    }
+    catch (Exception ignore) {
+    }
+    try {
+      FileUtil.delete(buildSystemDirectory.toFile());
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to remove build system directory.", e);
+    }
   }
 
   private void printIgnoredMessage(String message) {

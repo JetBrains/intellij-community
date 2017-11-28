@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A variant of {@link FoldingDescriptor} which keeps precalculated value of placeholder text. 
+ * This makes 'apply' phase of code folding pass (executed in EDT) faster. 
+ */
 public class NamedFoldingDescriptor extends FoldingDescriptor {
   private final String myPlaceholderText;
 

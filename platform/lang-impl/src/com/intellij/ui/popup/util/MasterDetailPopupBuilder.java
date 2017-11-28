@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -200,7 +199,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
 
     if (myDetailView == null) {
-      myDetailView = new DetailViewImpl(myProject);
+      setDetailView(new DetailViewImpl(myProject));
     }
 
     myPathLabel = new JLabel(" ");
@@ -222,7 +221,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
     JComponent toolBar = null;
     if (myActions != null) {
-      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
+      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("MasterDetailPopup", myActions, true);
       actionToolbar.setReservePlaceAutoPopupIcon(false);
       actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
       toolBar = actionToolbar.getComponent();
@@ -239,8 +238,8 @@ public class MasterDetailPopupBuilder implements MasterController {
       setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setItemChoosenCallback(itemCallback).
-      setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
+      setItemChoosenCallback(itemCallback);
+      //setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
       myPopupTuner.consume(builder);

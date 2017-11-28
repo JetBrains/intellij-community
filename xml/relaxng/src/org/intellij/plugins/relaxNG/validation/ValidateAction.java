@@ -53,11 +53,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";

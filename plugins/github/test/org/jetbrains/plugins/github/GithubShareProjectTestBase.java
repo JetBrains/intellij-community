@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
@@ -38,7 +37,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   protected String PROJECT_NAME;
 
   @Override
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
     Random rnd = new Random();
     long time = Clock.getTime();
     PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
@@ -87,7 +86,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
                                               for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
                                                 setGitIdentity(repository.getRoot());
                                               }
-                                              dialog.setSelectedFiles(Collections.<VirtualFile>emptyList());
+                                              dialog.setSelectedFiles(Collections.emptyList());
                                               return DialogWrapper.OK_EXIT_CODE;
                                             }
                                           });

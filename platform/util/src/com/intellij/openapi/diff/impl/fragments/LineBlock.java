@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.fragments;
 
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -62,7 +63,7 @@ public class LineBlock {
   public static final Comparator<LineBlock> COMPARATOR = new Comparator<LineBlock>() {
     @Override
     public int compare(LineBlock block1, LineBlock block2) {
-      return block1.getStartingLine1() - block2.getStartingLine1();
+      return Comparing.compare(block1.getStartingLine1(), block2.getStartingLine1());
     }
   };
 

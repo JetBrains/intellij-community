@@ -38,9 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
-/**
- * User: cdr
- */
 class TrafficProgressPanel extends JPanel {
   static final String MAX_TEXT = "100%";
   private static final String MIN_TEXT = "0%";
@@ -107,7 +104,7 @@ class TrafficProgressPanel extends JPanel {
     String text = label.getText();
     Icon icon = label.isEnabled() ? label.getIcon() : label.getDisabledIcon();
 
-    if ((icon == null) && (StringUtil.isEmpty(text))) {
+    if (icon == null && StringUtil.isEmpty(text)) {
       return 0;
     }
 
@@ -228,7 +225,7 @@ class TrafficProgressPanel extends JPanel {
 
       Pair<JProgressBar, JLabel> pair = myTrafficLightRenderer.passes.get(pass);
       JProgressBar progressBar = pair.getFirst();
-      progressBar.putClientProperty("JComponent.sizeVariant", "mini");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
       JLabel percLabel = pair.getSecond();
       myProgressToText.put(progressBar, percLabel);
       c.gridx = 0;

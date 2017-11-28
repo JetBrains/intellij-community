@@ -259,4 +259,5 @@ class A implements T {
   PsiMethod findMethod(String className, String methodName) {
     return JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)).findMethodsByName(methodName, false)[0]
   }
+
 }

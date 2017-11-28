@@ -30,13 +30,13 @@ public class SimpleClasspathElementFactory {
     final String level = element.getAttributeValue(GlobalLibraryReferenceElement.LEVEL_ATTRIBUTE);
     final String url = element.getChildText(SingleRootClasspathElement.URL_ELEMENT);
     if (!StringUtil.isEmpty(url)) {
-      return Collections.<SimpleClasspathElement>singletonList(new SingleRootClasspathElement(url));
+      return Collections.singletonList(new SingleRootClasspathElement(url));
     }
     if (name == null || level == null) {
       return Collections.emptyList();
     }
     if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) {
-      return Collections.<SimpleClasspathElement>singletonList(new GlobalLibraryReferenceElement(name));
+      return Collections.singletonList(new GlobalLibraryReferenceElement(name));
     }
     //this is needed only for backward compatibility with version before 8
     if (project != null) {
@@ -54,7 +54,7 @@ public class SimpleClasspathElementFactory {
   public static List<SimpleClasspathElement> createElements(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     if (table != null && LibraryTablesRegistrar.APPLICATION_LEVEL.equals(table.getTableLevel())) {
-      return Collections.<SimpleClasspathElement>singletonList(new GlobalLibraryReferenceElement(library.getName()));
+      return Collections.singletonList(new GlobalLibraryReferenceElement(library.getName()));
     }
     final List<SimpleClasspathElement> elements = new ArrayList<>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {

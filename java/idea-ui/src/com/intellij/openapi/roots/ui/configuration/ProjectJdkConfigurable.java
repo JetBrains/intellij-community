@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,6 @@ import java.awt.event.ActionListener;
 
 import static java.awt.GridBagConstraints.*;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
 public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
@@ -116,7 +112,9 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private void reloadModel() {
     myFreeze = true;
     final Sdk projectJdk = myJdksModel.getProjectSdk();
-    myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
+    if (myCbProjectJdk != null) {
+      myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
+    }
     final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectSdkName() : projectJdk.getName();
     if (sdkName != null) {
       final Sdk jdk = myJdksModel.findSdk(sdkName);

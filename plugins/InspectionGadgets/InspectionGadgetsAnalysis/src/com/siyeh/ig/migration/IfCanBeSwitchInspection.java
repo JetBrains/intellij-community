@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -29,10 +30,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -515,10 +513,17 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         return;
       }
-      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, onlySuggestNullSafe, false);
+      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, false, true);
       if (switchExpression == null) {
         return;
       }
+      final ProblemHighlightType highlightType = shouldHighlight(switchExpression)
+                                                 ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                                 : ProblemHighlightType.INFORMATION;
+      registerError(statement.getFirstChild(), highlightType, switchExpression);
+    }
+
+    private boolean shouldHighlight(PsiExpression switchExpression) {
       final PsiType type = switchExpression.getType();
       if (!suggestIntSwitches) {
         if (type instanceof PsiClassType) {
@@ -526,21 +531,38 @@ public class IfCanBeSwitchInspection extends BaseInspection {
               type.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
               type.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
               type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
-            return;
+            return false;
           }
         }
         else if (PsiType.INT.equals(type) || PsiType.SHORT.equals(type) || PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type)) {
-          return;
+          return false;
         }
       }
-      if (!suggestEnumSwitches && type instanceof PsiClassType) {
+      if (type instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)type;
         final PsiClass aClass = classType.resolve();
-        if (aClass == null || aClass.isEnum()) {
-          return;
+        if (aClass == null) {
+          return false;
+        }
+        if (!suggestEnumSwitches && aClass.isEnum()) {
+          return false;
+        }
+        if (CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName())) {
+          final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(switchExpression);
+          if (parent instanceof PsiExpressionList && onlySuggestNullSafe && !ExpressionUtils.isAnnotatedNotNull(switchExpression)) {
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiMethodCallExpression) {
+              final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+              if ("equals".equals(methodCallExpression.getMethodExpression().getReferenceName())) {
+                // Objects.equals(switchExpression, other) or other.equals(switchExpression)
+                return false;
+              }
+            }
+          }
+          return !(parent instanceof PsiPolyadicExpression); // == expression
         }
       }
-      registerStatementError(statement, switchExpression);
+      return !SideEffectChecker.mayHaveSideEffects(switchExpression);
     }
   }
 }

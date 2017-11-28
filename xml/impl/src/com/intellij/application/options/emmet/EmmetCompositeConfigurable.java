@@ -38,7 +38,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   private TemplateExpandShortcutPanel myTemplateExpandShortcutPanel;
   
   public EmmetCompositeConfigurable(@NotNull Configurable... innerConfigurables) {
-    this(Collections.<Configurable>emptyList(), innerConfigurables);
+    this(Collections.emptyList(), innerConfigurables);
   }
 
   public EmmetCompositeConfigurable(Collection<Configurable> nestedConfigurables, @NotNull Configurable... innerConfigurables) {

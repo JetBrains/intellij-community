@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.psi.search;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,9 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to retrieve files and Java classes, methods and fields in a project by
- * non-qualified names.
- *
+ * Allows to retrieve files and Java classes, methods and fields in a project by non-qualified names.
  */
 public abstract class PsiShortNamesCache {
   /**
@@ -40,11 +41,10 @@ public abstract class PsiShortNamesCache {
    * @param project the project to return the cache for.
    * @return the cache instance.
    */
-
   public static PsiShortNamesCache getInstance(Project project) {
     return ServiceManager.getService(project, PsiShortNamesCache.class);
   }
-  
+
   public static final ExtensionPointName<PsiShortNamesCache> EP_NAME = ExtensionPointName.create("com.intellij.java.shortNamesCache");
 
   /**
@@ -177,13 +177,17 @@ public abstract class PsiShortNamesCache {
    */
   public abstract void getAllFieldNames(@NotNull HashSet<String> set);
 
-  public boolean processFieldsWithName(@NotNull String name, @NotNull Processor<? super PsiField> processor,
-                                                @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processFieldsWithName(@NotNull String name,
+                                       @NotNull Processor<? super PsiField> processor,
+                                       @NotNull GlobalSearchScope scope,
+                                       @Nullable IdFilter filter) {
     return ContainerUtil.process(getFieldsByName(name, scope), processor);
   }
 
-  public boolean processClassesWithName(@NotNull String name, @NotNull Processor<? super PsiClass> processor,
-                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processClassesWithName(@NotNull String name,
+                                        @NotNull Processor<? super PsiClass> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
     return ContainerUtil.process(getClassesByName(name, scope), processor);
   }
 }

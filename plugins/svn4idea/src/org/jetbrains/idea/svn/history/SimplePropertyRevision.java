@@ -19,7 +19,7 @@ public class SimplePropertyRevision implements ContentRevision, PropertyRevision
 
   @Nullable
   @Override
-  public List<PropertyData> getProperties() throws VcsException {
+  public List<PropertyData> getProperties() {
     return myProperty;
   }
 

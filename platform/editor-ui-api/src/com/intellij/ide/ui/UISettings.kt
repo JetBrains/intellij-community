@@ -19,12 +19,14 @@ import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isValidFont
@@ -34,7 +36,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Transient
-import sun.swing.SwingUtilities2
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -49,11 +50,11 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   // should be stored or shouldn't by the provided filter only.
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_FACE")
-  var fontFace by storedProperty<String?>()
+  var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty(12)
+  var fontSize by storedProperty(defFontSize)
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
@@ -84,11 +85,14 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by storedProperty(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by storedProperty(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(1)
-  @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hdeKnownExtensionInTabs by storedProperty(false)
+  @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hideKnownExtensionInTabs by storedProperty(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by storedProperty(true)
+
   @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST") var closeNonModifiedFilesFirst by storedProperty(false)
   @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE") var activeMruEditorOnClose by storedProperty(false)
-  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
+  // TODO[anton] consider making all IDEs use the same settings
+  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRightEditorOnClose by storedProperty(PlatformUtils.isAppCode())
+
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("COLOR_BLINDNESS") var colorBlindness by storedProperty<ColorBlindness?>()
@@ -98,7 +102,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("ALPHA_MODE_RATIO") var alphaModeRatio by storedProperty(0.5f)
   @get:OptionTag("MAX_CLIPBOARD_CONTENTS") var maxClipboardContents by storedProperty(5)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS") var overrideLafFonts by storedProperty(false)
-  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(true)
+  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(!PlatformUtils.isAppCode())
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS") var disableMnemonics by storedProperty(SystemInfo.isMac)
   @get:OptionTag("DISABLE_MNEMONICS_IN_CONTROLS") var disableMnemonicsInControls by storedProperty(false)
@@ -113,18 +117,18 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
+  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.isJavaVersionAtLeast("9")))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
   @get:OptionTag("LANGUAGE_FLAGS") var languageFlags by storedProperty(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
   @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by storedProperty(true)
   @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks by storedProperty(false)
+  @get:OptionTag("PIN_FIND_IN_PATH_POPUP") var pinFindInPath by storedProperty(false)
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
   init {
-    tweakPlatformDefaults()
-
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
       defaultAutoScrollToSource = it
     }
@@ -133,15 +137,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   private fun withDefFont(): UISettings {
     initDefFont()
     return this
-  }
-
-  private fun tweakPlatformDefaults() {
-    // TODO[anton] consider making all IDEs use the same settings
-    if (PlatformUtils.isAppCode()) {
-      scrollTabLayoutInEditor = true
-      activeRigtEditorOnClose = true
-      showIconsInMenus = false
-    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -190,7 +185,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     val fontData = systemFontFaceAndSize
     if (fontFace == null) fontFace = fontData.first
     if (fontSize <= 0) fontSize = fontData.second
-    if (fontScale <= 0) fontScale = normalizingScale
+    if (fontScale <= 0) fontScale = defFontScale
   }
 
   class FontFilter : SerializationFilter {
@@ -231,7 +226,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
 
     fontSize = restoreFontSize(fontSize, fontScale)
-    fontScale = normalizingScale
+    fontScale = defFontScale
     initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -264,6 +259,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   }
 
   companion object {
+    private val LOG = Logger.getInstance(UISettings::class.java)
+
     const val ANIMATION_DURATION = 300 // Milliseconds
 
     /** Not tabbed pane.  */
@@ -355,28 +352,48 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent())
+      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
-      instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
+      instance.editorAAType?.let { GraphicsUtil.setAntialiasingType(component, it.textInfo) }
     }
 
+    /**
+     * Returns the default font scale, which depends on the HiDPI mode (see JBUI#ScaleType).
+     * <p>
+     * The font is represented:
+     * - in relative (dpi-independent) points in the JRE-managed HiDPI mode, so the method returns 1.0f
+     * - in absolute (dpi-dependent) points in the IDE-managed HiDPI mode, so the method returns the default screen scale
+     *
+     * @return the system font scale
+     */
     @JvmStatic
-    val normalizingScale: Float
+    val defFontScale: Float
       get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+
+    /**
+     * Returns the default font size scaled by #defFontScale
+     *
+     * @return the default scaled font size
+     */
+    @JvmStatic
+    val defFontSize: Int
+      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * defFontScale)
 
     @JvmStatic
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      var size = readSize
       if (readScale == null || readScale <= 0) {
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) return UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
       else {
-        return ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+        if (readScale != defFontScale) size = Math.round((readSize / readScale) * defFontScale)
       }
-      return readSize
+      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      return size
     }
   }
 

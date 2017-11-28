@@ -23,6 +23,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +37,22 @@ import java.util.Set;
  * @author max
  */
 public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
+  private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
+  private CodeStyleSchemesModel myModel;
 
-  public NewCodeStyleSettingsPanel(@NotNull Configurable tab) {
+  public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());
     myTab = tab;
+    myModel = model;
     JComponent component = myTab.createComponent();
-    add(component, BorderLayout.CENTER);
+    if (component != null) {
+      add(component, BorderLayout.CENTER);
+    }
+    else {
+      LOG.warn("No component for " + tab.getDisplayName());
+    }
   }
 
   public boolean isModified() {
@@ -73,13 +81,19 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
   }
 
   public void reset(CodeStyleSettings settings) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      ((CodeStyleAbstractConfigurable)myTab).reset(settings);
+    try {
+      myModel.setUiEventsEnabled(false);
+      if (myTab instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myTab).reset(settings);
+      }
+      else {
+        myTab.reset();
+      }
+      updatePreview();
     }
-    else {
-      myTab.reset();
+    finally {
+      myModel.setUiEventsEnabled(true);
     }
-    updatePreview();
   }
 
   public void reset() {

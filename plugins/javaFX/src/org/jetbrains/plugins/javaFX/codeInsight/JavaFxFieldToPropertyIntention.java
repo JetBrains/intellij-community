@@ -119,10 +119,10 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       final PsiType fromType = field.getType();
       final PsiType toType = elementFactory.createTypeFromText(myProperty.myObservableType.myText, field);
       try {
-        final TypeMigrationRules rules = new TypeMigrationRules();
+        final TypeMigrationRules rules = new TypeMigrationRules(myProject);
         final Set<VirtualFile> virtualFiles = ContainerUtil.map2SetNotNull(myFiles, PsiFile::getVirtualFile);
         rules.setBoundScope(GlobalSearchScope.filesScope(myProject, virtualFiles));
-        final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, toType);
+        final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, toType, myProject);
         labeler.getMigratedUsages(false, field);
 
         for (PsiReference reference : myReferences) {
@@ -132,7 +132,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
             final TypeConversionDescriptor conversion =
               myProperty.myObservableType.findDirectConversion(expression, toType, fromType);
             if (conversion != null) {
-              TypeMigrationReplacementUtil.replaceExpression(expression, myProject, conversion, new TypeEvaluator(null, null));
+              TypeMigrationReplacementUtil.replaceExpression(expression, myProject, conversion, new TypeEvaluator(null, null, myProject));
             }
           }
         }

@@ -121,12 +121,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     Assert.assertTrue(success);
   }
 
-  void expand(final TreePath p) throws Exception {
+  void expand(final TreePath p) {
     invokeAndWaitIfNeeded(() -> myTree.expandPath(p));
     waitBuilderToCome();
   }
 
-  void collapsePath(final TreePath p) throws Exception {
+  void collapsePath(final TreePath p) {
     invokeAndWaitIfNeeded(() -> myTree.collapsePath(p));
     waitBuilderToCome();
   }
@@ -344,7 +344,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     super.tearDown();
   }
 
-  void assertTree(final String expected) throws Exception {
+  void assertTree(final String expected) {
     waitBuilderToCome();
     assertTreeNow(expected);
   }

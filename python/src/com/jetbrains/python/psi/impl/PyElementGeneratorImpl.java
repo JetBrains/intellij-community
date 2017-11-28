@@ -404,12 +404,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     if (ret == null) {
       throw new IllegalArgumentException("Can't find element matching path " + Arrays.toString(path) + " in text '" + text + "'");
     }
-    try {
+    if (aClass.isInstance(ret)) {
       //noinspection unchecked
       return (T)ret;
     }
-    catch (ClassCastException e) {
-      throw new IllegalArgumentException("Can't create an expression of type " + aClass + " from text '" + text + "'");
+    else {
+      throw new IllegalArgumentException("Can't create an element of type " + aClass + " from text '" + text + "', got " + ret.getClass() + " instead");
     }
   }
 

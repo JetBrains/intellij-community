@@ -29,7 +29,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -136,9 +135,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
     if (element != null) {
-      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
       return true;
     }
     return false;
@@ -175,7 +173,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile) {
+    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
       // check that element is really physically inside the file

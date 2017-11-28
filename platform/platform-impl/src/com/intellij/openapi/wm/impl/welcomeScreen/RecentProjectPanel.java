@@ -20,29 +20,32 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ProjectGroup;
-import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.ReopenProjectAction;
+import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -54,8 +57,13 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecentProjectPanel extends JPanel {
   public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
@@ -65,7 +73,7 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.Project.Remove;
-  private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
   Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
@@ -79,6 +87,8 @@ public class RecentProjectPanel extends JPanel {
       currentIcon.paintIcon(this, g, 0, 0);
     }
   };
+
+  protected FilePathChecker myChecker;
 
 
   private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
@@ -97,18 +107,33 @@ public class RecentProjectPanel extends JPanel {
     return rectInListCoordinates.contains(p);
   }
 
-  public RecentProjectPanel(@Nullable Disposable parentDisposable) {
+  public RecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(new BorderLayout());
 
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
+    Collection<String> pathsToCheck = ContainerUtil.newHashSet();
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {
         final ReopenProjectAction item = (ReopenProjectAction)action;
 
         myPathShortener.addPath(item, item.getProjectPath());
+        pathsToCheck.add(item.getProjectPath());
       }
+    }
+
+    if (Registry.is("autocheck.availability.welcome.screen.projects")) {
+      myChecker = new FilePathChecker(new Runnable() {
+        @Override
+        public void run() {
+          if (myList.isShowing()) {
+            myList.revalidate();
+            myList.repaint();
+          }
+        }
+      }, pathsToCheck);
+      Disposer.register(parentDisposable, myChecker);
     }
 
     myList = createList(recentProjectActions, getPreferredScrollableViewportSize());
@@ -218,6 +243,10 @@ public class RecentProjectPanel extends JPanel {
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
   }
 
+  protected boolean isPathValid(String path) {
+    return myChecker == null || myChecker.isValid(path);
+  }
+
   protected static void removeRecentProjectElement(Object element) {
     final RecentProjectsManager manager = RecentProjectsManager.getInstance();
     if (element instanceof ReopenProjectAction) {
@@ -238,7 +267,7 @@ public class RecentProjectPanel extends JPanel {
   protected Dimension getPreferredScrollableViewportSize() {
     return JBUI.size(250, 400);
   }
-  
+
   protected void addMouseMotionListener() {
 
     MouseAdapter mouseAdapter = new MouseAdapter() {
@@ -247,7 +276,9 @@ public class RecentProjectPanel extends JPanel {
       public void mouseMoved(MouseEvent e) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (focusOwner == null) {
-          myList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
+          });
         }
         if (myList.getSelectedIndices().length > 1) {
           return;
@@ -259,7 +290,7 @@ public class RecentProjectPanel extends JPanel {
 
           final Rectangle cellBounds = myList.getCellBounds(index, index);
           if (cellBounds != null && cellBounds.contains(point)) {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (rectInListCoordinatesContains(cellBounds, point)) {
               currentIcon = AllIcons.Welcome.Project.Remove_hover;
             } else {
@@ -269,7 +300,7 @@ public class RecentProjectPanel extends JPanel {
             myList.repaint(cellBounds);
           }
           else {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             myHoverIndex = -1;
             myList.repaint();
           }
@@ -358,7 +389,7 @@ public class RecentProjectPanel extends JPanel {
       if (i != -1) {
         final Object elem = getModel().getElementAt(i);
         if (elem instanceof ReopenProjectAction && RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
-          return ((ReopenProjectAction)elem).getProjectPath();
+          return PathUtil.toSystemDependentName(((ReopenProjectAction)elem).getProjectPath());
         }
       }
       return super.getToolTipText(event);
@@ -466,7 +497,7 @@ public class RecentProjectPanel extends JPanel {
       String fullText = action.getProjectPath();
       if (fullText == null || fullText.length() == 0) return " ";
 
-      fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
+      fullText = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(fullText), false);
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
@@ -508,6 +539,57 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getSize() {
       return getPreferredSize();
+    }
+  }
+
+  private static class FilePathChecker implements Disposable {
+    private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
+    private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths service", 2);
+    private Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
+
+    private final Runnable myCallback;
+    private final Collection<String> myPaths;
+
+     FilePathChecker(Runnable callback, Collection<String>paths) {
+      myCallback = callback;
+      myPaths = paths;
+      for (String path : myPaths) {
+        myStates.put(path, new AtomicBoolean(true));//initially everything is valid
+      }
+      if (!PowerSaveMode.isEnabled()) {
+         for (String path : paths) {
+           scheduleCheck(path, MIN_AUTO_UPDATE_MILLIS);
+         }
+       }
+    }
+
+     boolean isValid(String path) {
+      AtomicBoolean b = myStates.get(path);
+      return b == null || b.get();
+    }
+
+    @Override
+    public void dispose() {
+      myService.shutdownNow();
+    }
+
+    private void scheduleCheck(String path, long delay) {
+      if (myService.isShutdown()) return;
+      
+      myService.schedule(() -> {
+        final long startTime = System.currentTimeMillis();
+        boolean exists;
+        try {
+          exists = new File(path).exists();
+        }
+        catch (Exception e) {
+          exists = false;
+        }
+        if (myStates.get(path).getAndSet(exists) != exists) {
+          ApplicationManager.getApplication().invokeLater(myCallback);
+        }
+        scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
+      }, delay, TimeUnit.MILLISECONDS);
     }
   }
 }

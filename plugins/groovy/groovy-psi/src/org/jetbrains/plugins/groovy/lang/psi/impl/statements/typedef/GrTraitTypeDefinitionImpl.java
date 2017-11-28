@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 09/04/14
- */
 public class GrTraitTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrTraitTypeDefinition {
 
   public GrTraitTypeDefinitionImpl(GrTypeDefinitionStub stub) {

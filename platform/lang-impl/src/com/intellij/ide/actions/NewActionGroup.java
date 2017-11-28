@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ public class NewActionGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     AnAction[] actions = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW)).getChildren(e);
     if (e == null || ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      AnAction[] newProjectActions = ((ActionGroup)ActionManager.getInstance().getAction("NewProjectOrModuleGroup")).getChildren(e);
+      AnAction newGroup = ActionManager.getInstance().getAction("NewProjectOrModuleGroup");
+      AnAction[] newProjectActions = newGroup == null ? EMPTY_ARRAY : ((ActionGroup)newGroup).getChildren(e);
       return ArrayUtil.mergeArrays(newProjectActions, actions);
     }
     else {

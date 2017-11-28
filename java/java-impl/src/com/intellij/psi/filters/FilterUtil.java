@@ -19,13 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 17:45:45
- * To change this template use Options | File Templates.
- */
 public class FilterUtil{
   private FilterUtil() {
   }

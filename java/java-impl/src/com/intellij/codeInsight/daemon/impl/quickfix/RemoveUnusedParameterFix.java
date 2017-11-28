@@ -88,6 +88,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
     processor.run();
   }
 
+  @NotNull
   public static ParameterInfoImpl[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {
     List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();

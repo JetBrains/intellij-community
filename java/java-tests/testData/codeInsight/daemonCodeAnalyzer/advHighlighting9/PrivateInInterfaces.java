@@ -21,3 +21,8 @@ interface E {
 interface F {
     <error descr="Modifier 'private' not allowed here">private</error> int m = 0;
 }
+
+@interface G {
+    <error descr="Modifier 'private' not allowed here">private</error> String m();
+    <error descr="Modifier 'private' not allowed here">private</error> String m1() {return "";}
+}

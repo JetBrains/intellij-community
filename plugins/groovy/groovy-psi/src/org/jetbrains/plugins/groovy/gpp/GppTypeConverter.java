@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -26,8 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign;
 
 /**
  * @author peter
@@ -35,27 +38,32 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 public class GppTypeConverter extends GrTypeConverter {
 
   @Override
-  public boolean isAllowedInMethodCall() {
-    return true;
+  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+    return position == ApplicableTo.ASSIGNMENT;
   }
 
+  @Nullable
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
+  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
+                                          @NotNull PsiType actualType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo currentPosition) {
     if (context instanceof GrListOrMap &&
         context.getReference() instanceof LiteralConstructorReference &&
         ((LiteralConstructorReference)context.getReference()).getConstructedClassType() != null) return null;
 
-    if (rType instanceof GrTupleType) {
-      final GrTupleType tupleType = (GrTupleType)rType;
+    if (actualType instanceof GrTupleType) {
+      final GrTupleType tupleType = (GrTupleType)actualType;
 
-      final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
+      final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(targetType, false);
       if (expectedComponent != null && isMethodCallConversion(context)) {
         PsiType[] parameters = tupleType.getParameters();
         if (parameters.length == 1) {
           PsiType tupleComponent = parameters[0];
           if (tupleComponent != null &&
-              TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
-            return true;
+              canAssign(expectedComponent, tupleComponent, context, ApplicableTo.ASSIGNMENT) == ConversionResult.OK &&
+              hasDefaultConstructor(targetType)) {
+            return ConversionResult.OK;
           }
         }
       }

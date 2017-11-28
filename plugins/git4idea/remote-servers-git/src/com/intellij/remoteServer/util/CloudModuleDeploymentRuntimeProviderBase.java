@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class CloudModuleDeploymentRuntimeProviderBase implements CloudDeploymentRuntimeProvider {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudModuleDeploymentRuntimeProviderBase.class.getName());
+  private static final Logger LOG = Logger.getInstance(CloudModuleDeploymentRuntimeProviderBase.class);
 
   @Override
   public Collection<DeploymentSource> getDeploymentSources(Project project) {

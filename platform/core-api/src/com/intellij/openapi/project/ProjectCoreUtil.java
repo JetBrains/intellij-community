@@ -16,6 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -26,12 +27,9 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectCoreUtil {
   public static volatile Project theProject;
 
-  /**
-   * @deprecated Please use ProjectUtil.isProjectOrWorkspaceFile
-   */
-  @Deprecated
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
+    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+    return isProjectOrWorkspaceFile(file, FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()));
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {

@@ -6,15 +6,17 @@ import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Test
 
-internal class AState : BaseState() {
+internal class AState(languageLevel: String? = null, nestedComplex: NestedState? = null) : BaseState() {
   @get:Attribute("customName")
-  var languageLevel by storedProperty<String?>()
+  var languageLevel by storedProperty<String?>(languageLevel)
+
+  var bar by string()
 
   var property2 by storedProperty(0)
 
   var floatProperty by storedProperty(0.3)
 
-  var nestedComplex by storedProperty<NestedState?>()
+  var nestedComplex by storedProperty<NestedState?>(nestedComplex)
 }
 
 internal class NestedState : BaseState() {
@@ -37,6 +39,10 @@ class StoredPropertyStateTest {
 
     assertThat(state).isNotEqualTo(AState())
 
+    val newEqualState = AState()
+    newEqualState.languageLevel = String("foo".toCharArray())
+    assertThat(state).isEqualTo(newEqualState)
+
     assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
     assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
   }
@@ -57,5 +63,10 @@ class StoredPropertyStateTest {
 
     state.languageLevel = null
     assertThat(state.modificationCount).isEqualTo(4)
+
+    state.copyFrom(AState("foo", nestedState))
+    @Suppress("USELESS_CAST")
+    assertThat(state.languageLevel as String?).isEqualTo("foo")
+    assertThat(state.modificationCount).isEqualTo(5)
   }
 }

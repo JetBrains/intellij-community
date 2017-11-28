@@ -16,6 +16,7 @@
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.FacetConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.facet.FacetState;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
@@ -36,6 +37,7 @@ public class InvalidFacetConfiguration implements FacetConfiguration {
     myErrorMessage = errorMessage;
   }
 
+  @NotNull
   public FacetState getFacetState() {
     return myFacetState;
   }

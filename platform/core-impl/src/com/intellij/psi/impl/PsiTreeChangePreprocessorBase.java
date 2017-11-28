@@ -45,11 +45,25 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     return true;
   }
 
-  private boolean outOfCodeBlock(@Nullable PsiElement element) {
+  private boolean _outOfCodeBlock(@Nullable PsiElement element) {
     if (element == null || !element.isValid()) return false;
     if (element instanceof PsiDirectory) return false; // handled by PsiModificationTrackerImpl#treeChanged()
     if (element instanceof PsiFileSystemItem) return isOutOfCodeBlock((PsiFileSystemItem)element);
     return isOutOfCodeBlock(element);
+  }
+
+  /**
+   * @param element can be invalid
+   * @return true if the changed element's subtree contains "important" elements (e.g. out-of-code-block ones, or classes)  
+   */
+  protected boolean containsStructuralElements(@NotNull PsiElement element) {
+    return false;
+  }
+
+  private boolean _containsStructuralElements(@Nullable PsiElement element) {
+    if (element == null) return false;
+    if (element instanceof PsiFileSystemItem) return true;
+    return containsStructuralElements(element);
   }
 
   @Override
@@ -64,51 +78,46 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
   }
 
   protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    boolean outOfCodeBlock;
+    if (isOutOfCodeBlockChangeEvent(event)) {
+      onOutOfCodeBlockModification(event);
+      doIncOutOfCodeBlockCounter();
+    }
+  }
 
+  protected final boolean isOutOfCodeBlockChangeEvent(@NotNull PsiTreeChangeEventImpl event) {
     switch (event.getCode()) {
       case BEFORE_PROPERTY_CHANGE:
-      case BEFORE_CHILD_MOVEMENT:
       case BEFORE_CHILD_ADDITION:
+      case BEFORE_CHILD_MOVEMENT:
+        return false;
+        
       case BEFORE_CHILD_REMOVAL:
       case BEFORE_CHILD_REPLACEMENT:
-        outOfCodeBlock = false;
-        break;
+        return _containsStructuralElements(event.getChild()) || _containsStructuralElements(event.getOldChild());
 
       case BEFORE_CHILDREN_CHANGE:
       case CHILDREN_CHANGED:
-        if (event.isGenericChange()) {
-          return;
-        }
-        outOfCodeBlock = outOfCodeBlock(event.getParent());
-        break;
+        return !event.isGenericChange() && (_outOfCodeBlock(event.getParent()) ||
+                                            _containsStructuralElements(event.getParent()));
 
       case CHILD_ADDED:
       case CHILD_REMOVED:
       case CHILD_REPLACED:
-        outOfCodeBlock = outOfCodeBlock(event.getParent()) ||
-                         outOfCodeBlock(event.getChild()) ||
-                         outOfCodeBlock(event.getOldChild()) ||
-                         outOfCodeBlock(event.getNewChild());
-        break;
+        return _outOfCodeBlock(event.getParent()) ||
+               _containsStructuralElements(event.getChild()) ||
+               _containsStructuralElements(event.getOldChild()) ||
+               _containsStructuralElements(event.getNewChild());
 
       case PROPERTY_CHANGED:
-        outOfCodeBlock = true;
-        break;
+        return true;
 
       case CHILD_MOVED:
-        outOfCodeBlock = outOfCodeBlock(event.getOldParent()) ||
-                         outOfCodeBlock(event.getNewParent()) ||
-                         outOfCodeBlock(event.getChild());
-        break;
-      default:
-        outOfCodeBlock = true;
-        break;
-    }
+        return _outOfCodeBlock(event.getOldParent()) ||
+               _outOfCodeBlock(event.getNewParent()) ||
+               _containsStructuralElements(event.getChild());
 
-    if (outOfCodeBlock) {
-      onOutOfCodeBlockModification(event);
-      doIncOutOfCodeBlockCounter();
+      default:
+        return true;
     }
   }
 

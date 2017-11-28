@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -34,11 +30,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +42,8 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseClasspathTest extends IdeaTestCase {
   @Override
@@ -62,7 +58,6 @@ public class EclipseClasspathTest extends IdeaTestCase {
     final VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
     copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
-
 
   private void doTest() throws Exception {
     doTest("/test", getProject());
@@ -111,17 +106,12 @@ public class EclipseClasspathTest extends IdeaTestCase {
     Element classpathElement1 = JDOMUtil.load(fileText1);
     ModuleRootModel model = ModuleRootManager.getInstance(module);
     Element resultClasspathElement = new EclipseClasspathWriter().writeClasspath(classpathElement1, model);
-
-    String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
-    assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
-               JDOMUtil.areElementsEqual(classpathElement1, resultClasspathElement));
+    assertThat(resultClasspathElement).isEqualTo(resultClasspathElement);
   }
-
 
   public void testAbsolutePaths() throws Exception {
     doTest("/parent/parent/test", getProject());
   }
-
 
   public void testWorkspaceOnly() throws Exception {
     doTest();

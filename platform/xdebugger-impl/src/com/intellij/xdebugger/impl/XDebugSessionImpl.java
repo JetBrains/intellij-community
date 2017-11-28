@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -82,8 +81,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG,
-                                                                                               false);
+
+  /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
+  @Deprecated
+  public static final NotificationGroup NOTIFICATION_GROUP = XDebuggerManagerImpl.NOTIFICATION_GROUP;
+
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new THashMap<>();
@@ -258,6 +260,10 @@ public class XDebugSessionImpl implements XDebugSession {
     return myCurrentStackFrame;
   }
 
+  public XExecutionStack getCurrentExecutionStack() {
+    return myCurrentExecutionStack;
+  }
+
   @Override
   public XSuspendContext getSuspendContext() {
     return mySuspendContext;
@@ -285,7 +291,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         stopImpl();
         myDebugProcess.getProcessHandler().removeProcessListener(this);
       }
@@ -899,6 +905,8 @@ public class XDebugSessionImpl implements XDebugSession {
         }
         myDebuggerManager.removeSession(this);
         myDispatcher.getMulticaster().sessionStopped();
+        myDispatcher.getListeners().clear();
+
         myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
 
         synchronized (myRegisteredBreakpoints) {
@@ -914,8 +922,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    ProcessHandler processHandler = myDebugProcess.getProcessHandler();
-    if (processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
+    ProcessHandler processHandler = myDebugProcess == null ? null : myDebugProcess.getProcessHandler();
+    if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
       processHandler.detachProcess();
@@ -942,7 +950,7 @@ public class XDebugSessionImpl implements XDebugSession {
         listener.hyperlinkUpdate(event);
       }
     };
-    NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
+    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

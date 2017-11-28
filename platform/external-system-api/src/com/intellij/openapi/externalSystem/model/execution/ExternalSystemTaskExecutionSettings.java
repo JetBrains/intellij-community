@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.model.execution;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
@@ -36,6 +39,7 @@ import java.util.List;
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
+  @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
@@ -45,6 +49,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myExternalProjectPath;
   private String myVmOptions;
   private String myScriptParameters;
+  private Map<String, String> myEnv = ContainerUtilRt.newHashMap();
+  private boolean myPassParentEnvs = true;
 
   @Nullable
   public String getExecutionName() {
@@ -107,6 +113,23 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskDescriptions = taskDescriptions;
   }
 
+  @NotNull
+  public Map<String, String> getEnv() {
+    return myEnv;
+  }
+
+  public void setEnv(Map<String, String> env) {
+    myEnv = env == null ? ContainerUtilRt.newHashMap() : env;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myPassParentEnvs;
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myPassParentEnvs = passParentEnvs;
+  }
+
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
     ExternalSystemTaskExecutionSettings result = new ExternalSystemTaskExecutionSettings();
@@ -117,6 +140,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result.setScriptParameters(getScriptParameters());
     result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
     result.setTaskDescriptions(ContainerUtilRt.newArrayList(getTaskDescriptions()));
+    result.setEnv(ContainerUtilRt.newHashMap(getEnv()));
+    result.setPassParentEnvs(isPassParentEnvs());
     return result;
   }
 
@@ -128,6 +153,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result = 31 * result + (myExternalProjectPath != null ? myExternalProjectPath.hashCode() : 0);
     result = 31 * result + (myVmOptions != null ? myVmOptions.hashCode() : 0);
     result = 31 * result + (myScriptParameters != null ? myScriptParameters.hashCode() : 0);
+    result = 31 * result + (myEnv != null ? myEnv.hashCode() : 0);
+    result = 31 * result + (myPassParentEnvs ? 1 : 0);
     return result;
   }
 
@@ -157,7 +184,8 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     if (myTaskNames != null ? !myTaskNames.equals(settings.myTaskNames) : settings.myTaskNames != null) return false;
     if (StringUtil.isEmpty(myVmOptions) ^ StringUtil.isEmpty(settings.myVmOptions)) return false;
     if (StringUtil.isEmpty(myScriptParameters) ^ StringUtil.isEmpty(settings.myScriptParameters)) return false;
-
+    if (myEnv != null ? !myEnv.equals(settings.myEnv) : settings.myEnv != null) return false;
+    if (myPassParentEnvs != settings.myPassParentEnvs) return false;
     return true;
   }
 

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +23,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyFunctionFindUsagesHandler extends FindUsagesHandler {
+public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   private final List<PsiElement> myAllElements;
 
   public PyFunctionFindUsagesHandler(@NotNull PsiElement psiElement) {

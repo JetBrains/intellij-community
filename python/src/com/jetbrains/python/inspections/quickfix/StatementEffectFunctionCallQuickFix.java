@@ -62,7 +62,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     final PsiElement next = getNextElement(expression);
     if (next == null) {
       stringBuilder.append(")");
-      expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
+      expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyElement.class,
                                                          stringBuilder.toString()));
       return;
     }
@@ -100,7 +100,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     if (commentText != null) {
       stringBuilder.append(commentText);
     }
-    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
+    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyStatement.class,
                                                        stringBuilder.toString()));
   }
 
@@ -140,7 +140,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     if (commentText != null) {
       stringBuilder.append(commentText);
     }
-    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,
+    expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyStatement.class,
                                                        stringBuilder.toString()));
   }
 

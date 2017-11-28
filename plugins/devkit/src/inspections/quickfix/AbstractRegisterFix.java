@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-
-import java.util.List;
 
 abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
   protected final SmartPsiElementPointer<PsiClass> myPointer;
@@ -49,7 +47,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
   @NotNull
   public String getFamilyName() {
-    return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
+    return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
   @Override
@@ -86,36 +84,22 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
     Runnable command = () -> {
       try {
-        if (PluginModuleType.isOfType(module)) {
-          XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-          if (pluginXml != null) {
-            DescriptorUtil.patchPluginXml(this, element, pluginXml);
-          }
+        XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+        if (pluginXml == null) {
+          pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(psiFile.getContainingDirectory());
         }
-        else {
-          List<Module> modules = PluginModuleType.getCandidateModules(module);
-          if (modules.size() > 1) {
-            ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
-            if (!dialog.showAndGet()) {
-              return;
-            }
-            modules = dialog.getSelectedModules();
-          }
-          XmlFile[] pluginXmls = new XmlFile[modules.size()];
-          for (int i = 0; i < pluginXmls.length; i++) {
-            pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
-          }
 
-          DescriptorUtil.patchPluginXml(this, element, pluginXmls);
+        if (pluginXml != null) {
+          DescriptorUtil.patchPluginXml(this, element, pluginXml);
         }
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-      }
-      catch (IncorrectOperationException e) {
+      } catch (IncorrectOperationException e) {
         Messages.showMessageDialog(project, filterMessage(e.getMessage()),
                                    DevKitBundle.message("inspections.component.not.registered.quickfix.error", getType()),
                                    Messages.getErrorIcon());
       }
     };
+
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);
   }
 }

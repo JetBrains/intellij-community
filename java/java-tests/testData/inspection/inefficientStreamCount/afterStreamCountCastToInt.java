@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 class Test {
   int cnt() {
-    /*inside*/
+      /*inside*/
       return Arrays.asList('d', 'e', 'f').size();
   }
 }

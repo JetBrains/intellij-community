@@ -42,7 +42,7 @@ class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected void setUp() {
     super.setUp()
-    CamelHumpMatcher.forceStartMatching(testRootDisposable)
+    CamelHumpMatcher.forceStartMatching(myFixture.testRootDisposable)
   }
 
   @Override
@@ -883,7 +883,7 @@ return foo()"""
 
   void testNamedArgsUsedInFile() {
     myFixture.configureByFile(getTestName(false) + ".groovy")
-    doVariantableTest 'false', 'foo2', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
+    doVariantableTest 'foo2', 'false', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
   }
 
   void testSuggestMembersOfExpectedType() {
@@ -954,12 +954,12 @@ class Fopppp {
 
   void testExcludeStringBuffer() {
     assert doContainsTest('StringBuffer', 'StringBuff<caret>f')
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, StringBuffer.name)
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, StringBuffer.name)
     assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
   }
 
   void testStaticMethodOnExcludedClass() {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, String.name)
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, String.name)
     assert doContainsTest('valueOf', 'String.val<caret>f')
   }
 
@@ -1096,7 +1096,7 @@ class X {
   }
 
   void testSortOrder0() {
-    doVariantableTest 'se', 'setProperty', 'setMetaClass', 'setSe'
+    doVariantableTest 'se', 'setProperty', 'setSe', 'setMetaClass'
   }
 
   void testPrimitiveCastOverwrite() {
@@ -1728,7 +1728,7 @@ class Baz {}''', '', CompletionType.BASIC, CompletionResult.contain, 'xxx', 'yyy
   }
 
   void "test honor statistics"() {
-    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(testRootDisposable)
+    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(myFixture.testRootDisposable)
 
     myFixture.addClass("class Foo { Object getMessage() {} }; class Bar extends Foo { Object getMessages(); }")
     configure "b = new Bar();\nb.mes<caret>"

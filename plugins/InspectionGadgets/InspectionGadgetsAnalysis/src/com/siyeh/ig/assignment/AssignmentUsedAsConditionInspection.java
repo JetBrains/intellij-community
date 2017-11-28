@@ -17,7 +17,11 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,29 +81,10 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = expression.getParent();
-      final PsiExpression condition;
-      if (parent instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-        condition = ifStatement.getCondition();
-      }
-      else if (parent instanceof PsiWhileStatement) {
-        final PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
-        condition = whileStatement.getCondition();
-      }
-      else if (parent instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)parent;
-        condition = forStatement.getCondition();
-      }
-      else if (parent instanceof PsiDoWhileStatement) {
-        final PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)parent;
-        condition = doWhileStatement.getCondition();
-      }
-      else {
+      if (!PsiUtil.isCondition(expression, parent)) {
         return;
       }
-      if (expression.equals(condition)) {
-        registerError(expression);
-      }
+      registerError(expression);
     }
   }
 }

@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 31 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
+  private static final int VERSION = 33 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -286,14 +286,19 @@ public class BuildDataManager implements StorageOwner {
   private void closeSourceToOutputStorages() throws IOException {
     IOException ex = null;
     try {
-      for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping : mySourceToOutputs.values()) {
+      for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> lazy : mySourceToOutputs.values()) {
         try {
-          mapping.getValue().close();
-        }
-        catch (IOException e) {
-          if (ex == null) {
-            ex = e;
+          final SourceToOutputMappingImpl mapping = lazy.getValue();
+          try {
+            mapping.close();
           }
+          catch (IOException e) {
+            if (ex == null) {
+              ex = e;
+            }
+          }
+        }
+        catch (Throwable ignored) {
         }
       }
     }

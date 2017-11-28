@@ -32,7 +32,6 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.text.AsyncHighlighterUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -44,8 +43,10 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
@@ -53,13 +54,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -78,6 +84,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +119,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected Module myModule;
   protected static final Collection<File> myFilesToDelete = new THashSet<>();
   protected boolean myAssertionsInTestDetected;
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
   private static final long DEFAULT_TEST_TIME = 300L;
@@ -122,6 +128,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
+  private SdkLeakTracker myOldSdks;
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
@@ -140,12 +148,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (firstTime) {
       cleanPersistedVFSContent();
     }
+    // try to remember old sdks as soon as possible after the app instantiation
+    myOldSdks = new SdkLeakTracker();
   }
 
   // AndroidStudio: our classpath matches multiple prefixes (Idea, CidrCommon, etc.), but the default should be AndroidStudio.
   private static final String[] PREFIX_CANDIDATES = {
-  "AndroidStudio", "AppCode", "CLion", "CidrCommon", "Rider",
-    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
+    "AndroidStudio",
+    "Rider",
+    "AppCode", "CLion", "CidrCommon",
+    "DataGrip",
+    "Python", "PyCharmCore",
+    "Ruby",
+    "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
    * @deprecated calling this method is no longer necessary
@@ -163,14 +178,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (ourPlatformPrefixInitialized) {
       return;
     }
-    URL resource = PlatformTestCase.class.getClassLoader().getResource("idea/ApplicationInfo.xml");
-    if (resource == null) {
-      for (String candidate : PREFIX_CANDIDATES) {
-        resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/" + candidate + "Plugin.xml");
-        if (resource != null) {
+    for (String candidate : PREFIX_CANDIDATES) {
+      String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
+      URL resource = PlatformTestCase.class.getClassLoader().getResource(markerPath);
+      if (resource != null) {
+        if (candidate != null) {
           setPlatformPrefix(candidate);
-          break;
         }
+        break;
       }
     }
   }
@@ -202,6 +217,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     LOG.debug(getClass().getName() + ".setUp()");
 
     initApplication();
+    if (myOldSdks == null) { // some bastard's overridden initApplication completely
+      myOldSdks = new SdkLeakTracker();
+    }
 
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
@@ -218,6 +236,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     DocumentCommitThread.getInstance().clearQueue();
     UIUtil.dispatchAllInvocationEvents();
+    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
 
   public final Project getProject() {
@@ -280,12 +299,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ourReportedLeakedProjects = true;
 
-      StringBuilder leakers = new StringBuilder();
-      leakers.append("Too many projects leaked: \n");
+      TIntHashSet hashCodes = new TIntHashSet();
       for (Project project : e.getLeakedProjects()) {
-        String presentableString = getCreationPlace(project);
-        leakers.append(presentableString);
-        leakers.append("\n");
+        hashCodes.add(System.identityHashCode(project));
       }
 
       String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
@@ -297,6 +313,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       catch (Exception ex) {
         ex.printStackTrace();
       }
+
+      StringBuilder leakers = new StringBuilder();
+      leakers.append("Too many projects leaked: \n");
+      LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked,backLink)->{
+        int hashCode = System.identityHashCode(leaked);
+        leakers.append("Leaked project found:" + leaked + "; hash: " +
+                           hashCode + "; place: " + getCreationPlace(leaked)+"\n");
+        leakers.append(backLink+"\n");
+        leakers.append(";-----\n");
+
+        hashCodes.remove(hashCode);
+
+        return !hashCodes.isEmpty();
+      });
+
       fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
       return null;
     }
@@ -382,11 +413,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void cleanupApplicationCaches(Project project) {
-    if (project != null && !project.isDisposed()) {
       UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
       if (globalInstance != null) {
         globalInstance.dropHistoryInTests();
       }
+    if (project != null && !project.isDisposed()) {
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
       ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
@@ -453,15 +484,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
 
-    runTearDownActions(project);
-  }
-
-  private void runTearDownActions(Project project) {
     new RunAll()
       .append(this::disposeRootDisposable)
       .append(() -> {
@@ -478,6 +504,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       })
       .append(() -> {
+        ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
+        
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }
@@ -502,6 +530,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       })
       .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
+      .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
       .append(() -> {
         myProjectManager = null;
         myProject = null;
@@ -529,7 +559,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       for (Project project : projectManager.closeTestProject(projectToClose)) {
         runAll = runAll
           .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
-          .append(() -> ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false));
+          .append(() -> ((ProjectManagerImpl)projectManager).forceCloseProject(project, true));
       }
     }
     runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
@@ -593,7 +623,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     finally {
       try {
-        SwingUtilities.invokeAndWait(() -> {
+        EdtTestUtil.runInEdtAndWait(() -> {
           cleanupApplicationCaches(getProject());
           resetAllFields();
         });
@@ -719,10 +749,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
+  @NotNull
   public static File createTempDir(@NonNls final String prefix) throws IOException {
     return createTempDir(prefix, true);
   }
 
+  @NotNull
   public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
@@ -736,12 +768,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @NotNull
   protected File createTempDirectory() throws IOException {
-    return createTempDir(getTestName(true));
+    return createTempDir("");
   }
 
+  @NotNull
   protected File createTempDirectory(final boolean refresh) throws IOException {
-    return createTempDir(getTestName(true), refresh);
+    return createTempDir("", refresh);
   }
 
   @NotNull
@@ -757,7 +791,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return file;
   }
 
-  public static void setContentOnDisk(@NotNull File file, byte[] bom, @NotNull String content, @NotNull Charset charset) throws IOException {
+  public static void setContentOnDisk(@NotNull File file, @Nullable byte[] bom, @NotNull String content, @NotNull Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
       stream.write(bom);
@@ -767,6 +801,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @NotNull
   public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
@@ -826,6 +861,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public @interface WrapInCommand {
   }
 
+  @NotNull
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -835,6 +871,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException().getResultObject();
   }
 
+  @NotNull
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -865,7 +902,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
-
+  
+  @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];
 

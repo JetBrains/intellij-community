@@ -49,13 +49,7 @@ public abstract class ModalityState {
       final Class<? extends ModalityState> ex = (Class<? extends ModalityState>)Class.forName("com.intellij.openapi.application.impl.ModalityStateEx");
       NON_MODAL = ex.newInstance();
     }
-    catch (ClassNotFoundException e) {
-      throw new IllegalStateException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException(e);
-    }
-    catch (InstantiationException e) {
+    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
       throw new IllegalStateException(e);
     }
   }

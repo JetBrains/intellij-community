@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * Provides common functionality for <code>'toggle soft wraps usage'</code> actions.
+ * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
  *
  * @author Denis Zhdanov
  * @since Aug 23, 2010 11:33:35 AM
@@ -43,7 +43,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   private final boolean myGlobal;
 
   /**
-   * Creates new <code>AbstractToggleUseSoftWrapsAction</code> object.
+   * Creates new {@code AbstractToggleUseSoftWrapsAction} object.
    * 
    * @param appliancePlace    defines type of the place where soft wraps are applied
    * @param global            indicates if soft wraps should be changed for the current editor only or for the all editors

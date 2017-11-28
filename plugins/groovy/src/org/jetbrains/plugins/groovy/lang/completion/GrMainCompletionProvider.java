@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -31,7 +30,6 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,9 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
-* Created by Max Medvedev on 14/05/14
-*/
 public class GrMainCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static final ElementPattern<PsiElement> AFTER_AT = PlatformPatterns.psiElement().afterLeaf("@");
   public static final ElementPattern<PsiElement> IN_CATCH_TYPE = PlatformPatterns
@@ -458,7 +453,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     JavaCompletionSession inheritors = new JavaCompletionSession(result);
     if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
+      GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors::addClassItem);
     }
 
     Runnable addSlowVariants =

@@ -78,7 +78,7 @@ public class RemoveManagedFilesAction extends MavenAction {
   private static void notifyUser(DataContext context, MavenProject mavenProject, MavenProject aggregator) {
     String aggregatorDescription = " (" + aggregator.getMavenId().getDisplayString() + ')';
     Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Failed to remove project",
-                                                 "You can not remove " + mavenProject.getName() + " because it's " +
+                                                 "You can not remove " + mavenProject.getDisplayName() + " because it's " +
                                                  "imported as a module of another project" +
                                                  aggregatorDescription
                                                  + ". You can use Ignore action. Only root project can be removed.",

@@ -44,16 +44,16 @@ public abstract class DataManager {
   public abstract AsyncResult<DataContext> getDataContextFromFocus();
 
   /**
-   * @return {@link DataContext} constructed by the specified <code>component</code>
+   * @return {@link DataContext} constructed by the specified {@code component}
    */
   public abstract DataContext getDataContext(Component component);
 
   /**
-   * @return {@link DataContext} constructed be the specified <code>component</code>
-   * and the point specified by <code>x</code> and <code>y</code> coordinate inside the
+   * @return {@link DataContext} constructed be the specified {@code component}
+   * and the point specified by {@code x} and {@code y} coordinate inside the
    * component.
    *
-   * @exception IllegalArgumentException if point <code>(x, y)</code> is not inside
+   * @exception IllegalArgumentException if point {@code (x, y)} is not inside
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);

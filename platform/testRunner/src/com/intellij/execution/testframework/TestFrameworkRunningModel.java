@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-May-2007
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -234,10 +235,12 @@ public class MigrationPanel extends JPanel implements Disposable {
     final JButton rerunButton = new JButton(RefactoringBundle.message("type.migration.rerun.button.text"));
     rerunButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        UsageViewManager.getInstance(myProject).closeContent(myContent);
-        final TypeMigrationDialog.MultipleElements dialog =
-          new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
-        dialog.show();
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          UsageViewManager.getInstance(myProject).closeContent(myContent);
+          final TypeMigrationDialog.MultipleElements dialog =
+            new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
+          dialog.show();
+        });
       }
     });
     panel.add(rerunButton, gc);

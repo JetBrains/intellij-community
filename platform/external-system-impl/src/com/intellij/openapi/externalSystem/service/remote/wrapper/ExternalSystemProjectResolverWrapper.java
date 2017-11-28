@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
 
 /**
  * Intercepts calls to the target {@link RemoteExternalSystemProjectResolver} and
- * {@link ExternalSystemTaskNotificationListener#onQueued(ExternalSystemTaskId, String) updates 'queued' task status}.
+ * {@link ExternalSystemTaskNotificationListener#onStart(ExternalSystemTaskId, String) updates 'queued' task status}.
  * <p/>
  * Thread-safe.
  *

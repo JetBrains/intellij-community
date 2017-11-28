@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
@@ -33,6 +34,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -159,7 +161,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         semaphore.down();
         evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             // re-setting the context will cause value recalculation
             try {
               setContext(myStoredEvaluationContext);
@@ -280,10 +282,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    final NodeRenderer renderer = getRenderer(context.getDebugProcess());
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    NodeRenderer renderer = getRenderer(debugProcess);
 
-    final EvaluateException valueException = myValueException;
-    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) && renderer.isExpandable(getValue(), context, this);
+    EvaluateException valueException = myValueException;
+    myIsExpandable = (valueException == null || valueException.getExceptionFromTargetVM() != null) &&
+                     getChildrenRenderer(debugProcess).isExpandable(getValue(), context, this);
 
     try {
       setValueIcon(renderer.calcValueIcon(this, context, labelListener));
@@ -295,11 +299,17 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     String label;
     if (valueException == null) {
+      long start = renderer instanceof NodeRendererImpl && ((NodeRendererImpl)renderer).hasOverhead() ? System.currentTimeMillis() : 0;
       try {
         label = renderer.calcLabel(this, context, labelListener);
       }
       catch (EvaluateException e) {
         label = setValueLabelFailed(e);
+      }
+      finally {
+        if (start > 0) {
+          OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead((NodeRendererImpl)renderer), 1, System.currentTimeMillis() - start);
+        }
       }
     }
     else {
@@ -326,6 +336,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       @Override
       public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
         return null;
+      }
+
+      @Override
+      public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
+        return ValueDescriptorImpl.this.getRenderer(debugProcess);
+      }
+
+      @Override
+      public <T> T getUserData(Key<T> key) {
+        return ValueDescriptorImpl.this.getUserData(key);
       }
     };
     descriptor.myFullValue = true;
@@ -390,7 +410,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
-  public NodeRenderer getRenderer (DebugProcessImpl debugProcess) {
+  public NodeRenderer getChildrenRenderer(DebugProcessImpl debugProcess) {
+    return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
+  }
+
+  public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     Type type = getType();
     if(type != null && myRenderer != null && myRenderer.isApplicable(type)) {
@@ -420,7 +444,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
 
       return DebuggerTreeNodeExpression.substituteThis(
-        vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
+        vDescriptor.getChildrenRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
         ((PsiExpression)parentEvaluation), vDescriptor.getValue()
       );
     }
@@ -598,5 +622,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
     return "";
+  }
+
+  public EvaluationContextImpl getStoredEvaluationContext() {
+    return myStoredEvaluationContext;
   }
 }

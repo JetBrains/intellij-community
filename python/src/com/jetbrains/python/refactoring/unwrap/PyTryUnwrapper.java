@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
@@ -28,7 +29,7 @@ public class PyTryUnwrapper extends PyUnwrapper {
     super(PyBundle.message("unwrap.try"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PyTryExceptStatement;
   }
 

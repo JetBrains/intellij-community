@@ -39,7 +39,7 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
   private final boolean myIsTests;
 
   private GradleResourcesTargetType(final String typeId, boolean isTests) {
-    super(typeId);
+    super(typeId, true);
     myIsTests = isTests;
   }
 

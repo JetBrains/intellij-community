@@ -17,15 +17,17 @@ package com.intellij.openapi.options.colors;
 
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.colors.EditorColorPalette;
-import com.intellij.openapi.editor.colors.EditorColorPaletteFactory;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage;
+import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
@@ -45,16 +47,34 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
     }
 
     @Override
-    protected Collection<TextAttributesKey> getTextAttributeKeys() {
+    protected Collection<TextAttributesKey> getTextAttributeKeys(boolean filterOutRainbowNonConflictingAttrKeys) {
       Set<TextAttributesKey> textAttributesKeys = new HashSet<>();
       for (ColorSettingsPage page : ColorSettingsPages.getInstance().getRegisteredPages()) {
         Language pageLanguage = guessPageLanguage(page);
         if (
           myLanguage == null && pageLanguage == null ||
-          myLanguage != null && (myLanguage.is(pageLanguage) || myLanguage.is(Language.ANY))
+          myLanguage != null && (myLanguage.is(pageLanguage) ||
+                                 myLanguage.is(Language.ANY) && pageIsGoodForAnyLanguage(filterOutRainbowNonConflictingAttrKeys, page))
           ) {
           for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
-            textAttributesKeys.add(descriptor.getKey());
+            final TextAttributesKey textAttributesKey = descriptor.getKey();
+            if (filterOutRainbowNonConflictingAttrKeys
+                && (textAttributesKey == DefaultLanguageHighlighterColors.LOCAL_VARIABLE
+                    || textAttributesKey == DefaultLanguageHighlighterColors.PARAMETER)) {
+              continue;              
+            }
+            if (!filterOutRainbowNonConflictingAttrKeys ||
+                pageLanguage == null ||
+                page instanceof RainbowColorSettingsPage && !((RainbowColorSettingsPage)page).isRainbowType(textAttributesKey)) {
+              textAttributesKeys.add(textAttributesKey);
+            }
+          }
+          if (page instanceof GeneralColorsPage) {
+            // collecting HighlightInfoType info
+            final Map<String, TextAttributesKey> map = page.getAdditionalHighlightingTagToDescriptorMap();
+            if (map != null) {
+              textAttributesKeys.addAll(map.values());
+            }
           }
         }
       }
@@ -71,5 +91,14 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
       }
       return null;
     }
+  }
+
+  @Contract(value = "false, _ -> true", pure = true)
+  private static boolean pageIsGoodForAnyLanguage(boolean filterOutRainbowNonConflictingAttrKeys,
+                                                  @NotNull ColorSettingsPage page) {
+    return !filterOutRainbowNonConflictingAttrKeys
+        || page instanceof DefaultLanguageColorsPage
+        || page instanceof GeneralColorsPage
+        || page instanceof RainbowColorSettingsPage;
   }
 }

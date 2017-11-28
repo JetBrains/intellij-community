@@ -76,9 +76,9 @@ public class IJSwingUtilities extends JBSwingUtilities {
   }
 
   /**
-   * This method is copied from <code>SwingUtilities</code>.
-   * Returns index of the first occurrence of <code>mnemonic</code>
-   * within string <code>text</code>. Matching algorithm is not
+   * This method is copied from {@code SwingUtilities}.
+   * Returns index of the first occurrence of {@code mnemonic}
+   * within string {@code text}. Matching algorithm is not
    * case-sensitive.
    *
    * @param text The text to search through, may be null

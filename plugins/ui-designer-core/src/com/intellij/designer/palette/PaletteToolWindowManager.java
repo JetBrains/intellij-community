@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -68,6 +69,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   protected void initToolWindow() {
     if (myToolWindowPanel == null) {
       myToolWindowPanel = new PalettePanel();
+      Disposer.register(this, () -> myToolWindowPanel.dispose());
     }
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
@@ -99,13 +101,6 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     else {
       myToolWindow.setAvailable(true, null);
       myToolWindow.show(null);
-    }
-  }
-
-  @Override
-  public void disposeComponent() {
-    if (myToolWindowPanel != null) {
-      myToolWindowPanel.dispose();
     }
   }
 

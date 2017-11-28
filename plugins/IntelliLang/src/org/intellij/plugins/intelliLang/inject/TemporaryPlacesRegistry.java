@@ -20,11 +20,12 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +128,7 @@ public class TemporaryPlacesRegistry {
     TempPlace place = new TempPlace(prevLanguage, pointer);
     TempPlace nextPlace = new TempPlace(null, pointer);
     Configuration.replaceInjectionsWithUndo(
-      project, nextPlace, place, Collections.<PsiElement>emptyList(),
+      project, nextPlace, place, Collections.emptyList(),
       (add, remove) -> {
         addInjectionPlace(add);
         return true;
@@ -142,7 +143,7 @@ public class TemporaryPlacesRegistry {
     TempPlace prevPlace = new TempPlace(prevLanguage, pointer);
     TempPlace place = new TempPlace(language, pointer);
     Configuration.replaceInjectionsWithUndo(
-      myProject, place, prevPlace, Collections.<PsiElement>emptyList(),
+      myProject, place, prevPlace, Collections.emptyList(),
       (add, remove) -> {
         addInjectionPlace(add);
         return true;

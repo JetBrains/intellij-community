@@ -75,8 +75,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private String myInternalName;
   private PsiClassStub myResult;
   private PsiModifierListStub myModList;
-
+  private final boolean myAnonymousInner;
+  private final boolean myLocalClassInner;
+  
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
+    this(classSource, innersStrategy, parent, access, shortName, false, false);
+  }
+  
+  public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName, 
+                             boolean anonymousInner, boolean localClassInner) {
     super(ASM_API);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
@@ -84,6 +91,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myAccess = access;
     myShortName = shortName;
     myMapping = createMapping(classSource);
+    myAnonymousInner = anonymousInner;
+    myLocalClassInner = localClassInner;
   }
 
   public PsiClassStub<?> getResult() {
@@ -96,15 +105,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     String parentName = myParent instanceof PsiClassStub ? ((PsiClassStub)myParent).getQualifiedName() :
                         myParent instanceof PsiJavaFileStub ? ((PsiJavaFileStub)myParent).getPackageName() :
                         null;
-    String fqn = getFqn(name, myShortName, parentName);
-    String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : PsiNameHelper.getShortClassName(fqn);
+    String fqn = myAnonymousInner || myLocalClassInner ? null : getFqn(name, myShortName, parentName);
+    String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : fqn != null ? PsiNameHelper.getShortClassName(fqn) : myShortName;
 
     int flags = myAccess | access;
     boolean isDeprecated = isSet(flags, Opcodes.ACC_DEPRECATED);
     boolean isInterface = isSet(flags, Opcodes.ACC_INTERFACE);
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
-    byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
+    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, 
+                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -177,7 +187,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     ClassInfo result = new ClassInfo();
     result.typeParameters = ContainerUtil.emptyList();
     result.superName = superClass != null ? myMapping.fun(superClass) : null;
-    result.interfaceNames = superInterfaces == null ? null : ContainerUtil.map(superInterfaces, name -> myMapping.fun(name));
+    result.interfaceNames = superInterfaces == null ? null : ContainerUtil.map(superInterfaces, myMapping);
     return result;
   }
 
@@ -245,16 +255,39 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     if (isSet(access, Opcodes.ACC_SYNTHETIC)) return;
-    if (innerName == null || outerName == null) return;
+    String jvmClassName = innerName;
 
+    boolean isAnonymousInner = innerName == null;
+    boolean isLocalClassInner = !isAnonymousInner && outerName == null;
+    
+    if (innerName == null || outerName == null) {
+      if(myInternalName.equals(name)) {
+        return;
+      }
+      int $index = name.lastIndexOf('$');
+      if ($index == -1) {
+        return;
+      } else {
+        if (isAnonymousInner) {
+          jvmClassName = name.substring($index + 1);
+          innerName = jvmClassName;
+          outerName = name.substring(0, $index);
+        }
+        else { // isLocalClassInner
+          outerName = name.substring(0, $index);
+          jvmClassName = name.substring($index + 1);
+        }
+      }
+    }
+    
     if (myParent instanceof PsiFileStub && myInternalName.equals(name)) {
       throw new OutOfOrderInnerClassException();  // our result is inner class
     }
 
     if (myInternalName.equals(outerName)) {
-      T innerClass = myInnersStrategy.findInnerClass(innerName, mySource);
+      T innerClass = myInnersStrategy.findInnerClass(jvmClassName, mySource);
       if (innerClass != null) {
-        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName));
+        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner));
       }
     }
   }
@@ -410,7 +443,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
     if (exceptions != null && (result.throwTypes == null || exceptions.length > result.throwTypes.size())) {
       // a signature may be inconsistent with exception list - in this case, the more complete list takes precedence
-      result.throwTypes = ContainerUtil.map(exceptions, name -> myMapping.fun(name));
+      result.throwTypes = ContainerUtil.map(exceptions, myMapping);
     }
 
     return result;
@@ -421,7 +454,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     result.typeParameters = ContainerUtil.emptyList();
     result.returnType = toJavaType(Type.getReturnType(desc), myMapping);
     result.argTypes = ContainerUtil.map(Type.getArgumentTypes(desc), type -> toJavaType(type, myMapping));
-    result.throwTypes = exceptions == null ? null : ContainerUtil.map(exceptions, name -> myMapping.fun(name));
+    result.throwTypes = exceptions == null ? null : ContainerUtil.map(exceptions, myMapping);
     return result;
   }
 
@@ -545,6 +578,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
     private final Function<String, String> myMapping;
+    private int myParamNameIndex;
     private int myUsedParamSize;
     private int myUsedParamCount;
     private List<Set<String>> myFilters;
@@ -606,21 +640,30 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     @Override
+    public void visitParameter(String name, int access) {
+      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && myParamNameIndex < myParamCount) {
+        setParameterName(name, myParamNameIndex);
+        myParamNameIndex++;
+      }
+    }
+
+    @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
       if (index >= myIgnoreCount) {
         // long and double variables increase the index by 2, not by 1
         int paramIndex = index - myIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myIgnoreCount;
-        if (paramIndex >= myParamCount) return;
-
-        if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
-          PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
-          if (parameterStub != null) {
-            parameterStub.setName(name);
-          }
+        if (paramIndex < myParamCount) {
+          setParameterName(name, paramIndex);
+          myUsedParamCount = paramIndex + 1;
+          myUsedParamSize += "D".equals(desc) || "J".equals(desc) ? 2 : 1;
         }
+      }
+    }
 
-        myUsedParamCount = paramIndex + 1;
-        myUsedParamSize += "D".equals(desc) || "J".equals(desc) ? 2 : 1;
+    private void setParameterName(String name, int paramIndex) {
+      if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
+        PsiParameterStubImpl stub = myParamStubs[paramIndex];
+        if (stub != null) stub.setName(name);
       }
     }
 
@@ -774,7 +817,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
             className = p.first;
             if (p.second != null) {
               className = fun(p.first) + '.' + p.second;
-              mapping.put(className, pair(className, (String)null));
+              mapping.put(className, pair(className, null));
             }
           }
 

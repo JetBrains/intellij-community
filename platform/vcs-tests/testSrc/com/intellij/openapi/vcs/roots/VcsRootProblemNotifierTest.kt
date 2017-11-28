@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.Extensions
@@ -36,7 +23,8 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vcs.roots.VcsRootPlatformTest.DOT_MOCK
+import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.io.File
@@ -68,6 +56,8 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     }
   }
 
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#com.intellij.openapi.vcs.roots")
+
   fun `test root is added automatically in simple case`() {
     assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
 
@@ -78,9 +68,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
   }
 
   fun `test nothing is added automatically if two roots detected`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    val subRoot = File(myProjectPath, "lib")
-    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    val subRoot = createNestedRoots()
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
@@ -111,9 +99,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
   // IDEA-CR-18592
   fun `test single root is not added automatically if there is ignored root`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    val subRoot = File(myProjectPath, "lib")
-    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    val subRoot = createNestedRoots()
     VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(FileUtil.toSystemIndependentName(subRoot.path)))
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
@@ -123,6 +109,14 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
       The directory ${toSystemDependentName(myProjectPath)} is under mock, but is not registered in the Settings.
       <a>Add root</a> <a>Configure</a> <a>Ignore</a>
       """.trimIndent())
+  }
+
+  private fun createNestedRoots(): File {
+    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
+    val subRoot = File(myProjectPath, "lib")
+    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subRoot)
+    return subRoot
   }
 
   private fun getExtensionPoint() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)

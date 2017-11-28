@@ -62,6 +62,11 @@ public final class Encoder {
     return UnitBitSet.decode(compressed, alphabet);
   }
 
+  @NotNull
+  public String decode(@NotNull byte[] data, int from, int to) {
+    return UnitBitSet.decode(data, from, to, alphabet);
+  }
+
   public int getFirstLetterIndex(byte firstPackedByte) {
     return UnitBitSet.getFirstLetterIndex(firstPackedByte, alphabet);
   }

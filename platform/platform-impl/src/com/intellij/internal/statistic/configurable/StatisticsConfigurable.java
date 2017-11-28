@@ -46,6 +46,7 @@ public class StatisticsConfigurable implements SearchableConfigurable, Configura
     return "Usage Statistics";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

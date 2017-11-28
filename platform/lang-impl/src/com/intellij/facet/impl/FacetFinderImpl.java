@@ -17,21 +17,21 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -118,7 +118,7 @@ public class FacetFinderImpl extends FacetFinder {
         file = file.getParent();
       }
     }
-    return Collections.<F>emptyList();
+    return Collections.emptyList();
   }
 
   private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {

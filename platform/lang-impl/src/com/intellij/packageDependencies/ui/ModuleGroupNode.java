@@ -26,10 +26,6 @@ import com.intellij.util.PlatformIcons;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 24-Jan-2006
- */
 public class ModuleGroupNode extends PackageDependenciesNode {
   private final ModuleGroup myModuleGroup;
 

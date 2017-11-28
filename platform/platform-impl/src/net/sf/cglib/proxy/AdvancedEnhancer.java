@@ -45,23 +45,23 @@ import java.util.*;
  * and after the invocation of the "super" method. In addition you can modify the
  * arguments before calling the super method, or not call it at all.
  * <p>
- * Although <code>MethodInterceptor</code> is generic enough to meet any
+ * Although {@code MethodInterceptor} is generic enough to meet any
  * interception need, it is often overkill. For simplicity and performance, additional
  * specialized callback types, such as {@link LazyLoader} are also available.
  * Often a single callback will be used per enhanced class, but you can control
  * which callback is used on a per-method basis with a {@link CallbackFilter}.
  * <p>
  * The most common uses of this class are embodied in the static helper methods. For
- * advanced needs, such as customizing the <code>ClassLoader</code> to use, you should create
- * a new instance of <code>Enhancer</code>. Other classes within CGLIB follow a similar pattern.
+ * advanced needs, such as customizing the {@code ClassLoader} to use, you should create
+ * a new instance of {@code Enhancer}. Other classes within CGLIB follow a similar pattern.
  * <p>
  * All enhanced objects implement the {@link Factory} interface, unless {@link #setUseFactory} is
- * used to explicitly disable this feature. The <code>Factory</code> interface provides an API
+ * used to explicitly disable this feature. The {@code Factory} interface provides an API
  * to change the callbacks of an existing object, as well as a faster and easier way to create
  * new instances of the same type.
  * <p>
  * For an almost drop-in replacement for
- * <code>java.lang.reflect.Proxy</code>, see the {@link Proxy} class.
+ * {@code java.lang.reflect.Proxy}, see the {@link Proxy} class.
  */
 
 @SuppressWarnings("StaticFieldReferencedViaSubclass")
@@ -143,10 +143,10 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private boolean interceptDuringConstruction = true;
 
   /**
-   * Create a new <code>Enhancer</code>. A new <code>Enhancer</code>
+   * Create a new {@code Enhancer}. A new {@code Enhancer}
    * object should be used for each generated object, and should not
    * be shared across threads. To create additional instances of a
-   * generated class, use the <code>Factory</code> interface.
+   * generated class, use the {@code Factory} interface.
    * @see Factory
    */
   public AdvancedEnhancer() {
@@ -157,7 +157,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
   /**
    * Set the class which the generated class will extend. As a convenience,
-   * if the supplied superclass is actually an interface, <code>setInterfaces</code>
+   * if the supplied superclass is actually an interface, {@code setInterfaces}
    * will be called with the appropriate argument instead.
    * A non-interface argument must not be declared as final, and must have an
    * accessible constructor.
@@ -176,7 +176,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   /**
-   * Set the interfaces to implement. The <code>Factory</code> interface will
+   * Set the interfaces to implement. The {@code Factory} interface will
    * always be implemented regardless of what is specified here.
    * @param interfaces array of interfaces to implement, or null
    * @see Factory
@@ -229,9 +229,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
    * the {@link Factory} interface.
    * This was added for tools that need for proxies to be more
    * indistinguishable from their targets. Also, in some cases it may
-   * be necessary to disable the <code>Factory</code> interface to
+   * be necessary to disable the {@code Factory} interface to
    * prevent code from changing the underlying callbacks.
-   * @param useFactory whether to implement <code>Factory</code>; default is <code>true</code>
+   * @param useFactory whether to implement {@code Factory}; default is {@code true}
    */
   public void setUseFactory(boolean useFactory) {
     this.useFactory = useFactory;
@@ -278,7 +278,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   /**
    * Generate a new class if necessary and uses the specified
    * callbacks (if any) to create a new object instance.
-   * Uses the constructor of the superclass matching the <code>argumentTypes</code>
+   * Uses the constructor of the superclass matching the {@code argumentTypes}
    * parameter, with the given arguments.
    * @param argumentTypes constructor signature
    * @param arguments compatible wrapped arguments to pass to constructor

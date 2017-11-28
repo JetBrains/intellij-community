@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -33,11 +32,15 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,10 +64,12 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class SvnHistoryProvider
   implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
@@ -126,13 +131,10 @@ public class SvnHistoryProvider
       field.setEditable(false);
       field.setOpaque(false);
       field.setWrapStyleWord(true);
-      listener = new Consumer<VcsFileRevision>() {
-        @Override
-        public void consume(VcsFileRevision vcsFileRevision) {
-          field.setText(mergeSourceColumn.getText(vcsFileRevision));
-          field.setCaretPosition(0);
-          field.repaint();
-        }
+      listener = vcsFileRevision -> {
+        field.setText(mergeSourceColumn.getText(vcsFileRevision));
+        field.setCaretPosition(0);
+        field.repaint();
       };
 
       final MergeSourceDetailsAction sourceAction = new MergeSourceDetailsAction();
@@ -159,7 +161,7 @@ public class SvnHistoryProvider
       }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();
-      fieldPanel.setBorder(IdeBorderFactory.createEmptyBorder());
+      fieldPanel.setBorder(JBUI.Borders.empty());
       addComp = fieldPanel;
     }
     else {
@@ -235,19 +237,14 @@ public class SvnHistoryProvider
       logLoader = new LocalLoader(myVcs, committedPath, from, to, limit, peg, showMergeSources);
     }
 
-    try {
-      logLoader.preliminary();
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    logLoader.preliminary();
     logLoader.check();
     if (showMergeSources) {
       logLoader.initSupports15();
     }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<>();
@@ -255,15 +252,12 @@ public class SvnHistoryProvider
     if (indicator != null) {
       indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));
     }
-    final Consumer<VcsFileRevision> consumer = new Consumer<VcsFileRevision>() {
-      @Override
-      public void consume(VcsFileRevision vcsFileRevision) {
-        if (!Boolean.TRUE.equals(sessionReported.get())) {
-          partner.reportCreatedEmptySession(historySession);
-          sessionReported.set(true);
-        }
-        partner.acceptRevision(vcsFileRevision);
+    final Consumer<VcsFileRevision> consumer = vcsFileRevision -> {
+      if (!Boolean.TRUE.equals(sessionReported.get())) {
+        partner.reportCreatedEmptySession(historySession);
+        sessionReported.set(true);
       }
+      partner.acceptRevision(vcsFileRevision);
     };
 
     logLoader.setConsumer(consumer);
@@ -273,7 +267,7 @@ public class SvnHistoryProvider
 
   private static abstract class LogLoader {
     protected final boolean myShowMergeSources;
-    protected String myUrl;
+    protected SVNURL myUrl;
     protected boolean mySupport15;
     protected final SvnVcs myVcs;
     protected final FilePath myFile;
@@ -309,7 +303,7 @@ public class SvnHistoryProvider
       if (myException != null) throw myException;
     }
 
-    protected abstract void preliminary() throws SVNException;
+    protected abstract void preliminary() throws SvnBindException;
 
     protected abstract void load();
   }
@@ -322,7 +316,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected void preliminary() throws SVNException {
+    protected void preliminary() {
       myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
         myException = new VcsException("File " + myFile.getPath() + " is not under version control");
@@ -332,20 +326,16 @@ public class SvnHistoryProvider
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
         return;
       }
-      myUrl = myInfo.getURL().toDecodedString();
+      myUrl = myInfo.getURL();
     }
 
     @Override
     protected void load() {
-      String relativeUrl = myUrl;
-      final SVNURL repoRootURL = myInfo.getRepositoryRootURL();
-
-      final String root = repoRootURL.toString();
-      if (myUrl != null && myUrl.startsWith(root)) {
-        relativeUrl = myUrl.substring(root.length());
-      }
+      SVNURL repoRootURL = myInfo.getRepositoryRootURL();
+      String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
+      
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
+        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
       final SvnTarget target = SvnTarget.fromFile(myFile.getIOFile(), myPeg);
@@ -355,15 +345,7 @@ public class SvnHistoryProvider
           myFrom == null ? SVNRevision.HEAD : myFrom,
           myTo == null ? SVNRevision.create(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit, null,
-          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
-                                createConsumerAdapter(myConsumer),
-                                repoRootURL, myFile.getCharset()));
-      }
-      catch (SVNCancelException e) {
-        //
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
+          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL));
       }
       catch (VcsException e) {
         myException = e;
@@ -372,12 +354,7 @@ public class SvnHistoryProvider
   }
 
   private static ThrowableConsumer<VcsFileRevision, SVNException> createConsumerAdapter(final Consumer<VcsFileRevision> consumer) {
-    return new ThrowableConsumer<VcsFileRevision, SVNException>() {
-      @Override
-      public void consume(VcsFileRevision revision) throws SVNException {
-        consumer.consume(revision);
-      }
-    };
+    return revision -> consumer.consume(revision);
   }
 
   private static class RepositoryLoader extends LogLoader {
@@ -395,40 +372,34 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected void preliminary() throws SVNException {
-      myUrl = myFile.getPath().replace('\\', '/');
+    protected void preliminary() throws SvnBindException {
+      myUrl = createUrl(myFile.getPath(), false);
     }
 
     @Override
     protected void load() {
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
+        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
 
       try {
         if (myForceBackwards) {
-          SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
-          if (! existsNow(svnurl)) {
-            loadBackwards(svnurl);
+          if (!existsNow(myUrl)) {
+            loadBackwards(myUrl);
             return;
           }
         }
 
-        final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
         // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
         // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
         // TODO: non-interactive mode)
-        final SVNURL rootURL = SvnUtil.getRepositoryRoot(myVcs, svnurl);
+        final SVNURL rootURL = SvnUtil.getRepositoryRoot(myVcs, myUrl);
         if (rootURL == null) {
-          throw new VcsException("Could not find repository root for URL: " + myUrl);
+          throw new VcsException("Could not find repository root for URL: " + myUrl.toDecodedString());
         }
-        final String root = rootURL.toString();
-        String relativeUrl = myUrl;
-        if (myUrl.startsWith(root)) {
-          relativeUrl = myUrl.substring(root.length());
-        }
-        SvnTarget target = SvnTarget.fromURL(svnurl, myPeg == null ? myFrom : myPeg);
+        String relativeUrl = getRelativeUrl(rootURL, myUrl);
+        SvnTarget target = SvnTarget.fromURL(myUrl, myPeg == null ? myFrom : myPeg);
         RepositoryLogEntryHandler handler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL);
 
@@ -436,36 +407,23 @@ public class SvnHistoryProvider
           .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
                  myLimit, null, handler);
       }
-      catch (SVNCancelException e) {
-        //
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
-      }
       catch (VcsException e) {
         myException = e;
       }
     }
 
-    private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
+    private void loadBackwards(SVNURL svnurl) throws VcsException {
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
-      final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
-      final String root = rootURL != null ? rootURL.toString() : "";
-      String relativeUrl = myUrl;
-      if (myUrl.startsWith(root)) {
-        relativeUrl = myUrl.substring(root.length());
+      if (info == null || info.getRepositoryRootURL() == null) {
+        throw new VcsException("Could not find repository root for URL: " + svnurl + " in revision " + myPeg);
       }
 
+      SVNURL rootURL = info.getRepositoryRootURL();
+      String relativeUrl = getRelativeUrl(rootURL, myUrl);
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
-          new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl,
-                                        new ThrowableConsumer<VcsFileRevision, SVNException>() {
-                                          @Override
-                                          public void consume(VcsFileRevision revision) throws SVNException {
-                                            myConsumer.consume(revision);
-                                          }
-                                        }, rootURL);
+        new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
       SvnTarget target = SvnTarget.fromURL(rootURL, myFrom);
@@ -507,12 +465,11 @@ public class SvnHistoryProvider
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
     protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
-    private final Charset myCharset;
     protected final ThrowableConsumer<VcsFileRevision, SVNException> myResult;
     private final String myLastPath;
     private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
-    protected final String myUrl;
+    protected final SVNURL myUrl;
     private final SvnMergeSourceTracker myTracker;
     protected SVNURL myRepositoryRoot;
     private boolean myThrowCancelOnMeetPathCreation;
@@ -521,71 +478,66 @@ public class SvnHistoryProvider
       myThrowCancelOnMeetPathCreation = throwCancelOnMeetPathCreation;
     }
 
-    public MyLogEntryHandler(SvnVcs vcs, final String url,
+    public MyLogEntryHandler(SvnVcs vcs, SVNURL url,
                              final SVNRevision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                             SVNURL repoRootURL, Charset charset)
-      throws SVNException, VcsException {
+                             SVNURL repoRootURL) {
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myLastPath = lastPath;
-      myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
       myPegRevision = pegRevision;
       myUrl = url;
       myRepositoryRoot = repoRootURL;
-      myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<LogEntry, Integer>, SVNException>() {
-        @Override
-        public void consume(final Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-          final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+      myTracker = new SvnMergeSourceTracker(svnLogEntryIntegerPair -> {
+        final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
 
-          if (myIndicator != null) {
-            if (myIndicator.isCanceled()) {
-              SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
-            }
-            myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+        if (myIndicator != null) {
+          if (myIndicator.isCanceled()) {
+            SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
           }
-          LogEntryPath entryPath = null;
-          String copyPath = null;
-          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
+          myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+        }
+        LogEntryPath entryPath = null;
+        String copyPath = null;
+        final int mergeLevel = svnLogEntryIntegerPair.getSecond();
 
-          if (! myLastPathCorrector.isRoot()) {
-            myLastPathCorrector.consume(logEntry);
-            entryPath = myLastPathCorrector.getDirectlyMentioned();
-            copyPath = null;
-            if (entryPath != null) {
-              copyPath = entryPath.getCopyPath();
-            } else {
-              // if there are no path with exact match, check whether parent or child paths had changed
-              // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
-
-              // Separate LogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
-              // revisions of some other revision - this way we construct merge hierarchy.
-              // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
-              // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
-              // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
-              // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
-              // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
-              // TODO: filtering. Check user feedback on this.
-//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
-            }
-          }
-
-          final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
-          if (mergeLevel >= 0) {
-            addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
+        if (!myLastPathCorrector.isRoot()) {
+          myLastPathCorrector.consume(logEntry);
+          entryPath = myLastPathCorrector.getDirectlyMentioned();
+          copyPath = null;
+          if (entryPath != null) {
+            copyPath = entryPath.getCopyPath();
           }
           else {
-            myResult.consume(revision);
-            myPrevious = revision;
-          }
-          if (myThrowCancelOnMeetPathCreation && myUrl.equals(revision.getURL()) && entryPath != null && entryPath.getType() == 'A') {
-            throw new SVNCancelException();
+            // if there are no path with exact match, check whether parent or child paths had changed
+            // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
+
+            // Separate LogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
+            // revisions of some other revision - this way we construct merge hierarchy.
+            // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
+            // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
+            // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
+            // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
+            // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
+            // TODO: filtering. Check user feedback on this.
+//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
           }
         }
 
+        final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
+        if (mergeLevel >= 0) {
+          addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
+        }
+        else {
+          myResult.consume(revision);
+          myPrevious = revision;
+        }
+        if (myThrowCancelOnMeetPathCreation && myUrl.equals(revision.getURL()) && entryPath != null && entryPath.getType() == 'A') {
+          throw new SVNCancelException();
+        }
       });
     }
 
@@ -646,18 +598,17 @@ public class SvnHistoryProvider
       final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
 //      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
 //                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
-      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath);
+      return new SvnFileRevision(myVcs, myPegRevision, rev, url, author, date, message, copyPath);
     }
   }
 
   private static class RepositoryLogEntryHandler extends MyLogEntryHandler {
-    public RepositoryLogEntryHandler(final SvnVcs vcs, final String url,
+    public RepositoryLogEntryHandler(final SvnVcs vcs, SVNURL url,
                                      final SVNRevision pegRevision,
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                                     SVNURL repoRootURL)
-      throws VcsException, SVNException {
-      super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
+                                     SVNURL repoRootURL) {
+      super(vcs, url, pegRevision, lastPath, result, repoRootURL);
     }
 
     @Override
@@ -665,7 +616,7 @@ public class SvnHistoryProvider
       throws SVNException {
       final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
                          myRepositoryRoot.appendPath(entryPath.getPath(), true);
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath);
+      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, copyPath);
     }
   }
 

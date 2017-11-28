@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.Consumer;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.codeStyle.arrangement.ArrangementSectionDetector.ArrangementSectionEntryTemplate;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 
@@ -179,7 +179,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
     // the first one then.
     PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
-    if (fieldPrev instanceof PsiJavaToken && ((PsiJavaToken)fieldPrev).getTokenType() == JavaTokenType.COMMA) {
+    if (PsiUtil.isJavaToken(fieldPrev, JavaTokenType.COMMA)) {
       return;
     }
 
@@ -221,7 +221,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
           }
           // Stop if current field ends by a semicolon.
           if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
-              || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
+              || (PsiUtil.isJavaToken(c, JavaTokenType.SEMICOLON)))
           {
             range = TextRange.create(range.getStartOffset(), expandToCommentIfPossible(c));
           }
@@ -259,7 +259,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
     Set<PsiField> classFields = myCachedClassFields.get(containingClass);
     if (classFields == null) {
-      classFields = ContainerUtil.map2Set(containingClass.getFields(), Functions.<PsiField>id());
+      classFields = ContainerUtil.map2Set(containingClass.getFields(), Functions.id());
       myCachedClassFields.put(containingClass, classFields);
     }
 
@@ -340,7 +340,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   private static boolean isSemicolon(@Nullable PsiElement e) {
-    return e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.SEMICOLON;
+    return PsiUtil.isJavaToken(e, JavaTokenType.SEMICOLON);
   }
 
   @Override
@@ -428,13 +428,13 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
     String propertyName = null;
     boolean getter = true;
-    if (PropertyUtil.isSimplePropertyGetter(method)) {
+    if (PropertyUtilBase.isSimplePropertyGetter(method)) {
       entry.addModifier(GETTER);
-      propertyName = PropertyUtil.getPropertyNameByGetter(method);
+      propertyName = PropertyUtilBase.getPropertyNameByGetter(method);
     }
-    else if (PropertyUtil.isSimplePropertySetter(method)) {
+    else if (PropertyUtilBase.isSimplePropertySetter(method)) {
       entry.addModifier(SETTER);
-      propertyName = PropertyUtil.getPropertyNameBySetter(method);
+      propertyName = PropertyUtilBase.getPropertyNameBySetter(method);
       getter = false;
     }
 

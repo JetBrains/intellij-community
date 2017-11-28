@@ -29,6 +29,7 @@ public class SystemProperties {
 
   private SystemProperties() { }
 
+  @NotNull
   public static String getUserHome() {
     return System.getProperty("user.home");
   }

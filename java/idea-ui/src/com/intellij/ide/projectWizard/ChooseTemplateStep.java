@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.TestOnly;
 
@@ -45,7 +46,9 @@ public class ChooseTemplateStep extends ModuleWizardStep {
       public void actionPerformed(ActionEvent e) {
         myTemplateList.setEnabled(myCreateFromTemplateCheckBox.isSelected());
         if (myCreateFromTemplateCheckBox.isSelected()) {
-          myTemplateList.getList().requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myTemplateList.getList(), true);
+          });
         }
       }
     });

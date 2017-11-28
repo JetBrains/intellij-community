@@ -15,11 +15,8 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -28,7 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -110,12 +106,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
   }
 
   protected static void incModCount() {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();
-      }
-    }.execute();
+    getPsiManager().dropPsiCaches();
   }
 
   @Nullable

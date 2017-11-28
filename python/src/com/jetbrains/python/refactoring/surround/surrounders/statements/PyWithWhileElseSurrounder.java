@@ -28,12 +28,6 @@ import com.jetbrains.python.psi.PyWhileStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 28, 2009
- * Time: 5:46:20 PM
- */
 public class PyWithWhileElseSurrounder extends PyStatementSurrounder {
   @Override
   @Nullable

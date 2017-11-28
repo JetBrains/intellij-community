@@ -30,10 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 7/18/12
- */
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
 

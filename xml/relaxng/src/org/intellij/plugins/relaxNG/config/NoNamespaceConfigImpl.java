@@ -97,21 +97,9 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
   }
 
   @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
   @NotNull
   public String getComponentName() {
     return "RELAX-NG.NoNamespaceConfig";
-  }
-
-  @Override
-  public void projectOpened() {
   }
 
   @Override

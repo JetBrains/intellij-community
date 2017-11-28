@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
+                                                                              ProjectComponent {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenTasksManagerState myState = new MavenTasksManagerState();
@@ -76,6 +78,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     myRunner = runner;
   }
 
+  @Override
   public synchronized MavenTasksManagerState getState() {
     MavenTasksManagerState result = new MavenTasksManagerState();
     result.afterCompileTasks = new THashSet<>(myState.afterCompileTasks);
@@ -85,6 +88,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     return result;
   }
 
+  @Override
   public void loadState(MavenTasksManagerState state) {
     synchronized (this) {
       myState = state;
@@ -171,8 +175,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
         }
       }
     }
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
+    for (MavenBeforeRunTask each : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
       if (each.isFor(project, goal)) {
         result.add(TasksBundle.message("maven.tasks.goal.before.run"));
         break;

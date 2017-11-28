@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,13 @@ public class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
   private final XDebugSession mySession;
 
-  public XDebugViewSessionListener(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
+  private XDebugViewSessionListener(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
     myDebugView = debugView;
     mySession = session;
+  }
+
+  public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
+    session.addSessionListener(new XDebugViewSessionListener(debugView, session)); // do not use disposable here, all listeners are removed on session end
   }
 
   private void onSessionEvent(@NotNull XDebugView.SessionEvent event) {

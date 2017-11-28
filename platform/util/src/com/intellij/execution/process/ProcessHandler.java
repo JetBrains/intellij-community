@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
@@ -56,7 +58,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final ProcessListener myEventMulticaster;
   private final TasksRunner myAfterStartNotifiedRunner;
 
-  @Nullable private volatile Integer myExitCode = null;
+  @Nullable private volatile Integer myExitCode;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();
@@ -149,6 +151,16 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myListeners.add(listener);
   }
 
+  public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
+
   public void removeProcessListener(final ProcessListener listener) {
     myListeners.remove(listener);
   }
@@ -196,7 +208,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     });
   }
 
-  public void notifyTextAvailable(final String text, final Key outputType) {
+  public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
     final ProcessEvent event = new ProcessEvent(this, text);
     myEventMulticaster.onTextAvailable(event, outputType);
   }
@@ -249,7 +261,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     private final List<Runnable> myPendingTasks = new ArrayList<Runnable>();
 
     @Override
-    public void startNotified(ProcessEvent event) {
+    public void startNotified(@NotNull ProcessEvent event) {
       removeProcessListener(this);
       // at this point it is guaranteed that nothing will be added to myPendingTasks
       runPendingTasks();

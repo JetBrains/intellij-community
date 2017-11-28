@@ -40,6 +40,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,6 +67,8 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -590,22 +593,25 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
     catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
+      return null;
     }
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(ReferenceType cls) {
     try {
       return cls.allLineLocations();
     }
-    catch (AbsentInformationException | ObjectCollectedException ignored) {
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+    catch (ObjectCollectedException ignored) {
       return Collections.emptyList();
     }
   }
@@ -761,6 +767,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  @Nullable
+  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+    if (position != null) {
+      if (position instanceof JavaXSourcePosition) {
+        return ((JavaXSourcePosition)position).mySourcePosition;
+      }
+      PsiFile psiFile = getPsiFile(position, project);
+      if (psiFile != null) {
+        return SourcePosition.createFromLine(psiFile, position.getLine());
+      }
+    }
+    return null;
+  }
+
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
@@ -797,6 +817,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     public TextRange getHighlightRange() {
       return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
+  }
+
+  @Nullable
+  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (position != null) {
+      VirtualFile file = position.getFile();
+      if (file.isValid()) {
+        return PsiManager.getInstance(project).findFile(file);
+      }
+    }
+    return null;
   }
 
   /**
@@ -1051,7 +1083,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       if (file == null) {
         return true;
       }
@@ -1060,5 +1092,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
       }
     });
+  }
+
+  public static boolean isInJavaSession(AnActionEvent e) {
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
   }
 }

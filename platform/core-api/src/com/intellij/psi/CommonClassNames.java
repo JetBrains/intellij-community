@@ -30,6 +30,8 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
   @NonNls String JAVA_LANG_VOID = "java.lang.Void";
 
+  @NonNls String JAVA_UTIL_OBJECTS = "java.util.Objects";
+
   @NonNls String JAVA_LANG_THROWABLE = "java.lang.Throwable";
   @NonNls String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";

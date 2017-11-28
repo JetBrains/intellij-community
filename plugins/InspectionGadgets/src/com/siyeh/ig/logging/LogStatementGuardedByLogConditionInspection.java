@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,27 +24,23 @@ import com.siyeh.ig.ui.TextField;
 import com.siyeh.ig.ui.UiUtils;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 
 public class LogStatementGuardedByLogConditionInspection extends LogStatementGuardedByLogConditionInspectionBase {
 
-  public LogStatementGuardedByLogConditionInspection() {
-  }
+  public LogStatementGuardedByLogConditionInspection() {}
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
-    classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
     final TextField loggerClassNameField = new TextField(this, "loggerClassName");
     final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(logMethodNameList, logConditionMethodNameList),
                                                                      InspectionGadgetsBundle.message("log.method.name"),
                                                                      InspectionGadgetsBundle.message("log.condition.text")));
-    panel.add(UiUtils.createAddRemovePanel(table), BorderLayout.CENTER);
-    panel.add(FormBuilder.createFormBuilder().addLabeledComponent(classNameLabel, loggerClassNameField).getPanel(), BorderLayout.NORTH);
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"),
-                           this, "flagAllUnguarded"), BorderLayout.SOUTH);
-    return panel;
+    return new FormBuilder()
+      .addLabeledComponent(InspectionGadgetsBundle.message("logger.name.option"), loggerClassNameField)
+      .addComponentFillVertically(UiUtils.createAddRemovePanel(table), 0)
+      .addComponent(new CheckBox(InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.flag.all.unguarded.option"),
+                                 this, "flagAllUnguarded"))
+      .getPanel();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.lang.Language;
@@ -41,6 +40,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.PomNamedTarget;
@@ -50,12 +50,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -149,12 +147,12 @@ class PostHighlightingVisitor {
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
-        progress.checkCanceled();
+        ProgressManager.checkCanceled();
         PsiElement psiRoot = viewProvider.getPsi(language);
         if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier) {
             PsiIdentifier identifier = (PsiIdentifier)element;
             HighlightInfo info = processIdentifier(identifier, progress, globalUsageHelper);
@@ -167,13 +165,13 @@ class PostHighlightingVisitor {
       }
     }
 
-    HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
+    HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportInspection.SHORT_NAME);
     if (isUnusedImportEnabled(unusedImportKey)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
         final PsiImportStatementBase[] imports = importList.getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           final HighlightInfo info = processImport(statement, unusedImportKey);
           if (info != null) {
             errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
@@ -226,7 +224,7 @@ class PostHighlightingVisitor {
       }
     }
     if (parent instanceof PsiMethod) {
-      if (myUnusedSymbolInspection.isIgnoreAccessors() && PropertyUtil.isSimplePropertyAccessor((PsiMethod)parent)) {
+      if (myUnusedSymbolInspection.isIgnoreAccessors() && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)parent)) {
         return null;
       }
       if (compareVisibilities((PsiModifierListOwner)parent, myUnusedSymbolInspection.getMethodVisibility())) {
@@ -364,14 +362,11 @@ class PostHighlightingVisitor {
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = new ConcurrentFactoryMap<PsiMethod, Boolean>() {
-    @Nullable
-    @Override
-    protected Boolean create(PsiMethod method) {
+  private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = ConcurrentFactoryMap.createMap(method-> {
       boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
       return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
     }
-  };
+  );
 
   private boolean isOverriddenOrOverrides(@NotNull PsiMethod method) {
     return isOverriddenOrOverrides.get(method);

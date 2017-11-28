@@ -20,16 +20,17 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.*;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,6 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -46,7 +46,7 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-public abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRunConfiguration<?>> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
@@ -77,11 +77,36 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
-        checkConfiguration(typedConfiguration, elementToRightClickOn);
+        if (configurationShouldBeProducedForElement(elementToRightClickOn)) {
+          @SuppressWarnings("unchecked") // Checked one line above
+          final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
+          Assert.assertTrue("Should use module sdk", typedConfiguration.isUseModuleSdk());
+          checkConfiguration(typedConfiguration, elementToRightClickOn);
+        } else {
+          // Any py file could be run script
+          // If no test config should be produced for this element then run script should be created
+          createConfigurationByElement(elementToRightClickOn, PythonRunConfiguration.class);
+        }
       }
     }), ModalityState.NON_MODAL);
+  }
+
+  protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+    return true;
+  }
+
+  /**
+   * @return default (template) configuration
+   */
+  @NotNull
+  protected T getTemplateConfiguration(@NotNull final PythonConfigurationFactoryBase factory) {
+    final RunnerAndConfigurationSettingsImpl settings =
+      RunManagerImpl.getInstanceImpl(myFixture.getProject()).getConfigurationTemplate(factory);
+    final RunConfiguration configuration = settings.getConfiguration();
+    assert myExpectedConfigurationType.isAssignableFrom(configuration.getClass()): "Wrong configuration created. Wrong factory?";
+    @SuppressWarnings("unchecked") //Checked one line above
+    final T typedConfig = (T)configuration;
+    return typedConfig;
   }
 
   /**
@@ -89,17 +114,19 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
    */
   @NotNull
   public static <T extends RunConfiguration> T createConfigurationByElement(@NotNull final PsiElement elementToRightClickOn,
-                                                   @NotNull Class<T> expectedConfigurationType) {
+                                                                            @NotNull Class<T> expectedConfigurationType) {
     final List<ConfigurationFromContext> configurationsFromContext =
       new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
     Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
 
 
-    final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
-      .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
-      .findFirst();
-    Assert.assertTrue("No configuration of expected type created for element " + elementToRightClickOn, maybeConfig.isPresent());
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
+    Assert.assertEquals("One and only one configuration should be produced", 1, configurationsFromContext.size());
+
+    final ConfigurationFromContext configurationFromContext = configurationsFromContext.get(0);
+    Assert.assertThat("Bad configuration type", configurationFromContext.getConfiguration(),
+                      Matchers.instanceOf(expectedConfigurationType));
+
+    final RunnerAndConfigurationSettings runnerAndConfigurationSettings = configurationFromContext.getConfigurationSettings();
 
 
     Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
@@ -128,7 +155,7 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
   /**
    * Task to create configuration
    */
-  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+  abstract static class PyConfigurationCreationTask<T extends PyAbstractTestConfiguration> extends PyExecutionFixtureTestTask {
     private volatile T myConfiguration;
 
 
@@ -137,7 +164,7 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
     }
 
     @Override
-    public void runTestOn(final String sdkHome) throws Exception {
+    public void runTestOn(final String sdkHome) {
       final T configuration =
         createFactory().createTemplateConfiguration(getProject());
       configuration.setModule(myFixture.getModule());
@@ -146,7 +173,7 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
     }
 
     @NotNull
-    protected abstract PyUniversalTestFactory<T> createFactory();
+    protected abstract PyAbstractTestFactory<T> createFactory();
 
     @NotNull
     T getConfiguration() {

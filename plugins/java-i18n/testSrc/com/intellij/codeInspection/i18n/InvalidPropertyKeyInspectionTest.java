@@ -20,24 +20,24 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class InvalidPropertyKeyInspectionTest extends InspectionTestCase {
-  private void doTest() throws Exception {
+  private void doTest() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new InvalidPropertyKeyInspection());
     doTest("invalidPropertyKey/" + getTestName(true), tool, "java 1.5");
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testImplicit() throws Exception {
+  public void testImplicit() {
     doTest();
   }
 
-  public void testImplicit2() throws Exception {
+  public void testImplicit2() {
     doTest();
   }
 
-  public void testImplicit3() throws Exception {
+  public void testImplicit3() {
     doTest();
   }
 

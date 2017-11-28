@@ -233,14 +233,12 @@ public class MoveInnerDialog extends MoveDialogBase {
         }
         PsiDirectory dir = RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
         if (dir == null) {
-          dir = ApplicationManager.getApplication().runWriteAction(new NullableComputable<PsiDirectory>() {
-            public PsiDirectory compute() {
-              try {
-                return RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
-              }
-              catch (IncorrectOperationException e) {
-                return null;
-              }
+          dir = ApplicationManager.getApplication().runWriteAction((NullableComputable<PsiDirectory>)() -> {
+            try {
+              return RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
+            }
+            catch (IncorrectOperationException e) {
+              return null;
             }
           });
         }

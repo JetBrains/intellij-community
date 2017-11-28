@@ -19,7 +19,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -27,20 +30,19 @@ import com.intellij.openapi.vcs.history.VcsAppendableHistoryPartnerAdapter;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.FileGroup;
-import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -51,23 +53,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/11/13
- * Time: 3:48 PM
- */
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnProtocolsTest extends Svn17TestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";
 
-  private final static String ourHTTP_URL = "http://unit-364.labs.intellij.net/svn/forMerge/tmp";
+  private final static SVNURL ourHTTP_URL = parseUrl("http://unit-364.labs.intellij.net/svn/forMerge/tmp", false);
   private final static String ourHTTPS_URL = "https://";
   private final static String ourSVN_URL = "svn://";
 
   //private final static String[] ourTestURL = {ourSSH_URL, ourHTTP_URL};
   // at the moment
-  private final static String[] ourTestURL = {ourHTTP_URL};
+  private final static SVNURL[] ourTestURL = {ourHTTP_URL};
 
   public static final String SSH_USER_NAME = "user";
   public static final String SSH_PASSWORD = "qwerty4321";
@@ -96,51 +94,31 @@ public class SvnProtocolsTest extends Svn17TestCase {
     manager.setAuthenticationProvider(authentication);
 
     authentication.addAuthentication(ISVNAuthenticationManager.SSH,
-                                     new Convertor<SVNURL, SVNAuthentication>() {
-                                       @Override
-                                       public SVNAuthentication convert(SVNURL o) {
-                                         return new SVNSSHAuthentication(SSH_USER_NAME, SSH_PASSWORD, SSH_PORT_NUMBER, true, o, false);
-                                       }
-                                     });
-    authentication.addAuthentication(ISVNAuthenticationManager.USERNAME, new Convertor<SVNURL, SVNAuthentication>() {
-      @Override
-      public SVNAuthentication convert(SVNURL o) {
-        return new SVNUserNameAuthentication(SSH_USER_NAME, true, o, false);
-      }
-    });
-    authentication.addAuthentication(ISVNAuthenticationManager.PASSWORD,
-                                     new Convertor<SVNURL, SVNAuthentication>() {
-                                       @Override
-                                       public SVNAuthentication convert(SVNURL o) {
-                                         return new SVNPasswordAuthentication("sally", "abcde", true, o, false);
-                                       }
-                                     });
+                                     o -> new SVNSSHAuthentication(SSH_USER_NAME, SSH_PASSWORD, SSH_PORT_NUMBER, true, o, false));
+    authentication.addAuthentication(ISVNAuthenticationManager.USERNAME, o -> new SVNUserNameAuthentication(SSH_USER_NAME, true, o, false));
+    authentication
+      .addAuthentication(ISVNAuthenticationManager.PASSWORD, o -> new SVNPasswordAuthentication("sally", "abcde", true, o, false));
   }
 
   @Test
   public void testBrowseRepository() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testBrowseRepositoryImpl(s);
     }
   }
 
-  private void testBrowseRepositoryImpl(final String url) throws SVNException {
+  private void testBrowseRepositoryImpl(SVNURL url) throws SVNException {
     final List<SVNDirEntry> list = new ArrayList<>();
     final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
-    repository.getDir(".", -1, null, new ISVNDirEntryHandler() {
-      @Override
-      public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
-        list.add(dirEntry);
-      }
-    });
+    repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
 
     Assert.assertTrue(! list.isEmpty());
   }
 
   @Test
   public void testCheckout() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testCheckoutImpl(s);
     }
@@ -148,13 +126,13 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   @Test
   public void testHistory() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testHistoryImpl(s);
     }
   }
 
-  private void testHistoryImpl(String s) throws VcsException {
+  private void testHistoryImpl(SVNURL s) throws VcsException {
     final VcsHistoryProvider provider = myVcs.getVcsHistoryProvider();
     final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
       @Override
@@ -166,7 +144,8 @@ public class SvnProtocolsTest extends Svn17TestCase {
       }
     };
     try {
-      provider.reportAppendableHistory(VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(s, true), partner);
+      provider
+        .reportAppendableHistory(VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(s.toDecodedString(), true), partner);
     } catch (ProcessCanceledException e) {
       //ok
     }
@@ -219,7 +198,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     return file;
   }
 
-  private File testCheckoutImpl(final String url) throws IOException {
+  private File testCheckoutImpl(SVNURL url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     Assert.assertTrue(root.exists());
@@ -235,12 +214,9 @@ public class SvnProtocolsTest extends Svn17TestCase {
       }, WorkingCopyFormat.ONE_DOT_SEVEN);
     final int[] cnt = new int[1];
     cnt[0] = 0;
-    FileUtil.processFilesRecursively(root, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        ++ cnt[0];
-        return ! (cnt[0] > 1);
-      }
+    FileUtil.processFilesRecursively(root, file -> {
+      ++ cnt[0];
+      return ! (cnt[0] > 1);
     });
     Assert.assertTrue(cnt[0] > 1);
     return root;

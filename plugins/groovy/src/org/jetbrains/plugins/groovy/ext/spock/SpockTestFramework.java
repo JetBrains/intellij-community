@@ -65,7 +65,7 @@ public class SpockTestFramework extends GroovyTestFramework {
   }
 
   @Override
-  public boolean isTestMethod(PsiElement element) {
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
     return SpockUtils.isTestMethod(element);
   }
 

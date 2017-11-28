@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.BeforeRunTaskProvider;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.lang.ant.AntBundle;
@@ -68,14 +67,14 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     if (targetName == null) {
       return AntBundle.message("ant.target.before.run.description.empty");
     }
-    return AntBundle.message("ant.target.before.run.description", targetName != null? targetName : "<not selected>");
+    return AntBundle.message("ant.target.before.run.description", targetName);
   }
 
   public boolean isConfigurable() {
     return true;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, AntBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull AntBeforeRunTask task) {
     AntBuildTarget buildTarget = findTargetToExecute(task);
     final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget);
     if (dlg.showAndGet()) {
@@ -94,16 +93,16 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return false;
   }
 
-  public AntBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public AntBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new AntBeforeRunTask();
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, AntBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull AntBeforeRunTask task) {
     return findTargetToExecute(task) != null;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, AntBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull AntBeforeRunTask task) {
     final AntBuildTarget target = findTargetToExecute(task);
     if (target != null) {
       return AntConfigurationImpl.executeTargetSynchronously(context, target);
@@ -114,14 +113,5 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
   @Nullable
   private AntBuildTarget findTargetToExecute(@NotNull AntBeforeRunTask task) {
     return GlobalAntConfiguration.getInstance().findTarget(myProject, task.getAntFileUrl(), task.getTargetName());
-  }
-
-  public void handleTargetRename(String oldName, String newName) {
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    for (AntBeforeRunTask task : runManager.getBeforeRunTasks(ID)) {
-      if (oldName.equals(task.getTargetName())) {
-        task.setTargetName(newName);
-      }
-    }
   }
 }

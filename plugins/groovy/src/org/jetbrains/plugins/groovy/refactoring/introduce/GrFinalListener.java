@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public class GrFinalListener {
   private final Editor myEditor;
-  private static final Logger LOG = Logger.getInstance("#" + GrFinalListener.class.getName());
+  private static final Logger LOG = Logger.getInstance(GrFinalListener.class);
 
   public GrFinalListener(Editor editor) {
     myEditor = editor;

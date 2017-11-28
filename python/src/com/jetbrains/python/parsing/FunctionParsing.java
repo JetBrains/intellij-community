@@ -20,9 +20,11 @@ import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.PyBundle.message;
+import static com.jetbrains.python.parsing.StatementParsing.TOK_ASYNC;
 
 /**
  * @author yole
@@ -56,7 +58,10 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseReturnTypeAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.RARROW) {
+    if (myBuilder.getTokenType() == PyTokenTypes.RARROW) {
+      if (myContext.getLanguageLevel().isPython2()) {
+        myBuilder.error("Return type annotations are unsupported in Python 2");
+      }
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
       if (!myContext.getExpressionParser().parseSingleExpression(false)) {
@@ -101,6 +106,10 @@ public class FunctionParsing extends Parsing {
   private void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
     if (myBuilder.getTokenType() == PyTokenTypes.ASYNC_KEYWORD) {
       myBuilder.advanceLexer();
+      parseDeclarationAfterDecorator(endMarker, true);
+    }
+    else if (atToken(PyTokenTypes.IDENTIFIER, TOK_ASYNC)) {
+      advanceAsync(true);
       parseDeclarationAfterDecorator(endMarker, true);
     }
     else {
@@ -163,7 +172,7 @@ public class FunctionParsing extends Parsing {
       }
       boolean isStarParameter = atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP);
       if (!parseParameter(endToken, isLambda)) {
-        if (afterStarParameter) {
+        if (afterStarParameter && myContext.getLanguageLevel().isOlderThan(LanguageLevel.PYTHON36)) {
           myBuilder.error("expression expected");
         }
         break;
@@ -185,15 +194,20 @@ public class FunctionParsing extends Parsing {
   }
 
   protected boolean parseParameter(IElementType endToken, boolean isLambda) {
-    final PsiBuilder.Marker parameter = myBuilder.mark();
+    PsiBuilder.Marker parameter = myBuilder.mark();
     boolean isStarParameter = false;
     if (myBuilder.getTokenType() == PyTokenTypes.MULT) {
       myBuilder.advanceLexer();
-      if (myContext.getLanguageLevel().isPy3K() &&
-          (myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
+      if ((myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
+        if (myContext.getLanguageLevel().isPython2()) {
+          parameter.rollbackTo();
+          parameter = myBuilder.mark();
+          advanceError(myBuilder, "Single star parameter is not supported in Python 2");
+        }
         parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
         return true;
       }
+
       isStarParameter = true;
     }
     else if (myBuilder.getTokenType() == PyTokenTypes.EXP) {
@@ -207,7 +221,7 @@ public class FunctionParsing extends Parsing {
       if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
         if (!getExpressionParser().parseSingleExpression(false)) {
           PsiBuilder.Marker invalidElements = myBuilder.mark();
-          while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
+          while (!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
             nextToken();
           }
           invalidElements.error(message("PARSE.expected.expression"));
@@ -231,7 +245,10 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseParameterAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
+    if (atToken(PyTokenTypes.COLON)) {
+      if (myContext.getLanguageLevel().isPython2()) {
+        myBuilder.error("Type annotations are unsupported in Python 2");
+      }
       PsiBuilder.Marker annotationMarker = myBuilder.mark();
       nextToken();
       if (!getExpressionParser().parseSingleExpression(false)) {

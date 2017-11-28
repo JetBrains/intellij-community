@@ -82,7 +82,7 @@ class MergeAutoTest : MergeTestBase() {
     val index = RNG.nextInt(changes.size)
     val change = changes[index]
 
-    command(change) { viewer.resolveConflictedChange(change) }
+    command(change) { viewer.resolveChangeAutomatically(change, ThreeSide.BASE) }
   }
 
   private fun TestBuilder.doModifyText(): Unit {

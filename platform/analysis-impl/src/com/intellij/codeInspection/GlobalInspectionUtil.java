@@ -30,11 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Maxim.Mossienko
- * Date: 16.09.2009
- * Time: 20:35:06
- */
 public class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
 

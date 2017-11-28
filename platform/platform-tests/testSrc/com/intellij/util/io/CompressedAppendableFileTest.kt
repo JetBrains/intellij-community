@@ -22,7 +22,7 @@ import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
-class CompressedAppendableFileTest() : TestCase() {
+class CompressedAppendableFileTest : TestCase() {
   @Throws
   fun testCreateParentDirWhenSave() {
     val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
@@ -30,9 +30,31 @@ class CompressedAppendableFileTest() : TestCase() {
       val appendableFile = CompressedAppendableFile(randomTemporaryPath)
       val byteArray: ByteArray = ByteArray(1)
       appendableFile.append(byteArray, 1)
-      appendableFile.force();
-      FileUtil.delete(randomTemporaryPath.parentFile);
+      appendableFile.force()
+      FileUtil.delete(randomTemporaryPath.parentFile)
       appendableFile.append(byteArray, 1)
+      appendableFile.dispose()
+    } finally {
+      FileUtil.delete(randomTemporaryPath.parentFile)
+    }
+  }
+
+  fun testSizeUpdateBug() {
+    val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
+    try {
+      var appendableFile = CompressedAppendableFile(randomTemporaryPath)
+      val singleByteArray: ByteArray = ByteArray(1)
+      appendableFile.append(singleByteArray, singleByteArray.size)
+      appendableFile.dispose()
+
+      appendableFile = CompressedAppendableFile(randomTemporaryPath)
+
+      val multiByteArray: ByteArray = ByteArray(CompressedAppendableFile.PAGE_LENGTH - 1)
+      appendableFile.append(multiByteArray, multiByteArray.size)
+      appendableFile.dispose()
+
+      appendableFile = CompressedAppendableFile(randomTemporaryPath)
+      assertEquals(CompressedAppendableFile.PAGE_LENGTH, appendableFile.length().toInt())
       appendableFile.dispose()
     } finally {
       FileUtil.delete(randomTemporaryPath.parentFile)
@@ -43,7 +65,7 @@ class CompressedAppendableFileTest() : TestCase() {
     val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
     try {
       val appendableFile = CompressedAppendableFile(randomTemporaryPath)
-      val max = 1000 * 32768;
+      val max = 1000 * CompressedAppendableFile.PAGE_LENGTH
       val startLatch = CountDownLatch(1)
       val numberOfThreads = 3
       val proceedLatch = CountDownLatch(numberOfThreads)
@@ -67,7 +89,7 @@ class CompressedAppendableFileTest() : TestCase() {
           proceedLatch.countDown()
         }
       }
-      for(i in 1..numberOfThreads) Thread(writer).start();
+      for(i in 1..numberOfThreads) Thread(writer).start()
 
       val flusher = {
         startLatch.await()
@@ -76,7 +98,7 @@ class CompressedAppendableFileTest() : TestCase() {
           TimeoutUtil.sleep(1)
         }
       }
-      Thread(flusher).start();
+      Thread(flusher).start()
 
       startLatch.countDown()
       proceedLatch.await()

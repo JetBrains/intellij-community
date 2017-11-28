@@ -19,7 +19,6 @@ import com.intellij.dvcs.push.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
@@ -56,14 +55,14 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
     List<VcsError> errors = new ArrayList<>();
     if (StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
       errors.add(new VcsError("Hg push path could not be empty."));
-      return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);
+      return new OutgoingResult(Collections.emptyList(), errors);
     }
     HgCommandResult result = hgOutgoingCommand
       .execute(repository.getRoot(), HgChangesetUtil.makeTemplate(templates), pushSpec.getSource().getPresentation(),
                hgTarget.myTarget, initial);
     if (result == null) {
       errors.add(new VcsError("Couldn't execute hg outgoing command for " + repository));
-      return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(), errors);
+      return new OutgoingResult(Collections.emptyList(), errors);
     }
     List<String> resultErrors = result.getErrorLines();
     if (resultErrors != null && !resultErrors.isEmpty() && result.getExitValue() != 0) {

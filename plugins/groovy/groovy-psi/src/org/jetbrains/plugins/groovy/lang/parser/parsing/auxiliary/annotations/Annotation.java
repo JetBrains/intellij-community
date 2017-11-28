@@ -61,20 +61,4 @@ public class Annotation {
     annMarker.done(GroovyElementTypes.ANNOTATION);
     return true;
   }
-
-  public static void parseAnnotationOptional(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker annOptMarker = builder.mark();
-
-    boolean hasAnnotations = false;
-    while (parse(builder, parser)) {
-      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-      hasAnnotations = true;
-    }
-
-    if (hasAnnotations) {
-      annOptMarker.done(GroovyElementTypes.MODIFIERS);
-    } else {
-      annOptMarker.rollbackTo();
-    }
-  }
 }

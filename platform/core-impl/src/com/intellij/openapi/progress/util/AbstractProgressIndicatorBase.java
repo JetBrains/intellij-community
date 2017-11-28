@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -25,13 +26,16 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -126,14 +130,25 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void checkCanceled() {
+    throwIfCanceled();
+    if (CoreProgressManager.runCheckCanceledHooks(this)) {
+      throwIfCanceled();
+    }
+  }
+
+  private void throwIfCanceled() {
     if (isCanceled() && isCancelable()) {
-      throw new ProcessCanceledException();
+      Throwable trace = getCancellationTrace();
+      throw trace instanceof ProcessCanceledException ? (ProcessCanceledException)trace : new ProcessCanceledException(trace);
     }
-    if (CoreProgressManager.runCheckCanceledHooks()) {
-      if (isCanceled() && isCancelable()) {
-        throw new ProcessCanceledException();
-      }
+  }
+
+  @Nullable
+  protected Throwable getCancellationTrace() {
+    if (this instanceof Disposable) {
+      return ObjectUtils.tryCast(Disposer.getTree().getDisposalInfo((Disposable)this), Throwable.class);
     }
+    return null;
   }
 
   @Override

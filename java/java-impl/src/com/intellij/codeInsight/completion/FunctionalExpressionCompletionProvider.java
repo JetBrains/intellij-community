@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -42,9 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private static final InsertHandler<LookupElement> CONSTRUCTOR_REF_INSERT_HANDLER = (context, item) -> {
@@ -56,6 +54,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       JavaCompletionUtil.insertClassReference(psiClass, context.getFile(), start, start + insertedName.length());
     }
   };
+  static final Key<Boolean> FUNCTIONAL_EXPR_ITEM = Key.create("FUNCTIONAL_EXPR_ITEM");
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
@@ -69,10 +68,10 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
-    addFunctionalVariants(parameters, true, true, result);
+    addFunctionalVariants(parameters, true, true, result.getPrefixMatcher(), result);
   }
 
-  static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean smart, boolean addInheritors, CompletionResultSet result) {
+  static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean smart, boolean addInheritors, PrefixMatcher matcher, Consumer<LookupElement> result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile()) || !isLambdaContext(parameters.getPosition())) return;
 
     ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
@@ -108,13 +107,16 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                 .withPresentableText(paramsString + " -> {}")
                 .withTypeText(functionalInterfaceType.getPresentableText())
                 .withIcon(AllIcons.Nodes.Function);
-            LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-            result.addElement(smart ? lambdaElement : PrioritizedLookupElement.withPriority(lambdaElement, 1));
+            builder.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+            result.consume(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
           }
 
           addMethodReferenceVariants(
-            smart, addInheritors, parameters, result.getPrefixMatcher(), functionalInterfaceType, functionalInterfaceMethod, params, originalPosition, substitutor,
-            element -> result.addElement(smart ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes)) : element));
+            smart, addInheritors, parameters, matcher, functionalInterfaceType, functionalInterfaceMethod, params, originalPosition, substitutor,
+            element -> {
+              element.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+              result.consume(smart ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes)) : element);
+            });
         }
       }
     }

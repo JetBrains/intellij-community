@@ -211,11 +211,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, LabelReferenceCompletion.LABEL_REFERENCE, new LabelReferenceCompletion());
 
     extend(CompletionType.SMART, psiElement(), new FunctionalExpressionCompletionProvider());
-    extend(CompletionType.SMART, psiElement(), new MethodReferenceCompletionProvider());
+    extend(CompletionType.SMART, psiElement().afterLeaf("::"), new MethodReferenceCompletionProvider());
   }
 
   @NotNull
-  static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
     return lookupElement -> result.addElement(decorate(lookupElement, infos));
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
@@ -33,18 +34,29 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.List;
 import java.util.Set;
 
 class RegistrationCheckerUtil {
 
+  enum RegistrationType {
+    ALL,
+    ALL_COMPONENTS,
+    APPLICATION_COMPONENT,
+    PROJECT_COMPONENT,
+    MODULE_COMPONENT,
+    ACTION
+  }
+
   @Nullable
-  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
+  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -53,118 +65,135 @@ class RegistrationCheckerUtil {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-
     if (module == null) return null;
 
-    if (PluginModuleType.isOfType(module)) {
-      return checkModule(module, psiClass, null, includeActions);
+    final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, registrationType);
+
+    if (PsiUtil.isIdeaProject(project)) {
+      return checkIdeaProject(project, finder);
     }
-    else {
-      Set<PsiClass> types = null;
-      final List<Module> modules = PluginModuleType.getCandidateModules(module);
-      for (Module m : modules) {
-        types = checkModule(m, psiClass, types, includeActions);
-      }
-      return types;
+
+    final Set<PsiClass> pluginModuleResults = checkModule(module, finder);
+    if (pluginModuleResults != null) {
+      return pluginModuleResults;
     }
+
+    final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
+    candidateModules.remove(module);  // already checked
+    for (Module candidateModule : candidateModules) {
+      Set<PsiClass> types = checkModule(candidateModule, finder);
+      if (types != null) return types;
+    }
+
+    return null;
   }
 
   @Nullable
-  private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, @Nullable Set<PsiClass> types, boolean includeActions) {
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (pluginXml == null) return null;
-    final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
-    if (fileElement == null) return null;
+  private static Set<PsiClass> checkIdeaProject(Project project,
+                                                RegistrationTypeFinder finder) {
+    finder.processScope(GlobalSearchScopesCore.projectProductionScope(project));
+    return finder.getTypes();
+  }
 
-    final String qualifiedName = psiClass.getQualifiedName();
-    if (qualifiedName != null) {
-      final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, types);
+  @Nullable
+  private static Set<PsiClass> checkModule(Module module,
+                                           RegistrationTypeFinder finder) {
+    final DomFileElement<IdeaPlugin> pluginXml = getPluginXmlFile(module);
+    if (pluginXml == null) {
+      return null;
+    }
 
-      // "main" plugin.xml
-      processPluginXml(pluginXml, finder, includeActions);
+    // "main" plugin.xml
+    if (!finder.processScope(GlobalSearchScope.fileScope(pluginXml.getFile()))) {
+      return finder.getTypes();
+    }
 
-      // <depends> plugin.xml files
-      for (Dependency dependency : fileElement.getRootElement().getDependencies()) {
-        final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
-        if (!DomUtil.hasXml(configFileAttribute)) continue;
+    // <depends> plugin.xml files
+    for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
+      final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
+      if (!DomUtil.hasXml(configFileAttribute)) continue;
 
-        final PathReference configFile = configFileAttribute.getValue();
-        if (configFile != null) {
-          final PsiElement resolve = configFile.resolve();
-          if (!(resolve instanceof XmlFile)) continue;
-          final XmlFile depPluginXml = (XmlFile)resolve;
-          if (DescriptorUtil.isPluginXml(depPluginXml)) {
-            processPluginXml(depPluginXml, finder, includeActions);
+      final PathReference configFile = configFileAttribute.getValue();
+      if (configFile != null) {
+        final PsiElement resolve = configFile.resolve();
+        if (!(resolve instanceof XmlFile)) continue;
+        final XmlFile depPluginXml = (XmlFile)resolve;
+
+        final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
+        if (dependentIdeaPlugin != null) {
+          if (!finder.processScope(GlobalSearchScope.fileScope(dependentIdeaPlugin.getFile()))) {
+            return finder.getTypes();
           }
         }
       }
-
-      types = finder.getTypes();
     }
 
-    return types;
+    return finder.getTypes();
   }
 
-  private static void processPluginXml(XmlFile xmlFile, RegistrationTypeFinder finder, boolean includeActions) {
-    final XmlDocument document = xmlFile.getDocument();
-    if (document == null) return;
-    final XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) return;
-
-    DescriptorUtil.processComponents(rootTag, finder);
-    if (includeActions) {
-      DescriptorUtil.processActions(rootTag, finder);
+  @Nullable
+  private static DomFileElement<IdeaPlugin> getPluginXmlFile(Module module) {
+    XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+    if (pluginXml == null) {
+      return null;
     }
+    return DescriptorUtil.getIdeaPlugin(pluginXml);
   }
 
-  private static class RegistrationTypeFinder implements ComponentType.Processor, ActionType.Processor {
 
-    private Set<PsiClass> myTypes;
-    private final String myQualifiedName;
-    private final PsiManager myManager;
-    private final GlobalSearchScope myScope;
+  private static class RegistrationTypeFinder {
 
-    private RegistrationTypeFinder(PsiClass psiClass, Set<PsiClass> types) {
-      myTypes = types;
-      myQualifiedName = psiClass.getQualifiedName();
-      myManager = psiClass.getManager();
-      myScope = psiClass.getResolveScope();
+    private final PsiClass myPsiClass;
+    private final RegistrationType myRegistrationType;
+
+    private final Set<PsiClass> myTypes = ContainerUtil.newIdentityTroveSet(1);
+
+    private RegistrationTypeFinder(PsiClass psiClass, RegistrationType registrationType) {
+      myPsiClass = psiClass;
+      myRegistrationType = registrationType;
     }
 
-    public boolean process(ComponentType type, XmlTag component, XmlTagValue impl, XmlTagValue intf) {
-      if (impl != null && myQualifiedName.equals(impl.getTrimmedText())) {
-        final PsiClass clazz = JavaPsiFacade.getInstance(myManager.getProject()).findClass(type.myClassName, myScope);
-        if (clazz != null) {
-          addType(clazz);
+    private boolean processScope(GlobalSearchScope scope) {
+      final boolean findAll = myRegistrationType == RegistrationType.ALL;
+      final boolean allComponents = findAll || myRegistrationType == RegistrationType.ALL_COMPONENTS;
+
+      if (allComponents || myRegistrationType == RegistrationType.APPLICATION_COMPONENT) {
+        if (IdeaPluginRegistrationIndex.isRegisteredApplicationComponent(myPsiClass, scope)) {
+          addType(ComponentType.APPLICATION.myClassName);
+          return false;
+        }
+      }
+      if (allComponents || myRegistrationType == RegistrationType.PROJECT_COMPONENT) {
+        if (IdeaPluginRegistrationIndex.isRegisteredProjectComponent(myPsiClass, scope)) {
+          addType(ComponentType.PROJECT.myClassName);
+          return false;
+        }
+      }
+      if (allComponents || myRegistrationType == RegistrationType.MODULE_COMPONENT) {
+        if (IdeaPluginRegistrationIndex.isRegisteredModuleComponent(myPsiClass, scope)) {
+          addType(ComponentType.MODULE.myClassName);
+          return false;
+        }
+      }
+
+      if (findAll || myRegistrationType == RegistrationType.ACTION) {
+        if (IdeaPluginRegistrationIndex.isRegisteredAction(myPsiClass,
+                                                           scope)) {
+          addType(ActionType.ACTION.myClassName);
+          return false;
         }
       }
       return true;
     }
 
-    public boolean process(ActionType type, XmlTag action) {
-      final String actionClass = action.getAttributeValue("class");
-      if (actionClass != null) {
-        if (actionClass.trim().equals(myQualifiedName)) {
-          final PsiClass clazz = JavaPsiFacade.getInstance(myManager.getProject()).findClass(type.myClassName, myScope);
-          if (clazz != null) {
-            addType(clazz);
-            return false;
-          }
-        }
-      }
-      return true;
+    private void addType(String fqn) {
+      final PsiClass psiClass = JavaPsiFacade.getInstance(myPsiClass.getProject())
+        .findClass(fqn, myPsiClass.getResolveScope());
+      ContainerUtil.addIfNotNull(myTypes, psiClass);
     }
 
-    private void addType(PsiClass clazz) {
-      if (myTypes == null) {
-        //noinspection unchecked
-        myTypes = ContainerUtil.newIdentityTroveSet(2);
-      }
-      myTypes.add(clazz);
-    }
-
-    public Set<PsiClass> getTypes() {
-      return myTypes;
+    private Set<PsiClass> getTypes() {
+      return myTypes.isEmpty() ? null : myTypes;
     }
   }
 }

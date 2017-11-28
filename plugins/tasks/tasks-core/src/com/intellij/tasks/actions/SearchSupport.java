@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.Task;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollingUtil;
@@ -67,7 +67,7 @@ public abstract class SearchSupport<T extends Task> {
   public SearchSupport(EditorTextField textField) {
 
     myTextField = textField;
-    myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         onTextChanged();
@@ -237,7 +237,9 @@ public abstract class SearchSupport<T extends Task> {
         final int caret = myTextField.getCaretModel().getOffset();
         getEditor().getSelectionModel().setSelection(caret, caret);
         myTextField.setFocusTraversalKeysEnabled(true);
-        ApplicationManager.getApplication().invokeLater(() -> myTextField.requestFocus());
+        ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true);
+        }));
         return Boolean.TRUE;
       }).setItemChoosenCallback(() -> processChosenFromCompletion()).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myTextField}).
           createPopup();

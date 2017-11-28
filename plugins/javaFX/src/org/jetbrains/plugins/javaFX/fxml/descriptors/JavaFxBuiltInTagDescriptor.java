@@ -38,9 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validator<XmlTag> {
   private final String myName;
   private final XmlTag myXmlTag;
@@ -229,6 +226,7 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
   public void init(PsiElement element) {
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

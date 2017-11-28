@@ -33,15 +33,15 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     if (element instanceof SyntheticElement) return false;
     PsiMethod method = (PsiMethod) element;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
   @Override
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
+  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
     for (PsiElement source : sources) {
       if (JavaMoveClassesOrPackagesHandler.invalid4Move(source)) return false;
     }
-    return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
+    return targetElement instanceof PsiClass && !(targetElement instanceof PsiAnonymousClass);
   }
 
   @Override

@@ -90,11 +90,6 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
     return null;
   }
 
-  @Override
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
-
   public String toString() {
     return SelectInManager.NAV_BAR;
   }

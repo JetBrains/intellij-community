@@ -37,7 +37,7 @@ public class SvnKitUpgradeClient extends BaseSvnClient implements UpgradeClient 
   }
 
   @Override
-  public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
+  public List<WorkingCopyFormat> getSupportedFormats() {
     return SvnKitCheckoutClient.SUPPORTED_FORMATS;
   }
 

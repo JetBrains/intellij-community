@@ -16,20 +16,20 @@
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
+import com.intellij.ide.util.projectWizard.CustomStepProjectGenerator;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class PluginSpecificProjectsStep extends DefaultActionGroup implements DumbAware {
 
-  public PluginSpecificProjectsStep(@NotNull final NullableConsumer<ProjectSettingsStepBase> callback,
+  public PluginSpecificProjectsStep(@NotNull final AbstractNewProjectStep.AbstractCallback callback,
                                     @NotNull final List<DirectoryProjectGenerator> projectGenerators) {
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);

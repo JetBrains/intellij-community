@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.io.DirectoryContentSpec;
+import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +49,8 @@ import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -114,7 +118,17 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }
 
+  protected static void assertOutput(final String outputPath, DirectoryContentSpec expected) {
+    DirectoryContentSpecKt.assertMatches(new File(outputPath), expected);
+  }
+
   protected static void assertOutput(JpsModule module, TestFileSystemBuilder expected) {
+    String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, false);
+    assertNotNull(outputUrl);
+    assertOutput(JpsPathUtil.urlToPath(outputUrl), expected);
+  }
+
+  protected static void assertOutput(JpsModule module, DirectoryContentSpec expected) {
     String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, false);
     assertNotNull(outputUrl);
     assertOutput(JpsPathUtil.urlToPath(outputUrl), expected);
@@ -173,18 +187,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
     try {
-      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourceFile(Object.class).getCanonicalPath()));
+      String pathToRtJar = ClasspathBootstrap.getResourcePath(Object.class);
+      String path = pathToRtJar == null ? null : FileUtil.toSystemIndependentName(new File(pathToRtJar).getCanonicalPath());
+      return addJdk(name, path);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected JpsSdk<JpsDummyElement> addJdk(final String name, final String path) {
+  protected JpsSdk<JpsDummyElement> addJdk(final String name, @Nullable String jdkClassesRoot) {
     String homePath = System.getProperty("java.home");
     String versionString = System.getProperty("java.version");
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE);
-    jdk.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
+    if (jdkClassesRoot != null) {
+      jdk.addRoot(JpsPathUtil.pathToUrl(jdkClassesRoot), JpsOrderRootType.COMPILED);
+    }
     return jdk.getProperties();
   }
 
@@ -212,7 +230,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void loadProject(String projectPath) {
-    loadProject(projectPath, Collections.<String, String>emptyMap());
+    loadProject(projectPath, Collections.emptyMap());
   }
 
   protected void loadProject(String projectPath,
@@ -225,6 +243,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
       allPathVariables.putAll(getAdditionalPathVariables());
       JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
+      final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
+      config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER = false;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -256,7 +276,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
         getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
     }
+    // ensure jdk entry is the first one in dependency list
+    module.getDependenciesList().clear();
     module.getDependenciesList().addSdkDependency(sdkType);
+    module.getDependenciesList().addModuleSourceDependency();
     if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));

@@ -15,29 +15,29 @@
  */
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -51,12 +51,15 @@ import java.util.List;
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
-  private final PsiNamedElement[] myElements;
+  private final List<SmartPsiElementPointer<PsiNamedElement>> myElements;
+  private final LinkedHashSet<PsiFile> mySourceFiles;
   private final String myDestination;
 
   public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
     super(elements[0].getProject());
-    myElements = elements;
+    final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    myElements = ContainerUtil.map(elements, manager::createSmartPsiElementPointer);
+    mySourceFiles = new LinkedHashSet<>(ContainerUtil.map(elements, PsiElement::getContainingFile));
     myDestination = destination;
   }
 
@@ -67,7 +70,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       @NotNull
       @Override
       public PsiElement[] getElements() {
-        return myElements;
+        return ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       }
 
       @Override
@@ -80,11 +83,12 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> result = new ArrayList<>();
-    for (final PsiNamedElement element : myElements) {
-      result.addAll(ContainerUtil.map(PyRefactoringUtil.findUsages(element, false), usageInfo -> new MyUsageInfo(usageInfo, element)));
-    }
-    return result.toArray(new UsageInfo[result.size()]);
+    return StreamEx.of(myElements)
+      .map(SmartPsiElementPointer::getElement)
+      .nonNull()
+      .flatMap(e -> StreamEx.of(PyRefactoringUtil.findUsages(e, false))
+        .map(info -> new MyUsageInfo(info, e)))
+      .toArray(UsageInfo[]::new);
   }
 
   @Override
@@ -93,49 +97,50 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
-    CommandProcessor.getInstance().executeCommand(myElements[0].getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
-            CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
-            for (final PsiNamedElement e : myElements) {
-              // TODO: Check for resulting circular imports
-              CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
-              assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
-              final String name = e.getName();
-              if (name == null) {
-                continue;
-              }
-              if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
-              }
-              if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
-              }
-              if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
-              }
-              final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
-              final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
-                @Override
-                public boolean value(UsageInfo usageInfo) {
-                  final PsiElement element = usageInfo.getElement();
-                  return element != null && !PsiTreeUtil.isAncestor(e, element, false);
-                }
-              });
-              if (usedFromOutside) {
-                PyMoveRefactoringUtil.checkValidImportableFile(e, destination.getVirtualFile());
-              }
-              new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
-            }
-          }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
+      CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
+      final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
+      for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
+        // TODO: Check for resulting circular imports
+        final PsiNamedElement e = pointer.getElement();
+        if (e == null) {
+          continue;
+        }
+        CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
+        assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
+        final String name = e.getName();
+        if (name == null) {
+          continue;
+        }
+        if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
+        }
+        if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
+        }
+        if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
+          throw new IncorrectOperationException(
+            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
+        }
+        final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
+        final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
+          final PsiElement element = usageInfo.getElement();
+          return element != null && !PsiTreeUtil.isAncestor(e, element, false);
         });
+        if (usedFromOutside) {
+          PyMoveRefactoringUtil.checkValidImportableFile(e, destination.getVirtualFile());
+        }
+        final PyMoveSymbolResult results = new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
+        optimizeImportsTargets.addAll(results.getOptimizeImportsTargets());
       }
-    }, REFACTORING_NAME, null);
+
+      for (PsiFile file : optimizeImportsTargets) {
+        PyClassRefactoringUtil.optimizeImports(file);
+      }
+    }), REFACTORING_NAME, null);
   }
 
   @NotNull

@@ -30,7 +30,7 @@ public class StopWatch {
 
   private static final String[] UNIT_NAMES = new String[]{"s", "m", "h"};
   private static final long[] UNITS = new long[]{1, 60, 60 * 60};
-  private static final String MSEC_FORMAT = "%03d";
+  private static final String M_SEC_FORMAT = "%03d";
 
   private final long myStartTime;
   @NotNull private final String myOperation;
@@ -88,12 +88,12 @@ public class StopWatch {
       remainder = remainder % UNITS[i];
 
       if (i == 0) {
-        result += quotient + (msec == 0 ? "" : "." + String.format(MSEC_FORMAT, msec)) + UNIT_NAMES[i];
+        result += quotient + (msec == 0 ? "" : "." + String.format(M_SEC_FORMAT, msec)) + UNIT_NAMES[i];
       }
       else {
         result += quotient + UNIT_NAMES[i] + " ";
         if (remainder == 0 && msec != 0) {
-          result += "0." + String.format(MSEC_FORMAT, msec) + UNIT_NAMES[0];
+          result += "0." + String.format(M_SEC_FORMAT, msec) + UNIT_NAMES[0];
         }
       }
     }

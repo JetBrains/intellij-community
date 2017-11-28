@@ -250,7 +250,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
-        eventMulticaster.addCaretListener(new CaretAdapter() {
+        eventMulticaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             if (myHint != null) {
@@ -795,9 +795,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     void execute(@NotNull BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
-      Document document = myEditor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file == null) return;
+      if (PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument()) == null) return;
 
       if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
         disposeHighlighter();
@@ -816,7 +814,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Nullable
           @Override
           public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-            return doExecute(file, offset);
+            return doExecute(offset);
           }
 
           @Override
@@ -827,7 +825,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @Nullable
-    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
+    private ReadTask.Continuation doExecute(int offset) {
+      if (isTaskOutdated()) return null;
+
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      if (file == null) return null;
+
       final Info info;
       final DocInfo docInfo;
       try {
@@ -842,9 +845,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
+        if (isTaskOutdated()) return;
         showHint(info, docInfo);
       });
+    }
+
+    private boolean isTaskOutdated() {
+      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
     }
 
     private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {

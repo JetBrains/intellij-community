@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -41,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
+class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
   private final VisibilityInspection myVisibilityInspection;
 
   AccessCanBeTightenedInspection(@NotNull VisibilityInspection visibilityInspection) {
@@ -83,9 +67,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
 
     public MyVisitor(@NotNull ProblemsHolder holder) {
       myHolder = holder;
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-      UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
-      myDeadCodeInspection = tool == null ? new UnusedDeclarationInspectionBase() : tool;
+      myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }
     private final TObjectIntHashMap<PsiClass> maxSuggestedLevelForChildMembers = new TObjectIntHashMap<>();
 
@@ -157,12 +139,14 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
           cls = cls.getSuperClass();
         }
 
-        PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() : ContainerUtil.find(
-          memberModifierList.getChildren(),
+        PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() :
+                                 ContainerUtil.find(memberModifierList.getChildren(),
           element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
-        assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
-        String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-        myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+        // can be null in some strange cases of malbuilt PSI, like in EA-95877
+        if (toHighlight != null) {
+          String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
+          myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+        }
       }
     }
 
@@ -297,23 +281,23 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       //}
+      PsiExpression qualifier = null;
+      if (element instanceof PsiReferenceExpression) {
+        qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+      }
+      else if (element instanceof PsiMethodCallExpression) {
+        qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
+      }
+
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+        return PsiUtil.ACCESS_LEVEL_PUBLIC;
+      }
       PsiDirectory directory = file.getContainingDirectory();
       PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
         return suggestPackageLocal(member);
       }
       if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
-        PsiExpression qualifier = null;
-        if (element instanceof PsiReferenceExpression) {
-          qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-        }
-        else if (element instanceof PsiMethodCallExpression) {
-          qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
-        }
-
-        if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
-          return PsiUtil.ACCESS_LEVEL_PUBLIC;
-        }
         //access from subclass can be via protected, except for constructors
         PsiElement resolved = element instanceof PsiReference ? ((PsiReference)element).resolve() : null;
         boolean isConstructor = resolved instanceof PsiClass && element.getParent() instanceof PsiNewExpression

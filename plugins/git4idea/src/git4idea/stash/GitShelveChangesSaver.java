@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.createSystemShelvedChangeListName;
+
 public class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
 
@@ -66,9 +68,10 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       for (Collection<Change> changeCollection : map.values()) {
         changes.addAll(changeCollection);
       }
-      if (! changes.isEmpty()) {
-        final ShelvedChangeList list = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes,
-                                                                    myStashMessage + " [" + entry.getKey() + "]", exceptions, false, true);
+      if (!changes.isEmpty()) {
+        final ShelvedChangeList list = GitShelveUtils
+          .shelveChanges(myProject, myShelveManager, changes, createSystemShelvedChangeListName(myStashMessage, entry.getKey()), exceptions,
+                         false, true);
         myShelvedLists.put(entry.getKey(), list);
       }
     }

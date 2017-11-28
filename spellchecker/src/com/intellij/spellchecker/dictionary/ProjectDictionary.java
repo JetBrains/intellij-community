@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 public class ProjectDictionary implements EditableDictionary {
@@ -130,17 +131,15 @@ public class ProjectDictionary implements EditableDictionary {
 
 
   @Override
-  @Nullable
+  @NotNull
   public Set<String> getWords() {
     if (dictionaries == null) {
-      return null;
+      return Collections.emptySet();
     }
     Set<String> words = new THashSet<>();
     for (Dictionary dictionary : dictionaries) {
       Set<String> otherWords = dictionary.getWords();
-      if (otherWords != null) {
-        words.addAll(otherWords);
-      }
+      words.addAll(otherWords);
     }
     return words;
   }
@@ -166,7 +165,7 @@ public class ProjectDictionary implements EditableDictionary {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Set<String> getEditableWords() {
     return getActiveDictionary().getWords();
   }

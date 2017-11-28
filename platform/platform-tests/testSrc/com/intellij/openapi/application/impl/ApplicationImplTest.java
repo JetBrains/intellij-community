@@ -29,12 +29,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.testFramework.*;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,12 +46,21 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings("StatementWithEmptyBody")
+@JITSensitive
 public class ApplicationImplTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     exception = null;
     timeOut = System.currentTimeMillis() + 2*60*1000;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    readThreads = null;
+    exception = null;
+    super.tearDown();
   }
 
   private volatile Throwable exception;
@@ -68,9 +73,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       Callable<String> runnable = () -> {
         try {
           assertFalse(application.isReadAccessAllowed());
-          long l2 = PlatformTestUtil.measure(() -> {
+          CpuUsageData dataAcq = CpuUsageData.measureCpuUsage(() -> {
             for (int i1 = 0; i1 < N; i1++) {
               AccessToken token = application.acquireReadActionLock();
+              //noinspection EmptyTryBlock
               try {
                 // do it
               }
@@ -79,18 +85,19 @@ public class ApplicationImplTest extends LightPlatformTestCase {
               }
             }
           });
-
-          long l1 = PlatformTestUtil.measure(() -> {
+          CpuUsageData dataRun = CpuUsageData.measureCpuUsage(() -> {
             for (int i1 = 0; i1 < N; i1++) {
               application.runReadAction(() -> {
               });
             }
           });
+          long l1 = dataRun.durationMs;
+          long l2 = dataAcq.durationMs;
 
           assertFalse(application.isReadAccessAllowed());
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "% (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
-          System.out.println(msg);
+          LOG.debug(msg + "\nAcquire:\n" + dataAcq.getSummary(" ") + "\nRun:\n" + dataRun.getSummary(" "));
           if (Math.abs(ratioPercent) > 40) {
             return "Suspiciously different times for " + msg;
           }
@@ -104,6 +111,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       err = application.executeOnPooledThread(runnable).get();
       if (err == null) break;
       System.err.println("Still trying, attempt "+i+": "+err);
+      System.gc();
     }
 
     assertNull(err);
@@ -111,14 +119,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
 
-  public void testRead50Write50LockPerformance() throws InterruptedException {
+  public void testRead50Write50LockPerformance() {
     final int readIterations = 600000;
     final int writeIterations = 600000;
 
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
-  public void testRead100Write0LockPerformance() throws InterruptedException {
+  public void testRead100Write0LockPerformance() {
     final int readIterations = 60000000;
     final int writeIterations = 0;
 
@@ -131,7 +139,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     application.disableEventsUntil(disposable);
 
     try {
-      PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
+      PlatformTestUtil.startPerformanceTest("lock/unlock", expectedMs, () -> {
         final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
         List<Thread> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -156,11 +164,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           }
           //System.out.println("write end");
         }
-        for (Thread thread : threads) {
-          thread.join();
-        }
+        ConcurrencyUtil.joinAll(threads);
         threads.clear();
-      }).cpuBound().assertTiming();
+      }).assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
@@ -180,7 +186,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     // try to take read lock2 - must wait (because of write preference - write lock is pending)
     // release read lock1 - write lock must be taken first
     // release write - read lock2 must be taken
-    System.out.println("-----");
+    LOG.debug("-----");
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     AtomicBoolean holdRead1 = new AtomicBoolean(true);
     AtomicBoolean holdWrite = new AtomicBoolean(true);
@@ -195,14 +201,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         AccessToken stamp = application.acquireReadActionLock();
         try {
-          System.out.println("read lock1 acquired");
+          LOG.debug("read lock1 acquired");
           read1Acquired.set(true);
           while (holdRead1.get() && ok());
         }
         finally {
           read1Released.set(true);
           stamp.finish();
-          System.out.println("read lock1 released");
+          LOG.debug("read lock1 released");
         }
       }
       catch (Throwable e) {
@@ -222,13 +228,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         TimeoutUtil.sleep(1000); // make sure it called writelock
         AccessToken stamp = application.acquireReadActionLock();
         try {
-          System.out.println("read lock2 acquired");
+          LOG.debug("read lock2 acquired");
           read2Acquired.set(true);
         }
         finally {
           read2Released.set(true);
           stamp.finish();
-          System.out.println("read lock2 released");
+          LOG.debug("read lock2 released");
         }
       }
       catch (Throwable e) {
@@ -309,7 +315,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     aboutToAcquireWrite.set(true);
     AccessToken stamp = application.acquireWriteActionLock(getClass());
     try {
-      System.out.println("write lock acquired");
+      LOG.debug("write lock acquired");
       writeAcquired.set(true);
 
       while (holdWrite.get() && ok()) {
@@ -321,7 +327,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     finally {
       writeReleased.set(true);
       stamp.finish();
-      System.out.println("write lock released");
+      LOG.debug("write lock released");
     }
 
     readAction1.join();
@@ -405,9 +411,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       LOG.append("\nfinished write action");
     });
     main.join();
-    for (Thread thread : readThreads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(readThreads);
 
     if (exception != null) {
       System.err.println(LOG);
@@ -502,36 +506,38 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testRWLockPerformance() throws InterruptedException {
+  public void testRWLockPerformance() {
     long s = System.currentTimeMillis();
     while (System.currentTimeMillis() < s + 2000) {
       UIUtil.dispatchAllInvocationEvents();
     }
     //System.out.println("warming finished");
-    final int readIterations = 100000000;
-    PlatformTestUtil.startPerformanceTest("RWLock is slow", 12000, ()-> {
+    final int readIterations = 100_000_000;
+    PlatformTestUtil.startPerformanceTest("RWLock/unlock", 1500, ()-> {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       List<Thread> threads = new ArrayList<>(numOfThreads);
       for (int i = 0; i < numOfThreads; i++) {
-        Thread thread = new Thread(() -> {
-          for (int i1 = 0; i1 < readIterations; i1++) {
-            try {
-              lock.readLock();
-            }
-            finally {
-              lock.readUnlock();
+        @SuppressWarnings("Convert2Lambda") // runnable is more debuggable
+        Thread thread = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            for (int r = 0; r < readIterations; r++) {
+              try {
+                lock.readLock();
+              }
+              finally {
+                lock.readUnlock();
+              }
             }
           }
         }, "read thread " + i);
         thread.start();
         threads.add(thread);
       }
-      for (Thread thread : threads) {
-        thread.join();
-      }
-    }).cpuBound().usesAllCPUCores().assertTiming();
+      ConcurrencyUtil.joinAll(threads);
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testCheckCanceledReadAction() throws Exception {
@@ -556,7 +562,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public void testSuspendWriteActionDelaysForeignReadActions() throws Exception {
+  public void testSuspendWriteActionDelaysForeignReadActions() {
     Semaphore mayStartForeignRead = new Semaphore();
     mayStartForeignRead.down();
 
@@ -591,7 +597,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private static void waitForFuture(Future<?> future) {
     try {
-      future.get(1000, TimeUnit.MILLISECONDS);
+      future.get(10000, TimeUnit.MILLISECONDS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -639,7 +645,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() {
     for (int i = 0; i < 1000; i++) {
-      safeWrite(() -> checkPooledThreadsDontGetWrongPrivileges());
+      safeWrite(ApplicationImplTest::checkPooledThreadsDontGetWrongPrivileges);
     }
   }
 
@@ -737,13 +743,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
       while (!app.isWriteActionPending());
-      ProgressManager.getInstance().executeNonCancelableSection(()->{
-        app.executeByImpatientReader(() -> {
-          executingImpatientReader.set(true);
-          app.runReadAction(EmptyRunnable.getInstance());
-          // must not throw
-        });
-      });
+      ProgressManager.getInstance().executeNonCancelableSection(()-> app.executeByImpatientReader(() -> {
+        executingImpatientReader.set(true);
+        app.runReadAction(EmptyRunnable.getInstance());
+        // must not throw
+      }));
     });
 
     Future<?> readAction1Canceler = app.executeOnPooledThread(() -> {

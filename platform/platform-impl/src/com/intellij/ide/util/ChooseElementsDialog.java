@@ -69,13 +69,9 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     List<? extends T> elements = new ArrayList<T>(items);
     if (sort) {
-      Collections.sort(elements, new Comparator<T>() {
-        public int compare(final T o1, final T o2) {
-          return getItemText(o1).compareToIgnoreCase(getItemText(o2));
-        }
-      });
+      Collections.sort(elements, (Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
     }
-    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.<T>emptyList());
+    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.emptyList());
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doOKAction();
@@ -104,9 +100,17 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   @Nullable
   protected abstract Icon getItemIcon(T item);
 
+  /**
+   * Override this method and return non-null value to specify location of {@code item}.
+   * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
+   */
+  protected String getItemLocation(T item) {
+    return null; // default implementation
+  }
+
   @NotNull
   public List<T> getChosenElements() {
-    return isOK() ? myChooser.getSelectedElements() : Collections.<T>emptyList();
+    return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
   }
 
   public void selectElements(@NotNull List<T> elements) {
@@ -136,12 +140,16 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   private ElementsChooser.ElementProperties createElementProperties(final T item) {
     return new ElementsChooser.ElementProperties() {
+      @Override
+      @Nullable
       public Icon getIcon() {
         return getItemIcon(item);
       }
 
-      public Color getColor() {
-        return null;
+      @Override
+      @Nullable
+      public String getLocation() {
+        return getItemLocation(item);
       }
     };
   }

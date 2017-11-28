@@ -44,6 +44,7 @@ public class ClassInnerStuffCache {
     myClass = aClass;
   }
 
+  @NotNull
   private static <T> T[] copy(T[] value) {
     return value.length == 0 ? value : value.clone();
   }
@@ -148,7 +149,7 @@ public class ClassInnerStuffCache {
     Map<String, PsiField> cachedFields = new THashMap<>();
     for (PsiField field : fields) {
       String name = field.getName();
-      if (!(field instanceof ExternallyDefinedPsiElement) || !cachedFields.containsKey(name)) {
+      if (!cachedFields.containsKey(name)) {
         cachedFields.put(name, field);
       }
     }

@@ -23,10 +23,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.io.File;
 
-/**
- * User: zolotov
- * Date: 10/9/13
- */
 @TestDataPath("$CONTENT_ROOT/testData/selectWord")
 public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
 
@@ -45,6 +41,11 @@ public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
   }
   
   public void testSelectClassNames() {
+    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(true);
+    doTest();
+  }
+
+  public void testSelectFromCss() {
     WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(true);
     doTest();
   }

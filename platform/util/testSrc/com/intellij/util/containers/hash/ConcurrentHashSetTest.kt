@@ -15,25 +15,24 @@
  */
 package com.intellij.util.containers.hash
 
-import com.intellij.util.containers.ConcurrentHashSet
+import com.intellij.util.containers.ContainerUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class ConcurrentHashSetTest {
-  @Suppress("DEPRECATION")
   @Test
   fun testEquals() {
-    val set = ConcurrentHashSet<String>()
+    val set = ContainerUtil.newConcurrentSet<String>()
     assertThat(set).isNotEqualTo(emptyMap<String, String>())
     assertThat(set).isEqualTo(emptySet<String>())
-    assertThat(set).isEqualTo(ConcurrentHashSet<String>())
+    assertThat(set).isEqualTo(ContainerUtil.newConcurrentSet<String>())
 
     set.add("foo")
     assertThat(set).isNotEqualTo(emptySet<String>())
     assertThat(set).isEqualTo(setOf("foo"))
     assertThat(set).isNotEqualTo(setOf("bar"))
 
-    val otherSet = ConcurrentHashSet<String>()
+    val otherSet = ContainerUtil.newConcurrentSet<String>()
     otherSet.add("bar")
     assertThat(set).isNotEqualTo(otherSet)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * @author Anton Katilin
@@ -196,7 +198,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       if (trackFocus) {
         Content current = getSelectedContent();
         if (current != null) {
-          setSelectedContent(current, true, true, !forcedFocus);
+          setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
           result.setDone();
@@ -260,25 +262,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       int newSize = myContents.size();
       if (newSize > 0 && trackSelection) {
-        ActionCallback result = new ActionCallback();
         if (indexToSelect > -1) {
           final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
+              ActionCallback result = new ActionCallback();
               setSelectedContentCB(toSelect).notify(result);
+              return result;
             }
             else {
               addSelectedContent(toSelect);
-              result.setDone();
             }
           }
         }
-        return result;
       }
       else {
         mySelection.clear();
-        return ActionCallback.DONE;
       }
+      return ActionCallback.DONE;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -617,7 +618,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     JComponent toFocus = computeWillFocusComponent(toSelect);
 
     if (toFocus != null) {
-      toFocus.requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(toFocus, true);
+      });
     }
 
     return ActionCallback.DONE;
@@ -666,6 +669,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myUI = null;
     myDispatcher.getListeners().clear();
     dataProviders.clear();
+    myComponent = null;
   }
 
   @Override

@@ -1,6 +1,6 @@
 class TestData<K> {}
 interface TerminalOp<L, M> extends IntermediateOp<L, M> {}
-interface IntermediateOp<L1, M1> { boolean _(L1 l, M1 m);}
+interface IntermediateOp<L1, M1> { boolean m(L1 l, M1 m);}
 
 class Test<T, U> {
   protected U exerciseOps(TestData<T> data, TerminalOp<T, U> terminal, IntermediateOp<T, U>... ops) {

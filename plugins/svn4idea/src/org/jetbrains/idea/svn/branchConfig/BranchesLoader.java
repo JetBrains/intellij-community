@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.BrowseClient;
-import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -93,13 +92,9 @@ public class BranchesLoader implements Runnable {
 
   @NotNull
   private static DirectoryEntryConsumer createConsumer(@NotNull final List<SvnBranchItem> result) {
-    return new DirectoryEntryConsumer() {
-
-      @Override
-      public void consume(final DirectoryEntry entry) throws SVNException {
-        if (entry.getDate() != null) {
-          result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
-        }
+    return entry -> {
+      if (entry.getDate() != null) {
+        result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
       }
     };
   }

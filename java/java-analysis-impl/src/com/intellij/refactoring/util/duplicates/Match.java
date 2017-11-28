@@ -55,6 +55,7 @@ public final class Match {
   private Ref<PsiExpression> myInstanceExpression;
   final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
+  private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
 
   Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
     LOG.assertTrue(start.getParent() == end.getParent());
@@ -97,7 +98,7 @@ public final class Match {
   }
 
 
-  boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
+  public boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
     final PsiVariable psiVariable = parameter.first;
 
     if (myDeclarationCorrespondence.get(psiVariable) == null) {
@@ -421,5 +422,14 @@ public final class Match {
 
   public PsiFile getFile() {
     return getMatchStart().getContainingFile();
+  }
+
+  public boolean putExtractedParameter(@NotNull ExtractableExpressionPart patternPart, @NotNull ExtractableExpressionPart candidatePart) {
+    return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
+  }
+
+  @NotNull
+  public List<ExtractedParameter> getExtractedParameters() {
+    return myExtractedParameters;
   }
 }

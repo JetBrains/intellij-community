@@ -50,6 +50,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
       myModel.dispose();
     }
     myModel = null;
+    entry = null;
     super.tearDown();
   }
 
@@ -71,7 +72,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     }
   }
 
-  public void testCreationOfSourceFolderWithFile() throws IOException {
+  public void testCreationOfSourceFolderWithFile() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
 
@@ -89,7 +90,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
   }
 
 
-  public void testCreationOfSourceFolderWithUrl() throws IOException {
+  public void testCreationOfSourceFolderWithUrl() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
     delete(dir);
@@ -103,7 +104,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
   }
 
-  public void testCreationOfSourceFolderWithUrlWhenFileExists() throws IOException {
+  public void testCreationOfSourceFolderWithUrlWhenFileExists() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
 
@@ -112,7 +113,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
   }
 
-  public void testCreationOfExcludedFolderWithFile() throws IOException {
+  public void testCreationOfExcludedFolderWithFile() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
 
@@ -130,11 +131,11 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
   }
 
   @NotNull
-  private VirtualFile createSrc() throws IOException {
+  private VirtualFile createSrc() {
     return createChildDirectory(root, "src");
   }
 
-  public void testCreationOfExcludedFolderWithUrl() throws IOException {
+  public void testCreationOfExcludedFolderWithUrl() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
     delete(dir);
@@ -148,7 +149,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
   }
 
-  public void testCreationOfExcludedFolderWithUrlWhenFileExists() throws IOException {
+  public void testCreationOfExcludedFolderWithUrlWhenFileExists() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
 

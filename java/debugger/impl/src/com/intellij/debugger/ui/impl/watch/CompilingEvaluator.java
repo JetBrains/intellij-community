@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -31,7 +19,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -73,14 +60,13 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
 
-    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(evaluationContext.getThisObject());
-    autoLoadContext.setAutoLoadClasses(true);
+    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).withAutoLoadClasses(true);
 
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
-    Collection<ClassObject> classes = compile(JdkVersionUtil.getVersion(version));
+    Collection<ClassObject> classes = compile(JavaSdkVersion.fromVersionString(version));
 
     defineClasses(classes, autoLoadContext, process, classLoader);
 
@@ -108,11 +94,16 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                                   EvaluationContext context,
                                   DebugProcess process,
                                   ClassLoaderReference classLoader) throws EvaluateException {
+    JavaSdkVersion targetVersion = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
+    boolean useMagicAccessorImpl = targetVersion != null && !targetVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
+
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {
-        final byte[] content = cls.getContent();
-        if (content != null) {
-          final byte[] bytes = changeSuperToMagicAccessor(content);
+        byte[] bytes = cls.getContent();
+        if (bytes != null) {
+          if (useMagicAccessorImpl) {
+            bytes = changeSuperToMagicAccessor(bytes);
+          }
           ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, process, classLoader);
         }
       }

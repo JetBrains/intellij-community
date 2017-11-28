@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Feb-2009
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Map;
@@ -37,7 +34,7 @@ public class ParameterData {
   private String mySetterName;
   private String myDefaultValue;
   private boolean myInsertSetter = true;
-  private static final Logger LOG = Logger.getInstance("#" + ParameterData.class.getName());
+  private static final Logger LOG = Logger.getInstance(ParameterData.class);
 
   public ParameterData(String parameterName, PsiType type) {
     myParameterName = parameterName;
@@ -91,7 +88,7 @@ public class ParameterData {
       parameterData = new ParameterData(paramName, parameter.getType());
 
       parameterData.setFieldName(styleManager.suggestVariableName(VariableKind.FIELD, uniqueParamName, null, parameter.getType()).names[0]);
-      parameterData.setSetterName(PropertyUtil.suggestSetterName(uniqueParamName, setterPrefix));
+      parameterData.setSetterName(PropertyUtilBase.suggestSetterName(uniqueParamName, setterPrefix));
 
       result.put(uniqueParamName, parameterData);
     }

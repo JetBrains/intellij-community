@@ -16,12 +16,15 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -83,6 +86,33 @@ public class InvokerTest {
   }
 
   @Test
+  public void testScheduleOnEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testScheduleOnBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.BackgroundPool(parent));
+  }
+
+  @Test
+  public void testScheduleOnBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.BackgroundThread(parent));
+  }
+
+  private static void testSchedule(Disposable parent, Invoker invoker) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(parent, invoker, latch, error -> {
+      AtomicBoolean current = new AtomicBoolean(false);
+      invoker.invokeLater(() -> countDown(latch, 0, error, "task is not done before subtask", current::get), 200);
+      invoker.invokeLater(() -> current.set(true), 100);
+    });
+  }
+
+  @Test
   public void testInvokeLaterIfNeededOnEDT() {
     Disposable parent = InvokerTest::dispose;
     testInvokeLaterIfNeeded(parent, new Invoker.EDT(parent));
@@ -106,6 +136,33 @@ public class InvokerTest {
       AtomicBoolean current = new AtomicBoolean(true);
       invoker.invokeLaterIfNeeded(() -> countDown(latch, 100, error, "task is done before subtask", current::get));
       current.set(false);
+    });
+  }
+
+  @Test
+  public void testRestartOnEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testRestartOnPCE(parent, new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testRestartOnBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testRestartOnPCE(parent, new Invoker.BackgroundPool(parent));
+  }
+
+  @Test
+  public void testRestartOnBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testRestartOnPCE(parent, new Invoker.BackgroundThread(parent));
+  }
+
+  private static void testRestartOnPCE(Disposable parent, Invoker invoker) {
+    AtomicInteger value = new AtomicInteger(10);
+    CountDownLatch latch = new CountDownLatch(1);
+    test(parent, invoker, latch, error -> {
+      if (0 < value.decrementAndGet()) throw new ProcessCanceledException();
+      latch.countDown();
     });
   }
 
@@ -233,7 +290,7 @@ public class InvokerTest {
     invoker.invokeLater(() -> consumer.accept(error));
     String message;
     try {
-      latch.await();
+      latch.await(10, TimeUnit.SECONDS);
       message = error.get();
     }
     catch (InterruptedException ignore) {

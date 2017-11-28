@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,12 +36,7 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
-    myRequests = ContainerUtil.map(requests, new Function<DiffRequest, DiffRequestProducerWrapper>() {
-      @Override
-      public DiffRequestProducerWrapper fun(DiffRequest request) {
-        return new DiffRequestProducerWrapper(request);
-      }
-    });
+    myRequests = ContainerUtil.map(requests, request -> new DiffRequestProducerWrapper(request));
   }
 
   @Override
@@ -83,7 +77,7 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestProducerException, ProcessCanceledException {
+      throws ProcessCanceledException {
       return myRequest;
     }
   }

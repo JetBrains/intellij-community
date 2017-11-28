@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public class MoveModuleToGroup extends ActionGroup {
     boolean active = project != null && modules != null && modules.length != 0;
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(active);
-    presentation.setText(myModuleGroup.presentableText());
+    presentation.setText(StringUtil.escapeMnemonics(myModuleGroup.presentableText()));
   }
 
   @Override

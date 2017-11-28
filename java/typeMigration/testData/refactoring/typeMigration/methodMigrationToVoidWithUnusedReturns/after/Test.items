@@ -6,4 +6,4 @@ Conversions:
 
 New expression type changes:
 Fails:
-"" + String.valueOf(999)->void
+"" + Integer.toString(999, 10)->void

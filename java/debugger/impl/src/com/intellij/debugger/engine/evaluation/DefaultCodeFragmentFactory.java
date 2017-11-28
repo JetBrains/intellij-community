@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,12 +59,20 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 
-    final JavaCodeFragment fragment;
+    JavaCodeFragment fragment = null;
     if (CodeFragmentKind.EXPRESSION == item.getKind()) {
-      final String expressionText = StringUtil.endsWithChar(text, ';')? text.substring(0, text.length() - 1) : text;
-      fragment = factory.createExpressionCodeFragment(expressionText, context, null, true);
+      try {
+        String expressionText = StringUtil.trimTrailing(text, ';');
+        if (!expressionText.isEmpty()) {
+          JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, context); // to test that expression is ok
+        }
+        fragment = factory.createExpressionCodeFragment(expressionText, context, null, true);
+      }
+      catch (IncorrectOperationException ignored) {
+      }
     }
-    else /*if (CodeFragmentKind.CODE_BLOCK == item.getKind())*/ {
+
+    if (fragment == null) {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 

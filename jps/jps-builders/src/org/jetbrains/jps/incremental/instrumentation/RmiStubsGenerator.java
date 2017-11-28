@@ -151,7 +151,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         final RmicOutputParser stdErrParser = new RmicOutputParser(context, getPresentableName());
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDOUT) {
               stdOutParser.append(event.getText());
             }
@@ -161,7 +161,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           }
 
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             super.processTerminated(event);
           }
         });

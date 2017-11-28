@@ -13,6 +13,8 @@ public class EnumeratedConstantNamingConventionInspectionTest extends LightInspe
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new EnumeratedConstantNamingConventionInspection();
+    FieldNamingConventionInspection inspection = new FieldNamingConventionInspection();
+    inspection.setEnabled(true, new EnumeratedConstantNamingConvention().getShortName());
+    return inspection;
   }
 }

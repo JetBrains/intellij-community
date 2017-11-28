@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,21 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
       return PsiReference.EMPTY_ARRAY;
     }
+    
     @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
     if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    String unquotedValue = ElementManipulators.getValueText(element);
-    if (XmlHighlightVisitor.skipValidation(element) || !XmlUtil.isSimpleValue(unquotedValue, element)) {
+
+    if (XmlHighlightVisitor.skipValidation(element)) {
       return PsiReference.EMPTY_ARRAY;
     }
+
+    String unquotedValue = ElementManipulators.getValueText(element);
+    if (!XmlUtil.isSimpleValue(unquotedValue, element)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
     if (descriptor instanceof XmlEnumerationDescriptor) {
       XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;

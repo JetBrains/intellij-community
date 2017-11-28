@@ -41,11 +41,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public class DefinitionResolver extends CommonElement.Visitor implements
         CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
 
@@ -71,7 +66,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
     final PsiFile value = include.getInclude();
     if (myVisitedFiles.get() == null) {
-      myVisitedFiles.set(ContainerUtil.<PsiFile>newIdentityTroveSet());
+      myVisitedFiles.set(ContainerUtil.newIdentityTroveSet());
     }
     if (value != null && myVisitedFiles.get().add(value)) {
       doVisitRncOrRngFile(value, this);

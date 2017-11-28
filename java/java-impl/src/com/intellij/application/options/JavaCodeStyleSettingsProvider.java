@@ -34,6 +34,7 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.codestyle.java";
       }

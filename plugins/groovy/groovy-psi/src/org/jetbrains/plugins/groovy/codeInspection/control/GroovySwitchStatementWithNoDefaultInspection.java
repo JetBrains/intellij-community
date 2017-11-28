@@ -28,13 +28,6 @@ public class GroovySwitchStatementWithNoDefaultInspection extends BaseInspection
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Switch statement with no default case";
   }

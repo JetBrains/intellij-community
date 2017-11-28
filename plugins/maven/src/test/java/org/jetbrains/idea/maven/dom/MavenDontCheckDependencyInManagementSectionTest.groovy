@@ -74,7 +74,7 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
     <dependency>
       <groupId>xxxx</groupId>
       <artifactId>yyyy</artifactId>
-      <version><error descr="Dependency '''xxxx:yyyy:zzzz''' not found">zzzz</error></version>
+      <version><error descr="Dependency 'xxxx:yyyy:zzzz' not found">zzzz</error></version>
     </dependency>
   </dependencies>
 
@@ -93,7 +93,7 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
       <plugin>
         <groupId>xxxx</groupId>
         <artifactId>yyyy</artifactId>
-        <version><error descr="Plugin '''xxxx:yyyy:zzzz''' not found">zzzz</error></version>
+        <version><error descr="Plugin 'xxxx:yyyy:zzzz' not found">zzzz</error></version>
       </plugin>
     </plugins>
 

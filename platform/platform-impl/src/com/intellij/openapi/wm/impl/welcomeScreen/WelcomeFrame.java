@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
@@ -68,7 +70,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         dispose();
@@ -113,8 +115,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(
       new WindowAdapter() {
-        @Override
         public void windowClosing(final WindowEvent e) {
+
+          // Android Studio: added by Change I7b1d7b0a / commit 42f5866
           if (frame instanceof Disposable) {
             // dispose via Disposer if possible, as per the intended com.intellij.openapi.Disposable design;
             // amongst all, this ensures the same object isn't disposed multiple times, which may be undesired
@@ -128,18 +131,11 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
           if (ProjectManager.getInstance().getOpenProjects().length == 0) {
             ApplicationManagerEx.getApplicationEx().exit();
           }
+          else {
+            frame.dispose();
+          }
         }
-      }
-    );
-  }
-
-  public static void clearRecents() {
-    if (ourInstance != null) {
-      if (ourInstance instanceof WelcomeFrame) {
-        WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
-        // todo clear recent projects
-      }
-    }
+      });
   }
 
   private static WelcomeScreen createScreen(JRootPane rootPane) {
@@ -177,15 +173,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
 
   public static void showIfNoProjectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-        windowManager.disposeRootFrame();
-        IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
-        if (frames.length == 0) {
-          showNow();
-        }
+    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      windowManager.disposeRootFrame();
+      IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
+      if (frames.length == 0) {
+        showNow();
       }
     }, ModalityState.NON_MODAL);
   }

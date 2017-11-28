@@ -56,7 +56,7 @@ public class ChangeToAppendUtil {
           }
           builder.append(CommentTracker.textWithSurroundingComments(operand));
         }
-        else {
+        else if (!operand.textMatches("\"\"")) {
           isConstant = false;
           if (builder.length() != 0) {
             append(builder, useStringValueOf && !isString, out);

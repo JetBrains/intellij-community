@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.codeInspection.ex.Tools;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,9 +37,9 @@ public class InspectionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     if (project == null) return ContainerUtil.emptyList();
-    List<BooleanOptionDescription> result = ContainerUtil.newArrayList();
+    List<OptionDescription> result = ContainerUtil.newArrayList();
     List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllEnabledInspectionTools(project);
     for (Tools tool : tools) {
       result.add(new ToolOptionDescription(tool, project));

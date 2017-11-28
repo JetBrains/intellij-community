@@ -112,7 +112,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
+  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
+                                                     SwingConstants.CENTER);
 
   public ProjectStructureConfigurable(final Project project,
                                       final ProjectLibrariesConfigurable projectLibrariesConfigurable,
@@ -189,7 +190,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new BackAction(myComponent));
     toolbarGroup.add(new ForwardAction(myComponent));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -593,6 +594,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return ServiceManager.getService(project, ProjectStructureConfigurable.class);
   }
 
+  @NotNull
   public ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }

@@ -1,8 +1,9 @@
-// "Replace 'addAll/putAll' method with parametrized constructor call" "true"
+// "Replace 'addAll()' call with parametrized constructor call" "true"
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
+import java.util.Set;
 
 class C {
   void m() {
@@ -10,6 +11,6 @@ class C {
     s.add(100);
     s.add(101);
     s.add(102);
-    final List<String> strings = new ArrayList<String>(s);
+      final List<String> strings = new ArrayList<String>(s);
   }
 }

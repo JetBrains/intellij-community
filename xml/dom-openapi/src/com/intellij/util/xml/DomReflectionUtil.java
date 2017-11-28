@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,13 +95,8 @@ public class DomReflectionUtil {
       if (cause instanceof ProcessCanceledException) {
         throw (ProcessCanceledException)cause;
       }
-      else if (cause instanceof Error) {
-        throw (Error)cause;
-      }
-      else if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      }
-      throw new RuntimeException(e);
+      ExceptionUtil.rethrow(cause);
+      return null;
     }
     catch (ProcessCanceledException e) {
       throw e;

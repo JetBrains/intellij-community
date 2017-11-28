@@ -15,13 +15,19 @@
  */
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
  * @author Pavel.Dolgov
  */
-public class SingleStatementInBlockInspectionTest extends IGInspectionTestCase {
-  public void test() {
-    doTest("com/siyeh/igtest/style/single_statement_block", new SingleStatementInBlockInspection());
+public class SingleStatementInBlockInspectionTest extends LightInspectionTestCase {
+  public void testSingleStatement() {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new SingleStatementInBlockInspection();
   }
 }

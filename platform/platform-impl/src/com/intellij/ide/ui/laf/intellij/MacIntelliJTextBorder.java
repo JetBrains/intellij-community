@@ -15,24 +15,34 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJTextBorder extends DarculaTextBorder {
+public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3, 6).asUIResource();
+    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+      return JBUI.insets(3, 3, 2, 2).asUIResource();
+    }
+    Insets insets = JBUI.insets(4, 8).asUIResource();
+    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+    return insets;
   }
 
   @Override
@@ -41,31 +51,61 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2d, int x, int y, int width, int height) {
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       return;
     }
-    Graphics2D g = (Graphics2D)g2d;
-    //todo[kb]: make a better solution
-    if (c.getParent() instanceof JComboBox) return;
-    Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
-    if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        g2.translate(x, y);
-        DarculaUIUtil.paintErrorBorder(g2, width, height, c.hasFocus());
-      } finally {
-        g2.dispose();
-      }
-      if (Registry.is("ide.inplace.errors.balloon")) {
-        DarculaUIUtil.showErrorTip((JComponent)c);
-      }
-    } else if (c.hasFocus()) {
-      MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.translate(x, y);
+
+      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
+      border.append(new Rectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
+                                                c.getWidth() - JBUI.scale(3)*2,
+                                                c.getHeight() - JBUI.scale(3)*2), false);
+      border.append(new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+                                                c.getWidth() - (JBUI.scale(3) + lw) * 2,
+                                                c.getHeight() - (JBUI.scale(3) + lw) * 2), false);
+      g2.setColor(Gray.xBC);
+      g2.fill(border);
+
+      if (c.getParent() instanceof JComboBox) return;
+
+      paint(c, g2, width, height, 0);
+    } finally {
+      g2.dispose();
     }
-    if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {
-      g.setColor(Gray.xB4);
-      g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+  }
+
+  public void paint(Component c, Graphics2D g2, int width, int height, float arc) {
+    clipForBorder(c, g2, width, height);
+
+    Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+    if (op != null) {
+      DarculaUIUtil.paintOutlineBorder(g2, width, height, arc, isSymmetric(), isFocused(c),
+                                       DarculaUIUtil.Outline.valueOf(op.toString()));
+    } else if (isFocused(c)) {
+      DarculaUIUtil.paintFocusBorder(g2, width, height, arc, isSymmetric());
     }
+  }
+
+  boolean isFocused(Component c) {
+    return c instanceof JScrollPane ? ((JScrollPane)c).getViewport().getView().hasFocus() :c.hasFocus();
+  }
+
+  void clipForBorder(Component c, Graphics2D g2, int width, int height) {
+    Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
+    double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
+    area.subtract(new Area(new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+                                                  width - (JBUI.scale(3) + lw) * 2,
+                                                  height - (JBUI.scale(3) + lw) * 2)));
+    area.intersect(new Area(g2.getClip()));
+    g2.setClip(area);
+  }
+
+  boolean isSymmetric() {
+    return true;
   }
 }

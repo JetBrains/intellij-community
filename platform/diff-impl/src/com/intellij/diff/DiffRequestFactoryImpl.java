@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
   private final DiffContentFactoryEx myContentFactory = DiffContentFactoryEx.getInstanceEx();
 
@@ -109,14 +111,16 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   @NotNull
   @Override
-  public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return getTitle(VcsUtil.getFilePath(file1), VcsUtil.getFilePath(file2), " vs ");
+  public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+    FilePath path1 = file1 != null ? VcsUtil.getFilePath(file1) : null;
+    FilePath path2 = file2 != null ? VcsUtil.getFilePath(file2) : null;
+    return getTitle(path1, path2, " vs ");
   }
 
   @NotNull
   @Override
   public String getTitle(@NotNull VirtualFile file) {
-    return getTitle(file, file);
+    return getTitle(file, null);
   }
 
   @NotNull
@@ -127,7 +131,13 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   }
 
   @NotNull
-  public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
+  public static String getTitle(@Nullable FilePath path1, @Nullable FilePath path2, @NotNull String separator) {
+    assert path1 != null || path2 != null;
+
+    if (path1 == null || path2 == null) {
+      return getContentTitle(chooseNotNull(path1, path2));
+    }
+
     if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) {
       return path1.getPresentableUrl();
     }

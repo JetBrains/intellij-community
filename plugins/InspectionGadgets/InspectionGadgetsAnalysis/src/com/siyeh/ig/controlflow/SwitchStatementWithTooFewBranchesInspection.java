@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -61,18 +60,15 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
       final int branchCount = SwitchUtils.calculateBranchCount(statement);
       if (branchCount == 0) {
-        return; // // do not warn when no switch branches are present at all
+        return; // do not warn when no switch branches are present at all
       }
-      if (branchCount >= m_limit) {
+      final int branchCountIncludingDefault = (branchCount < 0) ? -branchCount + 1 : branchCount;
+      if (branchCountIncludingDefault >= m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(branchCount));
+      registerStatementError(statement, Integer.valueOf(branchCountIncludingDefault));
     }
   }
 }

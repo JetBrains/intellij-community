@@ -704,3 +704,28 @@ def build_output_name(dirname, qualified_name):
         os.makedirs(dirname)
 
     return fname
+
+
+def is_valid_implicit_namespace_package_name(s):
+    """
+    Checks whether provided string could represent implicit namespace package name.
+    :param s: string to check
+    :return: True if provided string could represent implicit namespace package name and False otherwise
+    """
+    return isidentifier(s) and not keyword.iskeyword(s)
+
+
+def isidentifier(s):
+    """
+    Checks whether provided string complies Python identifier syntax requirements.
+    :param s: string to check
+    :return: True if provided string comply Python identifier syntax requirements and False otherwise
+    """
+    if version[0] >= 3:
+        return s.isidentifier()
+    else:
+        # quick test on provided string to comply major Python identifier syntax requirements
+        return (s and
+                not s[:1].isdigit() and
+                "-" not in s and
+                " " not in s)

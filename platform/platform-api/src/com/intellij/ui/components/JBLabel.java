@@ -38,17 +38,15 @@ import java.util.Collections;
 public class JBLabel extends JLabel implements AnchorableComponent {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
-  private JComponent myAnchor = null;
-  private JEditorPane myEditorPane = null;
-  private JLabel myIconLabel = null;
-  private boolean myMultiline = false;
+  private JComponent myAnchor;
+  private JEditorPane myEditorPane;
+  private JLabel myIconLabel;
+  private boolean myMultiline;
 
   public JBLabel() {
-    super();
   }
 
   public JBLabel(@NotNull UIUtil.ComponentStyle componentStyle) {
-    super();
     setComponentStyle(componentStyle);
   }
 

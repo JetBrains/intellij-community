@@ -32,10 +32,6 @@
 
     <fileTypeFactory implementation="com.intellij.uiDesigner.FormFileTypeFactory"/>
 
-    <invalidPropertyKeyInspectionTool implementation="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
-    <i18nInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
-    <java15InspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
-
     <search.topHitProvider implementation="com.intellij.uiDesigner.GuiDesignerOptionsTopHitProvider"/>
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
                          bundle="messages.UIDesignerBundle"/>
@@ -46,22 +42,31 @@
     <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
 
-    <localInspection shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
+    <localInspection language="TEXT" displayName="Invalid property key in a UI form"
+                     groupKey="form.inspections.group" alternativeId="UnresolvedPropertyKey" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
+    <localInspection language="TEXT" displayName="Typo in a UI form"
+                     groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
+    <localInspection language="TEXT" displayName="Hard coded string literal in a UI form"
+                     groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
+    <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.DuplicateMnemonicInspection"/>
-    <localInspection shortName="MissingMnemonic" bundle="messages.UIDesignerBundle" key="inspection.missing.mnemonics"
+    <localInspection language="TEXT" shortName="MissingMnemonic" bundle="messages.UIDesignerBundle" key="inspection.missing.mnemonics"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.MissingMnemonicInspection"/>
-    <localInspection shortName="NoLabelFor" bundle="messages.UIDesignerBundle" key="inspection.no.label.for"
+    <localInspection language="TEXT" shortName="NoLabelFor" bundle="messages.UIDesignerBundle" key="inspection.no.label.for"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.NoLabelForInspection"/>
-    <localInspection shortName="NoButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.no.button.group"
+    <localInspection language="TEXT" shortName="NoButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.no.button.group"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.NoButtonGroupInspection"/>
-    <localInspection shortName="OneButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.one.button.group"
+    <localInspection language="TEXT" shortName="OneButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.one.button.group"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.OneButtonGroupInspection"/>
-    <localInspection shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
+    <localInspection language="TEXT" shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
     <localInspection shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
@@ -143,6 +148,8 @@
 
     <projectService serviceInterface="com.intellij.uiDesigner.palette.Palette"
                     serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
+
+    <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
   </extensions>
 
   <project-components>
@@ -152,9 +159,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.palette.impl.PaletteToolWindowManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.clientProperties.ClientPropertiesManager</implementation-class>
     </component>
   </project-components>
 

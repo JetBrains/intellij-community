@@ -22,8 +22,9 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author vlan
@@ -73,6 +74,6 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
   @NotNull
   @Override
   public Shortcut[] getShortcut() {
-    return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
+    return getActiveKeymapShortcuts("FileStructurePopup").getShortcuts();
   }
 }

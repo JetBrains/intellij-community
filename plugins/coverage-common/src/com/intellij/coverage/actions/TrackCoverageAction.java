@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 19-Nov-2007
- */
 package com.intellij.coverage.actions;
 
 import com.intellij.coverage.CoverageDataManager;

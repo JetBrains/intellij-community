@@ -14,7 +14,6 @@
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -34,7 +33,6 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jcip" level="project" />
-    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="java-indexing-impl" exported="" />
@@ -42,7 +40,6 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
@@ -50,6 +47,17 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
     <orderEntry type="module" module-name="built-in-server" />
+    <orderEntry type="module" module-name="uast-java" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

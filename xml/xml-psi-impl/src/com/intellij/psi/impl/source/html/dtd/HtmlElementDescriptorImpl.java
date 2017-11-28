@@ -26,6 +26,7 @@ import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
@@ -194,6 +195,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     myDelegate.init(element);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return myDelegate.getDependences();

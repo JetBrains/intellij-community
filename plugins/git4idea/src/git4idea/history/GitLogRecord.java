@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -79,7 +78,7 @@ class GitLogRecord {
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
       final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + subPath, false);
+      final FilePath revisionPath = VcsUtil.getFilePath(prefix + subPath, false);
       res.add(revisionPath);
     }
     return res;
@@ -99,6 +98,11 @@ class GitLogRecord {
   @NotNull
   String getHash() {
     return lookup(HASH);
+  }
+
+  @NotNull
+  String getTreeHash() {
+    return lookup(TREE);
   }
 
   @NotNull
@@ -185,6 +189,15 @@ class GitLogRecord {
     return parseRefNames(decorate);
   }
 
+  @NotNull
+  public Map<GitLogParser.GitLogOption, String> getOptions() {
+    return myOptions;
+  }
+
+  public boolean isSupportsRawBody() {
+    return mySupportsRawBody;
+  }
+
   /**
    * Returns the list of tags and the list of branches.
    * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
@@ -226,12 +239,7 @@ class GitLogRecord {
       final String POINTER = " -> ";   // HEAD -> refs/heads/master in Git 2.4.3+
       if (item.contains(POINTER)) {
         List<String> parts = StringUtil.split(item, POINTER);
-        result.addAll(ContainerUtil.map(parts, new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return shortBuffer(s.trim());
-          }
-        }));
+        result.addAll(ContainerUtil.map(parts, s -> shortBuffer(s.trim())));
       }
       else {
         int colon = item.indexOf(':'); // tags have the "tag:" prefix.
@@ -248,7 +256,8 @@ class GitLogRecord {
 
   @NotNull
   public List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
-    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), Arrays.asList(getParentsHashes()));
+    String[] hashes = getParentsHashes();
+    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }
 
   /**

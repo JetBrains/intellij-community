@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,16 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.serialization.JpsProjectSerializationDataExtension;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @author nik
  */
 public class JpsProjectSerializationDataExtensionImpl extends JpsElementBase<JpsProjectSerializationDataExtensionImpl> implements JpsProjectSerializationDataExtension {
   public static final JpsElementChildRole<JpsProjectSerializationDataExtension> ROLE = JpsElementChildRoleBase.create("serialization data");
-  private File myBaseDirectory;
+  private Path myBaseDirectory;
 
-  public JpsProjectSerializationDataExtensionImpl(File baseDirectory) {
+  public JpsProjectSerializationDataExtensionImpl(@NotNull Path baseDirectory) {
     myBaseDirectory = baseDirectory;
   }
 
@@ -47,6 +48,6 @@ public class JpsProjectSerializationDataExtensionImpl extends JpsElementBase<Jps
   @NotNull
   @Override
   public File getBaseDirectory() {
-    return myBaseDirectory;
+    return myBaseDirectory.toFile();
   }
 }

@@ -22,9 +22,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public abstract class PackageSetBase implements PackageSet {
   /**
    * @see PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)

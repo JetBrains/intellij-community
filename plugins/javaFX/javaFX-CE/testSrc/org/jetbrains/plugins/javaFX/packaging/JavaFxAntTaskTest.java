@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.Collections;
@@ -24,11 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 3/28/13
- */
-public class JavaFxAntTaskTest extends UsefulTestCase{
+public class JavaFxAntTaskTest extends TestCase {
 
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
@@ -40,7 +37,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   private static final String PRELOADER_JAR = "preloaderJar";
   private static final String SIGNED = "signed";
 
-  public void testJarDeployNoInfo() throws Exception {
+  public void testJarDeployNoInfo() {
     doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployNoInfo.jar\">\n" +
            "</exclude>\n" +
@@ -66,10 +63,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset refid=\"all_jarDeployNoInfo\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.<String, String>emptyMap());
+           "</fx:deploy>\n", Collections.emptyMap());
   }
 
-  public void testJarDeployTitle() throws Exception {
+  public void testJarDeployTitle() {
     doTest("<fx:fileset id=\"all_but_jarDeployTitle\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployTitle.jar\">\n" +
            "</exclude>\n" +
@@ -104,7 +101,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
   }
 
-  public void testJarDeployIcon() throws Exception {
+  public void testJarDeployIcon() {
     doTest("<fx:fileset id=\"all_but_jarDeployIcon\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployIcon.jar\">\n" +
            "</exclude>\n" +
@@ -158,7 +155,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
              .build());
   }
 
-  public void testJarDeployIconAbsolute() throws Exception {
+  public void testJarDeployIconAbsolute() {
     doTest("<fx:fileset id=\"all_but_jarDeployIconAbsolute\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployIconAbsolute.jar\">\n" +
            "</exclude>\n" +
@@ -210,7 +207,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            Collections.singletonMap(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico"));
   }
 
-  public void testJarDeployVersion() throws Exception {
+  public void testJarDeployVersion() {
     doTest("<fx:fileset id=\"all_but_jarDeployVersion\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployVersion.jar\">\n" +
            "</exclude>\n" +
@@ -243,7 +240,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:deploy>\n", Collections.singletonMap(VERSION, "4.2"));
   }
 
-  public void testJarDeployTemplate() throws Exception {
+  public void testJarDeployTemplate() {
     doTest("<fx:fileset id=\"all_but_jarDeployTemplate\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployTemplate.jar\">\n" +
            "</exclude>\n" +
@@ -278,7 +275,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
              .build());
   }
 
-  public void testJarDeploySigned() throws Exception {
+  public void testJarDeploySigned() {
     doTest("<fx:fileset id=\"all_but_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeploySigned.jar\">\n" +
            "</exclude>\n" +
@@ -309,7 +306,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:deploy>\n", Collections.singletonMap(SIGNED, "true"));
   }
 
-  public void testJarDeployPreloader() throws Exception {
+  public void testJarDeployPreloader() {
     final HashMap<String, String> options = new HashMap<>();
     options.put(PRELOADER_CLASS, "MyPreloader");
     options.put(PRELOADER_JAR, "preloader.jar");
@@ -352,7 +349,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   }
 
   private void doTest(final String expected, Map<String, String> options) {
-    final String artifactName = getTestName(true);
+    final String artifactName = UsefulTestCase.getTestName(getName(), true);
     final String artifactFileName = artifactName + ".jar";
     final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + "/" + artifactFileName);
 
@@ -428,7 +425,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private List<JavaFxManifestAttribute> myCustomManifestAttributes;
     private JavaFxApplicationIcons myIcons;
     private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
-    ;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;

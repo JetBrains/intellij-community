@@ -51,9 +51,8 @@ public class GrMethodMergingContributor extends CompletionContributor {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
-        final PsiMethod method = (PsiMethod)o;
-        final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
-        final String name = method.getName() + "#" + (chain == null ? "" : chain.getQualifier().getLookupString());
+        PsiMethod method = (PsiMethod)o;
+        String name = JavaMethodMergingContributor.joinLookupStrings(item);
 
         if (commonName != null && !commonName.equals(name)) {
           return AutoCompletionDecision.SHOW_LOOKUP;

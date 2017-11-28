@@ -7,7 +7,7 @@ __version__ = ...  # type: str
 def encode(
     obj: Any,
     ensure_ascii: bool = ...,
-    double_precision: bool = ...,
+    double_precision: int = ...,
     encode_html_chars: bool = ...,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,
@@ -17,7 +17,7 @@ def encode(
 def dumps(
     obj: Any,
     ensure_ascii: bool = ...,
-    double_precision: bool = ...,
+    double_precision: int = ...,
     encode_html_chars: bool = ...,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,
@@ -28,7 +28,7 @@ def dump(
     obj: Any,
     fp: IO[str],
     ensure_ascii: bool = ...,
-    double_precision: bool = ...,
+    double_precision: int = ...,
     encode_html_chars: bool = ...,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,

@@ -17,18 +17,13 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

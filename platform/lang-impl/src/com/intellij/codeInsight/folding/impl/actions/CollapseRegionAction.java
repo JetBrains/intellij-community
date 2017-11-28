@@ -23,13 +23,14 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CollapseRegionAction extends EditorAction {
   public CollapseRegionAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
         CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(editor.getProject());
         foldingManager.updateFoldRegions(editor);
 

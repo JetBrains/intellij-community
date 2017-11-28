@@ -13,7 +13,7 @@ public class ObjectEquality
     {
         final Map map1 = new HashMap(5);
         final Map map2 = new HashMap(5);
-        if (map1 == map2)
+        if (map1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> map2)
         {
 
         }
@@ -25,7 +25,7 @@ public class ObjectEquality
         {
 
         }
-        if (map1 == ) {}
+        if (map1 ==<error descr="Expression expected"> </error>) {}
     }
     
     public void fooBarEnum()
@@ -41,7 +41,7 @@ public class ObjectEquality
     public void fooBarClass()
     {
         final Class class1 = String.class;
-        final Class class2 = com.siyeh.igtest.bugs.Object.class;
+        final Class class2 = Object.class;
         if (class1 == class2)
         {
 

@@ -20,7 +20,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -120,24 +119,13 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
     return false;
   }
 
+  public boolean isMultipleElementsSelected(ConfigurationContext context) {
+    return myBaseConfigurationProducer.isMultipleElementsSelected(context);
+  }
+
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {
     public GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
       super(configurationType);
-    }
-
-    @Override
-    protected boolean isTestClass(PsiClass psiClass) {
-      //for (RunConfigurationProducer<?> producer : RunConfigurationProducer.getProducers(psiClass.getProject())) {
-      //  if (producer instanceof AbstractPatternBasedConfigurationProducer) {
-      //    return ((AbstractPatternBasedConfigurationProducer)producer).isTestClass(psiClass);
-      //  }
-      //}
-      return JUnitUtil.isTestClass(psiClass);
-    }
-
-    @Override
-    protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
-      return JUnitUtil.getTestMethod(psiElement, checkAbstract) != null;
     }
 
     @Override

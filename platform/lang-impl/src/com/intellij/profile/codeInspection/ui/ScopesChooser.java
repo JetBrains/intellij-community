@@ -54,7 +54,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     myDefaultDescriptors = defaultDescriptors;
     myInspectionProfile = inspectionProfile;
     myProject = project;
-    myExcludedScopeNames = excludedScopeNames == null ? Collections.<String>emptySet() : ContainerUtil.newHashSet(excludedScopeNames);
+    myExcludedScopeNames = excludedScopeNames == null ? Collections.emptySet() : ContainerUtil.newHashSet(excludedScopeNames);
     setPopupTitle(TITLE);
     getTemplatePresentation().setText("In All Scopes");
   }
@@ -114,7 +114,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
         @Override
         public void actionPerformed(final AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {
-            inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, getEventProject(e));
+            inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, e.getProject());
           }
           onScopeAdded();
         }

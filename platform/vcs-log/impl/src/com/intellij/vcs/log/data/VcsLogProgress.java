@@ -32,14 +32,15 @@ import java.util.function.Consumer;
 public class VcsLogProgress implements Disposable {
   @NotNull private final Object myLock = new Object();
   @NotNull private final List<ProgressListener> myListeners = ContainerUtil.newArrayList();
-  @NotNull private Set<ProgressIndicator> myTasksWithVisibleProgress = ContainerUtil.newHashSet();
-  @NotNull private Set<ProgressIndicator> myTasksWithSilentProgress = ContainerUtil.newHashSet();
+  @NotNull private final Set<ProgressIndicator> myTasksWithVisibleProgress = ContainerUtil.newHashSet();
+  @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = ContainerUtil.newHashSet();
 
   @NotNull
   public ProgressIndicator createProgressIndicator() {
     return createProgressIndicator(true);
   }
 
+  @NotNull
   public ProgressIndicator createProgressIndicator(boolean visible) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return new EmptyProgressIndicator();

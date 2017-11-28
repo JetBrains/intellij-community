@@ -46,7 +46,7 @@ public class Main {
       long sum = 0L;
       for (Map.Entry<String, List<String>> e : strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
-              long count = e.getValue().stream().filter(new Predicate<String>() {
+              long count = e.getValue().stream().filter(new Predicate<>() {
                   // we're inside anonymous class
                   @Override
                   public boolean test(String s) {

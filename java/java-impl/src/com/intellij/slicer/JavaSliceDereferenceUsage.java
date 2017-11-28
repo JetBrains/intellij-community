@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: cdr
- */
 class JavaSliceDereferenceUsage extends JavaSliceUsage {
   JavaSliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     super(element, parent, substitutor,0,"");

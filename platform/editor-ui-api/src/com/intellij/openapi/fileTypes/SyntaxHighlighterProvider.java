@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 06.11.2007
- * Time: 19:49:57
- */
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.project.Project;

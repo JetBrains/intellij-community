@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -25,16 +11,17 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
+  private static final Logger LOG = Logger.getInstance(ExternalLibrariesNode.class);
+
   public ExternalLibrariesNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, "External Libraries", viewSettings);
   }
@@ -99,9 +88,13 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
-        //noinspection InstanceofIncompatibleInterface
-        if (library instanceof ItemPresentation) {
-          children.add(new SyntheticLibraryElementNode(project, library, getSettings()));
+        if (library.isShowInExternalLibrariesNode()) {
+          if (!(library instanceof ItemPresentation)) {
+            LOG.warn("Synthetic library must implement ItemPresentation to be shown in External Libraries node: "
+                     + libraries.getClass().getSimpleName());
+            continue;
+          }
+          children.add(new SyntheticLibraryElementNode(project, library, (ItemPresentation)library, getSettings()));
         }
       }
     }
@@ -122,11 +115,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
   private static boolean hasExternalEntries(ProjectFileIndex index, LibraryOrderEntry orderEntry) {
     for (VirtualFile file : LibraryGroupNode.getLibraryRoots(orderEntry)) {
-      if (!index.isInContent(PathUtil.getLocalFile(file))) return true;
+      if (!index.isInContent(VfsUtil.getLocalFile(file))) return true;
     }
     return false;
   }
-
 
   @Override
   protected void update(PresentationData presentation) {

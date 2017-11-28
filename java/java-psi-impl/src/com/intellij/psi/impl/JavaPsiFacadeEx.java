@@ -24,7 +24,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
@@ -34,7 +33,6 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   }
 
   @TestOnly
-  @Nullable
   public PsiClass findClass(@NotNull String qualifiedName) {
     return findClass(qualifiedName, GlobalSearchScope.allScope(getProject()));
   }

@@ -18,12 +18,6 @@ package com.intellij.openapi.vcs;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 5:03 PM
- */
 public class LineHandlerHelper {
   /**
    * Split text into lines. New line characters are treated as separators. So if the text starts

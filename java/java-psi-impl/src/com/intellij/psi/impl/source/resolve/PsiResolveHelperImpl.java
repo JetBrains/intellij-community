@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl");
@@ -124,7 +127,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                               @Nullable PsiClass accessObjectClass,
                               @Nullable PsiElement currentFileResolveScope) {
     PsiClass containingClass = member.getContainingClass();
-    return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
+    boolean accessible = JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
+    if (accessible && member instanceof PsiClass) {
+      accessible = isAccessible(moduleSystem -> moduleSystem.isAccessible(((PsiClass)member), place));
+    }
+    return accessible;
+  }
+
+  @Override
+  public boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place) {
+    return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg, place));
+  }
+
+  private static boolean isAccessible(Predicate<JavaModuleSystem> predicate) {
+    return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
   }
 
   @NotNull
@@ -204,7 +220,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   public PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                                  PsiType param,
                                                  PsiType arg,
-                                                 boolean isContraVariantPosition, 
+                                                 boolean isContraVariantPosition,
                                                  LanguageLevel languageLevel) {
     return getInferenceHelper(languageLevel)
       .getSubstitutionForTypeParameter(typeParam, param, arg, isContraVariantPosition, languageLevel);

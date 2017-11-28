@@ -105,4 +105,33 @@ public class SimplifiableIfStatement {
     }
     return i = true;
   }
+
+  boolean test( boolean b1, boolean b2, boolean b3 )
+  {
+    <warning descr="'if' statement can be replaced with 'return (!b1 || !b2) && b3;'">if</warning> (b1 && b2)
+      return false;
+    return b3;
+  }
+
+  boolean doSomething(int a, int b) {
+    <warning descr="'if' statement can be replaced with 'return 0 > a || a > b;'">if</warning>(a < 0) return true;
+    return 0 > a || a > b;
+  }
+
+  boolean doSomethingRandom(int a, int b) {
+    <warning descr="'if' statement can be replaced with 'return Math.random() > 0.5 || Math.random() > 0.5 || a > b;'">if</warning>(Math.random() > 0.5) return true;
+    return Math.random() > 0.5 || a > b;
+  }
+
+  boolean doSomething1(int a, int b) {
+    <warning descr="'if' statement can be replaced with 'return a < 0 || b < a;'">if</warning>(a < 0 || b < a) return true;
+    return a > b;
+  }
+
+  boolean doSomething2(int a, int b) {
+    <warning descr="'if' statement can be replaced with 'return b < a && a < 0;'">if</warning>(a > b) {
+      return b < a && a < 0;
+    }
+    return false;
+  }
 }

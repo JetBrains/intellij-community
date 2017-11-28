@@ -50,11 +50,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   @Override
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     PsiAnnotationStub stub = getStub();
-    if (stub != null) {
-      return PsiTreeUtil.getRequiredChildOfType(stub.getPsiElement(), PsiJavaCodeReferenceElement.class);
-    }
-
-    return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
+    return PsiTreeUtil.getChildOfType(stub != null ? stub.getPsiElement() : this, PsiJavaCodeReferenceElement.class);
   }
 
   @Override

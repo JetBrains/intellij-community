@@ -46,21 +46,18 @@ public class ResolveWorker {
   }
 
   private void refreshChangeListsFindConflicts(final UpdatedFiles updatedFiles) {
-    UpdateFilesHelper.iterateFileGroupFiles(updatedFiles,
-                                            new UpdateFilesHelper.Callback() {
-                                              public void onFile(final String filePath, final String groupId) {
-                                                final VirtualFile vf = SvnUtil.getVirtualFile(filePath);
-                                                if (vf != null) {
-                                                  // refresh base directory so that conflict files should be detected
-                                                  // file itself is already refreshed
-                                                  vf.getParent().refresh(false, false);
-                                                  myDirtyScopeManager.fileDirty(vf);
-                                                }
-                                                if (FileGroup.MERGED_WITH_CONFLICT_ID.equals(groupId)) {
-                                                  myConflictedVirtualFiles.add(vf);
-                                                }
-                                              }
-                                            });
+    UpdateFilesHelper.iterateFileGroupFiles(updatedFiles, (filePath, groupId) -> {
+      final VirtualFile vf = SvnUtil.getVirtualFile(filePath);
+      if (vf != null) {
+        // refresh base directory so that conflict files should be detected
+        // file itself is already refreshed
+        vf.getParent().refresh(false, false);
+        myDirtyScopeManager.fileDirty(vf);
+      }
+      if (FileGroup.MERGED_WITH_CONFLICT_ID.equals(groupId)) {
+        myConflictedVirtualFiles.add(vf);
+      }
+    });
   }
 
   public boolean needsInteraction(final UpdatedFiles updatedFiles) {

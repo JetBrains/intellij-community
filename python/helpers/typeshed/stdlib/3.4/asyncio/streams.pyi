@@ -1,20 +1,23 @@
 import sys
-from typing import Any, Awaitable, Callable, Generator, Iterable, Optional, Tuple
+from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple
 
 from . import coroutines
 from . import events
 from . import protocols
 from . import transports
 
-ClientConnectedCallback = Callable[[StreamReader, StreamWriter], Optional[Awaitable[None]]]
+_ClientConnectedCallback = Callable[[StreamReader, StreamWriter], Optional[Awaitable[None]]]
 
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 class IncompleteReadError(EOFError):
-    def __init__(self, partial: str, expected: int) -> None: ...
+    expected = ...  # type: Optional[int]
+    partial = ...  # type: bytes
+    def __init__(self, partial: bytes, expected: Optional[int]) -> None: ...
 
 class LimitOverrunError(Exception):
+    consumed = ...  # type: int
     def __init__(self, message: str, consumed: int) -> None: ...
 
 @coroutines.coroutine
@@ -22,18 +25,18 @@ def open_connection(
     host: str = ...,
     port: int = ...,
     *,
-    loop: events.AbstractEventLoop = ...,
+    loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
     **kwds: Any
 ) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
 
 @coroutines.coroutine
 def start_server(
-    client_connected_cb: ClientConnectedCallback,
+    client_connected_cb: _ClientConnectedCallback,
     host: str = ...,
     port: int = ...,
     *,
-    loop: events.AbstractEventLoop = ...,
+    loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
     **kwds: Any
 ) -> Generator[Any, None, events.AbstractServer]: ...
@@ -43,14 +46,14 @@ if sys.platform != 'win32':
     def open_unix_connection(
         path: str = ...,
         *,
-        loop: events.AbstractEventLoop = ...,
+        loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
         **kwds: Any
     ) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
 
     @coroutines.coroutine
     def start_unix_server(
-        client_connected_cb: ClientConnectedCallback,
+        client_connected_cb: _ClientConnectedCallback,
         path: str = ...,
         *,
         loop: int = ...,
@@ -62,8 +65,8 @@ class FlowControlMixin(protocols.Protocol): ...
 class StreamReaderProtocol(FlowControlMixin, protocols.Protocol):
     def __init__(self,
             stream_reader: StreamReader,
-            client_connected_cb: ClientConnectedCallback = ...,
-            loop: events.AbstractEventLoop = ...) -> None: ...
+            client_connected_cb: _ClientConnectedCallback = ...,
+            loop: Optional[events.AbstractEventLoop] = ...) -> None: ...
     def connection_made(self, transport: transports.BaseTransport) -> None: ...
     def connection_lost(self, exc: Exception) -> None: ...
     def data_received(self, data: bytes) -> None: ...
@@ -89,18 +92,18 @@ class StreamWriter:
 class StreamReader:
     def __init__(self,
             limit: int = ...,
-            loop: events.AbstractEventLoop = ...) -> None: ...
+            loop: Optional[events.AbstractEventLoop] = ...) -> None: ...
     def exception(self) -> Exception: ...
     def set_exception(self, exc: Exception) -> None: ...
     def set_transport(self, transport: transports.BaseTransport) -> None: ...
     def feed_eof(self) -> None: ...
     def at_eof(self) -> bool: ...
-    def feed_data(self, data: bytes): ...
+    def feed_data(self, data: bytes) -> None: ...
     @coroutines.coroutine
     def readline(self) -> Generator[Any, None, bytes]: ...
     @coroutines.coroutine
-    def readuntil(self, separator=b'\n') -> Generator[Any, None, bytes]: ...
+    def readuntil(self, separator: bytes = ...) -> Generator[Any, None, bytes]: ...
     @coroutines.coroutine
-    def read(self, n=-1) -> Generator[Any, None, bytes]: ...
+    def read(self, n: int = ...) -> Generator[Any, None, bytes]: ...
     @coroutines.coroutine
-    def readexactly(self, n) -> Generator[Any, None, bytes]: ...
+    def readexactly(self, n: int) -> Generator[Any, None, bytes]: ...

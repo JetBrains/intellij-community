@@ -115,7 +115,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     group.add(new EventLogConsole.ClearLogAction(console));
     group.add(new ContextHelpAction(EventLog.HELP_ID));
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
+    return ActionManager.getInstance().createActionToolbar("EventLog", group, false);
   }
   
   private static class DisplayBalloons extends ToggleAction implements DumbAware {

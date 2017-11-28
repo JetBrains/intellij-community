@@ -31,30 +31,11 @@ try:
 except:
     import builtins as __builtin__  # @UnresolvedImport
 
-try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
-
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
-IS_PYTHON_3K = False
-IS_PY24 = False
-
-try:
-    if sys.version_info[0] == 3:
-        IS_PYTHON_3K = True
-    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
-        IS_PY24 = True
-except:
-    #That's OK, not all versions of python have sys.version_info
-    pass
-
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
+IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
 
 class Command:
     def __init__(self, interpreter, code_fragment):
@@ -93,13 +74,12 @@ except:
 
 # Pull in runfile, the interface to UMD that wraps execfile
 from _pydev_bundle.pydev_umd import runfile, _set_globals_function
-try:
+if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
-except:
+else:
     import __builtin__
     __builtin__.runfile = runfile
-
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -142,9 +122,6 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def close(self):
         sys.exit(0)
-
-    def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
 
 
 class _ProcessExecQueueHelper:
@@ -318,6 +295,7 @@ def start_console_server(host, port, interpreter):
     server.register_function(interpreter.getArray)
     server.register_function(interpreter.evaluate)
     server.register_function(interpreter.ShowConsole)
+    server.register_function(interpreter.loadFullValue)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
@@ -327,10 +305,6 @@ def start_console_server(host, port, interpreter):
 
         print(port)
         print(interpreter.client_port)
-
-
-    sys.stderr.write(interpreter.get_greeting_msg())
-    sys.stderr.flush()
 
     while True:
         try:
@@ -351,12 +325,15 @@ def start_console_server(host, port, interpreter):
     return server
 
 
-def start_server(host, port, client_port):
+def start_server(host, port, client_port, client_host = None):
+    if not client_host:
+        client_host = host
+
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(host, client_port, threading.currentThread())
+    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread())
 
     start_new_thread(start_console_server,(host, port, interpreter))
 
@@ -374,9 +351,8 @@ def get_interpreter():
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
-        setattr(__builtin__, 'interpreter', interpreterInterface)
-        sys.stderr.write(interpreterInterface.get_greeting_msg())
-        sys.stderr.flush()
+        __builtin__.interpreter = interpreterInterface
+        print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface
 
@@ -530,4 +506,10 @@ if __name__ == '__main__':
 
         client_port = p
 
-    pydevconsole.start_server(pydev_localhost.get_localhost(), int(port), int(client_port))
+    if len(sys.argv) > 4:
+        host = sys.argv[3]
+        client_host = sys.argv[4]
+    else:
+        host = client_host = pydev_localhost.get_localhost()
+
+    pydevconsole.start_server(host, int(port), int(client_port), client_host)

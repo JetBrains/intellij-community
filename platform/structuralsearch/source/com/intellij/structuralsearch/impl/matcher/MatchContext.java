@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
@@ -19,7 +34,6 @@ public class MatchContext {
   private MatchOptions options;
   private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
-  private boolean myWithAlternativePatternRoots = true;
 
   private List<PsiElement> myMatchedNodes;
 
@@ -29,14 +43,6 @@ public class MatchContext {
 
   public void setMatchedNodes(final List<PsiElement> matchedNodes) {
     myMatchedNodes = matchedNodes;
-  }
-
-  public boolean isWithAlternativePatternRoots() {
-    return myWithAlternativePatternRoots;
-  }
-
-  public void setWithAlternativePatternRoots(boolean withAlternativePatternRoots) {
-    myWithAlternativePatternRoots = withAlternativePatternRoots;
   }
 
   public interface MatchedElementsListener {
@@ -107,7 +113,7 @@ public class MatchContext {
     this.sink = sink;
   }
 
-  void clear() {
+  public void clear() {
     result = null;
     pattern = null;
   }

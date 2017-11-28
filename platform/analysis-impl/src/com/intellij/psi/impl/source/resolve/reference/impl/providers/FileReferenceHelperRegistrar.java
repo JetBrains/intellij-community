@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +32,7 @@ public class FileReferenceHelperRegistrar {
   private FileReferenceHelperRegistrar() {
   }
 
+  @NotNull
   public static FileReferenceHelper[] getHelpers() {
     return Extensions.getExtensions(FileReferenceHelper.EP_NAME);
   }

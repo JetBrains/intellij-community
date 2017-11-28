@@ -15,6 +15,7 @@
  */
 package com.intellij;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -23,6 +24,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -40,7 +43,8 @@ public class JavaTestUtil {
     return StringUtil.trimStart(absolute, PathManager.getHomePath());
   }
 
-  public static void setupTestJDK() {
+  @TestOnly
+  public static void setupTestJDK(@NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
@@ -49,7 +53,7 @@ public class JavaTestUtil {
         jdkTable.removeJdk(jdk);
       }
 
-      jdkTable.addJdk(getTestJdk());
+      jdkTable.addJdk(getTestJdk(), parentDisposable);
     });
   }
 

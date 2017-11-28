@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,19 +41,26 @@ public abstract class ProjectManager {
   }
 
   /**
-   * Adds global listener to all projects
-   *
-   * @param listener listener to add
+   * @deprecated Use {@link Topic}
    */
+  @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
+
+  public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
+
+  /**
+   * @deprecated Use {@link Topic}
+   */
+  @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes global listener from all projects.
-   *
-   * @param listener listener to remove
+   * @deprecated Use {@link Topic}
    */
+  @Deprecated
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
+
+  public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
 
   /**
    * Adds listener to the specified project.

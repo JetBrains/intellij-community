@@ -34,8 +34,8 @@ public abstract class InlineDebuggerHelper {
    *
    * @param node debugger tree node
    *
-   * @return <code>true</code> to evaluate children for the inline debugger,
-   * <code>false</code> otherwise
+   * @return {@code true} to evaluate children for the inline debugger,
+   * {@code false} otherwise
    */
   public abstract boolean shouldEvaluateChildrenByDefault(XNamedTreeNode node);
 }

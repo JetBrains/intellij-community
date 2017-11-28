@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.project;
 
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,7 +33,8 @@ public class DumbUnawareHider extends JPanel {
   public DumbUnawareHider(JComponent dumbUnawareContent) {
     super(new CardLayout());
     add(dumbUnawareContent, CONTENT);
-    final JLabel label = new JLabel("This view is not available until indices are built");
+    final JBLabel label = new JBLabel("This view is not available until indices are built");
+    label.setFontColor(UIUtil.FontColor.BRIGHTER);
     label.setHorizontalAlignment(SwingConstants.CENTER);
     add(label, EXCUSE);
   }

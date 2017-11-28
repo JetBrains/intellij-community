@@ -9,6 +9,13 @@ from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_utils import to_string
 
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 # =======================================================================================================================
 # Null
@@ -115,6 +122,8 @@ class StdIn(BaseStdIn):
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
+        except KeyboardInterrupt:
+            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
         except:
             return '\n'
 
@@ -170,6 +179,14 @@ class BaseInterpreterInterface:
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
+        self.banner_shown = False
+        self.default_banner = ''
+
+    def build_banner(self):
+        return 'print({})\n'.format(repr(self.get_greeting_msg()))
+
+    def get_greeting_msg(self):
+        return 'PyDev console: starting.\n'
 
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
@@ -348,9 +365,15 @@ class BaseInterpreterInterface:
             return False
 
     def execLine(self, line):
+        if not self.banner_shown:
+            line = self.build_banner() + line
+            self.banner_shown = True
         return self.do_exec_code(line, True)
 
     def execMultipleLines(self, lines):
+        if not self.banner_shown:
+            lines = self.build_banner() + lines
+            self.banner_shown = True
         if IS_JYTHON:
             for line in lines.split('\n'):
                 self.do_exec_code(line, True)
@@ -436,15 +459,17 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
+        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns)
-        xml += "</xml>"
+        xml.write("<xml>")
+        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getVariable(self, attributes):
-        xml = "<xml>"
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
         valDict = pydevd_vars.resolve_var(self.get_namespace(), attributes)
         if valDict is None:
             valDict = {}
@@ -452,11 +477,13 @@ class BaseInterpreterInterface:
         keys = valDict.keys()
 
         for k in keys:
-            xml += pydevd_vars.var_to_xml(valDict[k], to_string(k))
+            val = valDict[k]
+            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml += "</xml>"
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
@@ -464,14 +491,21 @@ class BaseInterpreterInterface:
         return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = "<xml>"
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+        xml.write(pydevd_vars.var_to_xml(result, expression))
+        xml.write("</xml>")
+        return xml.getvalue()
 
-        xml += pydevd_vars.var_to_xml(result, expression)
-
-        xml += "</xml>"
-
-        return xml
+    def loadFullValue(self, expressions):
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for expression in expressions:
+            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+            xml.write(pydevd_vars.var_to_xml(result, expression, evaluate_full_value=True))
+        xml.write("</xml>")
+        return xml.getvalue()
 
     def changeVariable(self, attr, value):
         def do_change_variable():

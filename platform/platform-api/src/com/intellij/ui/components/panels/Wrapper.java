@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,10 +79,14 @@ public class Wrapper extends JPanel implements NullableComponent {
   @Override
   public void requestFocus() {
     if (getTargetComponent() == this) {
-      super.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        super.requestFocus();
+      });
       return;
     }
-    getTargetComponent().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getTargetComponent(), true);
+    });
   }
 
   @Override
@@ -93,7 +98,9 @@ public class Wrapper extends JPanel implements NullableComponent {
   }
 
   public void requestFocusInternal() {
-    super.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      super.requestFocus();
+    });
   }
 
   @Override

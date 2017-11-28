@@ -16,7 +16,7 @@
 package com.intellij.diff.util
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.openapi.editor.impl.DocumentImpl
 
 class LineOffsetsTest : DiffTestCase() {
@@ -40,26 +40,34 @@ class LineOffsetsTest : DiffTestCase() {
   }
 
   private fun checkSameAsDocument(text: String) {
-    val lineOffsets = LineOffsets.create(text)
-    val document = DocumentImpl(text)
+    val lineOffsets1 = LineOffsetsUtil.create(DocumentImpl(text))
+    val lineOffsets2 = LineOffsetsUtil.create(text)
 
-    assertEquals(lineOffsets.lineCount, getLineCount(document))
-    assertEquals(lineOffsets.textLength, document.textLength)
+    assertEquals(lineOffsets1.lineCount, lineOffsets2.lineCount)
+    assertEquals(lineOffsets1.textLength, lineOffsets2.textLength)
 
-    for (i in 0 until lineOffsets.lineCount) {
-      assertEquals(lineOffsets.getLineStart(i), document.getLineStartOffset(i))
-      assertEquals(lineOffsets.getLineEnd(i), document.getLineEndOffset(i))
+    for (i in 0 until lineOffsets1.lineCount) {
+      assertEquals(lineOffsets1.getLineStart(i), lineOffsets2.getLineStart(i))
+      assertEquals(lineOffsets1.getLineEnd(i), lineOffsets2.getLineEnd(i))
+    }
+
+    for (i in 0..lineOffsets1.textLength) {
+      assertEquals(lineOffsets1.getLineNumber(i), lineOffsets2.getLineNumber(i))
     }
   }
 
   private fun checkOffsets(text: String, vararg offsets: IntPair) {
-    val lineOffsets = LineOffsets.create(text)
+    val lineOffsets = LineOffsetsUtil.create(text)
 
     assertEquals(offsets.size, lineOffsets.lineCount)
 
-    offsets.forEachIndexed { i, value ->
-      assertEquals(lineOffsets.getLineStart(i), value.val1)
-      assertEquals(lineOffsets.getLineEnd(i), value.val2)
+    offsets.forEachIndexed { line, value ->
+      assertEquals(lineOffsets.getLineStart(line), value.val1)
+      assertEquals(lineOffsets.getLineEnd(line), value.val2)
+
+      for (offset in lineOffsets.getLineStart(line)..lineOffsets.getLineEnd(line)) {
+        assertEquals(line, lineOffsets.getLineNumber(offset))
+      }
     }
   }
 

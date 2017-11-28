@@ -143,6 +143,11 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
     }
   }
 
+  @Override
+  protected String getInitialTemplateName() {
+    return toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
+  }
+
   public String getDefaultTemplateBaseName() {
     return getTemplateBaseName(getDefaultTemplate());
   }

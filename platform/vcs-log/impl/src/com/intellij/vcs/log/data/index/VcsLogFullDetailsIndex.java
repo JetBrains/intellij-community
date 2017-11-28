@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -30,7 +31,6 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -43,11 +43,12 @@ import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 public class VcsLogFullDetailsIndex<T> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
-  @NotNull private final ID<Integer, T> myID;
+  @NotNull private final IndexId<Integer, T> myID;
   @NotNull private final String myLogId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
   @NotNull private final FatalErrorHandler myFatalErrorHandler;
+  private volatile boolean myDisposed = false;
 
   public VcsLogFullDetailsIndex(@NotNull String logId,
                                 @NotNull String name,
@@ -57,7 +58,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
-    myID = ID.create(name);
+    myID = IndexId.create(name);
     myName = name;
     myLogId = logId;
     myIndexer = indexer;
@@ -70,6 +71,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAnyKey(@NotNull Set<Integer> keys) throws StorageException {
+    checkDisposed();
     TIntHashSet result = new TIntHashSet();
 
     for (Integer key : keys) {
@@ -81,6 +83,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
+    checkDisposed();
     return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex, keys, (k) -> {
       ProgressManager.checkCanceled();
       return true;
@@ -106,22 +109,24 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
-  public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {
+  public void update(int commitId, @NotNull VcsFullCommitDetails details) {
+    checkDisposed();
     myMapReduceIndex.update(commitId, details).compute();
   }
 
   public void flush() throws StorageException {
+    checkDisposed();
     myMapReduceIndex.flush();
   }
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myMapReduceIndex.dispose();
   }
 
-  @NotNull
-  public static File getStorageFile(@NotNull String kind, @NotNull String id) {
-    return PersistentUtil.getStorageFile(INDEX, kind, id, getVersion(), false);
+  private void checkDisposed() {
+    if (myDisposed) throw new ProcessCanceledException();
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
@@ -146,7 +151,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
     public MyMapIndexStorage(@NotNull String name, @NotNull String logId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(VcsLogFullDetailsIndex.getStorageFile(name, logId), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(PersistentUtil.getStorageFile(INDEX, name, logId, getVersion()), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
     }
 
     @Override
@@ -170,7 +175,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
     @NotNull
     @Override
-    public ID<Integer, T> getName() {
+    public IndexId<Integer, T> getName() {
       return myID;
     }
 
@@ -206,7 +211,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    public void putInputData(int inputId, @NotNull Map<Integer, T> data) throws IOException {
+    public void putInputData(int inputId, @NotNull Map<Integer, T> data) {
     }
 
     @Override
@@ -214,11 +219,11 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    public void clear() throws IOException {
+    public void clear() {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
   }
 }

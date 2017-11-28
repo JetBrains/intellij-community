@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -248,5 +249,24 @@ public class RunContentDescriptor implements Disposable {
   @Nullable
   public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerLayoutUi;
+  }
+
+  /**
+   * Sets the RunnerLayoutUi instance used for managing tab contents.
+   *
+   * @param runnerLayoutUi the RunnerLayoutUi instance used for managing tab contents.
+   * @see #getRunnerLayoutUi()
+   * @since 17.2
+   */
+  public void setRunnerLayoutUi(@Nullable RunnerLayoutUi runnerLayoutUi) {
+    myRunnerLayoutUi = runnerLayoutUi;
+  }
+
+  /**
+   * return true if the content should not be shown by the {@link RunContentManager}
+   */
+  @ApiStatus.Experimental
+  public boolean isHiddenContent() {
+    return false;
   }
 }

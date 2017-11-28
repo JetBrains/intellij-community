@@ -36,12 +36,18 @@ public class CompileScopeUtil {
     scope.putUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD, scopes);
   }
 
-  public static void addScopesForModules(Collection<Module> modules, List<TargetTypeBuildScope> scopes, boolean forceBuild) {
-    if (!modules.isEmpty()) {
+  public static void addScopesForModules(Collection<Module> modules,
+                                         Collection<String> unloadedModules,
+                                         List<TargetTypeBuildScope> scopes,
+                                         boolean forceBuild) {
+    if (!modules.isEmpty() || !unloadedModules.isEmpty()) {
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
         TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
         for (Module module : modules) {
           builder.addTargetId(module.getName());
+        }
+        for (String unloadedModule : unloadedModules) {
+          builder.addTargetId(unloadedModule);
         }
         scopes.add(builder.build());
       }

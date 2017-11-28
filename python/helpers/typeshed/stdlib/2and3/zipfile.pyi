@@ -14,6 +14,7 @@ if sys.version_info >= (3,):
     BadZipfile = BadZipFile
 else:
     class BadZipfile(Exception): ...
+error = BadZipfile
 
 class LargeZipFile(Exception): ...
 

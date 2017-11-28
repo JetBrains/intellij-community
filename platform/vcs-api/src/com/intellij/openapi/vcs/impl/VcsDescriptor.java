@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -43,39 +42,33 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
   public boolean probablyUnderVcs(final VirtualFile file) {
     if (file == null || (! file.isDirectory()) || (! file.isValid())) return false;
     if (myAdministrativePattern == null) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (checkFileForBeingAdministrative(file)) return true;
-        if (myCrawlUpToCheckUnderVcs) {
-          VirtualFile current = file.getParent();
-          while (current != null) {
-            if (checkFileForBeingAdministrative(current)) return true;
-            current = current.getParent();
-          }
+    return ReadAction.compute(() -> {
+      if (checkFileForBeingAdministrative(file)) return true;
+      if (myCrawlUpToCheckUnderVcs) {
+        VirtualFile current = file.getParent();
+        while (current != null) {
+          if (checkFileForBeingAdministrative(current)) return true;
+          current = current.getParent();
         }
-        return false;
       }
+      return false;
     });
   }
 
   private boolean checkFileForBeingAdministrative(final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final String[] patterns = myAdministrativePattern.split(",");
-        for (String pattern : patterns) {
-          final VirtualFile child = file.findChild(pattern.trim());
-          if (child != null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(myName + " vcs detected: " + pattern + " folder found in " + file + ". Trace: " +
-                        ExceptionUtil.getThrowableText(new Throwable()));
-            }
-            return true;
+    return ReadAction.compute(() -> {
+      final String[] patterns = myAdministrativePattern.split(",");
+      for (String pattern : patterns) {
+        final VirtualFile child = file.findChild(pattern.trim());
+        if (child != null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(myName + " vcs detected: " + pattern + " folder found in " + file + ". Trace: " +
+                      ExceptionUtil.getThrowableText(new Throwable()));
           }
+          return true;
         }
-        return false;
       }
+      return false;
     });
   }
 

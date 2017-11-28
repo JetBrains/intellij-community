@@ -17,13 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ui.SimpleTextAttributes;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/3/11
- * Time: 12:56 PM
- * To change this template use File | Settings | File Templates.
- */
 public class RichTextItem {
   private final String myText;
   private final SimpleTextAttributes myTextAttributes;

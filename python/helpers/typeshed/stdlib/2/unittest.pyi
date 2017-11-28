@@ -4,11 +4,11 @@
 
 # Only a subset of functionality is included.
 
-from typing import (
-    Any, Callable, Dict, Iterable, Tuple, List, TextIO, Sequence,
-    overload, Set, FrozenSet, TypeVar, Union, Pattern, Type
-)
+from typing import (Any, Callable, Dict, FrozenSet, Iterable, List, Optional,
+                    overload, Pattern, Sequence, Set, TextIO, Tuple, Type,
+                    TypeVar, Union)
 from abc import abstractmethod, ABCMeta
+import types
 
 _T = TypeVar('_T')
 _FT = TypeVar('_FT')
@@ -152,11 +152,26 @@ class TestSuite(Testable):
     def debug(self) -> None: ...
     def countTestCases(self) -> int: ...
 
-# TODO TestLoader
-# TODO defaultTestLoader
+class TestLoader:
+    testMethodPrefix = ...  # type: str
+    sortTestMethodsUsing = ...  # type: Optional[Callable[[str, str], int]]
+    suiteClass = ...  # type: Callable[[List[TestCase]], TestSuite]
+    def loadTestsFromTestCase(self,
+                              testCaseClass: Type[TestCase]) -> TestSuite: ...
+    def loadTestsFromModule(self, module: str = ...,
+                            use_load_tests: bool = ...) -> TestSuite: ...
+    def loadTestsFromName(self, name: str = ...,
+                          module: Optional[str] = ...) -> TestSuite: ...
+    def loadTestsFromNames(self, names: List[str] = ...,
+                          module: Optional[str] = ...) -> TestSuite: ...
+    def discover(self, start_dir: str, pattern: str = ...,
+                 top_level_dir: Optional[str] = ...) -> TestSuite: ...
+    def getTestCaseNames(self, testCaseClass: Type[TestCase] = ...) -> List[str]: ...
+
+defaultTestLoader = TestLoader
 
 class TextTestRunner:
-    def __init__(self, stream: TextIO = ..., descriptions: bool = ...,
+    def __init__(self, stream: Optional[TextIO] = ..., descriptions: bool = ...,
                  verbosity: int = ..., failfast: bool = ...) -> None: ...
 
 class SkipTest(Exception):
@@ -168,9 +183,16 @@ def skipIf(condition: Any, reason: Union[str, unicode]) -> Any: ...
 def expectedFailure(func: _FT) -> _FT: ...
 def skip(reason: Union[str, unicode]) -> Any: ...
 
-def main(module: str = ..., defaultTest: str = ...,
-         argv: List[str] = ..., testRunner: Any = ...,
-         testLoader: Any = ...) -> None: ...  # TODO types
+# not really documented
+class TestProgram:
+    result = ...  # type: TestResult
+
+def main(module: str = ..., defaultTest: Optional[str] = ...,
+         argv: Optional[Sequence[str]] = ...,
+         testRunner: Union[Type[TextTestRunner], TextTestRunner, None] = ...,
+         testLoader: TestLoader = ..., exit: bool = ..., verbosity: int = ...,
+         failfast: Optional[bool] = ..., catchbreak: Optional[bool] = ...,
+         buffer: Optional[bool] = ...) -> TestProgram: ...
 
 # private but occasionally used
-util = ...  # type: module
+util = ...  # type: types.ModuleType

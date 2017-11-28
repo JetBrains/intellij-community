@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 21, 2001
- * Time: 4:35:07 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +99,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
-  public void updateTemplateValue(PsiExpression expression) {
+  void updateTemplateValue(PsiExpression expression) {
     if (myActualValueTemplate == null) return;
 
     String newTemplate = null;
@@ -121,14 +114,16 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
         if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
             psiField.hasModifierProperty(PsiModifier.FINAL) &&
             psiField.getContainingClass().getQualifiedName() != null) {
-          newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+          newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
+                                                               PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
         }
       }
     }
 
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
-    } else if (!Comparing.equal(myActualValueTemplate, newTemplate)) {
+    }
+    else if (!Comparing.equal(myActualValueTemplate, newTemplate)) {
       myActualValueTemplate = null;
     }
   }
@@ -158,10 +153,9 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Nullable
-  public static RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
+  static RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
     final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
-      final String paramName = fqName.substring(idx + 1);
       final String method = fqName.substring(0, idx);
       final RefMethod refMethod = RefMethodImpl.methodFromExternalName(manager, method);
       if (refMethod != null) {
@@ -169,33 +163,13 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
         final PsiParameterList list = element.getParameterList();
         final PsiParameter[] parameters = list.getParameters();
         int paramIdx = 0;
+        final String paramName = fqName.substring(idx + 1);
         for (PsiParameter parameter : parameters) {
           final String name = parameter.getName();
           if (name != null && name.equals(paramName)) {
             return manager.getExtension(RefJavaManager.MANAGER).getParameterReference(parameter, paramIdx);
           }
           paramIdx++;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiParameter findPsiParameter(String fqName, final PsiManager manager) {
-    final int idx = fqName.lastIndexOf(' ');
-    if (idx > 0) {
-      final String paramName = fqName.substring(idx + 1);
-      final String method = fqName.substring(0, idx);
-      final PsiMethod psiMethod = RefMethodImpl.findPsiMethod(manager, method);
-      if (psiMethod != null) {
-        final PsiParameterList list = psiMethod.getParameterList();
-        final PsiParameter[] parameters = list.getParameters();
-        for (PsiParameter parameter : parameters) {
-          final String name = parameter.getName();
-          if (name != null && name.equals(paramName)) {
-            return parameter;
-          }
         }
       }
     }

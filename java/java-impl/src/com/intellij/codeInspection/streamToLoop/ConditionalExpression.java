@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.util.OptionalUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 
 /**
  * An interface representing the conditional expression to be generated in the resulting code
@@ -37,12 +38,12 @@ interface ConditionalExpression {
   }
 
   class Plain implements ConditionalExpression {
-    private final String myType;
+    private final PsiType myType;
     private final String myCondition;
     private final String myTrueBranch;
     private final String myFalseBranch;
 
-    public Plain(String type, String condition, String trueBranch, String falseBranch) {
+    public Plain(PsiType type, String condition, String trueBranch, String falseBranch) {
       myType = type;
       myCondition = condition;
       myTrueBranch = trueBranch;
@@ -50,7 +51,7 @@ interface ConditionalExpression {
     }
 
     public String getType() {
-      return myType;
+      return myType.getCanonicalText();
     }
 
     public String getCondition() {
@@ -103,7 +104,7 @@ interface ConditionalExpression {
       return myInvert;
     }
 
-    public Plain toPlain(String type, String trueBranch, String falseBranch) {
+    public Plain toPlain(PsiType type, String trueBranch, String falseBranch) {
       return myInvert ? new Plain(type, myCondition, falseBranch, trueBranch) :
              new Plain(type, myCondition, trueBranch, falseBranch);
     }
@@ -115,21 +116,21 @@ interface ConditionalExpression {
   }
 
   class Optional implements ConditionalExpression {
-    private final String myType;
+    private final PsiType myType;
     private final String myCondition;
     private final String myPresentExpression;
     private final String myTypeArgument;
 
-    Optional(String type, String condition, String presentExpression) {
+    Optional(PsiType type, String condition, String presentExpression) {
       myType = type;
       myCondition = condition;
       myPresentExpression = presentExpression;
-      myTypeArgument = TypeConversionUtil.isPrimitive(type) ? "" : "<" + type + ">";
+      myTypeArgument = type instanceof PsiPrimitiveType ? "" : "<" + type.getCanonicalText() + ">";
     }
 
     @Override
     public String getType() {
-      return OptionalUtil.getOptionalClass(myType) + myTypeArgument;
+      return OptionalUtil.getOptionalClass(myType.getCanonicalText()) + myTypeArgument;
     }
 
     @Override
@@ -139,12 +140,12 @@ interface ConditionalExpression {
 
     @Override
     public String getTrueBranch() {
-      return OptionalUtil.getOptionalClass(myType) + "." + myTypeArgument + "of(" + myPresentExpression + ")";
+      return OptionalUtil.getOptionalClass(myType.getCanonicalText()) + "." + myTypeArgument + "of(" + myPresentExpression + ")";
     }
 
     @Override
     public String getFalseBranch() {
-      return OptionalUtil.getOptionalClass(myType) + "." + myTypeArgument + "empty()";
+      return OptionalUtil.getOptionalClass(myType.getCanonicalText()) + "." + myTypeArgument + "empty()";
     }
 
     public Plain unwrap(String absentExpression) {

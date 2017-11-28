@@ -49,7 +49,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     return false;
   }
 
-  private static void changeInterfaceToClass(PsiClass anInterface) throws IncorrectOperationException {
+  public static void changeInterfaceToClass(PsiClass anInterface) throws IncorrectOperationException {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
     assert nameIdentifier != null;
     final PsiElement whiteSpace = nameIdentifier.getPrevSibling();

@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Please see <a href="Wiki">http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure</a>.
  */
-public interface MessageBus {
+public interface MessageBus extends Disposable {
 
   /**
    * Messages buses can be organised into hierarchies. That allows facilities {@link Topic#getBroadcastDirection() broadcasting}.
@@ -140,6 +140,11 @@ public interface MessageBus {
    * {@link #connect(Disposable) connections}.
    */
   void dispose();
+
+  /**
+   * Returns true if this bus is disposed.
+   */
+  boolean isDisposed();
 
   /**
    * @return true when events in the given topic are being dispatched in the current thread,

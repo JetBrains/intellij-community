@@ -16,9 +16,8 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -61,8 +60,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   @Override
   public Module[] getModules(@NotNull final ProjectData projectData) {
-    final List<Module> modules = ContainerUtil.filter(getModules(), module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
-                                                                          StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
+    final List<Module> modules = ContainerUtil.filter(
+      getModules(),
+      module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
+                StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
     return ContainerUtil.toArray(modules, new Module[modules.size()]);
   }
 
@@ -87,16 +88,26 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   protected String[] suggestModuleNameCandidates(@NotNull ModuleData module) {
     String prefix = module.getGroup();
     File modulePath = new File(module.getLinkedExternalProjectPath());
-    if(modulePath.isFile()) {
+    if (modulePath.isFile()) {
       modulePath = modulePath.getParentFile();
     }
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
-    return new String[]{
-      module.getInternalName(),
-      prefix + '-' + module.getInternalName(),
-      prefix + '-' + module.getInternalName() + "~1"};
+    ExternalProjectSettings settings = getSettings(myProject, module.getOwner()).getLinkedProjectSettings(module.getLinkedExternalProjectPath());
+    char delimiter = settings != null && settings.isUseQualifiedModuleNames() ? '.' : '-';
+
+    if (prefix == null || StringUtil.startsWith(module.getInternalName(), prefix)) {
+      return new String[]{
+        module.getInternalName(),
+        module.getInternalName() + "~1"};
+    }
+    else {
+      return new String[]{
+        module.getInternalName(),
+        prefix + delimiter + module.getInternalName(),
+        prefix + delimiter + module.getInternalName() + "~1"};
+    }
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
@@ -113,6 +124,20 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Override
   public Module findIdeModule(@NotNull String ideModuleName) {
     return ModuleManager.getInstance(myProject).findModuleByName(ideModuleName);
+  }
+
+  @Nullable
+  @Override
+  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
+    for (String moduleName : suggestModuleNameCandidates(moduleData)) {
+      UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
+
+      // TODO external system module options should be honored to handle duplicated module names issues
+      if (unloadedModuleDescription != null) {
+        return unloadedModuleDescription;
+      }
+    }
+    return null;
   }
 
   @Nullable

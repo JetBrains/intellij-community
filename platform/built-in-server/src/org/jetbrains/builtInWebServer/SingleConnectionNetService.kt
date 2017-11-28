@@ -3,10 +3,7 @@ package org.jetbrains.builtInWebServer
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.io.addChannelListener
-import com.intellij.util.io.closeAndShutdownEventLoop
-import com.intellij.util.io.connect
-import com.intellij.util.io.shutdownIfOio
+import com.intellij.util.io.*
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -32,13 +29,15 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
     this.bootstrap = bootstrap
     this.port = port
 
-    bootstrap.connect(loopbackSocketAddress(port), promise)?.let {
+    val connectResult = bootstrap.connectRetrying(loopbackSocketAddress(port))
+    connectResult.channel?.let {
       promise.catchError {
         processChannel.set(it)
         addCloseListener(it)
         promise.setResult(processHandler)
       }
     }
+    handleErrors(connectResult, promise)
   }
 
   protected fun connectAgain(): Promise<Channel> {
@@ -48,14 +47,27 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
     }
 
     val promise = AsyncPromise<Channel>()
-    bootstrap!!.connect(loopbackSocketAddress(port), promise)?.let {
+    val connectResult = bootstrap!!.connectRetrying(loopbackSocketAddress(port))
+    connectResult.channel?.let {
       promise.catchError {
         processChannel.set(it)
         addCloseListener(it)
         promise.setResult(it)
       }
     }
+    handleErrors(connectResult, promise)
+
     return promise
+  }
+
+  private fun handleErrors(connectResult: ConnectToChannelResult, promise: AsyncPromise<*>) {
+    connectResult
+      .handleError(java.util.function.Consumer {
+        promise.setError(it)
+      })
+      .handleThrowable(java.util.function.Consumer {
+        promise.setError(it)
+      })
   }
 
   private fun addCloseListener(it: Channel) {

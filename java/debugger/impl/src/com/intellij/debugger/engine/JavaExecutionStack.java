@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -34,6 +21,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.ThreadReference;
@@ -88,7 +76,7 @@ public class JavaExecutionStack extends XExecutionStack {
     try {
       StackFrameProxyImpl frame = myThreadProxy.frame(0);
       if (frame != null) {
-        myTopFrame = createStackFrame(frame, myTracker);
+        myTopFrame = createStackFrame(frame);
       }
     }
     catch (EvaluateException e) {
@@ -99,8 +87,9 @@ public class JavaExecutionStack extends XExecutionStack {
     }
   }
 
-  private static XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull MethodsTracker tracker) {
-    StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
+  @NotNull
+  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, myTracker);
     DebugProcessImpl debugProcess = (DebugProcessImpl)descriptor.getDebugProcess();
     Location location = descriptor.getLocation();
     if (location != null) {
@@ -193,7 +182,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
         else {
           frameProxy = myStackFramesIterator.next();
-          frame = createStackFrame(frameProxy, myTracker);
+          frame = createStackFrame(frameProxy);
           if (first && !myTopFrameReady) {
             myTopFrame = frame;
             myTopFrameReady = true;
@@ -206,8 +195,9 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         // replace the rest with the related stack (if available)
-        if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame) {
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
+        if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame
+            && AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)myDebugProcess.getXdebugProcess().getSession())) {
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext, true);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             int i = 0;
             boolean separator = true;
@@ -235,6 +225,9 @@ public class JavaExecutionStack extends XExecutionStack {
             }
             myContainer.addStackFrames(Collections.emptyList(), true);
             return;
+          }
+          else {
+            ((JavaStackFrame)frame).setInsertCapturePoint(StackCapturingLineBreakpoint.getMatchingDisabledInsertionPoint(frameProxy));
           }
         }
 

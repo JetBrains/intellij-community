@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -70,8 +71,7 @@ public abstract class FilterComponent extends JPanel {
       public void keyPressed(final KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
-          myFilter.addCurrentTextToHistory();
-          filter();
+          userTriggeredFilter();
         } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           onEscape(e);
         }
@@ -120,7 +120,7 @@ public abstract class FilterComponent extends JPanel {
     myFilter.reset();
   }
 
-  protected void onEscape(KeyEvent e) {
+  protected void onEscape(@NotNull KeyEvent e) {
   }
 
   public String getFilter(){
@@ -146,6 +146,11 @@ public abstract class FilterComponent extends JPanel {
   public abstract void filter();
 
   protected void onlineFilter(){
+    filter();
+  }
+
+  protected void userTriggeredFilter() {
+    myFilter.addCurrentTextToHistory();
     filter();
   }
 

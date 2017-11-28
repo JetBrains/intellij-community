@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.*;
@@ -7,8 +22,6 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,9 +29,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * Root of handlers for pattern node matching. Handles simpliest type of the match.
- */
 public final class RegExpPredicate extends MatchPredicate {
   private Pattern pattern;
   private final String baseHandlerName;
@@ -36,7 +46,7 @@ public final class RegExpPredicate extends MatchPredicate {
   }
 
   public RegExpPredicate(final String regexp, final boolean caseSensitive, final String _baseHandlerName, boolean _wholeWords, boolean _target) {
-    couldBeOptimized = containsRegExp(regexp);
+    couldBeOptimized = !StructuralSearchUtil.containsRegExpMetaChar(regexp);
     if (!_wholeWords) {
       simpleString = couldBeOptimized;
     }
@@ -50,16 +60,6 @@ public final class RegExpPredicate extends MatchPredicate {
       compilePattern();
     }
     target = _target;
-  }
-
-  private static boolean containsRegExp(final String regexp) {
-    for(int i=0;i<regexp.length();++i) {
-      if(MatchUtils.SPECIAL_CHARS.indexOf(regexp.charAt(i))!=-1) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private void compilePattern() {
@@ -90,13 +90,13 @@ public final class RegExpPredicate extends MatchPredicate {
    * Attempts to match given handler node against given node.
    * @param matchedNode for matching
    * @param context of the matching
-   * @return true if matching was successfull and false otherwise
+   * @return true if matching was successful and false otherwise
    */
-  public boolean match(PsiElement node,PsiElement matchedNode, int start, int end, MatchContext context) {
+  @Override
+  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
     if (matchedNode==null) return false;
-    String text;
 
-    text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
+    String text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
 
     boolean result = doMatch(text, start, end, context, matchedNode);
 
@@ -116,10 +116,6 @@ public final class RegExpPredicate extends MatchPredicate {
   public static String getMeaningfulText(PsiElement matchedNode) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(matchedNode);
     return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
-  }
-
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode,matchedNode,0,-1,context);
   }
 
   boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {

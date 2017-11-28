@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>module-info.java</file>
+    <line>5</line>
+    <entry_point TYPE="java.module" FQNAME="com.moduleinfo.test" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant suppression</problem_class>
+    <description>Redundant suppression</description>
+  </problem>
+
+</problems>

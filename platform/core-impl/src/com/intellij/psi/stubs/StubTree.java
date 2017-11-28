@@ -19,14 +19,14 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.util.Function;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class StubTree extends ObjectStubTree<StubElement<?>> {
+  private final StubSpine mySpine = new StubSpine(this);
 
   public StubTree(@NotNull final PsiFileStub root) {
     this(root, true);
@@ -53,5 +53,10 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
   @Override
   public PsiFileStub getRoot() {
     return (PsiFileStub)myRoot;
+  }
+
+  @NotNull
+  public StubbedSpine getSpine() {
+    return mySpine;
   }
 }

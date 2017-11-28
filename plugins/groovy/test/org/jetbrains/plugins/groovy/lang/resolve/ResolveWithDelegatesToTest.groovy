@@ -641,23 +641,6 @@ a {
 ''', 'Boo'
   }
 
-  void 'test delegate within index property'() {
-    assertScript '''\
-class A {
-    def getAt(@DelegatesTo(Boo) Closure c) {}
-}
-
-class Boo {
-    def foo() {}
-}
-
-def a = new A()
-a[{
-    fo<caret>o()
-}]
-''', 'Boo'
-  }
-
   void 'test delegate within constructor argument'() {
     assertScript '''\
 class A {

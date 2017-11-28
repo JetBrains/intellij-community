@@ -8,7 +8,7 @@ adjust_django_sys_path()
 
 from django.conf import settings
 
-def _is_nosetest(settings):
+def is_nosetest(settings):
   """
   Checks if Django configured to work with nosetest
 
@@ -28,7 +28,7 @@ def _is_nosetest(settings):
 from django.test.testcases import TestCase
 from django import VERSION
 
-if _is_nosetest(settings):
+if is_nosetest(settings):
   from nose_utils import TeamcityNoseRunner
 
 # See: https://docs.djangoproject.com/en/1.8/releases/1.7/#django-utils-unittest
@@ -36,7 +36,7 @@ if _is_nosetest(settings):
 # Since unittest2 became the standard library's unittest module in Python 2.7,
 # and Django 1.7 drops support for older Python versions, this module isn't useful anymore.
 # It has been deprecated. Use unittest instead.
-if VERSION[1] >= 7:
+if VERSION >= (1,7):
   import unittest
 else:
   from django.utils import unittest
@@ -51,7 +51,7 @@ def get_test_suite_runner():
     return get_runner(TempSettings)
 
 try:
-  if VERSION[1] >= 6:
+  if VERSION >= (1,6):
     from django.test.runner import DiscoverRunner as DjangoSuiteRunner
   else:
     from django.test.simple import DjangoTestSuiteRunner as DjangoSuiteRunner
@@ -128,7 +128,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
     return suite
 
   def run_suite(self, suite, **kwargs):
-    if _is_nosetest(settings):
+    if is_nosetest(settings):
       from django_nose.plugin import DjangoSetUpPlugin, ResultPlugin
       from django_nose.runner import _get_plugins_from_settings
       from nose.config import Config
@@ -151,7 +151,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
       return TeamcityTestRunner.run(self, suite, **self.options)
 
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
-    if _is_nosetest(settings):
+    if is_nosetest(settings):
       return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests)
     return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 
@@ -251,8 +251,5 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
   }
   options.update(kwargs)
   TeamcityServiceMessages(sys.stdout).testMatrixEntered()
-  if VERSION[1] > 1:
-    return DjangoTeamcityTestRunner(**options).run_tests(test_labels,
-                                                         extra_tests=extra_tests, **options)
-
-  return run_the_old_way(extra_tests, options, test_labels, verbosity)
+  return DjangoTeamcityTestRunner(**options).run_tests(test_labels,
+                                                       extra_tests=extra_tests, **options)

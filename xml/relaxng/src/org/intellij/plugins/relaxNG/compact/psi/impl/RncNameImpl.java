@@ -49,11 +49,6 @@ import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.08.2007
- */
 public class RncNameImpl extends RncElementImpl implements RncName, PsiReference,
         EmptyResolveMessageProvider, LocalQuickFixProvider {
 

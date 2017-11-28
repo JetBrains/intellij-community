@@ -19,34 +19,22 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
 /**
  * @author yole
  */
 public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
   @Override
   @Nullable
-  public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {
+  public int[] getMethodNavigationOffsets(PsiFile file, int caretOffset) {
     if (file instanceof PsiJavaFile) {
-      ArrayList<PsiElement> array = new ArrayList<>();
-      addNavigationElements(array, file);
-      return MethodUpDownUtil.offsetsFromElements(array);      
+      return MethodUpDownUtil.offsetsFromElements(SyntaxTraverser.psiTraverser(file).filter(e -> shouldStopAt(e)).toList());
     }
     return null;
   }
 
-  private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
-    PsiElement[] children = element.getChildren();
-    boolean stopOnFields = Registry.is("ide.structural.navigation.visit.fields");
-    for (PsiElement child : children) {
-      if (child instanceof PsiMethod || child instanceof PsiClass || stopOnFields && child instanceof PsiField) {
-        array.add(child);
-        addNavigationElements(array, child);
-      }
-      if (element instanceof PsiClass && child instanceof PsiJavaToken && child.getText().equals("}")) {
-        array.add(child);
-      }
-    }
+  private static boolean shouldStopAt(PsiElement e) {
+    if (e instanceof PsiMethod || e instanceof PsiClass) return true;
+    if (e instanceof PsiField) return Registry.is("ide.structural.navigation.visit.fields");
+    return e instanceof PsiJavaToken && e.getParent() instanceof PsiClass && e.textMatches("}");
   }
 }

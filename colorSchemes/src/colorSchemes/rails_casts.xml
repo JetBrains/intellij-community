@@ -1,7 +1,4 @@
 <scheme name="Railscasts" parent_scheme="Darcula" version="1">
-  <option name="LINE_SPACING" value="1.0" />
-  <option name="EDITOR_FONT_SIZE" value="12" />
-  <option name="EDITOR_FONT_NAME" value="Menlo" />
   <colors>
     <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
     <option name="INDENT_GUIDE" value="404040" />
@@ -1031,16 +1028,8 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFC66D" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFC66D" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option name="OC.GLOBAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="D0D0FF" />

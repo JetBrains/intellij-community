@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.intellij.execution;
 
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
 public interface RunManagerListener extends EventListener {
+  Topic<RunManagerListener> TOPIC = new Topic<>("RunManager", RunManagerListener.class);
+
   default void runConfigurationSelected() {
   }
 
@@ -32,7 +36,7 @@ public interface RunManagerListener extends EventListener {
   default void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
-  default void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
+  default void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, @Nullable String existingId) {
     runConfigurationChanged(settings);
   }
 

@@ -20,10 +20,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 
-/**
- * User: anna
- * Date: 30-Jan-2006
- */
 public class FieldNode extends MemberNode<PsiField> {
 
   public FieldNode(final PsiField field) {

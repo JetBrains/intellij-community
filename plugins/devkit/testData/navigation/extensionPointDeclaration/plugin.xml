@@ -1,10 +1,8 @@
 <idea-plugin>
-
   <extensionPoints>
     <extensionPoint name="myStringEP" interface="java.lang.String"/>
 
     <!-- wrong EP name -->
     <extensionPoint name="myStringEP2" interface="java.lang.String"/>
   </extensionPoints>
-
 </idea-plugin>

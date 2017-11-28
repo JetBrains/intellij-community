@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -34,23 +33,20 @@ import java.util.Set;
  * @author peter
 */
 public class JavaInheritanceWeigher extends ProximityWeigher {
-  private static final NotNullLazyKey<Set<String>, ProximityLocation> PLACE_SUPER_CLASSES = NotNullLazyKey.create("PLACE_SUPER_CLASSES", new NotNullFunction<ProximityLocation, Set<String>>() {
-    @NotNull
-    @Override
-    public Set<String> fun(ProximityLocation location) {
-      final HashSet<String> result = new HashSet<>();
-      PsiClass contextClass = PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
-      Processor<PsiClass> processor = psiClass -> {
-        ContainerUtilRt.addIfNotNull(result, psiClass.getQualifiedName());
-        return true;
-      };
-      while (contextClass != null) {
-        InheritanceUtil.processSupers(contextClass, true, processor);
-        contextClass = contextClass.getContainingClass();
-      }
-      return result;
-    }
-  });
+  private static final NotNullLazyKey<Set<String>, ProximityLocation> PLACE_SUPER_CLASSES = NotNullLazyKey.create("PLACE_SUPER_CLASSES",
+                                                                                                                  location -> {
+                                                                                                                    final HashSet<String> result = new HashSet<>();
+                                                                                                                    PsiClass contextClass = PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
+                                                                                                                    Processor<PsiClass> processor = psiClass -> {
+                                                                                                                      ContainerUtilRt.addIfNotNull(result, psiClass.getQualifiedName());
+                                                                                                                      return true;
+                                                                                                                    };
+                                                                                                                    while (contextClass != null) {
+                                                                                                                      InheritanceUtil.processSupers(contextClass, true, processor);
+                                                                                                                      contextClass = contextClass.getContainingClass();
+                                                                                                                    }
+                                                                                                                    return result;
+                                                                                                                  });
 
   @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {

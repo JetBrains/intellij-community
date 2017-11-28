@@ -98,7 +98,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
         }
       }
       else {
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.emptyList());
       }
     }
   }

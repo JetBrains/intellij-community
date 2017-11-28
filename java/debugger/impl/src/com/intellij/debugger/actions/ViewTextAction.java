@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -56,7 +56,8 @@ public class ViewTextAction extends XFetchValueActionBase {
 
       @Override
       public void handleInCollector(Project project, String value, XDebuggerTree tree) {
-        String text = StringUtil.unquoteString(value);
+        // do not unquote here! Value here must be correct already
+        String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
           dialog.setTitle(ActionsBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
@@ -111,7 +112,7 @@ public class ViewTextAction extends XFetchValueActionBase {
       setCrossClosesWindow(true);
 
       myTextViewer = new TextViewer(initialValue, project, myStringNode == null);
-      myTextViewer.addDocumentListener(new DocumentAdapter() {
+      myTextViewer.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           if (e.getNewLength() + e.getOldLength() > 0) {

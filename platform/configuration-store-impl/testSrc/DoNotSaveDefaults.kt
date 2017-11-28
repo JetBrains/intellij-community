@@ -69,7 +69,8 @@ class DoNotSaveDefaultsTest {
       "feature.usage.statistics.xml" /* non-roamable usage counters */,
       "tomee.extensions.xml", "jboss.extensions.xml", "glassfish.extensions.xml" /* javaee non-roamable stuff, it will be better to fix it */,
       "dimensions.xml" /* non-roamable sizes of window, dialogs, etc. */,
-      "debugger.renderers.xml", "debugger.xml" /* todo */
+      "debugger.renderers.xml", "debugger.xml" /* todo */,
+      "databaseSettings.xml"
     ))
     println(directoryTree)
     assertThat(directoryTree).toMatchSnapshot(testData.resolve("DoNotSaveDefaults.snap.txt"))

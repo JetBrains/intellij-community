@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -206,7 +207,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         ResolveResult result = results[i];
         final PsiElement element = result.getElement();
         if (element == null) {
-          results1[i] = GroovyResolveResult.EMPTY_RESULT;
+          results1[i] = EmptyGroovyResolveResult.INSTANCE;
         }
         else {
           results1[i] = new GroovyResolveResultImpl(element, true);
@@ -214,12 +215,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       }
       return results1;
     }
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Override

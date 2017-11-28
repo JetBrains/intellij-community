@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 27, 2006
- * Time: 7:49:54 PM
- */
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -39,7 +33,7 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
   }
 
-  public void testPropertyCompletion() throws Throwable {
+  public void testPropertyCompletion() {
     final String testName = "PropertyCompletion";
     doTestFor(
       new String [] { testName, testName + ".properties" },
@@ -47,13 +41,13 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
     );
   }
 
-  public void testPropertyCompletion2() throws Throwable {
+  public void testPropertyCompletion2() {
     final String testName = "PropertyCompletion2";
     final String[] fileNames = new String [] { testName + ".xml", "PropertyCompletion.properties" };
     myFixture.testCompletionTyping(fileNames, "\n", testName + "_after.xml");
   }
 
-  private void doTestFor(final String[] fileNames, final String ext) throws Throwable {
+  private void doTestFor(final String[] fileNames, final String ext) {
 
     String initialTest = fileNames[0];
     for(int i = 0; i < fileNames.length; ++i) {

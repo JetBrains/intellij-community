@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.containers.SoftValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class StringDescriptorManager {
   private Module myModule;
-  private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = new SoftValueHashMap<>();
+  private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;

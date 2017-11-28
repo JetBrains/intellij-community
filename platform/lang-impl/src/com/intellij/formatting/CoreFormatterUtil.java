@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -88,22 +89,19 @@ public class CoreFormatterUtil {
    * @return non-line feed symbols to the left of the given wrapped block
    */
   public static int getStartColumn(@Nullable LeafBlockWrapper block) {
-    if (block != null) {
-      int result = 0;
-      while (true) {
-        final WhiteSpace whiteSpace = block.getWhiteSpace();
+    if (block == null) return -1;
+
+    int result = 0;
+    while (true) {
+      final WhiteSpace whiteSpace = block.getWhiteSpace();
+      if (whiteSpace != null) {
         result += whiteSpace.getTotalSpaces();
-        if (whiteSpace.containsLineFeeds()) {
-          return result;
-        }
-        block = block.getPreviousBlock();
-        if (result > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return result;
-        result += block.getSymbolsAtTheLastLine();
-        if (block.containsLineFeeds()) return result;
+        if (whiteSpace.containsLineFeeds()) return result;
       }
-    }
-    else {
-      return -1;
+      block = block.getPreviousBlock();
+      if (result > CodeStyleConstraints.MAX_RIGHT_MARGIN || block == null) return result;
+      result += block.getSymbolsAtTheLastLine();
+      if (block.containsLineFeeds()) return result;
     }
   }
 

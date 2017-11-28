@@ -32,7 +32,8 @@ public class GradleProjectImportProvider extends AbstractExternalProjectImportPr
 
   @Override
   protected boolean canImportFromFile(VirtualFile file) {
-    return GradleConstants.EXTENSION.equals(file.getExtension());
+    return GradleConstants.EXTENSION.equals(file.getExtension()) ||
+      file.getName().endsWith("." + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION);
   }
 
   @Nullable

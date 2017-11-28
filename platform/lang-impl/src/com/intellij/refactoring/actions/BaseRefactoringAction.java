@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -60,7 +59,10 @@ public abstract class BaseRefactoringAction extends AnAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context) {
     return true;
   }
 
@@ -83,14 +85,15 @@ public abstract class BaseRefactoringAction extends AnAction {
   protected abstract RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
     int eventCount = IdeEventQueue.getInstance().getEventCount();
+
     RefactoringActionHandler handler;
     try {
       handler = getHandler(dataContext);
@@ -99,8 +102,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
     if (handler == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(
-        "error.wrong.caret.position.symbol.to.refactor")), RefactoringBundle.getCannotRefactorMessage(null), null);
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
 
@@ -119,7 +122,6 @@ public abstract class BaseRefactoringAction extends AnAction {
         CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
-
 
     IdeEventQueue.getInstance().setEventCount(eventCount);
     if (editor != null) {
@@ -187,7 +189,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
       boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;
       if (isVisible) {
-        boolean isEnabled = isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
+        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
         if (!isEnabled) {
           disableAction(e);
         }
@@ -231,7 +233,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return caret;
   }
 
-  private static void disableAction(final AnActionEvent e) {
+  private static void disableAction(AnActionEvent e) {
     e.getPresentation().setEnabled(false);
   }
 
@@ -264,5 +266,4 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
     return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
   }
-
 }

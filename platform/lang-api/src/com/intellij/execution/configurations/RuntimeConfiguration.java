@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,12 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
-  }
-
-  @Override
-  @NotNull
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
   }
 
   @Override

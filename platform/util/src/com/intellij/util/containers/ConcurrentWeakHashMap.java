@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 18.12.2006
- * Time: 20:18:31
- */
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
@@ -27,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Map;
 
 /**
  * Concurrent weak key:K -> strong value:V map.
@@ -69,13 +62,10 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     }
   }
 
+  @NotNull
   @Override
   protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     return new WeakKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
-  }
-
-  public ConcurrentWeakHashMap(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
   }
 
   public ConcurrentWeakHashMap(int initialCapacity) {
@@ -92,11 +82,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  public ConcurrentWeakHashMap(Map<? extends K, ? extends V> t) {
-    super(t);
-  }
-
-  public ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(hashingStrategy);
   }
 }

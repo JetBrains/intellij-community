@@ -16,7 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
-import com.intellij.internal.statistic.ideSettings.IdeInitialConfigButtonUsages;
+import com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;

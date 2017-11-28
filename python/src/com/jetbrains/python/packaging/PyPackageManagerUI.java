@@ -293,7 +293,7 @@ public class PyPackageManagerUI {
     public InstallManagementTask(@Nullable Project project,
                                  @NotNull Sdk sdk,
                                  @Nullable Listener listener) {
-      super(project, sdk, Collections.<PyRequirement>emptyList(), Collections.<String>emptyList(), listener);
+      super(project, sdk, Collections.emptyList(), Collections.emptyList(), listener);
     }
 
     @NotNull

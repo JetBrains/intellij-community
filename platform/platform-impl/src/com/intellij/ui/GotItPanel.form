@@ -57,7 +57,7 @@
               <size top="4" left="10" bottom="4" right="8"/>
             </border>
             <children>
-              <component id="366a9" class="javax.swing.JLabel">
+              <component id="366a9" class="javax.swing.JLabel" binding="myButtonLabel">
                 <constraints border-constraint="Center"/>
                 <properties>
                   <font size="12" style="1"/>

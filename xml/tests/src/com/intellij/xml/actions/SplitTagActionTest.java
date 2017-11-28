@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class SplitTagActionTest extends LightIntentionActionTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected boolean shouldBeAvailableAfterExecution() {

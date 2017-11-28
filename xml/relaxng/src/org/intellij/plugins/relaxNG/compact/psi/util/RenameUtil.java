@@ -32,11 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.08.2007
- */
 public class RenameUtil {
 
   private static final Set<String> ourRncKeywords = new HashSet<>();

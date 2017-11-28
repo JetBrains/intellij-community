@@ -31,12 +31,7 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
   @NotNull
   public static UpdatableIntToIntMap newInstance(final Flags visibleNodes) {
-    return newInstance(new BooleanFunction<Integer>() {
-      @Override
-      public boolean fun(Integer integer) {
-        return visibleNodes.get(integer);
-      }
-    }, visibleNodes.size());
+    return newInstance(integer -> visibleNodes.get(integer), visibleNodes.size());
   }
 
   /**

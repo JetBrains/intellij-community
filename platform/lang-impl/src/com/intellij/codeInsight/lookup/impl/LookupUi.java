@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
@@ -275,10 +276,10 @@ class LookupUi {
     }
 
     SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
-    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
 
     if (!isPositionedAboveCaret()) {
-      int shiftLow = screenRectangle.height - (location.y + dim.height);
+      int shiftLow = screenRectangle.y + screenRectangle.height - (location.y + dim.height);
       myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
     }
     if (isPositionedAboveCaret()) {
@@ -339,7 +340,7 @@ class LookupUi {
           mainPanel.setSize(size);
           mainPanel.validate();
 
-          if (!myLookup.myResizePending) {
+          if (IdeEventQueue.getInstance().getTrueCurrentEvent().getID() == MouseEvent.MOUSE_DRAGGED) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
               UISettings.getInstance().setMaxLookupWidth(Math.max(500, size.width));

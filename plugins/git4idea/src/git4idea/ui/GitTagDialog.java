@@ -137,11 +137,8 @@ public class GitTagDialog extends DialogWrapper {
         validateFields();
       }
     });
-    myCommitTextFieldValidator = new GitReferenceValidator(project, myGitRootComboBox, myCommitTextField, myValidateButton, new Runnable() {
-      public void run() {
-        validateFields();
-      }
-    });
+    myCommitTextFieldValidator = new GitReferenceValidator(project, myGitRootComboBox, myCommitTextField, myValidateButton,
+                                                           () -> validateFields());
     myForceCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (myForceCheckBox.isEnabled()) {
@@ -214,7 +211,7 @@ public class GitTagDialog extends DialogWrapper {
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
       if (repository != null) {
-        repository.getRepositoryFiles().refresh(true);
+        repository.getRepositoryFiles().refresh();
       }
       else {
         LOG.error("No repository registered for root: " + getGitRoot());

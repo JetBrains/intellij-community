@@ -97,7 +97,7 @@ public class JDOMUtil {
   /**
    *
    * @param ignoreEmptyAttrValues defines if elements like <element foo="bar" skip_it=""/> and <element foo="bar"/> are 'equal'
-   * @return <code>true</code> if two elements are deep-equals by their content and attributes
+   * @return {@code true} if two elements are deep-equals by their content and attributes
    */
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2, boolean ignoreEmptyAttrValues) {
     if (e1 == null && e2 == null) return true;
@@ -268,7 +268,9 @@ public class JDOMUtil {
   }
 
   /**
-   * @deprecated Use load
+   * @deprecated Use {@link #load(CharSequence)}
+   *
+   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @NotNull
   @Deprecated
@@ -276,7 +278,6 @@ public class JDOMUtil {
     return loadDocument(new CharSequenceReader(seq));
   }
 
-  @NotNull
   public static Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
     return load(new CharSequenceReader(seq));
   }
@@ -306,11 +307,13 @@ public class JDOMUtil {
     return loadDocument(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
   }
 
-  @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
+  /**
+   * Consider to use `loadElement` (JdomKt.loadElement from java) due to more efficient whitespace handling (cannot be changed here due to backward compatibility).
+   */
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
     return stream == null ? null : loadDocument(stream).detachRootElement();
@@ -384,7 +387,11 @@ public class JDOMUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
+   */
   @NotNull
+  @Deprecated
   public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     writeDocument(document, writer, lineSeparator);
@@ -426,7 +433,10 @@ public class JDOMUtil {
   }
 
   public static void writeElement(@NotNull Element element, Writer writer, String lineSeparator) throws IOException {
-    XMLOutputter xmlOutputter = createOutputter(lineSeparator);
+    writeElement(element, writer, createOutputter(lineSeparator));
+  }
+
+  public static void writeElement(@NotNull Element element, @NotNull Writer writer, @NotNull XMLOutputter xmlOutputter) throws IOException {
     try {
       xmlOutputter.output(element, writer);
     }
@@ -476,7 +486,12 @@ public class JDOMUtil {
 
   @NotNull
   public static XMLOutputter createOutputter(String lineSeparator) {
-    XMLOutputter xmlOutputter = new MyXMLOutputter();
+    return createOutputter(lineSeparator, null);
+  }
+
+  @NotNull
+  public static XMLOutputter createOutputter(String lineSeparator, @Nullable ElementOutputFilter elementOutputFilter) {
+    XMLOutputter xmlOutputter = new MyXMLOutputter(elementOutputFilter);
     Format format = Format.getCompactFormat().
       setIndent("  ").
       setTextMode(Format.TextMode.TRIM).
@@ -548,6 +563,16 @@ public class JDOMUtil {
   }
 
   public static class MyXMLOutputter extends XMLOutputter {
+    private final ElementOutputFilter myElementOutputFilter;
+
+    public MyXMLOutputter(@Nullable ElementOutputFilter filter) {
+      myElementOutputFilter = filter;
+    }
+
+    public MyXMLOutputter() {
+      this(null);
+    }
+
     @Override
     @NotNull
     public String escapeAttributeEntities(@NotNull String str) {
@@ -559,6 +584,17 @@ public class JDOMUtil {
     public String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
     }
+
+    @Override
+    protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
+      if (myElementOutputFilter == null || myElementOutputFilter.accept(element, level)) {
+        super.printElement(out, element, level, namespaces);
+      }
+    }
+  }
+
+  public interface ElementOutputFilter {
+    boolean accept(@NotNull Element element, int level);
   }
 
   private static void printDiagnostics(@NotNull Element element, String prefix) {
@@ -670,5 +706,18 @@ public class JDOMUtil {
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
     return element == null || (element.getAttributes().size() == attributeCount && element.getContent().isEmpty());
+  }
+
+  public static void merge(@NotNull Element to, @NotNull Element from) {
+    for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
+      Element configuration = iterator.next();
+      iterator.remove();
+      to.addContent(configuration);
+    }
+    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+      Attribute attribute = iterator.next();
+      iterator.remove();
+      to.setAttribute(attribute);
+    }
   }
 }

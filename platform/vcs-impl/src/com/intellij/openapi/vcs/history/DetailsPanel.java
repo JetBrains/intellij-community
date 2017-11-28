@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.HtmlPanel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     myStatusText.setText("Commit message");
     myStatusText.attachTo(this);
 
-    setPreferredSize(new Dimension(150, 100));
+    setPreferredSize(new JBDimension(150, 100));
   }
 
   @Override
@@ -70,7 +71,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     boolean addRevisionInfo = selection.size() > 1;
     StringBuilder html = new StringBuilder();
     for (TreeNodeOnVcsRevision revision : selection) {
-      String message = revision.getCommitMessage();
+      String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {
         html.append("<br/><br/>");

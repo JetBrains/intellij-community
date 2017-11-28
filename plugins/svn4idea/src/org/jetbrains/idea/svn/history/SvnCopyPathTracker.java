@@ -20,43 +20,41 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
-import java.util.Map;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
+
+
 public class SvnCopyPathTracker {
 
   private static final Logger LOG = Logger.getInstance(SvnCopyPathTracker.class);
 
   @NotNull private String myCurrentPath;
-  private String myRepositoryRoot;
+  @NotNull private final SVNURL myRepositoryUrl;
   private boolean myHadChanged;
 
-  public SvnCopyPathTracker(@NotNull String repositoryUrl, @NotNull String relativeUrl) {
-    myRepositoryRoot = repositoryUrl;
-    myCurrentPath = relativeUrl;
+  public SvnCopyPathTracker(@NotNull SVNURL repositoryUrl, @NotNull String repositoryRelativeUrl) {
+    myRepositoryUrl = repositoryUrl;
+    myCurrentPath = repositoryRelativeUrl;
   }
 
-  public void accept(@NotNull final LogEntry entry) {
-    final Map changedPaths = entry.getChangedPaths();
-    if (changedPaths == null) return;
-
-    for (Object o : changedPaths.values()) {
-      final LogEntryPath entryPath = (LogEntryPath) o;
+  public void accept(@NotNull LogEntry entry) {
+    for (LogEntryPath entryPath : entry.getChangedPaths().values()) {
       if (entryPath != null && 'A' == entryPath.getType() && entryPath.getCopyPath() != null) {
         if (myCurrentPath.equals(entryPath.getPath())) {
           myHadChanged = true;
           myCurrentPath = entryPath.getCopyPath();
           return;
-        } else if (SVNPathUtil.isAncestor(entryPath.getPath(), myCurrentPath)) {
-          final String relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myCurrentPath);
-          myCurrentPath = SVNPathUtil.append(entryPath.getCopyPath(), relativePath);
+        }
+        else if (isAncestor(entryPath.getPath(), myCurrentPath)) {
+          myCurrentPath = append(entryPath.getCopyPath(), getRelativePath(entryPath.getPath(), myCurrentPath));
           myHadChanged = true;
           return;
         }
@@ -65,15 +63,17 @@ public class SvnCopyPathTracker {
   }
 
   @Nullable
-  public FilePath getFilePath(final SvnVcs vcs) {
-    if (! myHadChanged) return null;
-    final SvnFileUrlMapping svnFileUrlMapping = vcs.getSvnFileUrlMapping();
-    final String absolutePath = SVNPathUtil.append(myRepositoryRoot, myCurrentPath);
-    final File localPath = svnFileUrlMapping.getLocalPath(absolutePath);
+  public FilePath getFilePath(@NotNull SvnVcs vcs) throws SvnBindException {
+    if (!myHadChanged) return null;
+
+    SVNURL currentUrl = append(myRepositoryUrl, myCurrentPath);
+    File localPath = vcs.getSvnFileUrlMapping().getLocalPath(currentUrl);
+
     if (localPath == null) {
-      LOG.info("Cannot find local path for url: " + absolutePath);
+      LOG.info("Cannot find local path for url: " + currentUrl);
       return null;
     }
+
     return VcsUtil.getFilePath(localPath, false);
   }
 }

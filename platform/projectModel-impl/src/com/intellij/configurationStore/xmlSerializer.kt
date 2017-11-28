@@ -31,17 +31,28 @@ import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.primaryConstructor
+
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+
+private fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
+  var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
+  if (result == null) {
+    result = SkipDefaultsSerializationFilter()
+    skipDefaultsSerializationFilter.set(SoftReference(result))
+  }
+  return result
+}
 
 @JvmOverloads
-fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializationFilter()): Element {
+fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
   try {
     val clazz = javaClass
     val binding = serializer.getClassBinding(clazz)
     return if (binding is BeanBinding) {
       // top level expects not null (null indicates error, empty element will be omitted)
-      binding.serialize(this, true, filter)
+      binding.serialize(this, createElementIfEmpty, filter)
     }
     else {
       binding.serialize(this, null, filter) as Element
@@ -57,16 +68,21 @@ fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializati
 
 inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
 
-fun <T> Element.deserialize(aClass: Class<T>): T {
+fun <T> Element.deserialize(clazz: Class<T>): T {
+  if (clazz == Element::class.java) {
+    @Suppress("UNCHECKED_CAST")
+    return this as T
+  }
+
   @Suppress("UNCHECKED_CAST")
   try {
-    return (serializer.getClassBinding(aClass) as NotNullDeserializeBinding).deserialize(null, this) as T
+    return (serializer.getClassBinding(clazz) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
   catch (e: XmlSerializationException) {
     throw e
   }
   catch (e: Exception) {
-    throw XmlSerializationException("Cannot deserialize class ${aClass.name}", e)
+    throw XmlSerializationException("Cannot deserialize class ${clazz.name}", e)
   }
 }
 
@@ -103,17 +119,33 @@ fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
   (this as PersistentStateComponent<Any>).loadState(state)
 }
 
-fun <T : Any> T.serializeInto(element: Element) {
-  try {
-    val binding = serializer.getClassBinding(javaClass)
-    (binding as BeanBinding).serializeInto(this, element, null)
+fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
+  state?.let { serializeObjectInto(it, element) }
+}
+
+@Deprecated("")
+fun <T : Any> T.serializeInto(target: Element) {
+  serializeObjectInto(this, target)
+}
+
+fun serializeObjectInto(o: Any, target: Element) {
+  if (o is Element) {
+    val iterator = o.children.iterator()
+    for (child in iterator) {
+      iterator.remove()
+      target.addContent(child)
+    }
+
+    val attributeIterator = o.attributes.iterator()
+    for (attribute in attributeIterator) {
+      attributeIterator.remove()
+      target.setAttribute(attribute)
+    }
+    return
   }
-  catch (e: XmlSerializationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    throw XmlSerializationException(e)
-  }
+
+  val binding = serializer.getClassBinding(o.javaClass)
+  (binding as BeanBinding).serializeInto(o, target, getDefaultSerializationFilter())
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
@@ -144,7 +176,11 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
       try {
         binding.init(originalType, this)
       }
-      catch (e: XmlSerializationException) {
+      catch (e: RuntimeException) {
+        map.remove(key)
+        throw e
+      }
+      catch (e: Error) {
         map.remove(key)
         throw e
       }

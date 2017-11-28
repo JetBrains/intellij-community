@@ -22,11 +22,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -53,10 +54,11 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EditorFactoryImpl extends EditorFactory implements ApplicationComponentAdapter {
+public class EditorFactoryImpl extends EditorFactory implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
@@ -160,41 +162,62 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
 
   @Override
   public Editor createEditor(@NotNull Document document) {
-    return createEditor(document, false, null);
+    return createEditor(document, false, null, EditorKind.UNTYPED);
   }
 
   @Override
   public Editor createViewer(@NotNull Document document) {
-    return createEditor(document, true, null);
+    return createEditor(document, true, null, EditorKind.UNTYPED);
   }
 
   @Override
   public Editor createEditor(@NotNull Document document, Project project) {
-    return createEditor(document, false, project);
+    return createEditor(document, false, project, EditorKind.UNTYPED);
+  }
+
+  @Override
+  public Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind) {
+    return createEditor(document, false, project, kind);
   }
 
   @Override
   public Editor createViewer(@NotNull Document document, Project project) {
-    return createEditor(document, true, project);
+    return createEditor(document, true, project, EditorKind.UNTYPED);
+  }
+
+  @Override
+  public Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind) {
+    return createEditor(document, true, project, kind);
   }
 
   @Override
   public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
-    Editor editor = createEditor(document, isViewer, project);
+    Editor editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
     ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
     return editor;
   }
 
   @Override
   public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
-    Editor editor = createEditor(document, isViewer, project);
+    Editor editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
     ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
     return editor;
   }
 
-  private Editor createEditor(@NotNull Document document, boolean isViewer, Project project) {
+  @Override
+  public Editor createEditor(@NotNull Document document,
+                             Project project,
+                             @NotNull VirtualFile file,
+                             boolean isViewer,
+                             @NotNull EditorKind kind) {
+    Editor editor = createEditor(document, isViewer, project, kind);
+    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
+    return editor;
+  }
+
+  private Editor createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project);
+    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));

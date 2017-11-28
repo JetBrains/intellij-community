@@ -18,6 +18,10 @@ package com.intellij.notification;
 import com.intellij.openapi.application.ApplicationManager;
 
 public abstract class NotificationsConfiguration extends NotificationsAdapter {
+  /**
+   * If notification group ID starts with this prefix it wouldn't be shown in Preferences
+   */
+  public static final String LIGHTWEIGHT_PREFIX = "LIGHTWEIGHT";
   public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
 
   public static NotificationsConfiguration getNotificationsConfiguration() {

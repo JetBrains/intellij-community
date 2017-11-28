@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -24,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -54,6 +54,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = JBUI.scale(new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18));
@@ -85,7 +87,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
 
-    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0, true, false);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
 
@@ -97,6 +99,14 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     else {
       setText("loading...");
     }
+  }
+
+  public AnAction getAnAction() {
+    return myAction.getAction();
+  }
+
+  public String getPlace() {
+    return myPlace;
   }
 
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
@@ -113,6 +123,10 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
+    AnAction action = myAction.getAction();
+    if (action != null && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      MainMenuCollector.getInstance().record(action);
+    }
     TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
 
@@ -157,7 +171,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
-      setAcceleratorFromShortcuts(KeymapManager.getInstance().getActiveKeymap().getShortcuts(id));
+      setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
     }
     else {
       final ShortcutSet shortcutSet = action.getShortcutSet();
@@ -211,7 +225,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   public void updateContext(@NotNull DataContext context) {
     myContext = context;
-    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0, true, false);
   }
 
   private void updateIcon(AnAction action) {
@@ -254,10 +268,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   @Override
   public void setIcon(Icon icon) {
     if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      if (icon instanceof IconLoader.LazyIcon) {
-        // [tav] JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = ((IconLoader.LazyIcon)icon).inOriginalScale();
-      }
+      // JDK can't paint correctly our HiDPI icons at the system menu bar
+      icon = IconLoader.get1xIcon(icon);
     }
     super.setIcon(icon);
   }
@@ -299,7 +311,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
         final AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {

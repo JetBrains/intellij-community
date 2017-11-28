@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +36,7 @@ public final class ObjectTree<T> {
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
   private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
-  private final Map<Object, Object> myDisposedObjects = new WeakHashMap<Object, Object>(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
+  private final Map<Object, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>(); // guarded by myExecutedUnregisteredNodes
@@ -50,8 +49,13 @@ public final class ObjectTree<T> {
     return myObject2NodeMap.get(object);
   }
 
-  ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
-    return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
+  void putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
+    if (node == null) {
+      myObject2NodeMap.remove(object);
+    }
+    else {
+      myObject2NodeMap.put(object, node);
+    }
   }
 
   @NotNull
@@ -67,7 +71,9 @@ public final class ObjectTree<T> {
                                             "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
                                             wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
     }
-
+    if (isDisposing(parent)) {
+      throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+    }
     synchronized (treeLock) {
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
@@ -121,7 +127,7 @@ public final class ObjectTree<T> {
     return myModification.incrementAndGet();
   }
 
-  public final boolean executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
+  public final void executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
     ObjectNode<T> node;
     synchronized (treeLock) {
       node = getNode(object);
@@ -130,12 +136,22 @@ public final class ObjectTree<T> {
       if (processUnregistered) {
         rememberDisposedTrace(object);
         executeUnregistered(object, action);
-        return true;
       }
-      return false;
     }
-    node.execute(action);
-    return true;
+    else {
+      node.execute(action);
+    }
+  }
+
+  public boolean isDisposing(@NotNull T disposable) {
+    List<ObjectNode<T>> guard = getNodesInExecution();
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (guard) {
+      for (ObjectNode<T> node : guard) {
+        if (node.getObject() == disposable) return true;
+      }
+    }
+    return false;
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")

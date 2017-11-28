@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,10 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -37,7 +41,7 @@ public class ApplicationUtil {
 
   public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
     if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
-      throw new CannotRunReadActionException();
+      throw CannotRunReadActionException.create();
     }
   }
 
@@ -76,6 +80,27 @@ public class ApplicationUtil {
     }
   }
 
+  public static void showDialogAfterWriteAction(@NotNull Runnable runnable) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
+      application.invokeLater(runnable);
+    }
+    else {
+      runnable.run();
+    }
+  }
+
   public static class CannotRunReadActionException extends ProcessCanceledException {
+    // When ForkJoinTask joins task which was exceptionally completed from the other thread
+    // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
+    // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().
+    // To prevent creation of unneeded wrapped exception we restrict constructor visibility to private so that stupid ForkJoinTask has no choice
+    // but to use the original exception. (see ForkJoinTask.getThrowableException())
+    public static CannotRunReadActionException create() {
+      return new CannotRunReadActionException();
+    }
+    private CannotRunReadActionException() {
+    }
+
   }
 }

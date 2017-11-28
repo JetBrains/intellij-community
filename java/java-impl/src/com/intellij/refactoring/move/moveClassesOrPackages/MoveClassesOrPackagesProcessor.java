@@ -183,7 +183,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
     detectPackageLocalsMoved(usageInfos, myConflicts);
-    detectPackageLocalsUsed(myConflicts);
+    detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
   }
@@ -237,13 +237,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private void detectPackageLocalsUsed(final MultiMap<PsiElement, String> conflicts) {
-    PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(myElementsToMove, myTargetPackage, conflicts);
+  static void detectPackageLocalsUsed(final MultiMap<PsiElement, String> conflicts,
+                                      PsiElement[] elementsToMove,
+                                      PackageWrapper targetPackage) {
+    PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(elementsToMove, targetPackage, conflicts);
 
-    for (PsiElement element : myElementsToMove) {
-      if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
-        aClass.accept(visitor);
+    for (PsiElement element : elementsToMove) {
+      if (element.getContainingFile() != null) {
+        element.accept(visitor);
       }
     }
   }
@@ -511,13 +512,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         myElementsToMove[idx] = element;
       }
 
+      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
           MoveClassesOrPackagesUtil.finishMoveClass((PsiClass)element);
         }
       }
-
-      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
 
       if (myOpenInEditor) {
         EditorHelper.openFilesInEditor(myElementsToMove);

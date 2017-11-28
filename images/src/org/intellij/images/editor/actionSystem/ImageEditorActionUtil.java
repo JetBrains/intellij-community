@@ -34,7 +34,7 @@ public final class ImageEditorActionUtil {
      * Extract current editor from event context.
      *
      * @param e Action event
-     * @return Current {@link ImageEditor} or <code>null</code>
+     * @return Current {@link ImageEditor} or {@code null}
      */
     //public static ImageEditor getValidEditor(AnActionEvent e) {
     //    ImageEditor editor = getEditor(e);

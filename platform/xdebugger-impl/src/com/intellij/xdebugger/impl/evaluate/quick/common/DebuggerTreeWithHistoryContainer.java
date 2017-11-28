@@ -95,7 +95,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    return ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true).getComponent();
   }
 
   private class GoForwardAction extends AnAction {

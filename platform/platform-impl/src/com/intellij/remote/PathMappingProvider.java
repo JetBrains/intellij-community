@@ -1,6 +1,5 @@
 package com.intellij.remote;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,12 +19,7 @@ public abstract class PathMappingProvider {
 
   public static List<PathMappingProvider> getSuitableMappingProviders(final RemoteSdkAdditionalData data) {
     return Lists
-      .newArrayList(Iterables.filter(Arrays.asList(EP_NAME.getExtensions()), new Predicate<PathMappingProvider>() {
-        @Override
-        public boolean apply(PathMappingProvider provider) {
-          return provider.accepts(data);
-        }
-      }));
+      .newArrayList(Iterables.filter(Arrays.asList(EP_NAME.getExtensions()), provider -> provider.accepts(data)));
   }
 
   @NotNull

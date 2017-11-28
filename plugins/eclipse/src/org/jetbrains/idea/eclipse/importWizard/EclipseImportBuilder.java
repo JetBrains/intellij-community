@@ -77,7 +77,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
-  private static final Logger LOG = Logger.getInstance("#" + EclipseImportBuilder.class.getName());
+  private static final Logger LOG = Logger.getInstance(EclipseImportBuilder.class);
 
   public static class Parameters {
     public String root;

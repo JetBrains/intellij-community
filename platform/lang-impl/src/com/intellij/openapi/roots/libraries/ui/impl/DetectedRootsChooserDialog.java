@@ -26,13 +26,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +38,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
@@ -190,13 +187,10 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     treeTable.setRootVisible(false);
-    new TreeTableSpeedSearch(treeTable, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        Object node = o.getLastPathComponent();
-        if (!(node instanceof VirtualFileCheckedTreeNode)) return "";
-        return ((VirtualFileCheckedTreeNode)node).getFile().getPresentableUrl();
-      }
+    new TreeTableSpeedSearch(treeTable, o -> {
+      Object node = o.getLastPathComponent();
+      if (!(node instanceof VirtualFileCheckedTreeNode)) return "";
+      return ((VirtualFileCheckedTreeNode)node).getFile().getPresentableUrl();
     });
     TreeUtil.expandAll(treeTable.getTree());
     return treeTable;

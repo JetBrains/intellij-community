@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class UrlCollector {
 
-  private static final Logger LOG = Logger.getInstance("#" + UrlCollector.class.getName());
+  private static final Logger LOG = Logger.getInstance(UrlCollector.class);
 
   private List<File> myFiles;
 

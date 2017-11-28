@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author amarch
@@ -51,7 +52,7 @@ public class GetArrayCommand extends GetFrameCommand {
   }
 
   @Override
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }

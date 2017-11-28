@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiReplacementUtil {
-  private static final Logger LOG = Logger.getInstance("#" + PsiReplacementUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiReplacementUtil.class);
 
   public static void replaceExpression(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
     final Project project = expression.getProject();

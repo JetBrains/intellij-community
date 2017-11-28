@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author max
@@ -60,6 +63,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
+                               ContainerUtil.map(getSubscriptedSuperClasses(psi), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
@@ -78,6 +82,30 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     }
 
     return result;
+  }
+
+  @NotNull
+  private static List<PySubscriptionExpression> getSubscriptedSuperClasses(@NotNull PyClass pyClass) {
+    return ContainerUtil.mapNotNull(pyClass.getSuperClassExpressions(), x -> as(x, PySubscriptionExpression.class));
+  }
+
+  /**
+   * If the class' stub is present, return subscription expressions in the base classes list, converting
+   * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
+   * from them. Otherwise, get suitable expressions directly from AST, but process them in the same way as
+   * if they were going to be saved in the stub.
+   *
+   * @see PyClassStub#getSubscriptedSuperClasses()
+   */
+  @NotNull
+  public static List<PySubscriptionExpression> getSubscriptedSuperClassesStubLike(@NotNull PyClass pyClass) {
+    final PyClassStub classStub = pyClass.getStub();
+    if (classStub == null) {
+      return getSubscriptedSuperClasses(pyClass);
+    }
+    return ContainerUtil.mapNotNull(classStub.getSubscriptedSuperClasses(),
+                                    x -> as(PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()),
+                                            PySubscriptionExpression.class));
   }
 
   @Nullable
@@ -116,6 +144,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       QualifiedName.serialize(entry.getValue(), dataStream);
     }
 
+    final List<String> baseClassesText = pyClassStub.getSubscriptedSuperClasses();
+    dataStream.writeByte(baseClassesText.size());
+    for (String text : baseClassesText) {
+      dataStream.writeName(text);
+    }
+
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
 
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
@@ -134,6 +168,15 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       superClasses.put(QualifiedName.deserialize(dataStream), QualifiedName.deserialize(dataStream));
     }
 
+    final byte parametrizedBaseClassesCount = dataStream.readByte();
+    final ArrayList<String> parametrizedBaseClasses = new ArrayList<>();
+    for (int i = 0; i < parametrizedBaseClassesCount; i++) {
+      final StringRef ref = dataStream.readName();
+      if (ref != null) {
+        parametrizedBaseClasses.add(ref.getString());
+      }
+    }
+
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
 
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
@@ -141,7 +184,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
 
-    return new PyClassStubImpl(name, parentStub, superClasses, metaClass, slots, docString, getStubElementType());
+    return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, metaClass, slots, docString, getStubElementType());
   }
 
   public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {

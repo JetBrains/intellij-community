@@ -70,7 +70,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   protected String getText(@NotNull VcsLogFileFilter filter) {
     Collection<VirtualFile> roots = filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots();
     Collection<FilePath> files =
-      filter.getStructureFilter() == null ? Collections.<FilePath>emptySet() : filter.getStructureFilter().getFiles();
+      filter.getStructureFilter() == null ? Collections.emptySet() : filter.getStructureFilter().getFiles();
     Collection<VirtualFile> visibleRoots =
       VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
@@ -78,7 +78,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       return getTextFromRoots(roots, visibleRoots.size() == getAllRoots().size());
     }
     else {
-      return getTextFromFilePaths(files, "folders", files.isEmpty());
+      return getTextFromFilePaths(files, "folders", false);
     }
   }
 
@@ -331,9 +331,9 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
 
     @Override
-    public CheckboxColorIcon withJBUIPreScaled(boolean preScaled) {
-      mySizedIcon = (SizedIcon)mySizedIcon.withJBUIPreScaled(preScaled);
-      return (CheckboxColorIcon)super.withJBUIPreScaled(preScaled);
+    public CheckboxColorIcon withIconPreScaled(boolean preScaled) {
+      mySizedIcon = (SizedIcon)mySizedIcon.withIconPreScaled(preScaled);
+      return (CheckboxColorIcon)super.withIconPreScaled(preScaled);
     }
 
     @Override

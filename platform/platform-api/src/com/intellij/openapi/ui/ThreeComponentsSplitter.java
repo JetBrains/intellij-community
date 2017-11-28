@@ -373,14 +373,14 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
   public boolean getOrientation() {
     return myVerticalSplit;
   }
 
   /**
-   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   * @param verticalSplit {@code true} means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
     myVerticalSplit = verticalSplit;
@@ -468,13 +468,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   public void setFirstSize(final int size) {
-    myFirstSize = size;
+    myFirstSize = Math.max(getMinSize(true), size);
     doLayout();
     repaint();
   }
 
   public void setLastSize(final int size) {
-    myLastSize = size;
+    myLastSize = Math.max(getMinSize(false), size);
     doLayout();
     repaint();
   }

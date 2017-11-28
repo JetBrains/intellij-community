@@ -66,16 +66,13 @@ public class StartBrowserPanel {
 
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myRoot));
         if (project == null) {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext context) {
-              Project project = CommonDataKeys.PROJECT.getData(context);
-              if (project == null) {
-                // IDEA-118202
-                project = ProjectManager.getInstance().getDefaultProject();
-              }
-              setupUrlField(myUrlField, project);
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+            Project project1 = CommonDataKeys.PROJECT.getData(context);
+            if (project1 == null) {
+              // IDEA-118202
+              project1 = ProjectManager.getInstance().getDefaultProject();
             }
+            setupUrlField(myUrlField, project1);
           });
         }
         else {

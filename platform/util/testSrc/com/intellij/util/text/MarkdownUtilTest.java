@@ -28,14 +28,14 @@ import java.util.List;
 public class MarkdownUtilTest {
 
   @Test
-  public void testReplaceHeaders() throws Exception {
+  public void testReplaceHeaders() {
     List<String> markdown = ContainerUtil.newArrayList("# Hello1", "## Hello2##", "### Hello3#");
     MarkdownUtil.replaceHeaders(markdown);
     Assert.assertEquals(ContainerUtil.newArrayList("<h1>Hello1</h1>", "<h2>Hello2</h2>", "<h3>Hello3</h3>"), markdown);
   }
 
   @Test
-  public void testRemoveImage() throws Exception {
+  public void testRemoveImage() {
     List<String> markdown = Arrays.asList(
       "![logo](http://localhost/logo.png)",
       "Hello, [node](http://nodejs.org). [![Build Status](https://secure.travis-ci.org/visionmedia/express.png)](http://travis-ci.org/visionmedia/express) [![Dependency Status](https://gemnasium.com/visionmedia/express.png)](https://gemnasium.com/visionmedia/express)"
@@ -48,14 +48,14 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testRemoveImageEdgeCase() throws Exception {
+  public void testRemoveImageEdgeCase() {
     List<String> markdown = Arrays.asList("[![logo](http://localhost/logo.png)]");
     MarkdownUtil.removeImages(markdown);
     Assert.assertEquals(Arrays.asList("[]"),markdown);
   }
 
   @Test
-  public void testReplaceCodeBlocks() throws Exception {
+  public void testReplaceCodeBlocks() {
     List<String> markdown = Arrays.asList(" Create the app:",
                                           "",
                                           "    $ npm install -g express",
@@ -68,7 +68,7 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testReplaceCodeBlocks2() throws Exception {
+  public void testReplaceCodeBlocks2() {
     List<String> markdown = Arrays.asList(
       "   text",
       "    code block",
@@ -98,7 +98,7 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testReplaceLists1() throws Exception {
+  public void testReplaceLists1() {
     List<String> markdown = Arrays.asList(
       "*   Red",
       "*   Green",
@@ -116,7 +116,7 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testReplaceLists2() throws Exception {
+  public void testReplaceLists2() {
     List<String> markdown = Arrays.asList(
       "1.   Red",
       "",
@@ -134,7 +134,7 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testReplaceLists3() throws Exception {
+  public void testReplaceLists3() {
     List<String> markdown = Arrays.asList(
       "1986\\. What a great season."
     );
@@ -148,7 +148,7 @@ public class MarkdownUtilTest {
   }
 
   @Test
-  public void testReplaceLists4() throws Exception {
+  public void testReplaceLists4() {
     List<String> markdown = Arrays.asList(
       "+ one two",
       "three",

@@ -27,13 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 31.03.2003
- * Time: 17:21:42
- * To change this template use Options | File Templates.
- */
 public class DuplicateConflictResolver implements PsiConflictResolver{
   public static final DuplicateConflictResolver INSTANCE = new DuplicateConflictResolver();
 

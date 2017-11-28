@@ -197,7 +197,7 @@ public class ModuleNameLocationComponent {
       VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) { //e.g. was deleted
         final String baseDirPath = baseDir.getPath();
-        String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, "untitled", "");
+        String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, myWizardContext.getDefaultModuleName(), "");
         String contentRoot = baseDirPath + "/" + moduleName;
         if (!Comparing.strEqual(project.getName(), myWizardContext.getProjectName()) &&
             !myWizardContext.isCreatingNewProject() &&

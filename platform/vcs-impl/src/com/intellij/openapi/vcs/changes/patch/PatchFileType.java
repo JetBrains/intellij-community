@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2006
- * Time: 17:36:42
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.icons.AllIcons;
@@ -60,7 +54,7 @@ public class PatchFileType implements FileType {
 
   @Nullable
   public Icon getIcon() {
-    return AllIcons.Nodes.Pointcut;
+    return AllIcons.Vcs.Patch;
   }
 
   public boolean isBinary() {

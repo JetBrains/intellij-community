@@ -304,6 +304,18 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-25567
+  public void testExistingParenthesesInReorderedFromImport() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
+  // PY-25567
+  public void testExistingParenthesesInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

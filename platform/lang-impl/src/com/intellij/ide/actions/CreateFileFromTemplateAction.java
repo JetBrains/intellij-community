@@ -24,8 +24,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
@@ -70,13 +71,13 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       dir = mkdirs.directory;
     }
     
-    PsiElement element;
     Project project = dir.getProject();
     try {
-      element = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir);
-      final PsiFile psiFile = element.getContainingFile();
+      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir)
+        .getContainingFile();
+      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiFile);
 
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         if (openFile) {
           if (template.isLiveTemplateEnabled()) {
@@ -89,7 +90,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
         if (defaultTemplateProperty != null) {
           PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName());
         }
-        return psiFile;
+        return pointer.getElement();
       }
     }
     catch (ParseException e) {

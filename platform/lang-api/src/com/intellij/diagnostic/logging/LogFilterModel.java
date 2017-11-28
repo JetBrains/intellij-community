@@ -18,7 +18,6 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,22 +40,17 @@ public abstract class LogFilterModel {
   private Pattern getCustomPattern() {
     String customFilter = getCustomFilter();
     if (myCustomPattern == null && customFilter != null) {
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        for (int i = 0; i < customFilter.length(); i++) {
-          final char c = customFilter.charAt(i);
-          if (Character.isLetterOrDigit(c)) {
-            buf.append(Character.toUpperCase(c));
-          }
-          else {
-            buf.append("\\").append(c);
-          }
+      final StringBuilder buf = new StringBuilder(customFilter.length());
+      for (int i = 0; i < customFilter.length(); i++) {
+        final char c = customFilter.charAt(i);
+        if (Character.isLetterOrDigit(c)) {
+          buf.append(Character.toUpperCase(c));
         }
-        myCustomPattern = Pattern.compile(".*" + buf + ".*", Pattern.DOTALL);
+        else {
+          buf.append("\\").append(c);
+        }
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
+      myCustomPattern = Pattern.compile(".*" + buf + ".*", Pattern.DOTALL);
     }
     return myCustomPattern;
   }

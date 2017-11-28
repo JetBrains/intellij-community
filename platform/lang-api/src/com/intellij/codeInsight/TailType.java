@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class TailType {
   protected static int moveCaret(final Editor editor, final int tailOffset, final int delta) {
     final CaretModel model = editor.getCaretModel();
     if (model.getOffset() == tailOffset) {
-      model.moveToOffset(tailOffset + delta);
+      model.moveToLogicalPosition(editor.offsetToLogicalPosition(tailOffset + delta).leanForward(true));
     }
     return tailOffset + delta;
   }

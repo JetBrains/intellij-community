@@ -1,10 +1,7 @@
-/*
- * User: anna
- * Date: 04-Aug-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.ConvertToAtomicIntentionTest;
+import com.intellij.codeInsight.ConvertToThreadLocalIntention6Test;
 import com.intellij.codeInsight.ConvertToThreadLocalIntentionTest;
 import com.intellij.codeInsight.inspections.GuavaInspectionTest;
 import junit.framework.Test;
@@ -23,6 +20,7 @@ public class AllTypeMigrationTests {
      suite.addTestSuite(WildcardTypeMigrationTest.class);
      suite.addTestSuite(ConvertToAtomicIntentionTest.class);
      suite.addTestSuite(ConvertToThreadLocalIntentionTest.class);
+     suite.addTestSuite(ConvertToThreadLocalIntention6Test.class);
      suite.addTestSuite(GuavaInspectionTest.class);
      return suite;
    }

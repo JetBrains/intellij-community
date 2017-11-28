@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -63,22 +62,8 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return GroovyInspectionBundle.message("groovy.dfa.issues");
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return GroovyInspectionBundle.message("unassigned.access");
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "GroovyVariableNotAssigned";
   }
 
   @Override

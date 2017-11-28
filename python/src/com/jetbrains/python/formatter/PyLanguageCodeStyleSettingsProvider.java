@@ -102,6 +102,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 PyBundle.message("formatter.around.top.level.classes.and.function"), BLANK_LINES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AFTER_LOCAL_IMPORTS",
                                 PyBundle.message("formatter.after.local.imports"), BLANK_LINES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_BEFORE_FIRST_METHOD",
+                                PyBundle.message("formatter.before.first.method"), BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
@@ -162,6 +164,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     indentOptions.INDENT_SIZE = 4;
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    // Don't set it to 2 -- this setting is used implicitly in a lot of methods related to spacing,
+    // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
+    // behavior
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
   }
@@ -188,9 +193,11 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
                                                        "class C(object):\n" +
+                                                       "    import sys\n" +
                                                        "    x = 1\n" +
                                                        "    def foo(self):\n" +
-                                                       "        pass";
+                                                       "        import platform\n" +
+                                                       "        print(platform.processor())";
   @SuppressWarnings("FieldCanBeLocal")
   private static String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
                                                 "\n" +

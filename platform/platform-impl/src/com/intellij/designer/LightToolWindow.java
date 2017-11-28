@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,12 +114,13 @@ public class LightToolWindow extends JPanel {
     add(header, BorderLayout.NORTH);
 
     JLabel titleLabel = new JLabel(title);
-    titleLabel.setBorder(IdeBorderFactory.createEmptyBorder(2, 5, 2, 10));
+    titleLabel.setBorder(JBUI.Borders.empty(2, 5, 2, 10));
     titleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     header.add(titleLabel, BorderLayout.CENTER);
 
+    // Android Studio: modified by Change Ib6a22fff / commit 421e74a
     myActionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-    myActionPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 2, 0));
+    myActionPanel.setBorder(JBUI.Borders.empty(3, 0, 2, 0));
     myActionPanel.setOpaque(false);
     header.add(myActionPanel, BorderLayout.EAST);
 
@@ -476,6 +478,7 @@ public class LightToolWindow extends JPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      super.update(e);
       e.getPresentation().setEnabledAndVisible(!SystemInfo.isMac);
     }
   }

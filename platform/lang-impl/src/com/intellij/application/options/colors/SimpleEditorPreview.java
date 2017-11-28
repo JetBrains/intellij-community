@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -38,6 +38,7 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
@@ -55,8 +56,11 @@ import java.util.List;
 import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
 
 public class SimpleEditorPreview implements PreviewPanel {
-  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS =
-    Collections.singletonMap("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
+  static {
+    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+  }
 
   private final ColorSettingsPage myPage;
 
@@ -80,7 +84,10 @@ public class SimpleEditorPreview implements PreviewPanel {
     myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS);
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
-      10, 3, -1, myOptions, false);
+      10, 3, -1, myOptions.getSelectedScheme(), false);
+    if (page instanceof EditorCustomization) {
+      ((EditorCustomization)page).customize(myEditor);
+    }
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
@@ -92,7 +99,7 @@ public class SimpleEditorPreview implements PreviewPanel {
         }
       });
 
-      myEditor.getCaretModel().addCaretListener(new CaretAdapter() {
+      myEditor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           navigate(true, e.getNewPosition());
@@ -242,7 +249,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   private boolean isOffsetVisible(final int startOffset) {
     return myEditor
       .getScrollingModel()
-      .getVisibleArea()
+      .getVisibleAreaOnScrollingFinished()
       .contains(myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(startOffset)));
   }
 
@@ -332,7 +339,6 @@ public class SimpleEditorPreview implements PreviewPanel {
   public void setupRainbow(@NotNull EditorColorsScheme colorsScheme, @NotNull RainbowColorSettingsPage page) {
     final List<HighlightData> initialMarkup = new ArrayList<>();
     myHighlightsExtractor.extractHighlights(page.getDemoText(), initialMarkup);
-
     final List<HighlightData> rainbowMarkup = setupRainbowHighlighting(
       page,
       initialMarkup,

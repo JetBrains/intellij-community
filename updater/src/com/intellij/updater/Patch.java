@@ -17,10 +17,12 @@ package com.intellij.updater;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.zip.ZipFile;
 
@@ -45,7 +47,7 @@ public class Patch {
   private final List<String> myDeleteFiles;
   private final List<PatchAction> myActions;
 
-  public Patch(PatchSpec spec, UpdaterUI ui) throws IOException, OperationCancelledException {
+  public Patch(PatchSpec spec, UpdaterUI ui) throws IOException {
     myOldBuild = spec.getOldVersionDescription();
     myNewBuild = spec.getNewVersionDescription();
     myRoot = spec.getRoot();
@@ -86,15 +88,14 @@ public class Patch {
     return new String(bytes, Charset.forName("UTF-8"));
   }
 
-  private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException, OperationCancelledException {
+  private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException {
     Runner.logger().info("Calculating difference...");
     ui.startProcess("Calculating difference...");
-    ui.checkCancelled();
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
-    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
+    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized());
+    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false);
     DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
@@ -127,17 +128,15 @@ public class Patch {
 
     Runner.logger().info("Preparing actions...");
     ui.startProcess("Preparing actions...");
-    ui.checkCancelled();
 
     List<PatchAction> actions = new ArrayList<>();
     for (PatchAction action : tempActions) {
-      ui.setStatus(action.getPath());
-      ui.checkCancelled();
-
-      if (!action.calculate(olderDir, newerDir)) continue;
-      actions.add(action);
-      action.setCritical(spec.getCriticalFiles().contains(action.getPath()));
-      action.setOptional(spec.getOptionalFiles().contains(action.getPath()));
+      Runner.logger().info(action.getPath());
+      if (action.calculate(olderDir, newerDir)) {
+        actions.add(action);
+        action.setCritical(spec.getCriticalFiles().contains(action.getPath()));
+        action.setOptional(spec.getOptionalFiles().contains(action.getPath()));
+      }
     }
     addRenameRootDirectoryActionIfNeeded(spec, actions);
     return actions;
@@ -305,15 +304,13 @@ public class Patch {
     File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      //always collect files and folders to avoid cases such as IDEA-152249
+      // always collect files and folders - to avoid cases such as IDEA-152249
       files = Utils.collectRelativePaths(toDir);
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
         if (warning != null) {
-          if (!ui.showWarning(warning)) {
-            throw new OperationCancelledException();
-          }
+          ui.askUser(warning);
           checkWarnings = true;
           break;
         }
@@ -321,7 +318,7 @@ public class Patch {
     }
 
     if (myIsStrict) {
-      // In strict mode add delete actions for unknown files.
+      // in strict mode, add delete actions for unknown files
       for (PatchAction action : myActions) {
         files.remove(action.getPath());
       }
@@ -333,8 +330,7 @@ public class Patch {
     List<ValidationResult> results = new ArrayList<>();
 
     Set<String> deletedPaths = new HashSet<>();
-    Runner.logger().info("Validating installation...");
-    forEach(myActions, "Validating installation...", ui, true, action -> {
+    forEach(myActions, "Validating installation...", ui, action -> {
       ValidationResult result = action.validate(toDir);
 
       if (action instanceof DeleteAction) {
@@ -344,7 +340,7 @@ public class Patch {
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // create action + the same element was deleted + validated as already exists
+        // do not warn about files which are going to be deleted
         result = null;
       }
 
@@ -358,34 +354,49 @@ public class Patch {
     return Runner.isCaseSensitiveFs() ? path : path.toLowerCase(Locale.getDefault());
   }
 
-  public ApplicationResult apply(ZipFile patchFile,
-                                 File rootDir,
-                                 File backupDir,
-                                 Map<String, ValidationResult.Option> options,
-                                 UpdaterUI ui) throws IOException, OperationCancelledException {
+  public PatchFileCreator.ApplicationResult apply(ZipFile patchFile,
+                                                  File rootDir,
+                                                  File backupDir,
+                                                  Map<String, ValidationResult.Option> options,
+                                                  UpdaterUI ui) throws IOException {
     File toDir = toBaseDir(rootDir);
-    List<PatchAction> actionsToProcess = new ArrayList<>();
-    for (PatchAction each : myActions) {
-      if (each.shouldApply(toDir, options)) actionsToProcess.add(each);
+    List<PatchAction> actionsToApply = new ArrayList<>(myActions.size());
+
+    try {
+      for (PatchAction each : myActions) {
+        ui.checkCancelled();
+        if (each.shouldApply(toDir, options)) {
+          actionsToApply.add(each);
+        }
+      }
+
+      if (actionsToApply.isEmpty()) {
+        Runner.logger().info("nothing to apply");
+        return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
+      }
+
+      if (backupDir != null) {
+        forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, backupDir));
+      }
+    }
+    catch (OperationCancelledException e) {
+      Runner.logger().warn("cancelled", e);
+      return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
     }
 
-    forEach(actionsToProcess, "Backing up files...", ui, true, action -> action.backup(toDir, backupDir));
+    List<PatchAction> appliedActions = new ArrayList<>(actionsToApply.size());
+    List<File> createdDirectories = new ArrayList<>();
+    Set<File> createdOptionalFiles = new HashSet<>();
 
-    List<PatchAction> appliedActions = new ArrayList<>();
-    boolean shouldRevert = false;
-    boolean cancelled = false;
     try {
-      List<File> createdDirectories = new ArrayList<>();
-
-      forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
-        if ((action instanceof CreateAction) &&
-            !new File(toDir, action.getPath()).getParentFile().exists()) {
+      forEach(actionsToApply, "Applying patch...", ui, action -> {
+        if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
         }
-        else if ((action instanceof UpdateAction) &&
-              !new File(toDir, action.getPath()).getParentFile().exists()) {
-            Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
-        } else {
+        else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
+          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
+        }
+        else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
 
@@ -394,67 +405,76 @@ public class Patch {
             if (file.isDirectory()) {
               createdDirectories.add(0, file);
             }
+            else if (action.isOptional()) {
+              createdOptionalFiles.add(file);
+            }
           }
         }
       });
+    }
+    catch (OperationCancelledException e) {
+      Runner.logger().warn("cancelled", e);
+      return new PatchFileCreator.ApplicationResult(false, appliedActions);
+    }
+    catch (Throwable t) {
+      Runner.logger().error("apply failed", t);
+      return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
+    }
 
-      for (File directory : createdDirectories) {
-        if (Utils.isEmptyDirectory(directory)) {
-          Runner.logger().info("Pruning empty directory: " + directory);
+    for (File directory : createdDirectories) {
+      File[] children = directory.listFiles();
+      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
+        Runner.logger().info("Pruning empty directory: " + directory);
+        try {
           Utils.delete(directory);
+        }
+        catch (IOException e) {
+          Runner.logger().warn("pruning: " + directory, e);
         }
       }
     }
-    catch (OperationCancelledException e) {
-      Runner.printStackTrace(e);
-      shouldRevert = true;
-      cancelled = true;
+
+    try {
+      // on macOS, we need to update bundle timestamp to reset Info.plist caches
+      Files.setLastModifiedTime(toDir.toPath(), FileTime.from(Instant.now()));
     }
-    catch (Throwable e) {
-      Runner.printStackTrace(e);
-      shouldRevert = true;
-      ui.showError(e);
+    catch (IOException e) {
+      Runner.logger().warn("setLastModified: " + toDir, e);
     }
 
-    if (shouldRevert) {
-      revert(appliedActions, backupDir, rootDir, ui);
-      appliedActions.clear();
-
-      if (cancelled) throw new OperationCancelledException();
-    }
-
-    // on OS X we need to update bundle timestamp to reset Info.plist caches.
-    //noinspection ResultOfMethodCallIgnored
-    toDir.setLastModified(System.currentTimeMillis());
-
-    return new ApplicationResult(appliedActions);
+    return new PatchFileCreator.ApplicationResult(true, appliedActions);
   }
 
-  public void revert(List<PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws OperationCancelledException, IOException {
+  public void revert(List<PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
+    Runner.logger().info("Reverting... [" + actions.size() + " actions]");
+    ui.startProcess("Reverting...");
+
     List<PatchAction> reverse = new ArrayList<>(actions);
     Collections.reverse(reverse);
     File toDir = toBaseDir(rootDir);
-    forEach(reverse, "Reverting...", ui, false, action -> action.revert(toDir, backupDir));
+
+    for (int i = 0; i < reverse.size(); i++) {
+      reverse.get(i).revert(toDir, backupDir);
+      ui.setProgress((i + 1) * 100 / reverse.size());
+    }
   }
 
   private static void forEach(List<PatchAction> actions,
                               String title,
                               UpdaterUI ui,
-                              boolean canBeCancelled,
                               ActionsProcessor processor) throws OperationCancelledException, IOException {
+    Runner.logger().info(title + " [" + actions.size() + " actions]");
     ui.startProcess(title);
-    if (canBeCancelled) ui.checkCancelled();
+    ui.checkCancelled();
 
     for (int i = 0; i < actions.size(); i++) {
       PatchAction each = actions.get(i);
-
-      ui.setStatus(each.getPath());
-      if (canBeCancelled) ui.checkCancelled();
-
+      ui.checkCancelled();
       processor.forEach(each);
-
       ui.setProgress((i + 1) * 100 / actions.size());
     }
+
+    ui.checkCancelled();
   }
 
   public long digestFile(File toFile, boolean normalize) throws IOException {
@@ -466,15 +486,14 @@ public class Patch {
     }
   }
 
-  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize, UpdaterUI ui) throws IOException, OperationCancelledException {
+  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
     //always collect files and folders to avoid cases such as IDEA-152249
     LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
     for (String each : paths) {
-      if (ignoredFiles.contains(each)) continue;
-      ui.setStatus(each);
-      ui.checkCancelled();
-      result.put(each, digestFile(new File(dir, each), normalize));
+      if (!ignoredFiles.contains(each)) {
+        result.put(each, digestFile(new File(dir, each), normalize));
+      }
     }
     return result;
   }
@@ -515,15 +534,5 @@ public class Patch {
   @FunctionalInterface
   private interface ActionsProcessor {
     void forEach(PatchAction action) throws IOException;
-  }
-
-  public static class ApplicationResult {
-    public final boolean applied;
-    public final List<PatchAction> appliedActions;
-
-    public ApplicationResult(List<PatchAction> appliedActions) {
-      this.applied = !appliedActions.isEmpty();
-      this.appliedActions = appliedActions;
-    }
   }
 }

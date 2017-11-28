@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,17 +197,13 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
 
   @NotNull
   public String getBaseName(@NotNull final PsiFile file) {
-    return getBaseName(file.getVirtualFile());
-  }
-
-  @NotNull
-  private String getBaseName(@NotNull final VirtualFile file) {
-    final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(file);
+    final VirtualFile vFile = file.getVirtualFile();
+    final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(vFile);
     if (customResourceBundle != null) {
       return customResourceBundle.getBaseName();
     }
-    if (isDefaultDissociated(file)) {
-      return file.getNameWithoutExtension();
+    if (isDefaultDissociated(vFile)) {
+      return vFile.getNameWithoutExtension();
     }
     return PropertiesUtil.getDefaultBaseName(file);
   }

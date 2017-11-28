@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SpeedSearchBase;
@@ -52,6 +53,10 @@ public abstract class TextComponentEditorAction extends EditorAction {
     if (editor != null) return editor;
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    if (data instanceof EditorComponentImpl) {
+      // can happen if editor is already disposed, or if it's in renderer mode
+      return null;
+    }
     if (data instanceof JTextComponent) {
       return new TextComponentEditorImpl(project, (JTextComponent)data);
     }

@@ -16,8 +16,10 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +29,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
-  private final Map<String, String> myMap = new LinkedHashMap<>();
+  private static final Logger LOG = Logger.getInstance(PropertiesComponentImpl.class);
+
+  private final Map<String, String> myMap = new LinkedHashMap<String, String>() {
+    @Override
+    public String put(String key, String value) {
+      String reason = Verifier.checkCharacterData(key);
+      if (reason != null) {
+        LOG.error(reason);
+      }
+      return super.put(key, value);
+    }
+  };
+
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";

@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class ContextTest extends TaskManagerTestCase {
 
-  public void testSaveContext() throws Exception {
+  public void testSaveContext() {
     WorkingContextManager manager = getContextManager();
 
     manager.saveContext("first", "comment");
@@ -76,7 +76,7 @@ public class ContextTest extends TaskManagerTestCase {
     manager.saveContext("foo", "bar");
   }
 
-  public void testXDebugger() throws Exception {
+  public void testXDebugger() {
     final WorkingContextManager manager = getContextManager();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
 
@@ -96,7 +96,7 @@ public class ContextTest extends TaskManagerTestCase {
     manager.clearContext();
   }
 
-  public void testContextFileName() throws Exception {
+  public void testContextFileName() {
     ProjectImpl project = (ProjectImpl)getProject();
     String name = project.getName();
     try {

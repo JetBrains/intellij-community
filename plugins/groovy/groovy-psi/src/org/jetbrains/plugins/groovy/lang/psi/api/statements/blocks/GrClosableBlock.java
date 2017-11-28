@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
 
   String OWNER_NAME = "owner";
   String IT_PARAMETER_NAME = "it";
+
+  @NotNull
+  @Override
+  PsiElement getLBrace();
 
   @Override
   @NotNull

@@ -15,8 +15,10 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This is to be provided by IDEA and not by plugin authors.
@@ -27,4 +29,9 @@ import com.intellij.openapi.project.Project;
 public interface IdeaProjectTestFixture extends IdeaTestFixture {
   Project getProject();
   Module getModule();
+
+  @NotNull
+  default Disposable getTestRootDisposable() {
+    return getProject();
+  }
 }

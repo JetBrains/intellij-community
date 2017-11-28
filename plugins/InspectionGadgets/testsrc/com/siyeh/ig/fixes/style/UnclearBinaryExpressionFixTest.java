@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.UnclearBinaryExpressionInspection;
@@ -30,6 +33,22 @@ public class UnclearBinaryExpressionFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(new UnclearBinaryExpressionInspection());
     myRelativePath = "style/unclear_binary_expression";
     myDefaultHint = InspectionGadgetsBundle.message("unclear.binary.expression.quickfix");
+  }
+
+  @Override
+  protected void doTest() {
+    // epic fail - two same named intentions
+    final String testName = getTestName(false);
+    myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
+    for (IntentionAction action : myFixture.filterAvailableIntentions(myDefaultHint)) {
+      while (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      if (action instanceof QuickFixWrapper) {
+        myFixture.launchAction(action);
+        myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
+        return;
+      }
+    }
+    fail();
   }
 
   public void testSimpleAssignment() { doTest(); }

@@ -49,7 +49,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
 
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
-    return Arrays.<PsiNamedElement>asList(getGlobals());
+    return Arrays.asList(getGlobals());
   }
 
   @Nullable

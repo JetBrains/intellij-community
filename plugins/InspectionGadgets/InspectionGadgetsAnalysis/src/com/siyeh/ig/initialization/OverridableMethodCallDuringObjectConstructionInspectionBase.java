@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,21 +52,15 @@ public class OverridableMethodCallDuringObjectConstructionInspectionBase extends
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-          return;
-        }
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final PsiMethod calledMethod = expression.resolveMethod();
-      if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-        return;
-      }
-      final PsiClass calledMethodClass = calledMethod.getContainingClass();
-      if (calledMethodClass == null || !calledMethodClass.equals(containingClass)) {
+      if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         return;
       }
       registerMethodCallError(expression, expression);

@@ -22,7 +22,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionListener;
 
-public class FieldPanel extends AbstractFieldPanel {
+public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
   private final JTextField myTextField;
 
   public FieldPanel() {

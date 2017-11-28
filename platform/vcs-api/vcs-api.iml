@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" exported="" />
+    <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="module" module-name="vcs-api-core" exported="" />
     <orderEntry type="module" module-name="diff-api" exported="" />

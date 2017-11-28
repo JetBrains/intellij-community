@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 /**
@@ -59,6 +60,7 @@ public class BaseFixture implements IdeaTestFixture {
     }
   }
 
+  @NotNull
   public final Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface UserDataHolderEx extends UserDataHolder {
   /**
-   * @return written value
+   * @return written or already existing value
    */
   @NotNull
   <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value);

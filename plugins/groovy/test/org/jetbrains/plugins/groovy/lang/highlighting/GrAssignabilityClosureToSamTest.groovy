@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ interface B {}
 
 A a = {print 1}
 A a1 = {->print 1}
-A <warning>a2</warning> = {String s->print 1}
+A a2 = {String s->print 1}
 B <warning>b</warning> = {print 2}
 ''')
   }
@@ -66,7 +66,7 @@ interface A<T> {
 
 A<String> a1 = {print 1}
 A<String> a2 = {String s -> print 1}
-A<String> <warning>a3</warning> = {int s -> print 1}
+A<String> a3 = {int s -> print 1}
 A a4 = {int s -> print 1}
 A a7 = {int s, String y -> print 1}
 A a5 = { print 1}
@@ -84,7 +84,7 @@ interface B extends A<String> {}
 
 B b1 = {print 1}
 B b2 = {String s -> print 1}
-B <warning>b3</warning> = {int s -> print 1}
+B b3 = {int s -> print 1}
 ''')
   }
 

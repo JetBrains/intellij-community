@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -64,7 +65,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.StatusBar;
@@ -155,7 +156,9 @@ public class DaemonListeners implements Disposable {
     myTooltipController = tooltipController;
 
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
-    LOG.assertTrue(replaced, "Daemon listeners already initialized for the project "+myProject);
+    if (!replaced) {
+      LOG.error("Daemon listeners already initialized for the project " + myProject);
+    }
 
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
@@ -169,7 +172,7 @@ public class DaemonListeners implements Disposable {
       }
     });
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    eventMulticaster.addDocumentListener(new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
@@ -184,7 +187,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    eventMulticaster.addCaretListener(new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
@@ -286,7 +289,7 @@ public class DaemonListeners implements Disposable {
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
     actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
-    virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
+    virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();
@@ -318,7 +321,14 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(new ErrorStripeHandler(myProject), this);
+    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
+      RangeHighlighter highlighter = e.getHighlighter();
+      if (!highlighter.isValid()) return;
+      Object info = highlighter.getErrorStripeTooltip();
+      if (info instanceof HighlightInfo) {
+        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), (HighlightInfo)info);
+      }
+    }, this);
 
     ModalityStateListener modalityStateListener = entering -> {
       // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
@@ -368,7 +378,7 @@ public class DaemonListeners implements Disposable {
     if (project != null && project != myProject) return false;
     // cached is essential here since we do not want to create PSI file in alien project
     PsiFile psiFile = myPsiDocumentManager.getCachedPsiFile(document);
-    return psiFile != null && psiFile.getOriginalFile() == psiFile;
+    return psiFile != null && psiFile.isPhysical() && psiFile.getOriginalFile() == psiFile;
   }
 
   @Override
@@ -435,7 +445,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyCommandListener extends CommandAdapter {
+  private class MyCommandListener implements CommandListener {
     private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override
@@ -499,11 +509,13 @@ public class DaemonListeners implements Disposable {
     @Override
     public void profileChanged(InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
+      updateStatusBarLater();
     }
 
     @Override
     public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile activated");
+      updateStatusBarLater();
     }
 
     @Override
@@ -522,8 +534,15 @@ public class DaemonListeners implements Disposable {
 
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
-  public void updateStatusBar() {
+  void updateStatusBar() {
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
+  }
+
+  private void updateStatusBarLater() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
+      updateStatusBar();
+    });
   }
 
   private class MyAnActionListener extends AnActionListener.Adapter {
@@ -614,7 +633,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
+  static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!project.isInitialized()) return;
     final Document document = editor.getDocument();

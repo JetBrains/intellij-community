@@ -77,7 +77,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void moveToVisualPosition(@NotNull VisualPosition pos);
 
   /**
-   * Short hand for calling {@link #moveToOffset(int, boolean)} with <code>'false'</code> as a second argument.
+   * Short hand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
    *
    * @param offset      the offset to move to
    */
@@ -102,7 +102,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * <p/>
    * Current method allows to check that.
    *
-   * @return    <code>true</code> if caret position is up-to-date for now; <code>false</code> otherwise
+   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
    */
   boolean isUpToDate();
 
@@ -229,7 +229,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * System selection will be updated, if such feature is supported by current editor.
    *
    * @param startOffset     start selection offset
-   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   * @param endPosition     end visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
    * @param endOffset       end selection offset
    */
@@ -244,9 +244,9 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * <p>
    * System selection will be updated, if such feature is supported by current editor.
    *
-   * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
+   * @param startPosition   start visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
-   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   * @param endPosition     end visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
    * @param startOffset     start selection offset
    * @param endOffset       end selection offset
@@ -260,9 +260,9 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * <p/>
    * Also, in column mode this method allows to create selection spanning virtual space after the line end.
    *
-   * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
+   * @param startPosition   start visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
-   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   * @param endPosition     end visual position of the text range to select ({@code null} argument means that
    *                        no specific visual position should be used)
    * @param startOffset     start selection offset
    * @param endOffset       end selection offset
@@ -294,21 +294,21 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Clones the current caret and positions the new one right above or below the current one. If current caret has selection, corresponding
    * selection will be set for the new caret.
    *
-   * @param above if <code>true</code>, new caret will be created at the previous line, if <code>false</code> - on the next line
-   * @return newly created caret instance, or <code>null</code> if the caret cannot be created because it already exists at the new location
+   * @param above if {@code true}, new caret will be created at the previous line, if {@code false} - on the next line
+   * @return newly created caret instance, or {@code null} if the caret cannot be created because it already exists at the new location
    * or caret model doesn't support multiple carets.
    */
   @Nullable
   Caret clone(boolean above);
 
   /**
-   * Returns <code>true</code> if caret is located in RTL text fragment. In that case visual column number is inversely related
+   * Returns {@code true} if caret is located in RTL text fragment. In that case visual column number is inversely related
    * to offset and logical column number in the vicinity of caret.
    */
   boolean isAtRtlLocation();
 
   /**
-   * Returns <code>true</code> if caret is located at a boundary between different runs of bidirectional text. 
+   * Returns {@code true} if caret is located at a boundary between different runs of bidirectional text.
    * This means that text fragments at different sides of the boundary are non-adjacent in logical order.
    * Caret can located at any side of the boundary, 
    * exact location can be determined from directionality flags of caret's logical and visual position 

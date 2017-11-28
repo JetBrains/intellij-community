@@ -38,7 +38,9 @@ class DfaControlTransferValue(factory: DfaValueFactory,
 interface TransferTarget
 data class ExceptionTransfer(val throwable: DfaValue) : TransferTarget
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
-object ReturnTransfer : TransferTarget
+object ReturnTransfer : TransferTarget {
+  override fun toString(): String = "ReturnTransfer"
+}
 
 open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
   override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
@@ -138,7 +140,7 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
 
   private fun initVariableState(param: PsiParameter, throwable: DfaValue): DfaVariableState {
     val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param, false)
-    val varState = state.createVariableState(sampleVar).withNullability(Nullness.NOT_NULL)
+    val varState = state.createVariableState(sampleVar).withFact(DfaFactType.CAN_BE_NULL, false)
     return if (throwable is DfaTypeValue) varState.withInstanceofValue(throwable)!! else varState
   }
 

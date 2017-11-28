@@ -20,6 +20,7 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
@@ -53,6 +54,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Nullable
   private NamedScope getContainingScope(@Nullable PsiFile file) {
     if (file == null) return null;
+    if (ScratchUtil.isScratch(file.getVirtualFile())) return null;
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
     for (NamedScope scope : ScopeViewPane.getShownScopes(myProject)) {
       PackageSet packageSet = scope.getValue();
@@ -81,11 +83,6 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public float getWeight() {
     return StandardTargetWeights.SCOPE_WEIGHT;
-  }
-
-  @Override
-  protected boolean canWorkWithCustomObjects() {
-    return false;
   }
 
   @Override

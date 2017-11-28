@@ -50,7 +50,10 @@ public class PsiErrorElementImpl extends CompositePsiElement implements PsiError
     PsiElement master = this;
     while (true) {
       master = master.getNextSibling();
-      if (master == null || master instanceof OuterLanguageElement) return getParent().getLanguage();
+      if (master == null || master instanceof OuterLanguageElement) {
+        PsiElement parent = getParent();
+        return parent == null ? Language.ANY : parent.getLanguage();
+      }
       if (master instanceof PsiWhiteSpace || master instanceof PsiErrorElement) continue;
       return master.getLanguage();
     }

@@ -31,8 +31,11 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 /**
  * @since 2016.3
@@ -55,7 +58,7 @@ public class MetaAnnotationUtil {
     final Project project = module.getProject();
 
     Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
-      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createConcurrentMap(key -> {
+      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
 
         PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(key.getFirst(), moduleScope);
@@ -157,30 +160,62 @@ public class MetaAnnotationUtil {
 
     final List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
     for (String annotationFQN : annotations) {
-      for (PsiClass psiClass : resolvedAnnotations) {
-        ConcurrentFactoryMap<String, Boolean> cachedValue = CachedValuesManager.getCachedValue(psiClass, () ->
-          new CachedValueProvider.Result<>(ConcurrentFactoryMap.createConcurrentMap(anno -> isMetaAnnotated(psiClass, anno, new HashSet<>())),
-                                           PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
-        if (cachedValue.getOrDefault(annotationFQN, false)) return true;
+      for (PsiClass resolvedAnnotation : resolvedAnnotations) {
+        if (metaAnnotationCached(resolvedAnnotation, annotationFQN) != null) return true;
       }
     }
 
     return false;
   }
 
-  private static boolean isMetaAnnotated(PsiClass aClass, final String annotation, final Set<PsiClass> visited) {
-    if (AnnotationUtil.isAnnotated(aClass, annotation, false)) {
-      return true;
+  @Nullable
+  private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
+    ConcurrentMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
+      ConcurrentMap<String, PsiAnnotation>
+        metaAnnotationsMap = ConcurrentFactoryMap.createMap(anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
+      return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+    return cachedValue.get(annotationToFind);
+  }
+
+  @Nullable
+  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, final String annotation, final Set<PsiClass> visited) {
+    PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, annotation);
+    if (directAnnotation != null) {
+      return directAnnotation;
     }
     List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(aClass);
     for (PsiClass resolvedAnnotation : resolvedAnnotations) {
-      if (visited.add(resolvedAnnotation) && isMetaAnnotated(resolvedAnnotation, annotation, visited)) {
-        return true;
+      if (visited.add(resolvedAnnotation)) {
+        PsiAnnotation annotated = findMetaAnnotation(resolvedAnnotation, annotation, visited);
+        if (annotated != null) {
+          return annotated;
+        }
       }
     }
 
-    return false;
+    return null;
   }
+
+
+  @NotNull
+  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull final Collection<String> annotations) {
+    Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
+
+    Stream<PsiClass> lazyResolvedAnnotations =
+      Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
+        .flatMap(it -> it.stream());
+
+    Stream<PsiAnnotation> metaAnnotations =
+      lazyResolvedAnnotations
+        .flatMap(psiClass -> annotations.stream()
+          .map(annotationFQN -> metaAnnotationCached(psiClass, annotationFQN)))
+        .filter(Objects::nonNull);
+
+    return Stream.concat(directAnnotations, metaAnnotations);
+  }
+
 
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();

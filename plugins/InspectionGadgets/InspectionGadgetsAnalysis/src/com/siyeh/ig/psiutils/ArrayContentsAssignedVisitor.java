@@ -53,40 +53,12 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitPrefixExpression(
-    @NotNull PsiPrefixExpression expression) {
+  public void visitUnaryExpression(
+    @NotNull PsiUnaryExpression expression) {
     if (assigned) {
       return;
     }
-    super.visitPrefixExpression(expression);
-    final IElementType tokenType = expression.getOperationTokenType();
-    if (!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
-          tokenType.equals(JavaTokenType.MINUSMINUS))) {
-      return;
-    }
-    final PsiExpression operand = expression.getOperand();
-    final PsiExpression arrayExpression = getDeepArrayExpression(operand);
-    if (!(arrayExpression instanceof PsiReferenceExpression)) {
-      return;
-    }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)arrayExpression;
-    final PsiElement referent = referenceExpression.resolve();
-    if (referent == null) {
-      return;
-    }
-    if (referent.equals(variable)) {
-      assigned = true;
-    }
-  }
-
-  @Override
-  public void visitPostfixExpression(
-    @NotNull PsiPostfixExpression expression) {
-    if (assigned) {
-      return;
-    }
-    super.visitPostfixExpression(expression);
+    super.visitUnaryExpression(expression);
     final IElementType tokenType = expression.getOperationTokenType();
     if (!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
           tokenType.equals(JavaTokenType.MINUSMINUS))) {

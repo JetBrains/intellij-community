@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -121,7 +122,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     try {
       Configurable configurable = getConfigurable(project);
       Component component = configurable.createComponent();

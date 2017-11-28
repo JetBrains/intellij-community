@@ -24,13 +24,6 @@ import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.reference.SoftReference;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 26.02.2003
- * Time: 12:31:24
- * To change this template use Options | File Templates.
- */
 public class ExcludeDeclaredFilter extends PositionElementFilter{
   public ExcludeDeclaredFilter(ElementFilter filter){
     setFilter(filter);

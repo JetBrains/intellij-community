@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
@@ -68,8 +69,9 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void setTestsComparator(TestConsoleProperties properties) {
-    if (TestConsoleProperties.SORT_BY_DURATION.value(properties)) {
+  public void setTestsComparator(TestFrameworkRunningModel model) {
+    TestConsoleProperties properties = model.getProperties();
+    if (TestConsoleProperties.SORT_BY_DURATION.value(properties) && !model.isRunning()) {
       setNodeDescriptorComparator((o1, o2) -> {
         if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
             o1 instanceof BaseTestProxyNodeDescriptor &&

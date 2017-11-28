@@ -34,7 +34,7 @@ public class MergeRootInfo {
     myRevision2 = SVNRevision.HEAD;
 
     Info info = vcs.getInfo(file);
-    myUrl1 = info != null && info.getURL() != null ? info.getURL().toString() : "";
+    myUrl1 = info != null && info.getURL() != null ? info.getURL().toDecodedString() : "";
     myUrl2 = myUrl1;
   }
 

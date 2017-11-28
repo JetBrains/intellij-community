@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,16 +26,24 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   private boolean myLayingOut;
   private int myMinLength = 20;
 
-  public ComboBoxWithWidePopup() { }
-
-  public ComboBoxWithWidePopup(final ComboBoxModel<E> aModel) {
-    super(aModel);
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
+  public ComboBoxWithWidePopup() {
+    init();
   }
 
-  public ComboBoxWithWidePopup(final E[] items) {
+  public ComboBoxWithWidePopup(@NotNull ComboBoxModel<E> model) {
+    super(model);
+    init();
+  }
+
+  public ComboBoxWithWidePopup(@NotNull E[] items) {
     super(items);
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
+    init();
+  }
+
+  private void init() {
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+      setMaximumRowCount(25);
+    }
   }
 
   @SuppressWarnings("GtkPreferredJComboBoxRenderer")
@@ -73,7 +82,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     }
     return size;
   }
-  
+
   private Dimension _getSuperSize() {
     return super.getSize();
   }
@@ -86,29 +95,28 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     private final ListCellRenderer<? super E> myOldRenderer;
     private final ComboBoxWithWidePopup myComboBox;
 
-    public AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
+    AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
       myComboBox = comboBox;
       myOldRenderer = oldRenderer;
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-      E _value = value;
-      if (index == -1 && _value instanceof String && !myComboBox.isValid()) {
+      if (index == -1 && value instanceof String && !myComboBox.isValid()) {
         int minLength = getMinLength();
 
         Dimension size = myComboBox._getSuperSize();
-        String stringValue = (String)_value;
+        String stringValue = (String)value;
 
         if (size.width == 0) {
           if (stringValue.length() > minLength) {
             @SuppressWarnings("unchecked") E e = (E)stringValue.substring(0, minLength);
-            _value = e;
+            value = e;
           }
         }
       }
 
-      return myOldRenderer.getListCellRendererComponent(list, _value, index, isSelected, cellHasFocus);
+      return myOldRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
   }
 }

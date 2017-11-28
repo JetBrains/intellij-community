@@ -31,12 +31,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/31/12
- * Time: 6:19 PM
- */
 public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, ApplicationLevelNumberConnectionsGuard {
   public static final int DELAY = 20000;
 
@@ -59,16 +53,13 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     myService = Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("SVN connection"));
     myLock = new Object();
     myDisposed = false;
-    myRecheck = new Runnable() {
-      @Override
-      public void run() {
-        HashSet<CachingSvnRepositoryPool> pools = new HashSet<>();
-        synchronized (myLock) {
-          pools.addAll(mySet);
-        }
-        for (CachingSvnRepositoryPool pool : pools) {
-          pool.check();
-        }
+    myRecheck = () -> {
+      HashSet<CachingSvnRepositoryPool> pools = new HashSet<>();
+      synchronized (myLock) {
+        pools.addAll(mySet);
+      }
+      for (CachingSvnRepositoryPool pool : pools) {
+        pool.check();
       }
     };
     myCurrentlyActiveConnections = 0;

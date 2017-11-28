@@ -242,7 +242,7 @@ internal class XmlSerializerTest {
     bean.INT_V = 987
     bean.STRING_V = "1234"
 
-    val element = bean.serialize()
+    val element = bean.serialize()!!
 
     val node = element.children.get(0)
     element.removeContent(node)
@@ -504,15 +504,15 @@ internal class XmlSerializerTest {
     doSerializerTest("<BeanWithEnum>\n" + "  <option name=\"FLD\" value=\"VALUE_3\" />\n" + "</BeanWithEnum>", bean)
   }
 
-  @Test fun conversionFromTextToAttribute() {
-    @Tag("condition")
-    class ConditionBean {
-      @Attribute("expression")
-      var newCondition: String? = null
-      @Text
-      var oldCondition: String? = null
-    }
+  @Tag("condition")
+  private class ConditionBean {
+    @Attribute("expression")
+    var newCondition: String? = null
+    @Text
+    var oldCondition: String? = null
+  }
 
+  @Test fun conversionFromTextToAttribute() {
     @Tag("bean")
     class Bean {
       @Property(surroundWithTag = false)
@@ -526,6 +526,22 @@ internal class XmlSerializerTest {
     bean = Bean()
     bean.conditionBean.newCondition = "2+2"
     doSerializerTest("<bean>\n  <condition expression=\"2+2\" />\n" + "</bean>", bean)
+  }
+
+  @Test fun `no_wrap`() {
+    @Tag("bean")
+    class Bean {
+      @Property(flat = true)
+      var conditionBean = ConditionBean()
+    }
+
+    var bean = Bean()
+    bean.conditionBean.oldCondition = "2+2"
+    doSerializerTest("<bean>2+2</bean>", bean)
+
+    bean = Bean()
+    bean.conditionBean.newCondition = "2+2"
+    doSerializerTest("<bean expression=\"2+2\" />", bean)
   }
 
   @Test fun deserializeInto() {
@@ -644,8 +660,8 @@ internal class XmlSerializerTest {
 private val XML_PREFIX = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
-  val element = bean.serialize(filter)
-  var actual = JDOMUtil.writeElement(element, "\n").trim()
+  val element = bean.serialize(filter, createElementIfEmpty = true)!!
+  var actual = JDOMUtil.writeElement(element).trim()
   if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
     actual = actual.substring(XML_PREFIX.length).trim()
   }

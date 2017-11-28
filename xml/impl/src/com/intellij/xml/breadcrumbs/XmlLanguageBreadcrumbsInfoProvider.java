@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Jun 19, 2007
- * Time: 4:44:25 PM
- */
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;

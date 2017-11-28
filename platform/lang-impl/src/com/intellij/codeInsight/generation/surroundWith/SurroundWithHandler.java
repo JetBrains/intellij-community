@@ -46,7 +46,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +96,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = selectionModel.hasSelection();
     if (!hasSelection) {
-      selectionModel.selectLineAtCaret();
+      selectLogicalLineContentsAtCaret(editor);
     }
     int startOffset = selectionModel.getSelectionStart();
     int endOffset = selectionModel.getSelectionEnd();
@@ -116,9 +118,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     assert element1 != null;
     final Language l = element1.getParent().getLanguage();
-    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>();
 
-    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
+    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
     surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
 
@@ -154,6 +155,14 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       }
     }
     return doBuildSurroundActions(project, editor, file, surrounders);
+  }
+
+  public static void selectLogicalLineContentsAtCaret(Editor editor) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    editor.getSelectionModel().setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
+                                            CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
   }
 
   private static void invokeSurrounderInTests(Project project,

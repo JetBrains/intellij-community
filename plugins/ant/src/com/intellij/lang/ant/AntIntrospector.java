@@ -18,6 +18,7 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.tools.ant.IntrospectionHelper;
@@ -72,12 +73,7 @@ public final class AntIntrospector {
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof RuntimeException) {
-        throw (RuntimeException)cause;
-      }
-      if (cause instanceof Error) {
-        throw (Error)cause;
-      }
+      ExceptionUtil.rethrowUnchecked(cause);
       if (!ignoreErrors) {
         LOG.error(e);
       }

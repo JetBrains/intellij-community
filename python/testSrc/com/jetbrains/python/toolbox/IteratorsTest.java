@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class IteratorsTest extends TestCase {
   public void testToStringDoesntExhaustIterator() {
     final ChainIterable<String> initial = new ChainIterable<>();
     initial.addItem("foo");
-    assertEquals("foo", initial.toString());;
+    assertEquals("foo", initial.toString());
     assertEquals("foo", initial.toString());
   }
 }

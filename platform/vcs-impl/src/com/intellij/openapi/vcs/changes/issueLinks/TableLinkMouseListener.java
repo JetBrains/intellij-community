@@ -16,8 +16,7 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.dualView.DualView;
-import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.dualView.TableCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +39,14 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
     int column = table.columnAtPoint(e.getPoint());
     if (row == -1 || column == -1) return null;
     TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
-    if (cellRenderer instanceof DualView.TableCellRendererWrapper) {
-      cellRenderer = ((DualView.TableCellRendererWrapper) cellRenderer).getRenderer();
-    }
-    if (cellRenderer instanceof TreeTableView.CellRendererWrapper) {
-      cellRenderer = ((TreeTableView.CellRendererWrapper) cellRenderer).getBaseRenderer();
+    if (cellRenderer instanceof TableCellRendererWrapper) {
+      cellRenderer = ((TableCellRendererWrapper)cellRenderer).getBaseRenderer();
     }
     if (cellRenderer instanceof ColoredTableCellRenderer) {
       final ColoredTableCellRenderer renderer = (ColoredTableCellRenderer)cellRenderer;
       tag = forColoredRenderer(e, table, row, column, renderer);
-    } else {
+    }
+    else {
       tag = tryGetTag(e, table, row, column);
     }
     return tag;

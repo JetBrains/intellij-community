@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class FluentIterableConversionUtil {
       return new GuavaFilterInstanceOfConversionDescriptor(filterClassName);
     }
     else if (GuavaLambda.PREDICATE.getClassQName().equals(resolvedClass.getQualifiedName())) {
-      return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
+      return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)", context);
     }
     return null;
   }
@@ -157,8 +157,8 @@ public class FluentIterableConversionUtil {
   }
 
   static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
-    public TransformAndConcatConversionRule() {
-      super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)");
+    public TransformAndConcatConversionRule(PsiExpression context) {
+      super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)", context);
     }
 
     @Override
@@ -272,7 +272,7 @@ public class FluentIterableConversionUtil {
     final String returnType;
     if ("toMap".equals(methodName) || "uniqueIndex".equals(methodName)) {
       final GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$it$.$methodName$($f$)",
-                                                                                         "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
+                                                                                         "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", context);
       return descriptor.withConversionType(GuavaConversionUtil.addTypeParameters(CommonClassNames.JAVA_UTIL_MAP, context.getType(), context));
     }
     else if ("toList".equals(methodName)) {

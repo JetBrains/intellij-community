@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -40,6 +39,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -60,6 +60,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
 
 /**
  * @author Vladimir Kondratyev
@@ -348,8 +351,6 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    e = fixNonEnglishKeyboardLayouts(e);
-
     e = mapEvent(e);
     if (Registry.is("keymap.windows.as.meta")) {
       e = mapMetaState(e);
@@ -427,9 +428,6 @@ public class IdeEventQueue extends EventQueue {
   private static AWTEvent fixNonEnglishKeyboardLayouts(@NotNull AWTEvent e) {
     if (!(e instanceof KeyEvent)) return e;
 
-    KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
-    if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
-
     KeyEvent ke = (KeyEvent)e;
 
     switch (ke.getID()) {
@@ -439,15 +437,6 @@ public class IdeEventQueue extends EventQueue {
         break;
     }
 
-    //if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent)) {
-    //  if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
-    //    ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
-    //                     KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
-    //    ke.setKeyCode(KeyEvent.VK_U);
-    //    ke.setKeyChar('ґ');
-    //    return ke;
-    //  }
-    //}
 
     // NB: Standard keyboard layout is an English keyboard layout. If such
     //     layout is active every KeyEvent that is received has
@@ -640,6 +629,12 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
+      if (me.getID() == MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
+        // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
+        // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
+        // So we have to reset this WeakReference with synthetic event just before processing of actual event
+        super.dispatchEvent(new MouseEvent(me.getComponent(), MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+      }
       if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
         final MouseEvent toDispatch =
           new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
@@ -901,6 +896,9 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void pumpEventsForHierarchy(Component modalComponent, @NotNull Condition<AWTEvent> exitCondition) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
+    }
     AWTEvent event;
     do {
       try {
@@ -914,6 +912,9 @@ public class IdeEventQueue extends EventQueue {
             while (c != null && c != modalWindow) c = c.getParent();
             if (c == null) {
               eventOk = false;
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("pumpEventsForHierarchy.consumed: "+event);
+              }
               ((InputEvent)event).consume();
             }
           }
@@ -929,6 +930,9 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     while (!exitCondition.value(event));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
+    }
   }
 
   @FunctionalInterface
@@ -1150,7 +1154,12 @@ public class IdeEventQueue extends EventQueue {
       if (listener.consumePostedEvent(event)) return false;
     }
 
-    myFrequentEventDetector.eventHappened(event);
+    String message = myFrequentEventDetector.getMessageOnEvent(event);
+    if (message != null) {
+      // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
+      AppExecutorUtil.getAppExecutorService().submit(() -> myFrequentEventDetector.logMessage(message));
+    }
+
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
     }

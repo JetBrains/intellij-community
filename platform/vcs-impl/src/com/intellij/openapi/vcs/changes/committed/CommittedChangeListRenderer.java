@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
@@ -56,8 +55,9 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     return DateFormatUtil.formatPrettyDateTime(date);
   }
 
-  public static Pair<String, Boolean> getDescriptionOfChangeList(final String text) {
-    return new Pair<>(text.replaceAll("\n", " // "), text.contains("\n"));
+  @NotNull
+  public static String getDescriptionOfChangeList(@NotNull String text) {
+    return text.replaceAll("\n", " // ");
   }
 
   public static String truncateDescription(final String initDescription, final FontMetrics fontMetrics, int maxWidth) {
@@ -100,9 +100,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     }
     int dateCommitterSize = myDateWidth + boldMetrics.stringWidth(changeList.getCommitterName());
 
-    final Pair<String, Boolean> descriptionInfo = getDescriptionOfChangeList(changeList.getName().trim());
-    boolean truncated = descriptionInfo.getSecond().booleanValue();
-    String description = descriptionInfo.getFirst();
+    String description = getDescriptionOfChangeList(changeList.getName().trim());
 
     for (CommittedChangeListDecorator decorator : myDecorators) {
       final Icon icon = decorator.decorate(changeList);
@@ -145,14 +143,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       append(branch, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
 
-    if (description.isEmpty() && !truncated) {
+    if (description.isEmpty()) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       appendTextPadding(descMaxWidth);
     }
     else if (descMaxWidth < 0) {
       myRenderer.appendTextWithLinks(description);
     }
-    else if (descWidth < descMaxWidth && !truncated) {
+    else if (descWidth < descMaxWidth) {
       myRenderer.appendTextWithLinks(description);
       appendTextPadding(descMaxWidth);
     }
@@ -186,11 +184,6 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       return description.substring(0, pos).trim();
     }
     return description.substring(0, description.length()-1);
-  }
-
-  @NotNull
-  public Dimension getPreferredSize() {
-    return new Dimension(2000, super.getPreferredSize().height);
   }
 
   public static int getRowX(JTree tree, int depth) {

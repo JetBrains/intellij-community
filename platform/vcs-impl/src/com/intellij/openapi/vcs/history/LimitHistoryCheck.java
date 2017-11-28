@@ -21,12 +21,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/28/12
- * Time: 3:53 PM
- */
 public class LimitHistoryCheck {
   private final Project myProject;
   private final String myFilePath;

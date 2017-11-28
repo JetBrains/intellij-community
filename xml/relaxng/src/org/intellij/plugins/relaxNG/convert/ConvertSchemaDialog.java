@@ -27,11 +27,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class ConvertSchemaDialog extends DialogWrapper implements PropertyChangeListener {
   private final ConvertSchemaSettingsImpl mySettings;
   private final AbstractAction myAdvancedAction;

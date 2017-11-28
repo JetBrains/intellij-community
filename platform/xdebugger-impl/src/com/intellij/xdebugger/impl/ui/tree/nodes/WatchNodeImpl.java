@@ -95,6 +95,9 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
             return;
           }
         }
+        else {
+          return; // do not set anything if view is not visible, otherwise the code in computePresentationIfNeeded() will not work
+        }
       }
 
       node.setPresentation(AllIcons.Debugger.Watch, EMPTY_PRESENTATION, false);

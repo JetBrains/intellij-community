@@ -2,6 +2,7 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -9,8 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.PyTestSdkTools;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.PySdkTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,16 +37,30 @@ public class PyEnvTaskRunner {
 
     List<String> passedRoots = Lists.newArrayList();
 
-    for (String root : myRoots) {
-      LOG.warn(String.format("Running on root %s", root));
+    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
 
-      final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
-      final boolean suitableForTask = isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags);
+    final Set<String> tagsToCover = null;
+
+    for (String root : myRoots) {
+
+      List<String> envTags = PyEnvTestCase.loadEnvTags(root);
+      final boolean suitableForTask = isSuitableForTask(envTags, requiredTags);
       final boolean shouldRun = shouldRun(root, testTask);
       if (!suitableForTask || !shouldRun) {
         LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
       }
+
+      if (tagsToCover != null && envTags.size() > 0 && !isNeededToRun(tagsToCover, envTags)) {
+        LOG.warn(String.format("Skipping %s (test already was executed on a similar environment)", root));
+        continue;
+      }
+
+      if (tagsToCover != null) {
+        tagsToCover.removeAll(envTags);
+      }
+
+      LOG.warn(String.format("Running on root %s", root));
 
       try {
         testTask.setUp(testName);
@@ -90,6 +105,8 @@ public class PyEnvTaskRunner {
       }
       finally {
         try {
+          // Teardown should be called on main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked
           testTask.tearDown();
         }
         catch (Exception e) {
@@ -108,6 +125,16 @@ public class PyEnvTaskRunner {
     }
   }
 
+  private static boolean isNeededToRun(@NotNull Set<String> tagsToCover, @NotNull List<String> envTags) {
+    for (String tag : envTags) {
+      if (tagsToCover.contains(tag)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Create SDK by path to python exectuable
    *
@@ -122,7 +149,7 @@ public class PyEnvTaskRunner {
     if (url == null) {
       return null;
     }
-    return PyTestSdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+    return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {
@@ -159,7 +186,6 @@ public class PyEnvTaskRunner {
 
     return necessaryTags.isEmpty();
   }
-
 
   public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");

@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,7 @@ import java.util.List;
  * @since 4/9/13 7:49 PM
  */
 public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecutionSettings>
-  extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemTaskManager<S>
-{
+  extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemTaskManager<S> {
 
   @NotNull private final ExternalSystemTaskManager<S> myDelegate;
 
@@ -45,20 +43,16 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
                            @NotNull final List<String> taskNames,
                            @NotNull final String projectPath,
                            @Nullable final S settings,
-                           @NotNull final List<String> vmOptions,
-                           @NotNull final List<String> scriptParameters,
-                           @Nullable final String debuggerSetup) throws RemoteException, ExternalSystemException
-  {
+                           @Nullable final String jvmAgentSetup) throws RemoteException, ExternalSystemException {
     execute(id, () -> {
       myDelegate.executeTasks(
-        id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
+        id, taskNames, projectPath, settings, jvmAgentSetup, getNotificationListener());
       return null;
     });
   }
 
   @Override
-  public boolean cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
-  {
+  public boolean cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException {
     return myDelegate.cancelTask(id, getNotificationListener());
   }
 }

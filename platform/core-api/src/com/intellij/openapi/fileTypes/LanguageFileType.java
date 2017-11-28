@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 
 /**
  * Kind of file types capable to provide {@link Language}.
+ * Note that the associated language can still be overridden by a {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class LanguageFileType implements FileType{
   private final Language myLanguage;

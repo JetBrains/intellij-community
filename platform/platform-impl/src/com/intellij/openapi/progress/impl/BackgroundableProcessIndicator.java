@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Aug 20, 2006
- * Time: 8:40:15 PM
- */
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -70,19 +62,12 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
     if (project != null) {
-      final ProjectManagerAdapter myListener = new ProjectManagerAdapter() {
+      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void projectClosing(Project closingProject) {
-          if (isRunning()) {
+        public void projectClosing(Project eventProject) {
+          if (eventProject == project && isRunning()) {
             cancel();
           }
-        }
-      };
-      ProjectManager.getInstance().addProjectManagerListener(project, myListener);
-      Disposer.register(this, new Disposable() {
-        @Override
-        public void dispose() {
-          ProjectManager.getInstance().removeProjectManagerListener(project, myListener);
         }
       });
     }
@@ -184,5 +169,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Override
   public boolean isShowing() {
     return isModal() || ! isBackgrounded();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + "; task=" + myInfo;
   }
 }

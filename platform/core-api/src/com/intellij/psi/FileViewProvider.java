@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ import java.util.Set;
  * @see PsiFile#getViewProvider()
  * @see PsiManager#findViewProvider(VirtualFile)
  */
-public interface FileViewProvider extends Cloneable, UserDataHolder {
+public interface FileViewProvider extends Cloneable, UserDataHolderEx {
 
   /**
    * @return this project's PsiManager

@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.Collection;
 
+@FunctionalInterface
 public interface MavenIndicesProcessor {
   void processArtifacts(Collection<MavenId> artifacts);
 }

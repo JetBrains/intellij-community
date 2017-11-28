@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
   private final Condition<WebBrowser> browserCondition;
 
   public OpenUrlHyperlinkInfo(@NotNull String url) {
-    this(url, Conditions.<WebBrowser>alwaysTrue(), null);
+    this(url, Conditions.alwaysTrue(), null);
   }
 
-  public OpenUrlHyperlinkInfo(@NotNull String url, @Nullable final WebBrowser browser) {
-    this(url, browser == null ? Conditions.<WebBrowser>alwaysTrue() : Conditions.is(browser));
+  public OpenUrlHyperlinkInfo(@NotNull String url, @Nullable WebBrowser browser) {
+    this(url, Conditions.alwaysTrue(), browser);
   }
 
   public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition) {

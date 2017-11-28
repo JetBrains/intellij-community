@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -37,6 +38,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -52,7 +54,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     final SearchScope searchScope = parameters.getScope();
 
     if (searchScope instanceof LocalSearchScope) {
-      return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+      VirtualFile[] files = ((LocalSearchScope)searchScope).getVirtualFiles();
+      if (isJavaOnlyScope(files)) {
+        return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+      }
     }
 
     Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
@@ -74,6 +79,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       }
     }
     return true;
+  }
+
+  static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
+    return Arrays.stream(files).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE);
   }
 
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,

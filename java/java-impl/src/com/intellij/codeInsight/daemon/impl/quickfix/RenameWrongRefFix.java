@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 20, 2002
- * Time: 8:49:24 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -31,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -88,6 +81,7 @@ public class RenameWrongRefFix implements IntentionAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
+  @NotNull
   private LookupElement[] collectItems() {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
@@ -132,7 +126,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
       }
 
-      items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
+      if (!ApplicationManager.getApplication().isUnitTestMode()) items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();

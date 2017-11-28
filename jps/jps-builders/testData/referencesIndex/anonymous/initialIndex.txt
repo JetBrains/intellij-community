@@ -1,16 +1,15 @@
 Backward Hierarchy:
-java.lang.Object -> Anonymous Anonymous$1
-java.lang.Runnable -> Anonymous$1
+java.lang.Object -> Anonymous anonymous(id=0)
+java.lang.Runnable -> anonymous(id=0)
 
 Backward References:
-Anonymous in Anonymous
-Anonymous$1.<init>(0) in Anonymous
-Anonymous$1.run(0) in Anonymous
-Anonymous.<init>(0) in Anonymous
-Anonymous.m(0) in Anonymous
-java.lang.Object.<init>(0) in Anonymous
-java.lang.Runnable in Anonymous
+Anonymous in Anonymous occurrences = 1
+Anonymous.m(0) in Anonymous occurrences = 1
+java.lang.Runnable in Anonymous occurrences = 2
+java.lang.Runnable.run(0) in Anonymous occurrences = 2
 
 Class Definitions:
 Anonymous in Anonymous
-Anonymous$1 in Anonymous
+anonymous(id=0) in Anonymous
+
+Members Signatures:

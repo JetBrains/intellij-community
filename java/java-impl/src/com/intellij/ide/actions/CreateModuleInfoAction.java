@@ -61,7 +61,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       .map(view -> getTargetDirectory(ctx, view))
       .filter(PsiUtil::isLanguageLevel9OrHigher)
       .map(ModuleUtilCore::findModuleForPsiElement)
-      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, module.getModuleScope(false)).isEmpty())
+      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, module.getModuleScope()).isEmpty())
       .orElse(false);
     e.getPresentation().setEnabledAndVisible(available);
   }

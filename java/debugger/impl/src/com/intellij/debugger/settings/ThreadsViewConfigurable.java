@@ -80,6 +80,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
     return myDataBinding.isModified(mySettings);
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.dialogs.customizeThreadView";
   }

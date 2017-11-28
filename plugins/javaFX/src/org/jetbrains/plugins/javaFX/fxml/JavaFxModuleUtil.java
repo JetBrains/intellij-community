@@ -100,7 +100,7 @@ public class JavaFxModuleUtil {
     }
   }
 
-  private static class FxmlPresenceListener extends VirtualFileAdapter {
+  private static class FxmlPresenceListener implements VirtualFileListener {
     private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
     private final SimpleModificationTracker myModificationTracker;
 
@@ -110,7 +110,10 @@ public class JavaFxModuleUtil {
     }
 
     private static ModificationTracker getModificationTracker(@NotNull Project project) {
-      return project.getUserData(KEY);
+      return () -> {
+        final ModificationTracker tracker = project.getUserData(KEY);
+        return tracker != null ? tracker.getModificationCount() + 1 : 0;
+      };
     }
 
     @Override

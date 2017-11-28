@@ -17,9 +17,6 @@ package com.intellij.lang.spi;
 
 import com.intellij.lang.Language;
 
-/**
- * User: anna
- */
 public class SPILanguage extends Language {
   public static final SPILanguage INSTANCE = new SPILanguage();
   

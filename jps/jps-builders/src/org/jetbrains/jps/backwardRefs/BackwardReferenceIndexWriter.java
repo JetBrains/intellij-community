@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
@@ -72,7 +73,7 @@ public class BackwardReferenceIndexWriter {
     return ourInstance;
   }
 
-  static void initialize(@NotNull final CompileContext context) {
+  static void initialize(@NotNull final CompileContext context, int attempt) {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
@@ -86,11 +87,11 @@ public class BackwardReferenceIndexWriter {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
       }
       else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        if (areAllJavaModulesAffected(context)) {
+        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+        if ((attempt == 0 && areAllJavaModulesAffected(context)) ) {
           throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
         } else {
           // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
-          CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
         }
       }
 
@@ -131,7 +132,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref) throws IOException {
+  LightRef enumerateNames(JavacRef ref, Function<String, Integer> ownerIdReplacer) throws IOException {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -139,16 +140,17 @@ public class BackwardReferenceIndexWriter {
       }
     }
     else {
-      String ownerName = ref.getOwnerName();
       if (isPrivate(ref)) {
         return null;
       }
+      String ownerName = ref.getOwnerName();
+      final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
-        return new LightRef.JavaLightFieldRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator));
+        return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
         int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new LightRef.JavaLightMethodRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
+        return new LightRef.JavaLightMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());

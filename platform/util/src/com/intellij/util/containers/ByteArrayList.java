@@ -20,6 +20,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.HashFunctions;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -489,6 +490,7 @@ public class ByteArrayList implements  Cloneable {
      *
      * @return an {@code int[]} value
      */
+    @NotNull
     public byte[] toNativeArray() {
         return toNativeArray(0, _pos);
     }
@@ -500,6 +502,7 @@ public class ByteArrayList implements  Cloneable {
      * @param len the number of values to copy.
      * @return an {@code int[]} value
      */
+    @NotNull
     public byte[] toNativeArray(int offset, int len) {
         byte[] rv = new byte[len];
         toNativeArray(rv, offset, len);

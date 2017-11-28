@@ -17,6 +17,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -29,14 +31,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
-public class IncreaseLanguageLevelFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#" + IncreaseLanguageLevelFix.class.getName());
+public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance(IncreaseLanguageLevelFix.class);
 
   private final LanguageLevel myLevel;
 
@@ -50,10 +53,23 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return CodeInsightBundle.message("set.language.level.to.0", myLevel.getPresentableText());
   }
 
+  @Nls
+  @NotNull
+  @Override
+  public String getName() {
+    return getText();
+  }
+
   @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("set.language.level");
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    invoke(project, null, element.getContainingFile());
   }
 
   @Override
@@ -67,9 +83,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
-    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return;
 
     JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);

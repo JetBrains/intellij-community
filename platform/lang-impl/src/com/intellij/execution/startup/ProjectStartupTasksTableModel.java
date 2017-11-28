@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.startup;
 
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
@@ -33,10 +32,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   private final Set<RunnerAndConfigurationSettings> mySharedConfigurations;
   private final List<RunnerAndConfigurationSettings> myAllConfigurations;
-  private final RunManagerEx myRunManager;
 
-  public ProjectStartupTasksTableModel(RunManagerEx runManager) {
-    myRunManager = runManager;
+  public ProjectStartupTasksTableModel() {
     mySharedConfigurations = new HashSet<>();
     myAllConfigurations = new ArrayList<>();
   }
@@ -128,14 +125,14 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     if (NAME_COLUMN == columnIndex) return false;
-    return myRunManager.isConfigurationShared(myAllConfigurations.get(rowIndex));
+    return myAllConfigurations.get(rowIndex).isShared();
   }
 
   public void addConfiguration(final @NotNull RunnerAndConfigurationSettings configuration) {
     if (myAllConfigurations.contains(configuration)) return;
     if (! myAllConfigurations.add(configuration)) return;
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
-    if (myRunManager.isConfigurationShared(configuration)) {
+    if (configuration.isShared()) {
       mySharedConfigurations.add(configuration);
     }
     fireTableDataChanged();

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -25,6 +25,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -52,16 +53,14 @@ import java.io.IOException;
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
-
-  private Set<VirtualFile> myOpenedFiles = new THashSet<>();
-  private Set<VirtualFile> myCreatedFiles = new THashSet<>();
+  private final Set<VirtualFile> myCreatedFiles = new THashSet<>();
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
-    NonProjectFileWritingAccessProvider.enableChecksInTests(getTestRootDisposable());
+    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
     ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
   }
 
@@ -69,10 +68,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   protected void tearDown() throws Exception {
     try {
       NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
-      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-      for (VirtualFile file : myOpenedFiles) {
-        editorManager.closeFile(file);
-      }
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (VirtualFile each : myCreatedFiles) {
           try {
@@ -126,7 +122,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile, false); // original is still locked 
   }
 
-  public void testAccessToProjectSystemFiles() throws Exception {
+  public void testAccessToProjectSystemFiles() {
     PlatformTestUtil.saveProject(getProject());
     VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBaseDir().getPath()));
     
@@ -137,7 +133,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(fileUnderProjectDir, false);
   }
 
-  public void testAccessToModuleSystemFiles() throws Exception {
+  public void testAccessToModuleSystemFiles() {
     final Module moduleWithoutContentRoot = new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(@NotNull Result<Module> result) throws Throwable {
@@ -189,7 +185,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     VirtualFile nonProjectFileDir12 = createFileExternally(dir);
 
     File subDir = new File(dir, "subdir");
-    subDir.mkdirs();
+    assertTrue(subDir.mkdirs());
     VirtualFile nonProjectFileDirSubdir1 = createFileExternally(subDir);
     
     VirtualFile nonProjectFileDir2 = createNonProjectFile();
@@ -280,7 +276,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
   }
   
-  public void testCheckingExtensionsForNonWritableFiles() throws Exception {
+  public void testCheckingExtensionsForNonWritableFiles() {
     VirtualFile nonProjectFile1 = createProjectFile();
     VirtualFile nonProjectFile2 = createProjectFile();
 
@@ -323,7 +319,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
         return true;
       }
-    }, getTestRootDisposable());
+    }, getProject());
     return requested;
   }
 
@@ -340,7 +336,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
                                            return filesToDeny.contains(file);
                                          }
                                        },
-                                       getTestRootDisposable());
+                                       getProject());
   }
 
   @NotNull
@@ -359,8 +355,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         // create externally, since files created via VFS are marked for editing automatically
-        File file = new File(dir, FileUtil.createSequentFileName(dir, "file", "txt"));
-        file.createNewFile();
+        File file = new File(dir, FileUtil.createSequentFileName(dir, "extfile", "txt"));
+        assertTrue(file.createNewFile());
         result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
       }
     }.execute().getResultObject();
@@ -393,24 +389,20 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private Editor getEditor(VirtualFile file) {
-    myOpenedFiles.add(file);
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     EditorTestUtil.waitForLoading(editor);
     return editor;
   }
 
-  protected void typeInChar(Editor e, char c) {
+  private void typeInChar(Editor e, char c) {
     getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
   }
 
   private DataContext createDataContextFor(final Editor editor) {
-    return new DataContext() {
-      @Override
-      public Object getData(String dataId) {
-        if (dataId.equals(DataConstants.EDITOR)) return editor;
-        if (dataId.equals(DataConstants.PROJECT)) return getProject();
-        return null;
-      }
+    return dataId -> {
+      if (dataId.equals(CommonDataKeys.EDITOR.getName())) return editor;
+      if (dataId.equals(CommonDataKeys.PROJECT.getName())) return getProject();
+      return null;
     };
   }
 

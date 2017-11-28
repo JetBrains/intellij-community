@@ -44,14 +44,14 @@ public class BloomFilterBase {
 
   protected final void addIt(int prime, int prime2) {
     for(int i = 0; i < myHashFunctionCount; ++i) {
-      int abs = Math.abs(i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount;
+      int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
       myElementsSet[abs >> BITS_PER_ELEMENT] |= (1L << abs);
     }
   }
 
   protected final boolean maybeContains(int prime, int prime2) {
     for(int i = 0; i < myHashFunctionCount; ++i) {
-      int abs = Math.abs(i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount;
+      int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
       if ((myElementsSet[abs >> BITS_PER_ELEMENT] & (1L << abs)) == 0) return false;
     }
 

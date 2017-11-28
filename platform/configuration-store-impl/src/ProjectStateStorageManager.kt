@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.isExternalStorageEnabled
 import org.jdom.Element
 
 // extended in upsource
@@ -52,4 +53,7 @@ open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstit
     }
     return PROJECT_FILE
   }
+
+  override val isExternalSystemStorageEnabled: Boolean
+    get() = project.isExternalStorageEnabled
 }

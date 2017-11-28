@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.08.2007
- */
 public interface RncFile extends PsiFile {
   RncDecl[] getDeclarations();
 

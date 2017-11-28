@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -21,26 +7,28 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
+  private static final String TEMP_PREFIX = "TEMP::";
   private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
-  
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = ContainerUtil.newConcurrentMap();
+
+  private static final Map<String, TextAttributesKey> ourRegistry = ConcurrentFactoryMap.createMap(TextAttributesKey::new);
+
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
     @Nullable
     @Override
@@ -60,7 +48,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   //read external only
   public TextAttributesKey(@NotNull Element element) {
     this(JDOMExternalizerUtil.readField(element, "myExternalName"));
-    Element myDefaultAttributesElement = JDOMExternalizerUtil.getOption(element, "myDefaultAttributes");
+    Element myDefaultAttributesElement = JDOMExternalizerUtil.readOption(element, "myDefaultAttributes");
     if (myDefaultAttributesElement != null) {
       myDefaultAttributes = new TextAttributes(myDefaultAttributesElement);
     }
@@ -68,14 +56,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   @NotNull
   public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    TextAttributesKey v = ourRegistry.get(externalName);
-    if (v != null) {
-      return v;
-    }
-
-    v = new TextAttributesKey(externalName);
-    TextAttributesKey prev = ourRegistry.putIfAbsent(externalName, v);
-    return prev == null ? v : prev;
+    return ourRegistry.get(externalName);
   }
 
   public String toString() {
@@ -164,6 +145,20 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key;
   }
 
+  /**
+   * Registers a temp text attribute key with the specified identifier and default attributes.
+   * The attribute of the temp attribute key is not serialized and not copied while TextAttributesScheme
+   * manipulations.
+   *
+   * @param externalName      the unique identifier of the key.
+   * @param defaultAttributes the default text attributes associated with the key.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
+  @NotNull
+  public static TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+    return createTextAttributesKey(TEMP_PREFIX + externalName, defaultAttributes);
+  }
 
   /**
    * Registers a text attribute key with the specified identifier and a fallback key. If text attributes for the key are not defined in
@@ -196,45 +191,25 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
     myFallbackAttributeKey = fallbackAttributeKey;
     if (fallbackAttributeKey != null) {
-      checkDependencies(fallbackAttributeKey, new THashSet<>());
+      JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
+      if (it.find(o -> o == this) == this) {
+        String cycle = StringUtil.join(it.map(TextAttributesKey::getExternalName), "->");
+        LOG.error("Cycle detected: " + cycle);
+      }
     }
   }
-  
+
   @TestOnly
   public static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
-    if (ourRegistry.containsKey(externalName)) {
-      ourRegistry.remove(externalName);
-    }
+    ourRegistry.remove(externalName);
+  }
+
+  public static boolean isTemp(@NotNull TextAttributesKey key) {
+    return key.getExternalName().startsWith(TEMP_PREFIX);
   }
 
   public interface TextAttributeKeyDefaultsProvider {
     TextAttributes getDefaultAttributes(TextAttributesKey key);
   }
 
-  private void checkDependencies(@NotNull TextAttributesKey key, @NotNull Set<TextAttributesKey> referencedKeys) {
-    if (referencedKeys.add(key)) {
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      if (fallbackKey != null) {
-        checkDependencies(fallbackKey, referencedKeys);
-      }
-    }
-    else {
-      StringBuilder sb = new StringBuilder();
-      sb.append("Cyclic TextAttributesKey dependency found: ");
-      printDependencyLoop(sb, key);
-      myFallbackAttributeKey = null;
-      LOG.error(sb.toString());
-    }
-  }
-
-  private void printDependencyLoop(@NotNull StringBuilder stringBuilder, @NotNull TextAttributesKey currNode) {
-    stringBuilder.append(currNode.getExternalName()).append("->");
-    TextAttributesKey fallbackKey = currNode.getFallbackAttributeKey();
-    if (fallbackKey == this) {
-      stringBuilder.append(getExternalName());
-    }
-    else if (fallbackKey != null) {
-      printDependencyLoop(stringBuilder, fallbackKey);
-    }
-  }
 }

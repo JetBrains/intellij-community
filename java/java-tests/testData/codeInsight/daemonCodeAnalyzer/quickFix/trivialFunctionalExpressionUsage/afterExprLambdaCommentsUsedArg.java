@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 public class Test {
   public static void main(String[] args) {
-    /* bar */
+      /* bar */
       String s = ("a" +/* who-hoo */ "x") + "foo";
   }
 }

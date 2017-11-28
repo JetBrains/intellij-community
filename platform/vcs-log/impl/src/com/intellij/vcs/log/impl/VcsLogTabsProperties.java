@@ -28,9 +28,11 @@ import java.util.Map;
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabsProperties.State> {
   public static final String MAIN_LOG_ID = "MAIN";
+  @NotNull private final VcsLogApplicationSettings myAppSettings;
   private State myState = new State();
 
-  public VcsLogTabsProperties() {
+  public VcsLogTabsProperties(@NotNull VcsLogApplicationSettings appSettings) {
+    myAppSettings = appSettings;
   }
 
   @Nullable
@@ -46,13 +48,13 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
 
   public MainVcsLogUiProperties createProperties(@NotNull final String id) {
     myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
-    return new VcsLogUiPropertiesImpl() {
+    VcsLogUiPropertiesImpl properties = new VcsLogUiPropertiesImpl(myAppSettings) {
       @NotNull
       @Override
       public State getState() {
         State state = myState.TAB_STATES.get(id);
         if (state == null) {
-          state = new VcsLogUiPropertiesImpl.State();
+          state = new State();
           myState.TAB_STATES.put(id, state);
         }
         return state;
@@ -63,6 +65,15 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
         myState.TAB_STATES.put(id, state);
       }
     };
+    if (MAIN_LOG_ID.equals(id)) {
+      // migrate reference presentation settings from per-tab settings to app settings
+      // this is not ideal since we have many projects and settings for them can be different
+      // but ideal in this case is unachievable
+      // to remove after 2017.3 release
+      myAppSettings.migrateFrom(properties.getState().COMPACT_REFERENCES_VIEW,
+                                properties.getState().SHOW_TAG_NAMES);
+    }
+    return properties;
   }
 
   public static class State {

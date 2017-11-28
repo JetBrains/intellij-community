@@ -129,6 +129,11 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
+  public void dropPsiCaches() {
+    dropResolveCaches();
+  }
+
+  @Override
   public boolean isInProject(@NotNull PsiElement element) {
     return false;
   }

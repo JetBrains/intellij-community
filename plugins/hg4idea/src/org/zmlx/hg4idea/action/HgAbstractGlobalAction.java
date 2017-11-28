@@ -46,7 +46,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     if (!repositories.isEmpty()) {
       List<HgRepository> selectedRepositories = files != null
                                                 ? HgActionUtil.collectRepositoriesFromFiles(repositoryManager, Arrays.asList(files))
-                                                : ContainerUtil.<HgRepository>emptyList();
+                                                : ContainerUtil.emptyList();
 
       execute(project, repositories,
               selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories);

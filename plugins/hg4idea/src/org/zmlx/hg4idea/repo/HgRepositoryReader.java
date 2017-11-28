@@ -300,6 +300,6 @@ public class HgRepositoryReader {
   @NotNull
   public List<String> readMqPatchNames() {
     File seriesFile = new File(myMqInternalDir, "series");
-    return seriesFile.exists() ? StringUtil.split(DvcsUtil.tryLoadFileOrReturn(seriesFile, ""), "\n") : ContainerUtil.<String>emptyList();
+    return seriesFile.exists() ? StringUtil.split(DvcsUtil.tryLoadFileOrReturn(seriesFile, ""), "\n") : ContainerUtil.emptyList();
   }
 }

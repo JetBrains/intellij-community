@@ -1,4 +1,4 @@
-// "Wrap using 'Arrays.asList()'" "true"
+// "Wrap parameter using 'Arrays.asList()'" "true"
 import java.util.Arrays;
 import java.util.List;
 

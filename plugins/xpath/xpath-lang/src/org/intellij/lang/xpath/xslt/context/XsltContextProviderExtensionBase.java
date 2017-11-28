@@ -26,11 +26,6 @@ import org.intellij.lang.xpath.context.ContextProviderExtension;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.01.11
-*/
 public abstract class XsltContextProviderExtensionBase extends ContextProviderExtension {
   public boolean accepts(XPathFile file) {
     final PsiElement context = file.getContext();

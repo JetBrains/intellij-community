@@ -16,10 +16,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Py3NoneFunctionAssignmentInspectionTest extends PyTestCase {
+public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCase {
 
   @Nullable
   @Override
@@ -32,10 +33,9 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyTestCase {
     doMultiFileTest();
   }
 
-  private void doMultiFileTest() {
-    myFixture.copyDirectoryToProject("inspections/PyNoneFunctionAssignmentInspection/" + getTestName(false) + "/", "");
-    myFixture.configureByFile("a.py");
-    myFixture.enableInspections(PyNoneFunctionAssignmentInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyNoneFunctionAssignmentInspection.class;
   }
 }

@@ -42,6 +42,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Mikhail Golubev
@@ -188,6 +189,51 @@ public class TaskResponseUtil {
       catch (NumberFormatException e) {
         LOG.error("NFE in response: " + getResponseContentAsString(response), e);
         throw new RequestFailedException("Malformed response");
+      }
+    }
+  }
+
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
+    if (logger.isDebugEnabled() && response.hasBeenUsed()) {
+      try {
+        String content = TaskResponseUtil.getResponseContentAsString(response);
+        org.apache.commons.httpclient.Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        if (contentType.contains("xml")) {
+          TaskUtil.prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          TaskUtil.prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
+      }
+    }
+  }
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
+    if (logger.isDebugEnabled()) {
+      try {
+        String content = TaskResponseUtil.getResponseContentAsString(response);
+        Header header = response.getEntity().getContentType();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        if (contentType.contains("xml")) {
+          TaskUtil.prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          TaskUtil.prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
       }
     }
   }

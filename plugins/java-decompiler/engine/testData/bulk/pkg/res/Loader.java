@@ -7,7 +7,7 @@ import java.net.URL;
 public class Loader {
    public String getResource() {
       URL resource = this.getClass().getClassLoader().getResource("pkg/res/resource.txt");
-      if(resource == null) {
+      if (resource == null) {
          throw new RuntimeException("Resource missing");
       } else {
          try {

@@ -63,6 +63,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.XLinkReplace.attrib,
         SVG.External.attrib,
+        (common.attrs.aria.implicit.link | common.attrs.aria)?,
         attribute transform { TransformList.datatype }?,
         attribute target { LinkTarget.datatype }?
 }

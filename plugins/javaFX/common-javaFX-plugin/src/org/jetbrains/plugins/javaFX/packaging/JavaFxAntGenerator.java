@@ -26,10 +26,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 3/28/13
- */
 public class JavaFxAntGenerator {
   public static List<SimpleTag> createJarAndDeployTasks(AbstractJavaFxPackager packager,
                                                         String artifactFileName,

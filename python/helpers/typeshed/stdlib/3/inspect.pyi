@@ -1,5 +1,4 @@
-# Stubs for inspect
-
+import sys
 from typing import (AbstractSet, Any, Tuple, List, Dict, Callable, Generator,
                     Mapping, MutableMapping, NamedTuple, Optional, Sequence, Union,
                     )
@@ -8,15 +7,17 @@ from types import FrameType, ModuleType, TracebackType
 #
 # Types and members
 #
-ModuleInfo = NamedTuple('ModuleInfo', [('name', str),
-                                       ('suffix', str),
-                                       ('mode', str),
-                                       ('module_type', int),
-                                       ])
+if sys.version_info < (3, 6):
+    ModuleInfo = NamedTuple('ModuleInfo', [('name', str),
+                                           ('suffix', str),
+                                           ('mode', str),
+                                           ('module_type', int),
+                                           ])
+    def getmoduleinfo(path: str) -> Optional[ModuleInfo]: ...
+
 def getmembers(object: object,
                predicate: Callable[[Any], bool] = ...,
                ) -> List[Tuple[str, Any]]: ...
-def getmoduleinfo(path: str) -> Optional[ModuleInfo]: ...
 def getmodulename(path: str) -> Optional[str]: ...
 
 def ismodule(object: object) -> bool: ...

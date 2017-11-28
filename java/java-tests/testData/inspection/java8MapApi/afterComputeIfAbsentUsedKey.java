@@ -1,4 +1,4 @@
-// "Replace with 'computeIfAbsent' method call" "true"
+// "Replace with 'computeIfAbsent' method call" "INFORMATION"
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

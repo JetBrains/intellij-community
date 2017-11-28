@@ -8,14 +8,23 @@ internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) :
   override val typeDirection = TypeData.Direction.INPUT
 
   fun generateDeclarationBody(out: TextOutput, list: List<ItemDescriptor.Named>) {
-    for (i in 0..list.size - 1) {
-      val named = list.get(i)
+    for (i in 0 until list.size) {
+      val named = list[i]
       if (named.description != null) {
         out.doc(named.description)
       }
 
       val name = named.getName()
       val declarationName = generateMethodNameSubstitute(name, out)
+
+      if (classContextNamespace.lastComponent == "RemoteObjectValue" && name == "value") {
+        // specification says it is string, but it can be map or any other JSON too, so set Any? type
+        out.append("@org.jetbrains.jsonProtocol.JsonField(allowAnyPrimitiveValue=true)\n" +
+                   "  @Optional\n" +
+                   "  fun value(): Any?\n\n  ")
+        continue
+      }
+
       val typeDescriptor = InputMemberScope(name).resolveType(named)
       writeMember(out, typeDescriptor, declarationName)
       if (i != (list.size - 1)) {

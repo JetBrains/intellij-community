@@ -15,20 +15,16 @@
  */
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
@@ -49,8 +45,7 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
-      return myScope.intersectWith(accessScope);
+      return myScope.intersectWith(myElementToSearch.getUseScope());
     }
   }
 
@@ -63,18 +58,15 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod, @NotNull final SearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Query<PsiFunctionalExpression>>() {
-      @Override
-      public Query<PsiFunctionalExpression> compute() {
-        if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-          final PsiClass containingClass = psiMethod.getContainingClass();
-          if (containingClass != null) {
-            return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, scope));
-          }
+    return ReadAction.compute(() -> {
+      if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+        final PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass != null) {
+          return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, scope));
         }
-
-        return EmptyQuery.getEmptyQuery();
       }
+
+      return EmptyQuery.getEmptyQuery();
     });
   }
 

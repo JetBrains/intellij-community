@@ -12,7 +12,7 @@ public class TestClassLoop {
 
       while(true) {
          try {
-            if(!var0) {// 33
+            if (!var0) {// 33
                return;// 34
             }
          } finally {
@@ -30,7 +30,7 @@ public class TestClassLoop {
                System.out.println("1");// 49
                break;
             } finally {
-               if(var0) {// 52
+               if (var0) {// 52
                   System.out.println("3");// 53
                   continue;// 54
                }
@@ -51,19 +51,19 @@ public class TestClassLoop {
 
       for(boolean var8 = false; var2 < var1; ++var2) {// 70 73 90
          char var6 = var0.charAt(var2);// 74
-         if(var6 == 48) {// 75
+         if (var6 == '0') {// 75
             ++var7;// 76
          } else {
-            if(var6 != 46) {// 77
+            if (var6 != '.') {// 77
                break;
             }
 
-            if(var3) {// 78
+            if (var3) {// 78
                throw new NumberFormatException("multiple points");// 80
             }
 
             var5 = var2;// 82
-            if(var4) {// 83
+            if (var4) {// 83
                var5 = var2 - 1;// 84
             }
 

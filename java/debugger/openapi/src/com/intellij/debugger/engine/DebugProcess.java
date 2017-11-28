@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.PositionManager;
@@ -24,22 +22,20 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author lex
  */
-public interface DebugProcess {
+public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
-
-  <T> T    getUserData(Key<T> key);
-  <T> void putUserData(Key<T> key, T value);
 
   Project getProject();
 
@@ -91,7 +87,7 @@ public interface DebugProcess {
                              List<? extends Value> args,
                              int invocationOptions) throws EvaluateException;
 
-  ReferenceType findClass(EvaluationContext evaluationContext,
+  ReferenceType findClass(@Nullable EvaluationContext evaluationContext,
                           String name,
                           ClassLoaderReference classLoader) throws EvaluateException;
 

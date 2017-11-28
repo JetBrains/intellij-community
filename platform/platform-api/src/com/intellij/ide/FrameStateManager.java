@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class FrameStateManager {
   /**
-   * Returns the global <code>FrameStateManager</code> instance.
+   * Returns the global {@code FrameStateManager} instance.
    *
    * @return the component instance.
    */

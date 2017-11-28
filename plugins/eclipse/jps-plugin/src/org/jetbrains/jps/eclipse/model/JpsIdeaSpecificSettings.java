@@ -37,10 +37,6 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import java.io.File;
 import java.util.Map;
 
-/**
-* User: anna
-* Date: 11/8/12
-*/
 class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
   private JpsMacroExpander myExpander;
 

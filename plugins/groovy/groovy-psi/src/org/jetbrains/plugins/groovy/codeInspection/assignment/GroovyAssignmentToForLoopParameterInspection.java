@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -33,24 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return ASSIGNMENT_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Assignment to for-loop parameter";
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Assignment to for-loop parameter '#ref' #loc";
-
   }
 
   @NotNull

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-May-2008
- */
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -55,7 +51,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ShowCoveringTestsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + ShowCoveringTestsAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
   private final String myClassFQName;
   private final LineData myLineData;

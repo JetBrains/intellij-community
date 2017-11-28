@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="projectModel-api" />
     <orderEntry type="module" module-name="projectModel-impl" />
@@ -16,7 +16,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="library" name="Sanselan" level="project" />
+    <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-api" />
     <orderEntry type="module" module-name="vcs-api" />

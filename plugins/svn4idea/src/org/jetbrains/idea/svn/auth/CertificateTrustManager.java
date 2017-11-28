@@ -73,7 +73,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  private boolean checkPassive(@NotNull X509Certificate certificate) throws CertificateEncodingException {
+  private boolean checkPassive(@NotNull X509Certificate certificate) {
     Object cachedData = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck("svn.ssl.server", myRealm);
 
     return certificate.equals(cachedData);
@@ -112,7 +112,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  private void acknowledge(@NotNull X509Certificate certificate) throws CertificateEncodingException {
+  private void acknowledge(@NotNull X509Certificate certificate) {
     myAuthenticationService.getVcs().getSvnConfiguration().acknowledge("cmd.ssl.server", myRealm, certificate);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -87,35 +84,13 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
   }
 
   @Override
-  @NotNull
-  public ConfigurationType getType() {
-    return UnknownConfigurationType.INSTANCE;
-  }
-
-  @Override
-  public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @Override
-  public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
-    return null;
-  }
-
-  @Override
   public RunConfiguration clone() {
     try {
-      final UnknownRunConfiguration cloned = (UnknownRunConfiguration) super.clone();
-      return cloned;
-    } catch (CloneNotSupportedException e) {
+      return (UnknownRunConfiguration)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
       return null;
     }
-  }
-
-
-  @Override
-  public int getUniqueID() {
-    return System.identityHashCode(this);
   }
 
   @Override
@@ -143,22 +118,18 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
 
   @Override
   public void readExternal(final Element element) throws InvalidDataException {
-    myStoredElement = (Element) element.clone();
+    myStoredElement = element.clone();
   }
 
   @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     if (myStoredElement != null) {
-      final List attributeList = myStoredElement.getAttributes();
-      for (Object anAttributeList : attributeList) {
-        final Attribute a = (Attribute) anAttributeList;
+      for (Attribute a : myStoredElement.getAttributes()) {
         element.setAttribute(a.getName(), a.getValue());
       }
 
-      final List list = myStoredElement.getChildren();
-      for (Object child : list) {
-        final Element c = (Element) child;
-        element.addContent((Element) c.clone());
+      for (Element child : myStoredElement.getChildren()) {
+        element.addContent(child.clone());
       }
     }
   }
@@ -170,7 +141,7 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
       myPanel = new JPanel();
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
 
-      myPanel.add(new JLabel("This configuration cannot be edited", JLabel.CENTER));
+      myPanel.add(new JLabel("This configuration cannot be edited", SwingConstants.CENTER));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Random;
 
 public class EditorStressTest extends AbstractEditorTest {
-  private static final int ITERATIONS = 10000;
+  private static final int ITERATIONS = 10_000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
   private static final List<? extends Action> ourActions = Arrays.asList(new AddText("a"),
@@ -45,6 +46,7 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new RemoveFoldRegion(),
                                                                          new CollapseFoldRegion(),
                                                                          new ExpandFoldRegion(),
+                                                                         new ClearFoldRegions(),
                                                                          new ChangeBulkModeState(),
                                                                          new ChangeEditorVisibility(),
                                                                          new AddInlay(),
@@ -53,18 +55,18 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
-    setSeed(mySeed = (SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE));
+    setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
 
   public void testRandomActions() {
-    System.out.println("Seed is " + mySeed);
+    LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
       configureSoftWraps(10);
       EditorImpl editor = (EditorImpl)myEditor;
-      for (i = 1; i <= ITERATIONS; i++) {
+      for (i = 0; i < ITERATIONS; i++) {
         doRandomAction(editor);
         editor.validateState();
       }
@@ -72,7 +74,7 @@ public class EditorStressTest extends AbstractEditorTest {
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.out.println(message);
+      System.err.println(message);
       throw new RuntimeException(message, t);
     }
   }
@@ -81,6 +83,7 @@ public class EditorStressTest extends AbstractEditorTest {
     ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
   }
 
+  @FunctionalInterface
   interface Action {
     void perform(EditorEx editor, Random random);
   }
@@ -98,7 +101,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(document.getTextLength() + 1);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.insertString(offset, myText);
         }
       }.execute().throwException();
@@ -114,7 +117,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(textLength);
       new WriteCommandAction.Simple(getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           document.deleteString(offset, offset + 1);
         }
       }.execute().throwException();
@@ -132,7 +135,7 @@ public class EditorStressTest extends AbstractEditorTest {
       if (targetOffset < offset || targetOffset > offset + 1) {
         new WriteCommandAction.Simple(getProject()) {
           @Override
-          protected void run() throws Throwable {
+          protected void run() {
             ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
           }
         }.execute().throwException();
@@ -193,6 +196,16 @@ public class EditorStressTest extends AbstractEditorTest {
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
+    }
+  }
+  
+  private static class ClearFoldRegions implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      FoldingModelEx foldingModel = editor.getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.clearFoldRegions());
     }
   }
   

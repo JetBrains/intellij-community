@@ -17,24 +17,17 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.openapi.util.Pair;
-import gnu.trove.THashMap;
 import org.kohsuke.rngom.digested.*;
 
 import javax.xml.namespace.QName;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class AttributeFinder extends RecursionSaveWalker {
   private int depth;
   private int optional;
   private final QName myQname;
-  private final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> myAttributes =
-    new THashMap<>();
+  private final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> myAttributes = new LinkedHashMap<>();
   private DAttributePattern myLastAttr;
 
   private AttributeFinder() {

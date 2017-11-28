@@ -31,21 +31,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * User: anna
- * Date: Nov 22, 2004
- */
 public class Sandbox implements ValidatableSdkAdditionalData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
 
-  @SuppressWarnings({"WeakerAccess"})
+  @SuppressWarnings("WeakerAccess")
   public String mySandboxHome;
   private final Sdk myCurrentJdk;
 
   private String myJavaSdkName;
   private Sdk myJavaSdk;
 
-  private LocalFileSystem.WatchRequest mySandboxRoot = null;
+  private LocalFileSystem.WatchRequest mySandboxRoot;
   @NonNls private static final String SDK = "sdk";
 
   public Sandbox(String sandboxHome, Sdk javaSdk, Sdk currentJdk) {
@@ -66,17 +62,20 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     return mySandboxHome;
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @Override
   public Object clone() throws CloneNotSupportedException {
     return new Sandbox(mySandboxHome, getJavaSdk(), myCurrentJdk);
   }
 
+  @Override
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
     if (StringUtil.isEmpty(mySandboxHome) || getJavaSdk() == null) {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     LOG.assertTrue(mySandboxRoot == null);
     myJavaSdkName = element.getAttributeValue(SDK);
@@ -85,7 +84,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     final Sdk sdk = getJavaSdk();
     if (sdk != null) {
@@ -119,7 +118,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     return myJavaSdk;
   }
 
-  public void setJavaSdk(final Sdk javaSdk) {
+  void setJavaSdk(final Sdk javaSdk) {
     myJavaSdk = javaSdk;
   }
 }

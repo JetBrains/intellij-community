@@ -23,11 +23,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-/**
- * User: lex
- * Date: Sep 10, 2003
- * Time: 6:56:51 PM
- */
 public abstract class TreeBuilder implements TreeModel {
   private final Object userObject;
   private TreeBuilderNode myRoot;

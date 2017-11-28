@@ -111,12 +111,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
   }
 
   private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
-    return resolvesToFunction(elementAt, new Function<PyFunction, Boolean>() {
-      @Override
-      public Boolean apply(PyFunction input) {
-        return !isReturnTypeDefined(input);
-      }
-    });
+    return resolvesToFunction(elementAt, input -> !isReturnTypeDefined(input));
   }
 
   static boolean resolvesToFunction(@NotNull PsiElement elementAt, Function<PyFunction, Boolean> isAvailableForFunction) {
@@ -167,9 +162,12 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
       PsiReference reference = problemElement.getReference();
       final PsiElement resolved = reference != null? reference.resolve() : null;
       if (resolved instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-        if (assignedValue instanceof PyCallExpression) {
-          return (PyCallExpression)assignedValue;
+        final PyResolveContext context = getResolveContext(elementAt);
+        if (context.getTypeEvalContext().maySwitchToAST(resolved)) {
+          final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
+          if (assignedValue instanceof PyCallExpression) {
+            return (PyCallExpression)assignedValue;
+          }
         }
       }
     }

@@ -18,6 +18,7 @@ package net.sf.cglib.proxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.core.CodeGenerationException;
 
@@ -139,16 +140,9 @@ public class AdvancedProxy {
       if (throwable instanceof InvocationTargetException) {
         final InvocationTargetException targetException = (InvocationTargetException)throwable;
         final Throwable cause = targetException.getCause();
-        if (cause instanceof RuntimeException) {
-          throw (RuntimeException)cause;
-        }
-        if (cause instanceof Error) {
-          throw (Error)cause;
-        }
+        ExceptionUtil.rethrowUnchecked(cause);
       }
-      if (throwable instanceof RuntimeException) {
-        throw (RuntimeException)throwable;
-      }
+      ExceptionUtil.rethrowUnchecked(throwable);
       throw e;
     }
     catch (ProcessCanceledException e) {

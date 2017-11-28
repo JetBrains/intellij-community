@@ -16,59 +16,30 @@
 package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementation of {@link RootDetector} which detects a root by presence of files of some specified type under it
  *
  * @author nik
+ * @deprecated use {@link DescendentBasedRootFilter#createFileTypeBasedFilter(OrderRootType, boolean, FileType, String)} instead
  */
 public class FileTypeBasedRootFilter extends RootFilter {
   private final FileType myFileType;
+  private final RootFilter myDelegate;
 
-  public FileTypeBasedRootFilter(OrderRootType rootType, boolean jarDirectory, @NotNull FileType fileType,
-                                 final String presentableRootTypeName) {
+  public FileTypeBasedRootFilter(OrderRootType rootType, boolean jarDirectory, @NotNull FileType fileType, String presentableRootTypeName) {
     super(rootType, jarDirectory, presentableRootTypeName);
     myFileType = fileType;
+    myDelegate = new DescendentBasedRootFilter(rootType, jarDirectory, presentableRootTypeName, this::isFileAccepted);
   }
 
   @Override
-  public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull final ProgressIndicator progressIndicator) {
-    if (isJarDirectory()) {
-      if (!rootCandidate.isDirectory() || !rootCandidate.isInLocalFileSystem()) {
-        return false;
-      }
-      for (VirtualFile child : rootCandidate.getChildren()) {
-        if (!child.isDirectory() && child.getFileType().equals(FileTypes.ARCHIVE)) {
-          final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
-          if (jarRoot != null && containsFileOfType(jarRoot, progressIndicator)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-    else {
-      return containsFileOfType(rootCandidate, progressIndicator);
-    }
-  }
-
-  private boolean containsFileOfType(VirtualFile rootCandidate, final ProgressIndicator progressIndicator) {
-    return !VfsUtil.processFilesRecursively(rootCandidate, virtualFile -> {
-      progressIndicator.checkCanceled();
-      if (virtualFile.isDirectory()) {
-        progressIndicator.setText2(virtualFile.getPath());
-        return true;
-      }
-      return !isFileAccepted(virtualFile);
-    });
+  public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
+    return myDelegate.isAccepted(rootCandidate, progressIndicator);
   }
 
   protected boolean isFileAccepted(VirtualFile virtualFile) {

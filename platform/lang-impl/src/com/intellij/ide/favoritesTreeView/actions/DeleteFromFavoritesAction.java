@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class DeleteFromFavoritesAction extends AnActionButton implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#" + DeleteFromFavoritesAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(DeleteFromFavoritesAction.class);
 
   public DeleteFromFavoritesAction() {
     super(IdeBundle.message("action.remove.from.current.favorites"), IconUtil.getRemoveIcon());

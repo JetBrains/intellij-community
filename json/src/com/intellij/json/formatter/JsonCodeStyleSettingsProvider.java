@@ -31,7 +31,6 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
             addSpacesTab(settings);
             addBlankLinesTab(settings);
             addWrappingAndBracesTab(settings);
-            addTab(new JsonCodeStylePanel(settings));
           }
         };
       }

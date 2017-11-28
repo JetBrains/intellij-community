@@ -17,7 +17,9 @@ package com.siyeh.ig.callMatcher;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
@@ -41,8 +43,22 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   Stream<String> names();
 
+  boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef);
+
   @Contract("null -> false")
   boolean test(@Nullable PsiMethodCallExpression call);
+
+  /**
+   * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
+   *
+   * @param expression expression to test
+   * @return true if the supplied expression matches this matcher
+   */
+  @Contract("null -> false")
+  default boolean matches(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiMethodCallExpression && test((PsiMethodCallExpression)expression);
+  }
 
   /**
    * Returns a new matcher which will return true if any of supplied matchers return true
@@ -55,6 +71,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       @Override
       public Stream<String> names() {
         return Stream.of(matchers).flatMap(CallMatcher::names);
+      }
+
+      @Override
+      public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+        for (CallMatcher m : matchers) {
+          if (m.methodReferenceMatches(methodRef)) {
+            return true;
+          }
+        }
+        return false;
       }
 
       @Override
@@ -151,6 +177,17 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Override
+    public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+      if (methodRef == null) return false;
+      String name = methodRef.getReferenceName();
+      if (!myNames.contains(name)) return false;
+      PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
+      if (!methodMatches(method)) return false;
+      PsiParameterList parameterList = method.getParameterList();
+      return parametersMatch(parameterList);
+    }
+
+    @Override
     public boolean test(PsiMethodCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();
@@ -160,6 +197,24 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
         if (args.length < myParameters.length) return false;
       }
       PsiMethod method = call.resolveMethod();
+      if (!methodMatches(method)) return false;
+      PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() > args.length ||
+          (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
+        return false;
+      }
+      return parametersMatch(parameterList);
+    }
+
+    private boolean parametersMatch(@NotNull PsiParameterList parameterList) {
+      if (myParameters == null) return true;
+      if (myParameters.length != parameterList.getParametersCount()) return false;
+      return StreamEx.zip(myParameters, parameterList.getParameters(),
+                          Simple::parameterTypeMatches).allMatch(Boolean.TRUE::equals);
+    }
+
+    @Contract("null -> false")
+    private boolean methodMatches(PsiMethod method) {
       if (method == null) return false;
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
@@ -167,16 +222,6 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
           (myStatic && !myClassName.equals(aClass.getQualifiedName())) ||
           (!myStatic && !InheritanceUtil.isInheritor(aClass, myClassName))) {
         return false;
-      }
-      PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() > args.length ||
-          (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
-        return false;
-      }
-      if (myParameters != null) {
-        if (myParameters.length != parameterList.getParametersCount()) return false;
-        return StreamEx.zip(myParameters, parameterList.getParameters(),
-                            Simple::parameterTypeMatches).allMatch(Boolean.TRUE::equals);
       }
       return true;
     }

@@ -23,6 +23,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -40,10 +42,13 @@ public enum LanguageLevel {
   PYTHON35(35, true, false, true, true),
   PYTHON36(36, true, false, true, true);
 
-  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
+  public static final List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
+
+  public static final List<LanguageLevel> SUPPORTED_LEVELS = ImmutableList.copyOf(Stream.of(values()).filter(v -> v.myVersion >= 26).collect(
+    Collectors.toList())); // Python versions 2.4 and 2.5 aren't supported anymore
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON35;
+  private static final LanguageLevel DEFAULT3 = PYTHON36;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -84,6 +89,10 @@ public enum LanguageLevel {
 
   public boolean supportsSetLiterals() {
     return mySupportsSetLiterals;
+  }
+
+  public boolean isPython2() {
+    return !myIsPy3K;
   }
 
   public boolean isPy3K() {
@@ -147,7 +156,7 @@ public enum LanguageLevel {
   public static LanguageLevel forElement(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile instanceof PyFile) {
-      return ((PyFile) containingFile).getLanguageLevel();
+      return ((PyFile)containingFile).getLanguageLevel();
     }
     return getDefault();
   }

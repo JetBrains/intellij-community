@@ -118,9 +118,6 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
   }
 
-  public void reportWarningMessage(final String message) {
-  }
-
   public List<Change> getChanges() {
     return myChanges;
   }

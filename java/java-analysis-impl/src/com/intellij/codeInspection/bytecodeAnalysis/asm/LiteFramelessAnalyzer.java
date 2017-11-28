@@ -28,6 +28,8 @@ import java.util.List;
  */
 public class LiteFramelessAnalyzer extends FramelessAnalyzer {
 
+  public LiteFramelessAnalyzer(EdgeCreator creator) {super(creator);}
+
   @Override
   protected void findSubroutine(int insn, Subroutine sub, List<AbstractInsnNode> calls) throws AnalyzerException {
   }

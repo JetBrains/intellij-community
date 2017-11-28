@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 2, 2005
- * Time: 12:10:47 AM
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -75,7 +68,7 @@ public class TestNGConfigurationType implements ConfigurationType {
             if (Comparing.equal(location.getModule(), configurationModule)) return true;
 
             final Module predefinedModule =
-              ((TestNGConfiguration)RunManagerEx.getInstanceEx(location.getProject()).getConfigurationTemplate(myFactory)
+              ((TestNGConfiguration)RunManager.getInstance(location.getProject()).getConfigurationTemplate(myFactory)
                 .getConfiguration()).getConfigurationModule().getModule();
             return Comparing.equal(predefinedModule, configurationModule);
 

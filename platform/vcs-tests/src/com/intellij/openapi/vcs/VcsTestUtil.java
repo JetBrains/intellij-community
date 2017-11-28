@@ -23,7 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,6 +122,7 @@ public class VcsTestUtil {
     }.execute();
   }
 
+  @NotNull
   public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
                                               @NotNull final VirtualFile newParent, @NotNull final String newName) {
     return new WriteCommandAction<VirtualFile>(project) {
@@ -236,16 +237,13 @@ public class VcsTestUtil {
 
   @NotNull
   public static List<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
-    return ContainerUtil.map2List(relPaths, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        try {
-          return FileUtil.toSystemIndependentName((new File(project.getBasePath() + "/" + s).getCanonicalPath()));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          return "";
-        }
+    return ContainerUtil.map2List(relPaths, s -> {
+      try {
+        return FileUtil.toSystemIndependentName((new File(project.getBasePath() + "/" + s).getCanonicalPath()));
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        return "";
       }
     });
   }
@@ -273,4 +271,7 @@ public class VcsTestUtil {
     return res.toString();
   }
 
+  public static String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath() + "/platform/vcs-tests/testData";
+  }
 }

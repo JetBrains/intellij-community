@@ -43,7 +43,7 @@ class ModifierPredicate implements PsiElementPredicate {
     }
     final PsiNameIdentifierOwner named = (PsiNameIdentifierOwner)parent;
     final PsiElement identifier = named.getNameIdentifier();
-    if (identifier == null || (identifier.getTextOffset() + identifier.getTextLength()) <= element.getTextOffset()) {
+    if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
       return false;
     }
     if (parent instanceof PsiClass) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,15 +162,12 @@ public class JavaParametersUtil {
       return configuredJdk;
     }
 
-    if (!JdkUtil.checkForJre(jreHome) && !JdkUtil.checkForJdk(jreHome)) {
+    if (!JdkUtil.checkForJre(jreHome)) {
       throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
     }
 
     final JavaSdk javaSdk = JavaSdk.getInstance();
-    final String versionString = javaSdk.getVersionString(jreHome);
-    final Sdk jdk = javaSdk.createJdk(versionString != null ? versionString : "", jreHome);
-    if (jdk == null) throw CantRunException.noJdkConfigured();
-    return jdk;
+    return javaSdk.createJdk(ObjectUtils.notNull(javaSdk.getVersionString(jreHome), ""), jreHome);
   }
 
   public static void checkAlternativeJRE(@NotNull CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {
@@ -179,8 +177,8 @@ public class JavaParametersUtil {
   }
 
   public static void checkAlternativeJRE(@Nullable String jrePath) throws RuntimeConfigurationWarning {
-    if (StringUtil.isEmpty(jrePath) ||
-        ProjectJdkTable.getInstance().findJdk(jrePath) == null && !JavaSdk.checkForJre(jrePath)) {
+    if (StringUtil.isEmptyOrSpaces(jrePath) ||
+        ProjectJdkTable.getInstance().findJdk(jrePath) == null && !JdkUtil.checkForJre(jrePath)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jrePath));
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class IgnoredFilesComponent {
     myFilesMap = new THashMap<>();
 
     if (registerListener) {
-      project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
         @Override
         public void after(@NotNull List<? extends VFileEvent> events) {
           if (hasSignificantChanges(events)) {
@@ -64,7 +64,7 @@ public class IgnoredFilesComponent {
     myDirectoriesManuallyRemovedFromIgnored = new THashSet<>();
   }
 
-  public IgnoredFilesComponent(@NotNull IgnoredFilesComponent other) {
+  private IgnoredFilesComponent(@NotNull IgnoredFilesComponent other) {
     myProject = other.myProject;
     myFilesToIgnore = new LinkedHashSet<>(other.myFilesToIgnore);
     myFilesMap = new HashMap<>(other.myFilesMap);
@@ -224,5 +224,9 @@ public class IgnoredFilesComponent {
     finally {
       myReadLock.unlock();
     }
+  }
+
+  public IgnoredFilesComponent copy() {
+    return new IgnoredFilesComponent(this);
   }
 }

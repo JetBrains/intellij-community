@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -24,7 +12,6 @@ import com.intellij.debugger.settings.CaptureConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,14 +48,19 @@ public class StackFrameItem {
   private static final List<XNamedValue> VARS_NOT_CAPTURED = Collections.singletonList(
     JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
-  private static final XNamedValue VAR_NO_DEBUG_INFO =
-    JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
-                                     XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+
+  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
+    @Override
+    public void onClick(MouseEvent event) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
+      event.consume();
+    }
+  };
 
   private final Location myLocation;
   private final List<XNamedValue> myVariables;
 
-  public StackFrameItem(Location location, List<XNamedValue> variables) {
+  public StackFrameItem(@NotNull Location location, List<XNamedValue> variables) {
     myLocation = location;
     myVariables = variables;
   }
@@ -76,6 +68,11 @@ public class StackFrameItem {
   @NotNull
   public String path() {
     return myLocation.declaringType().name();
+  }
+
+  @NotNull
+  public String method() {
+    return myLocation.method().name();
   }
 
   public int line() {
@@ -86,8 +83,9 @@ public class StackFrameItem {
   public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
-      List<StackFrameItem> res = new ArrayList<>();
-      for (StackFrameProxyImpl frame : threadReferenceProxy.forceFrames()) {
+      List<StackFrameProxyImpl> frameProxies = threadReferenceProxy.forceFrames();
+      List<StackFrameItem> res = new ArrayList<>(frameProxies.size());
+      for (StackFrameProxyImpl frame : frameProxies) {
         try {
           List<XNamedValue> vars = null;
           Location location = frame.location();
@@ -125,7 +123,7 @@ public class StackFrameItem {
               }
               catch (EvaluateException e) {
                 if (e.getCause() instanceof AbsentInformationException) {
-                  vars.add(VAR_NO_DEBUG_INFO);
+                  vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
                   // only args for frames w/o debug info for now
                   try {
                     for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
@@ -147,7 +145,7 @@ public class StackFrameItem {
           StackFrameItem frameItem = new StackFrameItem(location, vars);
           res.add(frameItem);
 
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext, false);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             res.add(null); // separator
             res.addAll(relatedStack);
@@ -174,6 +172,11 @@ public class StackFrameItem {
       valueText = value.toString();
     }
     return new VariableItem(name, type, valueText, varType);
+  }
+
+  @Override
+  public String toString() {
+    return myLocation.toString();
   }
 
   private static class VariableItem extends XNamedValue {
@@ -229,14 +232,16 @@ public class StackFrameItem {
 
     public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(item.myLocation));
-      myIsSynthetic = DebuggerUtils.isSynthetic(item.myLocation.method());
-      myIsInLibraryContent =
-        DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
       myPath = item.path();
-      myMethodName = item.myLocation.method().name();
+      myMethodName = item.method();
       myLineNumber = item.line();
       myVariables = item.myVariables;
+
+      Location location = item.myLocation;
+      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(location));
+      myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
+      myIsInLibraryContent =
+        DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
     }
 
     @Nullable
@@ -262,14 +267,6 @@ public class StackFrameItem {
         component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
       }
     }
-
-    private static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
-      @Override
-      public void onClick(MouseEvent event) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
-        event.consume();
-      }
-    };
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {

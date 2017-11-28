@@ -47,8 +47,9 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   public abstract String getDisplayName();
 
   public abstract Icon getIcon();
-  public interface ScopeListener {
 
+  @FunctionalInterface
+  public interface ScopeListener {
     void scopesChanged();
   }
 
@@ -81,6 +82,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return scopes.toArray(new NamedScope[scopes.size()]);
   }
 
+  @NotNull
   public NamedScope[] getEditableScopes(){
     return myScopes.toArray(new NamedScope[myScopes.size()]);
   }

@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -137,12 +138,7 @@ public class TailRecursionInspection extends BaseInspection {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      final PsiType returnType = method.getReturnType();
-      if (!(returnType instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)returnType;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
       return containingClass.equals(aClass);
     }
 

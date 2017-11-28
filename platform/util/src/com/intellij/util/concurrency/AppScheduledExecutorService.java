@@ -116,6 +116,11 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return myName + " threads created counter = " + counter;
   }
 
+  @TestOnly
+  public String dumpQueue() {
+    return delayQueue.toString();
+  }
+
   public int getBackendPoolExecutorSize() {
     return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
@@ -202,5 +207,9 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     public void setThreadFactory(ThreadFactory threadFactory) {
       error();
     }
+  }
+  @NotNull
+  public Thread getPeriodicTasksThread() {
+    return delayQueue.getThread();
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +39,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -51,6 +49,7 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
@@ -63,9 +62,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;
@@ -81,6 +77,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JCheckBox analyzeDoctest;
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
+  private JCheckBox renderExternal;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -102,6 +99,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -132,16 +130,13 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
         final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
-          if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)) {
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
-                                          createQuickFix(sdk, facetErrorPanel, PyNames.PY_TEST));
-            }
-          }
-          else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)) {
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
-                                          createQuickFix(sdk, facetErrorPanel, PyNames.NOSE_TEST));
+
+          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+            if (PyTestFrameworkService.getSdkReadableNameByFramework(framework).equals(selectedItem)) {
+              if (!VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, framework)) {
+                return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", framework),
+                                            createQuickFix(sdk, facetErrorPanel, framework));
+              }
             }
           }
         }
@@ -163,12 +158,13 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(), name);
+              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(),
+                                                                               name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }
         });
-        ui.install(Collections.singletonList(new PyRequirement(name)), Collections.<String>emptyList());
+        ui.install(Collections.singletonList(new PyRequirement(name)), Collections.emptyList());
       }
     };
   }
@@ -212,6 +208,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       return true;
     }
+    if (renderExternal.isSelected() != myDocumentationSettings.isRenderExternalDocumentation()) {
+      return true;
+    }
     if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
       return true;
     }
@@ -231,18 +230,16 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     }
     if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       final List<VirtualFile> files = Lists.newArrayList();
-      ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory() && PythonFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
-            files.add(fileOrDir);
-          }
-          return true;
+      ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(fileOrDir -> {
+        if (!fileOrDir.isDirectory() && PythonFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
+          files.add(fileOrDir);
         }
+        return true;
       });
       FileContentUtil.reparseFiles(myProject, Lists.newArrayList(files), false);
     }
     myModel.apply();
+    myDocumentationSettings.setRenderExternalDocumentation(renderExternal.isSelected());
     myDocumentationSettings.setFormat((DocStringFormat)myDocstringFormatComboBox.getSelectedItem());
     final ReSTService reSTService = ReSTService.getInstance(myModule);
     reSTService.setWorkdir(myWorkDir.getText());
@@ -257,14 +254,11 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   public void reparseFiles(final List<String> extensions) {
     final List<VirtualFile> filesToReparse = Lists.newArrayList();
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (!fileOrDir.isDirectory() && extensions.contains(fileOrDir.getExtension())) {
-          filesToReparse.add(fileOrDir);
-        }
-        return true;
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(fileOrDir -> {
+      if (!fileOrDir.isDirectory() && extensions.contains(fileOrDir.getExtension())) {
+        filesToReparse.add(fileOrDir);
       }
+      return true;
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
 
@@ -282,6 +276,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
   }
 

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AssignmentToSuperclassFieldInspectionTest extends LightInspectionTestCase {
 
-  public void testAssignmentToSuperclassField() throws Exception {
+  public void testAssignmentToSuperclassField() {
     doTest();
   }
 

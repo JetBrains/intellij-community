@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -202,26 +200,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   @Override
-  public String getText(@NotNull TextRange range) {
-    return range.substring(getText());
-  }
-
-  @Override
-  @NotNull
-  public CharSequence getCharsSequence() {
-    return getText();
-  }
-
-  @NotNull
-  @Override
   public CharSequence getImmutableCharSequence() {
     return ImmutableCharSequence.asImmutable(getText());
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(getText());
   }
 
   @Override
@@ -539,6 +519,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
+  public boolean isLineModified(int line) {
+    return myDelegate.isLineModified(injectedToHostLine(line));
+  }
+
+  @Override
   @NotNull
   public Segment[] getHostRanges() {
     synchronized (myLock) {
@@ -613,10 +598,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public void clearLineModificationFlags() {
-  }
-
-  @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
@@ -629,15 +610,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
                                   boolean greedyToRight,
                                   int layer) {
     throw new IllegalStateException();
-  }
-
-  @Override
-  public boolean isInBulkUpdate() {
-    return false;
-  }
-
-  @Override
-  public void setInBulkUpdate(boolean value) {
   }
 
   @Override
@@ -818,6 +790,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   // result[i] == null means no change
   // result[i] == "" means delete
   // result[i] == string means replace
+  @NotNull
   public String[] calculateMinEditSequence(String newText) {
     synchronized (myLock) {
       String[] result = new String[myShreds.size()];
@@ -970,12 +943,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     synchronized (myLock) {
       return myShreds;
     }
-  }
-
-  @Override
-  @NotNull
-  public List<RangeMarker> getGuardedBlocks() {
-    return Collections.emptyList();
   }
 
   //todo convert injected RMs to host

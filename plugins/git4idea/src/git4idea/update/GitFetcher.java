@@ -32,7 +32,6 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -81,7 +80,8 @@ public class GitFetcher {
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
-    repository.getRepositoryFiles().refresh(false);
+    repository.update();
+    repository.getRepositoryFiles().refreshNonTrackedData();
     return fetchResult;
   }
 
@@ -184,7 +184,7 @@ public class GitFetcher {
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
     GitCommandResult result = git.fetch(repository, remote,
-                                        Collections.<GitLineHandlerListener>singletonList(pruneDetector), additionalParams);
+                                        Collections.singletonList(pruneDetector), additionalParams);
 
     GitFetchResult fetchResult;
     if (result.success()) {

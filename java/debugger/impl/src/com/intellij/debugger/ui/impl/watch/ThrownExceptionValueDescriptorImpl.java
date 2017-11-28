@@ -25,11 +25,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: lex
- * Date: Oct 8, 2003
- * Time: 5:08:07 PM
- */
 public class ThrownExceptionValueDescriptorImpl extends ValueDescriptorImpl {
   public ThrownExceptionValueDescriptorImpl(Project project, @NotNull ObjectReference exceptionObj) {
     super(project, exceptionObj);

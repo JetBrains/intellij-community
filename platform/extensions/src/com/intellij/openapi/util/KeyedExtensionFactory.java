@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
@@ -96,9 +97,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
           }
         }
         catch (InvocationTargetException e) {
-          if (e.getCause() instanceof RuntimeException) {
-            throw (RuntimeException)e.getCause();
-          }
+          ExceptionUtil.rethrowUnchecked(e.getCause());
           throw new RuntimeException(e);
         }
         catch (RuntimeException e) {

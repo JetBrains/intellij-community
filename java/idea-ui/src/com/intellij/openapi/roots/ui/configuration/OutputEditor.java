@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 12-Aug-2006
- * Time: 20:14:02
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;
@@ -32,17 +26,23 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class OutputEditor extends ModuleElementsEditor {
+  public static final String NAME = ProjectBundle.message("project.roots.path.tab.title");
   private final BuildElementsEditor myCompilerOutputEditor;
   private final JavadocEditor myJavadocEditor;
   private final AnnotationsEditor myAnnotationsEditor;
+  private final List<ModuleElementsEditor> myEditors;
 
   protected OutputEditor(final ModuleConfigurationState state) {
     super(state);
     myCompilerOutputEditor = new BuildElementsEditor(state);
     myJavadocEditor = new JavadocEditor(state);
     myAnnotationsEditor = new AnnotationsEditor(state);
+    myEditors = Arrays.asList(myCompilerOutputEditor, myJavadocEditor, myAnnotationsEditor);
+    myEditors.forEach(editor -> editor.addListener(this::fireConfigurationChanged));
   }
 
   @Override
@@ -64,32 +64,26 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   public void saveData() {
-    myCompilerOutputEditor.saveData();
-    myJavadocEditor.saveData();
-    myAnnotationsEditor.saveData();
+    super.saveData();
+    myEditors.forEach(ModuleElementsEditor::saveData);
   }
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("project.roots.path.tab.title");
+    return NAME;
   }
-
 
   @Override
   public void moduleStateChanged() {
     super.moduleStateChanged();
-    myCompilerOutputEditor.moduleStateChanged();
-    myJavadocEditor.moduleStateChanged();
-    myAnnotationsEditor.moduleStateChanged();
+    myEditors.forEach(ModuleElementsEditor::moduleStateChanged);
   }
 
 
   @Override
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
     super.moduleCompileOutputChanged(baseUrl, moduleName);
-    myCompilerOutputEditor.moduleCompileOutputChanged(baseUrl, moduleName);
-    myJavadocEditor.moduleCompileOutputChanged(baseUrl, moduleName);
-    myAnnotationsEditor.moduleCompileOutputChanged(baseUrl, moduleName);
+    myEditors.forEach(editor -> editor.moduleCompileOutputChanged(baseUrl, moduleName));
   }
 
   @Override

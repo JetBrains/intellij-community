@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,14 +37,19 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
       return;
     }
 
-    try {
-      final PyDebugValue value = myDebugProcess.evaluate(expression, false, false);
-      callback.evaluated(value.getValue());
-      showCustomPopup(myDebugProcess, value);
-    }
-    catch (PyDebuggerException e) {
-      callback.errorOccurred(e.getTracebackError());
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        final PyDebugValue value = myDebugProcess.evaluate(expression, false, false);
+        if (value.getValue() == null) {
+          throw new PyDebuggerException("Failed to Load Value");
+        }
+        callback.evaluated(value.getValue());
+        ApplicationManager.getApplication().invokeLater(() -> showCustomPopup(myDebugProcess, value));
+      }
+      catch (PyDebuggerException e) {
+        callback.errorOccurred(e.getTracebackError());
+      }
+    });
   }
 
   protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {

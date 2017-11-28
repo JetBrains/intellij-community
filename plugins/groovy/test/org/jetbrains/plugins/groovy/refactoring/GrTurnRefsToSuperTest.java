@@ -25,11 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 public class GrTurnRefsToSuperTest extends MultiFileTestCase {
-  public void testNoReturnType() throws Exception {
+  public void testNoReturnType() {
     doTest("ClassB", "ClassB1", false);
   }
 
-  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
+  private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
     doTest((rootDir, rootAfter) -> this.performAction(className, superClassName, replaceInstanceOf), true);
   }
 

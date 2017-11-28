@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -44,13 +30,7 @@ public class PythonInspectionsTest extends PyTestCase {
   private void doTestWithLanguageLevel(String testName,
                                        LocalInspectionTool localInspectionTool,
                                        LanguageLevel languageLevel) {
-    setLanguageLevel(languageLevel);
-    try {
-      doTest(testName, localInspectionTool);
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doTest(testName, localInspectionTool));
   }
 
   public void testPyMethodFirstArgAssignmentInspection() {
@@ -79,58 +59,9 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRedeclarationInspection() {
-    doHighlightingTest(PyRedeclarationInspection.class);
-  }
-
   public void testPyTrailingSemicolonInspection() {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
-  }
-
-  public void testPyUnusedLocalVariableInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    inspection.ignoreTupleUnpacking = false;
-    inspection.ignoreLambdaParameters = false;
-    doHighlightingTest(inspection, LanguageLevel.PYTHON27);
-  }
-
-  public void testPyUnusedLocalVariableInspection3K() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON30);
-  }
-
-  public void testPyUnusedVariableTupleUnpacking() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPyUnusedLocalFunctionInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  // PY-9778
-  public void testPyUnusedLocalCoroutine() {
-    myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
-  }
-
-  public void testPyUnusedParameterInspection() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
-  }
-
-  // PY-20805
-  public void testUnusedLocalFStringReferences() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
-  }
-
-  // PY-22087
-  public void testUnusedLocalFStringReferencesInComprehensions() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
-  }
-
-  // PY-8219
-  public void testUnusedLocalDoctestReference() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
   }
 
   public void testPyDictCreationInspection() {
@@ -213,8 +144,12 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyInitNewSignatureInspection() {
-    LocalInspectionTool inspection = new PyInitNewSignatureInspection();
-    doTest(getTestName(false), inspection);
+    final String folderPath = "inspections/" + getTestName(false) + "/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("test.py");
+    myFixture.enableInspections(PyInitNewSignatureInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyCallByClassInspection() {
@@ -228,23 +163,11 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass, final LanguageLevel languageLevel) {
-    setLanguageLevel(languageLevel);
-    try {
-      doHighlightingTest(inspectionClass);
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doHighlightingTest(inspectionClass));
   }
 
   private void doHighlightingTest(InspectionProfileEntry entry, final LanguageLevel languageLevel) {
-    setLanguageLevel(languageLevel);
-    try {
-      doHighlightingTest(entry);
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doHighlightingTest(entry));
   }
 
   private void doHighlightingTest(InspectionProfileEntry entry) {
@@ -295,8 +218,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyUnnecessaryBackslashInspection() {    //PY-2952
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doHighlightingTest(PyUnnecessaryBackslashInspection.class);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doHighlightingTest(PyUnnecessaryBackslashInspection.class));
   }
 
   public void testPySingleQuotedDocstringInspection() {    //PY-1445
@@ -316,8 +238,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPySetFunctionToLiteralInspection() {    //PY-3120
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doHighlightingTest(PySetFunctionToLiteralInspection.class);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doHighlightingTest(PySetFunctionToLiteralInspection.class));
   }
 
   public void testPyDecoratorInspection() {    //PY-3348
@@ -333,13 +254,9 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyShadowingNamesInspection.class);
   }
 
-  public void testPyDunderSlotsInspection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
-  }
-
   // PY-21645
   public void testInspectionsDisabledInFunctionTypeComments() {
-    myFixture.enableInspections(PyIncorrectDocstringInspection.class); 
+    myFixture.enableInspections(PyIncorrectDocstringInspection.class);
     myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
     myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
     myFixture.enableInspections(PyByteLiteralInspection.class); 

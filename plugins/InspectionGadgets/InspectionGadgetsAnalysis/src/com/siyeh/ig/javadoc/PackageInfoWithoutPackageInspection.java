@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,9 +79,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)element;
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiPackageStatement packageStatement = factory.createPackageStatement(myPackageName);
-      file.add(packageStatement);
+      file.setPackageName(myPackageName);
     }
   }
 
@@ -100,14 +100,13 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
       if (packageStatement != null) {
         return;
       }
-      final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
       final PsiDirectory directory = file.getContainingDirectory();
-      final PsiPackage aPackage = directoryService.getPackage(directory);
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == null) {
         return;
       }
       final String packageName = aPackage.getQualifiedName();
-      if (packageName.isEmpty()) {
+      if (packageName.isEmpty() || !PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
         return;
       }
       registerError(file, packageName);

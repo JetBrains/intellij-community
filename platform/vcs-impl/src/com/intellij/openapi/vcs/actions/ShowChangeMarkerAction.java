@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
@@ -83,22 +82,15 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     };
   }
 
-  private boolean isActive(VcsContext context) {
-    Editor editor = myChangeMarkerContext.getEditor(context);
-    return myChangeMarkerContext.getRange(context) != null && editor != null && !DiffUtil.isDiffEditor(editor);
-  }
-
   @Override
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
+    Editor editor = myChangeMarkerContext.getEditor(context);
     LineStatusTracker tracker = myChangeMarkerContext.getLineStatusTracker(context);
-    if (tracker == null || !tracker.isValid() || tracker.isSilentMode()) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
 
-    boolean active = isActive(context);
-    presentation.setEnabled(active);
-    presentation.setVisible(myChangeMarkerContext.getEditor(context) != null || ActionPlaces.isToolbarPlace(context.getPlace()));
+    boolean isAvailable = tracker != null && tracker.isValid() && editor != null && tracker.isAvailableAt(editor);
+
+    presentation.setEnabled(isAvailable && myChangeMarkerContext.getRange(context) != null);
+    presentation.setVisible(editor != null || ActionPlaces.isToolbarPlace(context.getPlace()));
   }
 
 

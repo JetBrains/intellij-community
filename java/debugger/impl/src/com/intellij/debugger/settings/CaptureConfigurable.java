@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -29,10 +18,17 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -45,6 +41,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +50,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,12 +59,19 @@ import java.util.List;
 public class CaptureConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
 
+  private JCheckBox myDebuggerAgent;
   private MyTableModel myTableModel;
   private JCheckBox myCaptureVariables;
 
   @NotNull
   @Override
   public String getId() {
+    return getHelpTopic();
+  }
+
+  @NotNull
+  @Override
+  public String getHelpTopic() {
     return "reference.idesettings.debugger.capture";
   }
 
@@ -239,10 +244,21 @@ public class CaptureConfigurable implements SearchableConfigurable {
     });
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
-    panel.addToCenter(decorator.createPanel());
+    myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
+    if (Registry.is("debugger.capture.points.agent")) {
+      panel.addToTop(myDebuggerAgent);
+    }
+
+    BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
+    if (Registry.is("debugger.capture.points.agent")) {
+      debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
+    }
+    debuggerPanel.addToCenter(decorator.createPanel());
 
     myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
-    panel.addToBottom(myCaptureVariables);
+    debuggerPanel.addToBottom(myCaptureVariables);
+
+    panel.addToCenter(debuggerPanel);
     return panel;
   }
 
@@ -261,20 +277,119 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     static final String[] COLUMN_NAMES =
       new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
-    List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    List<CapturePoint> myCapturePoints;
 
+    private MyTableModel() {
+      myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+      scanPoints();
+    }
+
+    private void scanPoints() {
+      if (Registry.is("debugger.capture.points.annotations")) {
+        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
+        scanPointsInt(true, capturePointsFromAnnotations);
+        scanPointsInt(false, capturePointsFromAnnotations);
+
+        capturePointsFromAnnotations.forEach(this::addIfNeeded);
+      }
+    }
+
+    private static void scanPointsInt(boolean capture, List<CapturePoint> capturePointsFromAnnotations) {
+      try {
+        String annotationName = (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
+        Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+        GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
+        if (annotationClass != null) {
+          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class).forEach(e -> {
+            if (e instanceof PsiMethod) {
+              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture, capturePointsFromAnnotations);
+            }
+            else if (e instanceof PsiParameter) {
+              PsiParameter psiParameter = (PsiParameter)e;
+              PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
+              addCapturePointIfNeeded(psiParameter, psiMethod, annotationName,
+                                      DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
+                                      capture, capturePointsFromAnnotations);
+            }
+          });
+        }
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
+                                                PsiMethod psiMethod,
+                                                String annotationName,
+                                                String defaultExpression,
+                                                boolean capture,
+                                                List<CapturePoint> capturePointsFromAnnotations) {
+      CapturePoint capturePoint = new CapturePoint();
+      capturePoint.myEnabled = false;
+      if (capture) {
+        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+      else {
+        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+
+      PsiModifierList modifierList = psiElement.getModifierList();
+      if (modifierList != null) {
+        PsiAnnotation annotation = modifierList.findAnnotation(annotationName);
+        if (annotation != null) {
+          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
+          if (StringUtil.isEmpty(keyExpression)) {
+            keyExpression = defaultExpression;
+          }
+          if (capture) {
+            capturePoint.myCaptureKeyExpression = keyExpression;
+          }
+          else {
+            capturePoint.myInsertKeyExpression = keyExpression;
+          }
+
+          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
+          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
+          if (!StringUtil.isEmpty(group)) {
+            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
+              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
+                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
+                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
+                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
+                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      capturePointsFromAnnotations.add(capturePoint);
+    }
+
+    @Override
     public String getColumnName(int column) {
       return COLUMN_NAMES[column];
     }
 
+    @Override
     public int getRowCount() {
       return myCapturePoints.size();
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMN_NAMES.length;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
@@ -296,10 +411,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return null;
     }
 
+    @Override
     public boolean isCellEditable(int row, int column) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
@@ -328,6 +445,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
       fireTableCellUpdated(row, col);
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case ENABLED_COLUMN:
@@ -370,6 +488,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
       add(new CapturePoint());
     }
 
+    @Override
     public void removeRow(final int row) {
       myCapturePoints.remove(row);
       fireTableRowsDeleted(row, row);
@@ -379,6 +498,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
+           DebuggerSettings.getInstance().INSTRUMENTING_AGENT != myDebuggerAgent.isSelected() ||
            !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
@@ -386,12 +506,15 @@ public class CaptureConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
     DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
+    DebuggerSettings.getInstance().INSTRUMENTING_AGENT = myDebuggerAgent.isSelected();
   }
 
   @Override
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
+    myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.scanPoints();
     myTableModel.fireTableDataChanged();
   }
 
@@ -399,11 +522,5 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
-  }
-
-  @Nullable
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 }

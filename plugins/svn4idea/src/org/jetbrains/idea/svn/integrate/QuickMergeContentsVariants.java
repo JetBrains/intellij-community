@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 7:53 PM
- */
 public enum QuickMergeContentsVariants {
   all, select, cancel, showLatest
 }

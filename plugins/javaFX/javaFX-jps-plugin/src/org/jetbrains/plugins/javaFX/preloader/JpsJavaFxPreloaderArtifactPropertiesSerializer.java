@@ -22,10 +22,6 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJavaFxPreloaderArtifactProperties> {
   public JpsJavaFxPreloaderArtifactPropertiesSerializer() {
     super("javafx-preloader", JpsJavaFxPreloaderArtifactType.INSTANCE);

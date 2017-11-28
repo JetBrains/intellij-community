@@ -20,7 +20,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -35,7 +37,9 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
@@ -43,6 +47,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;
+  private final Key<Map<String, RegExpGroup>> NAMED_GROUP_MAP = new Key<>("REG_EXP_NAMED_GROUP_MAP");
 
   public RegExpAnnotator() {
     myLanguageHosts = RegExpLanguageHosts.getInstance();
@@ -128,7 +133,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpBoundary(RegExpBoundary boundary) {
     if (!myLanguageHosts.supportsBoundary(boundary)) {
-      myHolder.createErrorAnnotation(boundary, "Unsupported boundary");
+      myHolder.createErrorAnnotation(boundary, "This boundary is not supported in this regex dialect");
     }
   }
 
@@ -194,13 +199,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (type == RegExpTT.ESC_CTRL_CHARACTER && text.equals("\\b") && !myLanguageHosts.supportsLiteralBackspace(ch)) {
       myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
     }
-    if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
-      final ASTNode astNode = ch.getNode().getFirstChildNode();
-      if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-        final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
-        registerFix(a, new RemoveRedundantEscapeAction(ch));
-      }
-    }
     final RegExpChar.Type charType = ch.getType();
     if (charType == RegExpChar.Type.HEX || charType == RegExpChar.Type.UNICODE) {
       if (ch.getValue() == -1) {
@@ -209,7 +207,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       }
       if (text.charAt(text.length() - 1) == '}') {
         if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
-          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
+          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported in this regex dialect");
         }
       }
     }
@@ -230,7 +228,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
     if (!myLanguageHosts.supportsNamedCharacters(namedCharacter)) {
-      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
+      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regex dialect");
     }
     else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
       final ASTNode node = namedCharacter.getNameNode();
@@ -277,7 +275,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     if (group.isAnyNamedGroup()) {
       if (!myLanguageHosts.supportsNamedGroupSyntax(group)) {
-        myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
+        myHolder.createErrorAnnotation(group, "This named group syntax is not supported in this regex dialect");
       }
     }
     if (group.getType() == RegExpGroup.Type.ATOMIC && !myLanguageHosts.supportsPossessiveQuantifiers(group)) {
@@ -288,11 +286,18 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) myHolder.createErrorAnnotation(node, "Invalid group name");
     }
+    final AnnotationSession session = myHolder.getCurrentAnnotationSession();
+    final Map<String, RegExpGroup> namedGroups = NAMED_GROUP_MAP.get(session, new HashMap<>());
+    if (namedGroups.isEmpty()) session.putUserData(NAMED_GROUP_MAP, namedGroups);
+    if (namedGroups.put(name, group) != null) {
+      final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) myHolder.createErrorAnnotation(node, "Group with name '" + name + "' already defined");
+    }
     final RegExpGroup.Type groupType = group.getType();
     if (groupType == RegExpGroup.Type.POSITIVE_LOOKBEHIND || groupType == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
       final RegExpLanguageHost.Lookbehind support = myLanguageHosts.supportsLookbehind(group);
       if (support == RegExpLanguageHost.Lookbehind.NOT_SUPPORTED) {
-        myHolder.createErrorAnnotation(group, "Look-behind groups not supported in this regex dialect");
+        myHolder.createErrorAnnotation(group, "Look-behind groups are not supported in this regex dialect");
       }
       else {
         group.accept(new LookbehindVisitor(support, myHolder));
@@ -303,7 +308,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
     if (!myLanguageHosts.supportsNamedGroupRefSyntax(groupRef)) {
-      myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported");
+      myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported in this regex dialect");
       return;
     }
     if (groupRef.getGroupName() == null) {
@@ -326,7 +331,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitComment(PsiComment comment) {
     if (comment.getText().startsWith("(?#")) {
       if (!myLanguageHosts.supportsPerl5EmbeddedComments(comment)) {
-        myHolder.createErrorAnnotation(comment, "Embedded comments are not supported");
+        myHolder.createErrorAnnotation(comment, "Embedded comments are not supported in this regex dialect");
       }
     }
   }
@@ -334,7 +339,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
     if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
-      myHolder.createErrorAnnotation(condRef, "Conditional references are not supported");
+      myHolder.createErrorAnnotation(condRef, "Conditional references are not supported in this regex dialect");
     }
   }
 
@@ -413,7 +418,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
     final String className = posixBracketExpression.getClassName();
-    if (!POSIX_CHARACTER_CLASSES.contains(className)) {
+    if (!POSIX_CHARACTER_CLASSES.contains(className) && !"<".equals(className) && !">".equals(className)) {
       final ASTNode node = posixBracketExpression.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) {
         final Annotation annotation = myHolder.createErrorAnnotation(node, "Unknown POSIX character class");

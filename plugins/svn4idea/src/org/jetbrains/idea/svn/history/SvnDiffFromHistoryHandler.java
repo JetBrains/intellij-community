@@ -48,8 +48,8 @@ public class SvnDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<SvnFil
   protected List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull SvnFileRevision rev1, @Nullable SvnFileRevision rev2)
     throws VcsException {
     File file = path.getIOFile();
-    SvnTarget target1 = SvnTarget.fromURL(SvnUtil.createUrl(rev1.getURL()), rev1.getRevision());
-    SvnTarget target2 = rev2 != null ? SvnTarget.fromURL(SvnUtil.createUrl(rev2.getURL()), rev2.getRevision()) : SvnTarget.fromFile(file);
+    SvnTarget target1 = SvnTarget.fromURL(rev1.getURL(), rev1.getRevision());
+    SvnTarget target2 = rev2 != null ? SvnTarget.fromURL(rev2.getURL(), rev2.getRevision()) : SvnTarget.fromFile(file);
 
     return executeDiff(path, target1, target2);
   }
@@ -58,8 +58,8 @@ public class SvnDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<SvnFil
   @Override
   protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull SvnFileRevision rev) throws VcsException {
     // Diff with zero revision is used here to get just affected changes under the path, and not all affected changes of the revision.
-    SvnTarget target1 = SvnTarget.fromURL(SvnUtil.createUrl(rev.getURL()), SVNRevision.create(0));
-    SvnTarget target2 = SvnTarget.fromURL(SvnUtil.createUrl(rev.getURL()), rev.getRevision());
+    SvnTarget target1 = SvnTarget.fromURL(rev.getURL(), SVNRevision.create(0));
+    SvnTarget target2 = SvnTarget.fromURL(rev.getURL(), rev.getRevision());
 
     return executeDiff(path, target1, target2);
   }

@@ -1,4 +1,5 @@
 class Foo(object):
+
     def wrong_blank_lines(self):
         pass
 

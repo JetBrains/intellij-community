@@ -375,6 +375,11 @@
       successive-show="5"
       min-usage-count="5"
       />
+    <feature id="codeassist.inspect.batch"
+             tip-file="InspectCode.html"
+             first-show="3"
+             min-usage-count="5"
+             successive-show="5"/>
   </group>
 
   <group id="refactoring">

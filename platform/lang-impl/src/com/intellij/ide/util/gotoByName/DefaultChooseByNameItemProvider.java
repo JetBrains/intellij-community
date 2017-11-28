@@ -60,6 +60,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
+    boolean preferStartMatches = !pattern.startsWith("*");
 
     if (removeModelSpecificMarkup(base.getModel(), namePattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
@@ -100,7 +101,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
     started = System.currentTimeMillis();
     List<MatchResult> results = (List<MatchResult>)collect.getResult();
-    sortNamesList(namePattern, results);
+    sortNamesList(namePattern, results, preferStartMatches);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
@@ -112,14 +113,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
       @SuppressWarnings("unchecked")
-      Comparator<Object> modelComparator = model instanceof Comparator
-                                           ? (Comparator<Object>)model
-                                           : new PathProximityComparator(myContext == null ? null :myContext.getElement());
+      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : getPathProximityComparator();
 
       @Override
       public int compare(Object o1, Object o2) {
         int result = modelComparator.compare(o1, o2);
-        return result != 0 ? result : qualifierMatchResults.get(o1).compareTo(qualifierMatchResults.get(o2));
+        return result != 0 ? result : qualifierMatchResults.get(o1).compareWith(qualifierMatchResults.get(o2), preferStartMatches);
       }
     };
 
@@ -127,7 +126,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
-    boolean sortedByMatchingDegree = !(base.getModel() instanceof CustomMatcherModel);
     IdFilter idFilter = null;
 
     if (model instanceof ContributorsBasedGotoByModel) {
@@ -136,13 +134,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.myProject, everywhere);
     FindSymbolParameters parameters = new FindSymbolParameters(pattern, namePattern, searchScope, idFilter);
-    boolean afterStartMatch = false;
 
     for (MatchResult result : namesList) {
       indicator.checkCanceled();
       String name = result.elementName;
-
-      boolean needSeparator = sortedByMatchingDegree && !result.startMatch && afterStartMatch;
 
       // use interruptible call if possible
       Object[] elements = model instanceof ContributorsBasedGotoByModel ?
@@ -166,35 +161,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
             continue;
           }
 
-          if (needSeparator && !startMiddleMatchVariants(qualifierMiddleMatched, consumer)) return false;
           if (!consumer.process(element)) return false;
-          needSeparator = false;
-          afterStartMatch = result.startMatch;
         }
       }
       else if (elements.length == 1 && matchQualifier(elements[0], base, patternsAndMatchers) != null) {
-        if (needSeparator && !startMiddleMatchVariants(qualifierMiddleMatched, consumer)) return false;
         if (!consumer.process(elements[0])) return false;
-        afterStartMatch = result.startMatch;
       }
     }
     return ContainerUtil.process(qualifierMiddleMatched, consumer);
   }
 
-  private static boolean startMiddleMatchVariants(@NotNull List<Object> qualifierMiddleMatched,
-                                                  @NotNull Processor<Object> consumer) {
-    if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-    if (!ContainerUtil.process(qualifierMiddleMatched, consumer)) return false;
-    qualifierMiddleMatched.clear();
-    return true;
+  @NotNull
+  protected PathProximityComparator getPathProximityComparator() {
+    return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
 
-  private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
+  private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList, boolean preferStartMatches) {
     Collections.sort(namesList, (mr1, mr2) -> {
       boolean exactPrefix1 = namePattern.equalsIgnoreCase(mr1.elementName);
       boolean exactPrefix2 = namePattern.equalsIgnoreCase(mr2.elementName);
       if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
-      return mr1.compareTo(mr2);
+      return mr1.compareWith(mr2, preferStartMatches);
     });
   }
 
@@ -361,7 +348,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  private static MatchResult matches(@NotNull ChooseByNameBase base,
+  protected static MatchResult matches(@NotNull ChooseByNameBase base,
                                      @NotNull String pattern,
                                      @NotNull MinusculeMatcher matcher,
                                      @Nullable String name) {
@@ -386,7 +373,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return NameUtil.buildMatcher(pattern, caseSensitivity);
   }
 
-  private static class PathProximityComparator implements Comparator<Object> {
+  protected static class PathProximityComparator implements Comparator<Object> {
     @NotNull private final PsiProximityComparator myProximityComparator;
 
     private PathProximityComparator(@Nullable final PsiElement context) {

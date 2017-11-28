@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -185,7 +186,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
     if (myBuildInActions) {
       final JComponent tbComp =
-        ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
+        ActionManager.getInstance().createActionToolbar("LogConsole", getOrCreateActions(), true).getComponent();
       myTopComponent.add(tbComp, BorderLayout.CENTER);
       myTopComponent.add(getSearchComponent(), BorderLayout.EAST);
     }
@@ -310,8 +311,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       else {
         try {
           final BufferedReader reader = readerThread.myReader;
-          while (reader != null && reader.ready()) {
-            addMessage(reader.readLine());
+          while (reader.ready()) {
+            //ensure have read lock before requiring for sync, otherwise dispose() under write action would lead to deadlock
+            ReadAction.run(() -> addMessage(reader.readLine()));
           }
         }
         catch (IOException ignore) {}
@@ -321,6 +323,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   protected synchronized void addMessage(final String text) {
+    if (myDisposed) return;
     if (text == null) return;
     if (myContentPreprocessor != null) {
       final List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
@@ -358,7 +361,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (process != null) {
       final ProcessAdapter stopListener = new ProcessAdapter() {
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           process.removeProcessListener(this);
           stopRunning(true);
         }

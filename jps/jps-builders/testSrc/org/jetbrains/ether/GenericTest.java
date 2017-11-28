@@ -20,63 +20,63 @@ package org.jetbrains.ether;
  * Date: 26.09.11
  */
 public class GenericTest extends IncrementalTestCase {
-  public GenericTest() throws Exception {
+  public GenericTest() {
     super("generics");
   }
 
-  public void testAddMethodToBase() throws Exception {
+  public void testAddMethodToBase() {
     doTest();
   }
 
-  public void testAddParameterizedMethodToBase() throws Exception {
+  public void testAddParameterizedMethodToBase() {
     doTest();
   }
 
-  public void testChangeBound() throws Exception {
+  public void testChangeBound() {
     doTest();
   }
 
-  public void testChangeBound1() throws Exception {
+  public void testChangeBound1() {
     doTest();
   }
 
-  public void testChangeBoundClass1() throws Exception {
+  public void testChangeBoundClass1() {
     doTest();
   }
 
-  public void testChangeBoundedClass() throws Exception {
+  public void testChangeBoundedClass() {
     doTest();
   }
 
-  public void testChangeBoundInterface1() throws Exception {
+  public void testChangeBoundInterface1() {
     doTest();
   }
 
-  public void testChangeExtends() throws Exception {
+  public void testChangeExtends() {
     doTest();
   }
 
-  public void testChangeExtends1() throws Exception {
+  public void testChangeExtends1() {
     doTest();
   }
 
-  public void testChangeExtends2() throws Exception {
+  public void testChangeExtends2() {
     doTest();
   }
 
-  public void testChangeImplements() throws Exception {
+  public void testChangeImplements() {
     doTest();
   }
 
-  public void testChangeInterfaceTypeParameter() throws Exception {
+  public void testChangeInterfaceTypeParameter() {
     doTest();
   }
 
-  public void testChangeToCovariantMethodInBase() throws Exception {
+  public void testChangeToCovariantMethodInBase() {
     doTest();
   }
 
-  public void testChangeToCovariantMethodInBase2() throws Exception {
+  public void testChangeToCovariantMethodInBase2() {
     doTest();
   }
 
@@ -85,72 +85,72 @@ public class GenericTest extends IncrementalTestCase {
     doTest();
   }
   */
-  public void testChangeVarargSignature() throws Exception {
+  public void testChangeVarargSignature() {
     doTest();
   }
 
-  public void testChangeVarargSignature1() throws Exception {
+  public void testChangeVarargSignature1() {
     doTest();
   }
 
-  public void testCovariance() throws Exception {
+  public void testCovariance() {
     doTest();
   }
 
-  public void testCovariance1() throws Exception {
+  public void testCovariance1() {
     doTest();
   }
 
-  public void testCovariance2() throws Exception {
+  public void testCovariance2() {
     doTest();
   }
 
-  public void testCovarianceNoChanges() throws Exception {
+  public void testCovarianceNoChanges() {
     doTest();
   }
 
-  public void testDegenerify() throws Exception {
+  public void testDegenerify() {
     doTest();
   }
 
-  public void testDegenerify1() throws Exception {
+  public void testDegenerify1() {
     doTest();
   }
 
-  public void testFieldTypeChange() throws Exception {
+  public void testFieldTypeChange() {
     doTest();
   }
 
-  public void testOverrideAnnotatedAnonymous() throws Exception {
+  public void testOverrideAnnotatedAnonymous() {
     doTest();
   }
 
   /* Not working yet */
-  public void testOverrideAnnotatedAnonymousNotRecompile() throws Exception {
+  public void testOverrideAnnotatedAnonymousNotRecompile() {
     doTest();
   }
 
-  public void testOverrideAnnotatedInner() throws Exception {
+  public void testOverrideAnnotatedInner() {
     doTest();
   }
 
-  public void testParamTypes() throws Exception {
+  public void testParamTypes() {
     doTest();
   }
 
-  public void testReturnType() throws Exception {
+  public void testReturnType() {
     doTest();
   }
 
-  public void testArgumentContainment() throws Exception {
+  public void testArgumentContainment() {
     doTest();
   }
 
-  public void testArgumentContainment2() throws Exception {
+  public void testArgumentContainment2() {
     doTest();
   }
 
-  public void testArgumentContainment3() throws Exception {
+  public void testArgumentContainment3() {
     doTest();
   }
 }

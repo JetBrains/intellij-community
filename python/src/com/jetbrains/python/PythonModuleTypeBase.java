@@ -59,10 +59,6 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
     return basicDescription;
   }
 
-  public Icon getBigIcon() {
-    return PythonIcons.Python.Python_24;
-  }
-
   public Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;
   }

@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,9 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
       
     originalHandler.execute(editor, dataContext);
     Project project = editor.getProject();
-    if (indentInsideJavadoc != null && project != null && CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+    if (indentInsideJavadoc != null &&
+        project != null &&
+        CodeStyleManager.getInstance(project).getDocCommentSettings(file).isLeadingAsteriskEnabled()) {
       document.insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
     

@@ -24,12 +24,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -43,6 +42,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static git4idea.GitUtil.getRepositoryManager;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -69,7 +69,8 @@ abstract class GitBranchOperation {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
-    myRepositories = repositories;
+
+    myRepositories = getRepositoryManager(project).sortByDependency(repositories);
     myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
     myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();
@@ -239,8 +240,15 @@ abstract class GitBranchOperation {
   /**
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
+   * @param branchName
    */
-  protected void updateRecentBranch() {
+  protected void updateRecentBranch(@Nullable String branchName) {
+    if (branchName != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
+      });
+    }
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
       String currentHead = myCurrentHeads.get(repository);
@@ -256,6 +264,16 @@ abstract class GitBranchOperation {
       if (recentCommonBranch != null) {
         mySettings.setRecentCommonBranch(recentCommonBranch);
       }
+    }
+  }
+
+  protected void branchWillChange() {
+    String currentBranch = myCurrentHeads.values().iterator().next();
+    if (currentBranch != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(currentBranch);
+      });
     }
   }
 
@@ -290,15 +308,6 @@ abstract class GitBranchOperation {
 
   private void showUnmergedFilesNotification() {
     myUiHandler.showUnmergedFilesNotification(getOperationName(), getRepositories());
-  }
-
-  /**
-   * Asynchronously refreshes the VFS root directory of the given repository.
-   */
-  protected void refreshRoot(@NotNull GitRepository repository) {
-    // marking all files dirty, because sometimes FileWatcher is unable to process such a large set of changes that can happen during
-    // checkout on a large repository: IDEA-89944
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getRoot());
   }
 
   protected void fatalLocalChangesError(@NotNull String reference) {
@@ -401,17 +410,9 @@ abstract class GitBranchOperation {
     if (grouped.size() == 1) {
       return grouped.keySet().iterator().next();
     }
-    return StringUtil.join(grouped.entrySet(), new Function<Map.Entry<String, Collection<VirtualFile>>, String>() {
-      @Override
-      public String fun(Map.Entry<String, Collection<VirtualFile>> entry) {
-        String roots = StringUtil.join(entry.getValue(), new Function<VirtualFile, String>() {
-          @Override
-          public String fun(VirtualFile file) {
-            return file.getName();
-          }
-        }, ", ");
-        return entry.getKey() + " (in " + roots + ")";
-      }
+    return StringUtil.join(grouped.entrySet(), entry -> {
+      String roots = StringUtil.join(entry.getValue(), file -> file.getName(), ", ");
+      return entry.getKey() + " (in " + roots + ")";
     }, "<br/>");
   }
 

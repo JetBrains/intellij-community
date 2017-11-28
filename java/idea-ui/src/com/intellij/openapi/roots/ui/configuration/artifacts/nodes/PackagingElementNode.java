@@ -30,7 +30,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,19 +101,13 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
       super.update(presentation);
       return;
     }
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    final String tooltip;
+    StringBuilder buffer = new StringBuilder();
     boolean isError = false;
-    try {
-      for (ArtifactProblemDescription problem : problems) {
-        isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
-        buffer.append(problem.getMessage(false)).append("<br>");
-      }
-      tooltip = XmlStringUtil.wrapInHtml(buffer);
+    for (ArtifactProblemDescription problem : problems) {
+      isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
+      buffer.append(problem.getMessage(false)).append("<br>");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    final String tooltip = XmlStringUtil.wrapInHtml(buffer);
 
     getElementPresentation().render(presentation, addErrorHighlighting(isError, SimpleTextAttributes.REGULAR_ATTRIBUTES),
                                     addErrorHighlighting(isError, SimpleTextAttributes.GRAY_ATTRIBUTES));
@@ -142,7 +135,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   @NotNull
   public Collection<PackagingNodeSource> getNodeSource(@NotNull PackagingElement<?> element) {
     final Collection<PackagingNodeSource> nodeSources = myNodeSources.get(element);
-    return nodeSources != null ? nodeSources : Collections.<PackagingNodeSource>emptyList();
+    return nodeSources != null ? nodeSources : Collections.emptyList();
   }
 
   public ArtifactEditorContext getContext() {

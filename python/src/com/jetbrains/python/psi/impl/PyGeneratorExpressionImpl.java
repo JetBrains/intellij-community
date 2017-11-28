@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,15 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -51,15 +45,13 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
-    final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.GENERATOR),
-                                                                           PyResolveImportUtil.fromFoothold(this)), PyClass.class);
-    if (resultExpr != null && generator != null) {
-      final List<PyType> parameters = Arrays.asList(context.getType(resultExpr), null, PyNoneType.INSTANCE);
-      return new PyCollectionTypeImpl(generator, false, parameters);
+    if (resultExpr != null) {
+      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), PyNoneType.INSTANCE, this);
     }
     return null;
   }
 
+  @Override
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
     // extract whatever names are defined in "for" components
@@ -80,6 +72,7 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
     return results;
   }
 
+  @Override
   @Nullable
   public PsiNamedElement getNamedElement(@NotNull final String the_name) {
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);

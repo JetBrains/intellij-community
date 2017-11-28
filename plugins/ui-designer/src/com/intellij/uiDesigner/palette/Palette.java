@@ -231,8 +231,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * @return <code>ComponentItem</code> for the UI bean with the specified <code>componentClassName</code>.
-   * The method returns <code>null</code> if palette has no information about the specified
+   * @return {@code ComponentItem} for the UI bean with the specified {@code componentClassName}.
+   * The method returns {@code null} if palette has no information about the specified
    * class.
    */
   @Nullable
@@ -268,7 +268,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * Adds specified <code>item</code> to the palette.
+   * Adds specified {@code item} to the palette.
    *
    * @param item item to be added
    * @throws IllegalArgumentException if an item for the same class
@@ -731,8 +731,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * @return introspected property with the given <code>name</code> of the
-   * specified <code>class</code>. The method returns <code>null</code> if there is no
+   * @return introspected property with the given {@code name} of the
+   * specified {@code class}. The method returns {@code null} if there is no
    * property with the such name.
    */
   @Nullable

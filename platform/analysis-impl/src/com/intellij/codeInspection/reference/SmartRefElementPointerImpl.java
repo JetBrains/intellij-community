@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2001
- * Time: 2:40:54 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import org.jdom.Element;
@@ -58,13 +50,6 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
      myType = type;
    }
 
-  public SmartRefElementPointerImpl(final String type, final String fqName, final RefManager manager) {
-    myIsPersistent = false;
-    myFQName = fqName;
-    myType = type;
-    resolve(manager);
-  }
-
   @Override
   public boolean isPersistent() {
     return myIsPersistent;
@@ -91,8 +76,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   @Override
   public boolean resolve(@NotNull RefManager manager) {
     if (myRefElement != null) {
-      if (myRefElement instanceof RefElement && myRefElement.isValid()) return true;
-      return false;
+      return myRefElement instanceof RefElement && myRefElement.isValid();
     }
     myRefElement = manager.getReference(myType, getFQName());
     return myRefElement != null;

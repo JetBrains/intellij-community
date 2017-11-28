@@ -75,6 +75,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @Override
   public void reformatTextWithContext(@NotNull PsiFile file, 
                                       @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
+    //in real world ranges are optimized before passing to formatter
     reformatText(file, ranges.allChangedRanges);
   }
 

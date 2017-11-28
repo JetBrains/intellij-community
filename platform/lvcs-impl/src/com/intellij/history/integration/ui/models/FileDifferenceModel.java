@@ -18,7 +18,6 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
@@ -100,10 +99,6 @@ public abstract class FileDifferenceModel {
   protected abstract DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p);
 
   protected abstract DiffContent getEditableRightDiffContent(RevisionProcessingProgress p);
-
-  protected DocumentContent createSimpleDiffContent(String content, Entry e) {
-    return DiffContentFactory.getInstance().create(content, myGateway.getFileType(e.getName()));
-  }
 
   protected Document getDocument() {
     return myGateway.getDocument(getRightEntry().getPath());

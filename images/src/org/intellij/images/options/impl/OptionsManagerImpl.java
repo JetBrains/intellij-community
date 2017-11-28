@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -56,11 +55,6 @@ final class OptionsManagerImpl extends OptionsManager implements PersistentState
 
   @Override
   public void loadState(final Element state) {
-    try {
-      options.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    options.readExternal(state);
   }
 }

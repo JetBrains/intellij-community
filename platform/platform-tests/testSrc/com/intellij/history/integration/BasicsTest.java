@@ -35,7 +35,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 public class BasicsTest extends IntegrationTestCase {
-  public void testProcessingCommands() throws Exception {
+  public void testProcessingCommands() {
     final VirtualFile[] f = new VirtualFile[1];
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
@@ -51,13 +51,13 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(2, getRevisionsFor(f[0]).size());
   }
 
-  public void testPuttingUserLabel() throws Exception {
+  public void testPuttingUserLabel() {
     VirtualFile f = createChildData(myRoot, "f.txt");
 
     LocalHistory.getInstance().putUserLabel(myProject, "global");
 
     assertEquals(3, getRevisionsFor(f).size());
-    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(4, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putUserLabel(myProject, "file");
 
@@ -69,11 +69,11 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(-1, rr.get(2).getLabelColor());
   }
 
-  public void testPuttingSystemLabel() throws IOException {
+  public void testPuttingSystemLabel() {
     VirtualFile f = createChildData(myRoot, "file.txt");
 
     assertEquals(2, getRevisionsFor(f).size());
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putSystemLabel(myProject, "label");
 
@@ -82,11 +82,11 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("label", rr.get(1).getLabel());
 
     rr = getRevisionsFor(myRoot);
-    assertEquals(3, rr.size());
+    assertEquals(4, rr.size());
     assertEquals("label", rr.get(1).getLabel());
   }
 
-  public void testPuttingLabelWithUnsavedDocuments() throws Exception {
+  public void testPuttingLabelWithUnsavedDocuments() {
     VirtualFile f = createChildData(myRoot, "f.txt");
     setContent(f, "1");
 
@@ -111,7 +111,7 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("", new String(rr.get(7).findEntry().getContent().getBytes()));
   }
 
-  public void testDoNotRegisterSameUnsavedDocumentContentTwice() throws Exception {
+  public void testDoNotRegisterSameUnsavedDocumentContentTwice() {
     VirtualFile f = createChildData(myRoot, "f.txt");
     setContent(f, "1");
 
@@ -128,7 +128,7 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("", new String(rr.get(4).findEntry().getContent().getBytes()));
   }
 
-  public void testIsUnderControl() throws Exception {
+  public void testIsUnderControl() {
     VirtualFile f1 = createChildData(myRoot, "file.txt");
     VirtualFile f2 = createChildData(myRoot, "file.hprof");
 
@@ -157,7 +157,7 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(1, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
     ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
       @Override
@@ -181,7 +181,7 @@ public class BasicsTest extends IntegrationTestCase {
     jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(2, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
-    assertEquals(1, getRevisionsFor(jarRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(2, getRevisionsFor(jarRoot).size());
   }
 }

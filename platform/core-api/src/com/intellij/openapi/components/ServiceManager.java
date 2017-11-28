@@ -18,6 +18,7 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ public class ServiceManager {
     PicoContainer picoContainer = componentManager.getPicoContainer();
     @SuppressWarnings("unchecked") T instance = (T)picoContainer.getComponentInstance(serviceClass.getName());
     if (instance == null) {
+      ProgressManager.checkCanceled();
       instance = componentManager.getComponent(serviceClass);
       if (instance != null) {
         Application app = ApplicationManager.getApplication();
@@ -70,6 +72,7 @@ public class ServiceManager {
    * @param <T>          Service class type.
    * @return Key instance.
    */
+  @NotNull
   public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> getService(project, serviceClass));
   }

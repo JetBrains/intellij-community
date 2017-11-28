@@ -37,18 +37,14 @@ public class ValidateXmlAction extends AnAction {
 
   private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
-    handler.setErrorReporter(
-      new StdErrorReporter(handler, file.getProject(),
-                           () -> doRunAction(file)
-      )
-    );
+    handler.setErrorReporter(new StdErrorReporter(handler, file, () -> doRunAction(file)));
     return handler;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (psiFile != null) {
+    if (psiFile != null && psiFile.getVirtualFile() != null) {
       doRunAction(psiFile);
     }
   }
@@ -86,26 +82,27 @@ public class ValidateXmlAction extends AnAction {
     Presentation presentation = event.getPresentation();
     PsiElement psiElement = CommonDataKeys.PSI_FILE.getData(event.getDataContext());
 
-    boolean flag = psiElement instanceof XmlFile;
-    presentation.setVisible(flag);
-    boolean value = psiElement instanceof XmlFile;
+    boolean visible = psiElement instanceof XmlFile;
+    presentation.setVisible(visible);
+    boolean enabled = psiElement instanceof XmlFile;
 
-    if (value) {
+    if (enabled) {
       final PsiFile containingFile = psiElement.getContainingFile();
 
       if (containingFile!=null &&
+          containingFile.getVirtualFile() != null &&
           (containingFile.getFileType() == StdFileTypes.XML ||
            containingFile.getFileType() == StdFileTypes.XHTML
           )) {
-        value = containingFile.getUserData(runningValidationKey) == null;
+        enabled = containingFile.getUserData(runningValidationKey) == null;
       } else {
-        value = false;
+        enabled = false;
       }
     }
 
-    presentation.setEnabled(value);
+    presentation.setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      presentation.setVisible(value);
+      presentation.setVisible(enabled);
     }
   }
 }

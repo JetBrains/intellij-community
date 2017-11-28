@@ -28,11 +28,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.05.2007
- */
 public class LocalDebugger implements Debugger {
   private final Thread myThread;
 

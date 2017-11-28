@@ -242,7 +242,7 @@ class Repr(expr):
     value = ...  # type: expr
 
 class Num(expr):
-    n = ...  # type: Union[int, float]
+    n = ...  # type: Union[int, float, complex]
 
 class Str(expr):
     s = ...  # type: bytes

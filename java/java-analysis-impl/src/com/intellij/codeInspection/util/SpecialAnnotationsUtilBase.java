@@ -52,6 +52,11 @@ public class SpecialAnnotationsUtilBase {
       }
 
       @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         doQuickFixInternal(project, targetList, qualifiedName);
       }

@@ -9,12 +9,12 @@ are important to the project's success.
 ## The contribution process at a glance
 
 1. Read the [README.md file](README.md).
-2. Set up your environment to be able to run all tests with `runtests.sh`.  They should pass.
+2. Set up your environment to be able to [run all tests](README.md#running-the-tests).  They should pass.
 3. [Prepare your changes](#preparing-changes):
     * [Contact us](#discussion) before starting significant work.
     * IMPORTANT: For new libraries, [get permission from the library owner first](#adding-a-new-library).
     * Create your stubs [conforming to the coding style](#stub-file-coding-style).
-    * Make sure `runtests.sh` passes cleanly on Mypy, pytype, and flake8.
+    * Make sure your tests pass cleanly on `mypy`, `pytype`, and `flake8`.
 4. [Submit your changes](#submitting-changes):
     * Open a pull request
     * For new libraries, [include a reference to where you got permission](#adding-a-new-library)
@@ -37,8 +37,8 @@ tracker](https://github.com/python/typeshed/issues).  This is the right
 place to start a discussion of any of the above or most any other
 topic concerning the project.
 
-For less formal discussion, try the Mypy chat room on
-[gitter.im](https://gitter.im/python/mypy).  Some Mypy core developers
+For less formal discussion, try the typing chat room on
+[gitter.im](https://gitter.im/python/typing).  Some Mypy core developers
 are almost always present; feel free to find us there and we're happy
 to chat.  Substantive technical discussion will be directed to the
 issue tracker.
@@ -68,6 +68,12 @@ developers will merge your pull request when they think it's ready.
 For every pull request, we aim to promptly either merge it or say why
 it's not yet ready; if you go a few days without a reply, please feel
 free to ping the thread by adding a new comment.
+
+To get your pull request merged sooner, you should explain why you are
+making the change. For example, you can point to a code sample that is
+processed incorrectly by a type checker. It is also helpful to add
+links to online documentation or to the implementation of the code
+you are changing.
 
 At present the core developers are (alphabetically):
 * David Fisher (@ddfisher)
@@ -103,8 +109,8 @@ should prefer to external type stubs).  When the project owners agree
 for you to submit stubs here, open a pull request **referencing the
 message where you received permission**.
 
-Make sure your changes pass tests by running ``runtests.sh`` (the
-[README](README.md) has more information).
+Make sure your changes pass the tests (the [README](README.md#running-the-tests)
+has more information).
 
 ### Using stubgen
 
@@ -135,12 +141,8 @@ rule is that they should be as concise as possible.  Specifically:
   names, or methods and fields within a single class;
 * use a single blank line between top-level class definitions, or none
   if the classes are very small;
-* add a top-level comment followed by an empty line that makes it clear
-  the file contains a stub and not the actual code for the module,
-  for example `# Stubs for pathlib (Python 3.4)`;
 * do not use docstrings;
-* prefer type comments over variable annotations unless your stubs are
-  exclusively targeting Python 3.6.
+* for arguments with a type and a default, use spaces around the `=`.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:
@@ -148,6 +150,14 @@ unless:
   explicit ``as`` even if the name stays the same); or
 * they use the form ``from library import *`` which means all names
   from that library are exported.
+
+For arguments with type and a default value of `None`, PEP 484
+prescribes that the type automatically becomes `Optional`.  However we
+prefer explicit over implicit in this case, and require the explicit
+`Optional[]` around the type.  The mypy tests enforce this (through
+the use of --no-implicit-optional) and the error looks like
+`Incompatible types in assignment (expression has type None, variable
+has type "Blah") `.
 
 Stub files support forward references natively.  In other words, the
 order of class declarations and type aliases does not matter in
@@ -159,11 +169,6 @@ Type variables and aliases you introduce purely for legibility reasons
 should be prefixed with an underscore to make it obvious to the reader
 they are not part of the stubbed API.
 
-Finally, remember to include a comment on the top of your file about the
-version of the Python language your stubs were tested against and
-version of the library they were built for.  This makes it easier to
-maintain the stubs in the future.
-
 NOTE: there are stubs in this repository that don't conform to the
 style described above.  Fixing them is a great starting point for new
 contributors.
@@ -172,9 +177,23 @@ contributors.
 
 There are separate directories for `stdlib` and `third_party` stubs.
 Within those, there are separate directories for different versions of
-Python the stubs target.  If the given library works on both Python 2
-and Python 3, prefer to put your stubs in an `2and3` directory, unless
-the types are so different that the stubs become unreadable that way.
+Python the stubs target.
+
+The directory name indicates the major version of Python that a stub targets
+and optionally the lowest minor version, with the exception of the `2and3`
+directory which applies to both Python 2 and 3.
+
+For example, stubs in the `3` directory will be applied to all versions of
+Python 3, though stubs in the `3.6` directory will only be applied to versions
+3.6 and above. However, stubs in the `2` directory will not be applied to
+Python 3.
+
+It is preferred to use a single stub in the more generic directory that
+conditionally targets specific versions when needed, as opposed
+to maintaining multiple stub files within more specific directories. Similarly,
+if the given library works on both Python 2 and Python 3, prefer to put your
+stubs in the `2and3` directory, unless the types are so different that the stubs
+become unreadable that way.
 
 You can use checks like `if sys.version_info >= (3, 4):` to denote new
 functionality introduced in a given Python version or solve type
@@ -217,23 +236,25 @@ project's tracker to fix their documentation.
 
 ## Issue-tracker conventions
 
-We aim to reply to all new issues promptly.  We'll assign a milestone
-to help us track which issues we intend to get to when, and may apply
-labels to carry some other information.  Here's what our milestones
-and labels mean.
+We aim to reply to all new issues promptly.  We'll assign one or more
+labels to to indicate we've triaged an issue, but most typeshed issues
+are relatively simple (stubs for a given module or package are
+missing, incomplete or incorrect) and we won't add noise to the
+tracker by labeling all of them.  Here's what our labels mean.  (We
+also apply these to pull requests.)
 
-### Labels
-
-* **needs discussion**: This issue needs agreement on some kind of
-  design before it makes sense to implement it, and it either doesn't
-  yet have a design or doesn't yet have agreement on one.
-* **help wanted**: This issue could use a volunteer willing to implement
-  it. Those issues can be great starting points for new contributors!
-* **enhancement**, **bug**, **refactoring**: These classify the
-  user-facing impact of the change.  Specifically "refactoring" means
-  there should be no user-facing effect.
-* **duplicate**, **wontfix**: These identify issues that we've closed
-  for the respective reasons.
+* **blocked**: This issue is waiting for the resolution of some issue
+    external to typeshed.
+* **bug**: It's a bug in a stub.
+* **bytes-unicode**: It's related to bytes vs. unicode, usually Python 2.
+* **feature**: It's a new typeshed feature.
+* **priority-high**: This issue is more important than most.
+* **priority-low**: This issue is less important than most.
+* **priority-normal**: This issue has average priority.
+* **question**: Not really an issue, but a question on how to do something.
+* **size-large**: An issue of high complexity or affecting many files.
+* **size-medium**: An issue of average complexity.
+* **size-small**: An issue that will take only little effort to fix.
 
 ### Core developer guidelines
 
@@ -242,3 +263,5 @@ Core developers should follow these rules when processing pull requests:
 * Always wait for tests to pass before merging PRs.
 * Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
 * Delete branches for merged PRs (by core devs pushing to the main repo).
+* Make sure commit messages to master are meaningful. For example, remove irrelevant
+  intermediate commit messages.

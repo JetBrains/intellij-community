@@ -17,6 +17,9 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.CleanupOnScopeIntention;
+import com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -24,6 +27,7 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
@@ -195,26 +199,41 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
     }
 
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      Class aClass = action.getClass();
+      FileModifier fix = action;
       if (action instanceof QuickFixWrapper) {
-        aClass = ((QuickFixWrapper)action).getFix().getClass();
+        fix = ((QuickFixWrapper)action).getFix();
       }
-      return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+      return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
     }
     else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
       if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
-        Class aClass = action.getClass();
+        FileModifier fix = action;
         if (action instanceof QuickFixWrapper) {
-          aClass = ((QuickFixWrapper)action).getFix().getClass();
+          fix = ((QuickFixWrapper)action).getFix();
         }
-        return new CleanupInspectionIntention(toolWrapper, aClass, action.getText());
+        return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
       }
     }
     else {
       throw new AssertionError("unknown tool: " + toolWrapper);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCleanupAllIntention() {
+    return CleanupAllIntention.INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> getCleanupIntentionOptions() {
+    ArrayList<IntentionAction> options = new ArrayList<>();
+    options.add(EditCleanupProfileIntentionAction.INSTANCE);
+    options.add(CleanupOnScopeIntention.INSTANCE);
+    return options;
   }
 
   @Override

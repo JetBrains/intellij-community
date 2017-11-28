@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 6, 2002
- * Time: 4:54:58 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -37,6 +29,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -447,7 +440,7 @@ public class EditorActionUtil {
    * @param editor              target editor
    * @param visualLineNumber    target visual line
    * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
-   *                            <code>'-1'</code> otherwise
+   *                            {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
     Document document = editor.getDocument();
@@ -540,7 +533,7 @@ public class EditorActionUtil {
    * @param start       target start offset (inclusive)
    * @param end         target end offset (exclusive)
    * @return            index of the first non-white space character at the given document at the given range if the one is found;
-   *                    <code>'-1'</code> otherwise
+   *                    {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceOffsetInRange(@NotNull CharSequence text, int start, int end) {
     for (; start < end; start++) {
@@ -561,7 +554,7 @@ public class EditorActionUtil {
    * 
    * @param editor target editor
    * @param isWithSelection whether selection should be set from original caret position to its target position
-   * @param ignoreTrailingWhitespace if <code>true</code>, line end will be determined while ignoring trailing whitespace, unless caret is
+   * @param ignoreTrailingWhitespace if {@code true}, line end will be determined while ignoring trailing whitespace, unless caret is
    *                                 already at so-determined target position, in which case trailing whitespace will be taken into account
    */
   public static void moveCaretToLineEnd(@NotNull Editor editor, boolean isWithSelection, boolean ignoreTrailingWhitespace) {
@@ -728,7 +721,8 @@ public class EditorActionUtil {
 
       int caret = caretModel.getOffset();
       final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
-      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand()) {
+      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() && 
+          Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY))) {
         if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
           caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());
         }

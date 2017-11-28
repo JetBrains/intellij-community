@@ -37,7 +37,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
@@ -127,7 +126,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       newInjections.add(newInjection);
     }
     configuration.replaceInjectionsWithUndo(
-      project, newInjections, injections, Collections.<PsiElement>emptyList());
+      project, newInjections, injections, Collections.emptyList());
     return true;
   }
 
@@ -145,7 +144,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       configuration.replaceInjectionsWithUndo(
         project, Collections.singletonList(newInjection),
         Collections.singletonList(originalInjection),
-        Collections.<PsiElement>emptyList());
+        Collections.emptyList());
     }
     return true;
   }
@@ -304,7 +303,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static boolean doInjectInAttributeValue(final XmlAttributeValue host, final String languageId) {
@@ -331,7 +330,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static ArrayList<BaseInjection> collectInjections(final PsiElement host,

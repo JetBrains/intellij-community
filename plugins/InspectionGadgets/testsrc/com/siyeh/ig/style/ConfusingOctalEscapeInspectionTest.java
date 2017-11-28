@@ -19,7 +19,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class ConfusingOctalEscapeInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/style/confusing_octal_escape", new ConfusingOctalEscapeInspection());
   }
 }

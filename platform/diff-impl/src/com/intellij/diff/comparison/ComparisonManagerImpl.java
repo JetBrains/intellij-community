@@ -16,6 +16,7 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.*;
 import com.intellij.diff.util.DiffUtil;
@@ -38,6 +39,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static java.util.Collections.singletonList;
 
 public class ComparisonManagerImpl extends ComparisonManager {
@@ -203,15 +205,6 @@ public class ComparisonManagerImpl extends ComparisonManager {
     }
     LOG.warn(policy.toString() + " is not supported by ByChar comparison");
     return convertIntoDiffFragments(ByChar.compareTwoStep(text1, text2, indicator));
-  }
-
-  @NotNull
-  public List<Range> compareLines(@NotNull List<? extends CharSequence> lines1,
-                                  @NotNull List<? extends CharSequence> lines2,
-                                  @NotNull ComparisonPolicy policy,
-                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    FairDiffIterable iterable = ByLine.compare(lines1, lines2, policy, indicator);
-    return ContainerUtil.newArrayList(iterable.iterateChanges());
   }
 
   @Override
@@ -461,9 +454,11 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
     List<CharSequence> lineTexts1 = ContainerUtil.map(lines1, line -> line.getNotIgnoredContent(ignored1));
     List<CharSequence> lineTexts2 = ContainerUtil.map(lines2, line -> line.getNotIgnoredContent(ignored2));
-
     FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT, indicator);
-    List<LineFragment> lineFragments = convertIntoLineFragments(lines1, lines2, iterable);
+
+    FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(iterable, lines1, lines2, ignored1, ignored2);
+
+    List<LineFragment> lineFragments = convertIntoLineFragments(lines1, lines2, correctedIterable);
 
     if (innerFragments) {
       lineFragments = createInnerFragments(lineFragments, text1, text2, ComparisonPolicy.DEFAULT, indicator);
@@ -481,6 +476,26 @@ public class ComparisonManagerImpl extends ComparisonManager {
       set.set(range.getStartOffset(), range.getEndOffset());
     }
     return set;
+  }
+
+  @NotNull
+  private static FairDiffIterable correctIgnoredRangesSecondStep(@NotNull FairDiffIterable iterable,
+                                                                 @NotNull List<Line> lines1,
+                                                                 @NotNull List<Line> lines2,
+                                                                 @NotNull BitSet ignored1,
+                                                                 @NotNull BitSet ignored2) {
+    DiffIterableUtil.ChangeBuilder builder = new DiffIterableUtil.ChangeBuilder(lines1.size(), lines2.size());
+    for (Range range : iterable.iterateUnchanged()) {
+      int count = range.end1 - range.start1;
+      for (int i = 0; i < count; i++) {
+        int index1 = range.start1 + i;
+        int index2 = range.start2 + i;
+        if (areIgnoredEqualLines(lines1.get(index1), lines2.get(index2), ignored1, ignored2)) {
+          builder.markEqual(index1, index2);
+        }
+      }
+    }
+    return fair(builder.finish());
   }
 
   @Nullable
@@ -542,7 +557,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   private static boolean isIgnoredLine(@NotNull Line line, @NotNull BitSet ignored) {
-    return trimIgnoredRange(line.getOffset1(), line.getOffset2(), ignored, 0).isEmpty();
+    return isIgnoredRange(ignored, line.getOffset1(), line.getOffset2());
   }
 
   private static boolean areIgnoredEqualLines(@NotNull Line line1, @NotNull Line line2,
@@ -551,13 +566,36 @@ public class ComparisonManagerImpl extends ComparisonManager {
     int end1 = line1.getOffset2();
     int start2 = line2.getOffset1();
     int end2 = line2.getOffset2();
-
     Range range = TrimUtil.trimExpandText(line1.getOriginalText(), line2.getOriginalText(),
                                           start1, start2, end1, end2,
                                           ignored1, ignored2);
-    return range.isEmpty();
+    if (!range.isEmpty()) return false;
+
+    List<ByWord.InlineChunk> words1 = getNonIgnoredWords(line1, ignored1);
+    List<ByWord.InlineChunk> words2 = getNonIgnoredWords(line2, ignored2);
+    if (words1.size() != words2.size()) return false;
+
+    for (int i = 0; i < words1.size(); i++) {
+      CharSequence word1 = getWordContent(line1, words1.get(i));
+      CharSequence word2 = getWordContent(line2, words2.get(i));
+      if (!StringUtil.equals(word1, word2)) return false;
+    }
+
+    return true;
   }
 
+  @NotNull
+  private static List<ByWord.InlineChunk> getNonIgnoredWords(@NotNull Line line, @NotNull BitSet ignored) {
+    int offset = line.getOffset1();
+    List<ByWord.InlineChunk> innerChunks = ByWord.getInlineChunks(line.getContent());
+    return ContainerUtil.filter(innerChunks, it -> it instanceof ByWord.WordChunk &&
+                                                   !isIgnoredRange(ignored, offset + it.getOffset1(), offset + it.getOffset2()));
+  }
+
+  @NotNull
+  private static CharSequence getWordContent(@NotNull Line line, @NotNull ByWord.InlineChunk word) {
+    return line.getContent().subSequence(word.getOffset1(), word.getOffset2());
+  }
 
   @NotNull
   private static TextRange trimIgnoredRange(int start, int end, @NotNull BitSet ignored, int offset) {
@@ -565,6 +603,9 @@ public class ComparisonManagerImpl extends ComparisonManager {
     return new TextRange(intPair.val1 - offset, intPair.val2 - offset);
   }
 
+  private static boolean isIgnoredRange(@NotNull BitSet ignored, int start, int end) {
+    return ignored.nextClearBit(start) >= end;
+  }
 
   private static class Line {
     @NotNull private final CharSequence myChars;

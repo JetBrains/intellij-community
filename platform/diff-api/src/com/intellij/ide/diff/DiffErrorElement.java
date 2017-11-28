@@ -68,13 +68,13 @@ public class DiffErrorElement extends DiffElement {
   }
 
   @Override
-  public DiffElement[] getChildren() throws IOException {
+  public DiffElement[] getChildren() {
     return EMPTY_ARRAY;
   }
 
   @Nullable
   @Override
-  public byte[] getContent() throws IOException {
+  public byte[] getContent() {
     return null;
   }
 

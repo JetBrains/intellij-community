@@ -82,7 +82,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -97,6 +96,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Caret myCaret;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
+  private final CompletionLookupArranger myArranger;
   private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
@@ -107,7 +107,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myQueue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };
-  private final Semaphore myFreezeSemaphore;
+  private final Semaphore myFreezeSemaphore = new Semaphore(1);
+  private final Semaphore myFinishSemaphore = new Semaphore(1);
   private final OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
@@ -127,8 +128,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
-  private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
@@ -139,7 +138,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      @NotNull Caret caret,
                                      CompletionParameters parameters,
                                      CodeCompletionHandlerBase handler,
-                                     Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
                                      OffsetsInFile hostOffsets,
                                      boolean hasModifiers,
@@ -148,7 +146,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCaret = caret;
     myParameters = parameters;
     myHandler = handler;
-    myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
     myHostOffsets = hostOffsets;
     myLookup = lookup;
@@ -156,7 +153,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
-    myLookup.setArranger(new CompletionLookupArranger(parameters, this));
+    myArranger = new CompletionLookupArranger(parameters, this);
+    myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -188,7 +186,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  public OffsetMap getOffsetMap() {
+  OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
@@ -292,11 +290,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  @NotNull
-  CompletionSorterImpl getSorter(LookupElement element) {
-    return myItemSorters.get(element);
-  }
-
   @Override
   public void dispose() {
   }
@@ -384,7 +377,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myLookupUpdated) {
       if (myLookup.getAdvertisements().isEmpty() && !isAutopopupCompletion() && !DumbService.isDumb(getProject())) {
-        DefaultCompletionContributor.addDefaultAdvertisements(myParameters, myLookup, myHasPsiElements);
+        DefaultCompletionContributor.addDefaultAdvertisements(myLookup, myHasPsiElements);
       }
       myLookup.getAdvertiser().showRandomText();
     }
@@ -452,7 +445,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       addDelayedMiddleMatches();
     }
 
-    myItemSorters.put(lookupElement, (CompletionSorterImpl)item.getSorter());
+    myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
     if (item.isStartMatch() || allowMiddleMatches) {
       addItemToLookup(item);
     } else {
@@ -542,12 +535,27 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     StatisticsUpdate.cancelLastCompletionStatisticsUpdate();
   }
 
+  boolean blockingWaitForFinish(int timeoutMs) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+      if (!myFinishSemaphore.waitFor(100 * 1000)) {
+        throw new AssertionError("Too long completion");
+      }
+      return true;
+    }
+    if (myFreezeSemaphore.waitFor(timeoutMs)) {
+      // the completion is really finished, now we may auto-insert or show lookup
+      return !isRunning() && !isCanceled();
+    }
+    return false;
+  }
+
   @Override
   public void stop() {
     super.stop();
 
     myQueue.cancelAllUpdates();
     myFreezeSemaphore.up();
+    myFinishSemaphore.up();
 
     GuiUtils.invokeLaterIfNeeded(() -> {
       final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -801,9 +809,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
 
   void startCompletion(final CompletionInitializationContext initContext) {
-    boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
+    boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
-    myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
+    myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, this::scheduleAdvertising));
     final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
@@ -821,7 +829,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-    myStrategy.startThread(this, new CalculateItems());
+    myStrategy.startThread(this, ()->AsyncCompletion.tryReadOrCancel(this, new CalculateItems()));
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {

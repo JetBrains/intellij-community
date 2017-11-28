@@ -45,11 +45,11 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @see #getUrls(OrderRootType)
    */
   @NotNull
-  VirtualFile[] getFiles(OrderRootType type);
+  VirtualFile[] getFiles(@NotNull OrderRootType type);
 
   /**
    * Returns list of roots of given type for this entry. To validate returned roots,
-   * use <code>{@link com.intellij.openapi.vfs.VirtualFileManager#findFileByUrl(java.lang.String)}</code> <br>
+   * use {@link com.intellij.openapi.vfs.VirtualFileManager#findFileByUrl(String)} <br>
    *
    * Note that list of roots is project-dependent.
    *
@@ -57,7 +57,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @return the list of roots of the specified type.
    */
   @NotNull
-  String[] getUrls(OrderRootType rootType);
+  String[] getUrls(@NotNull OrderRootType rootType);
 
   /**
    * Returns the user-visible name of this OrderEntry.
@@ -90,5 +90,5 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param initialValue the default value to be returned by the visit process.
    * @return the value returned by the visitor.
    */
-  <R> R accept(RootPolicy<R> policy, @Nullable R initialValue);
+  <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
 }

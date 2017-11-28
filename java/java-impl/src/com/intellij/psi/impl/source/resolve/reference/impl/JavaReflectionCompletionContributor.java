@@ -99,11 +99,11 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
   private static void addVariants(PsiElement position, BiConsumer<PsiClass, Boolean> variantAdder) {
     PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
-      PsiClass psiClass = getReflectiveClass(methodCall.getMethodExpression().getQualifierExpression());
-      if (psiClass != null) {
+      ReflectiveClass ownerClass = getReflectiveClass(methodCall.getMethodExpression().getQualifierExpression());
+      if (ownerClass != null) {
         String methodName = methodCall.getMethodExpression().getReferenceName();
         if (methodName != null) {
-          variantAdder.accept(psiClass, DECLARED_NAMES.contains(methodName));
+          variantAdder.accept(ownerClass.getPsiClass(), DECLARED_NAMES.contains(methodName));
         }
       }
     }
@@ -160,7 +160,10 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
   private static void handleConstructorSignatureInsertion(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      handleParametersInsertion(context, getParameterTypesText((PsiMethod)object));
+      String text = getParameterTypesText((PsiMethod)object);
+      if (text != null) {
+        handleParametersInsertion(context, text);
+      }
     }
   }
 

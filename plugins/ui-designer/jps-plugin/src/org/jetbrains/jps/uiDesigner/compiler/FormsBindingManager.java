@@ -180,7 +180,7 @@ public class FormsBindingManager extends FormsBuilder {
               exitCode = ExitCode.OK;
               // now inform others about files just copied
               for (File file : generatedFiles) {
-                outputConsumer.registerOutputFile(target, file, Collections.<String>emptyList());
+                outputConsumer.registerOutputFile(target, file, Collections.emptyList());
               }
             }
           }

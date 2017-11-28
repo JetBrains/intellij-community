@@ -41,7 +41,7 @@ import java.util.Set;
 
 public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + IntroduceParameterObjectProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(IntroduceParameterObjectProcessor.class);
   private final C myClassDescriptor;
   private final M myMethod;
   private final ChangeInfo myChangeInfo;

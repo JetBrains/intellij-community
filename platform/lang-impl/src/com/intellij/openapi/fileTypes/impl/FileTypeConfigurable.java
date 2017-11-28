@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBDimension;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,17 +91,15 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private void updateFileTypeList() {
     FileType[] types = myTempFileTypes.toArray(new FileType[myTempFileTypes.size()]);
-    Arrays.sort(types, new Comparator() {
-      @Override
-      public int compare(@NotNull Object o1, @NotNull Object o2) {
-        FileType fileType1 = (FileType)o1;
-        FileType fileType2 = (FileType)o2;
-        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
-      }
+    Arrays.sort(types, (o1, o2) -> {
+      FileType fileType1 = (FileType)o1;
+      FileType fileType2 = (FileType)o2;
+      return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
     });
     myRecognizedFileType.setFileTypes(types);
   }
 
+  @NotNull
   private static FileType[] getModifiableFileTypes() {
     FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     ArrayList<FileType> result = new ArrayList<>();
@@ -172,7 +172,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(0, 20);
+      return new JBDimension(0, 20);
     }
   }
 
@@ -303,7 +303,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       if (index >= 0) {
         ScrollingUtil.selectItem(myPatterns.myPatternsList, index);
       }
-      myPatterns.myPatternsList.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
+      });
     }
   }
 
@@ -335,7 +337,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     myTempPatternsTable.addAssociation(matcher, type);
     myPatterns.addPatternAndSelect(pattern);
-    myPatterns.myPatternsList.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
+    });
 
     return null;
   }
@@ -348,7 +352,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
 
     myTempPatternsTable.removeAssociation(matcher, type);
-    myPatterns.myPatternsList.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
+    });
   }
 
   @Override
@@ -526,7 +532,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     public void selectFileType(FileType fileType) {
       myFileTypesList.setSelectedValue(fileType, true);
-      myFileTypesList.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myFileTypesList, true);
+      });
     }
   }
 

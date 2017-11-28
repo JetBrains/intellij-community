@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
 import com.intellij.openapi.options.Configurable;
@@ -24,7 +25,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -64,12 +64,8 @@ public class PlatformContentEntriesConfigurable implements Configurable {
   }
 
   private void createEditor() {
-    myModifiableModel = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
-      @Override
-      public ModifiableRootModel compute() {
-        return ModuleRootManager.getInstance(myModule).getModifiableModel();
-      }
-    });
+    myModifiableModel =
+      ReadAction.compute(() -> ModuleRootManager.getInstance(myModule).getModifiableModel());
 
     final ModuleConfigurationStateImpl moduleConfigurationState =
       new ModuleConfigurationStateImpl(myModule.getProject(), new DefaultModulesProvider(myModule.getProject())) {
@@ -91,12 +87,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
         return entries;
       }
     };
-    JComponent component = ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return myEditor.createComponent();
-      }
-    });
+    JComponent component = ReadAction.compute(() -> myEditor.createComponent());
     myTopPanel.add(component, BorderLayout.CENTER);
   }
 

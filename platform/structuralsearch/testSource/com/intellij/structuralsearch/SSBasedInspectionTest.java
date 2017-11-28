@@ -35,11 +35,11 @@ public class SSBasedInspectionTest extends InspectionTestCase {
     myWrapper = new LocalInspectionToolWrapper(inspection);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("ssBased/" + getTestName(true), myWrapper,"java 1.5");
   }
 

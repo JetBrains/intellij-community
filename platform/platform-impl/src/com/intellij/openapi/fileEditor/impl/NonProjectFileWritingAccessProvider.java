@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
@@ -35,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +69,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     myProject = project;
     
     if (myInitialized.compareAndSet(false, true)) {
-      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileAdapter());
+      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileListener());
     }
   }
 
@@ -122,8 +120,10 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystem) return true;
-    
-    if (ArrayUtil.contains(file, IdeDocumentHistory.getInstance(project).getChangedFiles())) return true;
+
+    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+
+    if (documentHistory.isRecentlyChanged(file)) return true;
     
     if (!getApp().isUnitTestMode()
         && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
@@ -176,12 +176,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public static void disableChecksDuring(@NotNull Runnable runnable) {
     Application app = getApp();
-    ACCESS_ALLOWED.getValue(app).incrementAndGet();
-    try {
+    if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) == Boolean.TRUE) {
+      // reject disabling checks if checks in tests are enabled explicitly
       runnable.run();
     }
-    finally {
-      ACCESS_ALLOWED.getValue(app).decrementAndGet();
+    else {
+      ACCESS_ALLOWED.getValue(app).incrementAndGet();
+      try {
+        runnable.run();
+      }
+      finally {
+        ACCESS_ALLOWED.getValue(app).decrementAndGet();
+      }
     }
   }
 
@@ -212,7 +218,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public enum UnlockOption {UNLOCK, UNLOCK_DIR, UNLOCK_ALL}
 
-  private static class OurVirtualFileAdapter extends VirtualFileAdapter {
+  private static class OurVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       unlock(event);

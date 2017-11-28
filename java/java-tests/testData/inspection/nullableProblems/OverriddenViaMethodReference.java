@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Arrays;
 
 interface NonnullInterface {
   @NotNull
@@ -32,6 +33,10 @@ class P2 {
   boolean getPrimitive() { return true; }
 
   private void test(final NonnullInterface function) { }
+
+  private Iterable<String> arrayToIterable(String... array) {
+    return Arrays.stream(array)::iterator;
+  }
 }
 
 class WithImplicitConstructor {}

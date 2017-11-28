@@ -2,7 +2,7 @@ class Test {
 
     public void toVoidMethod() {
         int j = 0;
-        return "" + String.valueOf(999);
+        return "" + Integer.toString(999, 10);
     }
 
     public void main(String[] args) {

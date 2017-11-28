@@ -23,10 +23,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-/**
- * User: zolotov
- * Date: 9/23/13
- */
 abstract public class TestDataPathTestCase extends JavaCodeInsightFixtureTestCase {
   protected VirtualFile myContentRoot;
   protected VirtualFile myContentRootSubdir;
@@ -50,7 +46,7 @@ abstract public class TestDataPathTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addContentRoot(myFixture.getTempDirPath());
   }
 }

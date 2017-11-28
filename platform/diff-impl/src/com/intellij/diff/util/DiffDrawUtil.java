@@ -86,13 +86,6 @@ public class DiffDrawUtil {
   public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
                                                 int x1, int x2,
                                                 int start1, int end1,
-                                                int start2, int end2) {
-    drawConnectorLineSeparator(g, x1, x2, start1, end1, start2, end2, null);
-  }
-
-  public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
-                                                int x1, int x2,
-                                                int start1, int end1,
                                                 int start2, int end2,
                                                 @Nullable EditorColorsScheme scheme) {
     DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, start2, end1 - start1, scheme);
@@ -405,6 +398,7 @@ public class DiffDrawUtil {
       List<RangeHighlighter> highlighters = new ArrayList<>();
 
       boolean isEmptyRange = startLine == endLine;
+      boolean isFirstLine = startLine == 0;
       boolean isLastLine = endLine == getLineCount(editor.getDocument());
 
       TextRange offsets = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
@@ -419,10 +413,10 @@ public class DiffDrawUtil {
       highlighters.add(highlighter);
 
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, ignored, resolved,
-                                                                   hideWithoutLineNumbers, isEmptyRange, isLastLine));
+                                                                   hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine));
 
       if (isEmptyRange) {
-        if (startLine == 0) {
+        if (isFirstLine) {
           highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved, false));
         }
         else {

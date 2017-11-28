@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.StubHierarchyInheritorSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
@@ -71,23 +72,19 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     Project project = PsiUtilCore.getProjectInReadAction(clazz);
-    if (scope instanceof GlobalSearchScope) {
-      final List<PsiClass> candidates = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-        if (!clazz.isValid()) return Collections.emptyList();
-          GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope((GlobalSearchScope)scope);
-          return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
-        });
-      for (final PsiClass candidate : candidates) {
-        if (!queryParameters.isCheckInheritance() || isInheritor(clazz, candidate, project)) {
-          if (!consumer.process(candidate)) {
-            return false;
-          }
+    GlobalSearchScope globalSearchScope = GlobalSearchScopeUtil.toGlobalSearchScope(scope, project);
+    final List<PsiClass> candidates = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      if (!clazz.isValid()) return Collections.emptyList();
+      GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope(globalSearchScope);
+      return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
+    });
+    for (final PsiClass candidate : candidates) {
+      if (!queryParameters.isCheckInheritance() || isInheritor(clazz, candidate, project)) {
+        if (!consumer.process(candidate)) {
+          return false;
         }
       }
-
-      return true;
     }
-
     return true;
   }
 

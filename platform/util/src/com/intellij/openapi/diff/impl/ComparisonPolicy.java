@@ -282,6 +282,7 @@ public abstract class ComparisonPolicy {
     return new Formatting(text, textRange);
   }
 
+  @NotNull
   public static ComparisonPolicy[] getAllInstances() {
     return COMPARISON_POLICIES;
   }

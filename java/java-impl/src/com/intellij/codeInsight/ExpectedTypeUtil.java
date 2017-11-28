@@ -29,6 +29,7 @@ import java.util.*;
 public class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
 
+  @NotNull
   public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {
     if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY_ARRAY;
 
@@ -88,6 +89,7 @@ public class ExpectedTypeUtil {
       return myInfos.iterator();
     }
 
+    @NotNull
     public ExpectedTypeInfo[] toArray() {
       return myInfos.toArray(new ExpectedTypeInfo[myInfos.size()]);
     }

@@ -16,7 +16,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -34,6 +33,8 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * @author Dennis.Ushakov
@@ -59,7 +60,7 @@ public class HTMLControls {
       final byte[] bytes = FileUtilRt.loadBytes(stream);
       stream.close();
       final UnsyncByteArrayInputStream bytesStream = new UnsyncByteArrayInputStream(bytes);
-      element = JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
+      element = loadElement(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
       bytesStream.close();
     } catch (Exception e) {
       LOG.error(e);

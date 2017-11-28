@@ -8,6 +8,7 @@ public class ResultOfObjectAllocationIgnored {
 
     public static void foo() {
         new <warning descr="Result of 'new Integer()' is ignored">Integer</warning>(3);
+        new javax.swing.JFrame();
     }
 
     void boom() {

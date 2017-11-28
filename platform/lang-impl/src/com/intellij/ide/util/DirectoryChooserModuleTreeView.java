@@ -32,7 +32,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,17 +83,14 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath o) {
-        final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
-        if (userObject instanceof Module) {
-          return ((Module)userObject).getName();
-        }
-        else {
-          if (userObject == null) return "";
-          return userObject.toString();
-        }
+    new TreeSpeedSearch(myTree, o -> {
+      final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+      if (userObject instanceof Module) {
+        return ((Module)userObject).getName();
+      }
+      else {
+        if (userObject == null) return "";
+        return userObject.toString();
       }
     }, true);
   }

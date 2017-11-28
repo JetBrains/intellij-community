@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Feb-2008
- */
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;

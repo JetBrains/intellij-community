@@ -53,7 +53,7 @@ public class DirDiffDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myDiffPanel = new DirDiffPanel(myModel, new DirDiffWindow(this));
+    myDiffPanel = new DirDiffPanel(myModel, new DirDiffWindow.Dialog(this));
     Disposer.register(getDisposable(), myDiffPanel);
     return myDiffPanel.getPanel();
   }

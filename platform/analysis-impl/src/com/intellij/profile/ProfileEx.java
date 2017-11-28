@@ -20,10 +20,6 @@ import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 01-Dec-2005
- */
 public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";

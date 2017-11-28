@@ -104,7 +104,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridwidth = 2;
     gc.weightx = 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    JLabel urlLabel = new JLabel(myURL.toString());
+    JLabel urlLabel = new JLabel(myURL.toDecodedString());
     urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
     panel.add(urlLabel, gc);
 

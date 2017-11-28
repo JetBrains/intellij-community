@@ -118,6 +118,8 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean arePatternsEquivalent(RegExpPattern pattern1, RegExpPattern pattern2) {
+    if (pattern1 == null) return pattern2 == null;
+    if (pattern2 == null) return false;
     final RegExpBranch[] branches1 = pattern1.getBranches();
     final RegExpBranch[] branches2 = pattern2.getBranches();
     if (branches1.length != branches2.length) {
@@ -165,6 +167,9 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean areClassesEquivalent(RegExpClass aClass1, RegExpClass aClass2) {
+    if (aClass1.isNegated() != aClass2.isNegated()) {
+      return false;
+    }
     final RegExpClassElement[] elements1 = aClass1.getElements();
     final RegExpClassElement[] elements2 = aClass2.getElements();
     if (elements1.length != elements2.length) {
@@ -180,7 +185,7 @@ class RegExpEquivalenceChecker {
     return true;
   }
 
-  public static boolean areBranchesEquivalent(RegExpBranch branch1, RegExpBranch branch2) {
+  private static boolean areBranchesEquivalent(RegExpBranch branch1, RegExpBranch branch2) {
     final RegExpAtom[] atoms1 = branch1.getAtoms();
     final RegExpAtom[] atoms2 = branch2.getAtoms();
     if (atoms1.length != atoms2.length) {
@@ -194,7 +199,7 @@ class RegExpEquivalenceChecker {
     return true;
   }
 
-  public static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {
+  private static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {
     return aChar1.getValue() == aChar2.getValue();
   }
 }

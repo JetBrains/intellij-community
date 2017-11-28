@@ -154,7 +154,7 @@ public abstract class AbstractVcsTestCase {
 
   protected void tearDownProject() throws Exception {
     if (myProject != null) {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+      ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
       CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
       myProject = null;
     }
@@ -229,7 +229,8 @@ public abstract class AbstractVcsTestCase {
     VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
-  protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
+  @NotNull
+  protected VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<>();
     new WriteCommandAction.Simple(myProject) {
       @Override

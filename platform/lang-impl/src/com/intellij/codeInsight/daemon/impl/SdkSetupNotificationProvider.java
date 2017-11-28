@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Danila Ponomarenko
  */
 public class SdkSetupNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
-  static final Key<EditorNotificationPanel> KEY = Key.create("SdkSetupNotification");
+  public static final Key<EditorNotificationPanel> KEY = Key.create("SdkSetupNotification");
 
   private final Project myProject;
 

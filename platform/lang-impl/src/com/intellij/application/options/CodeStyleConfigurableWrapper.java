@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * Created by Kirill.Skrygan on 1/11/2017.
- */
 public class CodeStyleConfigurableWrapper
   implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
   private boolean myInitialResetInvoked;

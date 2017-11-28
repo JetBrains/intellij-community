@@ -18,9 +18,11 @@ package com.intellij.codeInspection.sameParameterValue;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,8 +37,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +51,22 @@ import java.util.List;
  * @author max
  */
 public class SameParameterValueInspection extends SameParameterValueInspectionBase {
-  private static final Logger LOG = Logger.getInstance("#" + SameParameterValueInspectionBase.class.getName());
+  private static final Logger LOG = Logger.getInstance(SameParameterValueInspectionBase.class);
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
+                                                                                                                  highestModifier,
+                                                                                                                  (newModifier) -> highestModifier = newModifier),
+                                                                                    "Methods to report:",
+                                                                                    BorderLayout.WEST);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHEAST, JBUI.emptyInsets(), 0, 0));
+    return panel;
+  }
+
 
   protected LocalQuickFix createFix(String paramName, String value) {
     return new InlineParameterValueFix(paramName, value);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +85,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     if (e != null && e.getSource() instanceof JCheckBox && ((JCheckBox)e.getSource()).isSelected()) {
       final Object source = e.getSource();
       if (source == checkBox && checkBox.isSelected()) {
-        textField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+        });
       }
     }
 

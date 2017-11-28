@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -50,20 +51,6 @@ public class QueueProcessor<T> {
 
   private final PairConsumer<T, Runnable> myProcessor;
   private final Deque<T> myQueue = new ArrayDeque<>();
-  private final Runnable myContinuationContext = new Runnable() {
-    @Override
-    public void run() {
-      synchronized (myQueue) {
-        isProcessing = false;
-        if (myQueue.isEmpty()) {
-          myQueue.notifyAll();
-        }
-        else {
-          startProcessing();
-        }
-      }
-    }
-  };
 
   private boolean isProcessing;
   private boolean myStarted;
@@ -110,11 +97,11 @@ public class QueueProcessor<T> {
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
-   * By default QueueProcessor starts processing when it receives the first element. Pass <code>false</code> to alternate its behavior.
+   * By default QueueProcessor starts processing when it receives the first element. Pass {@code false} to alternate its behavior.
    *
    * @param processor processor of queue elements.
-   * @param autostart if <code>true</code> (which is by default), the queue will be processed immediately when it receives the first element.
-   *                  If <code>false</code>, then it will wait for the {@link #start()} command.
+   * @param autostart if {@code true} (which is by default), the queue will be processed immediately when it receives the first element.
+   *                  If {@code false}, then it will wait for the {@link #start()} command.
    *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
 
@@ -139,6 +126,18 @@ public class QueueProcessor<T> {
       if (myStarted) return;
       myStarted = true;
       if (!myQueue.isEmpty()) {
+        startProcessing();
+      }
+    }
+  }
+  
+  private void finishProcessing(boolean continueProcessing) {
+    synchronized (myQueue) {
+      isProcessing = false;
+      if (myQueue.isEmpty()) {
+        myQueue.notifyAll();
+      }
+      else if (continueProcessing){
         startProcessing();
       }
     }
@@ -189,6 +188,27 @@ public class QueueProcessor<T> {
       }
     }
   }
+  
+  boolean waitFor(long timeoutMS) {
+    synchronized (myQueue) {
+      long start = System.currentTimeMillis();
+      
+      while (isProcessing) {
+        long rest = timeoutMS - (System.currentTimeMillis() - start);
+        
+        if (rest <= 0) return !isProcessing;
+        
+        try {
+          myQueue.wait(rest);
+        }
+        catch (InterruptedException e) {
+          //ok
+        }
+      }
+      
+      return true;
+    }
+  }
 
   private boolean startProcessing() {
     LOG.assertTrue(Thread.holdsLock(myQueue));
@@ -199,8 +219,11 @@ public class QueueProcessor<T> {
     isProcessing = true;
     final T item = myQueue.removeFirst();
     final Runnable runnable = () -> {
-      if (myDeathCondition.value(null)) return;
-      runSafely(() -> myProcessor.consume(item, myContinuationContext));
+      if (myDeathCondition.value(null)) {
+        finishProcessing(false);
+        return;
+      }
+      runSafely(() -> myProcessor.consume(item, () -> finishProcessing(true)));
     };
     final Application application = ApplicationManager.getApplication();
     if (myThreadToUse == ThreadToUse.AWT) {
@@ -218,7 +241,7 @@ public class QueueProcessor<T> {
     return true;
   }
 
-  public static void runSafely(@NotNull Runnable run) {
+  public static void runSafely(@Debugger.Insert(group = "com.intellij.util.Alarm._addRequest") @NotNull Runnable run) {
     try {
       run.run();
     }

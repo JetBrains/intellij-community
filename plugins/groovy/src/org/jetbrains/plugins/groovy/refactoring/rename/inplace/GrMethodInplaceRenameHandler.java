@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-/**
- * Created by Max Medvedev on 26/03/14
- */
 public class GrMethodInplaceRenameHandler extends MemberInplaceRenameHandler {
   @Override
   protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {

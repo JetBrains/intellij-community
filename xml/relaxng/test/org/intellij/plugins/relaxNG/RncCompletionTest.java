@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import org.intellij.plugins.testUtil.CopyFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 22.08.2007
- */
 public class RncCompletionTest extends HighlightingTestBase {
   @Override
   protected void setUp() throws Exception {
@@ -36,28 +31,28 @@ public class RncCompletionTest extends HighlightingTestBase {
     return "completion/rnc";
   }
 
-  public void testCompleteKeyword1() throws Throwable {
+  public void testCompleteKeyword1() {
     doTestCompletion("complete-keyword-1", "rnc");
   }
 
-  public void testCompleteKeyword2() throws Throwable {
+  public void testCompleteKeyword2() {
     doTestCompletion("complete-keyword-2", "rnc");
   }
 
-  public void testCompleteRef1() throws Throwable {
+  public void testCompleteRef1() {
     doTestCompletion("complete-ref-1", "rnc");
   }
 
-  public void testCompleteRef2() throws Throwable {
+  public void testCompleteRef2() {
     doTestCompletion("complete-ref-2", "rnc");
   }
 
   @CopyFile("included.rnc")
-  public void testCompleteRef3() throws Throwable {
+  public void testCompleteRef3() {
     doTestCompletion("complete-ref-3", "rnc");
   }
 
-  public void testCompleteRef4() throws Throwable {
+  public void testCompleteRef4() {
     doTestCompletion("complete-ref-4", "rnc");
   }
 }

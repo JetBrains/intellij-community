@@ -70,7 +70,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   @Override
   public void doCancelAction() {
     super.doCancelAction();
-    removeCreatedModuleLibraries(Collections.<Library>emptyList());
+    removeCreatedModuleLibraries(Collections.emptyList());
   }
 
   private void removeCreatedModuleLibraries(Collection<Library> selected) {

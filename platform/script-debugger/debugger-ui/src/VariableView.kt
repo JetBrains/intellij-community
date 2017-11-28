@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
@@ -431,13 +432,17 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       val valueString = value.valueString
       // only WIP reports normal description
-      if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
+      if (valueString != null && (valueString.endsWith(")") || valueString.endsWith(']')) &&
+          ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
         node.setPresentation(icon, null, valueString, true)
       }
       else {
         context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
           .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
-          .rejected(node) { node.setPresentation(icon, null, "Internal error: $it", false) }
+          .rejected(node) {
+            logger<VariableView>().error("Failed to evaluate array length: $it")
+            node.setPresentation(icon, null, valueString ?: "Array", true)
+          }
       }
     }
 
@@ -463,23 +468,25 @@ fun getObjectValueDescription(value: ObjectValue): String {
 }
 
 internal fun trimFunctionDescription(value: Value): String {
-  val presentableValue = value.valueString ?: return ""
+  return trimFunctionDescription(value.valueString ?: return "")
+}
 
+fun trimFunctionDescription(value: String): String {
   var endIndex = 0
-  while (endIndex < presentableValue.length && !StringUtil.isLineBreak(presentableValue[endIndex])) {
+  while (endIndex < value.length && !StringUtil.isLineBreak(value[endIndex])) {
     endIndex++
   }
-  while (endIndex > 0 && Character.isWhitespace(presentableValue[endIndex - 1])) {
+  while (endIndex > 0 && Character.isWhitespace(value[endIndex - 1])) {
     endIndex--
   }
-  return presentableValue.substring(0, endIndex)
+  return value.substring(0, endIndex)
 }
 
 private fun createNumberPresentation(value: String): XValuePresentation {
   return if (value == PrimitiveValue.NA_N_VALUE || value == PrimitiveValue.INFINITY_VALUE) XKeywordValuePresentation(value) else XNumericValuePresentation(value)
 }
 
-private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+\\[\\d+\\]$")
+private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+[\\[(]\\d+[\\])]$")
 
 private class ArrayPresentation(length: Int, className: String?) : XValuePresentation() {
   private val length = Integer.toString(length)

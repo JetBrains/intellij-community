@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Apr-2009
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -41,7 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ScopeToolState {
-  private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
+  private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
   @NotNull
   private final String myScopeName;
   private NamedScope myScope;

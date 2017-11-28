@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class CollapseBlockHandler implements CodeInsightActionHandler {
-  public static final String ourPlaceHolderText = "{...}";
+  private static final String ourPlaceHolderText = "{...}";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseBlockHandler");
 
   @Override

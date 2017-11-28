@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,33 @@
 
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.containers.ComparatorDelegate;
-import com.intellij.util.containers.Convertor;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
+
+import static java.util.Collections.sort;
+import static java.util.Comparator.comparing;
 
 public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChildren<T> {
-  private final ComparatorDelegate<T, VirtualFile> myComparator;
-  private final Convertor<T, VirtualFile> myConvertor;
+  @NotNull private final Comparator<T> myComparator;
+  @NotNull private final Function<T, VirtualFile> myConvertor;
 
-  public FilterDescendantVirtualFileConvertible(final Convertor<T, VirtualFile> convertor, final Comparator<VirtualFile> comparator) {
+  public FilterDescendantVirtualFileConvertible(@NotNull Function<T, VirtualFile> convertor, @NotNull Comparator<VirtualFile> comparator) {
     myConvertor = convertor;
-    myComparator = new ComparatorDelegate<>(myConvertor, comparator);
+    myComparator = comparing(myConvertor, comparator);
   }
 
   @Override
-  protected void sortAscending(final List<T> ts) {
-    Collections.sort(ts, myComparator);
+  protected void sortAscending(@NotNull List<T> ts) {
+    sort(ts, myComparator);
   }
 
   @Override
   protected boolean isAncestor(final T parent, final T child) {
-    return VfsUtil.isAncestor(myConvertor.convert(parent), myConvertor.convert(child), false);
+    return VfsUtil.isAncestor(myConvertor.apply(parent), myConvertor.apply(child), false);
   }
 }

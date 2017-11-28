@@ -71,6 +71,10 @@ public class LocalChangesWouldBeOverwrittenHelper {
       });
   }
 
+  /**
+   * @deprecated Use {@link #showErrorNotification(Project, VirtualFile, String, Collection) showErrorNotification()}.
+   */
+  @Deprecated
   public static void showErrorDialog(@NotNull Project project, @NotNull VirtualFile root, @NotNull String operationName,
                                      @NotNull Collection<String> relativeFilePaths) {
     Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
@@ -86,9 +90,12 @@ public class LocalChangesWouldBeOverwrittenHelper {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
     }
     else {
+      ChangesBrowserWithRollback changesViewer = new ChangesBrowserWithRollback(project, changes);
+
       DialogBuilder builder = new DialogBuilder(project);
       builder.setNorthPanel(new MultiLineLabel(description));
-      builder.setCenterPanel(new ChangesBrowserWithRollback(project, changes));
+      builder.setCenterPanel(changesViewer);
+      builder.addDisposable(changesViewer);
       builder.addOkAction();
       builder.setTitle(title);
       builder.show();

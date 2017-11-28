@@ -18,9 +18,11 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +72,20 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
+  /**
+   * @deprecated use {@link #onSuccessImport(Collection, ProjectData, Project, IdeModelsProvider)}
+   */
   public void onSuccessImport(@NotNull Project project) {
+  }
+
+  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModelsProvider modelsProvider) {
+    onSuccessImport(project);
+  }
+
+  @ApiStatus.Experimental
+  public void onFailureImport(Project project) {
   }
 }

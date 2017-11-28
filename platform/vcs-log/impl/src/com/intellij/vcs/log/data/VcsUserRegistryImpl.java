@@ -98,7 +98,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     try {
       Collection<VcsUser> users = myPersistentEnumerator != null ?
                                   myPersistentEnumerator.getAllDataObjects(ACCEPT_ALL_DATA_FILTER) :
-                                  Collections.<VcsUser>emptySet();
+                                  Collections.emptySet();
       return ContainerUtil.newHashSet(users);
     }
     catch (IOException e) {
@@ -126,12 +126,18 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   }
 
   public int getUserId(@NotNull VcsUser user) throws IOException {
-    return myPersistentEnumerator.enumerate(user);
+    if (myPersistentEnumerator != null) {
+      return myPersistentEnumerator.enumerate(user);
+    }
+    return -1;
   }
 
   @Nullable
   public VcsUser getUserById(Integer userId) throws IOException {
-    return myPersistentEnumerator.valueOf(userId);
+    if (myPersistentEnumerator != null) {
+      return myPersistentEnumerator.valueOf(userId);
+    }
+    return null;
   }
 
   private class MyDescriptor implements KeyDescriptor<VcsUser> {

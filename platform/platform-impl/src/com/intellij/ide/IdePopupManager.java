@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Objects;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
@@ -78,6 +79,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
           }
+          else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
+            // close all popups except one that is opening a modal dialog
+            closeAllPopups(true, focused.getOwner());
+            return;
+          }
         }
 
         if (shouldCloseAllPopup) {
@@ -107,10 +113,18 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   public boolean closeAllPopups(boolean forceRestoreFocus) {
+    return closeAllPopups(forceRestoreFocus, null);
+  }
+
+  private boolean closeAllPopups(boolean forceRestoreFocus, Window window) {
     if (myDispatchStack.size() == 0) return false;
 
     boolean closed = true;
     for (IdePopupEventDispatcher each : myDispatchStack) {
+      if (window != null && !(window instanceof Frame) && window == UIUtil.getWindow(each.getComponent())) {
+        // do not close a heavyweight popup that is opened in the specified window
+        continue;
+      }
       if (forceRestoreFocus) {
         each.setRestoreFocusSilentely();
       }
@@ -134,6 +148,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.stream()
              .flatMap(IdePopupEventDispatcher::getPopupStream)
              .map(JBPopup::getContent)
+             .filter(Objects::nonNull)
              .anyMatch(jbPopupContent -> SwingUtilities.getWindowAncestor(jbPopupContent) == w);
   }
 }

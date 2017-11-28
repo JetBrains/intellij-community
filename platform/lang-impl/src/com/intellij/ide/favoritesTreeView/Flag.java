@@ -17,12 +17,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import java.awt.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/1/12
- * Time: 2:03 PM
- */
 public enum Flag {
   orange(new Color(255, 128, 0)),
   blue(new Color(0, 102, 204)),

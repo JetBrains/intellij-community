@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,29 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UnorderedPair;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInspection.dataFlow.DfaFactType.CAN_BE_NULL;
+import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
+
 /**
  * @author peter
  */
 class StateMerger {
+  public static final int MAX_RANGE_STATES = 100;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
@@ -46,7 +52,7 @@ class StateMerger {
     }
 
     for (final Fact fact : statesByFact.keySet()) {
-      if (statesByFact.get(fact).size() == states.size() || fact.myPositive) continue;
+      if (fact.myPositive || statesByFact.get(fact).size() == states.size()) continue;
 
       Collection<DfaMemoryStateImpl> statesWithNegations = statesByFact.get(fact.getPositiveCounterpart());
       if (statesWithNegations.isEmpty()) continue;
@@ -68,8 +74,8 @@ class StateMerger {
         replacements.stripAndMerge(group, original -> {
           DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
           fact.removeFromState(copy);
-          if (fact.myType == FactType.equality) {
-            restoreOtherInequalities(fact, group, copy);
+          if (fact instanceof EqualityFact) {
+            restoreOtherInequalities((EqualityFact)fact, group, copy);
           }
           return copy;
         });
@@ -82,20 +88,28 @@ class StateMerger {
 
   @NotNull
   private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(@NotNull Fact fact,
-                                                                      @NotNull Collection<DfaMemoryStateImpl> states1) {
-    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = MultiMap.createLinked();
-    for (DfaMemoryStateImpl state : states1) {
-      statesByUnrelatedFacts1.putValue(getUnrelatedFacts(fact, state), state);
+                                                                      @NotNull Collection<DfaMemoryStateImpl> states) {
+    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
+    for (DfaMemoryStateImpl state : states) {
+      statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
     }
-    return statesByUnrelatedFacts1;
+    return statesByUnrelatedFacts;
   }
 
   @NotNull
   private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
-    return new LinkedHashSet<>(ContainerUtil.filter(getFacts(state), another -> !fact.invalidatesFact(another)));
+    final LinkedHashSet<Fact> result = new LinkedHashSet<>();
+    for (Fact other : getFacts(state)) {
+      if (!fact.invalidatesFact(other)) {
+        result.add(other);
+      }
+    }
+    return result;
   }
 
-  private void restoreOtherInequalities(@NotNull Fact removedFact, @NotNull Collection<DfaMemoryStateImpl> mergedGroup, @NotNull DfaMemoryStateImpl state) {
+  private void restoreOtherInequalities(@NotNull EqualityFact removedFact,
+                                        @NotNull Collection<DfaMemoryStateImpl> mergedGroup,
+                                        @NotNull DfaMemoryStateImpl state) {
     Set<DfaConstValue> inequalitiesToRestore = null;
     for (DfaMemoryStateImpl member : mergedGroup) {
       Set<Fact> memberFacts = getFacts(member);
@@ -111,20 +125,25 @@ class StateMerger {
     if (inequalitiesToRestore != null) {
       DfaRelationValue.Factory relationFactory = state.getFactory().getRelationFactory();
       for (DfaConstValue toRestore : inequalitiesToRestore) {
-        state.applyCondition(relationFactory.createRelation(removedFact.myVar, toRestore, JavaTokenType.EQEQ, true));
+        state.applyCondition(relationFactory.createRelation(removedFact.myVar, RelationType.NE, toRestore));
       }
     }
   }
 
   @NotNull
-  private static Set<DfaConstValue> getOtherInequalities(@NotNull Fact removedFact, @NotNull Set<Fact> memberFacts, @NotNull DfaMemoryStateImpl state) {
+  private static Set<DfaConstValue> getOtherInequalities(@NotNull EqualityFact removedFact,
+                                                         @NotNull Set<Fact> memberFacts,
+                                                         @NotNull DfaMemoryStateImpl state) {
     Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
-    Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues((DfaValue)removedFact.myArg));
+    Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues(removedFact.myArg));
     for (Fact candidate : memberFacts) {
-      if (candidate.myType == FactType.equality && !candidate.myPositive && candidate.myVar == removedFact.myVar &&
-          !eqValues.contains((DfaValue)candidate.myArg) &&
-          candidate.myArg instanceof DfaConstValue) {
-        otherInequalities.add((DfaConstValue)candidate.myArg);
+      if (!(candidate instanceof EqualityFact)) continue;
+      EqualityFact equality = (EqualityFact)candidate;
+      if (!equality.myPositive &&
+          equality.myVar == removedFact.myVar &&
+          equality.myArg instanceof DfaConstValue &&
+          !eqValues.contains(equality.myArg)) {
+        otherInequalities.add((DfaConstValue)equality.myArg);
       }
     }
     return otherInequalities;
@@ -203,6 +222,127 @@ class StateMerger {
     return replacements.getMergeResult();
   }
 
+  @Nullable
+  List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
+    // If the same variable has different range A and B in different memState and range A contains range B
+    // then range A is replaced with range B
+    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = createRangeMap(states);
+    boolean changed = false;
+    for (Map<LongRangeSet, LongRangeSet> map : ranges.values()) {
+      for (Map.Entry<LongRangeSet, LongRangeSet> entry : map.entrySet()) {
+        for(LongRangeSet candidate : map.values()) {
+          if(!entry.getValue().equals(candidate) && candidate.contains(entry.getValue())) {
+            entry.setValue(candidate);
+            changed = true;
+          }
+        }
+      }
+    }
+    if(changed) {
+      changed = false;
+      for (DfaMemoryStateImpl state : states) {
+        for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
+          DfaVariableState variableState = state.getVariableState(entry.getKey());
+          LongRangeSet range = variableState.getFact(RANGE);
+          LongRangeSet boundingRange = entry.getValue().get(range);
+          if (boundingRange != null && !boundingRange.equals(range)) {
+            state.setFact(entry.getKey(), RANGE, boundingRange);
+            changed = true;
+          }
+        }
+      }
+      if(changed) {
+        return new ArrayList<>(new LinkedHashSet<>(states));
+      }
+    }
+    List<DfaMemoryStateImpl> merged = mergeIndependentRanges(states, ranges);
+    if(merged != null) return merged;
+    return dropExcessRangeInfo(states, ranges.keySet());
+  }
+
+  @NotNull
+  private static Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> createRangeMap(List<DfaMemoryStateImpl> states) {
+    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
+    for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
+      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
+      variableStates.forEach((varValue, varState) -> {
+        LongRangeSet range = varState.getFact(RANGE);
+        if (range != null) {
+          ranges.computeIfAbsent(varValue, k -> new HashMap<>()).put(range, range);
+        }
+      });
+    }
+    return ranges;
+  }
+
+  @Nullable
+  private List<DfaMemoryStateImpl> mergeIndependentRanges(List<DfaMemoryStateImpl> states, Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges) {
+    boolean changed = false;
+    // For every variable with more than one range, try to union range info and see if some states could be merged after that
+    for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        List<DfaMemoryStateImpl> updated = mergeIndependentRanges(states, entry.getKey());
+        if (updated != null) {
+          states = updated;
+          changed = true;
+        }
+      }
+    }
+    return changed ? states : null;
+  }
+
+  @Nullable
+  private List<DfaMemoryStateImpl> mergeIndependentRanges(List<DfaMemoryStateImpl> states, DfaVariableValue var) {
+    class Record {
+      final DfaMemoryStateImpl myState;
+      final LongRangeSet myRange;
+      final boolean myMerged;
+
+      Record(DfaMemoryStateImpl state, LongRangeSet range, boolean merged) {
+        myState = state;
+        myRange = range;
+        myMerged = merged;
+      }
+
+      Record union(Record other) {
+        return new Record(myState, myRange.union(other.myRange), true);
+      }
+
+      DfaMemoryStateImpl getState() {
+        if(myMerged) {
+          myState.flushVariable(var);
+          myState.setFact(var, RANGE, myRange);
+        }
+        return myState;
+      }
+    }
+
+    ProgressManager.checkCanceled();
+    Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
+    for (DfaMemoryStateImpl state : states) {
+      DfaVariableState variableState = state.getVariableState(var);
+      LongRangeSet range = variableState.getFact(RANGE);
+      if (range == null) {
+        range = LongRangeSet.fromType(var.getVariableType());
+        if (range == null) return null;
+      }
+      merged.merge(copyWithoutVar(state, var), new Record(state, range, false), Record::union);
+    }
+    return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
+  }
+
+  @Nullable
+  private static List<DfaMemoryStateImpl> dropExcessRangeInfo(List<DfaMemoryStateImpl> states, Set<DfaVariableValue> rangeVariables) {
+    if (states.size() <= MAX_RANGE_STATES || rangeVariables.isEmpty()) return null;
+    // If there are too many states, try to drop range information from some variable
+    DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
+    for (DfaMemoryStateImpl state : states) {
+      state.setFact(lastVar, RANGE, null);
+    }
+    return new ArrayList<>(new HashSet<>(states));
+  }
+
   private static boolean mergeUnknowns(@NotNull Replacements replacements, @NotNull List<DfaMemoryStateImpl> complementary) {
     if (complementary.size() < 2) return false;
 
@@ -220,10 +360,7 @@ class StateMerger {
 
   @NotNull
   private DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
-    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.get(state);
-    if (map == null) {
-      myCopyCache.put(state, map = ContainerUtil.newIdentityHashMap());
-    }
+    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> ContainerUtil.newIdentityHashMap());
     DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();
@@ -233,8 +370,10 @@ class StateMerger {
     return copy;
   }
 
-  private static boolean areVarStatesEqualModuloNullability(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {
-    return state1.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
+  private static boolean areVarStatesEqualModuloNullability(@NotNull DfaMemoryStateImpl state1,
+                                                            @NotNull DfaMemoryStateImpl state2,
+                                                            @NotNull DfaVariableValue var) {
+    return state1.getVariableState(var).withoutFact(CAN_BE_NULL).equals(state2.getVariableState(var).withoutFact(CAN_BE_NULL));
   }
 
   @NotNull
@@ -245,51 +384,58 @@ class StateMerger {
     }
     
     result = ContainerUtil.newLinkedHashSet();
+
+    IdentityHashMap<EqClass, EqClassInfo> classInfo = new IdentityHashMap<>();
+
     for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-      DfaValue constant = eqClass.findConstant(true);
-      List<DfaVariableValue> vars = eqClass.getVariables(false);
-      for (DfaVariableValue var : vars) {
+      EqClassInfo info = classInfo.computeIfAbsent(eqClass, EqClassInfo::new);
+      DfaValue constant = info.constant;
+      List<DfaVariableValue> vars = info.vars;
+      int size = vars.size();
+      for (int i = 0; i < size; i++) {
+        DfaVariableValue var = vars.get(i);
         if (constant != null) {
-          result.add(Fact.createEqualityFact(var, constant, true));
+          result.add(Fact.createEqualityFact(var, constant));
         }
-        for (DfaVariableValue eqVar : vars) {
-          if (var != eqVar) {
-            result.add(Fact.createEqualityFact(var, eqVar, true));
-          }
+        for (int j = i + 1; j < size; j++) {
+          DfaVariableValue eqVar = vars.get(j);
+          result.add(Fact.createEqualityFact(var, eqVar));
         }
       }
     }
-    
+
     for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
-      List<DfaVariableValue> vars1 = classPair.first.getVariables(false);
-      List<DfaVariableValue> vars2 = classPair.second.getVariables(false);
-      
-      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<>(vars1);
-      ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
+      EqClassInfo info1 = classInfo.computeIfAbsent(classPair.first, EqClassInfo::new);
+      EqClassInfo info2 = classInfo.computeIfAbsent(classPair.second, EqClassInfo::new);
 
-      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<>(vars2);
-      ContainerUtil.addIfNotNull(secondSet, classPair.second.findConstant(true));
-
-      for (DfaVariableValue var : vars1) {
-        for (DfaValue value : secondSet) {
-          result.add(new Fact(FactType.equality, var, false, value));
+      for (DfaVariableValue var1 : info1.vars) {
+        for (DfaVariableValue var2 : info2.vars) {
+          result.add(new EqualityFact(var1, false, var2));
+          result.add(new EqualityFact(var2, false, var1));
         }
       }
-      for (DfaVariableValue var : vars2) {
-        for (DfaValue value : firstSet) {
-          result.add(new Fact(FactType.equality, var, false, value));
+      if(info1.constant != null) {
+        for (DfaVariableValue var2 : info2.vars) {
+          result.add(new EqualityFact(var2, false, info1.constant));
+        }
+      }
+      if(info2.constant != null) {
+        for (DfaVariableValue var1 : info1.vars) {
+          result.add(new EqualityFact(var1, false, info2.constant));
         }
       }
     }
 
     Map<DfaVariableValue, DfaVariableState> states = state.getVariableStates();
-    for (DfaVariableValue var : states.keySet()) {
-      DfaVariableState variableState = states.get(var);
-      for (DfaPsiType type : variableState.getInstanceofValues()) {
-        result.add(new Fact(FactType.instanceOf, var, true, type));
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : states.entrySet()) {
+      DfaVariableValue var = entry.getKey();
+      DfaVariableState variableState = entry.getValue();
+      TypeConstraint typeConstraint = variableState.getTypeConstraint();
+      for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
+        result.add(new InstanceofFact(var, true, type));
       }
-      for (DfaPsiType type : variableState.getNotInstanceofValues()) {
-        result.add(new Fact(FactType.instanceOf, var, false, type));
+      for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
+        result.add(new InstanceofFact(var, false, type));
       }
     }
 
@@ -297,91 +443,127 @@ class StateMerger {
     return result;
   }
 
-  private enum FactType { equality, instanceOf }
+  static abstract class Fact {
+    final boolean myPositive;
+    @NotNull final DfaVariableValue myVar;
+    private final int myHash;
 
-  private static class Fact {
-    @NotNull final FactType myType;
-    @NotNull private final DfaVariableValue myVar;
-    private final boolean myPositive;
-    @NotNull
-    private final Object myArg; // DfaValue for equality fact, DfaPsiType for instanceOf fact
-
-    private Fact(@NotNull FactType type, @NotNull DfaVariableValue var, boolean positive, @NotNull Object arg) {
-      myType = type;
-      myVar = var;
+    protected Fact(boolean positive, @NotNull DfaVariableValue var, int hash) {
       myPositive = positive;
+      myVar = var;
+      myHash = hash;
+    }
+
+    @Override
+    public final int hashCode() {
+      return myHash;
+    }
+
+    @NotNull
+    abstract Fact getPositiveCounterpart();
+
+    abstract boolean invalidatesFact(@NotNull Fact another);
+
+    abstract void removeFromState(@NotNull DfaMemoryStateImpl state);
+
+    @NotNull
+    static EqualityFact createEqualityFact(@NotNull DfaVariableValue var, @NotNull DfaValue val) {
+      if (val instanceof DfaVariableValue && val.getID() < var.getID()) {
+        return new EqualityFact((DfaVariableValue)val, true, var);
+      }
+      return new EqualityFact(var, true, val);
+    }
+
+    static DfaValue normalize(DfaValue value) {
+      if (value instanceof DfaVariableValue && ((DfaVariableValue)value).isNegated()) {
+        return ((DfaVariableValue)value).createNegated();
+      }
+      return value;
+    }
+  }
+
+  static final class EqualityFact extends Fact {
+    @NotNull private final DfaValue myArg;
+
+    private EqualityFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaValue arg) {
+      super(positive, var, (var.hashCode() * 31 + arg.hashCode()) * 31 + (positive ? 1 : 0));
       myArg = arg;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Fact)) return false;
+      if (!(o instanceof EqualityFact)) return false;
 
-      Fact fact = (Fact)o;
-
-      if (myPositive != fact.myPositive) return false;
-      if (!myArg.equals(fact.myArg)) return false;
-      if (myType != fact.myType) return false;
-      if (!myVar.equals(fact.myVar)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myType.hashCode();
-      result = 31 * result + myVar.hashCode();
-      result = 31 * result + (myPositive ? 1 : 0);
-      result = 31 * result + myArg.hashCode();
-      return result;
+      EqualityFact fact = (EqualityFact)o;
+      return myArg == fact.myArg && myVar == fact.myVar && myPositive == fact.myPositive;
     }
 
     @Override
     public String toString() {
-      return myVar + " " + (myPositive ? "" : "!") + myType + " " + myArg;
+      return myVar + (myPositive ? " EQ " : " NE ") + myArg;
     }
 
+    @Override
     @NotNull
-    private static Fact createEqualityFact(@NotNull DfaVariableValue var, @NotNull DfaValue val, boolean equal) {
-      if (val instanceof DfaVariableValue && val.getID() < var.getID()) {
-        return new Fact(FactType.equality, (DfaVariableValue)val, equal, var);
-      }
-      return new Fact(FactType.equality, var, equal, val);
+    EqualityFact getPositiveCounterpart() {
+      return new EqualityFact(myVar, true, myArg);
     }
 
-    @NotNull
-    private Fact getPositiveCounterpart() {
-      return new Fact(myType, myVar, true, myArg);
-    }
-
+    @Override
     boolean invalidatesFact(@NotNull Fact another) {
-      if (another.myType != myType) return false;
-      if (myType == FactType.equality) {
-        return aboutSame(myVar, another.myVar) || aboutSame(myVar, another.myArg);
-      }
-      return aboutSame(myVar, another.myVar) && aboutSame(myArg, another.myArg);
-    }
-    
-    private static boolean aboutSame(Object v1, Object v2) {
-      return normalize(v1) == normalize(v2);
+      if (!(another instanceof EqualityFact)) return false;
+      DfaValue normalizedVar = normalize(myVar);
+      return normalizedVar == normalize(another.myVar) || normalizedVar == normalize(((EqualityFact)another).myArg);
     }
 
-    private static Object normalize(Object value) {
-      if (value instanceof DfaVariableValue && ((DfaVariableValue)value).isNegated()) {
-        return ((DfaVariableValue)value).createNegated();
-      }
-      return value;
-    }
-
+    @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
       DfaVariableState varState = state.getVariableState(myVar);
-      if (myType == FactType.equality) {
-        state.flushVariable(myVar);
-        state.setVariableState(myVar, varState);
-      } else {
-        state.setVariableState(myVar, varState.withoutType((DfaPsiType)myArg));
-      }
+      state.flushVariable(myVar);
+      state.setVariableState(myVar, varState);
+    }
+  }
+
+  static final class InstanceofFact extends Fact {
+    @NotNull private final DfaPsiType myType;
+
+    private InstanceofFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaPsiType type) {
+      super(positive, var, (var.hashCode() * 31 + type.hashCode()) * 31 + (positive ? 1 : 0));
+      myType = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof InstanceofFact)) return false;
+
+      InstanceofFact fact = (InstanceofFact)o;
+      return myPositive == fact.myPositive && myType == fact.myType && myVar == fact.myVar;
+    }
+
+    @Override
+    public String toString() {
+      return myVar + (myPositive ? " IS " : " IS NOT ") + myType;
+    }
+
+    @Override
+    @NotNull
+    Fact getPositiveCounterpart() {
+      return new InstanceofFact(myVar, true, myType);
+    }
+
+    @Override
+    boolean invalidatesFact(@NotNull Fact another) {
+      return another instanceof InstanceofFact &&
+             myType == ((InstanceofFact)another).myType &&
+             normalize(myVar) == normalize(another.myVar);
+    }
+
+    @Override
+    void removeFromState(@NotNull DfaMemoryStateImpl state) {
+      DfaVariableState varState = state.getVariableState(myVar);
+      state.setVariableState(myVar, varState.withoutType(myType));
     }
   }
 
@@ -431,4 +613,13 @@ class StateMerger {
     }
   }
 
+  static final class EqClassInfo {
+    final List<DfaVariableValue> vars;
+    final DfaValue constant;
+
+    EqClassInfo(EqClass eqClass) {
+      vars = eqClass.getVariables(false);
+      constant = eqClass.findConstant(true);
+    }
+  }
 }

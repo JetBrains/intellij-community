@@ -30,10 +30,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertCollectionToArrayFix implements IntentionAction {
   private final PsiExpression myCollectionExpression;
+  private final PsiExpression myExpressionToReplace;
   private final String myNewArrayText;
 
-  public ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+  public ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                     @NotNull PsiExpression expressionToReplace,
+                                     @NotNull PsiArrayType arrayType) {
     myCollectionExpression = collectionExpression;
+    myExpressionToReplace = expressionToReplace;
 
     PsiType componentType = arrayType.getComponentType();
     myNewArrayText = componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? "" : "new " + getArrayTypeText(componentType);
@@ -55,7 +59,8 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCollectionExpression.isValid() && PsiManager.getInstance(project).isInProject(myCollectionExpression);
+    return myCollectionExpression.isValid() && PsiManager.getInstance(project).isInProject(myCollectionExpression) &&
+        myExpressionToReplace.isValid() && PsiManager.getInstance(project).isInProject(myExpressionToReplace);
   }
 
   @Override
@@ -63,7 +68,7 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     String replacement = ParenthesesUtils.getText(myCollectionExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) +
                          ".toArray(" + myNewArrayText + ")";
-    myCollectionExpression.replace(factory.createExpressionFromText(replacement, myCollectionExpression));
+    myExpressionToReplace.replace(factory.createExpressionFromText(replacement, myCollectionExpression));
   }
 
   @Override

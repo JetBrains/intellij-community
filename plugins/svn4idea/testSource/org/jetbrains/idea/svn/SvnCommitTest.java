@@ -16,16 +16,17 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NullableFunction;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,12 +36,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/13
- * Time: 11:59 AM
- */
 public class SvnCommitTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private VcsDirtyScopeManager myDirtyScopeManager;
@@ -56,13 +51,13 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   @Test
-  public void testSimpleCommit() throws Exception {
+  public void testSimpleCommit() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     run2variants(new MyRunner() {
       private String myName = "a.txt";
 
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
         myDirtyScopeManager.markEverythingDirty();
         myChangeListManager.ensureUpToDate(false);
@@ -71,21 +66,21 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
         myName = "b.txt";
       }
     });
   }
 
   @Test
-  public void testCommitRename() throws Exception {
+  public void testCommitRename() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     run2variants(new MyRunner() {
       private String myName = "a.txt";
       private String myRenamedName = "aRenamed.txt";
 
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
         myDirtyScopeManager.markEverythingDirty();
         myChangeListManager.ensureUpToDate(false);
@@ -100,7 +95,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
         myName = "b.txt";
         myRenamedName = "bRenamed.txt";
       }
@@ -108,14 +103,14 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   @Test
-  public void testRenameReplace() throws Exception {
+  public void testRenameReplace() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     run2variants(new MyRunner() {
       private String myName = "a.txt";
       private String myName2 = "aRenamed.txt";
 
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
         final VirtualFile file2 = createFileInCommand(myWorkingCopyDir, myName2, "1235");
         myDirtyScopeManager.markEverythingDirty();
@@ -133,7 +128,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
         myName = "b.txt";
         myName2 = "bRenamed.txt";
       }
@@ -141,13 +136,13 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   @Test
-  public void testRenameFolder() throws Exception {
+  public void testRenameFolder() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     run2variants(new MyRunner() {
       private String folder = "f";
 
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final VirtualFile dir = createDirInCommand(myWorkingCopyDir, folder);
         final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
         final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
@@ -165,21 +160,21 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
         folder = "f1";
       }
     });
   }
 
   @Test
-  public void testCommitDeletion() throws Exception {
+  public void testCommitDeletion() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     run2variants(new MyRunner() {
       private String folder = "f";
 
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final VirtualFile dir = createDirInCommand(myWorkingCopyDir, folder);
         final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
         final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
@@ -198,7 +193,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
         folder = "f1";
       }
     });
@@ -211,7 +206,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareInnerCopy(false);
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
@@ -234,7 +229,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(true);
@@ -248,7 +243,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareInnerCopy(false);
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
@@ -271,7 +266,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(true);
@@ -285,7 +280,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareInnerCopy(true);
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
@@ -306,7 +301,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(true);
@@ -320,7 +315,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareInnerCopy(true);
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
@@ -341,7 +336,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(true);
@@ -355,7 +350,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareExternal();
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
 
@@ -376,7 +371,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(true);
@@ -390,7 +385,7 @@ public class SvnCommitTest extends Svn17TestCase {
     prepareExternal();
     final MyRunner runner = new MyRunner() {
       @Override
-      protected void run() throws Exception {
+      protected void run() {
         final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
         final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
 
@@ -411,7 +406,7 @@ public class SvnCommitTest extends Svn17TestCase {
       }
 
       @Override
-      protected void cleanup() throws Exception {
+      protected void cleanup() {
       }
     };
     setNativeAcceleration(false);
@@ -444,14 +439,7 @@ public class SvnCommitTest extends Svn17TestCase {
       changes.add(change);
     }
     final HashSet<String> feedback = new HashSet<>();
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list",
-      new NullableFunction<Object, Object>() {
-        @Nullable
-        @Override
-        public Object fun(Object o) {
-          return null;
-        }
-      }, feedback);
+    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list", o -> null, feedback);
     if (exceptions !=null && ! exceptions.isEmpty()) {
       exceptions.get(0).printStackTrace();
     }
@@ -478,7 +466,7 @@ public class SvnCommitTest extends Svn17TestCase {
     Assert.assertNull(changeA);
   }
 
-  protected void run2variants(final MyRunner runner) throws Exception {
+  protected void run2variants(final MyRunner runner) {
     // TODO: Change this to run different variants separately. See SvnTestCase.myUseAcceleration.
     setNativeAcceleration(false);
     runner.run();
@@ -488,7 +476,7 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   private static abstract class MyRunner {
-    protected abstract void run() throws Exception;
-    protected abstract void cleanup() throws Exception;
+    protected abstract void run();
+    protected abstract void cleanup();
   }
 }

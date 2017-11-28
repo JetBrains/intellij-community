@@ -80,12 +80,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     AbstractUpdateIntegrateCrawler crawler = createCrawler(eventHandler, totalUpdate, exceptions, updatedFiles);
 
     Collection<VirtualFile> updatedRoots = new HashSet<>();
-    Arrays.sort(contentRoots, new Comparator<FilePath>() {
-      public int compare(FilePath o1, FilePath o2) {
-        return SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\").compareTo(o2.getPath().replace("/", "\\")) :
-          o1.getPath().replace("/", "\\").compareToIgnoreCase(o2.getPath().replace("/", "\\"));
-      }
-    });
+    Arrays.sort(contentRoots, (o1, o2) -> SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\")
+      .compareTo(o2.getPath().replace("/", "\\")) : o1.getPath().replace("/", "\\").compareToIgnoreCase(o2.getPath().replace("/", "\\")));
     for (FilePath contentRoot : contentRoots) {
       if (progressIndicator != null) {
         progressIndicator.checkCanceled();
@@ -96,13 +92,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       updatedRoots.addAll(SvnUtil.crawlWCRoots(myVcs, ioRoot, crawler, progressIndicator));
     }
     if (updatedRoots.isEmpty()) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
-                                   SvnBundle.message("messate.text.update.error"));
-        }
-      }, null, myVcs.getProject());
-      return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+        .showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
+                         SvnBundle.message("messate.text.update.error")), null, myVcs.getProject());
+      return new UpdateSessionAdapter(Collections.emptyList(), true);
     }
 
     return new MyUpdateSessionAdapter(contentRoots, updatedFiles, exceptions);
@@ -194,11 +187,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         }
 
         if (! parents.isEmpty()) {
-          RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-            public void run() {
-              myDirtyScopeManager.filesDirty(null, parents);
-            }
-          }, parents);
+          RefreshQueue.getInstance().refresh(true, true, () -> myDirtyScopeManager.filesDirty(null, parents), parents);
         }
       }
     }

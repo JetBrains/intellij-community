@@ -36,10 +36,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.*;
 
-/**
-* User: anna
-* Date: 1/11/12
-*/
 abstract class RenameChooser {
   @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
   @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";

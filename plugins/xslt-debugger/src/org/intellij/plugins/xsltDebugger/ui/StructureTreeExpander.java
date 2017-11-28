@@ -21,11 +21,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 28.11.2007
- */
 public class StructureTreeExpander implements TreeExpander {
   private final JTree myTree;
 

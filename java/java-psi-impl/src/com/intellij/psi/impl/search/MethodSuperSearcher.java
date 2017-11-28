@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -39,7 +38,7 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
   public boolean execute(@NotNull final SuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<MethodSignatureBackedByPsiMethod> consumer) {
     final PsiClass parentClass = queryParameters.getPsiClass();
     final PsiMethod method = queryParameters.getMethod();
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
 
       final boolean checkBases = queryParameters.isCheckBases();

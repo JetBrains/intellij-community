@@ -16,7 +16,7 @@
 
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,17 +27,13 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @deprecated use {@link ContainerUtil#newConcurrentSet()} instead
  */
-public class ConcurrentHashSet<K> implements Set<K> {
+public final class ConcurrentHashSet<K> implements Set<K> {
+  private static final Logger LOG = Logger.getInstance(ConcurrentHashSet.class);
   private final ConcurrentMap<K, Boolean> map;
 
-  public ConcurrentHashSet(int initialCapacity) {
-    map = ContainerUtil.newConcurrentMap(initialCapacity);
-  }
   public ConcurrentHashSet() {
     map = ContainerUtil.newConcurrentMap();
-  }
-  public ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    map = ContainerUtil.newConcurrentMap(hashingStrategy);
+    LOG.warn("ConcurrentHashSet is deprecated and will be removed soon; please use com.intellij.util.containers.ContainerUtil.newConcurrentSet instead.");
   }
 
   @Override

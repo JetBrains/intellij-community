@@ -19,13 +19,14 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
@@ -37,18 +38,20 @@ public class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
+  @SuppressWarnings("unused") // left for compatibility and reserved for future use
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
-  public static final String PATCHER_MAIN = "com.intellij.updater.Runner";
+  public static final int INSTALLATION_CORRUPTED = 12;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String PATCHER_MAIN_PROPERTY = "idea.patcher.main";
   private static final String[] NO_ARGS = {};
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
+  private static final List<String> HEADLESS_COMMANDS = Arrays.asList("ant", "duplocate", "traverseUI", "buildAppcodeCache", "format",
+                                                                     "keymap", "update", "inspections", "intentions");
 
   private Main() { }
 
@@ -70,12 +73,6 @@ public class Main {
     }
     else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
-    }
-
-    if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
-      showMessage("Unsupported Java Version",
-                  "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     if (isStudio() && !isHeadless()) {
@@ -114,15 +111,8 @@ public class Main {
     }
 
     String firstArg = args[0];
-    return Comparing.strEqual(firstArg, "ant") ||
-           Comparing.strEqual(firstArg, "duplocate") ||
-           Comparing.strEqual(firstArg, "traverseUI") ||
-           Comparing.strEqual(firstArg, "buildAppcodeCache") ||
-           Comparing.strEqual(firstArg, "format") ||
-           Comparing.strEqual(firstArg, "keymap") ||
-           Comparing.strEqual(firstArg, "inspections") ||
-           Comparing.strEqual(firstArg, "intentions") ||
-           (firstArg.length() < 20 && firstArg.endsWith("inspect"));
+    return HEADLESS_COMMANDS.contains(firstArg)
+           || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   private static boolean isCommandLine(String[] args) {
@@ -139,8 +129,8 @@ public class Main {
     return true;
   }
 
-  public static boolean isUITraverser(final String[] args) {
-    return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
+  public static boolean isApplicationStarterForBuilding(final String[] args) {
+    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") || Comparing.strEqual(args[0], "listBundledPlugins"));
   }
 
   // TODO: Use PlatformUtils#isAndroidStudio?
@@ -148,15 +138,8 @@ public class Main {
     return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void showMessage(String title, Throwable t) {
-    showMessage(title, "Internal Error. ", t, true);
-  }
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public static void showMessage(String title, String text, Throwable t, boolean error) {
     StringWriter message = new StringWriter();
-    message.append(text);
 
     AWTError awtError = findGraphicsError(t);
     if (awtError != null) {
@@ -165,13 +148,14 @@ public class Main {
       t = awtError;
     }
     else {
-      message.append("Please report to ");
-      message.append(isStudio() ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
+      message.append("Internal error. Please report to ");
+      boolean studio = isStudio();
+      message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");
     }
 
     t.printStackTrace(new PrintWriter(message));
-    showMessage(title, message.toString(), error);
+    showMessage(title, message.toString(), true);
   }
 
   private static AWTError findGraphicsError(Throwable t) {

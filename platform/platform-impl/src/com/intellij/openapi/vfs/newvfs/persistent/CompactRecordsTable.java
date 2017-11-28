@@ -103,7 +103,6 @@ public class CompactRecordsTable extends AbstractRecordsTable {
   private static final int CAPACITY_MASK = 0x7FFF0000;
   private static final int CAPACITY_SHIFT = 16;
   private static final int SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE = 0xFFFF;
-  private static final int SPECIAL_NEGATIVE_SIZE = -1;
 
   @Override
   public int getSize(int record) {
@@ -113,7 +112,7 @@ public class CompactRecordsTable extends AbstractRecordsTable {
       return myStorage.getInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD));
     }
     int i = currentValue & SIZE_MASK;
-    if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE;
+    if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
     return i;
   }
 
@@ -130,13 +129,13 @@ public class CompactRecordsTable extends AbstractRecordsTable {
     }
 
     // size to fit in normal record [-1 .. 0xFFFF)
-    if (size >= 0xFFFF || size < SPECIAL_NEGATIVE_SIZE || forceSplit) {
+    if (size >= 0xFFFF || size < SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD || forceSplit) {
       // introduce indirect record able to hold larger size range
       extendSizeAndCapacityRecord(record, size, getCapacity(record));
       return;
     }
 
-    if (size == SPECIAL_NEGATIVE_SIZE) {
+    if (size == SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD) {
       size = SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE;
     }
 
@@ -232,7 +231,7 @@ public class CompactRecordsTable extends AbstractRecordsTable {
       @Override
       public boolean validId() {
         assert hasNextId();
-        return getSize(nextId) != -1;
+        return isSizeOfLiveRecord(getSize(nextId));
       }
     };
   }

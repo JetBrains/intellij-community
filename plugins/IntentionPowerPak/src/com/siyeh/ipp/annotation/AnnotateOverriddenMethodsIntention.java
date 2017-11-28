@@ -158,7 +158,10 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
       for (String annotationToRemove : annotationsToRemove) {
         annotationsManager.deannotate(modifierListOwner, annotationToRemove);
       }
-      annotationsManager.annotateExternally(modifierListOwner, annotationName, modifierListOwner.getContainingFile(), attributes);
+      try {
+        annotationsManager.annotateExternally(modifierListOwner, annotationName, modifierListOwner.getContainingFile(), attributes);
+      }
+      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
     }
     else {
       WriteAction.run(() -> {

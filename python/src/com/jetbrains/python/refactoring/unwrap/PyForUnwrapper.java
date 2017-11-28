@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
@@ -28,7 +29,7 @@ public class PyForUnwrapper extends PyUnwrapper {
     super(PyBundle.message("unwrap.for"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof PyForStatement) {
       final PyStatementList statementList = ((PyForStatement)e).getForPart().getStatementList();
       if (statementList != null) {

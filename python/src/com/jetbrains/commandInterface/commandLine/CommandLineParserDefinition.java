@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineParserDefinition implements ParserDefinition {
+  public static final IFileElementType FILE_TYPE = new IFileElementType(CommandLineLanguage.INSTANCE);
+
   @NotNull
   @Override
   public Lexer createLexer(final Project project) {
@@ -50,7 +52,7 @@ public final class CommandLineParserDefinition implements ParserDefinition {
 
   @Override
   public IFileElementType getFileNodeType() {
-    return new IFileElementType(CommandLineLanguage.INSTANCE);
+    return FILE_TYPE;
   }
 
 

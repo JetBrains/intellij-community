@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
@@ -65,8 +64,6 @@ public class GroovyGStringKeyInspection extends BaseInspection {
 
     @Override
     public void visitExpression(@NotNull GrExpression grExpression) {
-      if (!isGStringType(grExpression)) return;
-
       final PsiElement gstringParent = grExpression.getParent();
       if (gstringParent == null || !(gstringParent instanceof GrArgumentList)) return;
 
@@ -78,6 +75,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
         return;
       }
 
+      if (!isGStringType(grExpression)) return;
       if (!isMapPutMethod((GrMethodCall)grandparent)) return;
 
       registerError(grExpression);
@@ -101,11 +99,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
 
     private static boolean isGStringType(@NotNull GrExpression expression) {
       PsiType expressionType = expression.getType();
-      if (expressionType == null) {
-        return false;
-      }
-      PsiClassType type = TypesUtil.createTypeByFQClassName(GROOVY_LANG_GSTRING, expression);
-      return type.isAssignableFrom(expressionType);
+      return expressionType != null && expressionType.equalsToText(GROOVY_LANG_GSTRING);
     }
   }
 }

@@ -16,7 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -30,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,25 +53,61 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * and set its indexed state to outdated
  * if we get other event we set indexed state to outdated
  *
- * Index stamp is file modified timestamp of the index's version file, it is assumed that index stamps are monotonically increasing, but
- * still << Long.MAX_VALUE: there is one negative special timestamp used for marking outdated index state.
- * The code doesn't take overflow of real file timestamps (or their coincidence to negative special timestamps) into account because
- * it will happen (if time will go as forward as it does today) near year 292277094 (=new java.util.Date(Long.MAX_VALUE).getYear()).
- * At that time (if this code will be still actual) we can use positive small timestamps for special cases.
+ * It is assumed that index stamps are monotonically increasing.
  */
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 15;
-  private static final ConcurrentMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
+  private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
+  private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
-  private static volatile long ourLastStamp; // ensure any file index stamp increases
 
   private IndexingStamp() {}
 
-  public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
+  static class IndexVersion {
+    private static volatile long ourLastStamp; // ensure any file index stamp increases
+    final long myModificationCount;
+
+    IndexVersion() {
+      this(calcNextVersion(ourLastStamp));
+    }
+
+    private IndexVersion(long modificationCount) {
+      myModificationCount = modificationCount;
+      ourLastStamp = Math.max(modificationCount, ourLastStamp);
+    }
+
+    public IndexVersion(DataInput in) throws IOException {
+      myModificationCount = DataInputOutputUtil.readTIME(in);
+      ourLastStamp = Math.max(ourLastStamp, myModificationCount);
+    }
+
+    public void write(DataOutput os) throws IOException {
+      DataInputOutputUtil.writeTIME(os, myModificationCount);
+    }
+
+    IndexVersion nextVersion() {
+      return new IndexVersion(calcNextVersion(myModificationCount));
+    }
+
+    private static long calcNextVersion(long modificationCount) {
+      return Math.max(
+        System.currentTimeMillis(),
+        Math.max(modificationCount + MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION, ourLastStamp + OUR_INDICES_TIMESTAMP_INCREMENT)
+      );
+    }
+  }
+  
+  public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
+    File file = IndexInfrastructure.getVersionFile(indexId);
+    if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
+      FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
+    }
     SharedIndicesData.beforeSomeIndexVersionInvalidation();
-    final long prevLastModifiedValue = file.lastModified();
+    final IndexVersion previousIndexVersion = getIndexVersion(indexId, version);
+
+    IndexVersion newIndexVersion = previousIndexVersion != null ? previousIndexVersion.nextVersion() : new IndexVersion();
+
     if (file.exists()) {
       FileUtil.deleteWithRenaming(file);
     }
@@ -83,7 +117,7 @@ public class IndexingStamp {
       @Override
       public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
         try {
-          return new DataOutputStream(new FileOutputStream(file));
+          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         }
         catch (FileNotFoundException ex) {
           if (lastAttempt) throw ex;
@@ -96,20 +130,11 @@ public class IndexingStamp {
       DataInputOutputUtil.writeINT(os, version);
       DataInputOutputUtil.writeINT(os, VERSION);
       DataInputOutputUtil.writeTIME(os, FSRecords.getCreationTimestamp());
+      newIndexVersion.write(os);
+      ourIndexIdToCreationStamp.put(indexId, newIndexVersion);
     }
     finally {
-      ourIndexIdToCreationStamp.clear();
       os.close();
-      long max = Math.max(
-        System.currentTimeMillis(),
-        Math.max(prevLastModifiedValue + MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION, ourLastStamp + OUR_INDICES_TIMESTAMP_INCREMENT)
-      );
-      ourLastStamp = max;
-      final boolean lastModifiedSuccess = file.setLastModified(max);
-      if (!lastModifiedSuccess) {
-        Logger.getInstance(IndexingStamp.class).info("Setting lastModified failed for " + file + " timestamp:" + max);
-        ourLastStamp = Math.max(ourLastStamp, file.lastModified());
-      }
     }
   }
 
@@ -119,37 +144,47 @@ public class IndexingStamp {
 
   private static final int OUR_INDICES_TIMESTAMP_INCREMENT = SystemProperties.getIntProperty("idea.indices.timestamp.resolution", 1);
 
-  public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
-    try {
-      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
-      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-      try {
-        final int savedIndexVersion = DataInputOutputUtil.readINT(in);
-        final int commonVersion = DataInputOutputUtil.readINT(in);
-        final long vfsCreationStamp = DataInputOutputUtil.readTIME(in);
-        return savedIndexVersion != currentIndexVersion ||
-               commonVersion != VERSION ||
-               vfsCreationStamp != FSRecords.getCreationTimestamp()
-          ;
-
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException e) {
-      return true;
-    }
+  public static boolean versionDiffers(@NotNull ID<?,?> indexId, final int currentIndexVersion) {
+    return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
+  private static final int ANY_VERSION = 1;
+  private static final long NO_VERSION = 0;
+  
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    Long version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version.longValue();
+    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    return version != null ? version.myModificationCount : NO_VERSION;
+  }
 
-    long stamp = IndexInfrastructure.getVersionFile(indexName).lastModified();
-    ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
+  private static @Nullable IndexVersion getIndexVersion(@NotNull ID<?, ?> indexName, int currentIndexVersion) {
+    IndexVersion version = ourIndexIdToCreationStamp.get(indexName);
+    if (version != null) return version;
 
-    return stamp;
+    synchronized (IndexingStamp.class) {
+      version = ourIndexIdToCreationStamp.get(indexName);
+      if (version != null) return version;
+
+      File versionFile = IndexInfrastructure.getVersionFile(indexName);
+      try {
+        final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
+        try {
+
+          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
+              DataInputOutputUtil.readINT(in) == VERSION &&
+              DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
+            version = new IndexVersion(in);
+            ourIndexIdToCreationStamp.put(indexName, version);
+            return version;
+          }
+        }
+        finally {
+          in.close();
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return null;
   }
 
   public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
@@ -360,12 +395,9 @@ public class IndexingStamp {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
           final SmartList<ID<?, ?>> retained = new SmartList<>();
-          stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
-            @Override
-            public boolean execute(ID<?, ?> object) {
-              retained.add(object);
-              return true;
-            }
+          stamp.myIndexStamps.forEach(object -> {
+            retained.add(object);
+            return true;
           });
           return retained;
         }

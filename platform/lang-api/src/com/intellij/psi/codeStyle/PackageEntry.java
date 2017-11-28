@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: cdr
- */
 public class PackageEntry {
   private final String myPackageName;
   private final boolean myWithSubpackages;

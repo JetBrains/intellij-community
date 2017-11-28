@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspectionTest extends LightInspectionTestCase {
 
-  public void testWhileCanBeForeach() throws Exception {
+  public void testWhileCanBeForeach() {
     doTest();
   }
 

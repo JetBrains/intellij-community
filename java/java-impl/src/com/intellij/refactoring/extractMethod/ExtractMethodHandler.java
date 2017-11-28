@@ -157,31 +157,36 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
     if (processor.showDialog(directTypes)) {
-      run(project, editor, processor);
+      extractMethod(project, processor);
       DuplicatesImpl.processDuplicates(processor, project, editor);
       return true;
     }
     return false;
   }
 
-  public static void run(@NotNull final Project project, final Editor editor, final ExtractMethodProcessor processor) {
+  public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {
     CommandProcessor.getInstance().executeCommand(project,
-                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
-                                                    try {
-                                                      final RefactoringEventData beforeData = new RefactoringEventData();
-                                                      beforeData.addElements(processor.myElements);
-                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
+                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+                                                    () -> doRefactoring(project, processor)), REFACTORING_NAME, null);
+  }
 
-                                                      processor.doRefactoring();
+  private static void doRefactoring(@NotNull Project project, ExtractMethodProcessor processor) {
+    try {
+      final RefactoringEventData beforeData = new RefactoringEventData();
+      beforeData.addElements(processor.myElements);
+      project.getMessageBus().syncPublisher(
+        RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
 
-                                                      final RefactoringEventData data = new RefactoringEventData();
-                                                      data.addElement(processor.getExtractedMethod());
-                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
-                                                    }
-                                                    catch (IncorrectOperationException e) {
-                                                      LOG.error(e);
-                                                    }
-                                                  }), REFACTORING_NAME, null);
+      processor.doRefactoring();
+
+      final RefactoringEventData data = new RefactoringEventData();
+      data.addElement(processor.getExtractedMethod());
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringDone("refactoring.extract.method", data);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
@@ -245,15 +250,16 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
                                                     final PsiElement[] elements,
                                                     final PsiFile file,
                                                     final boolean openEditor) {
-    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false, null);
+    return getProcessor(elements, project, file, openEditor ? openEditor(file) : null, false, null);
   }
 
   public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
-    return invokeOnElements(project, openEditor(project, file), processor, directTypes);
+    return invokeOnElements(project, openEditor(file), processor, directTypes);
   }
 
   @Nullable
-  private static Editor openEditor(final Project project, final PsiFile file) {
+  public static Editor openEditor(@NotNull final PsiFile file) {
+    final Project project = file.getProject();
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, virtualFile);

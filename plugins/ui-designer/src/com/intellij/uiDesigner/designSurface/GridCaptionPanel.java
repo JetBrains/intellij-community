@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
@@ -36,7 +37,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -335,7 +335,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Override public void mousePressed(MouseEvent e) {
       if (mySelectedContainer == null) return;
-      requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(GridCaptionPanel.this, true);
+      });
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       if (canResizeCells()) {

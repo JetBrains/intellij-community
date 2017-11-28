@@ -41,10 +41,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * User: anna
- * Date: 06-Feb-2006
- */
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
@@ -131,7 +127,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
+  private static final Logger LOG = Logger.getInstance(LogConsolePreferences.class);
 
   public static LogConsolePreferences getInstance(Project project) {
     return ServiceManager.getService(project, LogConsolePreferences.class);

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 18.12.2006
- * Time: 20:18:31
- */
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
@@ -81,7 +75,7 @@ class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
 
   @Override
   @NotNull
-  protected KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
+  KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
     SoftKey<K, V> keyReference = new SoftKey<K, V>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof SoftValue) {
@@ -89,5 +83,4 @@ class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
     }
     return keyReference;
   }
-
 }

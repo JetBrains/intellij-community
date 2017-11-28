@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,9 +147,6 @@ public class InplaceChangeSignature implements DocumentListener {
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {}
-
-  @Override
   public void documentChanged(DocumentEvent event) {
     RangeMarker marker = event.getDocument().createRangeMarker(event.getOffset(), event.getOffset());
     myDocumentManager.performWhenAllCommitted(() -> {
@@ -166,7 +163,7 @@ public class InplaceChangeSignature implements DocumentListener {
 
       if (element instanceof PsiWhiteSpace) {
         PsiElement method = myStableChange.getMethod();
-        if (PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class) == method) {
+        if (PsiTreeUtil.skipWhitespacesForward(element) == method) {
           return;
         }
       }

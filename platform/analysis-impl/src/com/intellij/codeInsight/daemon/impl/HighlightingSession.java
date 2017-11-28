@@ -30,7 +30,13 @@ public interface HighlightingSession {
   @NotNull
   PsiFile getPsiFile();
 
-  Editor getEditor();
+  /**
+   * TODO to remove in IDEA 2018
+   */
+  @Deprecated
+  default Editor getEditor() {
+    return null;
+  }
 
   @NotNull
   Document getDocument();

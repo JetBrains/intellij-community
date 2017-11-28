@@ -24,7 +24,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializer
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
@@ -65,8 +63,8 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
-  private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
-
+  private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
+  
   internal open val project: Project?
     get() = null
 
@@ -306,35 +304,20 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD) {
-      val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
       val storageChooser = component as? StateStorageChooserEx
-      for (storageSpec in storageSpecs) {
+      for (storageSpec in getStorageSpecs(component, stateSpec, StateStorageOperation.READ)) {
         if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
-        // todo fix FacetManager
-        // use.loaded.state.as.existing used in upsource
-        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
-          name != "AntConfiguration" &&
-          name != "ProjectModuleManager" &&
-          name != "FacetManager" &&
-          name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
-          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
-          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
-          (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
-        }
-        else {
-          null
-        }
+        val stateGetter = if (isUseLoadedStateAsExisting(storage, name)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
         var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
             // state will be null if file deleted
             // we must create empty (initial) state to reinit component
-            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+            state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
             continue
@@ -361,6 +344,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
+  // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+  // todo fix FacetManager
+  // use.loaded.state.as.existing used in upsource
+  private fun isUseLoadedStateAsExisting(storage: StateStorage, name: String): Boolean {
+    return isUseLoadedStateAsExisting(storage) &&
+           name != "AntConfiguration" &&
+           name != "ProjectModuleManager" &&
+           name != "FacetManager" &&
+           name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
+           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)
+  }
+
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
@@ -370,22 +366,22 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
       getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return DefaultStateSerializer.deserializeState(documentElement, stateClass, null)
+      return deserializeState(documentElement, stateClass, null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state from $url", e)
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.size == 1 || component is StateStorageChooserEx) {
-      return storages
+      return storages.toList()
     }
 
     if (storages.isEmpty()) {
       if (stateSpec.defaultStateAsResource) {
-        return storages
+        return emptyList()
       }
 
       throw AssertionError("No storage specified")
@@ -405,12 +401,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (componentName in componentNames) {
       if (isNotReloadable(componentName)) {
         if (notReloadableComponents == null) {
-          notReloadableComponents = LinkedHashSet<String>()
+          notReloadableComponents = LinkedHashSet()
         }
         notReloadableComponents.add(componentName)
       }
     }
-    return notReloadableComponents ?: emptySet<String>()
+    return notReloadableComponents ?: emptySet()
   }
 
   override final fun reloadStates(componentNames: MutableSet<String>, messageBus: MessageBus) {
@@ -502,39 +498,25 @@ internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair
   return errors
 }
 
-private fun findNonDeprecated(storages: Array<Storage>): Storage {
-  for (storage in storages) {
-    if (!storage.deprecated) {
-      return storage
-    }
-  }
-  throw AssertionError("All storages are deprecated")
-}
+private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
 
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
-  if (isEmpty()) {
-    return this
+internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
+  if (size < 2) {
+    return toList()
   }
 
-  if (!this[0].deprecated) {
-    var othersAreDeprecated = true
-    for (i in 1..size - 1) {
-      if (!this[i].deprecated) {
-        othersAreDeprecated = false
-        break
-      }
-    }
-
+  if (!first().deprecated) {
+    val othersAreDeprecated = (1 until size).any { get(it).deprecated }
     if (othersAreDeprecated) {
-      return this
+      return toList()
     }
   }
 
-  return sortedArrayWith(deprecatedComparator)
+  return sortedWith(deprecatedComparator)
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {

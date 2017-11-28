@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class WaitNotifyNotInSynchronizedContextInspectionMerger extends InspectionElementsMerger {
+  @NotNull
   @Override
   public String getMergedToolName() {
     return "WaitNotifyNotInSynchronizedContext";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {
@@ -34,6 +37,7 @@ public class WaitNotifyNotInSynchronizedContextInspectionMerger extends Inspecti
     };
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[]{

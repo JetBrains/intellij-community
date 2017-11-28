@@ -84,7 +84,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     val clazzName = containingClass?.qualifiedName ?: return null
     val fullMethodName = StringUtil.getQualifiedName(clazzName, name)
     val paramNames: List<String> = parameterList.parameters.map { it.name ?: "" }
-    return MethodInfo(fullMethodName, paramNames)
+    return MethodInfo(fullMethodName, paramNames, if (language == blackListDependencyLanguage) language else null)
   }
 
   override fun getDefaultBlackList(): Set<String> = blackList

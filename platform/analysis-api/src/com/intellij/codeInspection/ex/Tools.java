@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 24-Apr-2009
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.psi.PsiElement;

@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +37,7 @@ import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -93,7 +92,7 @@ public abstract class GitHandler {
   // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
   private boolean myEnvironmentCleanedUp = true;
   private UUID myHttpHandler;
-  private Processor<OutputStream> myInputProcessor; // The processor for stdin
+  @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
@@ -147,6 +146,7 @@ public abstract class GitHandler {
     myCommandLine.setWorkDirectory(myWorkingDirectory);
     if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
       myCommandLine.addParameters("-c", "core.quotepath=false");
+      myCommandLine.addParameters("-c", "log.showSignature=false");
       for (String configParameter : configParameters) {
         myCommandLine.addParameters("-c", configParameter);
       }
@@ -472,7 +472,7 @@ public abstract class GitHandler {
   }
 
   private void unsetGitTrace() {
-    myEnv.put("GIT_TRACE", "0");
+    myEnv.putAll(getCommonEnvironment());
   }
 
   private void setupHttpAuthenticator() throws IOException {
@@ -518,12 +518,9 @@ public abstract class GitHandler {
   }
 
   protected static boolean isSshUrlExcluded(@NotNull final HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
-    return ContainerUtil.exists(urls, new Condition<String>() {
-      @Override
-      public boolean value(String url) {
-        String host = URLUtil.parseHostFromSshUrl(url);
-        return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
-      }
+    return ContainerUtil.exists(urls, url -> {
+      String host = URLUtil.parseHostFromSshUrl(url);
+      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
     });
   }
 
@@ -638,8 +635,11 @@ public abstract class GitHandler {
     checkStarted();
     try {
       if (myInputProcessor != null && myProcess != null) {
-        myInputProcessor.process(myProcess.getOutputStream());
+        myInputProcessor.consume(myProcess.getOutputStream());
       }
+    }
+    catch (IOException e) {
+      addError(new VcsException(e));
     }
     finally {
       waitForProcess();
@@ -801,5 +801,25 @@ public abstract class GitHandler {
   @Override
   public String toString() {
     return myCommandLine.toString();
+  }
+
+  /**
+     * Set processor for standard input. This is a place where input to the git application could be generated.
+     *
+     * @param inputProcessor the processor
+     */
+    public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
+      myInputProcessor = inputProcessor;
+    }
+
+  @NotNull
+  public static Map<String, String> getCommonEnvironment() {
+    Map<String,String> commonEnv = new HashMap<>();
+    commonEnv.put("GIT_TRACE","0");
+    commonEnv.put("GIT_TRACE_PACK_ACCESS","");
+    commonEnv.put("GIT_TRACE_PACKET","");
+    commonEnv.put("GIT_TRACE_PERFORMANCE","0");
+    commonEnv.put("GIT_TRACE_SETUP","0");
+    return commonEnv;
   }
 }

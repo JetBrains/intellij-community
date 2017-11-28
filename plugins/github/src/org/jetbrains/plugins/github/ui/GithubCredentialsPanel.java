@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
@@ -59,14 +59,20 @@ public class GithubCredentialsPanel extends JPanel {
     super(new BorderLayout());
     add(myPane, BorderLayout.CENTER);
 
-    mySignupTextField.setText("<html>Do not have an account at github.com? <a href=\"https://github.com\">Sign up</a></html>");
-    mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
-    mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    mySignupTextField.setEditorKit(UIUtil.getHTMLEditorKit());
+    mySignupTextField.setText("<html><body>Do not have an account at github.com? <a href=\"https://github.com\">Sign up</a></body></html>");
+    mySignupTextField.setOpaque(false);
     mySignupTextField.setMargin(JBUI.insetsTop(5));
-    mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
+    mySignupTextField.addHyperlinkListener(new HyperlinkListener() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        BrowserUtil.browse(e.getURL());
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          BrowserUtil.browse(e.getURL());
+        }
+        else {
+          mySignupTextField.setCursor(
+            e.getEventType() == HyperlinkEvent.EventType.ENTERED ? new Cursor(Cursor.HAND_CURSOR) : new Cursor(Cursor.DEFAULT_CURSOR));
+        }
       }
     });
 

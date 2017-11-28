@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: spLeaner
- */
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {
   private final String myPlainTextTitle;
   private final String myDescription;

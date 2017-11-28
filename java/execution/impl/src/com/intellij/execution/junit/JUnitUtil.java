@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,6 +33,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,9 +67,13 @@ public class JUnitUtil {
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
+  public static final Collection<String> TEST5_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_EACH_ANNOTATION_NAME,
+                                                                                                           AFTER_EACH_ANNOTATION_NAME));
 
   public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
+  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_ALL_ANNOTATION_NAME,
+                                                                                                                  AFTER_ALL_ANNOTATION_NAME));
 
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
                                                                                                         TEST5_ANNOTATION,
@@ -74,6 +81,8 @@ public class JUnitUtil {
   public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
                                                                                                         TEST5_FACTORY_ANNOTATION,
                                                                                                         CUSTOM_TESTABLE_ANNOTATION));
+  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
+                                                                                                        TEST5_FACTORY_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -89,6 +98,7 @@ public class JUnitUtil {
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
+  private static final String[] KNOWN_RUNNERS = {"org.junit.runners.Parameterized", "org.junit.runners.BlockJUnit4ClassRunner", "org.junit.runners.JUnit4"};
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -126,7 +136,7 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
-        return !isParameterized(annotation);
+        return !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS);
       }
     }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
@@ -203,10 +213,23 @@ public class JUnitUtil {
     return isJUnit4TestClass(psiClass, true);
   }
 
-  private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
+  public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
+    if (topLevelClass != null) {
+      if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) {
+        PsiAnnotation annotation = getRunWithAnnotation(topLevelClass);
+        if (topLevelClass == psiClass) {
+          return true;
+        }
+
+        //default runners do not implicitly run inner classes
+        if (annotation != null && !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS)) {
+          return true;
+        }
+      }
+    }
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
@@ -218,7 +241,7 @@ public class JUnitUtil {
     return false;
   }
 
-  public static boolean isJUnit5TestClass(final PsiClass psiClass, boolean checkAbstract) {
+  public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
 
@@ -234,14 +257,26 @@ public class JUnitUtil {
 
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module != null) {
-      for (final PsiMethod method : psiClass.getAllMethods()) {
-        ProgressManager.checkCanceled();
-        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) return true;
-      }
+      return CachedValuesManager.getCachedValue(psiClass, () -> {
+        boolean hasAnnotation = false;
+        for (final PsiMethod method : psiClass.getAllMethods()) {
+          ProgressManager.checkCanceled();
+          if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+            hasAnnotation = true;
+            break;
+          }
+        }
 
-      for (PsiClass aClass : psiClass.getInnerClasses()) {
-        if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) return true;
-      }
+        if (!hasAnnotation) {
+          for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+            if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
+              hasAnnotation = true;
+              break;
+            }
+          }
+        }
+        return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      });
     }
 
     return false;
@@ -258,7 +293,7 @@ public class JUnitUtil {
       return aPackage != null && aPackage.getDirectories(scope).length > 0;
     };
 
-    return foundCondition.value(TEST5_PACKAGE_FQN);
+    return ReadAction.compute(() -> foundCondition.value(TEST5_PACKAGE_FQN));
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {
@@ -312,8 +347,11 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethodOrConfig(@NotNull PsiMethod psiMethod) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
     if (isTestMethod(PsiLocation.fromPsiElement(psiMethod), false)) {
-      final PsiClass containingClass = psiMethod.getContainingClass();
       assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
@@ -354,6 +392,10 @@ public class JUnitUtil {
         if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS)) {
           return true;
         }
+        
+        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS)) {
+          return true;
+        }
       }
     }
     return false;
@@ -385,11 +427,15 @@ public class JUnitUtil {
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
+    return isRunnerWithRequiredAnnotationOnTestMethod(annotation,"org.junit.runners.Parameterized");
+  }
+
+  private static boolean isRunnerWithRequiredAnnotationOnTestMethod(PsiAnnotation annotation, String... runners) {
     final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-      return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+      return psiClass != null && ArrayUtil.find(runners, psiClass.getQualifiedName()) > -1;
     }
     return false;
   }
@@ -433,7 +479,7 @@ public class JUnitUtil {
     PsiElement element = location.getPsiElement();
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length == 1) return classes[0];
+      if (classes.length == 1 && isTestClass(classes[0], false, true)) return classes[0];
     }
     return null;
   }

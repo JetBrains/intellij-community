@@ -19,13 +19,6 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/12/11
- * Time: 12:05 PM
- * To change this template use File | Settings | File Templates.
- */
 public interface DiffSplitterI {
   void redrawDiffs();
 

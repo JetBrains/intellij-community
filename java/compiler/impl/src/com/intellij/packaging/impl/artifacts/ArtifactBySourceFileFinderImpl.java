@@ -111,6 +111,6 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
       }
       file = file.getParent();
     }
-    return result != null ? result : Collections.<Artifact>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 }

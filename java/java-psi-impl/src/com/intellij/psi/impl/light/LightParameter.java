@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import org.jetbrains.annotations.NotNull;
 public class LightParameter extends LightVariableBuilder<LightVariableBuilder> implements PsiParameter {
   private final PsiElement myDeclarationScope;
   private final boolean myVarArgs;
+
+  public LightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope) {
+    this(name, type, declarationScope, declarationScope.getLanguage());
+  }
 
   public LightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope, @NotNull Language language) {
     this(name, type, declarationScope, language, type instanceof PsiEllipsisType);

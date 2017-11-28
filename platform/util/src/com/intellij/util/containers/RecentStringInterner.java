@@ -22,11 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
-* User: Maxim.Mossienko
-* Date: 2/4/13
-* Time: 4:50 PM
-*/
 public class RecentStringInterner {
   private final int myStripeMask;
   private final SLRUCache<String, String>[] myInterns;

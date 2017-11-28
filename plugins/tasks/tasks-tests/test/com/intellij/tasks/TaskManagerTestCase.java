@@ -34,19 +34,19 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
     SHORT_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
   
-  protected TaskManager myTaskManager;
+  protected TaskManagerImpl myTaskManager;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTaskManager = TaskManager.getManager(getProject());
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     removeAllTasks();
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      ((TaskManagerImpl)myTaskManager).setRepositories(Collections.<TaskRepository>emptyList());
+      myTaskManager.setRepositories(Collections.emptyList());
       removeAllTasks();
     }
     finally {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.execution.scratch;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -35,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -46,9 +45,8 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 08-Sep-15
  */
-public class JavaScratchCompilationSupport implements ProjectComponent, CompileTask{
-
-  public JavaScratchCompilationSupport(Project project, CompilerManager compileManager) {
+public class JavaScratchCompilationSupport implements CompileTask {
+  public JavaScratchCompilationSupport(CompilerManager compileManager) {
     compileManager.addAfterTask(this);
   }
 
@@ -113,34 +111,31 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
         }
         FileUtil.delete(srcDir); // perform cleanup
 
-        final String srcFileName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
-            if (vFile != null) {
-              final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-              if (psiFile instanceof PsiJavaFile) {
-                String name = null;
-                // take the name of the first found public top-level class, otherwise the name of any available top-level class
-                for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
-                  if (name == null) {
-                    name = aClass.getName();
-                    if (isPublic(aClass)) {
-                      break;
-                    }
-                  }
-                  else if (isPublic(aClass)){
-                    name = aClass.getName();
+        final String srcFileName = ReadAction.compute(() -> {
+          final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
+          if (vFile != null) {
+            final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+            if (psiFile instanceof PsiJavaFile) {
+              String name = null;
+              // take the name of the first found public top-level class, otherwise the name of any available top-level class
+              for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
+                if (name == null) {
+                  name = aClass.getName();
+                  if (isPublic(aClass)) {
                     break;
                   }
                 }
-                if (name != null) {
-                  return name;
+                else if (isPublic(aClass)) {
+                  name = aClass.getName();
+                  break;
                 }
               }
+              if (name != null) {
+                return name;
+              }
             }
-            return FileUtil.getNameWithoutExtension(scratchFile);
           }
+          return FileUtil.getNameWithoutExtension(scratchFile);
         });
         srcFile = new File(srcDir, srcFileName + ".java");
         FileUtil.copy(scratchFile, srcFile);
@@ -151,8 +146,8 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       final Set<File> cp = new LinkedHashSet<>();
       final List<File> platformCp = new ArrayList<>();
 
-      final Computable<OrderEnumerator> orderEnumerator = module != null ? (Computable<OrderEnumerator>)() -> ModuleRootManager.getInstance(module).orderEntries()
-                                                                         : (Computable<OrderEnumerator>)() -> ProjectRootManager.getInstance(project).orderEntries();
+      final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
+                                                                         : () -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
         for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
@@ -199,27 +194,5 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
   private static boolean isPublic(PsiClass aClass) {
     final PsiModifierList modifiers = aClass.getModifierList();
     return modifiers != null && modifiers.hasModifierProperty(PsiModifier.PUBLIC);
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "JavaScratchCompilationSupport";
   }
 }

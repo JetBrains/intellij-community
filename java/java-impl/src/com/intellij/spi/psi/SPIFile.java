@@ -18,6 +18,7 @@ package com.intellij.spi.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -33,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class SPIFile extends PsiFileBase {
   public SPIFile(@NotNull FileViewProvider viewProvider) {
     super(viewProvider, SPILanguage.INSTANCE);
@@ -55,35 +53,32 @@ public class SPIFile extends PsiFileBase {
   @NotNull
   @Override
   public PsiReference[] getReferences() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiReference[]>() {
-      @Override
-      public PsiReference[] compute() {
+    return ReadAction.compute(() -> {
 
-        final List<PsiReference> refs = new ArrayList<>();
-        int idx = 0;
-        int d;
-        final String fileName = getName();
-        while ((d = fileName.indexOf(".", idx)) > -1) {
-          final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
-          if (aPackage != null) {
-            refs.add(new SPIFileName2PackageReference(SPIFile.this, aPackage));
-          }
-          idx = d + 1;
+      final List<PsiReference> refs = new ArrayList<>();
+      int idx = 0;
+      int d;
+      final String fileName = getName();
+      while ((d = fileName.indexOf(".", idx)) > -1) {
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
+        if (aPackage != null) {
+          refs.add(new SPIFileName2PackageReference(SPIFile.this, aPackage));
         }
-        final PsiReference reference = getReference();
-        PsiElement resolve = reference.resolve();
-        while (resolve instanceof PsiClass) {
-          resolve = ((PsiClass)resolve).getContainingClass();
-          if (resolve != null) {
-            final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
-            if (jvmClassName != null) {
-              refs.add(new SPIFileName2PackageReference(SPIFile.this, resolve));
-            }
-          }
-        }
-        refs.add(reference);
-        return refs.toArray(new PsiReference[refs.size()]);
+        idx = d + 1;
       }
+      final PsiReference reference = getReference();
+      PsiElement resolve = reference.resolve();
+      while (resolve instanceof PsiClass) {
+        resolve = ((PsiClass)resolve).getContainingClass();
+        if (resolve != null) {
+          final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
+          if (jvmClassName != null) {
+            refs.add(new SPIFileName2PackageReference(SPIFile.this, resolve));
+          }
+        }
+      }
+      refs.add(reference);
+      return refs.toArray(new PsiReference[refs.size()]);
     });
   }
 

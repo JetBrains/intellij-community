@@ -38,12 +38,12 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   private final ArrayList myComponents;
   /**
-   * Describes border's type. This member is never <code>null</code>
+   * Describes border's type. This member is never {@code null}
    */
   private BorderType myBorderType;
   /**
    * Border's title. If border doesn't have any title then
-   * this member is <code>null</code>.
+   * this member is {@code null}.
    */
   private StringDescriptor myBorderTitle;
   private int myBorderTitleJustification;
@@ -94,8 +94,8 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * @param component component to be added.
    *
-   * @exception IllegalArgumentException if <code>component</code> is <code>null</code>
-   * @exception IllegalArgumentException if <code>component</code> already exist in the
+   * @exception IllegalArgumentException if {@code component} is {@code null}
+   * @exception IllegalArgumentException if {@code component} already exist in the
    * container
    */
   public final void addComponent(final LwComponent component){
@@ -127,7 +127,7 @@ public class LwContainer extends LwComponent implements IContainer{
   }
 
   /**
-   * @return border's type. The method never return <code>null</code>.
+   * @return border's type. The method never return {@code null}.
    *
    * @see BorderType
    */
@@ -153,8 +153,8 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * @see BorderType
    *
-   * @exception IllegalArgumentException if <code>type</code>
-   * is <code>null</code>
+   * @exception IllegalArgumentException if {@code type}
+   * is {@code null}
    */
   public final void setBorderType(final BorderType type){
     if(type==null){
@@ -165,14 +165,14 @@ public class LwContainer extends LwComponent implements IContainer{
 
   /**
    * @return border's title. If the container doesn't have any title then the
-   * method returns <code>null</code>.
+   * method returns {@code null}.
    */
   public final StringDescriptor getBorderTitle(){
     return myBorderTitle;
   }
 
   /**
-   * @param title new border's title. <code>null</code> means that
+   * @param title new border's title. {@code null} means that
    * the containr doesn't have have titled border.
    */
   public final void setBorderTitle(final StringDescriptor title){

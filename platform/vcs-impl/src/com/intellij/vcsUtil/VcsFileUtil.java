@@ -149,12 +149,13 @@ public class VcsFileUtil {
           // to avoid empty chunks
           rc.add(arguments.subList(i, i + groupSize));
           start = i + groupSize;
+          size = 0;
         }
         else {
           rc.add(arguments.subList(start, i));
           start = i;
+          size = length;
         }
-        size = 0;
       }
       else {
         size += length;

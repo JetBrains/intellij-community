@@ -108,21 +108,11 @@ public class PortableStatus extends Status {
           remotePropertiesStatus, isLocked, isCopied, isSwitched, null, remoteLock,
           localLock, changelistName, null);
     myConflicted = isConflicted;
-    myInfoGetter = infoGetter == null ? new Getter<Info>() {
-      @Override
-      public Info get() {
-        return null;
-      }
-    } : infoGetter;
+    myInfoGetter = infoGetter == null ? () -> null : infoGetter;
   }
 
   public PortableStatus() {
-    myInfoGetter = new Getter<Info>() {
-      @Override
-      public Info get() {
-        return null;
-      }
-    };
+    myInfoGetter = () -> null;
     setCommittedRevision(SVNRevision.UNDEFINED);
   }
 
@@ -174,12 +164,11 @@ public class PortableStatus extends Status {
    * @return the item ancestor's URL
    */
   @Override
-  public String getCopyFromURL() {
+  public SVNURL getCopyFromURL() {
     if (! isCopied()) return null;
     final Info info = initInfo();
     if (info == null) return null;
-    SVNURL url = initInfo().getCopyFromURL();
-    return url == null ? null : url.toString();
+    return initInfo().getCopyFromURL();
   }
 
   @Override
@@ -235,7 +224,7 @@ public class PortableStatus extends Status {
   /**
    * Returns a tree conflict description.
    *
-   * @return tree conflict description; <code>null</code> if no conflict
+   * @return tree conflict description; {@code null} if no conflict
    *         description exists on this item
    * @since 1.3
    */

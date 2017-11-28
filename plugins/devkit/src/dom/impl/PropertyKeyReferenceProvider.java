@@ -42,10 +42,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/7/11
- */
 public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myTagMode;
@@ -136,10 +132,8 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       final Project project = element.getProject();
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
 
-      final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
-
       final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
-      allPropertiesFiles.addAll(propertiesFiles);
+      final List<PropertiesFile> allPropertiesFiles = new ArrayList<>(propertiesFiles);
 
       if (propertiesFiles.isEmpty()) {
       final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);

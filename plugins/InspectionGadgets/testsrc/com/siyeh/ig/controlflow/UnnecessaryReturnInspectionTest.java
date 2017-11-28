@@ -7,7 +7,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryReturnInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final UnnecessaryReturnInspection inspection = new UnnecessaryReturnInspection();
     inspection.ignoreInThenBranch = true;
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());

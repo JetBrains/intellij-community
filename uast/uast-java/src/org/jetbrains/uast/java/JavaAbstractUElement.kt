@@ -16,38 +16,74 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiType
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import com.intellij.psi.*
+import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class JavaAbstractUElement : JavaUElementWithComments {
-    override fun equals(other: Any?): Boolean {
-        if (other !is UElement || other.javaClass != this.javaClass) return false
-        return this.psi == other.psi
+
+abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, JvmDeclarationUElement {
+
+  @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+  @Deprecated("use JavaAbstractUElement(givenParent)", ReplaceWith("JavaAbstractUElement(givenParent)"))
+  constructor() : this(null)
+
+  override fun equals(other: Any?): Boolean {
+    if (other !is UElement || other.javaClass != this.javaClass) return false
+    return if (this.psi != null) this.psi == other.psi else this === other
+  }
+
+  override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
+
+  override fun asSourceString(): String {
+    return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
+  }
+
+  override fun toString() = asRenderString()
+
+  override val uastParent: UElement? by lz { givenParent ?: convertParent() }
+
+  protected open fun convertParent(): UElement? =
+    getPsiParentForLazyConversion()?.let { JavaConverter.unwrapElements(it).toUElement() }?.also {
+      if (it === this) throw IllegalStateException("lazy parent loop for $this")
+      if (it.psi != null && it.psi === this.psi) throw IllegalStateException(
+        "lazy parent loop: psi ${this.psi}(${this.psi?.javaClass}) for $this of ${this.javaClass}")
     }
 
-    override fun asSourceString(): String {
-        return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
-    }
+  protected open fun getPsiParentForLazyConversion() = this.psi?.parent
 
-    override fun toString() = asRenderString()
+  //explicitly overridden in abstract class to be binary compatible with Kotlin
+  override val comments: List<UComment>
+    get() = super<JavaUElementWithComments>.comments
+  override val sourcePsi: PsiElement?
+    get() = super.sourcePsi
+  override val javaPsi: PsiElement?
+    get() = super.javaPsi
+
 }
 
-abstract class JavaAbstractUExpression : JavaAbstractUElement(), UExpression {
-    override fun evaluate(): Any? {
-        val project = psi?.project ?: return null
-        return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
-    }
+abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUElement(givenParent), UExpression {
 
-    override val annotations: List<UAnnotation>
-        get() = emptyList()
+  @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+  @Deprecated("use JavaAbstractUExpression(givenParent)", ReplaceWith("JavaAbstractUExpression(givenParent)"))
+  constructor() : this(null)
 
-    override fun getExpressionType(): PsiType? {
-        val expression = psi as? PsiExpression ?: return null
-        return expression.type
+  override fun evaluate(): Any? {
+    val project = psi?.project ?: return null
+    return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
+  }
+
+  override val annotations: List<UAnnotation>
+    get() = emptyList()
+
+  override fun getExpressionType(): PsiType? {
+    val expression = psi as? PsiExpression ?: return null
+    return expression.type
+  }
+
+  override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
+    when (it) {
+      is PsiResourceExpression -> it.parent
+      else -> it
     }
+  }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -322,6 +323,8 @@ class ProgressDialog implements Disposable {
       }
     });
 
+    Disposer.register(myPopup.getDisposable(), () -> myProgressWindow.exitModality());
+
     myPopup.show();
   }
 
@@ -418,9 +421,7 @@ class ProgressDialog implements Disposable {
       super.init();
       setUndecorated(true);
       getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-      if (! UIUtil.isUnderWin10LookAndFeel()) {
-        myPanel.setBorder(PopupBorder.Factory.create(true, true));
-      }
+      myPanel.setBorder(PopupBorder.Factory.create(true, true));
     }
 
     @Override

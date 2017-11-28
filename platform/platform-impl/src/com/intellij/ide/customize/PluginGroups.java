@@ -225,6 +225,7 @@ public class PluginGroups {
       "ByteCodeViewer",
       "com.intellij.dsm",
       "org.jetbrains.idea.eclipse",
+      "org.jetbrains.debugger.streams",
       "Remote Access:com.jetbrains.plugins.webDeployment,org.jetbrains.plugins.remote-run",
       "Task Management:com.intellij.tasks,com.intellij.tasks.timeTracking",
       "org.jetbrains.plugins.terminal",
@@ -243,7 +244,6 @@ public class PluginGroups {
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
-    featuredPlugins.put("Angular", "Web Development:Angular 1&2 support:AngularJS");
     featuredPlugins.put("Atlassian Connector",
                         "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }

@@ -76,7 +76,7 @@ public class BinaryOSProcessHandlerTest {
     }
 
     @Override
-    public void notifyTextAvailable(String text, Key outputType) {
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
       if (outputType != ProcessOutputTypes.SYSTEM) {
         stdErr.append(text);
       }
@@ -96,7 +96,7 @@ public class BinaryOSProcessHandlerTest {
     private static final int SEND_TIMEOUT = 500;
 
     @SuppressWarnings("BusyWait")
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
       System.err.print(TEXT);
 
       for (int offset = 0; offset < BYTES.length; offset += PACKET_SIZE) {

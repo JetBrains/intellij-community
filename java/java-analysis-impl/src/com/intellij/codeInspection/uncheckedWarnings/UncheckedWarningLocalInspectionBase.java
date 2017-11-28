@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -43,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
+public class UncheckedWarningLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls private static final String ID = "unchecked";
@@ -61,6 +47,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     return uncheckedCb;
   }
 
+  @NotNull
   private static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
     LOG.assertTrue(parameter.isValid());
@@ -148,8 +135,9 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     };
   }
 
+  @NotNull
   protected LocalQuickFix[] createFixes() {
-    return null;
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   private static String isMethodCalledOnRawType(PsiElement expression) {
@@ -179,7 +167,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     }
 
     protected abstract void registerProblem(@NotNull String message,
-                                            PsiElement callExpression, 
+                                            PsiElement callExpression,
                                             @NotNull PsiElement psiElement,
                                             @NotNull LocalQuickFix[] quickFixes);
 
@@ -472,14 +460,18 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
 
           @Override
           public Boolean visitClassType(PsiClassType classType) {
-            PsiClass psiClass = classType.resolve();
+            PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+            PsiClass psiClass = result.getElement();
             if (psiClass instanceof PsiTypeParameter) {
               if (((PsiTypeParameter)psiClass).getOwner() == method) return Boolean.FALSE;
               return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
             }
-            PsiType[] parameters = classType.getParameters();
-            for (PsiType parameter : parameters) {
-              if (parameter.accept(this).booleanValue()) return Boolean.TRUE;
+            if (psiClass != null) {
+              PsiSubstitutor typeSubstitutor = result.getSubstitutor();
+              for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+                PsiType psiType = typeSubstitutor.substitute(parameter);
+                if (psiType != null && psiType.accept(this).booleanValue()) return Boolean.TRUE;
+              }
             }
             return Boolean.FALSE;
           }

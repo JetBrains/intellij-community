@@ -6,6 +6,7 @@ PsiReferenceExpression:s : java.util.concurrent.atomic.AtomicReference<java.lang
 Conversions:
 "" -> new java.util.concurrent.atomic.AtomicReference<java.lang.String>($val$) $val$
 s -> $qualifier$.get() $qualifier$ s
+s -> $qualifier$.get() $qualifier$ s
 
 New expression type changes:
 Fails:

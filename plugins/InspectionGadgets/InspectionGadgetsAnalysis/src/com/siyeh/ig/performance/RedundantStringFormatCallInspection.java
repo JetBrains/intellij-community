@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RedundantStringFormatCallFix();
+    final Boolean printf = (Boolean)infos[0];
+    return printf.booleanValue() ? new ReplaceWithPrintFix() : new RedundantStringFormatCallFix();
   }
 
   @Override
@@ -52,13 +54,12 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     return true;
   }
 
-  private static class RedundantStringFormatCallFix extends InspectionGadgetsFix {
-
-    @Override
+  private static class ReplaceWithPrintFix extends InspectionGadgetsFix {
+    @Nls
     @NotNull
+    @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "redundant.string.format.call.quickfix");
+      return InspectionGadgetsBundle.message("replace.printf.with.print.quickfix");
     }
 
     @Override
@@ -70,10 +71,34 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression lastArgument = arguments[arguments.length - 1];
-      methodCallExpression.replace(lastArgument);
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      @NonNls final StringBuilder newExpression = new StringBuilder();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression != null) {
+        newExpression.append(qualifierExpression.getText()).append('.');
+      }
+      newExpression.append("print").append(methodCallExpression.getArgumentList().getText());
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+    }
+  }
+
+  private static class RedundantStringFormatCallFix extends InspectionGadgetsFix {
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("redundant.string.format.call.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement().getParent().getParent();
+      if (!(element instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
+      methodCallExpression.replace(arguments[arguments.length - 1]);
     }
   }
 
@@ -89,7 +114,14 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"format".equals(methodName)) {
+      final boolean printf;
+      if ("format".equals(methodName)) {
+        printf = false;
+      }
+      else if ("printf".equals(methodName)) {
+        printf = true;
+      }
+      else {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -106,7 +138,12 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         return;
       }
       final String className = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
+      if (printf) {
+        if (!"java.io.PrintStream".equals(className)) {
+          return;
+        }
+      }
+      else if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
         return;
       }
       final PsiExpression firstArgument = arguments[0];
@@ -116,7 +153,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (arguments.length == 1 && !containsPercentN(firstArgument)) {
-          registerMethodCallError(expression);
+          registerMethodCallError(expression, Boolean.valueOf(printf));
         }
       }
       else if (firstType.equalsToText("java.util.Locale")) {
@@ -131,7 +168,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         if (containsPercentN(secondArgument)) {
           return;
         }
-        registerMethodCallError(expression);
+        registerMethodCallError(expression, Boolean.valueOf(printf));
       }
     }
 

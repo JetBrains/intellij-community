@@ -24,7 +24,7 @@ public class CommentsTabForm {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     
     JTextArea errorArea = myErrorComponent.getTextComponent();
-    //errorArea.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
+    //errorArea.setPreferredSize(JBUI.size(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
     errorArea.setLineWrap(true);
     errorArea.setEditable(false);
     errorArea.setBackground(UIUtil.getTextFieldBackground());

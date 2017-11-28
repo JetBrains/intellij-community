@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.04.2006
- * Time: 00:14:22
- */
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;

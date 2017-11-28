@@ -41,6 +41,7 @@ public class PythonParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
@@ -334,6 +335,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-24389
+  public void testCommaAfterStarArgAllowedInPython36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testRangeAsLHS() {  // PY-6468
     doTest();
   }
@@ -537,6 +543,16 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-20682
   public void testAwaitOnTheSameLineAsFor() {
     doTest(LanguageLevel.PYTHON35);
+  }
+
+  // PY-17017
+  public void testTrailingBlockCommentsAtEndOfFile() {
+    doTest();
+  }
+
+  // PY-17017
+  public void testTrailingBlockCommentsFollowedByStatement() {
+    doTest();
   }
 
   public void doTest(LanguageLevel languageLevel) {

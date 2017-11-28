@@ -22,7 +22,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -35,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -56,7 +54,9 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {
-    if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
+    if (SystemInfo.isMac &&
+        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
+        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
@@ -153,6 +153,7 @@ public class EnvironmentUtil {
   }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   private static Map<String, String> getShellEnv() throws Exception {
     return new ShellEnvReader().readShellEnv();
@@ -162,15 +163,7 @@ public class EnvironmentUtil {
   public static class ShellEnvReader {
 
     public Map<String, String> readShellEnv() throws Exception {
-      String os = SystemInfo.isLinux ? "linux" : "mac";
-      File reader = FileUtil.findFirstThatExist(
-        PathManager.getBinPath() + "/printenv.py",
-        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
-      if (reader == null) {
-        throw new Exception("bin:" + PathManager.getBinPath());
-      }
+      File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
       try {
@@ -227,6 +220,7 @@ public class EnvironmentUtil {
       }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
@@ -263,7 +257,7 @@ public class EnvironmentUtil {
 
   @NotNull
   private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
@@ -323,15 +317,39 @@ public class EnvironmentUtil {
 
   private static Map<String, String> setCharsetVar(@NotNull Map<String, String> env) {
     if (!isCharsetVarDefined(env)) {
-      Locale locale = Locale.getDefault();
-      Charset charset = CharsetToolkit.getDefaultSystemCharset();
-      String language = locale.getLanguage();
-      String country = locale.getCountry();
-      String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
-      env.put(LC_CTYPE, value);
+      String value = setLocaleEnv(env, CharsetToolkit.getDefaultSystemCharset());
       LOG.info("LC_CTYPE=" + value);
     }
     return env;
+  }
+
+  private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
+      Locale[] available = Locale.getAvailableLocales();
+      for (Locale l : available) {
+        if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
+          return true;
+        }
+      }
+      return false;
+  }
+
+  @NotNull
+  public static String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
+    Locale locale = Locale.getDefault();
+    String language = locale.getLanguage();
+    String country = locale.getCountry();
+
+    String languageTerritory = "en_US";
+    if (!language.isEmpty() && !country.isEmpty()) {
+      String languageTerritoryFromLocale = language + '_' + country;
+      if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {
+        languageTerritory = languageTerritoryFromLocale ;
+      }
+    }
+
+    String result = languageTerritory + '.' + charset.name();
+    env.put(LC_CTYPE, result);
+    return result;
   }
 
   private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {
@@ -339,12 +357,15 @@ public class EnvironmentUtil {
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
-    Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+    inlineParentOccurrences(envs, new HashMap<String, String>(System.getenv()));
+  }
+
+  public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentParams.get(key);
+        String parentVal = parentEnv.get(key);
         if (parentVal != null && containsEnvKeySubstitution(key, value)) {
           envs.put(key, value.replace("$" + key + "$", parentVal));
         }

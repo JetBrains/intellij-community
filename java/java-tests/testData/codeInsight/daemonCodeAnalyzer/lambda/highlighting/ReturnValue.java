@@ -37,7 +37,11 @@ class Test1 {
       if (s.equals("1")) {
         return Option.option(1);
       } else {
-        return Option.option<error descr="'option(T)' in 'Test1.Option' cannot be applied to '(java.lang.String)'">("2")</error>;
+        return <error descr="Incompatible types. Required Option<Integer> but 'option' was inferred to Option<T>:
+no instance(s) of type variable(s)  exist so that String conforms to Integer
+inference variable T has incompatible bounds:
+ equality constraints: Integer
+lower bounds: String">Option.option("2");</error>
       }
     };
   }

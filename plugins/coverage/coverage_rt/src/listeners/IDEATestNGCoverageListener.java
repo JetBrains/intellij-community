@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 29-May-2008
- */
 package com.intellij.coverage.listeners;
 
 import org.testng.IDEATestNGListener;

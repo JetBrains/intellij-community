@@ -29,13 +29,6 @@ public class GroovyEmptyTryBlockInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return ERROR_HANDLING;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Empty 'try' block";
   }

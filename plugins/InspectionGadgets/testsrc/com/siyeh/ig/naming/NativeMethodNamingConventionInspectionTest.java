@@ -25,7 +25,9 @@ public class NativeMethodNamingConventionInspectionTest extends LightInspectionT
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new NativeMethodNamingConventionInspection();
+    NewMethodNamingConventionInspection inspection = new NewMethodNamingConventionInspection();
+    inspection.setEnabled(true,new NativeMethodNamingConvention().getShortName());
+    return inspection;
   }
 
   public void testNativeMethodNamingConvention() { doTest(); }

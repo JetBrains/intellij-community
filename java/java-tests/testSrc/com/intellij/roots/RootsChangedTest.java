@@ -31,8 +31,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +56,13 @@ public class RootsChangedTest extends ModuleTestCase {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
 
-  public void testEventsAfterFileModifications() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
+    myModuleRootListener = null;
+    super.tearDown();
+  }
+
+  public void testEventsAfterFileModifications() {
     File root = new File(FileUtil.getTempDirectory());
 
     File dir1 = new File(root, "dir1");
@@ -96,26 +104,26 @@ public class RootsChangedTest extends ModuleTestCase {
     assertNotNull(vSubdir);
 
     move(vDir2, vSubdir);
-    assertEventsCount(0);
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 
-  public void testProjectLibraryChangeEvent() throws Exception {
+  public void testProjectLibraryChangeEvent() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditing(projectLibraryTable);
   }
 
-  public void testGlobalLibraryChangeEvent() throws Exception {
+  public void testGlobalLibraryChangeEvent() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditing(globalLibraryTable);
   }
 
-  public void testProjectLibraryEventsInUncommittedModel() throws Exception {
+  public void testProjectLibraryEventsInUncommittedModel() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditingInUncommittedModel(projectLibraryTable);
   }
 
-  public void testGlobalLibraryEventsInUncommittedModel() throws Exception {
+  public void testGlobalLibraryEventsInUncommittedModel() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }
@@ -133,7 +141,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       ModuleRootModificationUtil.setModuleSdk(a, jdk);
@@ -161,7 +169,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -175,9 +183,6 @@ public class RootsChangedTest extends ModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      assertEventsCount(1);
-
-      ProjectJdkTable.getInstance().removeJdk(jdk);
       assertEventsCount(1);
     });
   }
@@ -193,7 +198,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final Sdk jdkBBB;
       try {
         jdk = (Sdk)IdeaTestUtil.getMockJdk17("AAA").clone();
-        ProjectJdkTable.getInstance().addJdk(jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
         assertEventsCount(0);
 
         jdkBBB = (Sdk)IdeaTestUtil.getMockJdk17("BBB").clone();
@@ -201,7 +206,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
@@ -212,9 +217,7 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelA.inheritSdk();
       rootModelB.inheritSdk();
       ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
@@ -223,9 +226,6 @@ public class RootsChangedTest extends ModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      assertEventsCount(1);
-
-      ProjectJdkTable.getInstance().removeJdk(jdk);
       assertEventsCount(1);
     });
   }
@@ -248,10 +248,8 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelB.addLibraryEntry(libraryA);
       rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
       rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
@@ -317,10 +315,8 @@ public class RootsChangedTest extends ModuleTestCase {
       final Library libraryQ = libraryTable.createLibrary("Q");
       assertEventsCount(0);
 
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       libraryTable.removeLibrary(libraryQ);
@@ -337,8 +333,8 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   private static class MyModuleRootListener implements ModuleRootListener {
-    private int beforeCount = 0;
-    private int afterCount = 0;
+    private int beforeCount;
+    private int afterCount;
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -354,5 +350,22 @@ public class RootsChangedTest extends ModuleTestCase {
       beforeCount = 0;
       afterCount = 0;
     }
+  }
+
+  public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() throws Exception {
+    VirtualFile temp = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+    String dirName = "xxx";
+    for (int i = 0; i < 10_000; i++) {
+      VirtualFilePointerManager.getInstance().create(temp.getUrl() + "/" + dirName + "/" + i, getTestRootDisposable(), null);
+    }
+
+    VirtualFile xxx = createChildDirectory(temp, dirName);
+
+    PlatformTestUtil.startPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", 10000, ()->{
+      for (int i = 0; i < 100; i++) {
+        rename(xxx, "yyy");
+        rename(xxx, dirName);
+      }
+    }).assertTiming();
   }
 }

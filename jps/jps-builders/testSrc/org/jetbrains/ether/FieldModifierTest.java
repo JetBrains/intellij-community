@@ -20,35 +20,35 @@ package org.jetbrains.ether;
  * Date: 23.09.11
  */
 public class FieldModifierTest extends IncrementalTestCase {
-  public FieldModifierTest() throws Exception {
+  public FieldModifierTest() {
     super("fieldModifiers");
   }
 
-  public void testSetFinal() throws Exception {
+  public void testSetFinal() {
     doTest();
   }
 
-  public void testSetPrivate() throws Exception {
+  public void testSetPrivate() {
     doTest();
   }
 
-  public void testSetPrivateToConstantField() throws Exception {
+  public void testSetPrivateToConstantField() {
     doTest();
   }
 
-  public void testSetProtected() throws Exception {
+  public void testSetProtected() {
     doTest();
   }
 
-  public void testSetStatic() throws Exception {
+  public void testSetStatic() {
     doTest();
   }
 
-  public void testUnsetStatic() throws Exception {
+  public void testUnsetStatic() {
     doTest();
   }
 
-  public void testUnsetStaticFinal() throws Exception {
+  public void testUnsetStaticFinal() {
     doTest();
   }
 }

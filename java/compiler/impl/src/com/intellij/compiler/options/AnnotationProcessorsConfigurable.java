@@ -46,6 +46,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     return "Annotation Processors";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.annotationProcessors";
   }

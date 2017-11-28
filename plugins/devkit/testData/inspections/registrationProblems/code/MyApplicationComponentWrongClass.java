@@ -1,1 +1,0 @@
-public class <error descr="According to its registration in plugin.xml, the class should implement 'com.intellij.openapi.components.ApplicationComponent'">MyApplicationComponentWrongClass</error> {}

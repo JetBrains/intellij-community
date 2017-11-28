@@ -31,12 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/24/11
- * Time: 1:21 PM
- */
 public class SvnLoadedBranchesStorage {
   private final Object myLock;
   private SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>> myState;

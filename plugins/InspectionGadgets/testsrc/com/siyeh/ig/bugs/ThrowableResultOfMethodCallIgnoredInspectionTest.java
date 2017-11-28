@@ -5,7 +5,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightInspectionTestCase {
 
-  public void testThrowableResultOfMethodCallIgnored() throws Exception {
+  public void testThrowableResultOfMethodCallIgnored() {
     doTest();
   }
 

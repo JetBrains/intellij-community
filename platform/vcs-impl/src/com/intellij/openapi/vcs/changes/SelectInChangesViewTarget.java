@@ -51,11 +51,9 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
 
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final VirtualFile file = context.getVirtualFile();
-    Runnable runnable = new Runnable() {
-      public void run() {
-        ChangesViewContentManager.getInstance(myProject).selectContent(ChangesViewContentManager.LOCAL_CHANGES);
-        ChangesViewManager.getInstance(myProject).selectFile(file);
-      }
+    Runnable runnable = () -> {
+      ChangesViewContentManager.getInstance(myProject).selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+      ChangesViewManager.getInstance(myProject).selectFile(file);
     };
     if (requestFocus) {
       ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);

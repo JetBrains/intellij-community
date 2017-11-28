@@ -7,13 +7,13 @@ public class TestClassTypes {
    public void testBoolean() {
       byte var1 = 0;// 25
       long var2 = System.currentTimeMillis();// 26
-      if(var2 % 2L > 0L) {// 28
+      if (var2 % 2L > 0L) {// 28
          var1 = 1;// 29
-      } else if(var2 % 3L > 0L) {// 31
+      } else if (var2 % 3L > 0L) {// 31
          var1 = 2;// 32
       }
 
-      if(var1 == 1) {// 35
+      if (var1 == 1) {// 35
          System.out.println();// 36
       }
 
@@ -40,7 +40,7 @@ public class TestClassTypes {
 
    public void testAssignmentType(List var1) {
       Object var2 = var1;// 61
-      if(var1 != null) {// 63
+      if (var1 != null) {// 63
          ((List)(var2 = new ArrayList(var1))).add("23");// 64
       }
 

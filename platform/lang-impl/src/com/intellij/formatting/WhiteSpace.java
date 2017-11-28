@@ -286,6 +286,10 @@ public class WhiteSpace {
    * @param indent      new value for the {@link #getIndentSpaces()}  indentSpaces} property
    */
   public void setSpaces(final int spaces, final int indent) {
+    if (spaces < 0 || indent < 0) {
+      throw new IllegalStateException("Neither spaces: " + spaces + " or indent " + indent + " should be null");
+    }
+
     performModification(() -> {
       if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
         mySpaces = spaces;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
 import com.intellij.lang.ASTNode;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class FilterPositionUtil {
-
   @Nullable
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
     return searchNonSpaceNonCommentBack(element, false);
@@ -35,14 +33,14 @@ public class FilterPositionUtil {
 
   @Nullable
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element, final boolean strict) {
-    if(element == null || element.getNode() == null) return null;
-    ASTNode leftNeibour = TreeUtil.prevLeaf(element.getNode());
+    if (element == null || element.getNode() == null) return null;
+    ASTNode leftNeighbour = TreeUtil.prevLeaf(element.getNode());
     if (!strict) {
-      while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment)){
-        leftNeibour = TreeUtil.prevLeaf(leftNeibour);
+      while (leftNeighbour != null &&
+             (leftNeighbour.getElementType() == TokenType.WHITE_SPACE || leftNeighbour.getPsi() instanceof PsiComment)) {
+        leftNeighbour = TreeUtil.prevLeaf(leftNeighbour);
       }
     }
-    return leftNeibour != null ? leftNeibour.getPsi() : null;
-
+    return leftNeighbour != null ? leftNeighbour.getPsi() : null;
   }
 }

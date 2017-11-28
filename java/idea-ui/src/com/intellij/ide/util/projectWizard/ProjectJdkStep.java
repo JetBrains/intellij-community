@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Aug-2006
- * Time: 18:01:13
- */
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;

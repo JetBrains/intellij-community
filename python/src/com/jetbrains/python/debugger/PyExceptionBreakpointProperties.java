@@ -20,6 +20,7 @@ import com.jetbrains.python.debugger.pydev.AddExceptionBreakpointCommand;
 import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommand;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -31,6 +32,8 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public boolean myNotifyOnTerminate;
   @Attribute("ignoreLibraries")
   public boolean myIgnoreLibraries;
+  public @Nullable String myCondition;
+  public @Nullable String myLogExpression;
 
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -41,6 +44,8 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myException = exception;
     myNotifyOnTerminate = true;
     myIgnoreLibraries = false;
+    myCondition = null;
+    myLogExpression = null;
   }
 
   @Override
@@ -80,13 +85,34 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     return myIgnoreLibraries;
   }
 
+  @Nullable
+  public String getCondition() {
+    return myCondition;
+  }
+
+  public void setCondition(@Nullable String condition) {
+    myCondition = condition;
+  }
+
+  @Nullable
+  public String getLogExpression() {
+    return myLogExpression;
+  }
+
+  public void setLogExpression(@Nullable String logExpression) {
+    myLogExpression = logExpression;
+  }
+
   public String getExceptionBreakpointId() {
     return "python-" + myException;
   }
 
   @Override
   public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger) {
-    return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getExceptionBreakpointId(),
+    return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger,
+                                                                    getExceptionBreakpointId(),
+                                                                    getCondition(),
+                                                                    getLogExpression(),
                                                                     new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
                                                                       isNotifyOnTerminate(), isNotifyOnlyOnFirst(), isIgnoreLibraries()));
   }

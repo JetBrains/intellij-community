@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,23 +65,29 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     selectOption(options, editor, file);
   }
 
-  private static List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
+  @NotNull
+  private static List<AnAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     List<AnAction> result = new ArrayList<>();
 
-    UnwrapDescriptor d = getUnwrapDescription(file);
+    UnwrapDescriptor descriptor = getUnwrapDescription(file);
 
-    for (Pair<PsiElement, Unwrapper> each : d.collectUnwrappers(project, editor, file)) {
-      result.add(createUnwrapAction(each.getSecond(), each.getFirst(), editor, project));
+    for (Pair<PsiElement, Unwrapper> desc : descriptor.collectUnwrappers(project, editor, file)) {
+      PsiElement element = desc.getFirst();
+      Unwrapper unwrapper = desc.getSecond();
+      if (element == null || unwrapper == null) {
+        throw new IllegalStateException(descriptor + " returned "+desc);
+      }
+      result.add(createUnwrapAction(unwrapper, element, editor, project));
     }
 
     return result;
   }
 
-  private static UnwrapDescriptor getUnwrapDescription(PsiFile file) {
+  private static UnwrapDescriptor getUnwrapDescription(@NotNull PsiFile file) {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
-  private static AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
+  private static AnAction createUnwrapAction(@NotNull Unwrapper u, @NotNull PsiElement el, @NotNull Editor ed, @NotNull Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
@@ -117,7 +124,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
         MyUnwrapAction a = (MyUnwrapAction)options.get(index);
 
-        List<PsiElement> toExtract = new ArrayList<>();
+        List<PsiElement> toExtract = new NotNullList<>();
         PsiElement wholeRange = a.collectAffectedElements(toExtract);
         highlighter.highlight(wholeRange, toExtract);
       }
@@ -155,9 +162,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private final Project myProject;
     private final Editor myEditor;
     private final Unwrapper myUnwrapper;
+    @NotNull
     private final PsiElement myElement;
 
-    public MyUnwrapAction(Project project, Editor editor, Unwrapper unwrapper, PsiElement element) {
+    MyUnwrapAction(@NotNull Project project, @NotNull Editor editor, @NotNull Unwrapper unwrapper, @NotNull PsiElement element) {
       super(unwrapper.getDescription(element));
       myProject = project;
       myEditor = editor;
@@ -233,7 +241,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    public PsiElement collectAffectedElements(List<PsiElement> toExtract) {
+    PsiElement collectAffectedElements(@NotNull List<PsiElement> toExtract) {
       return myUnwrapper.collectAffectedElements(myElement, toExtract);
     }
   }

@@ -5,12 +5,13 @@ result in loss of precision. Such casts are not necessarily a problem, but may r
 trace bugs if the loss of precision is unexpected.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate that this inspection should ignore casts from
+Use the first checkbox below to indicate that this inspection should ignore casts from
 <b>int</b> to <b>char</b>.
 This type of cast is often used when implementing I/O operations, because the
 <b>read()</b> method of the class
 <b>java.io.Reader</b> returns an <b>int</b>.
 <p>
-
+  Use the second checkbox below to ignore casts of constant values 128-255 from <b>int</b> to <b>byte</b>.
+  Such values will overflow to negative numbers that still fit inside a byte.
 </body>
 </html>

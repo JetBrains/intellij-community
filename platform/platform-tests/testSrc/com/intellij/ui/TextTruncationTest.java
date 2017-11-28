@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class TextTruncationTest {
   @Test
-  public void testVariants() throws Exception {
+  public void testVariants() {
     final MyWidthCalculator calculator = new MyWidthCalculator();
     testString("this is just a test", "this is just a test", calculator);
     testString("this is just a test", "this is just a ", calculator);

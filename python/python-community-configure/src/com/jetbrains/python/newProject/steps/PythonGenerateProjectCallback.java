@@ -18,49 +18,33 @@ package com.jetbrains.python.newProject.steps;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.NullableConsumer;
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
-  private static final Logger LOG = Logger.getInstance(PythonGenerateProjectCallback.class);
+public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.AbstractCallback<T> {
 
   @Override
-  public void consume(@Nullable ProjectSettingsStepBase step) {
+  public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
-
-    if (sdk instanceof PyDetectedSdk) {
-      sdk = addDetectedSdk(settingsStep, sdk);
-    }
 
     if (generator instanceof PythonProjectGenerator) {
       final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated(sdk);
@@ -72,11 +56,17 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
         }
       }
     }
-    final Project newProject = generateProject(settingsStep);
+
+    final Object settings = computeProjectSettings(generator, settingsStep, projectGeneratorPeer);
+    final Project newProject = generateProject(settingsStep, settings);
+    if (settings instanceof PyNewProjectSettings) {
+      sdk = ((PyNewProjectSettings)settings).getSdk();
+    }
+
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
-      final PyNewProjectSettings settings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
-      ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, settings);
-      sdk = settings.getSdk();
+      final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
+      ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, newSettings);
+      sdk = newSettings.getSdk();
     }
 
     if (newProject != null && generator instanceof PythonProjectGenerator) {
@@ -91,49 +81,31 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
     }
   }
 
-  private static Sdk addDetectedSdk(ProjectSpecificSettingsStep settingsStep, Sdk sdk) {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final String name = sdk.getName();
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(name));
-    sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-    if (sdk != null) {
-      PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
-    }
-
-    model.addSdk(sdk);
-    settingsStep.setSdk(sdk);
-    try {
-      model.apply();
-    }
-    catch (ConfigurationException exception) {
-      LOG.error("Error adding detected python interpreter " + exception.getMessage());
-    }
-    return sdk;
+  @Nullable
+  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings, @Nullable Object generationSettings) {
+    if (generationSettings == null) return null;
+    final DirectoryProjectGenerator generator = settings.getProjectGenerator();
+    final String location = FileUtil.expandUserHome(settings.getProjectLocation());
+    return AbstractNewProjectStep.doGenerateProject(null, location, generator, generationSettings);
   }
 
   @Nullable
-  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
-    final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-    final String location = FileUtil.expandUserHome(settings.getProjectLocation());
-    return AbstractNewProjectStep.doGenerateProject(ProjectManager.getInstance().getDefaultProject(), location, generator,
-                                                    file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
-  }
-
-  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator, final ProjectSpecificSettingsStep settings) {
+  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
+                                              final ProjectSpecificSettingsStep settingsStep,
+                                              @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
     if (generator instanceof PythonProjectGenerator) {
       final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
       projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {
-      projectSettings = ((WebProjectTemplate<?>)generator).getPeer().getSettings();
+      projectSettings = projectGeneratorPeer.getSettings();
     }
     if (projectSettings instanceof PyNewProjectSettings) {
       final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;
-      newProjectSettings.setSdk(settings.getSdk());
-      newProjectSettings.setInstallFramework(settings.installFramework());
-      newProjectSettings.setRemotePath(settings.getRemotePath());
+      newProjectSettings.setSdk(settingsStep.getSdk());
+      newProjectSettings.setInstallFramework(settingsStep.installFramework());
+      newProjectSettings.setRemotePath(settingsStep.getRemotePath());
     }
     return projectSettings;
   }

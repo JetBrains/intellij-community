@@ -44,7 +44,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -904,7 +903,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title) {
@@ -912,7 +911,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(Project project, @Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {
@@ -920,7 +919,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nullable Project project,
@@ -939,7 +938,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@Nullable Project project, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {
@@ -947,7 +946,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@NotNull Component parent, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {
@@ -1603,10 +1602,7 @@ public class Messages {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
-      HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit();
-      Font font = UIUtil.getLabelFont(fixedFontSize);
-      editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(font, UIUtil.getLabelForeground()));
-      messageComponent.setEditorKit(editorKit);
+      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);
@@ -1826,9 +1822,13 @@ public class Messages {
       }
 
       myField = createTextFieldComponent();
-      messagePanel.add(myField, BorderLayout.SOUTH);
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
 
       return messagePanel;
+    }
+
+    protected JComponent createScrollableTextComponent() {
+      return myField;
     }
 
     protected JComponent createTextComponent() {
@@ -1841,7 +1841,7 @@ public class Messages {
         textLabel.setUI(new MultiLineLabelUI());
         textComponent = textLabel;
       }
-      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 20));
       return textComponent;
     }
 
@@ -1882,6 +1882,11 @@ public class Messages {
     @Override
     protected JTextComponent createTextFieldComponent() {
       return new JTextArea(7, 50);
+    }
+
+    @Override
+    protected JComponent createScrollableTextComponent() {
+      return new JBScrollPane(myField);
     }
   }
 
@@ -1933,7 +1938,7 @@ public class Messages {
       }
 
       myField = createTextFieldComponent();
-      messagePanel.add(myField, BorderLayout.CENTER);
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
 
       myCheckBox = new JCheckBox();
       messagePanel.add(myCheckBox, BorderLayout.SOUTH);

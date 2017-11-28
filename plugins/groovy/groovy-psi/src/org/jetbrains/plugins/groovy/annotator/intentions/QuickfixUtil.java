@@ -35,10 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 20.12.2007
- */
 public class QuickfixUtil {
   @Nullable
   public static PsiClass findTargetClass(GrReferenceExpression refExpr, boolean compileStatic) {

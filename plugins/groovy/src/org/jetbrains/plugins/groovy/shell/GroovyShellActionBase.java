@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,12 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
 import java.util.Collection;
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.util.ModuleChooserUtil.formatModuleVersion;
 
 public abstract class GroovyShellActionBase extends AnAction {
 
@@ -47,10 +49,10 @@ public abstract class GroovyShellActionBase extends AnAction {
   // non-static to distinguish different module acceptability conditions
   private final Key<CachedValue<Boolean>> APPLICABLE_MODULE_CACHE = Key.create("APPLICABLE_MODULE_CACHE");
 
-  private final Function<Module, String> VERSION_PROVIDER = new Function<Module, String>() {
+  private final Function<Module, String> TITLE_PROVIDER = new Function<Module, String>() {
     @Override
     public String fun(Module module) {
-      return myConfig.getVersion(module);
+      return formatModuleVersion(module, myConfig.getVersion(module));
     }
   };
 
@@ -86,9 +88,8 @@ public abstract class GroovyShellActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
-    Collection<Module> suitableModules = ModuleChooserUtil.filterGroovyCompatibleModules(myConfig.getPossiblySuitableModules(project),
-                                                                                         APPLICABLE_MODULE);
-    ModuleChooserUtil.selectModule(project, suitableModules, VERSION_PROVIDER, RUNNER);
+    List<Module> suitableModules = ModuleChooserUtil.filterGroovyCompatibleModules(myConfig.getPossiblySuitableModules(project),
+                                                                                   APPLICABLE_MODULE);
+    ModuleChooserUtil.selectModule(project, suitableModules, TITLE_PROVIDER, RUNNER);
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -34,7 +36,7 @@ import java.util.Set;
 /**
  * Root of handlers for pattern node matching. Handles simplest type of the match.
  */
-public abstract class MatchingHandler extends MatchPredicate {
+public abstract class MatchingHandler {
   protected NodeFilter filter;
   private PsiElement pinnedElement;
 
@@ -48,18 +50,6 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    return match(patternNode,matchedNode,context);
-  }
-
-  /**
-   * Matches given handler node against given value.
-   * @param matchedNode for matching
-   * @param context of the matching
-   * @return true if matching was successful and false otherwise
-   */
-  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
       return matchedNode == null;
@@ -132,8 +122,8 @@ public abstract class MatchingHandler extends MatchPredicate {
     if (start==null) return null;
     if (start instanceof RegExpPredicate) return start;
 
-    if(start instanceof BinaryPredicate) {
-      BinaryPredicate binary = (BinaryPredicate)start;
+    if(start instanceof AndPredicate) {
+      AndPredicate binary = (AndPredicate)start;
       final MatchPredicate result = findRegExpPredicate(binary.getFirst());
       if (result!=null) return result;
 
@@ -160,8 +150,8 @@ public abstract class MatchingHandler extends MatchPredicate {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
       if (pattern.isToResetHandler(element)) {
-        MatchingHandler handler = pattern.getHandlerSimple(element);
-        if (handler instanceof SubstitutionHandler) {
+        final MatchingHandler handler = pattern.getHandlerSimple(element);
+        if (handler != null) {
           handler.reset();
         }
       }
@@ -196,7 +186,7 @@ public abstract class MatchingHandler extends MatchPredicate {
 
         final PsiElement startMatching = matchedNodes.current();
         do {
-          final PsiElement element = handler.getPinnedNode(null);
+          final PsiElement element = handler.getPinnedNode();
           final PsiElement matchedNode = element != null ? element : matchedNodes.current();
 
           if (element == null) matchedNodes.advance();
@@ -282,7 +272,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     //pinnedElement = null;
   }
 
-  public PsiElement getPinnedNode(PsiElement context) {
+  public PsiElement getPinnedNode() {
     return pinnedElement;
   }
 

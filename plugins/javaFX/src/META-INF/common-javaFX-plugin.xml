@@ -9,7 +9,7 @@
     <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
     <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxSchemaProvider"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.FxmlReferencesContributor"/>
-    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxEventHandlerReference$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxEventHandlerReferenceQuickFixProvider"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference$JavaFxUnresolvedTagRefsProvider"/>
     <multiHostInjector implementation="org.jetbrains.plugins.javaFX.fxml.ScriptLanguageInjector"/>
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>

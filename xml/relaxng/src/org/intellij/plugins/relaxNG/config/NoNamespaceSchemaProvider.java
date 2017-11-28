@@ -28,11 +28,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 22.11.2007
-*/
 public class NoNamespaceSchemaProvider extends XmlSchemaProvider {
   @Override
   @Nullable

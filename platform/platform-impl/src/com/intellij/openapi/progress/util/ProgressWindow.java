@@ -18,6 +18,8 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -61,7 +63,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   protected boolean myBackgrounded;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
-  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  private boolean myModalityEntered;
 
   @FunctionalInterface
   public interface Listener {
@@ -181,6 +184,20 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     timer.start();
   }
 
+  final void enterModality() {
+    if (myModalityProgress == this && !myModalityEntered) {
+      LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
+      myModalityEntered = true;
+    }
+  }
+
+  final void exitModality() {
+    if (myModalityProgress == this && myModalityEntered) {
+      myModalityEntered = false;
+      LaterInvocator.leaveModal(this);
+    }
+  }
+
   @Override
   public void startBlocking() {
     startBlocking(EmptyRunnable.getInstance());
@@ -196,14 +213,17 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     enterModality();
     init.run();
 
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-      if (isCancellationEvent(event)) {
-        cancel();
-      }
-      return isStarted() && !isRunning();
-    });
-
-    exitModality();
+    try {
+      IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+        if (isCancellationEvent(event)) {
+          cancel();
+        }
+        return isStarted() && !isRunning();
+      });
+    }
+    finally {
+      exitModality();
+    }
   }
 
   protected final boolean isCancellationEvent(AWTEvent event) {
@@ -293,7 +313,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }
 
-  private boolean isDialogShowing() {
+  protected boolean isDialogShowing() {
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 

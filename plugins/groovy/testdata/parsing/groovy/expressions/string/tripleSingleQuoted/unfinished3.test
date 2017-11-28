@@ -1,0 +1,6 @@
+'''foo''
+bar
+-----
+Groovy script
+  Literal
+    PsiElement(string)(''''foo''\nbar')

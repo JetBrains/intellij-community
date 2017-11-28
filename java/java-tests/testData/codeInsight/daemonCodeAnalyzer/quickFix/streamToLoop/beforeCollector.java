@@ -46,6 +46,12 @@ public class Main {
     return IntStream.of(4, 2, 1).boxed().collect(Collectors.toCollection(TreeSet::new));
   }
 
+  // Unresolved reference
+  void f(Collection<? extends Foo> c) {
+    Set<Foo> uniqueDescriptors = c.stream()
+      .collect(Collectors.toCollection(() -> new TreeSet()));
+  }
+
   public static void main(String[] args) {
     new Main().testAveragingDouble("a", "bbb", null, "cc", "dd", "eedasfasdfs");
     new Main().testAveragingInt("a", "bbb", null, "cc", "dd", "eedasfasdfs");

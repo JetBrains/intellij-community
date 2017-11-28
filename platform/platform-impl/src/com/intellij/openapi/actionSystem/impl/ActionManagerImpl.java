@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -549,7 +550,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   /**
-   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of <code>AnAction</code>.
+   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
@@ -718,8 +719,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
       // process all group's children. There are other groups, actions, references and links
-      for (final Object o : element.getChildren()) {
-        Element child = (Element)o;
+      for (Element child : element.getChildren()) {
         String name = child.getName();
         if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, loader, pluginId);
@@ -779,9 +779,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void processReferenceNode(final Element element, final PluginId pluginId) {
     final AnAction action = processReferenceElement(element, pluginId);
+    if (action == null) return;
 
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
       }
@@ -826,8 +826,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
+    String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
     ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
-    myId2GroupId.putValue(myAction2Id.get(action), myAction2Id.get(group));
+    myId2GroupId.putValue(actionId, myAction2Id.get(group));
   }
 
   @Nullable
@@ -852,7 +853,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   /**
-   * @param parentGroup group which is the parent of the separator. It can be <code>null</code> in that
+   * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
@@ -861,13 +862,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
-    Separator separator = Separator.getInstance();
+    String text = element.getAttributeValue(TEXT_ATTR_NAME);
+    Separator separator = text != null ? new Separator(text) : Separator.getInstance();
     if (parentGroup != null) {
       parentGroup.add(separator, this);
     }
     // try to find inner <add-to-parent...> tag
-    for (final Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(separator, child, pluginId, isSecondary(child));
       }
@@ -1062,12 +1063,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ActionManager";
-  }
-
   @NotNull
   @Override
   public Comparator<String> getRegistrationOrderComparator() {
@@ -1124,16 +1119,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
+      for (String groupId : myId2GroupId.get(actionId)) {
+        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        group.replaceAction(oldAction, newAction);
+      }
       unregisterAction(actionId);
       if (isGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }
     registerAction(actionId, newAction, pluginId);
-    for (String groupId : myId2GroupId.get(actionId)) {
-      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-      group.replaceAction(oldAction, newAction);
-    }
     return oldAction;
   }
 
@@ -1187,6 +1182,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       myLastPreformedActionId = getId(action);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
+      ActionsCollector.getInstance().record(myLastPreformedActionId);
     }
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
@@ -1352,7 +1348,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       addActionListener(this);
       setRepeats(true);
       final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);

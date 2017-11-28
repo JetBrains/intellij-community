@@ -19,7 +19,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class BooleanConstructorInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/performance/boolean_constructor", new BooleanConstructorInspection());
   }
 }

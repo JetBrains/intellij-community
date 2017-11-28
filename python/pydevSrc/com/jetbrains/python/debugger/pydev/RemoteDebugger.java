@@ -7,11 +7,13 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -26,6 +28,8 @@ import java.net.ServerSocket;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
@@ -201,6 +205,13 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  public void loadFullVariableValues(@NotNull String threadId,
+                                     @NotNull String frameId,
+                                     @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
+    final LoadFullValueCommand command = new LoadFullValueCommand(this, threadId, frameId, vars);
+    command.execute();
+  }
+
   @Override
   @Nullable
   public String loadSource(String path) {
@@ -259,8 +270,9 @@ public class RemoteDebugger implements ProcessDebugger {
       if (frameVars == null || frameVars.size() == 0) continue;
 
       final String expression = "del " + StringUtil.join(frameVars, ",");
+      final String wrappedExpression = String.format("try:\n    %s\nexcept:\n    pass", expression);
       try {
-        evaluate(threadId, entry.getKey(), expression, true);
+        evaluate(threadId, entry.getKey(), wrappedExpression, true);
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
@@ -320,16 +332,31 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void execute(@NotNull final AbstractCommand command) {
-    if (command instanceof ResumeOrStepCommand) {
-      final String threadId = ((ResumeOrStepCommand)command).getThreadId();
-      clearTempVariables(threadId);
-    }
+    CountDownLatch myLatch = new CountDownLatch(1);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (command instanceof ResumeOrStepCommand) {
+        final String threadId = ((ResumeOrStepCommand)command).getThreadId();
+        clearTempVariables(threadId);
+      }
 
-    try {
-      command.execute();
-    }
-    catch (PyDebuggerException e) {
-      LOG.error(e);
+      try {
+        command.execute();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        myLatch.countDown();
+      }
+    });
+    if (command.isResponseExpected()) {
+      // Note: do not wait for result from UI thread
+      try {
+        myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -379,6 +406,22 @@ public class RemoteDebugger implements ProcessDebugger {
   public void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode) {
     final ResumeOrStepCommand command = new ResumeOrStepCommand(this, threadId, mode);
     execute(command);
+  }
+
+  @Override
+  public void setNextStatement(@NotNull String threadId,
+                               @NotNull XSourcePosition sourcePosition,
+                               @Nullable String functionName,
+                               @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override
@@ -458,6 +501,9 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       else if (ProcessCreatedCommand.isProcessCreatedCommand(frame.getCommand())) {
         onProcessCreatedEvent();
+      }
+      else if (AbstractCommand.isShowWarningCommand(frame.getCommand())) {
+        myDebugProcess.showCythonWarning();
       }
       else {
         placeResponse(frame.getSequence(), frame);

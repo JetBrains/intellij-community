@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.packaging.artifacts.Artifact;
@@ -36,7 +36,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class ArtifactVirtualFileListener extends VirtualFileAdapter {
+public class ArtifactVirtualFileListener implements VirtualFileListener {
   private final CachedValue<MultiValuesMap<String, Artifact>> myParentPathsToArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
 

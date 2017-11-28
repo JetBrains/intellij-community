@@ -317,8 +317,11 @@ private fun createComponentConstraints(constraints: Array<out CCFlags>? = null,
   }
 
   if (growPolicy == GrowPolicy.SHORT_TEXT) {
-//    cc().minWidth("210")
     cc().maxWidth("210")
+  }
+  else if (growPolicy == GrowPolicy.MEDIUM_TEXT) {
+    cc().minWidth("210")
+    cc().maxWidth("350")
   }
 
   return _cc

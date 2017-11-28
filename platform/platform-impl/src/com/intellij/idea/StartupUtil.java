@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -38,7 +39,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.lang.UrlClassLoader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author yole
@@ -153,8 +154,7 @@ public class StartupUtil {
    * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
-    String jreCheck = System.getProperty("idea.jre.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+    if ("true".equals(System.getProperty("idea.jre.check"))) {
       try {
         // try to find a class from tools.jar
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
@@ -171,18 +171,12 @@ public class StartupUtil {
         Main.showMessage("JDK Required", message, true);
         return false;
       }
-
-      if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-        String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
-        Main.showMessage("Unsupported JVM", message, true);
-        return false;
-      }
     }
-    jreCheck = System.getProperty("idea.64bit.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+
+    if ("true".equals(System.getProperty("idea.64bit.check"))) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-          String message = "32-bit JVM is not supported. Please install 64-bit version.";
-          Main.showMessage("Unsupported JVM", message, true);
+        String message = "32-bit JVM is not supported. Please install 64-bit version.";
+        Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
     }
@@ -355,16 +349,6 @@ public class StartupUtil {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
-      try {
-        UrlClassLoader.loadPlatformLibrary("focusKiller");
-        log.info("Using \"FocusKiller\" library to prevent focus stealing.");
-      }
-      catch (Throwable t) {
-        log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
-      }
-    }
-
     if (SystemInfo.isWindows) {
       // WinP should not unpack .dll files into parent directory
       System.setProperty("winp.unpack.dll.to.parent.dir", "false");
@@ -392,6 +376,8 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+    log.info("ForkJoinPool.commonPool: "+ForkJoinPool.commonPool());
 
     String extDirs = System.getProperty("java.ext.dirs");
     if (extDirs != null) {

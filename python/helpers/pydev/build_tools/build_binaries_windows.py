@@ -1,4 +1,4 @@
-'''
+r'''
 Creating the needed environments for creating the pre-compiled distribution on Windods:
 
 1. Download:
@@ -29,6 +29,14 @@ pip install "django>=1.9"
 pip install -U "setuptools>=0.9"
 pip install -U "pip>=1.4" "wheel>=0.21" twine
 deactivate
+
+C:\tools\Miniconda32\Scripts\conda create -y -f -n py36_32 python=3.6 cython numpy nose ipython pip
+C:\tools\Miniconda32\Scripts\activate py36_32
+pip install "django>=1.9"
+pip install -U "setuptools>=0.9"
+pip install -U "pip>=1.4" "wheel>=0.21" twine
+deactivate
+
 
 C:\tools\Miniconda\Scripts\conda create -y -f -n py27_64 python=2.7 cython numpy nose ipython pip
 C:\tools\Miniconda\Scripts\activate py27_64
@@ -97,7 +105,7 @@ def main():
         assert os.path.exists(python_install)
 
     from build import remove_binaries
-    remove_binaries()
+    remove_binaries(['.pyd'])
 
     for f in list_binaries():
         raise AssertionError('Binary not removed: %s' % (f,))

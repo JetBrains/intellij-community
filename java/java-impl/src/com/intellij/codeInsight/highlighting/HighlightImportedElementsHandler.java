@@ -26,7 +26,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -80,7 +79,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   @Override
   protected void selectTargets(final List<PsiMember> targets, final Consumer<List<PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
-      selectionConsumer.consume(Collections.<PsiMember>emptyList());
+      selectionConsumer.consume(Collections.emptyList());
       return;
     }
     if (targets.size() == 1) {

@@ -41,12 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/1/12
- * Time: 12:13 PM
- */
 // TODO: Currently make inherit SVNKit update implementation not to duplicate setXxx() methods.
 public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker mySelection;
   private final Document myDocument;
   private final PsiFile myFile;
-  private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
     myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
@@ -164,7 +165,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
    * Adds end variable after the specified element
    */
   public void setEndVariableAfter(PsiElement element) {
-    element = element.getNextSibling();
+    element = PsiTreeUtil.nextLeaf(element);
     setEndVariableBefore(element);
   }
 

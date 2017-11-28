@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -129,13 +115,7 @@ public class PyRenameTest extends PyTestCase {
   }
 
   public void testRenameProperty() {  // PY-5948
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    try {
-      doTest("bar");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest("bar"));
   }
 
   public void testClassNameConflict() {  // PY-2390
@@ -238,11 +218,6 @@ public class PyRenameTest extends PyTestCase {
   }
 
   // PY-2748
-  public void testFormatStringKeyword() {
-    doTest("renamed");
-  }
-
-  // PY-2748
   public void testFormatStringDictLiteral() {
     doUnsupportedOperationTest();
   }
@@ -291,7 +266,47 @@ public class PyRenameTest extends PyTestCase {
   public void testDictAsPercentArg() {
     doUnsupportedOperationTest();
   }
-  
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModuleRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClassRenameCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }

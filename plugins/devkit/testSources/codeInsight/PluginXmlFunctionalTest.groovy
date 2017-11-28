@@ -149,6 +149,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false)
   }
 
+  void testInnerClassReferenceHighlighting() {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
+    myFixture.testHighlighting("innerClassReferenceHighlighting.xml")
+  }
+
   void testInnerClassCompletion() {
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
     myFixture.configureByFile(getTestName(false) + ".xml")

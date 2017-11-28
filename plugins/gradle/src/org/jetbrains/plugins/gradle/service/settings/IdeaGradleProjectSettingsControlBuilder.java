@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -113,6 +114,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JBCheckBox myResolveModulePerSourceSetCheckBox;
   private boolean dropResolveModulePerSourceSetCheckBox;
+
+  @Nullable
+  private JBCheckBox myStoreExternallyCheckBox;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -232,6 +236,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myResolveModulePerSourceSetCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.create.module.per.sourceset"));
       content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
+
+    myStoreExternallyCheckBox = new JBCheckBox("Store generated project files externally");
+    content.add(myStoreExternallyCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
     addGradleChooserComponents(content, indentLevel);
     addGradleHomeComponents(content, indentLevel);
@@ -355,6 +362,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       settings.setResolveModulePerSourceSet(myResolveModulePerSourceSetCheckBox.isSelected());
     }
 
+    if (myStoreExternallyCheckBox != null) {
+      settings.setStoreProjectFilesExternally(myStoreExternallyCheckBox.isSelected());
+    }
+
     if (myUseLocalDistributionButton != null && myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
     }
@@ -395,6 +406,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
+    if (myStoreExternallyCheckBox != null && myStoreExternallyCheckBox.isSelected() != myInitialSettings.isStoreProjectFilesExternally()) {
+      return true;
+    }
+
     if (myGradleJdkComboBox != null && !StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), myInitialSettings.getGradleJvm())) {
       return true;
     }
@@ -418,6 +433,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     if (myResolveModulePerSourceSetCheckBox != null) {
       myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
+    }
+    if (myStoreExternallyCheckBox != null) {
+      myStoreExternallyCheckBox.setSelected(settings.isStoreProjectFilesExternally());
     }
 
     resetGradleJdkComboBox(project, settings);
@@ -496,6 +514,20 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private void resetWrapperControls(String linkedProjectPath, @NotNull GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+    if (isDefaultModuleCreation) {
+      JComponent[] toRemove = new JComponent[]{myUseWrapperWithVerificationButton, myUseWrapperVerificationLabel};
+      for (JComponent component : toRemove) {
+        if (component != null) {
+          Container parent = component.getParent();
+          if (parent != null) {
+            parent.remove(component);
+          }
+        }
+      }
+      myUseWrapperWithVerificationButton = null;
+      myUseWrapperVerificationLabel = null;
+    }
+
     if (StringUtil.isEmpty(linkedProjectPath) && !isDefaultModuleCreation) {
       if (myUseLocalDistributionButton != null) {
         myUseLocalDistributionButton.setSelected(true);

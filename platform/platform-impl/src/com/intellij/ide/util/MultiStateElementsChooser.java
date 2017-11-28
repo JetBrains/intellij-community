@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,6 +90,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
+    myTable.resetDefaultFocusTraversalKeys();
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(JBUI.size(100, 155));
     TableColumnModel columnModel = myTable.getColumnModel();
@@ -286,7 +289,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         myTable.getSelectionModel().clearSelection();
       }
     }
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeAllElements() {
@@ -313,16 +318,26 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   public interface ElementProperties {
     @Nullable
-    Icon getIcon();
+    default Icon getIcon() {
+      return null;
+    }
     @Nullable
-    Color getColor();
+    default Color getColor() {
+      return null;
+    }
+    @Nullable
+    default String getLocation() {
+      return null;
+    }
   }
 
   public void addElement(T element, final S markState, ElementProperties elementProperties) {
     myTableModel.addElement(element, markState);
     myElementToPropertiesMap.put(element, elementProperties);
     selectRow(myTableModel.getRowCount() - 1);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void setElementProperties(T element, ElementProperties properties) {
@@ -365,7 +380,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   private int[] getElementsRows(final Collection<? extends T> elements) {
@@ -635,37 +652,36 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return null;
   }
 
-  private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
+
+  private class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Color color = UIUtil.getTableFocusCellBackground();
-      Component component;
-      T t = (T)value;
-      try {
-        UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
-        component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(t != null ? getItemText(t) : "");
-        if (component instanceof JLabel) {
-          ((JLabel)component).setBorder(noFocusBorder);
+    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      @SuppressWarnings("unchecked") T item = (T)value;
+      String text = item == null ? "" : getItemText(item);
+      append(text);
+
+      ElementProperties properties = myElementToPropertiesMap.get(item);
+
+      if (properties != null) {
+        String location = properties.getLocation();
+        if (StringUtil.isNotEmpty(location)) {
+          append(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }
-      finally {
-        UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
+
+      setTransparentIconBackground(true);
+      Icon icon = properties != null ? properties.getIcon() : item != null ? getItemIcon(item) : null;
+      if (icon != null) {
+        setIcon(icon);
       }
-      final MyTableModel model = (MyTableModel)table.getModel();
-      component.setEnabled(isSelected || (MultiStateElementsChooser.this.isEnabled() &&
-                           (!myColorUnmarkedElements || myMarkStateDescriptor.isMarked(model.getElementMarkState(row)))));
-      final ElementProperties properties = myElementToPropertiesMap.get(t);
-      if (component instanceof JLabel) {
-        final Icon icon = properties != null ? properties.getIcon() : t != null ? getItemIcon(t) : null;
-        JLabel label = (JLabel)component;
-        label.setIcon(icon);
-        label.setDisabledIcon(icon);
-      }
-      component.setForeground(properties != null && properties.getColor() != null ?
-                              properties.getColor() :
-                              isSelected ? table.getSelectionForeground() : table.getForeground());
-      return component;
+
+      setForeground(properties != null && properties.getColor() != null ?
+                    properties.getColor() :
+                    selected ? table.getSelectionForeground() : table.getForeground());
+
+      @SuppressWarnings("unchecked") MyTableModel model = (MyTableModel)table.getModel();
+      setEnabled(selected || (MultiStateElementsChooser.this.isEnabled() &&
+                              (!myColorUnmarkedElements || myMarkStateDescriptor.isMarked(model.getElementMarkState(row)))));
     }
   }
 

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public enum LanguageLevel {
-  JDK_1_3("1.3"), JDK_1_4("1.4"), JDK_1_5("1.5"), JDK_1_6("1.6"), JDK_1_7("1.7"), JDK_1_8("1.8"), JDK_1_9("1.9"), JDK_X("valhalla");
+  JDK_1_3("1.3"), JDK_1_4("1.4"), JDK_1_5("1.5"), JDK_1_6("1.6"), JDK_1_7("1.7"), JDK_1_8("1.8"), JDK_1_9("1.9"), JDK_X("10");
 
   private final String myComplianceOption;
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
-    return ApplicationManager.getApplication().runReadAction((Computable<RunResult<T>>)() -> result.run());
+    return ReadAction.compute(() -> result.run());
   }
 
   public static AccessToken start() {

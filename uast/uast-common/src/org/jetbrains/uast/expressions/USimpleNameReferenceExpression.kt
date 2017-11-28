@@ -24,21 +24,21 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a simple reference expression (a non-qualified identifier).
  */
 interface USimpleNameReferenceExpression : UReferenceExpression {
-    /**
-     * Returns the identifier name.
-     */
-    val identifier: String
-    
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitSimpleNameReferenceExpression(this)) return
-        annotations.acceptList(visitor)
-        visitor.afterVisitSimpleNameReferenceExpression(this)
-    }
+  /**
+   * Returns the identifier name.
+   */
+  val identifier: String
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitSimpleNameReferenceExpression(this, data)
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitSimpleNameReferenceExpression(this)) return
+    annotations.acceptList(visitor)
+    visitor.afterVisitSimpleNameReferenceExpression(this)
+  }
 
-    override fun asLogString() = log("identifier = $identifier")
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+    visitor.visitSimpleNameReferenceExpression(this, data)
 
-    override fun asRenderString() = identifier
+  override fun asLogString() = log("identifier = $identifier")
+
+  override fun asRenderString() = identifier
 }

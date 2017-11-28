@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,7 +59,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
     final SdkAdditionalData sdkData = sdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
-      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
+      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)sdkData;
       try {
         String helpersPath;
         if (CaseCollector.useRemoteCredentials(remoteSdkData)) {
@@ -80,7 +80,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         LOG.error(e);
       }
       catch (ExecutionException e) {
-        throw analyzeException(e, helper, Collections.<String>emptyList());
+        throw analyzeException(e, helper, Collections.emptyList());
       }
     }
     return null;
@@ -115,7 +115,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         }
         if (manager != null && remoteSdkCredentials != null) {
           if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
+            askForSudo = !manager.ensureCanWrite(remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
           }
         }
         else {
@@ -127,12 +127,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         final List<String> cmdline = new ArrayList<>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
-        cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
-          @Override
-          public String apply(@Nullable String input) {
-            return quoteIfNeeded(input);
-          }
-        }));
+        cmdline.addAll(Collections2.transform(args, input -> quoteIfNeeded(input)));
         ProcessOutput processOutput;
         do {
           final PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdkData;
@@ -145,7 +140,9 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
                                                                                                                        workingDir, manager,
                                                                                                                        remoteSdkAdditionalData,
                                                                                                                        pathMapper,
-                                                                                                                       askForSudo, true);
+                                                                                                                       askForSudo,
+                                                                                                                       Sets.newHashSet(
+                                                                                                                         helperPath));
           }
           catch (InterruptedException e) {
             throw new ExecutionException(e);

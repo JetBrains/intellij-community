@@ -113,7 +113,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
     new WriteCommandAction(project) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         assert document != null;
         document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
         PsiDocumentManager.getInstance(project).commitDocument(document);

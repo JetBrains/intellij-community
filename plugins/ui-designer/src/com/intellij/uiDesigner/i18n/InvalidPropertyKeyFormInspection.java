@@ -33,9 +33,10 @@ import java.util.List;
  */
 public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection {
   public InvalidPropertyKeyFormInspection() {
-    super("UnresolvedPropertyKey");
+    super("InvalidPropertyKeyForm");
   }
 
+  @Override
   protected void checkStringDescriptor(final Module module,
                                        final IComponent component,
                                        final IProperty prop,
@@ -45,6 +46,12 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     if (error != null) {
       collector.addError(getID(), component, prop, error);
     }
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "UnresolvedPropertyKey";
   }
 
   @Nullable
@@ -63,7 +70,7 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
     List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, bundleName);
 
-    if (propFiles.size() == 0) {
+    if (propFiles.isEmpty()) {
       return UIDesignerBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.found", bundleName);
     }
 
