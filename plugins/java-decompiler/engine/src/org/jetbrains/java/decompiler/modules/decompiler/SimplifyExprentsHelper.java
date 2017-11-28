@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -37,7 +23,7 @@ import java.util.Map.Entry;
 public class SimplifyExprentsHelper {
 
   static final MatchEngine class14Builder = new MatchEngine();
-  
+
   private final boolean firstInvocation;
 
   public SimplifyExprentsHelper(boolean firstInvocation) {
@@ -884,26 +870,26 @@ public class SimplifyExprentsHelper {
           "   exprent type:var index:$var$\n" +
           "   exprent type:field name:$fieldname$\n" +
           " statement type:sequence statsize:2\n" +
-          "  statement type:trycatch\n" +  
+          "  statement type:trycatch\n" +
           "   statement type:basicblock exprsize:1\n" +
           "    exprent type:assignment\n" +
           "     exprent type:var index:$var$\n" +
           "     exprent type:invocation invclass:java/lang/Class signature:forName(Ljava/lang/String;)Ljava/lang/Class;\n" +
           "      exprent position:0 type:constant consttype:string constvalue:$classname$\n" +
           "   statement type:basicblock exprsize:1\n" +
-          "    exprent type:exit exittype:throw\n" + 
-          "  statement type:basicblock exprsize:1\n" + 
-          "   exprent type:assignment\n" + 
+          "    exprent type:exit exittype:throw\n" +
+          "  statement type:basicblock exprsize:1\n" +
+          "   exprent type:assignment\n" +
           "    exprent type:field name:$fieldname$ ret:$field$\n" +
           "    exprent type:var index:$var$"
         );
   }
-  
+
   private static boolean collapseInlinedClass14(Statement stat) {
 
     boolean ret = class14Builder.match(stat);
     if(ret) {
-      
+
       String class_name = (String)class14Builder.getVariableValue("$classname$");
       AssignmentExprent assfirst = (AssignmentExprent)class14Builder.getVariableValue("$assignfield$");
       FieldExprent fieldexpr = (FieldExprent)class14Builder.getVariableValue("$field$");
@@ -915,15 +901,15 @@ public class SimplifyExprentsHelper {
       stat.setExprents(data);
 
       SequenceHelper.destroyAndFlattenStatement(stat);
-      
+
       ClassWrapper wrapper = (ClassWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_WRAPPER);
       if (wrapper != null) {
         wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fieldexpr.getName(), fieldexpr.getDescriptor().descriptorString));
       }
-      
+
     }
-    
+
     return ret;
   }
-  
+
 }
