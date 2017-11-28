@@ -8,6 +8,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.resolve.isNonAnnotationResolve
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessClasses
 
 data class StarImport(val packageFqn: String) : GroovyStarImport {
 
@@ -20,6 +21,7 @@ data class StarImport(val packageFqn: String) : GroovyStarImport {
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
     if (processor.isNonAnnotationResolve()) return true
+    if (!processor.shouldProcessClasses()) return true
     val pckg = resolveImport(file) ?: return true
     return pckg.processDeclarations(processor, state, null, place)
   }
