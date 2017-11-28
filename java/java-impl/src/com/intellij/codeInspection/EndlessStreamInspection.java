@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.siyeh.ig.psiutils.ExpressionUtils.findSubsequentCall;
+import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> ALL_CONSUMING_OPERATIONS = new HashSet<>(Arrays.asList(
@@ -24,15 +24,24 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "average",
     "collect",
     "toArray",
-    "forEach"
+    "forEach",
+    "summaryStatistics"
+  ));
+
+  private static Set<String> NON_LIMITING_OPERATIONS = new HashSet<>(Arrays.asList(
+    "filter",
+    "map",
+    "flatMap",
+    "peek",
+    "skip"
   ));
 
   private static final CallMatcher INFINITE_SOURCE = CallMatcher.anyOf(
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "generate"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "generate").parameterCount(1),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "iterate").parameterCount(2),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "generate"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "generate").parameterCount(1),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "iterate").parameterCount(2),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "generate"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "generate").parameterCount(1),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "iterate").parameterCount(2),
     CallMatcher.instanceCall("java.util.Random", "ints", "longs", "doubles").parameterCount(2),
     CallMatcher.instanceCall("java.util.Random", "ints", "longs", "doubles").parameterCount(0)
@@ -50,7 +59,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
         if (!INFINITE_SOURCE.test(call)) return;
         PsiMethodCallExpression allConsumingCall = findSubsequentCall(call,
                                                                       name -> ALL_CONSUMING_OPERATIONS.contains(name),
-                                                                      name -> !"limit".equals(name));
+                                                                      name -> NON_LIMITING_OPERATIONS.contains(name));
         if (allConsumingCall == null) return;
         PsiElement nameElement = allConsumingCall.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;

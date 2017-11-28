@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.psiutils.ExpressionUtils.findSubsequentCall;
+import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 /**
  * @author Tagir Valeev
