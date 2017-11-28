@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public interface PanelGridBuilder<T extends PanelBuilder> extends PanelBuilder {
   /**
    * Adds a signle panel builder to grid.
-   * @param builder signle row panel builder
+   * @param builder single row panel builder
    * @return <code>this</code>
    */
   PanelGridBuilder<T> add(@NotNull T builder);

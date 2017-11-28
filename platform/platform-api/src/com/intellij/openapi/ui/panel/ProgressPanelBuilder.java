@@ -21,53 +21,68 @@ import org.jetbrains.annotations.NotNull;
 public interface ProgressPanelBuilder extends PanelBuilder {
   /**
    * Set label text.
+   *
    * @param text label text
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withLabel(String text);
 
   /**
-   * Move comment to the left of the progress bar.
-   * Default position is above the progress bar.
+   * Move comment to the left of the progress bar. Default position is above the progress bar.
+   *
+   * @return <code>this</code>
    */
   ProgressPanelBuilder moveLabelLeft();
 
   /**
    * Enables cancel button and sets action for it. Can't coexist with play and pause actions.
+   *
    * @param cancelAction <code>Runnable</code> action.
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withCancel(@NotNull Runnable cancelAction);
 
   /**
-   * Cancel button will look like an ordinary button rather than as icon.
-   * Default is icon styled cancel button.
+   * Cancel button will look like an ordinary button rather than as icon. Default is icon styled cancel button.
+   *
+   * @return <code>this</code>
    */
   ProgressPanelBuilder andCancelAsButton();
 
   /**
    * Enables play button (icon styled) and sets action for it. Can't coexist with cancel action.
+   *
    * @param playAction <code>Runnable</code> action.
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withResume(@NotNull Runnable playAction);
 
   /**
    * Enables pause button (icon styled) and sets action for it. Can't coexist with cancel action.
+   *
    * @param pauseAction <code>Runnable</code> action.
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withPause(@NotNull Runnable pauseAction);
 
   /**
    * Switch to small icons version.
+   *
+   * @return <code>this</code>
    */
   ProgressPanelBuilder andSmallIcons();
 
   /**
-   * Switch off the comment and don't reserve place for in th the layout.
-   * This makes overall panel size smaller.
+   * Switch off the comment and don't reserve place for it in the layout. This makes overall panel height smaller.
+   *
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withoutComment();
 
   /**
    * Enable separator on top of the panel.
+   *
+   * @return <code>this</code>
    */
   ProgressPanelBuilder withTopSeparator();
 }
