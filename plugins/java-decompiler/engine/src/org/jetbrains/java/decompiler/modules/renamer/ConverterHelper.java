@@ -42,7 +42,7 @@ public class ConverterHelper implements IIdentifierRenamer {
   public boolean toBeRenamed(Type elementType, String className, String element, String descriptor) {
     String value = elementType == Type.ELEMENT_CLASS ? className : element;
     return value == null || value.length() == 0 || value.length() <= 2 || KEYWORDS.contains(value) || Character.isDigit(value.charAt(0))
-      || elementType == Type.ELEMENT_CLASS && RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase());
+      || elementType == Type.ELEMENT_CLASS && (RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase()) || value.length() > 255 - ".class".length());
   }
 
   // TODO: consider possible conflicts with not renamed classes, fields and methods!
