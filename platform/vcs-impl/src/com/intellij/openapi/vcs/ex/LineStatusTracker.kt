@@ -73,7 +73,8 @@ class LineStatusTracker<R : Range> private constructor(override val project: Pro
       // later to avoid saving inside document change event processing.
       TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
-        if (blocks.isEmpty()) {
+        val isEmpty = documentTracker.readLock { blocks.isEmpty() }
+        if (isEmpty) {
           // file was modified, and now it's not -> dirty local change
           vcsDirtyScopeManager.fileDirty(virtualFile)
         }

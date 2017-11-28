@@ -43,8 +43,6 @@ class DocumentTracker : Disposable {
   private val dispatcher: EventDispatcher<Listener> = EventDispatcher.create(Listener::class.java)
   private val multicaster = dispatcher.multicaster
 
-  // write lock should be taken from EDT only
-  // read access allowed from EDT or while holding LOCK
   internal val LOCK: Lock = Lock()
 
   val document1: Document
@@ -142,9 +140,11 @@ class DocumentTracker : Disposable {
   }
 
   fun getContent(side: Side): CharSequence {
-    val frozenContent = freezeHelper.getFrozenContent(side)
-    if (frozenContent != null) return frozenContent
-    return side[document1, document2].immutableCharSequence
+    LOCK.read {
+      val frozenContent = freezeHelper.getFrozenContent(side)
+      if (frozenContent != null) return frozenContent
+      return side[document1, document2].immutableCharSequence
+    }
   }
 
 

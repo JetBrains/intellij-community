@@ -203,31 +203,37 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   @CalledInAwt
   protected fun updateHighlighters() {
-    for (block in blocks) {
-      updateHighlighter(block)
+    LOCK.write {
+      for (block in blocks) {
+        updateHighlighter(block)
+      }
     }
   }
 
   @CalledInAwt
   protected fun updateHighlighter(block: Block) {
-    destroyHighlighter(block)
-    installHighlighter(block)
+    LOCK.write {
+      destroyHighlighter(block)
+      installHighlighter(block)
+    }
   }
 
   @CalledInAwt
   protected fun updateInnerRanges() {
-    if (isDetectWhitespaceChangedLines()) {
-      for (block in blocks) {
-        block.ourData.innerRanges = calcInnerRanges(block)
+    LOCK.write {
+      if (isDetectWhitespaceChangedLines()) {
+        for (block in blocks) {
+          block.ourData.innerRanges = calcInnerRanges(block)
+        }
       }
-    }
-    else {
-      for (block in blocks) {
-        block.ourData.innerRanges = null
+      else {
+        for (block in blocks) {
+          block.ourData.innerRanges = null
+        }
       }
-    }
 
-    updateHighlighters()
+      updateHighlighters()
+    }
   }
 
   @CalledInAwt
