@@ -10,10 +10,6 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashSet;
@@ -102,27 +98,6 @@ public abstract class MatchingHandler {
 
   protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
     return !nodes2.hasNext();
-  }
-
-  private static MatchPredicate findRegExpPredicate(MatchPredicate start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return start;
-
-    if(start instanceof AndPredicate) {
-      AndPredicate binary = (AndPredicate)start;
-      final MatchPredicate result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
-    } else if (start instanceof NotPredicate) {
-      return null;
-    }
-    return null;
-  }
-
-  public static RegExpPredicate getSimpleRegExpPredicate(SubstitutionHandler handler) {
-    if (handler == null) return null;
-    return (RegExpPredicate)findRegExpPredicate(handler.getPredicate());
   }
 
   static class ClearStateVisitor extends PsiRecursiveElementWalkingVisitor {

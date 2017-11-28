@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
+import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGetArray
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
@@ -158,7 +158,10 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Array<out GroovyResolveResult> {
   resolvePackageOrClass()?.let { return arrayOf(it) }
-  resolveLocalVariable()?.let { return arrayOf(it) }
+
+  val localVariableResults = resolveLocalVariable()
+  if (localVariableResults.isNotEmpty()) return localVariableResults
+
   if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY
   val processor = GroovyResolverProcessorBuilder.builder()
     .setForceRValue(forceRValue)
@@ -198,11 +201,8 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   return null
 }
 
-private fun GrReferenceExpression.resolveLocalVariable(): GroovyResolveResult? {
-  if (isQualified) return null
-  val name = referenceName ?: return null
-  val state = ResolveState.initial()
-  val processor = LocalVariableProcessor(name)
-  treeWalkUp(processor, state)
-  return processor.resolveResult
+private fun GrReferenceExpression.resolveLocalVariable(): Array<out GroovyResolveResult> {
+  if (isQualified) return GroovyResolveResult.EMPTY_ARRAY
+  val name = referenceName ?: return GroovyResolveResult.EMPTY_ARRAY
+  return treeWalkUpAndGetArray(LocalVariableProcessor(name))
 }

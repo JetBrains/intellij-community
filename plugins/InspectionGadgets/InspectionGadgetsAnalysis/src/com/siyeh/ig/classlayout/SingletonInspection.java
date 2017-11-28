@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ public class SingletonInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("singleton.problem.descriptor");
+    return (Boolean)infos[0] ?
+           InspectionGadgetsBundle.message("enum.singleton.problem.descriptor") :
+           InspectionGadgetsBundle.message("singleton.problem.descriptor");
   }
 
   @Override
@@ -50,11 +52,10 @@ public class SingletonInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
       if (!SingletonUtil.isSingleton(aClass)) {
         return;
       }
-      registerClassError(aClass);
+      registerClassError(aClass, aClass.isEnum());
     }
   }
 }

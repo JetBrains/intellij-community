@@ -45,6 +45,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
 import java.util.concurrent.ConcurrentMap;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
+
 /**
  * Implements all abstractions related to Groovy file
  *
@@ -114,10 +117,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
+    if (ResolveUtil.shouldProcessProperties(classHint) || shouldProcessLocals(processor)) {
+      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    }
+
     if (myContext != null) {
-      if (ResolveUtil.shouldProcessProperties(classHint)) {
-        if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-      }
       return true;
     }
 
@@ -128,12 +132,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (ResolveUtil.shouldProcessProperties(classHint)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-    }
-
-    if (ResolveUtil.shouldProcessPackages(classHint)) {
-
+    if (shouldProcessPackages(processor)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       String expectedName = nameHint != null ? nameHint.getName(state) : null;
 

@@ -19,30 +19,43 @@ public interface ComponentPanelBuilder extends PanelBuilder {
 
   /**
    * @param labelText text for the label. If <code>null</code> or not set then no label is added in the layout.
+   *
+   * @return <code>this</code>
    */
   ComponentPanelBuilder withLabel(String labelText);
 
   /**
    * @param commentText help context styled text written below the owner component.
+   *
+   * @return <code>this</code>
    */
   ComponentPanelBuilder withComment(String commentText);
 
   /**
    * Move comment to the right of the owner component. Default position is below the owner component.
+   *
+   * @return <code>this</code>
    */
   ComponentPanelBuilder moveCommentRight();
 
   /**
-   * Enables the help tooltip label on the right of the owner component and sets the description text for the tooltip.
+   * Enables the help tooltip icon on the right of the owner component and sets the description text for the tooltip.
+   *
    * @param description help tooltip description. If <code>null</code> is passed then help tooltip is disabled (default
-   *                    behaviour) and no help label is added.
+   *                    behaviour) and no help icon is added.
+   *
+   * @return <code>this</code>
    */
   ComponentPanelBuilder withTooltip(String description);
 
   /**
    * Sets optional help tooltip link and link action.
+   *
    * @param linkText help tooltip link text. If <code>null</code> is passed, no link is added.
+   *
    * @param action help tooltip link action.
+   *
+   * @return <code>this</code>
    */
   ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action);
 }

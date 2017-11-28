@@ -273,4 +273,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testMatchingOpenFunctionCallTypesPy3() {
     doMultiFileTest();
   }
+
+  public void testChainedComparisonsGenericMatching() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
+      doTest();
+    });
+  }
 }

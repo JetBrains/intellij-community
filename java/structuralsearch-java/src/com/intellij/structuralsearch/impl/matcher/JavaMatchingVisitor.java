@@ -787,7 +787,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
       else if (matchedArrayDimensions != 0) {
-        regExpPredicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+        regExpPredicate = handler.findRegExpPredicate();
 
         if (regExpPredicate != null) {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
@@ -1147,7 +1147,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         int length = const2.getTextLength();
         final String text = const2.getText();
 
-        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+        if (StringUtil.isQuotedString(text)) {
           length--;
           offset++;
         }
@@ -1158,7 +1158,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(handler.match(const1, const2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(const1, const2));
+      final Object value1 = const1.getValue();
+      final Object value2 = const2.getValue();
+      if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(value1.toString(), value2.toString()));
+      }
+      else if (value1 != null && value2 != null) {
+        myMatchingVisitor.setResult(value1.equals(value2));
+      }
+      else {
+        // matches null literals
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(const1, const2));
+      }
     }
   }
 

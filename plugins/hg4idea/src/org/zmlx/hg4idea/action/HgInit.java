@@ -17,29 +17,31 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
 import org.zmlx.hg4idea.ui.HgInitDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.Objects.requireNonNull;
+
 /**
  * Action for initializing a Mercurial repository.
  * Command "hg init".
- * @author Kirill Likhodedov
  */
 public class HgInit extends DumbAwareAction {
 
@@ -47,10 +49,7 @@ public class HgInit extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    myProject = e.getData(CommonDataKeys.PROJECT);
-    if (myProject == null) {
-      myProject = ProjectManager.getInstance().getDefaultProject();
-    }
+    myProject = notNull(e.getData(CommonDataKeys.PROJECT), ProjectManager.getInstance().getDefaultProject());
 
     // provide window to select the root directory
     final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
@@ -85,18 +84,20 @@ public class HgInit extends DumbAwareAction {
       needToCreateRepo = true;
     }
 
-    if (needToCreateRepo) {
-      createRepositoryAsynchronously(selectedRoot, mapRoot);
-    }
-    else {
-      updateDirectoryMappings(mapRoot);
-    }
+    boolean finalNeedToCreateRepo = needToCreateRepo;
+    VirtualFile finalMapRoot = mapRoot;
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
+    {
+      if (!finalNeedToCreateRepo || createRepository(requireNonNull(myProject), selectedRoot)) {
+        updateDirectoryMappings(finalMapRoot);
+      }
+    });
   }
 
   // update vcs directory mappings if new repository was created inside the current project directory
   private void updateDirectoryMappings(VirtualFile mapRoot) {
-    if (myProject != null && (! myProject.isDefault()) && myProject.getBaseDir() != null && VfsUtil
-      .isAncestor(myProject.getBaseDir(), mapRoot, false)) {
+    if (myProject != null && (!myProject.isDefault()) && myProject.getBaseDir() != null &&
+        VfsUtilCore.isAncestor(myProject.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
@@ -105,26 +106,19 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  private void createRepositoryAsynchronously(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
-    new HgInitCommand(myProject).executeAsynchronously(selectedRoot, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
-          updateDirectoryMappings(mapRoot);
-          VcsNotifier.getInstance(myProject).notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                                                           HgVcsMessages.message("hg4idea.init.created.notification.description",
-                                                                                 selectedRoot.getPresentableUrl())
-          );
-        }
-        else {
-          new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
-            .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
-                                                                                                          selectedRoot
-                                                                                                            .getPresentableUrl()
-            ));
-        }
-      }
-    });
+  public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
+    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
+    if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
+      VcsNotifier.getInstance(project).notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
+                                                     HgVcsMessages.message("hg4idea.init.created.notification.description",
+                                                                           selectedRoot.getPresentableUrl()));
+      return true;
+    }
+    else {
+      new HgCommandResultNotifier(project.isDefault() ? null : project)
+        .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
+                                                                                                      selectedRoot.getPresentableUrl()));
+      return false;
+    }
   }
-  
 }

@@ -294,15 +294,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   public boolean matchText(@Nullable PsiElement left, @Nullable PsiElement right) {
-    if (left == null) {
-      return right == null;
-    }
-    else if (right == null) {
-      return false;
-    }
-    final boolean caseSensitiveMatch = matchContext.getOptions().isCaseSensitiveMatch();
-    final String leftText = left.getText();
-    final String rightText = right.getText();
-    return caseSensitiveMatch ? leftText.equals(rightText) : leftText.equalsIgnoreCase(rightText);
+    if (left == null) return right == null;
+    return right != null && matchText(left.getText(), right.getText());
+  }
+
+  public boolean matchText(String left, String right) {
+    return matchContext.getOptions().isCaseSensitiveMatch() ? left.equals(right) : left.equalsIgnoreCase(right);
   }
 }

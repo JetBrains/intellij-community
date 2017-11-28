@@ -524,7 +524,7 @@ public class AbstractPopup implements JBPopup {
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
     // inside the component (e.g. editor) it appears on top of.
-    AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
+    AccessibleContextUtil.setParent((Component)myComponent, editor.getContentComponent());
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {

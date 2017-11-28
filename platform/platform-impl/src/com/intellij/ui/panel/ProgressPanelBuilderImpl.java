@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,7 +97,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
     return this;
   }
 
-  @Override @Nullable
+  @Override
+  @NotNull
   public JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
@@ -119,7 +119,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
     }
   }
 
-  @Override public int gridWidth() {
+  @Override
+  public int gridWidth() {
     int width = labelAbove ? 1 : 2;
     width += (cancelAction != null || resumeAction != null && pauseAction != null) ? 1 : 0;
     return width;
@@ -160,14 +161,14 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       }
 
       cancelIcon = new IconButton(null,
-        smallVariant ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
-        smallVariant ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered);
+                                  smallVariant ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
+                                  smallVariant ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered);
       resumeIcon = new IconButton(null,
-        smallVariant ? AllIcons.Process.ProgressResumeSmall : AllIcons.Process.ProgressResume,
-        smallVariant ? AllIcons.Process.ProgressResumeSmallHover : AllIcons.Process.ProgressResumeHover);
+                                  smallVariant ? AllIcons.Process.ProgressResumeSmall : AllIcons.Process.ProgressResume,
+                                  smallVariant ? AllIcons.Process.ProgressResumeSmallHover : AllIcons.Process.ProgressResumeHover);
       pauseIcon = new IconButton(null,
-        smallVariant ? AllIcons.Process.ProgressPauseSmall : AllIcons.Process.ProgressPause,
-        smallVariant ? AllIcons.Process.ProgressPauseSmallHover : AllIcons.Process.ProgressPauseHover);
+                                 smallVariant ? AllIcons.Process.ProgressPauseSmall : AllIcons.Process.ProgressPause,
+                                 smallVariant ? AllIcons.Process.ProgressPauseSmallHover : AllIcons.Process.ProgressPauseHover);
     }
 
     private String emptyComment() {
@@ -211,7 +212,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       if (serviceComment) {
         myServiceComment = commentText != null;
         comment.setText(commentText == null ? myCommentText : commentText);
-      } else if (!myServiceComment) {
+      }
+      else if (!myServiceComment) {
         myCommentText = StringUtil.isNotEmpty(commentText) ? commentText : emptyComment();
         comment.setText(myCommentText);
       }
@@ -243,7 +245,8 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       if (labelAbove) {
         gc.insets = JBUI.insets(5, 13, 7, 0);
         gc.gridy++;
-      } else {
+      }
+      else {
         gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 12, 0, 0);
         gc.gridx++;
       }
@@ -262,20 +265,23 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
           JButton cancelButton = new JButton("Cancel");
           cancelButton.addActionListener((e) -> cancelAction.run());
           panel.add(cancelButton, gc);
-        } else {
+        }
+        else {
           button = new InplaceButton(cancelIcon, a -> {
             button.setPainting(false);
             state = State.CANCELLED;
             cancelAction.run();
           }).setFillBg(false);
         }
-      } else if (resumeAction != null && pauseAction != null) {
+      }
+      else if (resumeAction != null && pauseAction != null) {
         button = new InplaceButton(pauseIcon, a -> {
           if (state == State.PLAYING) {
             button.setIcons(resumeIcon);
             state = State.PAUSED;
             pauseAction.run();
-          } else {
+          }
+          else {
             button.setIcons(pauseIcon);
             state = State.PLAYING;
             resumeAction.run();
@@ -313,9 +319,11 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
       public void mouseEntered(MouseEvent e) {
         if (cancelAction != null) {
           setCommentText("Cancel", true);
-        } else if (resumeAction != null && pauseAction != null) {
+        }
+        else if (resumeAction != null && pauseAction != null) {
           setCommentText(state == State.PLAYING ? "Pause" : "Resume", true);
-        } else {
+        }
+        else {
           setCommentText(null, true);
         }
       }

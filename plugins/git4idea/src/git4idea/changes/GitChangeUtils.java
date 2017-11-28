@@ -526,7 +526,7 @@ public class GitChangeUtils {
       return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, detectRenames);
     }
     catch (VcsException e) {
-      LOG.warn("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
+      LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
       return null;
     }
   }

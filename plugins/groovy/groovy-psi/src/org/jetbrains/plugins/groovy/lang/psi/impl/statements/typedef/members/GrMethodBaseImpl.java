@@ -10,7 +10,6 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -64,6 +63,8 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 /**
  * @author ilyas
@@ -162,7 +163,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     final GrTypeParameterList list = getTypeParameterList();
     if (list != null && !list.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) {
+    if (shouldProcessLocals(processor)) {
       for (final GrParameter parameter : getParameters()) {
         if (!ResolveUtil.processElement(processor, parameter, state)) return false;
       }

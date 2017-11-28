@@ -63,7 +63,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    testRoot = File(FileUtil.getTempDirectory(), "testRoot")
+    testRoot = File(FileUtil.getTempDirectory(), "root-${Integer.toHexString(Random().nextInt())}")
     PlatformTestCase.myFilesToDelete.add(testRoot)
     checkTestRootIsEmpty(testRoot)
 

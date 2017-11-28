@@ -223,7 +223,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return getAppropriateHolder(processor).processDeclarations(processor, state, place);
+    return !shouldProcessMembers(processor) || getAppropriateHolder(processor).processDeclarations(processor, state, place);
   }
 
   @NotNull

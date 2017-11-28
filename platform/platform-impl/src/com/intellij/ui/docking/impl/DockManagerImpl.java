@@ -31,9 +31,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -234,7 +233,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myDragImage = myDefaultDragImage;
 
       myWindow.getContentPane().setLayout(new BorderLayout());
-      myImageContainer = new JLabel(createImageIcon(myDragImage));
+      myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
       myImageContainer.setBorder(new LineBorder(Color.lightGray));
       myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
@@ -300,7 +299,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
         if (img != myDragImage) {
           myDragImage = img;
-          myImageContainer.setIcon(createImageIcon(myDragImage));
+          myImageContainer.setIcon(IconUtil.createImageIcon(myDragImage));
           myWindow.pack();
         }
 
@@ -316,22 +315,6 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
           stopCurrentDragSession();
         }
       }
-    }
-
-    // TODO: need to use com.intellij.util.IconUtil.createImageIcon(), but it requires BufferedImage
-    @NotNull
-    private JBImageIcon createImageIcon(@NotNull final Image img) {
-      return new JBImageIcon(img) {
-        @Override
-        public int getIconWidth() {
-          return ImageUtil.getUserWidth(getImage());
-        }
-
-        @Override
-        public int getIconHeight() {
-          return ImageUtil.getUserHeight(getImage());
-        }
-      };
     }
 
     @Override

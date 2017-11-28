@@ -13,7 +13,7 @@
 // limitations under the License.
 package com.intellij.openapi.ui.panel;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,9 +22,11 @@ public interface PanelBuilder {
   /**
    * Creates panel from the panel builder settings. <code>GridBagLayout</code> is
    * used internally as the layout manager.
+   *
    * @return resulting <code>JPanel</code>
    */
-  @Nullable JPanel createPanel();
+  @NotNull
+  JPanel createPanel();
 
   /**
    * @return <code>true</code> if builder constrains are valid from the design
@@ -42,7 +44,7 @@ public interface PanelBuilder {
   /**
    * @return the the maximum with in columns in terms of <code>GridBagConstraints</code>
    * of the form being created.
-   *
+   * <p>
    * Users should not call this method directly. It is used by the <code>PanelGrid</code>
    * implementation.
    */

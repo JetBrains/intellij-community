@@ -11,9 +11,13 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
+import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -89,6 +93,27 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public MatchPredicate getPredicate() {
     return predicate;
+  }
+
+  @Nullable
+  public RegExpPredicate findRegExpPredicate() {
+    return findRegExpPredicate(getPredicate());
+  }
+
+  private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
+    if (start==null) return null;
+    if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
+
+    if(start instanceof AndPredicate) {
+      AndPredicate binary = (AndPredicate)start;
+      final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
+      if (result!=null) return result;
+
+      return findRegExpPredicate(binary.getSecond());
+    } else if (start instanceof NotPredicate) {
+      return null;
+    }
+    return null;
   }
 
   private static boolean validateOneMatch(final PsiElement match, int start, int end, final MatchResult result, final MatchContext matchContext) {

@@ -565,7 +565,7 @@ public class IconUtil {
         }
       }
     }
-    return createImageIcon(img);
+    return createImageIcon((Image)img);
   }
   
   private static abstract class Filter {
@@ -645,8 +645,17 @@ public class IconUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createImageIcon(Image)}
+   */
+  @Deprecated
   @NotNull
   public static JBImageIcon createImageIcon(@NotNull final BufferedImage img) {
+    return createImageIcon((Image)img);
+  }
+
+  @NotNull
+  public static JBImageIcon createImageIcon(@NotNull final Image img) {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {

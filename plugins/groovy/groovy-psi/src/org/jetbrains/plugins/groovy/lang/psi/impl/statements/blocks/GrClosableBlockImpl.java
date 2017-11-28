@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -39,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Objects;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 /**
  * @author ilyas
@@ -150,7 +151,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
                                     @NotNull ResolveState state,
                                     @NotNull PsiElement place) {
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
+    if (!shouldProcessLocals(processor)) return true;
 
     if (hasParametersSection()) {
       for (GrParameter parameter : getParameters()) {
