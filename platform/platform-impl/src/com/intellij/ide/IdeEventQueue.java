@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -135,6 +136,10 @@ public class IdeEventQueue extends EventQueue {
 
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
     if (!focusEventsList.isEmpty()) {
+
+      FOCUS_AWARE_RUNNABLES_LOG.info("Focus event list (trying to execute runnable): " + focusEventsList.stream().
+        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+
       // find the latest focus gained
       Optional<AWTEvent> first = focusEventsList.stream().
         filter(e ->
@@ -142,13 +147,16 @@ public class IdeEventQueue extends EventQueue {
         findFirst();
 
       if (first.isPresent()) {
+        FOCUS_AWARE_RUNNABLES_LOG.info("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
         yes.accept(first.get());
       }
       else {
+        FOCUS_AWARE_RUNNABLES_LOG.info("    runnable is run right away : " + no.getClass().getName());
         no.run();
       }
     }
     else {
+      FOCUS_AWARE_RUNNABLES_LOG.info("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
       no.run();
     }
   }
@@ -420,11 +428,14 @@ public class IdeEventQueue extends EventQueue {
 
     if (isFocusEvent(e)) {
       AWTEvent finalEvent = e;
+      FOCUS_AWARE_RUNNABLES_LOG.info("Focus event list (execute on focus event): " + focusEventsList.stream().
+        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
       StreamEx.of(focusEventsList).
           takeWhile(entry -> entry.equals(finalEvent)).
           collect(Collectors.toList()).forEach(entry -> {
           focusEventsList.remove(entry);
           Runnable runnable = myRunnablesWaitingFocusChange.remove(entry);
+          FOCUS_AWARE_RUNNABLES_LOG.info("Remove [" + entry.getID() + "; " + entry.getSource().getClass().getName() + "] and run " + ((runnable == null) ? "NULL" : runnable.getClass().getName()));
           if (runnable != null) {
             runnable.run();
           }
