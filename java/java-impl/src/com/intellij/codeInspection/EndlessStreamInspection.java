@@ -33,7 +33,16 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "map",
     "flatMap",
     "peek",
-    "skip"
+    "skip",
+    "dropWhile",
+    "mapToDouble",
+    "mapToLong",
+    "mapToObj",
+    "mapToInt",
+    "parallel",
+    "boxed",
+    "sequential",
+    "unordered"
   ));
 
   private static final CallMatcher INFINITE_SOURCE = CallMatcher.anyOf(
