@@ -173,7 +173,8 @@ public abstract class GitHandler {
   /**
    * @return the current working directory
    */
-  public File getWorkingDirectory() {
+  @NotNull
+  File getWorkingDirectory() {
     return myCommandLine.getWorkDirectory();
   }
 
