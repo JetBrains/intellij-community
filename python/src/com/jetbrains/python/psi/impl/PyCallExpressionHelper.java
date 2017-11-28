@@ -725,12 +725,15 @@ public class PyCallExpressionHelper {
     final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callExpression);
 
-    final List<PyCallableParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+    final int safeImplicitOffset = Math.min(markedCallee.getImplicitOffset(), parameters.size());
+    final List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
     final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
     return new PyCallExpression.PyArgumentsMapping(callExpression,
                                                    markedCallee,
+                                                   implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
@@ -799,26 +802,18 @@ public class PyCallExpressionHelper {
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final List<PyExpression> arguments = callSite.getArguments(callable);
-    final List<PyCallableParameter> explicitParameters =
-      filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
-    final Map<PyExpression, PyCallableParameter> mapped = new LinkedHashMap<>();
-    final PyExpression receiver = callSite.getReceiver(callable);
-    if (receiver != null && !explicitParameters.equals(parameters)) {
-      final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
-      if (first != null && first.getParameter() != null && first.getParameter().isSelf()) {
-        mapped.put(receiver, first);
-      }
-    }
-    mapped.putAll(mappingResults.getMappedParameters());
 
     final PyCallExpression.PyMarkedCallee markedCallee =
       new PyCallExpression.PyMarkedCallee(callableType, callable, null, 0, false, RatedResolveResult.RATE_NORMAL);
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    markedCallee,
-                                                   mapped,
+                                                   implicitParameters,
+                                                   mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
                                                    mappingResults.getParametersMappedToVariadicPositionalArguments(),
