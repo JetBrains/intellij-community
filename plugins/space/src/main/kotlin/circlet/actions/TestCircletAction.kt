@@ -27,12 +27,12 @@ class TestCircletAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         async {
-            val res = service<HealthCheck>().check()
+            val res = service<Me>().info()
             application.invokeLater {
                 Notification(
                     "IdePLuginClient",
                     "Circlet check",
-                    "res = $res",
+                    "Me = $res",
                     NotificationType.INFORMATION)
                     .notify(e.project)
             }
