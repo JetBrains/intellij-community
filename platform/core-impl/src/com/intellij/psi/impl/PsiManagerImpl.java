@@ -34,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -234,7 +233,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   }
 
   private static String logPsi(@Nullable PsiElement element) {
-    return element == null ? " null" : PsiUtilCore.getElementType(element) + " " + element.getClass();
+    return element == null ? " null" : element.getClass().getName();
   }
   
   @Override
