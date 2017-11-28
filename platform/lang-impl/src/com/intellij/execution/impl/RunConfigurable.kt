@@ -447,10 +447,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
     messagePanel.border = EmptyBorder(30, 0, 0, 0)
-    messagePanel.add(JLabel("Press the"))
+    messagePanel.add(JLabel("Click the"))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
-    addIcon.border = EmptyBorder(0, 0, 0, 5)
+    addIcon.border = EmptyBorder(0, 3, 0, 3)
     messagePanel.add(addIcon)
 
     val configurationTypeDescription = if (configurationType != null)
