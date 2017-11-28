@@ -275,6 +275,10 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       if (projectSettings.shouldUpdateBranchInfo()) {
         incomingOutgoingManager.startScheduling();
       }
+      else {
+        //switch off force authentication flag if the entire feature has been switched off
+        incomingOutgoingManager.setUseForceAuthentication(false);
+      }
     }
   }
 

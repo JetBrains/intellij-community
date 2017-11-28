@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -98,15 +99,21 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
           preselectActionCondition, DIMENSION_SERVICE_KEY);
-    AnAction updateBranchInfoWithAuthenticationAction =
-      new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          myPopup.cancel();
-        }
-      };
-    updateBranchInfoWithAuthenticationAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.Warning);
-    myPopup.addToolbarAction(updateBranchInfoWithAuthenticationAction, false);
+
+    final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
+    if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+      AnAction updateBranchInfoWithAuthenticationAction =
+        new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            gitBranchIncomingOutgoingManager.setUseForceAuthentication(true);
+            gitBranchIncomingOutgoingManager.forceUpdateBranches();
+            myPopup.cancel();
+          }
+        };
+      updateBranchInfoWithAuthenticationAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.Warning);
+      myPopup.addToolbarAction(updateBranchInfoWithAuthenticationAction, false);
+    }
   }
 
   @Override

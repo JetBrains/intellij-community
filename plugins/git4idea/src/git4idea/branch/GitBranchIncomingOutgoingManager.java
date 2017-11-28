@@ -4,6 +4,7 @@ package git4idea.branch;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = ContainerUtil.newConcurrentMap();
   @NotNull private final Project myProject;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
+  private volatile boolean myUseForceAuthentication;
 
   GitBranchIncomingOutgoingManager(@NotNull Project project) {
     myProject = project;
@@ -47,6 +49,14 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   public static GitBranchIncomingOutgoingManager getInstance(Project project) {
     return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
+  }
+
+  public boolean hasAuthenticationProblems() {
+    return true;
+  }
+
+  public void setUseForceAuthentication(boolean useForceAuthentication) {
+    myUseForceAuthentication = useForceAuthentication;
   }
 
   @CalledInAwt
@@ -72,6 +82,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       myPeriodicalUpdater = null;
     }
     myProject.getMessageBus().connect().disconnect();
+  }
+
+  public void forceUpdateBranches() {
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> updateBranchInfo());
   }
 
   @NotNull
@@ -102,8 +116,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private Map<GitLocalBranch, Hash> calcBranchesToPullForRemote(@NotNull GitRepository repository,
-                                                                @NotNull GitRemote gitRemote,
-                                                                @NotNull List<GitBranchTrackInfo> trackInfoList) {
+                                                                @NotNull GitRemote gitRemote, List<GitBranchTrackInfo> trackInfoList) {
     Map<GitLocalBranch, Hash> result = ContainerUtil.newHashMap();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
@@ -127,7 +140,11 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                      @NotNull List<String> branchRefNames) {
     Map<String, Hash> result = ContainerUtil.newHashMap();
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = ContainerUtil.newArrayList("--heads", remote.getName());
+      List<String> params = ContainerUtil.newArrayList();
+      if (!myUseForceAuthentication) {
+        params.addAll(Arrays.asList("-c", "credential.helper="));
+      }
+      params.addAll(Arrays.asList("--heads", remote.getName()));
       params.addAll(refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().lsRemote(myProject, repository.getRoot(), remote, ArrayUtil.toStringArray(params));
