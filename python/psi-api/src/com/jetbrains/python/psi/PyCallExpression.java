@@ -374,6 +374,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   class PyArgumentsMapping {
     @NotNull private final PyCallSiteExpression myCallSiteExpression;
     @Nullable private final PyMarkedCallee myMarkedCallee;
+    @NotNull private final List<PyCallableParameter> myImplicitParameters;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
@@ -383,6 +384,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
     public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
                               @Nullable PyMarkedCallee markedCallee,
+                              @NotNull List<PyCallableParameter> implicitParameters,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
                               @NotNull List<PyExpression> unmappedArguments,
@@ -391,6 +393,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
                               @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
       myCallSiteExpression = callSiteExpression;
       myMarkedCallee = markedCallee;
+      myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedArguments = unmappedArguments;
@@ -403,6 +406,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     public static PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
       return new PyCallExpression.PyArgumentsMapping(callSiteExpression,
                                                      null,
+                                                     Collections.emptyList(),
                                                      Collections.emptyMap(),
                                                      Collections.emptyList(),
                                                      Collections.emptyList(),
@@ -419,6 +423,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @Nullable
     public PyMarkedCallee getMarkedCallee() {
       return myMarkedCallee;
+    }
+
+    @NotNull
+    public List<PyCallableParameter> getImplicitParameters() {
+      return myImplicitParameters;
     }
 
     @NotNull
