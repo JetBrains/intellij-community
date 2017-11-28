@@ -18,10 +18,17 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.BackgroundVfsOperationListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
@@ -31,13 +38,16 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
+import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -59,6 +69,7 @@ class PartialLocalLineStatusTracker(project: Project,
   private val affectedChangeLists = HashSet<String>()
 
   private var isFreezedByBackgroundTask: Boolean = false
+  private var hasUndoInCommand: Boolean = false
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
@@ -70,6 +81,11 @@ class PartialLocalLineStatusTracker(project: Project,
 
     val connection = project.messageBus.connect(disposable)
     connection.subscribe(BackgroundVfsOperationListener.TOPIC, MyBackgroundVfsOperationListener())
+
+    if (Registry.`is`("vcs.enable.partial.changelists.undo")) {
+      document.addDocumentListener(MyUndoDocumentListener(), disposable)
+      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+    }
   }
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
@@ -182,6 +198,34 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
+
+  private inner class MyUndoDocumentListener : DocumentListener {
+    override fun beforeDocumentChange(event: DocumentEvent?) {
+      if (hasUndoInCommand) return
+      hasUndoInCommand = true
+
+      registerUndoAction(true)
+    }
+  }
+
+  private inner class MyUndoCommandListener : CommandListener {
+    override fun commandFinished(event: CommandEvent?) {
+      if (hasUndoInCommand && CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          registerUndoAction(false)
+        }
+      }
+    }
+  }
+
+  private fun registerUndoAction(undo: Boolean) {
+    val undoState = documentTracker.readLock {
+      blocks.map { RangeState(it.range, it.marker.changelistId) }
+    }
+    UndoManager.getInstance(project).undoableActionPerformed(MyUndoableAction(project, document, undoState, undo))
+  }
 
   private inner class MyBackgroundVfsOperationListener : BackgroundVfsOperationListener {
     override fun backgroundVcsOperationStarted() {
@@ -396,6 +440,64 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     updateAffectedChangeLists()
+  }
+
+
+  @CalledInAwt
+  internal fun restoreState(states: List<RangeState>) {
+    documentTracker.doFrozen {
+      // ensure that changelist can't disappear in the middle of operation
+      changeListManager.executeUnderDataLock {
+        documentTracker.writeLock {
+          val success = documentTracker.setFrozenState(states.map { it.range })
+          if (success) {
+            val changelistIds = changeListManager.changeLists.map { it.id }
+            val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
+            assert(blocks.size == states.size)
+            blocks.forEachIndexed { i, block ->
+              block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
+              updateHighlighter(block)
+            }
+          }
+
+          updateAffectedChangeLists()
+        }
+      }
+    }
+  }
+
+
+  class RangeState(
+    val range: com.intellij.diff.util.Range,
+    val changelistId: String
+  )
+
+  private class MyUndoableAction(
+    project: Project,
+    document: Document,
+    val states: List<RangeState>,
+    val undo: Boolean
+  ) : BasicUndoableAction(document) {
+    val projectRef: WeakReference<Project> = WeakReference(project)
+
+    override fun undo() {
+      if (undo) restore()
+    }
+
+    override fun redo() {
+      if (!undo) restore()
+    }
+
+    private fun restore() {
+      val document = affectedDocuments!!.single().document
+      val project = projectRef.get()
+      if (document != null && project != null) {
+        val tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
+        if (tracker is PartialLocalLineStatusTracker) {
+          tracker.restoreState(states)
+        }
+      }
+    }
   }
 
 

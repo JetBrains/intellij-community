@@ -403,6 +403,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myScheduler.submit(r);
   }
 
+  public void executeUnderDataLock(@NotNull Runnable r) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        r.run();
+      }
+    });
+  }
+
   @Override
   public void scheduleUpdate() {
     myUpdater.schedule();

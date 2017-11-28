@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -153,7 +154,7 @@ class DocumentTracker : Disposable {
 
 
   @CalledInAwt
-  private fun refreshDirty(fastRefresh: Boolean, forceInFrozen: Boolean = false) {
+  fun refreshDirty(fastRefresh: Boolean, forceInFrozen: Boolean = false) {
     if (isDisposed) return
     if (!forceInFrozen && freezeHelper.isFrozen()) return
 
@@ -250,6 +251,38 @@ class DocumentTracker : Disposable {
 
     return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
   }
+
+  @CalledInAwt
+  fun setFrozenState(lineRanges: List<Range>): Boolean {
+    if (isDisposed) return false
+    assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))
+
+    LOCK.write {
+      val content1 = getContent(Side.LEFT)
+      val content2 = getContent(Side.RIGHT)
+      if (!isValidState(content1, content2, lineRanges)) return false
+
+      tracker.setRanges(lineRanges, true)
+
+      return true
+    }
+  }
+
+  private fun isValidState(content1: CharSequence,
+                           content2: CharSequence,
+                           lineRanges: List<Range>): Boolean {
+    val lineOffset1 = content1.lineOffsets
+    val lineOffset2 = content2.lineOffsets
+
+    val iterable = DiffIterableUtil.create(lineRanges, lineOffset1.lineCount, lineOffset2.lineCount)
+    for (range in iterable.unchanged()) {
+      val lines1 = DiffUtil.getLines(content1, lineOffset1, range.start1, range.end1)
+      val lines2 = DiffUtil.getLines(content2, lineOffset2, range.start2, range.end2)
+      if (lines1 != lines2) return false
+    }
+    return true
+  }
+
 
 
   private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {
