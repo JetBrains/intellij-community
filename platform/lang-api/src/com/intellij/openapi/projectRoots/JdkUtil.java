@@ -105,17 +105,7 @@ public class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull File homePath) {
-    File binPath = new File(homePath, "bin");
-    if (!binPath.exists()) return false;
-
-    FileFilter fileFilter = f -> {
-      if (f.isDirectory()) return false;
-      String name = FileUtil.getNameWithoutExtension(f);
-      return "javac".equals(name) || "javah".equals(name);
-    };
-    File[] children = binPath.listFiles(fileFilter);
-
-    return children != null && children.length >= 2 &&
+    return (new File(homePath, "bin/javac").isFile() || new File(homePath, "bin/javac.exe").isFile()) &&
            checkForRuntime(homePath.getAbsolutePath());
   }
 
