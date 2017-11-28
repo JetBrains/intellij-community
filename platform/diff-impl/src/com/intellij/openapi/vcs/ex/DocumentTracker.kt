@@ -36,9 +36,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class DocumentTracker : Disposable {
   private val dispatcher: EventDispatcher<Listener> = EventDispatcher.create(Listener::class.java)
@@ -46,7 +45,7 @@ class DocumentTracker : Disposable {
 
   // write lock should be taken from EDT only
   // read access allowed from EDT or while holding LOCK
-  val LOCK: ReentrantReadWriteLock = ReentrantReadWriteLock()
+  internal val LOCK: Lock = Lock()
 
   val document1: Document
   val document2: Document
@@ -95,6 +94,11 @@ class DocumentTracker : Disposable {
   fun addListener(listener: Listener) {
     dispatcher.addListener(listener)
   }
+
+
+  fun <T> readLock(task: () -> T): T = LOCK.read(task)
+  fun <T> writeLock(task: () -> T): T = LOCK.write(task)
+  val isLockHeldByCurrentThread: Boolean get() = LOCK.isHeldByCurrentThread
 
 
   fun isFrozen(): Boolean {
@@ -158,7 +162,7 @@ class DocumentTracker : Disposable {
   }
 
   private fun unfreeze(side: Side, oldText: CharSequence) {
-    assert(LOCK.isWriteLocked)
+    assert(LOCK.isHeldByCurrentThread)
     if (isDisposed) return
 
     val newText = side[document1, document2]
@@ -354,6 +358,21 @@ class DocumentTracker : Disposable {
     constructor(data: FreezeData, textBeforeFreeze: CharSequence) : this(textBeforeFreeze, data.counter)
   }
 
+
+  internal inner class Lock {
+    private val myLock = ReentrantLock()
+
+    internal inline fun <T> read(task: () -> T): T {
+      return myLock.withLock(task)
+    }
+
+    internal inline fun <T> write(task: () -> T): T {
+      return myLock.withLock(task)
+    }
+
+    internal val isHeldByCurrentThread: Boolean
+      get() = myLock.isHeldByCurrentThread
+  }
 
   interface Listener : EventListener {
     fun onRangeRefreshed(before: Block, after: List<Block>) {}

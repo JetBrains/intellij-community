@@ -33,8 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.nullize
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 
 abstract class LineStatusTrackerBase<R : Range> {
   protected val application: Application = ApplicationManager.getApplication()
@@ -52,7 +50,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   private var isInitialized: Boolean = false
 
   protected val blocks: List<Block> get() = documentTracker.blocks
-  protected val LOCK: ReentrantReadWriteLock get() = documentTracker.LOCK
+  internal val LOCK: DocumentTracker.Lock get() = documentTracker.LOCK
 
   constructor(project: Project?, document: Document) {
     this.project = project
@@ -134,7 +132,7 @@ abstract class LineStatusTrackerBase<R : Range> {
       Disposer.dispose(disposable)
     }
 
-    if (!application.isDispatchThread || LOCK.isWriteLocked) {
+    if (!application.isDispatchThread || LOCK.isHeldByCurrentThread) {
       application.invokeLater(runnable)
     }
     else {
