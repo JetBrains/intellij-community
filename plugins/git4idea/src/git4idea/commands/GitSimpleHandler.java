@@ -105,6 +105,7 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * For silent handlers, print out everything
    */
+  @Deprecated
   public void unsilence() {
   }
 
