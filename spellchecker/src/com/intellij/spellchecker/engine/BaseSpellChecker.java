@@ -213,7 +213,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public void removeDictionariesRecursively(@NotNull String directory) {
     bundledDictionaries.stream()
       .map(Dictionary::getName)
-      .filter(dict -> isAncestor(directory, dict, true) && isDictionaryLoad(dict))
+      .filter(dict -> isAncestor(directory, dict, false) && isDictionaryLoad(dict))
       .forEach(this::removeDictionary);
   }
 

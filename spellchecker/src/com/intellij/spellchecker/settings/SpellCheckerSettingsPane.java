@@ -168,7 +168,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     optionalChooserComponent.apply();
     pathsChooserComponent.apply();
-    settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
+    settings.setDictionaryFoldersPaths(new ArrayList<>(pathsChooserComponent.getValues()));
 
     final HashSet<String> disabledDictionaries = new HashSet<>();
     final HashSet<String> bundledDisabledDictionaries = new HashSet<>();

@@ -27,11 +27,13 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
+import static java.util.Collections.singletonList;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
@@ -51,7 +53,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     settings = SpellCheckerSettings.getInstance(getProject());
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
     oldPaths = settings.getDictionaryFoldersPaths();
-    settings.setDictionaryFoldersPaths(Collections.singletonList(getTestDictDirectory()));
+    settings.setDictionaryFoldersPaths(new ArrayList<>(singletonList(getTestDictDirectory())));
     spellCheckerManager.fullConfigurationReload();
   }
 

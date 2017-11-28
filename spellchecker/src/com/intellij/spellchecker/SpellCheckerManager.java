@@ -318,17 +318,12 @@ public class SpellCheckerManager implements Disposable {
     }
 
     private void removeCustomDictionaries(@NotNull String path) {
-      path = toSystemDependentName(path);
-      if (spellChecker.isDictionaryLoad(path)) {
-        spellChecker.removeDictionary(path);
+      final String systemDependentPath = toSystemDependentName(path);
+      if (locatedInDictFolders(path)) {
+        spellChecker.removeDictionariesRecursively(systemDependentPath);
+        mySettings.getDictionaryFoldersPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
+        mySettings.getDisabledDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
         restartInspections();
-      }
-      else if (locatedInDictFolders(path)) {
-        spellChecker.removeDictionariesRecursively(path);
-        restartInspections();
-      }
-      if (mySettings.getDictionaryFoldersPaths().contains(path)) {
-        mySettings.getDictionaryFoldersPaths().remove(path);
       }
     }
 
@@ -336,24 +331,18 @@ public class SpellCheckerManager implements Disposable {
       final String path = toSystemDependentName(file.getPath());
       if (!locatedInDictFolders(path)) return;
 
-      if (file.isDirectory()) {
-        visitChildrenRecursively(file, new VirtualFileVisitor() {
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            final boolean isDirectory = file.isDirectory();
-            final String path = file.getPath();
-            if (!isDirectory && isDic(path)) {
-              loadDictionary(path);
-              restartInspections();
-            }
-            return isDirectory;
+      visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          final boolean isDirectory = file.isDirectory();
+          final String path = file.getPath();
+          if (!isDirectory && isDic(path)) {
+            loadDictionary(path);
+            restartInspections();
           }
-        });
-      }
-      else if (isDic(path)) {
-        loadDictionary(path);
-        restartInspections();
-      }
+          return isDirectory;
+        }
+      });
     }
 
     private boolean isDic(String path) {
