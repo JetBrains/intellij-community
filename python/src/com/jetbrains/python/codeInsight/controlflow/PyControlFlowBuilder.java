@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -278,17 +279,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private Instruction getPrevInstruction(final PyElement condition) {
-    final Ref<Instruction> head = new Ref<>(myBuilder.prevInstruction);
+  @NotNull
+  private List<Pair<PsiElement, Instruction>> getPrevInstructions(final PyElement condition) {
+    final List<Pair<PsiElement, Instruction>> result = ContainerUtil.newArrayList(Pair.create(condition, myBuilder.prevInstruction));
     myBuilder.processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
-        head.set(instruction);
+        result.add(Pair.create(pendingScope, instruction));
       }
       else {
         myBuilder.addPendingEdge(pendingScope, instruction);
       }
     });
-    return head.get();
+    return result;
   }
 
   @Override
@@ -327,8 +329,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     // Set the head as the last instruction of condition
     PyElement lastCondition = condition;
-    Instruction lastBranchingPoint = getPrevInstruction(condition);
-    myBuilder.prevInstruction = lastBranchingPoint;
+
+    List<Pair<PsiElement, Instruction>> lastBranchingPoints = getPrevInstructions(condition);
+    lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    myBuilder.prevInstruction = null;
+
     final PyStatementList thenStatements = ifPart.getStatementList();
     myBuilder.startConditionalNode(thenStatements, condition, true);
     InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
@@ -344,18 +349,22 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     for (final PyIfPart part : node.getElifParts()) {
       // Set the head as the false branch
-      myBuilder.prevInstruction = lastBranchingPoint;
+      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(part, lastCondition, false);
       condition = part.getCondition();
       assertionEvaluator = new PyTypeAssertionEvaluator();
       if (condition != null) {
         lastCondition = condition;
-        lastBranchingPoint = getPrevInstruction(lastCondition);
+        lastBranchingPoints = getPrevInstructions(lastCondition);
         condition.accept(this);
         condition.accept(assertionEvaluator);
       }
       // Set the head as the last instruction of condition
-      myBuilder.prevInstruction = getPrevInstruction(lastCondition);
+      getPrevInstructions(lastCondition).forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(part, lastCondition, true);
       final PyStatementList statementList = part.getStatementList();
       InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
@@ -379,15 +388,24 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyElsePart elseBranch = node.getElsePart();
     if (elseBranch != null) {
       // Set the head as the false branch
-      myBuilder.prevInstruction = lastBranchingPoint;
+      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(elseBranch, lastCondition, false);
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       elseBranch.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     else {
-      myBuilder.prevInstruction = lastBranchingPoint;
-      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
+      myBuilder.prevInstruction = null;
+      final Instruction instruction = ContainerUtil.getFirstItem(InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator));
+      if (instruction != null) {
+        lastBranchingPoints.forEach(p -> myBuilder.addEdge(p.getSecond(), instruction));
+      }
+      else {
+        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      }
+
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
   }
