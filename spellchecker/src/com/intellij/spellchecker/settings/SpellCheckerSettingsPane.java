@@ -243,8 +243,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         return new ArrayList<>();
       }
       Set<String> words = this.dictionary.getEditableWords();
-      List<String> result = new ArrayList<>();
-      result.addAll(words);
+      List<String> result = new ArrayList<>(words);
       Collections.sort(result);
       return result;
     }
