@@ -25,7 +25,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1146,6 +1145,24 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = D.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationClassMethodCalledOnInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().factory()");
   }
 
   // PY-24990
