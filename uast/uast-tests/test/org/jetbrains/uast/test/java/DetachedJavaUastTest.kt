@@ -20,11 +20,11 @@ class DetachedJavaUastTest : AbstractJavaUastTest() {
     val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.psi, *detachers.keys.toTypedArray())
       .map { psiElement -> psiElement to detachers.entries.first { it.key.isAssignableFrom(psiElement.javaClass) }.value }
 
-    for ((element, converter) in detachablePsiElements) {
+    for ((element, detacher) in detachablePsiElements) {
       val attachedUElement = element.toUElement()
       TestCase.assertNotNull("UElement should be defined for attached element with text '${element.text}' in $testName",
                              attachedUElement)
-      val detachedPsiElement = converter.invoke(elementFactory, element.text, element)
+      val detachedPsiElement = detacher.invoke(elementFactory, element.text, element)
       val detachedUElement = try {
         detachedPsiElement.toUElement()
       }
