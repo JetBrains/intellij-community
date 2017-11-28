@@ -1068,6 +1068,65 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-24990
+  public void testSelfAnnotationReceiverUnionType() {
+    doTest("Union[A, B]",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(Base): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A() or B()).method()");
+  }
+
+  // PY-24990
+  public void _testClsAnnotationReceiverUnionType() {
+    doTest("Union[A, B]",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A or B).factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationReceiverUnionTypeClassMethodCalledOnMixedInstanceClassObject() {
+    doTest("A",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A or A()).factory()");
+  }
+
+  // PY-24990
   public void testSelfAnnotationInTypeCommentSameClassInstance() {
     doTest("C",
            "from typing import TypeVar\n" +
