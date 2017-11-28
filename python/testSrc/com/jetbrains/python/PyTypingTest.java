@@ -1127,6 +1127,23 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-24990
+  public void testSelfAnnotationInstanceMethodCalledOnClassObject() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = C.method(D())");
+  }
+
+  // PY-24990
   public void testSelfAnnotationInTypeCommentSameClassInstance() {
     doTest("C",
            "from typing import TypeVar\n" +
