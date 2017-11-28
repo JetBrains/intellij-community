@@ -44,6 +44,12 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return myClassName;
   }
 
+  @Nullable
+  @Override
+  public String getQualifiedReferenceName() {
+    return myClassName;
+  }
+
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {

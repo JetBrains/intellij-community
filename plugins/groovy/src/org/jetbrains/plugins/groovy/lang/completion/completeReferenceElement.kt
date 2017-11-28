@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processClasses
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.qualifiedReferenceName
 import org.jetbrains.plugins.groovy.lang.resolve.resolveClassFqn
 import org.jetbrains.plugins.groovy.util.consumeAll
 

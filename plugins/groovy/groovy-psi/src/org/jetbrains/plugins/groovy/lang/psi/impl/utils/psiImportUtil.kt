@@ -5,7 +5,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils
 
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*
-import org.jetbrains.plugins.groovy.lang.resolve.qualifiedReferenceName
 
 internal fun GrImportStatement.createImportFromStatement(): GroovyImport? {
   val reference = importReference ?: return null

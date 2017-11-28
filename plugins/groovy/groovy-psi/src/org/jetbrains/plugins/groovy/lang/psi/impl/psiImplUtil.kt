@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -66,4 +67,17 @@ fun GrCodeReferenceElement.doGetKind(): CodeReferenceKind {
     is GrCodeReferenceElement -> parent.kind
     else -> CodeReferenceKind.REFERENCE
   }
+}
+
+fun getQualifiedReferenceName(reference: GrReferenceElement<*>): String? {
+  val parts = mutableListOf<String>()
+  var current = reference
+  while (true) {
+    val name = current.referenceName ?: return null
+    parts.add(name)
+    val qualifier = current.qualifier ?: break
+    qualifier as? GrReferenceElement<*> ?: return null
+    current = qualifier
+  }
+  return parts.reversed().joinToString(separator = ".")
 }

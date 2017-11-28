@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
-import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.getQualifiedReferenceName;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -144,7 +143,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return true;
     }
     else if (resolved instanceof PsiClass) {
-      final String qualifiedReferenceName = getQualifiedReferenceName(this);
+      final String qualifiedReferenceName = getQualifiedReferenceName();
       if (qualifiedReferenceName == null) return false;
       final String classFqn = ((PsiClass)resolved).getQualifiedName();
       if (classFqn == null) return false;
