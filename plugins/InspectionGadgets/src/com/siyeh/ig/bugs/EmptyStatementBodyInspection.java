@@ -81,7 +81,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"), "m_reportEmptyBlocks");
-    panel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), "commentsAreContent");
+    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
     return panel;
   }
 
