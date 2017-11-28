@@ -21,4 +21,13 @@ class X {
      EOFException {
      }
 
+  /**
+   * Execute.
+   *
+   * @throws IOException if file write is failed
+   * @throws Throwable if any other problem occurred
+   */
+  void execute() throws IOException, Throwable {
+
+  }
 }
