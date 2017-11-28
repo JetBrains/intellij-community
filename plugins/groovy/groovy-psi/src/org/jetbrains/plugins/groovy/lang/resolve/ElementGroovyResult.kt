@@ -25,4 +25,13 @@ open class ElementGroovyResult<out T : PsiElement>(protected val myElement: T) :
   override fun isInvokedOnProperty(): Boolean = false
 
   override fun getSpreadState(): SpreadState? = null
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as ElementGroovyResult<*>
+    return myElement == other.myElement
+  }
+
+  override fun hashCode(): Int = myElement.hashCode()
 }
