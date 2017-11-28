@@ -20,6 +20,7 @@ import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.externalDependencies.ProjectExternalDependency;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -139,7 +140,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       })
       .createPanel();
     
-    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. IntelliJ IDEA will notify you if a required plugin is missing or needs an update. ");
+    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
+                                           ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
     return JBUI.Panels.simplePanel(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
