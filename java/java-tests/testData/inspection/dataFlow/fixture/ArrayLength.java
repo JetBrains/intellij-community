@@ -1,6 +1,23 @@
 import java.util.Arrays;
 
 public final class ArrayLength {
+  void testEquality(int[] x) {
+    int len = x.length;
+    for(int i=0; i<100; i++) {
+      if (i == len) {
+        x[<warning descr="Array index is out of bounds">i</warning>] = 10;
+      }
+    }
+  }
+
+  int[] testFor(int length) {
+    int[] x = new int[length];
+    for(int i=0; i<=length; i++) {
+      x[i] = 1;
+    }
+    return x;
+  }
+
   public static void testArray2(Object[] x, Object[] y, int a) {
     if(<warning descr="Condition 'x[a] == null && a == x.length' is always 'false'">x[a] == null && <warning descr="Condition 'a == x.length' is always 'false' when reached">a == x.length</warning></warning>) {
       System.out.println("Impossible");

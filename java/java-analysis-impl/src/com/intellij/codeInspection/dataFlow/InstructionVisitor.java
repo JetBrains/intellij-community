@@ -139,7 +139,9 @@ public abstract class InstructionVisitor {
     if (variable != null) {
       if (instruction.isDependentsOnly()) {
         for (DfaVariableValue qualified : runner.getFactory().getVarFactory().getAllQualifiedBy(variable)) {
-          memState.flushVariable(qualified);
+          if (qualified.isFlushableByCalls()) {
+            memState.flushVariable(qualified);
+          }
         }
       }
       else {
