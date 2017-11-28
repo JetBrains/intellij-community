@@ -327,7 +327,7 @@ Function ConfirmDesktopShortcut
     StrCpy $R1 "64-bit launcher"
   ${Else}
     ;there is only one launcher and it is 64-bit.
-    StrCpy $R0 "64-bit launcher"
+    StrCpy $R0 "${MUI_PRODUCT} launcher"
     StrCpy $R1 ""
   ${EndIf}
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
@@ -1342,9 +1342,11 @@ skip_delete_settings:
   StrCpy $5 "Software\${MANUFACTURER}"
 shortcuts:
   ;user has the admin rights
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
+  SetShellVarContext current
+  IfFileExists "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
   SetShellVarContext all
 keep_current_user:
+  DetailPrint "Desktop: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
   DetailPrint "Start Menu: $SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}"
 
   Delete "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
