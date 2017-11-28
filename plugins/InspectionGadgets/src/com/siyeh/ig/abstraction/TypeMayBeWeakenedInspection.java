@@ -45,6 +45,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -127,7 +128,30 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
   @Override
   public void readSettings(@NotNull Element node) {
-    super.readSettings(node);
+    List<Element> options = node.getChildren("option");
+    Map<String, String> values = new HashMap<>();
+    for (Element option : options) {
+      Attribute nameAttribute = option.getAttribute("name");
+      if(nameAttribute == null) continue;
+      Attribute valueAttribute = option.getAttribute("value");
+      if(valueAttribute == null) continue;
+      values.put(nameAttribute.getValue(), valueAttribute.getValue());
+    }
+    useRighthandTypeAsWeakestTypeInAssignments = readOrDefault(values, "useRighthandTypeAsWeakestTypeInAssignments");
+    useParameterizedTypeForCollectionMethods = readOrDefault(values, "useParameterizedTypeForCollectionMethods");
+    doNotWeakenToJavaLangObject = readOrDefault(values, "doNotWeakenToJavaLangObject");
+    onlyWeakentoInterface = readOrDefault(values, "onlyWeakentoInterface");
+    doNotWeakenReturnType = readOrDefault(values, "doNotWeakenReturnType");
+    readStopClasses(node);
+  }
+
+  private static boolean readOrDefault(Map<String, String> options, String name) {
+    String value = options.get(name);
+    if(value == null) return true;
+    return Boolean.parseBoolean(value);
+  }
+
+  private void readStopClasses(@NotNull Element node) {
     List<Element> classes = node.getChildren("stopClasses");
     if(classes.isEmpty()) return;
     Element element = classes.get(0);
@@ -139,10 +163,26 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
   @Override
   public void writeSettings(@NotNull Element node) {
-    Element stopClasses = new Element("stopClasses");
-    stopClasses.addContent(myStopClassSet.stream().collect(Collectors.joining(",")));
-    node.addContent(stopClasses);
-    super.writeSettings(node);
+    writeBool(node, useRighthandTypeAsWeakestTypeInAssignments, "useRighthandTypeAsWeakestTypeInAssignments");
+    writeBool(node, useParameterizedTypeForCollectionMethods, "useParameterizedTypeForCollectionMethods");
+    writeBool(node, doNotWeakenToJavaLangObject, "doNotWeakenToJavaLangObject");
+    writeBool(node, onlyWeakentoInterface, "onlyWeakentoInterface");
+    if (!doNotWeakenReturnType) {
+      writeBool(node, true, "doNotWeakenReturnType");
+    }
+    if (!myStopClassSet.isEmpty()) {
+      Element stopClasses = new Element("stopClasses");
+      stopClasses.addContent(myStopClassSet.stream().collect(Collectors.joining(",")));
+      node.addContent(stopClasses);
+    }
+  }
+
+
+  private static void writeBool(@NotNull Element node, boolean value, String name) {
+    Element optionElement = new Element("option");
+    optionElement.setAttribute("name", name);
+    optionElement.setAttribute("value", String.valueOf(value));
+    node.addContent(optionElement);
   }
 
   void addClass(@NotNull String stopClass, @NotNull Project project) {
