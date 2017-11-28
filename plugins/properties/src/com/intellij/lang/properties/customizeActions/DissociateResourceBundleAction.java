@@ -18,7 +18,6 @@ package com.intellij.lang.properties.customizeActions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleManager;
@@ -85,13 +84,9 @@ public class DissociateResourceBundleAction extends AnAction {
       ResourceBundleManager.getInstance(project).dissociateResourceBundle(resourceBundle);
     }
     AbstractProjectViewPane currentProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-    if (currentProjectViewPane == null) {
-      return;
-    }
-    AbstractTreeBuilder treeBuilder = currentProjectViewPane.getTreeBuilder();
-    if (treeBuilder != null) {
+    if (currentProjectViewPane != null) {
       for (PsiFileSystemItem item : toUpdateInProjectView) {
-        treeBuilder.queueUpdateFrom(item, false);
+        currentProjectViewPane.updateFrom(item, false, true);
       }
     }
   }

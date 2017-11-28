@@ -212,6 +212,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull
   public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (builder != null) {
+      builder.queueUpdateFrom(element, forceResort, updateStructure);
+    }
+    else if (element instanceof PsiElement) {
+      AsyncProjectViewSupport support = getAsyncSupport();
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+    }
+  }
+
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
   public void selectModule(final Module module, final boolean requestFocus) {
