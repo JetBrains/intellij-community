@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.DirectoryIndex
@@ -42,10 +43,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
@@ -109,6 +107,8 @@ class LineStatusTrackerManager(
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), disposable)
       if (partialChangeListsEnabled) editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), disposable)
+
+      changeListManager.addChangeListListener(MyChangeListListener())
 
       val virtualFileManager = VirtualFileManager.getInstance()
       virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), disposable)
@@ -568,6 +568,18 @@ class LineStatusTrackerManager(
             installTracker(virtualFile, document)
           }
         }
+      }
+    }
+  }
+
+  private inner class MyChangeListListener : ChangeListAdapter() {
+    override fun defaultListChanged(oldDefaultList: ChangeList?, newDefaultList: ChangeList?) {
+      edt {
+        EditorFactory.getInstance().allEditors
+          .filterIsInstance(EditorEx::class.java)
+          .forEach {
+            it.gutterComponentEx.repaint()
+          }
       }
     }
   }
