@@ -103,7 +103,6 @@ public class TestDataUtil {
 
     int commonPrefixLength = StringUtil.commonPrefixLength(file1Name, file2Name);
     if (commonPrefixLength == 0) {
-      //noinspection ConstantConditions - no NPE
       if (isBeforeAfterPrefixedPair(file1Name, file2Name)) {
         return new TestDataGroupVirtualFile(file1, file2);
       }
@@ -122,11 +121,16 @@ public class TestDataUtil {
     return null;
   }
 
-  private static boolean isBeforeAfterPrefixedPair(@NonNls String name1, @NonNls String name2) {
-    //noinspection ConstantConditions - no NPE
-    return name1.toLowerCase().startsWith(TESTDATA_FILE_BEFORE_MARKER) && name2.startsWith(TESTDATA_FILE_AFTER_MARKER)
-           && StringUtil.substringAfter(name1, TESTDATA_FILE_BEFORE_MARKER)
-             .equals(StringUtil.substringAfter(name2, TESTDATA_FILE_AFTER_MARKER));
+  private static boolean isBeforeAfterPrefixedPair(@NotNull @NonNls String name1, @NotNull @NonNls String name2) {
+    String lcName1 = name1.toLowerCase();
+    String lcName2 = name2.toLowerCase();
+    if (lcName1.startsWith(TESTDATA_FILE_BEFORE_MARKER) && lcName2.startsWith(TESTDATA_FILE_AFTER_MARKER)) {
+      String lcName1MainPart = StringUtil.substringAfter(lcName1, TESTDATA_FILE_BEFORE_MARKER);
+      if (lcName1MainPart != null && lcName1MainPart.equals(StringUtil.substringAfter(lcName2, TESTDATA_FILE_AFTER_MARKER))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isAfterSuffixed(@NonNls String nameToCheck, @NonNls String secondName, int commonPrefixLength) {
