@@ -4,7 +4,6 @@ package com.intellij.debugger.jdi;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import com.sun.tools.jdi.LocationImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
