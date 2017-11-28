@@ -2192,6 +2192,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Cursor cursor = myEditorComponent.getCursor();
         if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) && 
             cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
+            cursor != EMPTY_CURSOR &&
             (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
           // someone else has set cursor, don't touch it
           return;
