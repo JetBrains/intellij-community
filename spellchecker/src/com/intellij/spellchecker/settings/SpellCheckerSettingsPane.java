@@ -164,7 +164,6 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   public void reset() {
     myCustomDictionariesChooserComponent.reset();
-    fillAllDictionaries();
     myBundledDictionariesChooserComponent.reset();
     removedDictionaries.clear();
   }
@@ -322,6 +321,12 @@ public class SpellCheckerSettingsPane implements Disposable {
     public void apply() {
       super.apply();
       settings.setCustomDictionariesPaths(myCustomDictionariesChooserComponent.getValues());
+    }
+
+    @Override
+    public void reset() {
+      super.reset();
+      fillAllDictionaries();
     }
   }
 
