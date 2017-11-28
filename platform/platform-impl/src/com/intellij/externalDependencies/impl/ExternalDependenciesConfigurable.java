@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -142,7 +144,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     
     String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
                                            ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
-    return JBUI.Panels.simplePanel(dependenciesPanel).addToTop(new JBLabel(text));
+    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
   public boolean editSelectedDependency(JBList dependenciesList) {
