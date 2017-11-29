@@ -4,7 +4,10 @@ iml_module(
     name = "platform-build-scripts",
     iml_files = ["platform-build-scripts.iml"],
     resources = ["groovy"],
-    tags = ["managed"],
+    tags = [
+        "managed",
+        "manual",
+    ],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:execution-impl",
@@ -14,8 +17,7 @@ iml_module(
         "//tools/idea:tasks-platform-impl",
         "//tools/idea:credential-store",
     ],
-    ## Android studio only, bazel fails when it tries to execute these tests since no test classes exist in this directory.
-    #test_srcs = ["testSrc"],
+    test_srcs = ["testSrc"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
