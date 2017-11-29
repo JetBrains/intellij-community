@@ -437,7 +437,7 @@ public class GuessManagerImpl extends GuessManager {
         if (type instanceof PsiIntersectionType) {
           myResult.putValues((PsiExpression)myForPlace, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
         }
-        else {
+        else if (type != null) {
           myResult.putValue((PsiExpression)myForPlace, type);
         }
       }
