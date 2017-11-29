@@ -227,7 +227,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
           final PyExpression qualifier = callee.getQualifier();
           return qualifier != null &&
                  qualifier.getText().equals(keywordContainerName) &&
-                 ArrayUtil.contains(callee.getReferencedName(), "get", PyNames.GETITEM);
+                 ArrayUtil.contains(callee.getReferencedName(), "get", "pop", PyNames.GETITEM);
         }
       )
       .isPresent();
