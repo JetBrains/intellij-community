@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,10 +118,6 @@ foo.with {
   combo <hint name="a">1, foo: 10, <hint name="b">2, <hint name="...c">3, 4, bar: 20, 5
 }
 '''
-  }
-
-  void 'test index expression'() {
-    testInlays 'new Foo()[<hint name="a">1]'
   }
 
   void 'test new expression'() {

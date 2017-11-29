@@ -16,22 +16,20 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -40,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 /**
  * @author max
@@ -205,104 +205,82 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return false;
   }
 
-  private static class FileOrDir {
-    private final FilePath myPath;
-    private final boolean myRecursive;
+  public void addDirtyData(@NotNull Collection<FilePath> dirs, @NotNull Collection<FilePath> files) {
+    Map<VirtualFile, THashSet<FilePath>> perRootDirs = new HashMap<>(); // recursive
+    Map<VirtualFile, THashSet<FilePath>> perRootFiles = new HashMap<>(); // non-recursive
 
-    private FileOrDir(FilePath path, boolean recursive) {
-      myPath = path;
-      myRecursive = recursive;
+    for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyDirectoriesRecursively.entrySet()) {
+      perRootDirs.put(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyFiles.entrySet()) {
+      perRootFiles.put(entry.getKey(), entry.getValue());
+    }
+
+    addFilePathsToMap(dirs, perRootDirs);
+    addFilePathsToMap(files, perRootFiles);
+
+
+    myAffectedContentRoots.addAll(perRootDirs.keySet());
+    myAffectedContentRoots.addAll(perRootFiles.keySet());
+
+
+    for (VirtualFile root : myAffectedContentRoots) {
+      Set<FilePath> rootDirs = notNullize(perRootDirs.get(root));
+      Set<FilePath> rootFiles = notNullize(perRootFiles.get(root));
+
+      THashSet<FilePath> filteredDirs = removeAncestorsRecursive(rootDirs);
+      THashSet<FilePath> filteredFiles = removeAncestorsNonRecursive(filteredDirs, rootFiles);
+
+      myDirtyDirectoriesRecursively.put(root, filteredDirs);
+      myDirtyFiles.put(root, filteredFiles);
     }
   }
 
-  public void addDirtyData(@NotNull Collection<FilePath> dirs, @NotNull Collection<FilePath> files) {
-    final HashSet<FilePath> newFiles = new HashSet<>(files);
-    newFiles.removeAll(dirs); // if the same dir is added recursively and not recursively, prefer recursive mark
-
-    final MultiMap<VirtualFile, FileOrDir> perRoot = MultiMap.createSet();
-    for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyDirectoriesRecursively.entrySet()) {
-      newFiles.removeAll(entry.getValue()); // if the same dir is added recursively and not recursively, prefer recursive mark
-      for (FilePath path : entry.getValue()) {
-        perRoot.putValue(entry.getKey(), new FileOrDir(path, true));
-      }
-    }
-
-    for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyFiles.entrySet()) {
-      for (FilePath path : entry.getValue()) {
-        perRoot.putValue(entry.getKey(), new FileOrDir(path, false));
-      }
-    }
-
-    for (FilePath dir : dirs) {
-      addFilePathToMap(perRoot, dir, true);
-    }
-    for (FilePath file : newFiles) {
-      addFilePathToMap(perRoot, file, false);
-    }
-
-    for (Map.Entry<VirtualFile, Collection<FileOrDir>> entry : perRoot.entrySet()) {
-      final Collection<FileOrDir> set = entry.getValue();
-      final Collection<FileOrDir> newCollection = FileUtil.removeAncestors(set, new Convertor<FileOrDir, String>() {
-        @Override
-        public String convert(FileOrDir o) {
-          return o.myPath.getPath();
-        }
-      }, new PairProcessor<FileOrDir, FileOrDir>() {
-          @Override
-          public boolean process(FileOrDir parent, FileOrDir child) {
-            if (parent.myRecursive) {
-              return true;
-            }
-            // if under non-recursive dirty dir, generally do not remove child with one exception...
-            if (child.myRecursive || child.myPath.isDirectory()) {
-              return false;
-            }
-            // only if dir non-recursively + non-recursive file child -> can be truncated to dir only
-            return Comparing.equal(child.myPath.getParentPath(), parent.myPath);
-          }
-      });
-      set.retainAll(newCollection);
-    }
-
-    myAffectedContentRoots.addAll(perRoot.keySet());
-    for (Map.Entry<VirtualFile, Collection<FileOrDir>> entry : perRoot.entrySet()) {
-      final VirtualFile root = entry.getKey();
-      final THashSet<FilePath> curFiles = newFilePathsSet();
-      final THashSet<FilePath> curDirs = newFilePathsSet();
-      final Collection<FileOrDir> value = entry.getValue();
-      for (FileOrDir fileOrDir : value) {
-        if (fileOrDir.myRecursive) {
-          curDirs.add(fileOrDir.myPath);
-        } else {
-          curFiles.add(fileOrDir.myPath);
-        }
-      }
-      // no clear is necessary since no root can disappear
-      // also, we replace contents, so here's no merging
-      if (! curDirs.isEmpty()) {
-        myDirtyDirectoriesRecursively.put(root, curDirs);
-      }
-      if (! curFiles.isEmpty()) {
-        myDirtyFiles.put(root, curFiles);
-      }
+  private void addFilePathsToMap(@NotNull Collection<FilePath> paths, @NotNull Map<VirtualFile, THashSet<FilePath>> pathsMap) {
+    for (FilePath dir : paths) {
+      VirtualFile vcsRoot = myVcsManager.getVcsRootFor(dir);
+      if (vcsRoot == null) continue;
+      THashSet<FilePath> set = pathsMap.get(vcsRoot);
+      if (set == null) pathsMap.put(vcsRoot, set = newFilePathsSet());
+      set.add(dir);
     }
   }
 
   @NotNull
-  private THashSet<FilePath> newFilePathsSet() {
-    return new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+  private static THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<FilePath> dirs) {
+    List<FilePath> paths = ContainerUtil.sorted(dirs, Comparator.comparing(it -> it.getPath().length()));
+
+    THashSet<FilePath> result = newFilePathsSet();
+    for (FilePath path : paths) {
+      if (hasAncestor(result, path)) continue;
+      result.add(path);
+    }
+    return result;
   }
 
-  private void addFilePathToMap(MultiMap<VirtualFile, FileOrDir> perRoot, final FilePath dir, final boolean recursively) {
-    VirtualFile vcsRoot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return myVcsManager.getVcsRootFor(dir);
-      }
-    });
-    if (vcsRoot != null) {
-      perRoot.putValue(vcsRoot, new FileOrDir(dir, recursively));
+  @NotNull
+  private static THashSet<FilePath> removeAncestorsNonRecursive(@NotNull Set<FilePath> dirs, @NotNull Set<FilePath> files) {
+    THashSet<FilePath> result = newFilePathsSet();
+    for (FilePath file : files) {
+      if (hasAncestor(dirs, file)) continue;
+      // if dir non-recursively + non-recursive file child -> can be truncated to dir only
+      if (!file.isDirectory() && files.contains(file.getParentPath())) continue;
+      result.add(file);
     }
+    return result;
+  }
+
+  private static boolean hasAncestor(@NotNull Set<FilePath> dirs, @NotNull FilePath filePath) {
+    String path = filePath.getPath();
+    for (FilePath parent : dirs) {
+      if (FileUtil.startsWith(path, parent.getPath())) return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  private static THashSet<FilePath> newFilePathsSet() {
+    return new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
   }
 
   /**

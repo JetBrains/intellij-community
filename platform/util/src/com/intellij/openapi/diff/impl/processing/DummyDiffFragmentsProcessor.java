@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 
-public class DummyDiffFragmentsProcessor {
+class DummyDiffFragmentsProcessor {
   public ArrayList<LineFragment> process(String text1, String text2) {
     ArrayList<LineFragment> lineFragments = new ArrayList<LineFragment>();
 

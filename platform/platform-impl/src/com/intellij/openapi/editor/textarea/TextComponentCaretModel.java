@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
 import java.util.Collections;
 import java.util.List;
 
@@ -202,18 +202,28 @@ public class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    if (caretStates.size() != 1) throw new IllegalArgumentException("Exactly one CaretState object must be passed");
+    CaretState state = caretStates.get(0);
+    if (state != null) {
+      if (state.getCaretPosition() != null) moveToLogicalPosition(state.getCaretPosition());
+      if (state.getSelectionStart() != null && state.getSelectionEnd() != null) {
+        myEditor.getSelectionModel().setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()), 
+                                                  myEditor.logicalPositionToOffset(state.getSelectionEnd()));
+      }
+    }
   }
 
   @Override
   public void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection) {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    setCaretsAndSelections(caretStates);
   }
 
   @NotNull
   @Override
   public List<CaretState> getCaretsAndSelections() {
-    throw new UnsupportedOperationException("Multiple carets are not supported");
+    return Collections.singletonList(new CaretState(getLogicalPosition(), 
+                                                    myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionStart()), 
+                                                    myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionEnd())));
   }
 
   @Override

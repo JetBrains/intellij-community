@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -37,8 +35,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,10 +43,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 1/25/11
- */
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
   private AnnotationsPanel myNullablePanel;
@@ -60,7 +52,7 @@ public class NullableNotNullDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     init();
-    setTitle("Nullable/NotNull configuration");
+    setTitle("Nullable/NotNull Configuration");
   }
 
   public static JButton createConfigureAnnotationsButton(Component context) {
@@ -116,18 +108,18 @@ public class NullableNotNullDialog extends DialogWrapper {
   private class AnnotationsPanel {
     private String myDefaultAnnotation;
     private final Set<String> myDefaultAnnotations;
-    private final JBList myList;
+    private final JBList<String> myList;
     private final JPanel myComponent;
 
     private AnnotationsPanel(final String name, final String defaultAnnotation,
                              final Collection<String> annotations, final String[] defaultAnnotations) {
       myDefaultAnnotation = defaultAnnotation;
-      myDefaultAnnotations = new HashSet(Arrays.asList(defaultAnnotations));
-      myList = new JBList(annotations);
-      myList.setCellRenderer(new ColoredListCellRenderer() {
+      myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
+      myList = new JBList<>(annotations);
+      myList.setCellRenderer(new ColoredListCellRenderer<String>() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        protected void customizeCellRenderer(@NotNull JList list, String value, int index, boolean selected, boolean hasFocus) {
+          append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (value.equals(myDefaultAnnotation)) {
             setIcon(AllIcons.Diff.CurrentLine);
           } else {
@@ -143,10 +135,10 @@ public class NullableNotNullDialog extends DialogWrapper {
         new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            final String selectedValue = (String)myList.getSelectedValue();
+            final String selectedValue = myList.getSelectedValue();
             if (selectedValue == null) return;
             myDefaultAnnotation = selectedValue;
-            final DefaultListModel model = (DefaultListModel)myList.getModel();
+            DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
 
             // to show the new default value in the ui
             model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
@@ -154,47 +146,29 @@ public class NullableNotNullDialog extends DialogWrapper {
 
           @Override
           public void updateButton(AnActionEvent e) {
-            final String selectedValue = (String)myList.getSelectedValue();
-            final boolean enabled = selectedValue != null && !selectedValue.equals(myDefaultAnnotation);
-            if (!enabled) {
-              e.getPresentation().setEnabled(enabled);
-            }
+            String selectedValue = myList.getSelectedValue();
+            e.getPresentation().setEnabled(selectedValue != null && !selectedValue.equals(myDefaultAnnotation));
           }
         };
 
       final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton anActionButton) {
-            chooseAnnotation(name, myList);
-          }
-        })
+        .setAddAction(b -> chooseAnnotation(name, myList))
         .setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
-            final String selectedValue = (String)myList.getSelectedValue();
+            final String selectedValue = myList.getSelectedValue();
             if (selectedValue == null) return;
-            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myList.getModel().getElementAt(0);
+            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = myList.getModel().getElementAt(0);
 
             ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
           }
         })
+        .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(myList.getSelectedValue()))
         .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
-      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, new Insets(10, 0, 0, 0)));
+      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
       myComponent.add(panel);
-      final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
-      myList.addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          if (e.getValueIsAdjusting()) return;
-          final String selectedValue = (String)myList.getSelectedValue();
-          if (myDefaultAnnotations.contains(selectedValue)) {
-            SwingUtilities.invokeLater(() -> removeButton.setEnabled(false));
-          }
-        }
-      });
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setSelectedValue(myDefaultAnnotation, true);
     }
@@ -213,7 +187,8 @@ public class NullableNotNullDialog extends DialogWrapper {
         return;
       }
       final String qualifiedName = selected.getQualifiedName();
-      final DefaultListModel model = (DefaultListModel)list.getModel();
+      //noinspection unchecked
+      final DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
       final int index = model.indexOf(qualifiedName);
       if (index < 0) {
         model.addElement(qualifiedName);

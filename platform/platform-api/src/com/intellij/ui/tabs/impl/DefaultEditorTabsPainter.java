@@ -43,17 +43,15 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
                               int row,
                               int column,
                               boolean vertical) {
-    ;
     g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g2d.fillRect(x, y, w, h);
-    //if (myTabs.hasUnderlineSelection()) return;
     g2d.setColor(getInactiveMaskColor());
     g2d.fillRect(x, y, w, h);
   }
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
-    g.setColor(myTabs.hasUnderlineSelection() ? new JBColor(() -> UIUtil.getPanelBackground()) : getBackgroundColor());
+    g.setColor(getBackgroundColor());
     g.fill(clip);
   }
 
@@ -65,7 +63,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return myTabs.hasUnderlineSelection() ? new JBColor(Gray._255, Gray._60) : UIUtil.CONTRAST_BORDER_COLOR;
+    return myTabs.hasUnderlineSelection() ? new JBColor(Gray._255, Gray.x4B) : UIUtil.CONTRAST_BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {

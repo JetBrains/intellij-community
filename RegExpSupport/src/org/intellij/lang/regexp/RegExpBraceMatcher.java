@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RegExpBraceMatcher implements PairedBraceMatcher {
+  @NotNull
   @Override
   public BracePair[] getPairs() {
     return new BracePair[]{

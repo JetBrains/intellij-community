@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
@@ -32,7 +31,7 @@ import java.util.Arrays;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public class MavenGeneralPanel implements  PanelWithAnchor {
+public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
@@ -43,7 +42,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
-  private JBLabel myMultiprojectBuildFailPolicyLabel;
+  private JBLabel myMultiProjectBuildFailPolicyLabel;
   private JCheckBox alwaysUpdateSnapshotsCheckBox;
   private JTextField threadsEditor;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
@@ -58,7 +57,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     fillFailureBehaviorCombobox();
     fillPluginUpdatePolicyCombobox();
 
-    setAnchor(myMultiprojectBuildFailPolicyLabel);
+    setAnchor(myMultiProjectBuildFailPolicyLabel);
   }
 
   private void fillOutputLevelCombobox() {
@@ -88,9 +87,6 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   public JComponent createComponent() {
     mavenPathsForm.createComponent(); // have to initialize all listeners
     return panel;
-  }
-
-  public void disposeUIResources() {
   }
 
   protected void setData(MavenGeneralSettings data) {
@@ -143,7 +139,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
-    myMultiprojectBuildFailPolicyLabel.setAnchor(anchor);
+    myMultiProjectBuildFailPolicyLabel.setAnchor(anchor);
     mavenPathsForm.setAnchor(anchor);
   }
 }

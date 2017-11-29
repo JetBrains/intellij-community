@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -25,10 +27,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +44,6 @@ import java.beans.PropertyChangeListener;
 import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
-
-  private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
-
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
@@ -54,7 +51,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
-  private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
+  private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
   private boolean mySelected;
@@ -140,7 +137,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void performAction(MouseEvent e) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext());
+    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
       return;
     }
@@ -155,6 +152,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       actionPerformed(event);
       manager.queueActionPerformedEvent(myAction, dataContext, event);
+      if (event.getInputEvent() instanceof MouseEvent) {
+        ToolbarClicksCollector.record(myAction, myPlace);
+      }
     }
   }
 
@@ -179,7 +179,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         }
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
-      if (ActionPlaces.isToolbarPlace(event.getPlace())) {
+
+      if (Registry.is("ide.helptooltip.enabled")) {
+        HelpTooltip.onShowMasterPopup(this, popupMenu.getComponent());
+      }
+
+      if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
       else {
@@ -204,34 +209,51 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
-    AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
+    AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
     updateToolTipText();
     updateIcon();
   }
 
   public void setToolTipText(String s) {
-    String tooltipText = KeymapUtil.createTooltipText(s, myAction);
-    super.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+    if (!Registry.is("ide.helptooltip.enabled")) {
+      String tooltipText = KeymapUtil.createTooltipText(s, myAction);
+      super.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+    }
   }
 
-  public Dimension getPreferredSize() {
+  @Override public Insets getInsets() {
+    return myLook.getInsets();
+  }
+
+  @Override public void updateUI() {
+    if (myLook != null) {
+      myLook.updateUI();
+    }
+  }
+
+  @Override public Dimension getPreferredSize() {
+    if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&
         icon.getIconHeight() < myMinimumButtonSize.height) {
-      return myMinimumButtonSize;
+
+      Dimension size = new Dimension(myMinimumButtonSize);
+      JBInsets.addTo(size, getInsets());
+      return size;
     }
     else {
-      return new Dimension(
+      Dimension size = new Dimension(
         Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
-        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom)
-      );
+        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
+
+      JBInsets.addTo(size, getInsets());
+      return size;
     }
   }
 
-
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? JBUI.insets(insets) : new Insets(0,0,0,0);
+    myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
   }
 
   public Dimension getMinimumSize() {
@@ -240,12 +262,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   /**
    * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is <code>null</code> then it returns
+   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
-  protected Icon getIcon() {
+  public Icon getIcon() {
     Icon icon = isButtonEnabled() ? myIcon : myDisabledIcon;
-    return icon == null ? ourEmptyIcon : icon;
+    return icon == null ? EmptyIcon.ICON_18 : icon;
   }
 
   public void updateIcon() {
@@ -258,13 +280,19 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  private void setDisabledIcon(Icon icon) {
-    myDisabledIcon = icon;
-  }
-
   void updateToolTipText() {
     String text = myPresentation.getText();
-    setToolTipText(text == null ? myPresentation.getDescription() : text);
+    String description = myPresentation.getDescription();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
+      new HelpTooltip().setTitle(text).setDescription(description).setShortcut(shortcut).setLocation(getTooltipLocation()).installOn(this);
+    } else {
+      setToolTipText(text == null ? description : text);
+    }
+  }
+
+  protected HelpTooltip.Alignment getTooltipLocation() {
+    return HelpTooltip.Alignment.BOTTOM;
   }
 
   public void paintComponent(Graphics g) {
@@ -273,16 +301,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintButtonLook(g);
 
     if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-
-      int x = 5;
-      int y = 4;
-
-      if (getPopState() == PUSHED) {
-        x++;
-        y++;
-      }
-
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(x), JBUI.scale(y));
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(4));
     }
   }
 
@@ -302,7 +321,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myLook = look;
     }
     else {
-      myLook = ActionButtonLook.IDEA_LOOK;
+      myLook = ActionButtonLook.SYSTEM_LOOK;
     }
     repaint();
   }
@@ -369,19 +388,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (Presentation.PROP_TEXT.equals(propertyName)) {
       updateToolTipText();
     }
-    else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-      updateIcon();
-      repaint();
-    }
-    else if (Presentation.PROP_ICON.equals(propertyName)) {
+    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {
       updateIcon();
       repaint();
     }
     else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-      setDisabledIcon(myPresentation.getDisabledIcon());
+      myDisabledIcon = myPresentation.getDisabledIcon();
       repaint();
-    }
-    else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
     }
     else if ("selected".equals(propertyName)) {
       repaint();

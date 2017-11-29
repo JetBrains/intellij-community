@@ -57,7 +57,7 @@ public class DiffToolbarImpl implements DiffToolbar {
   public JComponent getComponent() {
     if (myActionToolbar == null) {
       myActionToolbar = ActionManager.getInstance().
-        createActionToolbar(ActionPlaces.UNKNOWN, myActionGroup, true);
+        createActionToolbar("Diff", myActionGroup, true);
       myActionToolbar.setTargetComponent(myTargetComponent);
     }
     return myActionToolbar.getComponent();

@@ -31,6 +31,7 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.Locale;
 
 /**
@@ -38,6 +39,7 @@ import java.util.Locale;
  */
 public class JavaRegExpHost implements RegExpLanguageHost {
 
+  protected static final EnumSet<RegExpGroup.Type> SUPPORTED_NAMED_GROUP_TYPES = EnumSet.of(RegExpGroup.Type.NAMED_GROUP);
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   private final String[][] myPropertyNames = {
@@ -169,6 +171,15 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
     return ref.isNamedGroupRef() && hasAtLeastJdkVersion(ref, JavaSdkVersion.JDK_1_7);
+  }
+
+  @NotNull
+  @Override
+  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    if (!hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7)) {
+      return EMPTY_NAMED_GROUP_TYPES;
+    }
+    return SUPPORTED_NAMED_GROUP_TYPES;
   }
 
   @Override

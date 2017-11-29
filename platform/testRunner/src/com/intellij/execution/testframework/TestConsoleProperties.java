@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -230,5 +231,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;
+  }
+
+  @NotNull
+  public String getWindowId() {
+    return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
   }
 }

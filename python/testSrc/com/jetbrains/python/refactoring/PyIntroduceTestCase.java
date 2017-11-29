@@ -78,7 +78,7 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
     myFixture.configureByFile(name + ".py");
     final boolean enabled = myFixture.getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), myFixture.getTestRootDisposable());
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       IntroduceHandler handler = createHandler();

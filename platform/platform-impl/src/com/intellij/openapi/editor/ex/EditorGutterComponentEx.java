@@ -62,4 +62,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setForceShowLeftFreePaintersArea(boolean value);
 
   public abstract void setForceShowRightFreePaintersArea(boolean value);
+
+  public abstract void setInitialIconAreaWidth(int width);
 }

@@ -35,6 +35,7 @@ public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
   private static Logger logger = null;
+  private static String logPath = null;
   private static boolean ourCaseSensitiveFs;
 
   public static Logger logger() {
@@ -45,10 +46,11 @@ public class Runner {
     return ourCaseSensitiveFs;
   }
 
-  public static void main(String[] args) throws Exception {
-    boolean includeJar = !Arrays.asList(args).contains("--no_jar");
-    String jarFile = includeJar ? getArgument(args, "jar") : null;
-    jarFile = includeJar && jarFile == null ? resolveJarFile() : jarFile;
+  public static void main(String[] args) {
+    String jarFile = getArgument(args, "jar");
+    if (jarFile == null) {
+      jarFile = resolveJarFile();
+    }
 
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
@@ -60,19 +62,9 @@ public class Runner {
       checkCaseSensitivity(newFolder);
       initLogger();
 
-      // See usage for an explanation of these flags
-      boolean binary = Arrays.asList(args).contains("--zip_as_binary");
-      boolean strict = Arrays.asList(args).contains("--strict");
-      boolean normalized = Arrays.asList(args).contains("--normalized");
-      boolean renameRootDirectory = Arrays.asList(args).contains("--rename_root_dir");
-      String hashAlgorithm = getArgument(args, "hash_algorithm");
-      // Ensure the hashAlgorithm is valid
-      if (!Digester.isValidAlgorithm(hashAlgorithm)) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println(hashAlgorithm + " is not a valid hash algorithm.");
-        System.exit(1);
-      }
-      boolean supportLargeFiles = Arrays.asList(args).contains("--large_files");
+      boolean binary = hasArgument(args, "zip_as_binary");
+      boolean strict = hasArgument(args, "strict");
+      boolean normalized = hasArgument(args, "normalized");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -97,18 +89,16 @@ public class Runner {
         .setPatchFile(patchFile)
         .setJarFile(jarFile)
         .setStrict(strict)
-        .setHashAlgorithm(hashAlgorithm)
-        .setSupportLargeFiles(supportLargeFiles)
         .setBinary(binary)
         .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings)
-        .setRenameRootDirectory(renameRootDirectory);
+        .setWarnings(warnings);
 
-      create(spec);
+      boolean success = create(spec);
+      System.exit(success ? 0 : 1);
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0]))) {
       String destFolder = args[1];
@@ -117,16 +107,38 @@ public class Runner {
       initLogger();
       logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
 
+      UpdaterUI ui;
       if ("install".equals(args[0])) {
-        install(jarFile, destFolder);
+        ui = new SwingUpdaterUI();
+      }
+      else if (hasArgument(args, "toolbox-ui")) {
+        ui = new ToolboxUpdaterUI();
       }
       else {
-        apply(jarFile, destFolder, Arrays.asList(args).contains("--toolbox-ui"));
+        ui = new ConsoleUpdaterUI();
       }
+
+      boolean backup = !hasArgument(args, "no-backup");
+      boolean success = install(jarFile, destFolder, ui, backup);
+      System.exit(success ? 0 : 1);
     }
     else {
       printUsage();
     }
+  }
+
+  public static String getArgument(String[] args, String name) {
+    String flag = "--" + name + "=";
+    for (String param : args) {
+      if (param.startsWith(flag)) {
+        return param.substring(flag.length());
+      }
+    }
+    return null;
+  }
+
+  private static boolean hasArgument(String[] args, String name) {
+    return Arrays.asList(args).contains("--" + name);
   }
 
   public static void checkCaseSensitivity(String path) {
@@ -147,38 +159,21 @@ public class Runner {
     return map;
   }
 
-  // checks that log directory 1)exists 2)has write perm. and 3)has 1MB+ free space
-  private static boolean isValidDir(String folder, long space) {
-    File fileDir = new File(folder);
-    return fileDir.isDirectory() && fileDir.canWrite() && fileDir.getUsableSpace() >= space;
-  }
-
-  public static String getDir(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
-  public static void initLogger() {
+  private static void initLogger() {
     if (logger == null) {
-      long requiredFreeSpace = 1000000;
-      String logFolder = getDir(requiredFreeSpace);
-      FileAppender update = new FileAppender();
+      String logDirectory = Utils.findDirectory(1_000_000L);
+      logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
 
-      update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
-      update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      FileAppender update = new FileAppender();
+      update.setFile(logPath);
+      update.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(logFolder, "idea_updater_error.log").getAbsolutePath());
-      updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      updateError.setFile(new File(logDirectory, "idea_updater_error.log").getAbsolutePath());
+      updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       updateError.setAppend(false);
       updateError.activateOptions();
@@ -187,23 +182,8 @@ public class Runner {
       logger.addAppender(updateError);
       logger.addAppender(update);
       logger.setLevel(Level.ALL);
-
       logger.info("--- Updater started ---");
     }
-  }
-
-  public static void printStackTrace(Throwable e){
-    logger().error(e.getMessage(), e);
-  }
-
-  public static String getArgument(String[] args, String name) {
-    String flag = "--" + name + "=";
-    for (String param : args) {
-      if (param.startsWith(flag)) {
-        return param.substring(flag.length());
-      }
-    }
-    return null;
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
@@ -244,29 +224,20 @@ public class Runner {
       "              patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
       "              the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
       "              will be validated\n" +
-      "    --rename_root_dir: Include action to rename the directory where the patch is applied. The directory will be renamed\n" +
-      "                  to the last path component of <new_folder>. This action will only be applied if the directory to which the\n" +
-      "                  patch is applied to has the same last component of its path as <old_folder>\n" +
-      "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
-      "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
-      "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
+      "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be" +
+      "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root." +
+      "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators." +
       "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
       "                  A normalized patch must be used to move from an installation that was patched\n" +
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
       "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n" +
-      "    --hash_algorithm=<hashAlgorithm>: The digest algorithm used to detect differences in files.\n" +
-      "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
-      "                                      \"crc\" (the default).\n" +
-      "    --large_files: Support large files. When encountering a large file, a slightly less-efficient but faster\n" +
-      "                   diffing algorithm will be used.\n" +
-      "    --jar=<jar file>: Include the specified patcher code in the generated patch instead of the currently-running\n" +
-      "                      patcher jar.\n" +
-      "    --no_jar: Do not include the patcher code in the generated patch.");
+      "                  guarantees that the patched version will match exactly the original one.\n");
   }
 
-  private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
-    UpdaterUI ui = new ConsoleUpdaterUI();
+  private static boolean create(PatchSpec spec) {
+    ConsoleUpdaterUI ui = new ConsoleUpdaterUI();
+    boolean success = false;
+
     try {
       File tempPatchFile = Utils.getTempFile("patch");
       PatchFileCreator.create(spec, tempPatchFile, ui);
@@ -274,24 +245,41 @@ public class Runner {
       logger().info("Packing JAR file: " + spec.getPatchFile() );
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()))) {
-        String jarFile = spec.getJarFile();
-        if (jarFile != null) {
-          try (ZipInputStream in = new ZipInputStream(new FileInputStream(new File(jarFile)))) {
-            ZipEntry e;
-            while ((e = in.getNextEntry()) != null) {
-              out.zipEntry(e, in);
-            }
-          }
+      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
+           ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())))) {
+        ZipEntry e;
+        while ((e = in.getNextEntry()) != null) {
+          out.zipEntry(e, in);
         }
 
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
+
+      success = true;
+    }
+    catch (Throwable t) {
+      logger().error("create failed", t);
+      ui.showError(printStackTrace(t));
     }
     finally {
-      cleanup(ui);
+      try {
+        cleanup(ui);
+      }
+      catch (Throwable t) {
+        success = false;
+        logger().error("cleanup failed", t);
+        ui.showError(printStackTrace(t));
+      }
     }
+
+    return success;
+  }
+
+  private static String printStackTrace(Throwable t) {
+    StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
@@ -301,24 +289,13 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static void install(String jarFile, String destFolder) throws Exception {
-    new StandaloneSwingUpdaterUI(ui -> {
-      logger().info("Installing patch to the " + destFolder);
-      return doInstall(jarFile, ui, destFolder);
-    });
-  }
-
-  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
-    logger().info("Applying patch to the " + destFolder);
-    UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
-    boolean success = doInstall(jarFile, ui, destFolder);
-    if (!success) {
-      System.exit(1);
-    }
-  }
-
-  public static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
+  private static boolean install(String jarFile, String destPath, UpdaterUI ui, boolean backup) {
     try {
+      PatchFileCreator.PreparationResult preparationResult;
+      Map<String, ValidationResult.Option> resolutions;
+      File backupDir;
+      PatchFileCreator.ApplicationResult applicationResult;
+
       try {
         File patchFile = Utils.getTempFile("patch");
 
@@ -333,41 +310,88 @@ public class Runner {
 
         ui.checkCancelled();
 
-        File destDir = new File(destFolder);
-        PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
-        List<ValidationResult> problems = result.validationResults;
-        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
-        return PatchFileCreator.apply(result, resolutions, ui);
+        File destDir = new File(destPath);
+        preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
+
+        List<ValidationResult> problems = preparationResult.validationResults;
+        resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+
+        backupDir = null;
+        if (backup) {
+          backupDir = Utils.getTempFile("backup");
+          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+        }
+
+        applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
       }
-      catch (Throwable e) {
-        printStackTrace(e);
-        ui.showError(e);
+      catch (OperationCancelledException e) {
+        logger().warn("cancelled", e);
+        return false;
       }
+      catch (IOException | RuntimeException | Error t) {
+        logger().error("prepare failed", t);
+        String message = "An unexpected error occurred when preparing the patch\n" + t.getMessage() + "\n\n" +
+                         "No files were changed; retry applying the patch.\n\n" +
+                         "More details in the log: " + logPath;
+        ui.showError(message);
+        return false;
+      }
+
+      if (!applicationResult.applied) {
+        List<PatchAction> appliedActions = applicationResult.appliedActions;
+        Throwable error = applicationResult.error;
+
+        if (error != null) {
+          String message = "An unexpected error occurred when applying the patch:\n" + error.getMessage() + "\n\n";
+          if (appliedActions.isEmpty()) {
+            message += "No files were changed; retry applying the patch.\n\n";
+          }
+          else if (backupDir == null) {
+            message += "IDE files may be corrupted, no backup was requested, please reinstall.\n\n";
+          }
+          else {
+            message += "IDE files may be corrupted, the patch will attempt to revert the changes.\n\n";
+          }
+          message += "More details in the log: " + logPath;
+          ui.showError(message);
+        }
+
+        if (!appliedActions.isEmpty() && backupDir != null) {
+          try {
+            PatchFileCreator.revert(preparationResult, appliedActions, backupDir, ui);
+          }
+          catch (Throwable t) {
+            logger().error("revert failed", t);
+            String message = "An unexpected error occurred when reverting the patch:\n" + t.getMessage() + "\n\n" +
+                             "IDE files may be corrupted, please reinstall.\n\n" +
+                             "More details in the log: " + logPath;
+            ui.showError(message);
+          }
+        }
+      }
+
+      return applicationResult.applied;
     }
     finally {
       try {
-        System.gc();
         cleanup(ui);
       }
-      catch (Throwable e) {
-        printStackTrace(e);
-        ui.showError(e);
+      catch (Throwable t) {
+        logger().warn("cleanup failed", t);
       }
     }
-
-    return false;
   }
 
-  public static String resolveJarFile() throws IOException {
+  private static String resolveJarFile() {
     URL url = Runner.class.getResource("");
-    if (url == null) throw new IOException("Cannot resolve JAR file path");
-    if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a JAR file");
+    if (url == null) throw new IllegalArgumentException("Cannot resolve JAR file path");
+    if (!"jar".equals(url.getProtocol())) throw new IllegalArgumentException("Patch file is not a JAR file");
 
     String path = url.getPath();
 
     int start = path.indexOf("file:/");
     int end = path.indexOf("!/");
-    if (start == -1 || end == -1) throw new IOException("Unknown protocol: " + url);
+    if (start == -1 || end == -1) throw new IllegalArgumentException("Unknown protocol: " + url);
 
     String jarFileUrl = path.substring(start, end);
 
@@ -375,8 +399,7 @@ public class Runner {
       return new File(new URI(jarFileUrl)).getAbsolutePath();
     }
     catch (URISyntaxException e) {
-      printStackTrace(e);
-      throw new IOException(e.getMessage());
+      throw new IllegalArgumentException(e);
     }
   }
 

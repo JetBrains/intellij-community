@@ -36,7 +36,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -166,21 +165,18 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
   }
 
   private static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs,final TIntArrayList parametersToRemove) {
-    parametersToRemove.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(final int paramNum) {
-        try {
-          final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
-          if (actualArg == null) return true;
-          for (PsiElement arg : actualArg.args) {
-            arg.delete();
-          }
+    parametersToRemove.forEach(paramNum -> {
+      try {
+        final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
+        if (actualArg == null) return true;
+        for (PsiElement arg : actualArg.args) {
+          arg.delete();
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
   }
 
@@ -205,30 +201,27 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       hasNamedArgs = false;
     }
 
-    data.getParametersToRemove().forEachDescending(new TIntProcedure() {
-      @Override
-      public boolean execute(int paramNum) {
-        try {
-          if (paramNum == 0 && hasNamedArgs) {
-            for (GrNamedArgument namedArgument : namedArguments) {
-              namedArgument.delete();
-            }
-          }
-          else {
-            if (hasNamedArgs) paramNum--;
-            if (paramNum < arguments.length) {
-              arguments[paramNum].delete();
-            }
-            else if (paramNum < arguments.length + closureArguments.length) {
-              closureArguments[paramNum - arguments.length].delete();
-            }
+    data.getParametersToRemove().forEachDescending(paramNum -> {
+      try {
+        if (paramNum == 0 && hasNamedArgs) {
+          for (GrNamedArgument namedArgument : namedArguments) {
+            namedArgument.delete();
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        else {
+          if (hasNamedArgs) paramNum--;
+          if (paramNum < arguments.length) {
+            arguments[paramNum].delete();
+          }
+          else if (paramNum < arguments.length + closureArguments.length) {
+            closureArguments[paramNum - arguments.length].delete();
+          }
         }
-        return true;
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
   }
 
@@ -241,22 +234,19 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    data.getParametersToRemove().forEachDescending(new TIntProcedure() {
-      @Override
-      public boolean execute(final int paramNum) {
-        try {
-          PsiParameter param = parameters[paramNum];
-          PsiDocTag tag = javaDocHelper.getTagForParameter(param);
-          if (tag != null) {
-            tag.delete();
-          }
-          param.delete();
+    data.getParametersToRemove().forEachDescending(paramNum -> {
+      try {
+        PsiParameter param = parameters[paramNum];
+        PsiDocTag tag = javaDocHelper.getTagForParameter(param);
+        if (tag != null) {
+          tag.delete();
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
+        param.delete();
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
 
     addParameter(method, javaDocHelper, data.getForcedType(), data.getParameterName(), data.isDeclareFinal(), data.getProject());

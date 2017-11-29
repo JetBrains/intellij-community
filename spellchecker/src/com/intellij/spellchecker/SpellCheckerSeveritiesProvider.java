@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jun-2009
- */
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;

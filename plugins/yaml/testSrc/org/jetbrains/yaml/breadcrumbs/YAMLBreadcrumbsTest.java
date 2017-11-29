@@ -15,24 +15,11 @@
  */
 package org.jetbrains.yaml.breadcrumbs;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
-import com.intellij.xml.breadcrumbs.BreadcrumbsItem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLFileType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -82,66 +69,13 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
       .collect(Collectors.toList()).stream()
       .map((offset) -> {
         caretModel.moveToOffset(offset);
-        return getBreadcrumbs(myFixture).stream()
-          .map(BreadcrumbsItem::toString)
-          .reduce((left, right) -> right + left).orElse("[]");
+        return myFixture.getBreadcrumbsAtCaret().stream()
+          .map(crumb -> "[" + crumb.getText() + ";" + crumb.getTooltip() + "]")
+          .reduce((left, right) -> left + right).orElse("[]");
       })
       .reduce((left, right) -> left + "\n------\n" + right).orElse("");
 
     assertSameLines(OUTPUT, result);
   }
 
-  // TODO move this method and class to platform when breadcrumbs are moved there, too
-  @NotNull
-  private static List<BreadcrumbsItem> getBreadcrumbs(@NotNull CodeInsightTestFixture fixture) {
-    PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
-    if (element == null) {
-      return Collections.emptyList();
-    }
-    final Language language = element.getContainingFile().getLanguage();
-
-    final BreadcrumbsInfoProvider provider = ContainerUtil.find(Extensions.getExtensions(BreadcrumbsInfoProvider.EP_NAME),
-                                                                (p) -> Arrays.asList(p.getLanguages()).contains(language));
-    if (provider == null) {
-      return Collections.emptyList();
-    }
-
-    List<BreadcrumbsItem> result = new ArrayList<>();
-    while (element != null) {
-      if (provider.acceptElement(element)) {
-        result.add(new MockBreadcrumbsItem(provider.getElementInfo(element), provider.getElementTooltip(element)));
-      }
-      element = provider.getParent(element);
-    }
-    return result;
-  }
-
-  private static class MockBreadcrumbsItem extends BreadcrumbsItem {
-    @Nullable
-    private final String myDisplayText;
-    @Nullable
-    private final String myTooltip;
-
-    private MockBreadcrumbsItem(@Nullable String displayText, @Nullable String tooltip) {
-      myDisplayText = displayText;
-      myTooltip = tooltip;
-    }
-
-    @Nullable
-    @Override
-    public String getDisplayText() {
-      return myDisplayText;
-    }
-
-    @Nullable
-    @Override
-    public String getTooltip() {
-      return myTooltip;
-    }
-
-    @Override
-    public String toString() {
-      return "[" + getDisplayText() + ";" + getTooltip() + "]";
-    }
-  }
 }

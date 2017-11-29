@@ -32,13 +32,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 8, 2003
- * Time: 2:48:47 PM
- * To change this template use Options | File Templates.
- */
 public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
 
   private static final TokenSet CONTROL_FLOW_ELEMENT_TYPES = TokenSet.create(

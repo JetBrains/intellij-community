@@ -1,0 +1,3 @@
+package classes
+
+class Foo {}

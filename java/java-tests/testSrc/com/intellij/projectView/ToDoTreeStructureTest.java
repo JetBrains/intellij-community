@@ -22,7 +22,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     myPrintInfo = new Queryable.PrintInfo(new String[] {"className", "fileName", "fieldName", "methodName", "packageName"}, new String[] {"toDoFileCount", "toDoItemCount"});
   }
 
-  public void testToDo1() throws Exception {
+  public void testToDo1() {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 
@@ -42,7 +42,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
  }
 
   //todo kirillk
-  public void testToDo() throws Exception {
+  public void testToDo() {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 

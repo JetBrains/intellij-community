@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -54,11 +54,9 @@ public class JavaTemplateUtil {
       classes.add((PsiClass)item);
     }
     else if (item instanceof PsiClassType) {
-      PsiClass aClass = PsiUtil.resolveClassInType((PsiType)item);
-      if (aClass != null) {
-        classes.add(aClass);
-      }
-      collectClassParams((PsiType)item, classes);
+      PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+      ((PsiClassType)item).accept(searcher);
+      classes.addAll(searcher.getTypeParameters());
     }
 
     if (!classes.isEmpty()) {
@@ -97,20 +95,6 @@ public class JavaTemplateUtil {
           addImportForClass(document, aClass, segmentStart, segmentEnd);
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
         }
-      }
-    }
-  }
-
-  private static void collectClassParams(PsiType item, List<PsiClass> classes) {
-    PsiClass aClass = PsiUtil.resolveClassInType(item);
-    if (aClass instanceof PsiTypeParameter) {
-      classes.add(aClass);
-    }
-
-    if (item instanceof PsiClassType) {
-      PsiType[] parameters = ((PsiClassType)item).getParameters();
-      for (PsiType parameter : parameters) {
-        collectClassParams(parameter, classes);
       }
     }
   }

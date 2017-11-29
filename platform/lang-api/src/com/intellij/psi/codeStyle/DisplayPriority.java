@@ -26,6 +26,10 @@ public enum DisplayPriority {
    */
   GENERAL_SETTINGS,
   /**
+   * Font settings
+   */
+  FONT_SETTINGS,
+  /**
    * Any generic settings normally used by multiple languages.
    */
   COMMON_SETTINGS,

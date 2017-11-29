@@ -21,8 +21,8 @@ import java.util.EventListener;
 
 public interface ToolWindowManagerListener extends EventListener{
   /**
-   * Invoked when tool window with specified <code>id</code> is registered in {@link ToolWindowManagerEx}.
-   * @param id <code>id</code> of registered tool window.
+   * Invoked when tool window with specified {@code id} is registered in {@link ToolWindowManagerEx}.
+   * @param id {@code id} of registered tool window.
    */
   void toolWindowRegistered(@NotNull String id);
 

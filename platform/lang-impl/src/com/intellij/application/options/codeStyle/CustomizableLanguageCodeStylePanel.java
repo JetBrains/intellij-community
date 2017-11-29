@@ -16,14 +16,12 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -88,12 +86,6 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   @Override
-  protected PsiFile createFileFromText(final Project project, final String text) {
-    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(getDefaultLanguage(), project, text);
-    return file != null ? file : super.createFileFromText(project, text);
-  }
-
-  @Override
   protected int getRightMargin() {
     if (getDefaultLanguage() == null) return -1;
     return LanguageCodeStyleSettingsProvider.getRightMargin(getDefaultLanguage(), getSettingsType());
@@ -133,8 +125,10 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      doc.replaceString(0, doc.getTextLength(), text);
-      manager.commitDocument(doc);
+      if (doc != null) {
+        doc.replaceString(0, doc.getTextLength(), text);
+        manager.commitDocument(doc);
+      }
       try {
         CodeStyleManager.getInstance(project).reformat(psiFile);
       }
@@ -158,12 +152,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   protected <T extends OrderedOption>List<T> sortOptions(Collection<T> options) {
-    Set<String> names = new THashSet<>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
-      @Override
-      public String fun(OrderedOption option) {
-        return option.getOptionName();
-      }
-    }));
+    Set<String> names = new THashSet<>(ContainerUtil.map(options, (Function<OrderedOption, String>)option -> option.getOptionName()));
 
     List<T> order = new ArrayList<>(options.size());
     MultiMap<String, T> afters = new MultiMap<>();
@@ -201,8 +190,8 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     @Nullable private final String anchorOptionName;
 
     protected OrderedOption(@NotNull String optionName,
-                            OptionAnchor anchor,
-                            String anchorOptionName) {
+                            @Nullable OptionAnchor anchor,
+                            @Nullable String anchorOptionName) {
       this.optionName = optionName;
       this.anchor = anchor;
       this.anchorOptionName = anchorOptionName;

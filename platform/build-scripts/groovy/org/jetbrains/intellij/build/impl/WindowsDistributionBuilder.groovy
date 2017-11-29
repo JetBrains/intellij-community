@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 /**
@@ -80,7 +81,24 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String winDistPath) {
-    // Android Studio: we build separate artifacts for win32 and win64.
+    def arch = customizer.bundledJreArchitecture
+    def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    List<String> jreDirectoryPaths = [jreDirectoryPath64]
+
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+      File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
+      if (archive != null && archive.exists()) {
+        //prepare folder with jre x86 for win archive
+        def jreDirectoryPath = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
+          tarfileset(dir: "${jreDirectoryPath}/jre32") {
+            include(name: "**/**")
+          }
+        }
+        jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
+      }
+    }
+
     if (customizer.buildZipArchive) {
       buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x64),
                   buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
@@ -106,7 +124,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def batName = "${buildContext.productProperties.baseFileName}.bat"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/scripts/win")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
@@ -114,17 +132,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "main_class_name", value: buildContext.mainClassName)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: batName)
       }
     }
 
-    if (batName != "idea.bat") {
-      //todo[nik] rename idea.bat in sources to something more generic
-      buildContext.ant.move(file: "$winDistPath/bin/idea.bat", tofile: "$winDistPath/bin/$batName")
-    }
+    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/$batName")
+
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
       String targetPath = "$winDistPath/bin/${inspectScript}.bat"
@@ -156,14 +171,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.shortProductName
 
-      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : "";
+      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
 IDS_APP_TITLE=$productName Launcher
-IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector
+IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector\\\\config
 IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
@@ -186,10 +201,10 @@ IDS_VM_OPTIONS=$vmOptions
         arg(value: outputPath)
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
-          fileset(dir: "$communityHome/lib") {
-            include(name: "guava*.jar")
-            include(name: "jdom.jar")
-            include(name: "sanselan*.jar")
+          ["Guava", "JDOM", "commons-imaging"].each {
+            buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
+              pathelement(location: it.absolutePath)
+            }
           }
           resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)

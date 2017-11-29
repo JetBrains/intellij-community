@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,14 +119,15 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     String right = ")";
 
     if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
-    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, "."));
+    String separator = text.contains(File.separator) ? File.separator : ".";
+    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
     int index;
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(StringUtil.join(parts, ".") + "...") < maxWidth) {
-        parts.add(index, index == 0 ? "..." : ".");
-        return left + StringUtil.join(parts, ".") + right;
+      if (fm.stringWidth(StringUtil.join(parts, separator) + "...") < maxWidth) {
+        parts.add(index, "...");
+        return left + StringUtil.join(parts, separator) + right;
       }
     }
     //todo

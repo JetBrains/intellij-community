@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -113,11 +112,9 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       }
     });
 
-    new TreeSpeedSearch(myArchetypesTree, new Convertor<TreePath, String>() {
-      public String convert(TreePath path) {
-        MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
-        return info.groupId + ":" + info.artifactId + ":" + info.version;
-      }
+    new TreeSpeedSearch(myArchetypesTree, path -> {
+      MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
+      return info.groupId + ":" + info.artifactId + ":" + info.version;
     }).setComparator(new SpeedSearchComparator(false));
 
     myArchetypeDescriptionField.setEditable(false);

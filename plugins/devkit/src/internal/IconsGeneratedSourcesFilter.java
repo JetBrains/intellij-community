@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package org.jetbrains.idea.devkit.internal;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -28,20 +27,20 @@ public class IconsGeneratedSourcesFilter extends GeneratedSourcesFilter {
   @Override
   public boolean isGeneratedSource(@NotNull final VirtualFile file, @NotNull final Project project) {
     if (file.getName().endsWith("Icons.java")) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile instanceof PsiJavaFile) {
-            for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
-              if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                PsiDocComment comment = aClass.getDocComment();
-                return comment != null && comment.getText().contains("run build/scripts/icons.gant instead");
-              }
+      return ReadAction.compute(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile instanceof PsiJavaFile) {
+          for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
+            if (aClass.isValid() && aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+              PsiDocComment comment = aClass.getDocComment();
+              if (comment == null) return false;
+              String docText = comment.getText();
+              return docText.contains("NOTE THIS FILE IS AUTO-GENERATED") &&
+                     docText.contains("DO NOT EDIT IT BY HAND");
             }
           }
-          return false;
         }
+        return false;
       });
     }
     return false;

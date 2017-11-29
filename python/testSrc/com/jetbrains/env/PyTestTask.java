@@ -1,9 +1,9 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -27,12 +27,16 @@ public abstract class PyTestTask {
   public void setUp(String testName) throws Exception {
   }
 
+  /**
+   * Method called on main thread.
+   * Each inheritor may do anything on edt, but should call parent *after all* on main thread
+   */
   public void tearDown() throws Exception {
   }
 
   /**
    * Run test on certain SDK path.
-   * To create SDK from path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, com.jetbrains.python.sdkTools.SdkCreationType)}
+   * To create SDK from path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, sdkTools.SdkCreationType)}
    *
    * @param sdkHome sdk path
    */
@@ -82,5 +86,17 @@ public abstract class PyTestTask {
    */
   public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
     return true;
+  }
+
+  /**
+   * Provides a way to filter out non-relevant environments
+   *
+   * @return the set of a tags that interpreter should run on, if an environment doesn't contain one of them, it won't be
+   * used to run this test task.
+   * null in case filtering shouldn't be used
+   */
+  @Nullable
+  public Set<String> getTagsToCover() {
+    return null;
   }
 }

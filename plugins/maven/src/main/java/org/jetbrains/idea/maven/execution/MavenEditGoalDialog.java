@@ -16,11 +16,9 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -105,16 +102,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
 
     workDirectoryField.addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
-      new FileChooserDescriptor(false, true, false, false, false, false) {
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          if (!super.isFileSelectable(file)) return false;
-          for (VirtualFile child : file.getChildren()) {
-            if(MavenUtil.isPomFileName(child.getName())) return true;
-          }
-          return false;
-        }
-      });
+      new MavenPomFileChooserDescriptor(myProject));
   }
 
   @Nullable

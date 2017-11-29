@@ -45,9 +45,9 @@ import java.awt.event.KeyEvent;
  *
  * This class is also responsible for delivering key events while focus transferring is in progress.
  * <p>
- * <code>IdeFocusManager</code> instance can be received per project or the global instance. The preferred way is
- * to use instance <code>IdeFocusManager.getInstance(project)</code>. If no project instance is available, then
- * <code>IdeFocusManager.getGlobalInstance()</code> can be used.
+ * {@code IdeFocusManager} instance can be received per project or the global instance. The preferred way is
+ * to use instance {@code IdeFocusManager.getInstance(project)}. If no project instance is available, then
+ * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 
 public abstract class IdeFocusManager implements FocusRequestor {
@@ -118,20 +118,20 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Reports of focus transfer is enabled right now. It can be disabled if app is inactive. In this case
-   * all focus requests will be either postponed or executed only if <code>FocusCommand</code> can be executed on an inaactive app.
+   * all focus requests will be either postponed or executed only if {@code FocusCommand} can be executed on an inaactive app.
    * @see com.intellij.openapi.wm.FocusCommand#canExecuteOnInactiveApp()
    */
   public abstract boolean isFocusTransferEnabled();
 
   /**
-   * Returns <code>Expirable</code> instance for the given counter of focus commands. As any new <code>FocusCommand</code>
-   * is emitted to execute, the counter increments thus making the returned <code>Expirable</code> objects expired.
+   * Returns {@code Expirable} instance for the given counter of focus commands. As any new {@code FocusCommand}
+   * is emitted to execute, the counter increments thus making the returned {@code Expirable} objects expired.
    */
   @NotNull
   public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
 
   /**
-   * Returns <code>FocusRequestor</code> object which will emit focus requests unless expired.
+   * Returns {@code FocusRequestor} object which will emit focus requests unless expired.
    * @see #getTimestamp(boolean)
    */
   @NotNull
@@ -155,26 +155,26 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract Component getFocusOwner();
 
   /**
-   * Runs runnable for which <code>DataContext</code> will no be computed from the current focus owner,
+   * Runs runnable for which {@code DataContext} will no be computed from the current focus owner,
    * but used the given one
    */
   public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);
 
   /**
-   * Returns last focused component for the given <code>IdeFrame</code>
+   * Returns last focused component for the given {@code IdeFrame}
    */
   @Nullable
   public abstract Component getLastFocusedFor(@Nullable IdeFrame frame);
 
   /**
-   * Returns last focused <code>IdeFrame</code>
+   * Returns last focused {@code IdeFrame}
    */
   @Nullable
   public abstract IdeFrame getLastFocusedFrame();
 
   /**
    * Put the container window to front. May not execute of the app is inactive or under some other conditions. This
-   * is the preferred way to finding the container window and unconditionally calling <code>window.toFront()</code>
+   * is the preferred way to finding the container window and unconditionally calling {@code window.toFront()}
    */
   public abstract void toFront(JComponent c);
 

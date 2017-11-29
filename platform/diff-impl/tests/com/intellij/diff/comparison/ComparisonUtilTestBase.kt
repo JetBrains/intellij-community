@@ -152,17 +152,17 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   private fun checkLineChanges(fragments: List<LineFragment>, expected: List<Couple<IntPair>>) {
     val changes = convertLineFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Couple<IntPair>>) {
     val changes = convertDiffFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkMergeChanges(fragments: List<MergeWordFragment>, expected: List<Trio<IntPair>>) {
     val changes = convertMergeFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
@@ -173,8 +173,8 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       set2.set(fragment.startLine2, fragment.endLine2)
     }
 
-    assertEquals(matchings.first, set1, "Before")
-    assertEquals(matchings.second, set2, "After")
+    assertSetsEquals(matchings.first, set1, "Before")
+    assertSetsEquals(matchings.second, set2, "After")
   }
 
   private fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
@@ -185,8 +185,8 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       set2.set(fragment.startOffset2, fragment.endOffset2)
     }
 
-    assertEquals(matchings.first, set1, "Before")
-    assertEquals(matchings.second, set2, "After")
+    assertSetsEquals(matchings.first, set1, "Before")
+    assertSetsEquals(matchings.second, set2, "After")
   }
 
   private fun checkMergeMatching(fragments: List<MergeWordFragment>, matchings: Trio<BitSet>) {
@@ -199,9 +199,9 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       set3.set(fragment.getStartOffset(ThreeSide.RIGHT), fragment.getEndOffset(ThreeSide.RIGHT))
     }
 
-    assertEquals(matchings.data1, set1, "Before")
-    assertEquals(matchings.data2, set2, "Base")
-    assertEquals(matchings.data3, set3, "After")
+    assertSetsEquals(matchings.data1, set1, "Left")
+    assertSetsEquals(matchings.data2, set2, "Base")
+    assertSetsEquals(matchings.data3, set3, "Right")
   }
 
   private fun convertDiffFragments(fragments: List<DiffFragment>): List<Couple<IntPair>> {

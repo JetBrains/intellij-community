@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public interface EditorHighlighter extends DocumentListener {
   @NotNull
   HighlighterIterator createIterator(int startOffset);
-  void setText(@NotNull CharSequence text);
+
+  default void setText(@NotNull CharSequence text) {
+  }
+
   void setEditor(@NotNull HighlighterClient editor);
-  void setColorScheme(@NotNull EditorColorsScheme scheme);
+
+  default void setColorScheme(@NotNull EditorColorsScheme scheme) {
+  }
 }

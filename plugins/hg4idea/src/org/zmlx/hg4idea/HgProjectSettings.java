@@ -12,14 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +50,9 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
+    
+    @Property(surroundWithTag = false, flat = true)
+    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
   public State getState() {
@@ -100,8 +106,13 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
     if (myState.myIgnoreWhitespacesInAnnotations != ignoreWhitespacesInAnnotations) {
       myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
-      myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
+      BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
     }
+  }
+
+  @NotNull
+  public DvcsBranchSettings getFavoriteBranchSettings() {
+    return myState.FAVORITE_BRANCH_SETTINGS;
   }
 
   public String getHgExecutable() {

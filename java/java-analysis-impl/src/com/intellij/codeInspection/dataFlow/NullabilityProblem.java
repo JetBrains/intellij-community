@@ -8,7 +8,9 @@ public enum NullabilityProblem {
   fieldAccessNPE,
   unboxingNullable,
   assigningToNotNull,
+  storingToNotNullArray,
   nullableReturn,
+  nullableFunctionReturn,
   passingNullableToNotNullParameter,
   passingNullableArgumentToNonAnnotatedParameter
 }

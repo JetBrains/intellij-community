@@ -22,6 +22,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -87,7 +88,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myMappingSettings = mappingSettings;
   }
 
-  public boolean isTestBased() {
+  /**
+   * @return if config uses {@link GeneralIdBasedToSMTRunnerEventsConvertor} or not
+   */
+  public boolean isIdTestBased() {
     return false;
   }
 

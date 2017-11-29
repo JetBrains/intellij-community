@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -68,7 +69,7 @@ public interface EditorEx extends Editor {
    *
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
-   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition<RangeHighlighter>)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition)
    * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
    */
   @NotNull
@@ -154,6 +155,7 @@ public interface EditorEx extends Editor {
 
   void setFontSize(int fontSize);
 
+  @NotNull
   Color getBackgroundColor();
 
   void setBackgroundColor(Color color);
@@ -203,11 +205,16 @@ public interface EditorEx extends Editor {
    * {@link SoftWrapAppliancePlaces#MAIN_EDITOR} is used by default.
    *
    * @param place   soft wraps appliance appliance use-case
+   * @deprecated set {@link EditorKind} via
+   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, EditorKind) },
+   * {@link com.intellij.openapi.editor.EditorFactory#createViewer(Document, Project, EditorKind)}
+   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, VirtualFile, boolean, EditorKind)}
    */
+  @Deprecated
   void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place);
 
   /**
-   * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
+   * Allows to define {@code 'placeholder text'} for the current editor, i.e. virtual text that will be represented until
    * any user data is entered.
    *
    * Feel free to see the detailed feature
@@ -219,14 +226,14 @@ public interface EditorEx extends Editor {
 
   /**
    * Sets text attributes for a placeholder. Font style and color are currently supported. 
-   * <code>null</code> means default values should be used.
+   * {@code null} means default values should be used.
    * 
    * @see #setPlaceholder(CharSequence)
    */
   void setPlaceholderAttributes(@Nullable TextAttributes attributes);
   
   /**
-   * Controls whether <code>'placeholder text'</code> is visible when editor is focused.
+   * Controls whether {@code 'placeholder text'} is visible when editor is focused.
    *
    * @param show   flag indicating whether placeholder is visible when editor is focused.
    *
@@ -238,16 +245,16 @@ public interface EditorEx extends Editor {
    * Allows to answer if 'sticky selection' is active for the current editor.
    * <p/>
    * 'Sticky selection' means that every time caret position changes, selection end offset is automatically set to the same position.
-   * Selection start is always caret offset on {@link #setStickySelection(boolean)} call with <code>'true'</code> argument.
+   * Selection start is always caret offset on {@link #setStickySelection(boolean)} call with {@code 'true'} argument.
    *
-   * @return      <code>true</code> if 'sticky selection' mode is active at the current editor; <code>false</code> otherwise
+   * @return      {@code true} if 'sticky selection' mode is active at the current editor; {@code false} otherwise
    */
   boolean isStickySelection();
 
   /**
    * Allows to set current {@link #isStickySelection() sticky selection} mode.
    *
-   * @param enable      flag that identifies if <code>'sticky selection'</code> mode should be enabled
+   * @param enable      flag that identifies if {@code 'sticky selection'} mode should be enabled
    */
   void setStickySelection(boolean enable);
 
@@ -306,7 +313,7 @@ public interface EditorEx extends Editor {
 
   /**
    * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to 
-   * <code>null</code> disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
+   * {@code null} disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
    * event listener).
    * 
    * @see #getContextMenuGroupId() 
@@ -314,7 +321,7 @@ public interface EditorEx extends Editor {
   void setContextMenuGroupId(@Nullable String groupId);
 
   /**
-   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. <code>null</code>
+   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. {@code null}
    * value means built-in logic for showing context menu is disabled.
    * 
    * @see #setContextMenuGroupId(String)

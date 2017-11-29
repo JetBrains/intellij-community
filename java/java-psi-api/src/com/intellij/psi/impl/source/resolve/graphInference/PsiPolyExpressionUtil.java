@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -25,9 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression ||
@@ -109,10 +107,15 @@ public class PsiPolyExpressionUtil {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
-        for (PsiType type : classType.getParameters()) {
-          if (type.accept(this)) return true;
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
         }
-        final PsiClass psiClass = classType.resolve();
         return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
       }
 
@@ -136,10 +139,20 @@ public class PsiPolyExpressionUtil {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !isVarContext((PsiVariable)context) ||
            context instanceof PsiLambdaExpression;
   }
 
+  private static boolean isVarContext(PsiVariable variable) {
+    if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_X)) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
       final PsiType type = arg.getType();
@@ -174,7 +187,7 @@ public class PsiPolyExpressionUtil {
     }
     if (expr == null) return null;
     PsiType type = null;
-    //A class instance creation expression (§15.9) for a class that is convertible to a numeric type.
+    //A class instance creation expression (p15.9) for a class that is convertible to a numeric type.
     //As numeric classes do not have type parameters, at this point expressions with diamonds could be ignored
     if (expr instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expr) ||
         hasStandaloneForm(expr)) {

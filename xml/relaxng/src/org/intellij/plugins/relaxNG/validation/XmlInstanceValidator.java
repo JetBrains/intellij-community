@@ -36,11 +36,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 30.07.2007
- */
 public class XmlInstanceValidator {
   private static final Logger LOG = Logger.getInstance("org.intellij.plugins.relaxNG.validation.XmlInstanceValidator");
 

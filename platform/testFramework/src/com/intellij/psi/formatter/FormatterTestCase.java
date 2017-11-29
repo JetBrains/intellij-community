@@ -82,7 +82,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     assertFalse(CodeStyleSettingsManager.getInstance(getProject()).USE_PER_PROJECT_SETTINGS);
-    assertNull(CodeStyleSettingsManager.getInstance(getProject()).PER_PROJECT_SETTINGS);
   }
 
   protected void doTest(String resultNumber) throws Exception {

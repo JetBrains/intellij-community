@@ -32,8 +32,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class SvnRevisionPanel extends JPanel {
@@ -50,34 +48,27 @@ public class SvnRevisionPanel extends JPanel {
     super(new BorderLayout());
     add(myPanel);
     myHead.setSelected(true);
-    myRevisionField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseRevision();
-      }
-    });
+    myRevisionField.addActionListener(e -> chooseRevision());
 
 //    myRevisionField.setEditable(false);
     myRevisionField.setEnabled(false);
 
-    mySpecified.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (mySpecified.isSelected()) {
-          if (myRevisionField.getText().trim().length() == 0) {
-            myRevisionField.setText("HEAD");
-          }
-          myRevisionField.setEnabled(true);
-        } else {
-          myRevisionField.setEnabled(false);
+    mySpecified.addActionListener(e -> {
+      if (mySpecified.isSelected()) {
+        if (myRevisionField.getText().trim().length() == 0) {
+          myRevisionField.setText("HEAD");
         }
-        notifyChangeListeners();
+        myRevisionField.setEnabled(true);
       }
+      else {
+        myRevisionField.setEnabled(false);
+      }
+      notifyChangeListeners();
     });
 
-    myHead.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myRevisionField.setEnabled(false);
-        notifyChangeListeners();
-      }
+    myHead.addActionListener(e -> {
+      myRevisionField.setEnabled(false);
+      notifyChangeListeners();
     });
 
     myRevisionField.getTextField().setColumns(10);

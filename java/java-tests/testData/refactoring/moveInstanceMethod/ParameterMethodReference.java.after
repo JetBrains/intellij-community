@@ -10,7 +10,7 @@ class Test {
   private final Destination destination = new Destination();
 
   public void main(Stream<Destination> stream){
-    stream.filter(Test.Destination::notNull);
+    stream.filter(Destination::notNull);
   }
 
 }

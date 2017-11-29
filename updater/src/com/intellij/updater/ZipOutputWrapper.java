@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class ZipOutputWrapper implements AutoCloseable {
     myCompressed = compressionLevel > 0;
   }
 
-  public OutputStream zipStream(String entryPath) throws IOException {
+  public OutputStream zipStream(String entryPath) {
     return new OptByteArrayOutputStream() {
       @Override
       public void close() throws IOException {

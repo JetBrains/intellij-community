@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public interface ChooseByNameModel {
   @Nullable
   String getFullName(Object element);
 
-  @Nullable
+  @Nullable @NonNls
   String getHelpId();
 
   boolean willOpenEditor();

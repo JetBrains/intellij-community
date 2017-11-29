@@ -15,21 +15,13 @@
  */
 package com.jetbrains.jsonSchema.schemaFile;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Irina.Chernushina on 4/1/2016.
  */
 public class TestJsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsProjectConfiguration {
-  public TestJsonSchemaMappingsProjectConfiguration(Project project) {
-    super(project);
-  }
-
-  @Override
-  public boolean isRegisteredSchemaFile(@NotNull VirtualFile file) {
-    return true;
+  public TestJsonSchemaMappingsProjectConfiguration() {
+    super();
   }
 }

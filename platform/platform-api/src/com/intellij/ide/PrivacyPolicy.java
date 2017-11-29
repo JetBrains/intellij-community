@@ -74,6 +74,10 @@ public final class PrivacyPolicy {
     ourCachedPolicyFile = new File(dataDir, CACHED_RESOURCE_NAME);
   }
 
+  public static File getCachedPolicyFile() {
+    return ourCachedPolicyFile;
+  }
+
   public static boolean isVersionAccepted(final Version ver) {
     if (ver.isUnknown() || MAGIC_VERSION.equals(ver)) {
       return true;
@@ -119,6 +123,9 @@ public final class PrivacyPolicy {
   public static void updateText(String text) {
     try {
       FileUtil.writeToFile(ourCachedPolicyFile, text);
+    }
+    catch (FileNotFoundException e) {
+      LOG.info(e.getMessage());
     }
     catch (IOException e) {
       LOG.info(e);

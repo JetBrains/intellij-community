@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 7, 2007
- * Time: 1:45:27 PM
- */
 package com.intellij.find.impl;
 
 import com.intellij.openapi.fileTypes.FileTypes;

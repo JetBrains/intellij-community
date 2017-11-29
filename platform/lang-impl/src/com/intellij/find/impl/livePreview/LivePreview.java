@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LivePreview extends DocumentAdapter implements SearchResults.SearchResultsListener, SelectionListener {
+public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener {
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
   private static final Object IN_SELECTION1 = new Object();
   private static final Object IN_SELECTION2 = new Object();

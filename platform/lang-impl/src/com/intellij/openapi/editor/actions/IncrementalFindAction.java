@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class IncrementalFindAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
@@ -40,7 +41,7 @@ public class IncrementalFindAction extends EditorAction {
     }
 
     @Override
-    public void execute(final Editor editor, DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, DataContext dataContext) {
       final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
         EditorSearchSession search = EditorSearchSession.get(editor);

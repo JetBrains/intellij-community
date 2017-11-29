@@ -33,6 +33,7 @@ import java.awt.image.BufferedImage;
 public class ArrangementAnimationPanel extends JPanel {
 
   @NotNull private final JComponent myContent;
+  private int myAnimationIterationStep;
 
   @Nullable private BufferedImage myImage;
   @Nullable private BufferedImage myCurrentImage;
@@ -65,8 +66,8 @@ public class ArrangementAnimationPanel extends JPanel {
     //myContent.setDoubleBuffered(false);
     myContent.setBounds(0, 0, size.width, size.height);
     myContent.validate();
-    myImage = UIUtil.createImage(myContent, size.width, size.height, BufferedImage.TYPE_INT_RGB);
-    assert myImage != null;
+    //noinspection UndesirableClassUsage
+    myImage = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     final Graphics2D graphics = myImage.createGraphics();
     UISettings.setupAntialiasing(graphics);
     graphics.setClip(0, 0, size.width, size.height);
@@ -74,27 +75,30 @@ public class ArrangementAnimationPanel extends JPanel {
     graphics.fillRect(0, 0, size.width, size.height);
     myContent.paint(graphics);
     graphics.dispose();
+    int expectedDurationMillis = 500;
+    myAnimationIterationStep = Math.max(
+      (myHorizontal ? size.width : size.height) / (expectedDurationMillis / ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS), 1);
 
     myContent.setBounds(bounds);
     applyDoubledBuffered(myContent, true);
 
     if (myExpand) {
       if (myHorizontal) {
-        myCurrentImage = myImage.getSubimage(0, 0, ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight());
+        myCurrentImage = myImage.getSubimage(0, 0, myAnimationIterationStep, myImage.getHeight());
       }
       else {
-        myCurrentImage = myImage.getSubimage(0, 0, myImage.getWidth(), ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP);
+        myCurrentImage = myImage.getSubimage(0, 0, myImage.getWidth(), myAnimationIterationStep);
       }
     }
     else {
       if (myHorizontal) {
         myCurrentImage = myImage.getSubimage(
-          0, 0, myImage.getWidth() - ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight()
+          0, 0, myImage.getWidth() - myAnimationIterationStep, myImage.getHeight()
         );
       }
       else {
         myCurrentImage = myImage.getSubimage(
-          0, 0, myImage.getWidth(), myImage.getHeight() - ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP
+          0, 0, myImage.getWidth(), myImage.getHeight() - myAnimationIterationStep
         );
       }
     }
@@ -111,7 +115,7 @@ public class ArrangementAnimationPanel extends JPanel {
   /**
    * Asks current panel to switch to the next drawing iteration
    * 
-   * @return    <code>true</code> if there are more iterations
+   * @return    {@code true} if there are more iterations
    */
   public boolean nextIteration() {
     int widthToUse = getImageWidthToUse();
@@ -165,8 +169,8 @@ public class ArrangementAnimationPanel extends JPanel {
 
     if (myCurrentImage == null) {
       Dimension size = myContent.getPreferredSize();
-      int width = (myHorizontal && myExpand) ? ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP : size.width;
-      int height = (!myHorizontal && myExpand) ? ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP : size.height;
+      int width = (myHorizontal && myExpand) ? myAnimationIterationStep : size.width;
+      int height = (!myHorizontal && myExpand) ? myAnimationIterationStep : size.height;
       return new Dimension(width, height);
     }
     return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
@@ -179,7 +183,7 @@ public class ArrangementAnimationPanel extends JPanel {
     }
     
     int sign = myExpand ? 1 : -1;
-    int result = myCurrentImage.getWidth() + sign * ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP;
+    int result = myCurrentImage.getWidth() + sign * myAnimationIterationStep;
 
     if (result <= 0 || result > myImage.getWidth()) {
       return -1;
@@ -194,7 +198,7 @@ public class ArrangementAnimationPanel extends JPanel {
     }
 
     int sign = myExpand ? 1 : -1;
-    int result = myCurrentImage.getHeight() + sign * ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP;
+    int result = myCurrentImage.getHeight() + sign * myAnimationIterationStep;
 
     if (result <= 0 || result > myImage.getHeight()) {
       return -1;

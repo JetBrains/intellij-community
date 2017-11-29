@@ -51,12 +51,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     myProject = project;
     myPointerManager = pointerManager;
     myExcludedFrameworks = new HashSet<>();
-    myExcludedFiles = new FactoryMap<String, VirtualFilePointerContainer>() {
-      @Override
-      protected VirtualFilePointerContainer create(String key) {
-        return myPointerManager.createContainer(DetectionExcludesConfigurationImpl.this);
-      }
-    };
+    myExcludedFiles = FactoryMap.create(key -> myPointerManager.createContainer(this));
   }
 
   @Override

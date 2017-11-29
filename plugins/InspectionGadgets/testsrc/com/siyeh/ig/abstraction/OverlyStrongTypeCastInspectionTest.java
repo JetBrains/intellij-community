@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class OverlyStrongTypeCastInspectionTest extends LightInspectionTestCase {
 
-  public void testOverlyStrongTypeCast() throws Exception {
+  public void testOverlyStrongTypeCast() {
     doTest();
   }
 

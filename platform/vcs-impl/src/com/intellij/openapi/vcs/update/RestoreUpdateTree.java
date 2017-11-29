@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -49,38 +48,24 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
-          ActionInfo actionInfo = myUpdateInfo.getActionInfo();
-          if (actionInfo != null) {
-            ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
-                                                                                    VcsBundle.message("action.display.name.update"), actionInfo,
-                                                                                    false);
-            CommittedChangesCache.getInstance(myProject).refreshIncomingChangesAsync();
-          }
+    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
+        ActionInfo actionInfo = myUpdateInfo.getActionInfo();
+        if (actionInfo != null) {
+          ProjectLevelVcsManagerEx.getInstanceEx(myProject).showUpdateProjectInfo(myUpdateInfo.getFileInformation(),
+                                                                                  VcsBundle.message("action.display.name.update"), actionInfo,
+                                                                                  false);
+          CommittedChangesCache.getInstance(myProject).refreshIncomingChangesAsync();
         }
-        myUpdateInfo = null;
       }
+      myUpdateInfo = null;
     });
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override
   @NotNull
   public String getComponentName() {
     return "RestoreUpdateTree";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Nullable
@@ -101,12 +86,7 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
   @Override
   public void loadState(Element state) {
     UpdateInfo updateInfo = new UpdateInfo();
-    try {
-      updateInfo.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    updateInfo.readExternal(state);
     myUpdateInfo = updateInfo.isEmpty() ? null : updateInfo;
   }
 

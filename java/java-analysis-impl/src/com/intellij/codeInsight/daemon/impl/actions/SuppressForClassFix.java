@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,11 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDeclarationStatement;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: May 13, 2005
- */
 public class SuppressForClassFix extends SuppressFix {
   public SuppressForClassFix(final HighlightDisplayKey key) {
     super(key);
@@ -40,8 +33,8 @@ public class SuppressForClassFix extends SuppressFix {
 
   @Override
   @Nullable
-  public PsiDocCommentOwner getContainer(final PsiElement element) {
-    PsiDocCommentOwner container = super.getContainer(element);
+  public PsiJavaDocumentedElement getContainer(final PsiElement element) {
+    PsiJavaDocumentedElement container = super.getContainer(element);
     if (container == null || container instanceof PsiClass){
       return null;
     }

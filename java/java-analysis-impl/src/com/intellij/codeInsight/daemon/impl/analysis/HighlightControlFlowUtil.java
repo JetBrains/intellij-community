@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -99,7 +100,18 @@ public class HighlightControlFlowUtil {
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         String description = JavaErrorMessages.message("unreachable.statement");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(unreachableStatement).descriptionAndTooltip(description).create();
+        PsiElement keyword = null;
+        if (unreachableStatement instanceof PsiIfStatement ||
+            unreachableStatement instanceof PsiSwitchStatement ||
+            unreachableStatement instanceof PsiLoopStatement) {
+          keyword = unreachableStatement.getFirstChild();
+        }
+        final PsiElement element = keyword != null ? keyword : unreachableStatement;
+        final HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(
+          info, QUICK_FIX_FACTORY.createDeleteFix(unreachableStatement, QuickFixBundle.message("delete.unreachable.statement.fix.text")));
+        return info;
       }
     }
     catch (AnalysisCanceledException | IndexNotReadyException e) {
@@ -208,7 +220,7 @@ public class HighlightControlFlowUtil {
    * see JLS chapter 16
    * @return true if variable assigned (maybe more than once)
    */
-  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+  public static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     try {
       ControlFlow controlFlow = getControlFlow(context);
       return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);
@@ -595,17 +607,9 @@ public class HighlightControlFlowUtil {
       }
       readBeforeWrite = assignmentExpression.getOperationTokenType() != JavaTokenType.EQ;
     }
-    else if (expression instanceof PsiPostfixExpression) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPostfixExpression)expression).getOperand());
-      final IElementType sign = ((PsiPostfixExpression)expression).getOperationTokenType();
-      if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
-        reference = (PsiReferenceExpression)operand;
-      }
-      readBeforeWrite = true;
-    }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
-      final IElementType sign = ((PsiPrefixExpression)expression).getOperationTokenType();
+    else if (expression instanceof PsiUnaryExpression) {
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)expression).getOperand());
+      final IElementType sign = ((PsiUnaryExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
@@ -709,7 +713,7 @@ public class HighlightControlFlowUtil {
         String text = JavaErrorMessages.message("lambda.variable.must.be.final");
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
-        return highlightInfo;
+        return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "lambda.variable.must.be.final");
       }
     }
     return null;
@@ -741,6 +745,15 @@ public class HighlightControlFlowUtil {
           }
         }
         effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
+        if (effectivelyFinal) {
+          return ReferencesSearch.search(variable).forEach(ref -> {
+            PsiElement element = ref.getElement();
+            if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+              return !ControlFlowUtil.isVariableAssignedInLoop((PsiReferenceExpression)element, variable);
+            }
+            return true;
+          });
+        }
       }
     }
     return effectivelyFinal;

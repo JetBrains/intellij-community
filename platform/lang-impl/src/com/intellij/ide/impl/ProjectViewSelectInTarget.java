@@ -23,17 +23,23 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +120,15 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   protected boolean canSelect(PsiFileSystemItem file) {
-    return true;
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+    if (vFile == null || !vFile.isValid()) return false;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return index.getContentRootForFile(vFile, false) != null ||
+           index.isInLibraryClasses(vFile) ||
+           index.isInLibrarySource(vFile) ||
+           Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && vFile.getFileType() == ScratchFileType.INSTANCE;
   }
 
   public String getSubIdPresentableName(String subId) {
@@ -124,12 +138,18 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   public void select(PsiElement element, final boolean requestFocus) {
+    PsiUtilCore.ensureValid(element);
     PsiElement toSelect = null;
     for (TreeStructureProvider provider : getProvidersDumbAware()) {
       if (provider instanceof SelectableTreeStructureProvider) {
         toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
       }
-      if (toSelect != null) break;
+      if (toSelect != null) {
+        if (!toSelect.isValid()) {
+          throw new PsiInvalidElementAccessException(toSelect, "Returned by " + provider);
+        }
+        break;
+      }
     }
 
     toSelect = findElementToSelect(element, toSelect);
@@ -149,11 +169,6 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   @Override
   public final String getToolWindowId() {
     return ToolWindowId.PROJECT_VIEW;
-  }
-
-  @Override
-  protected boolean canWorkWithCustomObjects() {
-    return true;
   }
 
   public final void setSubId(String subId) {

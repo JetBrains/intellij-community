@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("InterfaceMethodClashesWithObject")
 public class InterfaceMethodClashesWithObjectInspectionTest extends LightInspectionTestCase {
 
   public void testBadClone() {

@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -43,7 +44,18 @@ public class DefaultExternalSystemExecutionConsoleManager
     return ProjectSystemId.IDE;
   }
 
-  @NotNull
+  @Nullable
+  @Override
+  public ExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                 @NotNull ExternalSystemTask task,
+                                                 @Nullable ExecutionEnvironment env,
+                                                 @Nullable ProcessHandler processHandler) {
+    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    executionConsole.attachToProcess(processHandler);
+    return executionConsole;
+  }
+
+  @Nullable
   @Override
   public ExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
                                                  @NotNull Project project,
@@ -51,9 +63,7 @@ public class DefaultExternalSystemExecutionConsoleManager
                                                  @NotNull Executor executor,
                                                  @NotNull ExecutionEnvironment env,
                                                  @NotNull ProcessHandler processHandler) throws ExecutionException {
-    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    executionConsole.attachToProcess(processHandler);
-    return executionConsole;
+    return attachExecutionConsole(project, task, env, processHandler);
   }
 
   @Override

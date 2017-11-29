@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -187,7 +188,6 @@ public class InstancesWindow extends DialogWrapper {
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
                                                                 editorsProvider, InstancesWindow.this.myDisposable);
 
-      myFilterButton.setBorder(BorderFactory.createEmptyBorder());
       final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
       filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
                                   myFilterButton.getPreferredSize().width;
@@ -195,7 +195,7 @@ public class InstancesWindow extends DialogWrapper {
 
       final JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
       final JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
-      sideEffectsWarning.setBorder(JBUI.Borders.empty(1, 0, 0, 0));
+      sideEffectsWarning.setBorder(JBUI.Borders.emptyTop(1));
       sideEffectsWarning.setComponentStyle(UIUtil.ComponentStyle.SMALL);
       sideEffectsWarning.setFontColor(UIUtil.FontColor.BRIGHTER);
 
@@ -396,7 +396,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action matched(@NotNull ObjectReference ref) {
+      public Action matched(@NotNull Value ref) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
                                                     myEvaluationContext, myNodeManager);
         myMatchedCount++;
@@ -410,7 +410,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action notMatched(@NotNull ObjectReference ref) {
+      public Action notMatched(@NotNull Value ref) {
         myProceedCount++;
         updateProgress();
 
@@ -419,7 +419,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action error(@NotNull ObjectReference ref, @NotNull String description) {
+      public Action error(@NotNull Value ref, @NotNull String description) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
                                                     myEvaluationContext, myNodeManager);
         myErrorsGroup.addErrorValue(description, val);
@@ -482,13 +482,17 @@ public class InstancesWindow extends DialogWrapper {
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
                         @NotNull XExpression expression,
                         @NotNull EvaluationContextImpl evaluationContext) {
-        myTask = new FilteringTask(myClassName, myDebugProcess, expression, refs,
+        myTask = new FilteringTask(myClassName, myDebugProcess, expression, new MyValuesList(refs),
                                    new MyFilteringCallback(evaluationContext));
       }
 
       @Override
       protected Void doInBackground() throws Exception {
-        myTask.run();
+        try {
+          myTask.run();
+        } catch (Throwable e) {
+          LOG.error(e);
+        }
         return null;
       }
 
@@ -499,11 +503,30 @@ public class InstancesWindow extends DialogWrapper {
     }
   }
 
+  private static class MyValuesList implements FilteringTask.ValuesList {
+    private final List<ObjectReference> myRefs;
+
+    public MyValuesList(List<ObjectReference> refs) {
+      myRefs = refs;
+    }
+
+    @Override
+    public int size() {
+      return myRefs.size();
+    }
+
+    @Override
+    public ObjectReference get(int index) {
+      return myRefs.get(index);
+    }
+  }
+
   private final static class MyNodeManager extends NodeManagerImpl {
     MyNodeManager(Project project) {
       super(project, null);
     }
 
+    @NotNull
     @Override
     public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
       return new DebuggerTreeNodeImpl(null, descriptor);
@@ -514,6 +537,7 @@ public class InstancesWindow extends DialogWrapper {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
+    @NotNull
     @Override
     public DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));

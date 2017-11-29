@@ -17,10 +17,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
-import com.intellij.lang.Language;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
@@ -30,9 +28,11 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -64,7 +64,7 @@ public class AutoHardWrapHandler {
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
    * holds that {@code 'document -> last auto-wrap change'} mappings.
    */
-  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<>();
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = ContainerUtil.createWeakMap();
 
   public static AutoHardWrapHandler getInstance() {
     return INSTANCE;
@@ -160,7 +160,7 @@ public class AutoHardWrapHandler {
 
     // Is assumed to be max possible number of characters inserted on the visual line with caret.
     int maxPreferredOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(
-      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.getReservedLineWrapWidthInColumns(editor))
     ));
 
     int wrapOffset = strategy.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, true, false);
@@ -195,10 +195,6 @@ public class AutoHardWrapHandler {
 
       private boolean autoFormatted(DocumentEvent event) {
         return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
-      }
-
-      @Override
-      public void documentChanged(DocumentEvent event) {
       }
     };
 

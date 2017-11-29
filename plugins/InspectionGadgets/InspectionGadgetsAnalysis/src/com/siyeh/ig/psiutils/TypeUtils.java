@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class TypeUtils {
   }
 
   public static PsiClassType getType(@NotNull PsiClass aClass) {
-    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
   }
 
   public static PsiClassType getObjectType(@NotNull PsiElement context) {
@@ -110,7 +110,7 @@ public class TypeUtils {
     if (type == null) {
       return false;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     for (String rhsTypeText : rhsTypeTexts) {
       final PsiClassType rhsType = factory.createTypeByFQClassName(rhsTypeText, expression.getResolveScope());
       if (type.isAssignableFrom(rhsType)) {
@@ -120,6 +120,7 @@ public class TypeUtils {
     return false;
   }
 
+  @Contract("null, _ -> false")
   public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     return expressionHasTypeOrSubtype(expression, new String[] {typeName}) != null;
   }
@@ -129,16 +130,13 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                                                                 : expression.getType();
+    final PsiType type = expression instanceof PsiFunctionalExpression
+                         ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
+                         : expression.getType();
     if (type == null) {
       return null;
     }
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return null;
     }
@@ -154,15 +152,7 @@ public class TypeUtils {
     if (expression == null) {
       return false;
     }
-    final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) {
       return false;
     }
@@ -178,12 +168,7 @@ public class TypeUtils {
     if (variable == null) {
       return false;
     }
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
     if (aClass == null) {
       return false;
     }
@@ -231,12 +216,8 @@ public class TypeUtils {
   }
 
   public static boolean isTypeParameter(PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
-    return aClass != null && aClass instanceof PsiTypeParameter;
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass instanceof PsiTypeParameter;
   }
 
   /**
@@ -261,5 +242,11 @@ public class TypeUtils {
       return PsiType.DOUBLE;
     }
     return type;
+  }
+
+  @Contract("null -> null")
+  public static String resolvedClassName(PsiType type) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass == null ? null : aClass.getQualifiedName();
   }
 }

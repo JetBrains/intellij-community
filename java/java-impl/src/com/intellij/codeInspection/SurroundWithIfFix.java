@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
-    myText = expressionToAssert.getText();
+    myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
   @Override
@@ -54,9 +55,8 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
     if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
-      final PsiElement body = ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(anchorStatement)).getBody();
-      LOG.assertTrue(body instanceof PsiCodeBlock);
-      anchorStatement = ((PsiCodeBlock)body).getStatements()[0];
+      final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
+      anchorStatement = body.getStatements()[0];
     }
     Editor editor = PsiUtilBase.findEditor(anchorStatement);
     if (editor == null) return;
@@ -65,7 +65,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     Document document = documentManager.getDocument(file);
     if (document == null) return;
     PsiElement[] elements = {anchorStatement};
-    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorStatement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
     }
@@ -77,7 +77,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
 
       editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());
-      
+
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       new MergeIfAndIntention().invoke(project, editor, file);

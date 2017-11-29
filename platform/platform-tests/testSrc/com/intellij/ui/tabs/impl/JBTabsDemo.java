@@ -99,6 +99,14 @@ public class JBTabsDemo {
     });
     south.add(v);
 
+    final JCheckBox before = new JCheckBox("Before", true);
+    before.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setSideComponentBefore(before.isSelected());
+      }
+    });
+    south.add(before);
+
     final JCheckBox row = new JCheckBox("Single row", true);
     row.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
@@ -141,13 +149,13 @@ public class JBTabsDemo {
 
     final JTree someTree = new Tree() {
       public void addNotify() {
-        super.addNotify();    //To change body of overridden methods use File | Settings | File Templates.
+        super.addNotify();
         System.out.println("JBTabs.addNotify");
       }
 
       public void removeNotify() {
         System.out.println("JBTabs.removeNotify");
-        super.removeNotify();    //To change body of overridden methods use File | Settings | File Templates.
+        super.removeNotify();
       }
     };
     //someTree.setBorder(new LineBorder(Color.cyan));

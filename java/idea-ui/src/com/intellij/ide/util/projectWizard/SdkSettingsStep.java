@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.GridBagConstraints;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -146,7 +145,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     if (selected != null && sdkFilter.value(selected.getSdkType())) {
       return selected;
     }
-    return null;
+    return myJdkComboBox.getSelectedJdk();
   }
 
   protected void onSdkSelected(Sdk sdk) {}

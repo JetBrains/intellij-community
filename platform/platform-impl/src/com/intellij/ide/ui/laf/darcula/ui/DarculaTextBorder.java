@@ -16,7 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -31,7 +31,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextBorder implements Border, UIResource {
+public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
     int vOffset = TextFieldWithPopupHandlerUI.isSearchField(c) ? 6 : 4;
@@ -45,7 +45,9 @@ public class DarculaTextBorder implements Border, UIResource {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
     else {
-      return JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();
+      Insets insets = JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();
+      TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+      return insets;
     }
   }
 
@@ -56,18 +58,16 @@ public class DarculaTextBorder implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (DarculaTextFieldUI.isSearchField(c)) return;
+    if (TextFieldWithPopupHandlerUI.isSearchField(c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.translate(x, y);
 
-      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
-      if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, c.hasFocus());
-        if (Registry.is("ide.inplace.errors.balloon") && c.hasFocus()) {
-          DarculaUIUtil.showErrorTip((JComponent)c);
-        }
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      if (op != null) {
+        DarculaUIUtil.paintOutlineBorder(g2, width, height, JBUI.scale(5), true, c.hasFocus(),
+                                         DarculaUIUtil.Outline.valueOf(op.toString()));
       } else if (c.hasFocus()) {
         DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2)));
       } else {

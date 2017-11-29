@@ -15,13 +15,11 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.List;
 
@@ -50,7 +48,7 @@ public class FileFinder {
               }
             }
             else {
-              if (StringUtil.startsWithIgnoreCase(f.getName(), MavenConstants.POM_EXTENSION + '.')) {
+              if (MavenUtil.isPomFile(f)) {
                 result.add(f);
               }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,20 @@
  */
 package org.jetbrains.idea.svn;
 
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+
 public class SvnCopyRootSimple {
   public String myVcsRoot;
   public String myCopyRoot;
+
+  @SuppressWarnings("unused") // used for persistence
+  public SvnCopyRootSimple() {
+  }
+
+  public SvnCopyRootSimple(@NotNull RootUrlInfo info) {
+    myVcsRoot = toSystemDependentName(info.getRoot().getPath());
+    myCopyRoot = info.getPath();
+  }
 }

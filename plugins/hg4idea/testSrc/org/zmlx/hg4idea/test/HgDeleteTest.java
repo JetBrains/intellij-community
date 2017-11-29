@@ -41,7 +41,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   }
 
   @Test
-  public void testDeleteNewFile() throws Exception {
+  public void testDeleteNewFile() {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     deleteFileInCommand(file);
     Assert.assertFalse(file.exists());
@@ -73,7 +73,7 @@ public class HgDeleteTest extends HgSingleUserTest {
    * 3. File shouldn't be prompted for removal from repository.
    */
   @Test
-  public void testNewlyAddedFileShouldNotBePromptedForRemoval() throws Exception {
+  public void testNewlyAddedFileShouldNotBePromptedForRemoval() {
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile vf = createFileInCommand("a.txt", null);
     final HgMockVcsHelper helper = registerMockVcsHelper();
@@ -95,7 +95,7 @@ public class HgDeleteTest extends HgSingleUserTest {
    * 5. File shouldn't be prompted for removal from repository.
    */
   @Test
-  public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() throws Exception {
+  public void testJustDeletedAndThenAddedFileShouldNotBePromptedForRemoval() {
     VirtualFile vf = createFileInCommand("a.txt", null);
     myChangeListManager.commitFiles(vf);
     deleteFileInCommand(vf);

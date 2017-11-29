@@ -19,8 +19,6 @@ import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
@@ -55,8 +53,12 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
@@ -68,6 +70,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -164,7 +167,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {
-          ToolWindowManagerImpl.this.projectOpened();
+          //noinspection TestOnlyProblems
+          init();
         }
       }
 
@@ -390,17 +394,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     assert myId2StripeButton.isEmpty();
   }
 
-  public void projectOpened() {
-    final MyUIManagerPropertyChangeListener uiManagerPropertyListener = new MyUIManagerPropertyChangeListener();
-    final MyLafManagerListener lafManagerListener = new MyLafManagerListener();
+  @TestOnly
+  public void init() {
+    if (myToolWindowsPane != null) {
+      return;
+    }
 
-    UIManager.addPropertyChangeListener(uiManagerPropertyListener);
-    LafManager.getInstance().addLafManagerListener(lafManagerListener);
-
-    Disposer.register(this, () -> {
-      UIManager.removePropertyChangeListener(uiManagerPropertyListener);
-      LafManager.getInstance().removeLafManagerListener(lafManagerListener);
-    });
     myFrame = myWindowManager.allocateFrame(myProject);
     LOG.assertTrue(myFrame != null);
 
@@ -419,6 +418,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       return false;
     }, myProject);
+
+    UIUtil.putClientProperty(
+      myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+        @Override
+        public Iterator<JComponent> iterator() {
+          return JBIterable.of(myLayout.getInfos())
+            .map(info -> (JComponent)getInternalDecorator(info.getId()))
+            .filter(decorator -> decorator.getParent() == null)
+            .iterator();
+        }
+      });
   }
 
   private void initAll(List<FinalizableCommand> commandsList) {
@@ -1133,6 +1143,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         boolean canCloseContent,
                                         final boolean canWorkInDumbMode,
                                         boolean shouldBeAvailable) {
+    //noinspection TestOnlyProblems
+    init();
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -2027,8 +2040,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
+    @NotNull
     @Override
-    @Nullable
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
@@ -2118,8 +2131,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
+    @NotNull
     @Override
-    @Nullable
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
@@ -2329,31 +2342,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     @Override
     public void visibleStripeButtonChanged(@NotNull InternalDecorator source, boolean visible) {
       setShowStripeButton(source.getToolWindow().getId(), visible);
-    }
-  }
-
-  private void updateComponentTreeUI() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (WindowInfoImpl info : infos) {
-      // the main goal is to update hidden TW components because they are not in the hierarchy
-      // and will not be updated automatically but unfortunately the visibility of a TW may change
-      // during the same actionPerformed() so we can't optimize and have to process all of them
-      IJSwingUtilities.updateComponentTreeUI(getInternalDecorator(info.getId()));
-    }
-  }
-
-  private final class MyUIManagerPropertyChangeListener implements PropertyChangeListener {
-    @Override
-    public void propertyChange(final PropertyChangeEvent e) {
-      updateComponentTreeUI();
-    }
-  }
-
-  private final class MyLafManagerListener implements LafManagerListener {
-    @Override
-    public void lookAndFeelChanged(final LafManager source) {
-      updateComponentTreeUI();
     }
   }
 

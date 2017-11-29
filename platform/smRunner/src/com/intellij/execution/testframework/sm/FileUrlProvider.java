@@ -30,7 +30,6 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,19 +48,29 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return Collections.emptyList();
     }
 
-    final String normalizedPath = path.replace(File.separatorChar, '/');
-
-    final int lineNoSeparatorIndex = normalizedPath.lastIndexOf(':');
-
     final String filePath;
     final int lineNumber;
-    // if line is specified
-    if (lineNoSeparatorIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator 
-      lineNumber = StringUtil.parseInt(normalizedPath.substring(lineNoSeparatorIndex + 1), -1);
-      filePath = normalizedPath.substring(0, lineNoSeparatorIndex);
+    final int columnNumber;
+
+    int lastColonIndex = path.lastIndexOf(':');
+    if (lastColonIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator
+      int lastValue = StringUtil.parseInt(path.substring(lastColonIndex + 1), -1);
+      int penultimateColonIndex = path.lastIndexOf(':', lastColonIndex - 1);
+      if (penultimateColonIndex > 3) {
+        int penultimateValue = StringUtil.parseInt(path.substring(penultimateColonIndex + 1, lastColonIndex), -1);
+        filePath = path.substring(0, penultimateColonIndex);
+        lineNumber = penultimateValue;
+        columnNumber = lineNumber <= 0 ? -1 : lastValue;
+      }
+      else {
+        filePath = path.substring(0, lastColonIndex);
+        lineNumber = lastValue;
+        columnNumber = -1;
+      }
     } else {
+      filePath = path;
       lineNumber = -1;
-      filePath = normalizedPath;
+      columnNumber = -1;
     }
     // Now we should search file with most suitable path
     // here path may be absolute or relative
@@ -73,9 +82,14 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
 
     final List<Location> locations = new ArrayList<>(2);
     for (VirtualFile file : virtualFiles) {
-      locations.add(createLocationFor(project, file, lineNumber));
+      locations.add(createLocationFor(project, file, lineNumber, columnNumber));
     }
     return locations;
+  }
+
+  @Nullable
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
+    return createLocationFor(project, virtualFile, lineNum, -1);
   }
 
   /**
@@ -83,10 +97,12 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
    * @param virtualFile VirtualFile instance to locate
    * @param lineNum     one-based line number to locate inside {@code virtualFile},
    *                    a non-positive line number doesn't change text caret position inside the file
+   * @param columnNum   one-based column number to locate inside {@code virtualFile},
+   *                    a non-positive column number doesn't change text caret position inside the file
    * @return Location instance, or null if not found
    */
   @Nullable
-  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
@@ -100,19 +116,14 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return null;
     }
 
-    final int lineCount = doc.getLineCount();
-    final int lineStartOffset;
-    final int endOffset;
-    if (lineNum <= lineCount) {
-      lineStartOffset = doc.getLineStartOffset(lineNum - 1);
-      endOffset = doc.getLineEndOffset(lineNum - 1);
-    } else {
-      // unknown line
-      lineStartOffset = 0;
-      endOffset = doc.getTextLength();
+    if (lineNum > doc.getLineCount()) {
+      return PsiLocation.fromPsiElement(psiFile);
     }
+    
+    final int lineStartOffset = doc.getLineStartOffset(lineNum - 1);
+    final int endOffset = doc.getLineEndOffset(lineNum - 1);
 
-    int offset = lineStartOffset;
+    int offset = Math.min(lineStartOffset + Math.max(columnNum - 1, 0), endOffset);
     PsiElement elementAtLine = null;
     while (offset <= endOffset) {
       elementAtLine = psiFile.findElementAt(offset);

@@ -18,12 +18,14 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.ui.GradleProjectCompositeSelectorDialog;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
@@ -43,6 +45,9 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   protected boolean isVisible(AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return false;
+    ProjectSystemId systemId = getSystemId(e);
+    if(!GradleConstants.SYSTEM_ID.equals(systemId)) return false;
+
     if (GradleSettings.getInstance(project).getLinkedProjectsSettings().size() > 1) {
       final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
       if (projectNode == null || projectNode.getData() == null) return false;

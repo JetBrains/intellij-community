@@ -36,8 +36,11 @@ public interface CommonProblemDescriptor {
       if (diff != 0) {
         return diff;
       }
-      return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(),
-                                                   ((ProblemDescriptor)c1).getPsiElement());
+
+      diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(), ((ProblemDescriptor)c1).getPsiElement());
+      if (diff != 0) {
+        return diff;
+      }
     }
     return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
   };

@@ -24,12 +24,6 @@ import java.net.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/20/13
- * Time: 10:51 PM
- */
 public class ProxyTest {
 
   private ProxySelector myDefault;

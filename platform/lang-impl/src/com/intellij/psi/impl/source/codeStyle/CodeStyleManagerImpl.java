@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -792,12 +793,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       if (myCaretModel.getVisualPosition().column == myVisualColumnToRestore) {
         return;
       }
+      Project project = myEditor.getProject();
+      if (project == null || PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(myDocument)) {
+        return;
+      }
       insertWhiteSpaceIndentIfNeeded(newCaretLineStartOffset);
     }
 
     private void restoreVisualPosition() {
       if (myVisualColumnToRestore < 0) {
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorUtil.runWithAnimationDisabled(myEditor, () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE));
         return;
       }
       VisualPosition position = myCaretModel.getVisualPosition();
@@ -879,5 +884,48 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   
   void setCurrentFormattingMode(@NotNull FormattingMode mode) {
     myCurrentFormattingMode.set(mode);
+  }
+
+  @Override
+  public int getSpacing(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+  }
+
+  @Override
+  public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getMinLineFeedsBeforeBlockAtOffset(model, offset);
+  }
+
+  @Nullable
+  private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    if (builder == null) return null;
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    return builder.createModel(file, settings);
+  }
+
+  @Override
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    DocCommentSettings docSettings = getDocCommentSettings(file);
+    boolean currDocFormattingEnabled = docSettings.isDocFormattingEnabled();
+    docSettings.setDocFormattingEnabled(false);
+    try {
+      runnable.run();
+    }
+    finally {
+      docSettings.setDocFormattingEnabled(currDocFormattingEnabled);
+    }
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    Language language = file.getLanguage();
+    LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (settingsProvider != null) {
+      return settingsProvider.getDocCommentSettings(file);
+    }
+    return DocCommentSettings.DEFAULTS;
   }
 }

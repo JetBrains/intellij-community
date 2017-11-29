@@ -25,12 +25,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 7:18:30 PM
- */
 public class DeleteToWordEndAction extends TextComponentEditorAction {
   public DeleteToWordEndAction() {
     super(new Handler(false));

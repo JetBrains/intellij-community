@@ -20,7 +20,7 @@ public class UnnecessarySuperQualifier {
 
     private static class Up extends Base<String> {
         void foo() {
-            super.test("asfd");
+            <warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.test("asfd");
             System.out.println(<warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.field);
         }
     }

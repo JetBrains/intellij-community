@@ -15,12 +15,6 @@
  */
 package com.intellij.util;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/22/12
- * Time: 5:26 PM
- */
 public interface PairConvertor<First,Second,Result> {
   Result convert(final First first, final Second second);
 }

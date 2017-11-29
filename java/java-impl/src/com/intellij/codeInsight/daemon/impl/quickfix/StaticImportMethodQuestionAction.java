@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -42,7 +43,7 @@ import java.awt.*;
 import java.util.List;
 
 public class StaticImportMethodQuestionAction<T extends PsiMember> implements QuestionAction {
-  private static final Logger LOG = Logger.getInstance("#" + StaticImportMethodQuestionAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
   private List<T> myCandidates;
@@ -87,10 +88,11 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     return true;
   }
 
-  private void doImport(final T toImport) {
+  protected void doImport(final T toImport) {
     final Project project = toImport.getProject();
     final PsiElement element = myRef.getElement();
     if (element == null) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
       AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
   }

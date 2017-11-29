@@ -124,6 +124,11 @@
     <item name='org.apache.velocity.runtime.visitor.BaseVisitor java.lang.Object visit(org.apache.velocity.runtime.parser.node.SimpleNode, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.visitor.NodeViewMode NodeViewMode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.visitor.NodeViewMode java.lang.Object showNode(org.apache.velocity.runtime.parser.node.Node, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -245,6 +250,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.visitor.NodeViewMode java.lang.String indentString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

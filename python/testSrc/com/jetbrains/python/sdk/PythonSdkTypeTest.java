@@ -32,24 +32,24 @@ public class PythonSdkTypeTest extends PlatformLiteFixture {
     registerExtension(CredentialsLanguageContribution.EP_NAME, credentialsLanguageContribution);
   }
 
-  public void testLocalSdk() throws Exception {
+  public void testLocalSdk() {
     when(sdk.getSdkAdditionalData()).thenReturn(sdkAdditionalData);
     Assert.assertFalse(PythonSdkType.hasInvalidRemoteCredentials(sdk));
   }
 
-  public void testAbsentRemoteSdkCredentials() throws Exception {
+  public void testAbsentRemoteSdkCredentials() {
     when(sdk.getSdkAdditionalData()).thenReturn(remoteSdkAdditionalData);
     Assert.assertFalse(PythonSdkType.hasInvalidRemoteCredentials(sdk));
   }
 
-  public void testValidRemoteSdkCredentials() throws Exception {
+  public void testValidRemoteSdkCredentials() {
     when(vagrantBasedCredentialsHolder.getVagrantFolder()).thenReturn("/home/vagrant/box");
     mockSwitchOnConnectionType(remoteSdkAdditionalData, vagrantBasedCredentialsHolder);
     when(sdk.getSdkAdditionalData()).thenReturn(remoteSdkAdditionalData);
     Assert.assertFalse(PythonSdkType.hasInvalidRemoteCredentials(sdk));
   }
 
-  public void testInvalidRemoteSdkCredentials() throws Exception {
+  public void testInvalidRemoteSdkCredentials() {
     when(vagrantBasedCredentialsHolder.getVagrantFolder()).thenReturn("");
     mockSwitchOnConnectionType(remoteSdkAdditionalData, vagrantBasedCredentialsHolder);
     when(sdk.getSdkAdditionalData()).thenReturn(remoteSdkAdditionalData);

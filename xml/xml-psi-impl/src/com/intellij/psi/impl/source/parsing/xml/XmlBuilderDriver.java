@@ -61,7 +61,6 @@ public class XmlBuilderDriver {
     FlyweightCapableTreeStructure<LighterASTNode> structure = b.getLightTree();
 
     LighterASTNode root = structure.getRoot();
-    root = structure.prepareForGetChildren(root);
 
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(root, childrenRef);
@@ -86,7 +85,7 @@ public class XmlBuilderDriver {
                                  FlyweightCapableTreeStructure<LighterASTNode> structure,
                                  LighterASTNode prolog) {
     final Ref<LighterASTNode[]> prologChildren = new Ref<>(null);
-    final int prologChildrenCount = structure.getChildren(structure.prepareForGetChildren(prolog), prologChildren);
+    final int prologChildrenCount = structure.getChildren(prolog, prologChildren);
     for (int i = 0; i < prologChildrenCount; i++) {
       LighterASTNode node = prologChildren.get()[i];
       IElementType type = node.getTokenType();
@@ -103,7 +102,7 @@ public class XmlBuilderDriver {
   private void processDoctypeNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
                                   final LighterASTNode doctype) {
     final Ref<LighterASTNode[]> tokens = new Ref<>(null);
-    final int tokenCount = structure.getChildren(structure.prepareForGetChildren(doctype), tokens);
+    final int tokenCount = structure.getChildren(doctype, tokens);
     if (tokenCount > 0) {
       CharSequence publicId = null;
       boolean afterPublic = false;
@@ -155,8 +154,6 @@ public class XmlBuilderDriver {
                               XmlBuilder builder) {
     final IElementType nodeTT = node.getTokenType();
     assert nodeTT == XmlElementType.XML_TAG || nodeTT == XmlElementType.HTML_TAG;
-
-    node = structure.prepareForGetChildren(node);
 
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(node, childrenRef);
@@ -210,8 +207,6 @@ public class XmlBuilderDriver {
   }
 
   private void processTextNode(FlyweightCapableTreeStructure<LighterASTNode> structure, LighterASTNode node, XmlBuilder builder) {
-    node = structure.prepareForGetChildren(node);
-
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(node, childrenRef);
     LighterASTNode[] children = childrenRef.get();
@@ -294,8 +289,6 @@ public class XmlBuilderDriver {
   private CharSequence findTextByTokenType(LighterASTNode attrNode,
                                            FlyweightCapableTreeStructure<LighterASTNode> structure,
                                            IElementType tt) {
-    attrNode = structure.prepareForGetChildren(attrNode);
-
     final Ref<LighterASTNode[]> childrenRef = Ref.create(null);
     final int count = structure.getChildren(attrNode, childrenRef);
     LighterASTNode[] children = childrenRef.get();

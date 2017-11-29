@@ -40,12 +40,6 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression with identical branches #loc";
   }

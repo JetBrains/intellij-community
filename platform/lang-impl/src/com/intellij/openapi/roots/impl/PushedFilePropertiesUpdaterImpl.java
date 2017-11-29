@@ -20,10 +20,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,7 +33,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -158,12 +154,9 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   }
 
   private void doPushRecursively(VirtualFile dir, final FilePropertyPusher[] pushers, ProjectFileIndex fileIndex) {
-    fileIndex.iterateContentUnderDirectory(dir, new ContentIterator() {
-      @Override
-      public boolean processFile(final VirtualFile fileOrDir) {
-        applyPushersToFile(fileOrDir, pushers, null);
-        return true;
-      }
+    fileIndex.iterateContentUnderDirectory(dir, fileOrDir -> {
+      applyPushersToFile(fileOrDir, pushers, null);
+      return true;
     });
   }
 
@@ -258,36 +251,25 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   }
 
   private void doPushAll(final FilePropertyPusher[] pushers) {
-    Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      @Override
-      public Module[] compute() {
-        return ModuleManager.getInstance(myProject).getModules();
-      }
-    });
+    Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModules());
 
     List<Runnable> tasks = new ArrayList<>();
 
     for (final Module module : modules) {
-      Runnable iteration = ApplicationManager.getApplication().runReadAction(new Computable<Runnable>() {
-        @Override
-        public Runnable compute() {
-          if (module.isDisposed()) return EmptyRunnable.INSTANCE;
-          ProgressManager.checkCanceled();
+      Runnable iteration = ReadAction.compute(() -> {
+        if (module.isDisposed()) return EmptyRunnable.INSTANCE;
+        ProgressManager.checkCanceled();
 
-          final Object[] moduleValues = new Object[pushers.length];
-          for (int i = 0; i < moduleValues.length; i++) {
-            moduleValues[i] = pushers[i].getImmediateValue(module);
-          }
-
-          final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-          return () -> fileIndex.iterateContent(new ContentIterator() {
-            @Override
-            public boolean processFile(final VirtualFile fileOrDir) {
-              applyPushersToFile(fileOrDir, pushers, moduleValues);
-              return true;
-            }
-          });
+        final Object[] moduleValues = new Object[pushers.length];
+        for (int i = 0; i < moduleValues.length; i++) {
+          moduleValues[i] = pushers[i].getImmediateValue(module);
         }
+
+        final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+        return () -> fileIndex.iterateContent(fileOrDir -> {
+          applyPushersToFile(fileOrDir, pushers, moduleValues);
+          return true;
+        });
       });
       tasks.add(iteration);
     }

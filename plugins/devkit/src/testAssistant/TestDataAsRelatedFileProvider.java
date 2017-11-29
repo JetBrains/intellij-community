@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,20 +43,14 @@ public class TestDataAsRelatedFileProvider extends GotoRelatedProvider {
     final Project project = context.getData(CommonDataKeys.PROJECT);
     final PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
     if (editor == null || element == null || project == null) {
-      return Collections.emptyList(); 
+      return Collections.emptyList();
     }
 
-    PsiMethod method = null;
-    for (PsiElement e = element; e != null; e = e.getParent()) {
-      if (e instanceof PsiMethod) {
-        method = (PsiMethod)e;
-        break;
-      }
-    }
+    PsiMethod method = UastContextKt.getUastParentOfType(element, UMethod.class);
     if (method == null) {
       return Collections.emptyList();
-    } 
-    
+    }
+
     final List<String> testDataFiles = NavigateToTestDataAction.findTestDataFiles(context);
     if (testDataFiles == null || testDataFiles.isEmpty()) {
       return Collections.emptyList();

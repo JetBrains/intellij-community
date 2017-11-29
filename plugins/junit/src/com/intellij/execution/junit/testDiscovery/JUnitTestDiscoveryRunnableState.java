@@ -84,7 +84,7 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
       protected void onFound() {
         if (myPatterns != null) {
           try {
-            addClassesListToJavaParameters(myPatterns, FunctionUtil.<String>id(), "", false, getJavaParameters());
+            addClassesListToJavaParameters(myPatterns, FunctionUtil.id(), "", false, getJavaParameters());
           }
           catch (ExecutionException ignored) {
           }

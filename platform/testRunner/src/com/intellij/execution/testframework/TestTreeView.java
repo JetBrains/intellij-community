@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-May-2007
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -34,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -184,12 +179,10 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      public String convert(final TreePath path) {
-        final AbstractTestProxy testProxy = getSelectedTest(path);
-        if (testProxy == null) return null;
-        return testProxy.getName();
-      }
+    new TreeSpeedSearch(this, path -> {
+      final AbstractTestProxy testProxy = getSelectedTest(path);
+      if (testProxy == null) return null;
+      return testProxy.getName();
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);

@@ -23,7 +23,7 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git.AddLoadedFile
 import org.jetbrains.settingsRepository.git.DeleteFile
-import org.jetbrains.settingsRepository.git.createGitRepository
+import org.jetbrains.settingsRepository.git.buildRepository
 import org.jetbrains.settingsRepository.git.edit
 import org.junit.Rule
 import java.nio.file.FileSystem
@@ -72,3 +72,9 @@ abstract class IcsTestCase {
 }
 
 fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newPath(directoryName))
+
+private fun createGitRepository(dir: Path): Repository {
+  val repository = buildRepository(workTree = dir)
+  repository.create()
+  return repository
+}

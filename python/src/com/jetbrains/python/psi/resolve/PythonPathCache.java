@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -25,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -55,7 +54,7 @@ public abstract class PythonPathCache {
       // At least one element is invalid
       return null;
     }
-    return elements;
+    return elements != null ? Collections.unmodifiableList(elements) : null;
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
@@ -69,14 +68,15 @@ public abstract class PythonPathCache {
     if (vFile == null) {
       return null;
     }
-    return myQNameCache.get(vFile.getUrl());
+    final List<QualifiedName> names = myQNameCache.get(vFile.getUrl());
+    return names != null ? Collections.unmodifiableList(names) : null;
   }
 
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
     myQNameCache.put(vFile.getUrl(), new ArrayList<>(qNames));
   }
 
-  protected class MyVirtualFileAdapter extends VirtualFileAdapter {
+  protected class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       clearCache();

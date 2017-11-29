@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class VcsUsagesCollector extends AbstractApplicationUsagesCollector {
+public class VcsUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "vcs";
 
   @NotNull

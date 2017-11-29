@@ -39,14 +39,14 @@ public class ExtensionsComplexTest {
   private List<MyAreaInstance> myAreasToDispose;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myAreasToDispose = new ArrayList<>();
     Extensions.registerAreaClass("area", null);
     Extensions.registerAreaClass("child_area", "area");
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     for (MyAreaInstance instance : myAreasToDispose) {
       Extensions.disposeArea(instance);
     }
@@ -59,7 +59,7 @@ public class ExtensionsComplexTest {
   }
 
   @Test
-  public void testPluginInit() throws Exception {
+  public void testPluginInit() {
     initExtensionPoints(
       PLUGIN_NAME, "<extensionPoints>\n" +
                    "  <extensionPoint name=\"extensionPoint\" beanClass=\"com.intellij.openapi.extensions.impl.XMLTestBean\" />\n" +
@@ -115,7 +115,7 @@ public class ExtensionsComplexTest {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      Extensions.getArea(instance).registerExtensionPoint(pluginName, child);
+      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtensionPoint(pluginName, child);
     }
   }
 
@@ -123,7 +123,7 @@ public class ExtensionsComplexTest {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      Extensions.getArea(instance).registerExtension(element.getNamespaceURI(), child);
+      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtension(element.getNamespaceURI(), child);
     }
   }
 

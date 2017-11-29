@@ -42,6 +42,7 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
      return SpellCheckerBundle.message("spelling");
    }
 
+  @Override
   @Nullable
    @NonNls
    public String getHelpTopic() {

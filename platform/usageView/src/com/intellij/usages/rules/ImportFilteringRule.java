@@ -18,11 +18,6 @@ package com.intellij.usages.rules;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.usages.rules.UsageFilteringRule;
 
-/**
- * User: Maxim.Mossienko
- * Date: 11.03.2010
- * Time: 19:08:33
- */
 public abstract class ImportFilteringRule implements UsageFilteringRule {
   public static final ExtensionPointName<ImportFilteringRule> EP_NAME = ExtensionPointName.create("com.intellij.importFilteringRule");
 }

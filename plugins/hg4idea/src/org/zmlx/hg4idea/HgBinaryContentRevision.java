@@ -31,7 +31,7 @@ public class HgBinaryContentRevision extends HgContentRevision implements Binary
 
   @Nullable
   @Override
-  public byte[] getBinaryContent() throws VcsException {
+  public byte[] getBinaryContent() {
     return getContentAsBytes();
   }
 }

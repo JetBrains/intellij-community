@@ -32,9 +32,9 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -72,13 +72,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -105,7 +105,7 @@ public class Switcher extends AnAction implements DumbAware {
   @NotNull private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
-    Shortcut recentFiles = ArrayUtil.getFirstElement(KeymapManager.getInstance().getActiveKeymap().getShortcuts("RecentFiles"));
+    Shortcut recentFiles = ArrayUtil.getFirstElement(getActiveKeymapShortcuts("RecentFiles").getShortcuts());
     List<Shortcut> shortcuts = ContainerUtil.newArrayList();
     for (char ch = '0'; ch <= '9'; ch++) {
       shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
@@ -629,11 +629,15 @@ public class Switcher extends AnAction implements DumbAware {
         }).createPopup();
 
       if (isPinnedMode()) {
-        new AnAction(null, null, null) {
+        new DumbAwareAction(null, null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
               mySpeedSearch.hidePopup();
+              Object[] elements = mySpeedSearch.getAllElements();
+              if (elements != null && elements.length > 0) {
+                mySpeedSearch.selectElement(elements[0], "");
+              }
             }
             else {
               myPopup.cancel();
@@ -641,7 +645,7 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
-      new AnAction(null, null, null) {
+      new DumbAwareAction(null, null, null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           //suppress all actions to activate a toolwindow : IDEA-71277
@@ -653,6 +657,7 @@ public class Switcher extends AnAction implements DumbAware {
         window = WindowManager.getInstance().getFrame(project);
       }
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
+      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       myPopup.showInCenterOf(window);
 
       Container popupFocusAncestor = getPopupFocusAncestor();

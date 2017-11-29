@@ -17,8 +17,8 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -158,7 +158,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     final boolean changed = myState.IGNORE_SPACES_IN_ANNOTATE != value;
     myState.IGNORE_SPACES_IN_ANNOTATE = value;
     if (changed) {
-      getProject().getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
+      BackgroundTaskUtil.syncPublisher(getProject(), VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
   }
 
@@ -374,12 +374,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
       myAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
-      Disposer.register(svnVcs.getProject(), new Disposable() {
-        @Override
-        public void dispose() {
-          myAuthManager = null;
-        }
-      });
+      Disposer.register(svnVcs.getProject(), () -> myAuthManager = null);
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));
@@ -505,6 +500,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
+  @NotNull
   public MergeRootInfo getMergeRootInfo(final File file, final SvnVcs svnVcs) {
     if (!myMergeRootInfos.containsKey(file)) {
       myMergeRootInfos.put(file, new MergeRootInfo(file, svnVcs));

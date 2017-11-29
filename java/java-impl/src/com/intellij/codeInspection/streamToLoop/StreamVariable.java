@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import one.util.streamex.StreamEx;
@@ -38,7 +39,7 @@ import java.util.List;
 class StreamVariable {
   private static final Logger LOG = Logger.getInstance(StreamVariable.class);
 
-  static StreamVariable STUB = new StreamVariable("") {
+  static StreamVariable STUB = new StreamVariable(PsiType.VOID) {
     @Override
     public void addBestNameCandidate(String candidate) {
     }
@@ -54,17 +55,17 @@ class StreamVariable {
   };
 
   String myName;
-  @NotNull String myType;
+  @NotNull PsiType myType;
   boolean myFinal;
 
   private Collection<String> myBestCandidates = new LinkedHashSet<>();
   private Collection<String> myOtherCandidates = new LinkedHashSet<>();
 
-  StreamVariable(@NotNull String type) {
+  StreamVariable(@NotNull PsiType type) {
     myType = type;
   }
 
-  StreamVariable(@NotNull String type, @NotNull String name) {
+  StreamVariable(@NotNull PsiType type, @NotNull String name) {
     myType = type;
     myName = name;
   }
@@ -103,7 +104,7 @@ class StreamVariable {
   void register(StreamToLoopReplacementContext context) {
     LOG.assertTrue(myName == null);
     String[] fromType = JavaCodeStyleManager.getInstance(context.getProject())
-      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, context.createType(myType), true).names;
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, myType, true).names;
     List<String> variants = StreamEx.of(myBestCandidates).append(myOtherCandidates).append(fromType).distinct().toList();
     if (variants.isEmpty()) variants.add("val");
     myName = context.registerVarName(variants);
@@ -116,16 +117,16 @@ class StreamVariable {
   }
 
   @NotNull
-  String getType() {
+  PsiType getType() {
     return myType;
   }
 
   String getDeclaration() {
-    return getType() + " " + getName();
+    return getType().getCanonicalText() + " " + getName();
   }
 
   String getDeclaration(String initializer) {
-    return getType() + " " + getName() + "=" + initializer + ";\n";
+    return getType().getCanonicalText() + " " + getName() + "=" + initializer + ";\n";
   }
 
   public boolean isFinal() {

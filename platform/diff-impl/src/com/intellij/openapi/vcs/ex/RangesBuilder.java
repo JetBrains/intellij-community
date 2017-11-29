@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ex.Range.InnerRange;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,11 +54,16 @@ public class RangesBuilder {
                                          int currentShift,
                                          int vcsShift,
                                          boolean innerWhitespaceChanges) throws FilesTooBigForDiffException {
-    if (innerWhitespaceChanges) {
-      return createRangesSmart(current, vcs, currentShift, vcsShift);
+    try {
+      if (innerWhitespaceChanges) {
+        return createRangesSmart(current, vcs, currentShift, vcsShift);
+      }
+      else {
+        return createRangesSimple(current, vcs, currentShift, vcsShift);
+      }
     }
-    else {
-      return createRangesSimple(current, vcs, currentShift, vcsShift);
+    catch (DiffTooBigException e) {
+      throw new FilesTooBigForDiffException();
     }
   }
 
@@ -64,7 +71,7 @@ public class RangesBuilder {
   private static List<Range> createRangesSimple(@NotNull List<String> current,
                                                 @NotNull List<String> vcs,
                                                 int currentShift,
-                                                int vcsShift) throws FilesTooBigForDiffException {
+                                                int vcsShift) throws DiffTooBigException {
     FairDiffIterable iterable = ByLine.compare(vcs, current, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
 
     List<Range> result = new ArrayList<>();
@@ -83,7 +90,7 @@ public class RangesBuilder {
   private static List<Range> createRangesSmart(@NotNull List<String> current,
                                                @NotNull List<String> vcs,
                                                int currentShift,
-                                               int vcsShift) throws FilesTooBigForDiffException {
+                                               int vcsShift) throws DiffTooBigException {
     FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
 
     RangeBuilder rangeBuilder = new RangeBuilder(current, vcs, currentShift, vcsShift);
@@ -140,23 +147,28 @@ public class RangesBuilder {
       myResult.add(newRange);
     }
 
-    @NotNull
+    @Nullable
     private List<InnerRange> calcInnerRanges(@NotNull com.intellij.diff.util.Range blockRange) {
-      List<String> vcs = myVcs.subList(blockRange.start1, blockRange.end1);
-      List<String> current = myCurrent.subList(blockRange.start2, blockRange.end2);
+      try {
+        List<String> vcs = myVcs.subList(blockRange.start1, blockRange.end1);
+        List<String> current = myCurrent.subList(blockRange.start2, blockRange.end2);
 
-      ArrayList<InnerRange> result = new ArrayList<>();
-      FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
-      for (Pair<com.intellij.diff.util.Range, Boolean> pair : DiffIterableUtil.iterateAll(iwIterable)) {
-        com.intellij.diff.util.Range range = pair.first;
-        Boolean equals = pair.second;
+        ArrayList<InnerRange> result = new ArrayList<>();
+        FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
+        for (Pair<com.intellij.diff.util.Range, Boolean> pair : DiffIterableUtil.iterateAll(iwIterable)) {
+          com.intellij.diff.util.Range range = pair.first;
+          Boolean equals = pair.second;
 
-        byte type = equals ? Range.EQUAL : getChangeType(range.start1, range.end1, range.start2, range.end2);
-        result.add(new InnerRange(range.start2 + blockRange.start2, range.end2 + blockRange.start2,
-                                  type));
+          byte type = equals ? Range.EQUAL : getChangeType(range.start1, range.end1, range.start2, range.end2);
+          result.add(new InnerRange(range.start2 + blockRange.start2, range.end2 + blockRange.start2,
+                                    type));
+        }
+        result.trimToSize();
+        return result;
       }
-      result.trimToSize();
-      return result;
+      catch (DiffTooBigException e) {
+        return null;
+      }
     }
   }
 

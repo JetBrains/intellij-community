@@ -56,6 +56,8 @@ public interface EditorColors {
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
+  ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
+  ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
   @Deprecated ColorKey FOLDING_TREE_COLOR = TEARLINE_COLOR;
   @Deprecated ColorKey SELECTED_FOLDING_TREE_COLOR = SELECTED_TEARLINE_COLOR;
 
@@ -71,4 +73,6 @@ public interface EditorColors {
   TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
   TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
   TextAttributesKey BREADCRUMBS_INACTIVE = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_INACTIVE");
+
+  ColorKey VISUAL_INDENT_GUIDE_COLOR = ColorKey.createColorKey("VISUAL_INDENT_GUIDE");
 }

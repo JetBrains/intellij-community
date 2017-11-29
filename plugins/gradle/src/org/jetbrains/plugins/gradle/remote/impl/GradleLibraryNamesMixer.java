@@ -24,7 +24,7 @@ import java.util.*;
 public class GradleLibraryNamesMixer {
 
   /**
-   * Holds mappings like <code>('file name'; boolean)</code> where <code>'file name'</code> defines 'too common' file/dir
+   * Holds mappings like {@code ('file name'; boolean)} where {@code 'file name'} defines 'too common' file/dir
    * name that should not be used during library name generation. Boolean flag indicates if 'common file name' may be used
    * if 'non-common' files are the same.
    * <p/>
@@ -38,10 +38,10 @@ public class GradleLibraryNamesMixer {
    *        |_test
    *           |_resources
    * </pre>
-   * Let's say we have two libraries where one of them points to <code>'src/main/resources'</code> and another one
-   * to <code>'src/test/resources'</code>. We want to generate names <code>'module-resources'</code> and
-   * <code>'module-test-resources'</code> respectively because <code>'test'</code> entry at the current collection is
-   * stored with <code>'true'</code> flag.
+   * Let's say we have two libraries where one of them points to {@code 'src/main/resources'} and another one
+   * to {@code 'src/test/resources'}. We want to generate names {@code 'module-resources'} and
+   * {@code 'module-test-resources'} respectively because {@code 'test'} entry at the current collection is
+   * stored with {@code 'true'} flag.
    */
   private static final Map<String, Boolean> NON_UNIQUE_PATH_ENTRIES = new HashMap<>();
   static {
@@ -78,11 +78,11 @@ public class GradleLibraryNamesMixer {
   }
 
   /**
-   * Does the same as {@link #mixNames(Collection)} but uses given <code>('library name; wrapped library'}</code> mappings cache.
+   * Does the same as {@link #mixNames(Collection)} but uses given {@code ('library name; wrapped library'}} mappings cache.
    * 
    * @param libraries  libraries to process
    * @param cache      cache to use
-   * @return           <code>true</code> if all of the given libraries have distinct names now; <code>false</code> otherwise
+   * @return           {@code true} if all of the given libraries have distinct names now; {@code false} otherwise
    */
   private static boolean doMixNames(@NotNull Collection<Wrapped> libraries, @NotNull Map<String, Wrapped> cache) {
     cache.clear();

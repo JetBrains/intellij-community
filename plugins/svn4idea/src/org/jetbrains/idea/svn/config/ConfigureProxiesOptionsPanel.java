@@ -22,11 +22,7 @@ import com.intellij.ui.InsertPathAction;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
@@ -113,12 +109,10 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     initRepositories();
     putPatternsListener();
 
-    myTestConnectionButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final String value = (String) myRepositoriesList.getSelectedValue();
-        if ((value != null) && (myTestConnectionPerformer.enabled())) {
-          myTestConnectionPerformer.execute(value);
-        }
+    myTestConnectionButton.addActionListener(e -> {
+      final String value = (String)myRepositoriesList.getSelectedValue();
+      if ((value != null) && (myTestConnectionPerformer.enabled())) {
+        myTestConnectionPerformer.execute(value);
       }
     });
   }
@@ -146,11 +140,8 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     final ListSelectionModel selectionModel = new DefaultListSelectionModel();
     selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRepositoriesList.setSelectionModel(selectionModel);
-    myRepositoriesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        myTestConnectionButton.setEnabled(myTestConnectionPerformer.enabled() && (myRepositoriesList.getSelectedValue() != null));
-      }
-    });
+    myRepositoriesList.addListSelectionListener(
+      e -> myTestConnectionButton.setEnabled(myTestConnectionPerformer.enabled() && (myRepositoriesList.getSelectedValue() != null)));
   }
 
   private void fillMappings() {

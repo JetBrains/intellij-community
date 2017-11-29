@@ -21,15 +21,10 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: 16-Dec-2005
- */
 public class TextFieldWithStoredHistory extends TextFieldWithHistory {
   private final String myPropertyName;
 
   // API compatibility with 7.0.1
-  @SuppressWarnings({"UnusedDeclaration"})
   public TextFieldWithStoredHistory(@NonNls final String propertyName, boolean cropList) {
     this(propertyName);
   }
@@ -39,6 +34,7 @@ public class TextFieldWithStoredHistory extends TextFieldWithHistory {
     reset();
   }
 
+  @Override
   public void addCurrentTextToHistory() {
     super.addCurrentTextToHistory();
     PropertiesComponent.getInstance().setValue(myPropertyName, StringUtil.join(getHistory(), "\n"));
@@ -51,7 +47,7 @@ public class TextFieldWithStoredHistory extends TextFieldWithHistory {
       final String[] items = history.split("\n");
       ArrayList<String> result = new ArrayList<>();
       for (String item : items) {
-        if (item != null && item.length() > 0) {
+        if (item != null && !item.isEmpty()) {
           result.add(item);
         }
       }

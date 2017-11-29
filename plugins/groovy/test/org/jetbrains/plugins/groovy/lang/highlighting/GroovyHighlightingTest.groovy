@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
-import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
+import com.siyeh.ig.junit.AbstractTestClassNamingConvention
+import com.siyeh.ig.junit.TestClassNamingConvention
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
@@ -299,7 +300,10 @@ class Bar {{
 
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
-    doTest(new JUnitTestClassNamingConventionInspection(), new JUnitAbstractTestClassNamingConventionInspection())
+    def inspection = new NewGroovyClassNamingConventionInspection()
+    inspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    inspection.setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    doTest(inspection)
   }
 
   void testDuplicateMethods() {
@@ -348,6 +352,112 @@ class Baz implements I {
 
     myFixture.testHighlighting(false, false, false)
   }
+
+  void testMethodDelegate() {
+    myFixture.addClass('''\
+package groovy.lang;
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Delegate {}
+''')
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  @Delegate A getA(){return new A()}
+}
+
+new B().foo()
+''')
+
+    fixture.checkHighlighting()
+  }
+
+  void testMethodDelegateError() {
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  <error>@Delegate</error> A getA(int i){return new A()}
+}
+
+new B().foo()
+''')
+
+    fixture.checkHighlighting()
+  }
+
+
+  void testBuilderSimpleStrategyError() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+<error>@Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)</error>
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+''')
+
+    fixture.checkHighlighting()
+  }
+
+  void testBuilderSimpleStrategy() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy)
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+new Pojo().setName("sd").setCounter(5)
+''')
+
+    fixture.checkHighlighting()
+  }
+
 
   void testPrimitiveTypeParams() {
     myFixture.configureByText('a.groovy', '''\
@@ -833,7 +943,7 @@ class A {
   class B {}
 }
 
-A.B foo = new A.<warning descr="Cannot reference non-static symbol 'A.B' from static context">B</warning>()
+A.B foo = new A.B()
 ''', GrUnresolvedAccessInspection)
   }
 
@@ -1661,7 +1771,7 @@ class MyCommand {
     testHighlighting('''\
 class MyController {
      def list() {
-         def myInnerClass = new MyCommand.<warning descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</warning>()
+         def myInnerClass = new MyCommand.MyInnerClass()
          print myInnerClass
     }
 }
@@ -1689,8 +1799,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -1710,8 +1818,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -2020,7 +2126,24 @@ package a.b.c.trait.d.as.e.def.f.in.g;
 public class Foo {} 
 '''
     testHighlighting '''\
-<info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
+import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*
 ''', false, true
+  }
+
+  void 'test resolve methods of boxed types on primitive qualifiers'() {
+    testHighlighting '''\
+class Widget {
+    float width = 1.1f
+}
+
+Widget w = new Widget()
+w.width.round()
+w.width.intValue()
+w.width.compareTo(2f)
+''', GrUnresolvedAccessInspection
+  }
+
+  void "test no warning on extension method with spread operator"() {
+    testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
   }
 }

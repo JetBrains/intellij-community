@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,62 +15,59 @@
  */
 package com.siyeh.ipp.varargs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 class VarargArgumentsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof PsiExpressionList)) {
       return false;
     }
     final PsiExpressionList argumentList = (PsiExpressionList)element;
-    final PsiElement grandParent = argumentList.getParent();
-    if (!(grandParent instanceof PsiMethodCallExpression)) {
+    final PsiElement parent = argumentList.getParent();
+    if (!(parent instanceof PsiCall)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)grandParent;
-    final PsiMethod method = methodCallExpression.resolveMethod();
+    final PsiCall call = (PsiCall)parent;
+    final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (!resolveResult.isValidResult()) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
     if (method == null || !method.isVarArgs()) {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();
-    final int parametersCount = parameterList.getParametersCount();
+    final PsiParameter[] parameters = parameterList.getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length < parametersCount) {
+    if (arguments.length < parameters.length) {
       return false;
     }
-
-    // after invoking the (false positive) quick fix for
-    // "Unnecessarily qualified static usage" inspection
-    // the psi gets into a bad state, this guards against that.
-    // http://www.jetbrains.net/jira/browse/IDEADEV-40124
-    final PsiReferenceExpression methodExpression =
-      methodCallExpression.getMethodExpression();
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
-    if (qualifier == null) {
-      final PsiReferenceParameterList typeParameterList =
-        methodExpression.getParameterList();
-      if (typeParameterList != null) {
-        final PsiTypeElement[] typeParameterElements =
-          typeParameterList.getTypeParameterElements();
-        if (typeParameterElements.length > 0) {
-          return false;
-        }
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    final PsiType lastParameterType = PsiTypesUtil.getParameterType(parameters, parameters.length - 1, true);
+    final PsiType substitutedType = substitutor.substitute(lastParameterType);
+    if (substitutedType instanceof PsiCapturedWildcardType) {
+      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
+      if (!capturedWildcardType.getWildcard().isSuper()) {
+        // red code
+        return false;
       }
     }
 
-    if (arguments.length != parametersCount) {
+    if (!JavaGenericsUtil.isReifiableType(substitutedType)) {
+      return false;
+    }
+    if (arguments.length != parameters.length) {
       return true;
     }
-    final PsiExpression lastExpression =
-      arguments[arguments.length - 1];
-    final PsiExpression expression = PsiUtil.deparenthesizeExpression(
-      lastExpression);
+    final PsiExpression lastExpression = arguments[arguments.length - 1];
+    final PsiExpression expression = PsiUtil.deparenthesizeExpression(lastExpression);
     if (expression instanceof PsiLiteralExpression) {
       final String text = expression.getText();
       if ("null".equals(text)) {
@@ -85,15 +82,6 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     }
     final PsiArrayType arrayType = (PsiArrayType)lastArgumentType;
     final PsiType type = arrayType.getComponentType();
-    final PsiParameter[] parameters = parameterList.getParameters();
-    final PsiParameter lastParameter = parameters[parameters.length - 1];
-    final PsiEllipsisType lastParameterType =
-      (PsiEllipsisType)lastParameter.getType();
-    final PsiType lastType = lastParameterType.getComponentType();
-    final JavaResolveResult resolveResult =
-      methodCallExpression.resolveMethodGenerics();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiType substitutedType = substitutor.substitute(lastType);
     return !substitutedType.equals(type);
   }
 }

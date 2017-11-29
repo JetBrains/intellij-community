@@ -23,11 +23,16 @@ public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageIn
 
   private final PsiMethod myCalledMethod;
   private final PsiMethod myCallerMethod;
+  private final PsiParameter myParameterInCaller;
 
-  public SafeDeleteParameterCallHierarchyUsageInfo(PsiMethod calledMethod, PsiParameter parameter, PsiMethod callerMethod) {
+  public SafeDeleteParameterCallHierarchyUsageInfo(PsiMethod calledMethod,
+                                                   PsiParameter parameter,
+                                                   PsiMethod callerMethod,
+                                                   PsiParameter parameterInCaller) {
     super(calledMethod, parameter);
     myCalledMethod = calledMethod;
     myCallerMethod = callerMethod;
+    myParameterInCaller = parameterInCaller;
   }
 
   @Override
@@ -60,6 +65,7 @@ public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageIn
 
     if (!myCalledMethod.equals(info.myCalledMethod)) return false;
     if (!myCallerMethod.equals(info.myCallerMethod)) return false;
+    if (!myParameterInCaller.equals(info.myParameterInCaller)) return false;
 
     return true;
   }
@@ -69,6 +75,11 @@ public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageIn
     int result = super.hashCode();
     result = 31 * result + myCalledMethod.hashCode();
     result = 31 * result + myCallerMethod.hashCode();
+    result = 31 * result + myParameterInCaller.hashCode();
     return result;
+  }
+
+  public PsiParameter getParameterInCaller() {
+    return myParameterInCaller;
   }
 }

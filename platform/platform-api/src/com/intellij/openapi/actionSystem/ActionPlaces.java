@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,10 +138,13 @@ public abstract class ActionPlaces {
     ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
     DEBUGGER_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, METHOD_HIERARCHY_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR, JAVADOC_TOOLBAR,
     FILE_HISTORY_TOOLBAR, FILEHISTORY_VIEW_TOOLBAR, LVCS_DIRECTORY_HISTORY_TOOLBAR, CHANGES_VIEW_TOOLBAR, PHING_EXPLORER_TOOLBAR,
-    PHING_MESSAGES_TOOLBAR, ANALYZE_STACKTRACE_PANEL_TOOLBAR, DIFF_TOOLBAR
+    PHING_MESSAGES_TOOLBAR, ANALYZE_STACKTRACE_PANEL_TOOLBAR, DIFF_TOOLBAR, NAVIGATION_BAR_TOOLBAR
   );
 
 
+  /**
+   * @deprecated use {@link AnActionEvent#isFromActionToolbar()}
+   */
   public static boolean isToolbarPlace(@NotNull String place) {
     return ourToolbarPlaces.contains(place);
   }

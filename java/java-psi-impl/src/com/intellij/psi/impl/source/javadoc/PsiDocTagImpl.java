@@ -57,6 +57,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElement.ARRAY_FACTORY);

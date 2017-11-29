@@ -150,7 +150,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // TODO: 3) Properties change is currently not added as part of result change like in SvnChangeProviderContext.patchWithPropertyChange
 
     SvnTarget subTarget1 = SvnUtil.append(target1, diffPath.path, true);
-    String relativePath = SvnUtil.getRelativeUrl(SvnUtil.toDecodedString(target1), SvnUtil.toDecodedString(subTarget1));
+    String relativePath = SvnUtil.getRelativeUrl(target1, subTarget1);
 
     if (relativePath == null) {
       throw new SvnBindException("Could not get relative path for " + target1 + " and " + subTarget1);

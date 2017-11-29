@@ -35,7 +35,7 @@ public class StringTable extends VersionInfoBin {
       if (bin.getName().equals(key)) {
         StringTableEntry entry = (StringTableEntry) bin;
         ((WChar) entry.getMember("Value")).setValue(value);
-        ((Word) entry.getMember("wValueLength")).setValue(value.length());
+        ((Word) entry.getMember("wValueLength")).setValue(value.length() + 1);
         return;
       }
     }

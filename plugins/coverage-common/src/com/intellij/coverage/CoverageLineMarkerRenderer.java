@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -269,6 +268,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return editor.getColorsScheme().getAttributes(myKey).getErrorStripeColor();
   }
 
+  @NotNull
   @Override
   public Position getPosition() {
     return Position.LEFT;

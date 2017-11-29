@@ -28,11 +28,11 @@ inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
   CommandProcessor.getInstance().runUndoTransparentAction {
     result = ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
   }
+  @Suppress("UNCHECKED_CAST")
   return result as T
 }
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(
-  Computable { runnable() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 
 /**
  * @exclude Internal use only
@@ -46,12 +46,24 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
     else {
       var result: T? = null
       SwingUtilities.invokeAndWait { result = runnable() }
+      @Suppress("UNCHECKED_CAST")
       return result as T
     }
   }
   else {
     var result: T? = null
     app.invokeAndWait({ result = runnable() }, modalityState ?: ModalityState.defaultModalityState())
+    @Suppress("UNCHECKED_CAST")
     return result as T
+  }
+}
+
+inline fun runInEdt(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
+  val app = ApplicationManager.getApplication()
+  if (app.isDispatchThread) {
+    runnable()
+  }
+  else {
+    app.invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
   }
 }

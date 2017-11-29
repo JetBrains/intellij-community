@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  *         Date: 1/19/12
  */
+@FunctionalInterface
 public interface UnusedDeclarationFixProvider {
   ExtensionPointName<UnusedDeclarationFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.unusedDeclarationFixProvider");
 

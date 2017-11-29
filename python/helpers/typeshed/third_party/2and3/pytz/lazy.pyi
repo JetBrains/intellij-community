@@ -1,13 +1,14 @@
-# Stubs for pytz.lazy (Python 3.5)
-
-from typing import Any, Iterable, List, Set, Dict  # NOQA
+from typing import Iterator, List, Set, TypeVar
 from collections import Mapping
 
-class LazyDict(Mapping):
-    pass
+_T = TypeVar('_T')
+_KT = TypeVar('_KT')
+_VT = TypeVar('_VT')
 
-class LazyList(List):
-    pass
+class LazyDict(Mapping[_KT, _VT]):
+    def __getitem__(self, key: _KT) -> _VT: ...
+    def __iter__(self) -> Iterator[_KT]: ...
+    def __len__(self) -> int: ...
 
-class LazySet(Set):
-    pass
+class LazyList(List[_T]): ...
+class LazySet(Set[_T]): ...

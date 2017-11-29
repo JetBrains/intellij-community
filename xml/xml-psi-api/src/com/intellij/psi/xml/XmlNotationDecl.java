@@ -15,13 +15,6 @@
  */
 package com.intellij.psi.xml;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 13.11.2003
- * Time: 17:48:06
- * To change this template use Options | File Templates.
- */
 public interface XmlNotationDecl extends XmlElement{
   XmlElement getNameElement();
   XmlElementContentSpec getContentSpecElement();

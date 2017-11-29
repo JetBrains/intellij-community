@@ -124,7 +124,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   @NotNull
   @Override
-  public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
+  public List<PyType> getElementTypes() {
     return myElementTypes;
   }
 

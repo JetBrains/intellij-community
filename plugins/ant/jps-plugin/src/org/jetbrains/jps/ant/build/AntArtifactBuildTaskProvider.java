@@ -183,7 +183,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       }
 
       List <String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
-                                                                          Collections.<String>emptyList(), classpath, vmParams, programParams, false);
+                                                                           Collections.emptyList(), classpath, vmParams, programParams, false);
       try {
         Process process = new ProcessBuilder(commandLine).directory(new File(buildFilePath).getParentFile()).start();
         String commandLineString = StringUtil.join(commandLine, " ");
@@ -195,14 +195,14 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         final StringBuilder errorOutput = new StringBuilder();
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDERR) {
               errorOutput.append(event.getText());
             }
           }
 
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             int exitCode = event.getExitCode();
             if (exitCode != 0) {
               context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, errorOutput.toString()));

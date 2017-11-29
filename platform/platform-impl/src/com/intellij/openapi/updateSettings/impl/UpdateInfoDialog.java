@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
@@ -58,9 +44,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -90,7 +76,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
     myPatch = patch;
-    myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
+    myWriteProtected = myPatch != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     init();
@@ -239,7 +225,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void showPatchInstructions(String[] command) {
-    String product = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    String product = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.US);
     String version = ApplicationInfo.getInstance().getFullVersion();
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {

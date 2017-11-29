@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -47,7 +46,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author alex
@@ -441,16 +439,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         .withHideIgnored(false)
         .withShowHiddenFiles(true);
 
-      FileChooser.chooseFiles(descriptor, myProject, file, new Consumer<List<VirtualFile>>() {
-        @Override
-        public void consume(List<VirtualFile> files) {
-          if (files.size() == 1) {
-            path[0] = FileUtil.toSystemDependentName(files.get(0).getPath());
-            myKeyFileText.setText(path[0]);
-          }
-          checkKeyFile();
-          updateOKButton();
+      FileChooser.chooseFiles(descriptor, myProject, file, files -> {
+        if (files.size() == 1) {
+          path[0] = FileUtil.toSystemDependentName(files.get(0).getPath());
+          myKeyFileText.setText(path[0]);
         }
+        checkKeyFile();
+        updateOKButton();
       });
     }
   }

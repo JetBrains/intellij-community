@@ -24,7 +24,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -91,9 +90,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module createModule(final String path, final ModuleType moduleType) {
-    Module module = ApplicationManager.getApplication().runWriteAction(
-      (Computable<Module>)() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId())
-    );
+    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
 
     myModulesToDispose.add(module);
     return module;

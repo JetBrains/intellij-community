@@ -16,6 +16,7 @@
 package com.intellij.diff;
 
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class DiffContextEx extends DiffContext {
   /*
@@ -41,4 +42,7 @@ public abstract class DiffContextEx extends DiffContext {
    */
   @CalledInAwt
   public abstract void showProgressBar(boolean enabled);
+
+  @CalledInAwt
+  public abstract void setWindowTitle(@NotNull String title);
 }

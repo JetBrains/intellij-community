@@ -82,7 +82,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
             resultPromise.setResult(null);
             return;
           }
-          resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session));
+          resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session, false));
         });
         return resultPromise;
       });

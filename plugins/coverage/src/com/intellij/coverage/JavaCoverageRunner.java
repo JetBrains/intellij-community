@@ -32,7 +32,7 @@ import java.io.IOException;
  * @author Roman.Chernyatchik
  */
 public abstract class JavaCoverageRunner extends CoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + JavaCoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaCoverageRunner.class);
   private static final String COVERAGE_AGENT_PATH = "coverage.lib.path";
 
   public boolean isJdk7Compatible() {
@@ -47,8 +47,13 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   public abstract void appendCoverageArgument(final String sessionDataFilePath, @Nullable final String[] patterns, final SimpleJavaParameters parameters,
                                               final boolean collectLineInfo, final boolean isSampling);
 
-  public void appendCoverageArgument(final String sessionDataFilePath, @Nullable final String[] patterns, final SimpleJavaParameters parameters,
-                                     final boolean collectLineInfo, final boolean isSampling, String sourceMapPath) {
+  public void appendCoverageArgument(final String sessionDataFilePath,
+                                     @Nullable final String[] patterns,
+                                     String[] excludePatterns,
+                                     final SimpleJavaParameters parameters,
+                                     final boolean collectLineInfo,
+                                     final boolean isSampling,
+                                     String sourceMapPath) {
     appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
   }
 

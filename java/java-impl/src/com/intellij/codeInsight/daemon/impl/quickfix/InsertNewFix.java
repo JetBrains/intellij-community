@@ -47,7 +47,7 @@ public class InsertNewFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall);
+    return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall) && !(myMethodCall.getNextSibling() instanceof PsiErrorElement);
   }
 
   @NotNull

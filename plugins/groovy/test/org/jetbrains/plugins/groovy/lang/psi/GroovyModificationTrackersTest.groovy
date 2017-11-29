@@ -50,7 +50,7 @@ class A {
 class A {
   <caret>
 }
-''', true
+''', false, true
   }
 
   void 'test script body'() {
@@ -58,29 +58,35 @@ class A {
   }
 
   void 'test script variable'() {
-    doTest 'def a<caret>= 1', true
+    doTest 'def a<caret>= 1', false, true
   }
 
-  void doTest(String text, boolean shouldChange) {
+  void doTest(String text, boolean structureShouldChange, boolean oocbShouldChange = structureShouldChange) {
     fixture.configureByText '_.groovy', text
     def (long beforeStructure, long beforeOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
     List<Throwable> changeTraces = []
-    if (!shouldChange) {
+    if (!structureShouldChange && !oocbShouldChange) {
       PsiModificationTracker.Listener listener = {
-        def message = "java scrtucture: $javaStructureCount, out of code block: $outOfCodeBlockCount"
+        def message = "java structure: $javaStructureCount, out of code block: $outOfCodeBlockCount"
         changeTraces << new Throwable(message)
       }
-      project.messageBus.connect testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
+      project.messageBus.connect myFixture.testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
     }
     fixture.type " "
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
     def (long afterStructure, long afterOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
     try {
-      if (shouldChange) {
-        assert beforeStructure < afterStructure && beforeOutOfCodeBlock < afterOutOfCodeBlock
+      if (structureShouldChange) {
+        assert beforeStructure < afterStructure
       }
       else {
-        assert beforeStructure == afterStructure && beforeOutOfCodeBlock == afterOutOfCodeBlock
+        assert beforeStructure == afterStructure
+      }
+      if (oocbShouldChange) {
+        assert beforeOutOfCodeBlock < afterOutOfCodeBlock
+      }
+      else {
+        assert beforeOutOfCodeBlock == afterOutOfCodeBlock
       }
     }
     catch (Throwable e) {

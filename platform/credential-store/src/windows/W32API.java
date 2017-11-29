@@ -17,8 +17,8 @@ import com.sun.jna.ptr.ByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
 /** Base type for most W32 API libraries.  Provides standard options
- * for unicode/ASCII mappings.  Set the system property <code>w32.ascii</code>
- * to <code>true</code> to default to the ASCII mappings.
+ * for unicode/ASCII mappings.  Set the system property {@code w32.ascii}
+ * to {@code true} to default to the ASCII mappings.
  */
 @SuppressWarnings("serial")
 public interface W32API extends StdCallLibrary {    

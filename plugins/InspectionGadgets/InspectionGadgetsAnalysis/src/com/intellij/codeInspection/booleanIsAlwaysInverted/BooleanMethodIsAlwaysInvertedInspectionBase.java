@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
@@ -23,8 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +59,7 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.isReferenceTo(psiMethod)) {
-          if (isInvertedMethodCall(methodExpression)) return;
+          if (isInvertedMethodCall(call)) return;
           refMethod.putUserData(ALWAYS_INVERTED, Boolean.FALSE);
         }
       }
@@ -87,16 +74,11 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
     });
   }
 
-  private static boolean isInvertedMethodCall(final PsiReferenceExpression methodExpression) {
-    final PsiPrefixExpression prefixExpression = PsiTreeUtil.getParentOfType(methodExpression, PsiPrefixExpression.class);
+  static boolean isInvertedMethodCall(@NotNull PsiMethodCallExpression methodCallExpression) {
+    PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) return true; //don't flag super calls
-    if (prefixExpression != null) {
-      final IElementType tokenType = prefixExpression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.EXCL)) {
-        return true;
-      }
-    }
-    return false;
+    final PsiPrefixExpression prefixExpression = ObjectUtils.tryCast(methodCallExpression.getParent(), PsiPrefixExpression.class);
+    return prefixExpression != null && prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL);
   }
 
   @Override
@@ -151,14 +133,17 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
             }
           })) return null;
         }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier,
-                                                                       InspectionsBundle
-                                                                         .message("boolean.method.is.always.inverted.problem.descriptor"),
-                                                                       (LocalQuickFix)getQuickFix(null),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
+        return new ProblemDescriptor[]{createProblemDescriptor(manager, psiIdentifier)};
       }
     }
     return null;
+  }
+
+  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiIdentifier psiIdentifier) {
+    return manager.createProblemDescriptor(psiIdentifier,
+                                           InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
+                                           getInvertBooleanFix(),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 
   @Override
@@ -172,9 +157,11 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
           final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
             @Override
             public boolean process(PsiReference psiReference) {
-              final PsiElement psiReferenceExpression = psiReference.getElement();
-              if (psiReferenceExpression instanceof PsiReferenceExpression &&
-                  !isInvertedMethodCall((PsiReferenceExpression)psiReferenceExpression)) {
+              final PsiReferenceExpression psiReferenceExpression = ObjectUtils.tryCast(psiReference.getElement(), PsiReferenceExpression.class);
+              if (psiReferenceExpression == null) return false;
+              PsiMethodCallExpression methodCallExpression =
+                ObjectUtils.tryCast(psiReferenceExpression.getParent(), PsiMethodCallExpression.class);
+              if (methodCallExpression != null && !isInvertedMethodCall(methodCallExpression)) {
                 descriptionsProcessor.ignoreElement(refMethod);
               }
               return false;
@@ -186,6 +173,21 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
     });
     return false;
   }
+
+  @Override
+  public QuickFix getQuickFix(final String hint) {
+    return getInvertBooleanFix();
+  }
+
+  protected LocalQuickFix getInvertBooleanFix() {
+    return null;
+  }
+
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new BooleanMethodIsAlwaysInvertedLocalInspection(this);
+  }
+
 
   private static class BooleanInvertedAnnotator extends RefGraphAnnotator {
     @Override

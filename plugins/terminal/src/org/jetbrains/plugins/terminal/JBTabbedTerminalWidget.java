@@ -23,8 +23,6 @@ import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -72,12 +70,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   public JBTabbedTerminalWidget(@NotNull Project project,
                                 @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                                 final @NotNull Predicate<Pair<TerminalWidget, String>> createNewSessionAction, @NotNull Disposable parent) {
-    super(settingsProvider, new Predicate<TerminalWidget>() {
-      @Override
-      public boolean apply(TerminalWidget input) {
-        return createNewSessionAction.apply(Pair.<TerminalWidget, String>create(input, null));
-      }
-    });
+    super(settingsProvider, input -> createNewSessionAction.apply(Pair.create(input, null)));
     myProject = project;
 
     mySettingsProvider = settingsProvider;
@@ -100,7 +93,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
                                                           PsiFileSystemItem element = (PsiFileSystemItem)ao.getPsiElements()[0];
                                                           PsiDirectory dir = element instanceof PsiFile ? ((PsiFile)element).getContainingDirectory() : (PsiDirectory)element;
 
-                                                          createNewSessionAction.apply(Pair.<TerminalWidget, String>create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
+                                                          createNewSessionAction.apply(Pair.create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
                                                         }
                                                       }
                                                     }
@@ -121,18 +114,14 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       if (action.isHidden()) {
         continue;
       }
-      AnAction a = new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          KeyEvent event = e.getInputEvent() instanceof KeyEvent ? (KeyEvent)e.getInputEvent() : null;
-          if (!action.perform(event)) {
-            if (elseAction != null) {
-              elseAction.apply(event);
-            }
+      DumbAwareAction.create(e -> {
+        KeyEvent event = e.getInputEvent() instanceof KeyEvent ? (KeyEvent)e.getInputEvent() : null;
+        if (!action.perform(event)) {
+          if (elseAction != null) {
+            elseAction.apply(event);
           }
         }
-      };
-      a.registerCustomShortcutSet(action.getKeyCode(), action.getModifiers(), component);
+      }).registerCustomShortcutSet(action.getKeyCode(), action.getModifiers(), component);
     }
   }
 
@@ -143,12 +132,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     widget.addMessageFilter(myProject, new UrlFilter());
 
     convertActions(widget, widget.getActions());
-    convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), new Predicate<KeyEvent>() {
-      @Override
-      public boolean apply(KeyEvent input) {
-        widget.getTerminalPanel().handleKeyEvent(input);
-        return true;
-      }
+    convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), input -> {
+      widget.getTerminalPanel().handleKeyEvent(input);
+      return true;
     });
 
     return widget;

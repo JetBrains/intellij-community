@@ -27,7 +27,10 @@ import java.util.Map;
  * Soft keys hash map.
  * Null keys are NOT allowed
  * Null values are allowed
+ *
+ * @deprecated use {@link ContainerUtil#createSoftMap()} instead
  */
+@Deprecated
 public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   public SoftHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);

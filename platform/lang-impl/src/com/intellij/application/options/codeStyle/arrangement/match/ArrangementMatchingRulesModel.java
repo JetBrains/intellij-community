@@ -29,7 +29,7 @@ import javax.swing.table.DefaultTableModel;
 @SuppressWarnings("unchecked")
 public class ArrangementMatchingRulesModel extends DefaultTableModel {
 
-  private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchingRulesModel.class.getName());
+  private static final Logger LOG = Logger.getInstance(ArrangementMatchingRulesModel.class);
 
   @Override
   public int getColumnCount() {

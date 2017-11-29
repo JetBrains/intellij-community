@@ -44,22 +44,10 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
-  }
-
-  @Override
-  public void initComponent() {
   }
 
   @Override

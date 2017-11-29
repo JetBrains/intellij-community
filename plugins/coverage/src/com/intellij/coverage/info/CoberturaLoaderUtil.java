@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 16-Nov-2007
- */
 package com.intellij.coverage.info;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class CoberturaLoaderUtil {
-  private static final Logger LOG = Logger.getInstance("#" + CoberturaLoaderUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoberturaLoaderUtil.class);
 
   private CoberturaLoaderUtil() {
   }

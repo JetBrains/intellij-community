@@ -513,7 +513,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return GroovyTokenTypes.mRPAREN;
   }
 
-  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.<Class>singleton(GroovyPsiElement.class);
+  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
 
   @NotNull
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.diff.FocusableContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -23,15 +24,11 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class MergeContext implements UserDataHolder {
+public abstract class MergeContext implements UserDataHolder, FocusableContext {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   @Nullable
   public abstract Project getProject();
-
-  public abstract boolean isFocused();
-
-  public abstract void requestFocus();
 
   /**
    * Called by MergeTool on conflict resolve end. Should delegate to the {@link MergeRequest#applyResult(MergeResult)}

@@ -30,12 +30,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class LibraryTreeStructure extends AbstractTreeStructure {
+class LibraryTreeStructure extends AbstractTreeStructure {
   private final NodeDescriptor myRootElementDescriptor;
   private final LibraryRootsComponent myParentEditor;
   private final LibraryRootsComponentDescriptor myComponentDescriptor;
 
-  public LibraryTreeStructure(LibraryRootsComponent parentElement, LibraryRootsComponentDescriptor componentDescriptor) {
+  LibraryTreeStructure(LibraryRootsComponent parentElement, LibraryRootsComponentDescriptor componentDescriptor) {
     myParentEditor = parentElement;
     myComponentDescriptor = componentDescriptor;
     myRootElementDescriptor = new NodeDescriptor(null, null) {
@@ -60,7 +60,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
   public Object[] getChildElements(Object element) {
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
-      ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<>(3);
+      List<LibraryTableTreeContentElement> elements = new ArrayList<>(3);
       for (OrderRootType type : myComponentDescriptor.getRootTypes()) {
         final String[] urls = libraryEditor.getUrls(type);
         if (urls.length > 0) {
@@ -77,9 +77,9 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     if (element instanceof OrderRootTypeElement) {
       OrderRootTypeElement rootTypeElement = (OrderRootTypeElement)element;
       OrderRootType orderRootType = rootTypeElement.getOrderRootType();
-      ArrayList<ItemElement> items = new ArrayList<>();
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
+      List<ItemElement> items = new ArrayList<>(urls.length);
       for (String url : urls) {
         items.add(new ItemElement(rootTypeElement, url, orderRootType, libraryEditor.isJarDirectory(url, orderRootType), libraryEditor.isValid(url, orderRootType)));
       }

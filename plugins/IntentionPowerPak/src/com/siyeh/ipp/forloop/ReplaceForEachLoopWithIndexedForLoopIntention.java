@@ -66,7 +66,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     final Project project = statement.getProject();
     final CodeStyleSettings codeStyleSettings =
       CodeStyleSettingsManager.getSettings(project);
-    if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+    if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
     newStatement.append(type.getCanonicalText());

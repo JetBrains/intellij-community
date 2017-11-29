@@ -76,7 +76,7 @@ public class ArrayUtilTest extends TestCase {
     assertTrue(Arrays.equals(expected, actual));
   }
 
-  public void testReverse() throws Exception {
+  public void testReverse() {
     checkArrayReverse(new int[]{}, new int[]{});
     checkArrayReverse(new int[]{1}, new int[]{1});
     checkArrayReverse(new int[]{1, 2, 3, 4}, new int[]{4, 3, 2, 1});

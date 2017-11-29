@@ -21,12 +21,14 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -83,6 +85,11 @@ public class MavenModuleImporter {
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
     myModifiableModelsProvider = modifiableModelsProvider;
+
+    VirtualFile pomFile = mavenProject.getFile();
+    if (!FileUtil.namesEqual("pom", pomFile.getNameWithoutExtension())) {
+      MavenPomPathModuleService.getInstance(module).setPomFileUrl(pomFile.getUrl());
+    }
   }
 
   public ModifiableRootModel getRootModel() {
@@ -269,7 +276,10 @@ public class MavenModuleImporter {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
-        myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
+        LibraryOrderEntry libraryOrderEntry =
+          myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
+        myModifiableModelsProvider.trySubstitute(
+          myModule, libraryOrderEntry, new ProjectId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
       }
     }
 
@@ -322,7 +332,7 @@ public class MavenModuleImporter {
 
           Library library = myModifiableModelsProvider.getLibraryByName(libraryName);
           if (library == null) {
-            library = myModifiableModelsProvider.createLibrary(libraryName);
+            library = myModifiableModelsProvider.createLibrary(libraryName, MavenRootModelAdapter.getMavenExternalSource());
           }
           libraryModel = myModifiableModelsProvider.getModifiableLibraryModel(library);
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   public final boolean canSelect(@NotNull SelectInContext context) {
     if (!isContextValid(context)) return false;
 
-    return canWorkWithCustomObjects() || canSelectInner(context);
+    return canSelectInner(context);
   }
 
   protected boolean canSelectInner(@NotNull SelectInContext context) {
@@ -81,7 +82,12 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     }
 
     if (selector instanceof PsiElement) {
-      select(((PsiElement)selector).getOriginalElement(), requestFocus);
+      PsiUtilCore.ensureValid((PsiElement)selector);
+      PsiElement original = ((PsiElement)selector).getOriginalElement();
+      if (original != null && !original.isValid()) {
+        throw new PsiInvalidElementAccessException(original, "Returned by " + selector + " of " + selector.getClass());
+      }
+      select(original, requestFocus);
     }
     else {
       select(selector, file, requestFocus);
@@ -90,7 +96,12 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   protected abstract void select(Object selector, VirtualFile virtualFile, boolean requestFocus);
 
-  protected abstract boolean canWorkWithCustomObjects();
+  /**
+   * @deprecated unused, implement canSelectInner(context) instead
+   */
+  protected boolean canWorkWithCustomObjects() {
+    return false;
+  }
 
   protected abstract void select(PsiElement element, boolean requestFocus);
 

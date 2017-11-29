@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -56,16 +55,6 @@ public class GrCopyStringConcatenationContentIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(PsiElement element) {
-        if (element instanceof GrLiteral && ((GrLiteral)element).getValue() instanceof String) return true;
-
-        return element instanceof GrBinaryExpression &&
-               ((GrBinaryExpression)element).getOperationTokenType() == GroovyTokenTypes.mPLUS &&
-               satisfiedBy(((GrBinaryExpression)element).getLeftOperand()) &&
-               satisfiedBy(((GrBinaryExpression)element).getRightOperand());
-      }
-    };
+    return GrCopyStringConcatenationPredicate.INSTANCE;
   }
 }

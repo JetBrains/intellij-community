@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.FilenameIndex
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
@@ -35,37 +36,50 @@ class JavaModuleIndexBuildTask : CompileTask {
 
     val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project)
     if (systemDir == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, "Internal error: no system directory for project: ${project}", null, 0, 0)
+      context.error("Internal error: no system directory for project: ${project}")
       return false
     }
 
-    val map = runReadAction {
-      val compilerManager = CompilerManager.getInstance(project)
-      ModuleManager.getInstance(project).modules.asSequence()
-        .map {
-          val files = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, it.getModuleScope(false))
-          it.name to files.filter { !compilerManager.isExcludedFromCompilation(it) }
+    val badModules = mutableListOf<String>()
+    val paths = mutableMapOf<String, String?>()
+
+    val compilerManager = CompilerManager.getInstance(project)
+    runReadAction {
+      ModuleManager.getInstance(project).modules.forEach { module ->
+        val index = ModuleRootManager.getInstance(module).fileIndex
+        val sourceFiles = mutableListOf<String>()
+        val testFiles = mutableListOf<String>()
+        FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.moduleScope).forEach { file ->
+          if (!compilerManager.isExcludedFromCompilation(file)) {
+            (if (index.isInTestSourceContent(file)) testFiles else sourceFiles) += file.path
+          }
         }
-        .toMap()
+        if (sourceFiles.size + testFiles.size > 1) {
+          badModules += module.name
+        }
+        else {
+          paths += module.name + JavaModuleIndexImpl.SOURCE_SUFFIX to sourceFiles.firstOrNull()
+          paths += module.name + JavaModuleIndexImpl.TEST_SUFFIX to testFiles.firstOrNull()
+        }
+      }
     }
 
-    val errors = map.filter { it.value.size > 1 }.map { IdeBundle.message("compiler.multiple.module.descriptors", it.key) }
-    if (errors.isNotEmpty()) {
-      errors.forEach { context.addMessage(CompilerMessageCategory.ERROR, it, null, 0, 0) }
+    if (badModules.isNotEmpty()) {
+      badModules.forEach { context.error(IdeBundle.message("compiler.multiple.module.descriptors", it)) }
       return false
     }
-
-    val paths = map.map { it.key to it.value.firstOrNull()?.path }.toMap()
 
     try {
       JavaModuleIndexImpl.store(BuildDataPathsImpl(systemDir).dataStorageRoot, paths)
     }
     catch(e: Exception) {
       Logger.getInstance(JavaModuleIndexBuildTask::class.java).error(e)
-      context.addMessage(CompilerMessageCategory.ERROR, "Internal error: can't save module index: ${e.message}", null, 0, 0)
+      context.error("Internal error: can't save module index: ${e.message}")
       return false
     }
 
     return true
   }
+
+  private fun CompileContext.error(message: String) = addMessage(CompilerMessageCategory.ERROR, message, null, 0, 0)
 }

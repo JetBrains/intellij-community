@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,9 +96,18 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
       return;
     }
 
+    if (type == ValueHintType.MOUSE_OVER_HINT && !ApplicationManager.getApplication().isActive()) {
+      return;
+    }
+
     Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
-      hideHint();
+    if (myRequest != null) {
+      if (myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
+        return;
+      }
+      else if (!myRequest.isKeepHint(editor, point)) {
+        hideHint();
+      }
     }
 
     for (DebuggerSupport support : mySupports) {
@@ -155,7 +166,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     if (myRequest != null && myRequest.isInsideHint(editor, point)) {
       return;
     }
-    Promise<AbstractValueHint> hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+    Promise<AbstractValueHint> hintPromise;
+    try {
+      hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     hintPromise.done(hint -> {
       if (hint == null)
         return;

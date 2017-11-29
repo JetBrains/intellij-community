@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -59,11 +47,13 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return qname != null ? qname.getLastComponent() : null;
   }
 
+  @Override
   @Nullable
   public PyFunction getTarget() {
     return PsiTreeUtil.getParentOfType(this, PyFunction.class);
   }
 
+  @Override
   public boolean isBuiltin() {
     ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens());
     if (node != null) {
@@ -74,11 +64,14 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return false;
   }
 
+  @Override
   public boolean hasArgumentList() {
     final ASTNode arglistNode = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
     return (arglistNode != null) && (arglistNode.findChildByType(PyTokenTypes.LPAR) != null);
   }
 
+  @Override
+  @Nullable
   public QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
     if (stub != null) {
@@ -93,6 +86,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
+  @Override
+  @Nullable
   public PyExpression getCallee() {
     try {
       return (PyExpression)getFirstChild().getNextSibling(); // skip the @ before call
@@ -107,23 +102,22 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @NotNull
   @Override
-  public List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    final Function<PyRatedMarkedCallee, PyRatedMarkedCallee> mapping = ratedMarkedCallee -> {
+  public List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    final Function<PyMarkedCallee, PyMarkedCallee> mapping = markedCallee -> {
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
-        final PyMarkedCallee oldMarkedCallee = ratedMarkedCallee.getMarkedCallee();
-        final PyMarkedCallee newMarkedCallee = new PyMarkedCallee(oldMarkedCallee.getCallable(),
-                                                                  oldMarkedCallee.getModifier(),
-                                                                  oldMarkedCallee.getImplicitOffset() + 1,
-                                                                  oldMarkedCallee.isImplicitlyResolved());
-
-        return new PyRatedMarkedCallee(newMarkedCallee, ratedMarkedCallee.getRate());
+        return new PyMarkedCallee(markedCallee.getCallableType(),
+                                  markedCallee.getElement(),
+                                  markedCallee.getModifier(),
+                                  markedCallee.getImplicitOffset() + 1,
+                                  markedCallee.isImplicitlyResolved(),
+                                  markedCallee.getRate());
       }
 
-      return ratedMarkedCallee;
+      return markedCallee;
     };
 
-    return ContainerUtil.map(PyCallExpressionHelper.multiResolveRatedCallee(this, resolveContext, implicitOffset), mapping);
+    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset), mapping);
   }
 
   @NotNull
@@ -150,6 +144,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
+  @Override
+  @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context);
   }

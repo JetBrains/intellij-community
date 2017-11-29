@@ -28,7 +28,7 @@ import java.util.List;
 public abstract class GithubCreateGistContentTestBase extends GithubTest {
 
   @Override
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
     createProjectFiles();
   }
 

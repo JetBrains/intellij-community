@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
-import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -125,7 +124,7 @@ public class HtmlUtil {
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
+  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
   
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
@@ -250,7 +249,7 @@ public class HtmlUtil {
   }
 
   public static boolean isBooleanAttribute(@NotNull XmlAttributeDescriptor descriptor, @Nullable PsiElement context) {
-    if (descriptor instanceof HtmlAttributeDescriptorImpl && descriptor.isEnumerated()) {
+    if (descriptor.isEnumerated()) {
       final String[] values = descriptor.getEnumeratedValues();
       if (values == null) {
         return false;
@@ -427,6 +426,10 @@ public class HtmlUtil {
 
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+    if (doc == null && context != null) {
+      return Html5SchemaProvider.getHtml5SchemaLocation()
+        .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(context.getProject()));
+    }
     return isHtml5Document(doc);
   }
 
@@ -608,11 +611,11 @@ public class HtmlUtil {
     return tagName != null && "br".equalsIgnoreCase(tagName);
   }
 
-  public static boolean hasHtml(PsiFile file) {
+  public static boolean hasHtml(@NotNull PsiFile file) {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
-  public static boolean supportsXmlTypedHandlers(PsiFile file) {
+  public static boolean supportsXmlTypedHandlers(@NotNull PsiFile file) {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;

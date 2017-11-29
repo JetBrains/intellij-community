@@ -125,7 +125,7 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
 
     Data s = myBase.valueOf(idx);
 
-    if (stripe != -1 && s != null) {
+    if (s != null) {
       myStripeLocks[stripe].lock();
       try {
         myIdToStringCache[stripe].put(idx, s);

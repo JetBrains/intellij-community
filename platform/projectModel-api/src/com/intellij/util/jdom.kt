@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -61,9 +47,19 @@ private fun getSaxBuilder(): SAXBuilder {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Parent.write(file: Path, lineSeparator: String = "\n") {
-  BufferedOutputStream(file.outputStream()).use {
-    JDOMUtil.write(this, it, lineSeparator)
+fun Parent.write(file: Path, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+  write(file.outputStream(), lineSeparator, filter)
+}
+
+@JvmOverloads
+fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+  output.bufferedWriter().use { writer ->
+    if (this is Document) {
+      JDOMUtil.writeDocument(this, writer, lineSeparator)
+    }
+    else {
+      JDOMUtil.writeElement(this as Element, writer, JDOMUtil.createOutputter(lineSeparator, filter))
+    }
   }
 }
 
@@ -79,7 +75,7 @@ fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).de
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
 
-private fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
+fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 
@@ -125,3 +121,11 @@ fun Element.addOptionTag(name: String, value: String) {
   element.setAttribute("value", value)
   addContent(element)
 }
+
+fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
+  val out = BufferExposingByteArrayOutputStream(512)
+  JDOMUtil.write(this, out, lineSeparator)
+  return out
+}
+
+fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))

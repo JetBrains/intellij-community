@@ -23,8 +23,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI.ScalableJBIcon;
-import com.intellij.util.ui.JBUI.ScalableJBIcon.Scale;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +32,6 @@ import javax.swing.*;
  */
 public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
-  private static final Icon SAMPLE_ICON = PlatformIcons.CLASS_ICON;
 
   @Override
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
@@ -50,8 +47,8 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   public static Icon getRawIcon(final LookupElement item, boolean real) {
     Icon icon = _getRawIcon(item, real);
     if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
-    if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
-      return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
+    if (icon != null && icon.getIconHeight() > PlatformIcons.CLASS_ICON.getIconHeight()) {
+      return new SizedIcon(icon, icon.getIconWidth(), PlatformIcons.CLASS_ICON.getIconHeight());
     }
     return icon;
   }
@@ -70,7 +67,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
         return EmptyIcon.ICON_0;
       }
 
-      return EmptyIcon.create(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());
+      return EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
     }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {

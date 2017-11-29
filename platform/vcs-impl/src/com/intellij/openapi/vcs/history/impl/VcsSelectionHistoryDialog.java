@@ -28,8 +28,10 @@ import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -70,7 +72,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -142,7 +143,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
 
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
-    myComments.setPreferredSize(new Dimension(150, 100));
+    myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
     myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
@@ -208,7 +209,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     final DefaultActionGroup popupActions = new DefaultActionGroup();
     popupActions.add(new MyDiffAction());
-    popupActions.add(new MyDiffLocalAction());
+    popupActions.add(new MyDiffAfterWithLocalAction());
     popupActions.add(ShowAllAffectedGenericAction.getInstance());
     popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
@@ -248,7 +249,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     myBlockLoader.start(this);
 
     updateRevisionsList();
-    myList.getSelectionModel().setSelectionInterval(0, 0);
+    if (myList.getRowCount() != 0) myList.getSelectionModel().setSelectionInterval(0, 0);
   }
 
   @NotNull
@@ -277,7 +278,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       myList.setSelection(oldSelection);
       if (myList.getSelectedRowCount() == 0) {
         int index = getNearestVisibleRevision(ContainerUtil.getFirstItem(oldSelection));
-        myList.getSelectionModel().setSelectionInterval(index, index);
+        if (myList.getRowCount() != 0) myList.getSelectionModel().setSelectionInterval(index, index);
       }
     }
     finally {
@@ -292,12 +293,10 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     if (data.isLoading()) {
       VcsFileRevision revision = data.getCurrentLoadingRevision();
-      if (revision != null) {
-        myStatusLabel.setText("<html>Loading revision <tt>" + revision.getRevisionNumber() + "</tt></html>");
-      }
-      else {
-        myStatusLabel.setText("Loading...");
-      }
+      String loadingString = revision != null
+                             ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
+                             : "Loading...";
+      myStatusLabel.setText(String.format("<html>%s (%s/%s)</html>", loadingString, data.myBlocks.size(), myRevisions.size()));
 
       myStatusSpinner.resume();
       myStatusSpinner.setVisible(true);
@@ -333,26 +332,22 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     ArrayList<VcsFileRevision> result = new ArrayList<>();
     BlockData data = myBlockLoader.getLoadedData();
 
-    int firstRevision;
-    boolean foundInitialRevision = false;
-    for (firstRevision = myRevisions.size() - 1; firstRevision > 0; firstRevision--) {
-      Block block = data.getBlock(firstRevision);
-      if (block == EMPTY_BLOCK) foundInitialRevision = true;
-      if (block != null && block != EMPTY_BLOCK) break;
-    }
-    if (!foundInitialRevision && data.isLoading()) firstRevision = myRevisions.size() - 1;
-
-    result.add(myRevisions.get(firstRevision));
-
-    for (int i = firstRevision - 1; i >= 0; i--) {
-      Block block1 = data.getBlock(i + 1);
+    for (int i = 1; i < myRevisions.size(); i++) {
+      Block block1 = data.getBlock(i - 1);
       Block block2 = data.getBlock(i);
-      if (block1 == null || block2 == null) continue;
-      if (block1.getLines().equals(block2.getLines())) continue;
-      result.add(myRevisions.get(i));
+      if (block1 == null || block2 == null) break;
+      if (!block1.getLines().equals(block2.getLines())) {
+        result.add(myRevisions.get(i - 1));
+      }
+      if (block2 == EMPTY_BLOCK) break;
     }
 
-    Collections.reverse(result);
+    int initialCommit = myRevisions.size() - 1;
+    Block initialCommitBlock = data.getBlock(initialCommit);
+    if (initialCommitBlock != null && initialCommitBlock != EMPTY_BLOCK) {
+      result.add(myRevisions.get(initialCommit));
+    }
+
     return result;
   }
 
@@ -500,12 +495,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
   }
 
-  private class MyDiffLocalAction extends DumbAwareAction {
-    public MyDiffLocalAction() {
-      super(VcsBundle.message("show.diff.with.local.action.text"),
-            VcsBundle.message("show.diff.with.local.action.description"),
-            AllIcons.Actions.DiffWithCurrent);
-      setShortcutSet(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal").getShortcutSet());
+  private class MyDiffAfterWithLocalAction extends DumbAwareAction {
+    public MyDiffAfterWithLocalAction() {
+      ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 
     public void update(final AnActionEvent e) {
@@ -560,11 +552,11 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
 
     public void start(@NotNull Disposable disposable) {
-      BackgroundTaskUtil.executeOnPooledThread((indicator) -> {
+      BackgroundTaskUtil.executeOnPooledThread(disposable, () -> {
         try {
           // first block is loaded in constructor
           for (int index = 1; index < myRevisions.size(); index++) {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
 
             Block block = myBlocks.get(index - 1);
             VcsFileRevision revision = myRevisions.get(index);
@@ -595,7 +587,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
           }
           notifyUpdate();
         }
-      }, disposable);
+      });
     }
 
     @CalledInBackground

@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
@@ -51,7 +49,6 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return key.getID();
   }
 
-  @SuppressWarnings("ConstantConditions")
   public T forLanguage(@NotNull Language l) {
     T cached = l.getUserData(IN_LANGUAGE_CACHE);
     if (cached != null) return cached;
@@ -73,14 +70,10 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       return forLanguage(base);
     }
 
-    for (MetaLanguage metaLanguage: MetaLanguage.all()) {
-      if (metaLanguage.matchesLanguage(l)) {
-        T result = forLanguage(metaLanguage);
-        if (result != null) break;
-      }
-    }
+    Optional<T> forAnyMetaLanguage = MetaLanguage.getAllMatchingMetaLanguages(l)
+      .map(metaLanguage -> forLanguage(metaLanguage)).filter(Objects::nonNull).findAny();
 
-    return myDefaultImplementation;
+    return forAnyMetaLanguage.orElse(myDefaultImplementation);
   }
 
   /**
@@ -115,11 +108,10 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       providers.addAll(allForLanguage(Language.ANY));
     }
 
-    if (!(l instanceof MetaLanguage)) {
-      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-        providers.addAll(allForLanguage(metaLanguage));
-      }
-    }
+    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> {
+      providers.addAll(allForLanguage(metaLanguage));
+    });
+
     return providers;
   }
 

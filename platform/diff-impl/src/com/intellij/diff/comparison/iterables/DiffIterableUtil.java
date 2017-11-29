@@ -79,12 +79,8 @@ public class DiffIterableUtil {
   @NotNull
   public static <T> FairDiffIterable diff(@NotNull List<T> objects1, @NotNull List<T> objects2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
-    indicator.checkCanceled();
-
     // TODO: compare lists instead of arrays in Diff
-    Object[] data1 = ContainerUtil.toArray((List)objects1, new Object[objects1.size()]);
-    Object[] data2 = ContainerUtil.toArray((List)objects2, new Object[objects2.size()]);
-    return diff(data1, data2, indicator);
+    return diff(objects1.toArray(), objects2.toArray(), indicator);
   }
 
   //

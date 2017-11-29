@@ -19,8 +19,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -39,16 +37,12 @@ public abstract class IdeaTestCase extends PlatformTestCase {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    filePointerManager.storePointers();
   }
 
   @Override
   protected void tearDown() throws Exception {
     myJavaFacade = null;
     super.tearDown();
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    filePointerManager.assertPointersAreDisposed();
   }
 
   public final JavaPsiFacadeEx getJavaFacade() {

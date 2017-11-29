@@ -16,12 +16,14 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
@@ -31,65 +33,48 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public abstract class RunDashboardContributor {
-  public static final ExtensionPointName<RunDashboardContributor> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardContributor");
+  public static final ExtensionPointName<RunDashboardContributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.runDashboardContributor");
 
-  private final ConfigurationType myType;
+  @NotNull private final ConfigurationType myType;
 
-  protected RunDashboardContributor(ConfigurationType type) {
+  protected RunDashboardContributor(@NotNull ConfigurationType type) {
     myType = type;
   }
 
   /**
    * @return configuration type for which contributor is registered.
    */
+  @NotNull
   public ConfigurationType getType() {
     return myType;
   }
 
-  public void updatePresentation(PresentationData presentation, DashboardNode node) {
+  public void updatePresentation(@NotNull PresentationData presentation, @NotNull RunDashboardNode node) {
+  }
+
+  public boolean customizeCellRenderer(@NotNull ColoredTreeCellRenderer cellRenderer, @NotNull JLabel nodeLabel,
+                                       @NotNull RunDashboardNode node,
+                                       boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    return false;
   }
 
   /**
    * Returns node's status. Subclasses may override this method to provide custom statuses.
+   *
    * @param node dashboard node
    * @return node's status. Returned status is used for grouping nodes by status.
    */
-  public DashboardRunConfigurationStatus getStatus(DashboardRunConfigurationNode node) {
-    RunContentDescriptor descriptor = node.getDescriptor();
-    if (descriptor == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    ProcessHandler processHandler = descriptor.getProcessHandler();
-    if (processHandler == null) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    Integer exitCode = processHandler.getExitCode();
-    if (exitCode == null) {
-      return DashboardRunConfigurationStatus.STARTED;
-    }
-    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
-    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
-      return DashboardRunConfigurationStatus.STOPPED;
-    }
-    return DashboardRunConfigurationStatus.FAILED;
+  @NotNull
+  public RunDashboardRunConfigurationStatus getStatus(@NotNull RunDashboardRunConfigurationNode node) {
+    return RunDashboardRunConfigurationStatus.getStatus(node);
   }
 
-  public static RunDashboardContributor getContributor(ConfigurationType type) {
-    if (!Registry.is("ide.run.dashboard")) {
-      return null;
-    }
-
-    if (type != null) {
-      for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
-        if (type.equals(contributor.getType())) {
-          return contributor;
-        }
-      }
-    }
-    return null;
+  public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
+    return true;
   }
 
-  public static boolean isShowInDashboard(ConfigurationType type) {
-    return getContributor(type) != null;
+  public boolean handleDoubleClick(@NotNull RunConfiguration runConfiguration) {
+    return false;
   }
 }

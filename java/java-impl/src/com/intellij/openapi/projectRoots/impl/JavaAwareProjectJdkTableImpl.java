@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -23,6 +24,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
@@ -32,10 +35,11 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   private final JavaSdk myJavaSdk;
   private Sdk myInternalJdk;
 
-  public JavaAwareProjectJdkTableImpl(final JavaSdk javaSdk) {
+  public JavaAwareProjectJdkTableImpl(@NotNull JavaSdk javaSdk) {
     myJavaSdk = javaSdk;
   }
 
+  @NotNull
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       final String jdkHome = SystemProperties.getJavaHome();
@@ -46,7 +50,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
-  public void removeJdk(final Sdk jdk) {
+  public void removeJdk(@NotNull final Sdk jdk) {
     super.removeJdk(jdk);
     if (jdk.equals(myInternalJdk)) {
       myInternalJdk = null;
@@ -54,6 +58,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
+  @NotNull
   public SdkTypeId getDefaultSdkType() {
     return myJavaSdk;
   }
@@ -73,4 +78,15 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   protected String getSdkTypeName(final String type) {
     return type != null ? type : JavaSdk.getInstance().getName();
   }
+
+  @TestOnly
+  public static void removeInternalJdkInTests() {
+    WriteAction.run(()-> {
+      JavaAwareProjectJdkTableImpl table = getInstanceEx();
+      if (table.myInternalJdk != null) {
+        table.removeJdk(table.myInternalJdk);
+      }
+    });
+  }
+
 }

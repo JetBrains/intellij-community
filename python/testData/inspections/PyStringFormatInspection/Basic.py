@@ -23,7 +23,7 @@
 '%d%d' % ((5), (5)) #ok
 "%(name)d %(name)d" % {"name": 43} #ok
 "%(name)d" % {'a': 4, "name": 5} #ok
-'%% name %(name)c' % <warning descr="Key 'name' has no following argument">{'a': 4}</warning> #Key 'name' has no following argument
+'%% name %(name)c' % <warning descr="Key 'name' has no corresponding argument">{'a': 4}</warning> #Key 'name' has no following argument
 '%d %u %f %F %s %r' % (2, 3, 4.1, 4.0, "name", "str") #ok
 '%d %d %d' % (4, <warning descr="Unexpected type str">"a"</warning>, <warning descr="Unexpected type str">"b"</warning>) #Unexpected type
 '%f %f %f' % (4, 5, <warning descr="Unexpected type str">"test"</warning>) #Unexpected type

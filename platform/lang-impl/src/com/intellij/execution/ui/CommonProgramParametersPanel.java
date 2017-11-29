@@ -19,8 +19,6 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -30,34 +28,31 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.ui.MacroAwareTextBrowseFolderListener;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JComponent> myWorkingDirectoryComponent;
+  @Deprecated
   protected TextFieldWithBrowseButton myWorkingDirectoryField;
+  private MacroComboBoxWithBrowseButton myWorkingDirectoryComboBox;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
-  private boolean myHasModuleMacro = false;
 
   public CommonProgramParametersPanel() {
     this(true);
@@ -95,17 +90,13 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     //noinspection DialogTitleCapitalization
     fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
-    myWorkingDirectoryField = new TextFieldWithBrowseButton();
-    myWorkingDirectoryField.addBrowseFolderListener(new MacroAwareTextBrowseFolderListener(fileChooserDescriptor, getProject()) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myFileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
-        setProject(getProject());
-        super.actionPerformed(e);
-      }
-    });
+    myWorkingDirectoryComboBox = new MacroComboBoxWithBrowseButton(fileChooserDescriptor, getProject());
 
-    myWorkingDirectoryComponent = LabeledComponent.create(createComponentWithMacroBrowse(myWorkingDirectoryField), ExecutionBundle.message("run.configuration.working.directory.label"));
+    // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
+    myWorkingDirectoryField = new TextFieldWithBrowseButton();
+    addWorkingDirectoryListener(myWorkingDirectoryField::setText);
+
+    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryComboBox, ExecutionBundle.message("run.configuration.working.directory.label"));
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
 
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
@@ -119,22 +110,19 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     copyDialogCaption(myProgramParametersComponent);
   }
 
+  @Deprecated // use MacroComboBoxWithBrowseButton instead
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.RunConfigurations.Variables);
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<String> macros = new SmartList<>(PathMacros.getInstance().getUserMacroNames());
-        if (myModuleContext != null || myHasModuleMacro) {
-          macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
-        }
-
-        final JList list = new JBList(ArrayUtil.toStringArray(macros));
+        //noinspection unchecked
+        final JList list = new JBList(myWorkingDirectoryComboBox.getChildComponent().getModel());
         JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(() -> {
           final Object value = list.getSelectedValue();
           if (value instanceof String) {
-            textAccessor.setText('$' + ((String)value) + '$');
+            textAccessor.setText((String)value);
           }
         }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
       }
@@ -167,16 +155,25 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myProgramParametersComponent.getComponent().setText(params);
   }
 
+  public TextAccessor getWorkingDirectoryAccessor() {
+    return myWorkingDirectoryComboBox;
+  }
+
+  public void addWorkingDirectoryListener(Consumer<String> onTextChange) {
+    myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
+  }
+
   public void setWorkingDirectory(String dir) {
-    myWorkingDirectoryField.setText(dir);
+    myWorkingDirectoryComboBox.setText(dir);
   }
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
+    myWorkingDirectoryComboBox.setModule(moduleContext);
   }
 
   public void setHasModuleMacro() {
-    myHasModuleMacro = true;
+    myWorkingDirectoryComboBox.showModuleMacroAlways();
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {
@@ -198,7 +195,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void applyTo(CommonProgramRunConfigurationParameters configuration) {
     configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
-    configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
+    configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryComboBox, configuration));
 
     configuration.setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());

@@ -164,28 +164,24 @@ public class CreateResourceBundleDialogComponent {
 
   private List<PsiFile> createPropertiesFiles() {
     final Set<String> fileNames = getFileNamesToCreate();
-    final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject, new Computable<List<PsiFile>>() {
-      @Override
-      public List<PsiFile> compute() {
-        return ReadAction.compute(() -> ContainerUtil.map(fileNames, n -> {
-          final boolean isXml = myResourceBundle == null
-                  ? myUseXMLBasedPropertiesCheckBox.isSelected()
-                  : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
-          if (isXml) {
-            FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-            LOG.assertTrue(template != null);
-            try {
-              return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          } else {
-            return myDirectory.createFile(n);
-          }
-        }));
-      }
-    });
+    final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject,
+                                                                                (Computable<List<PsiFile>>)() -> ReadAction.compute(() -> ContainerUtil.map(fileNames, n -> {
+                                                                                  final boolean isXml = myResourceBundle == null
+                                                                                          ? myUseXMLBasedPropertiesCheckBox.isSelected()
+                                                                                          : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
+                                                                                  if (isXml) {
+                                                                                    FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
+                                                                                    LOG.assertTrue(template != null);
+                                                                                    try {
+                                                                                      return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
+                                                                                    }
+                                                                                    catch (Exception e) {
+                                                                                      throw new RuntimeException(e);
+                                                                                    }
+                                                                                  } else {
+                                                                                    return myDirectory.createFile(n);
+                                                                                  }
+                                                                                })));
     combineToResourceBundleIfNeed(createdFiles);
     return createdFiles;
   }

@@ -1,17 +1,16 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlTest;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 5/22/13
- */
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
@@ -19,6 +18,7 @@ public class IDEATestNGRemoteListener {
   private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
   private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
   private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
     this(System.out);
@@ -48,7 +48,7 @@ public class IDEATestNGRemoteListener {
 
   public synchronized void onFinish(ISuite suite) {
     try {
-      if (suite != null && suite.getAllInvokedMethods().size() < suite.getAllMethods().size()) {
+      if (suite != null && suite.getAllInvokedMethods().size() + mySkipped < suite.getAllMethods().size()) {
         for (ITestNGMethod method : suite.getAllMethods()) {
           if (method.isTest()) {
             boolean found = false;
@@ -123,20 +123,32 @@ public class IDEATestNGRemoteListener {
   public synchronized void onFinish(ITestContext context) {}
 
   public void onTestStart(ExposedTestResult result) {
+   onStartWithParameters(result, false);
+  }
+
+  public void onStartWithParameters(ExposedTestResult result, boolean config) {
     final Object[] parameters = result.getParameters();
     final String qualifiedName = result.getClassName() + result.getDisplayMethodName();
     Integer invocationCount = myInvocationCounts.get(qualifiedName);
     if (invocationCount == null) {
       invocationCount = 0;
     }
-    
-    final String paramString = getParamsString(parameters, invocationCount);
-    onTestStart(result, paramString, invocationCount, false);
+    Integer normalizedIndex = normalizeInvocationCountInsideIncludedMethods(invocationCount, result);
+    final String paramString = getParamsString(parameters, config, normalizedIndex);
+    onTestStart(result, paramString, normalizedIndex, config);
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
 
+  private static Integer normalizeInvocationCountInsideIncludedMethods(Integer invocationCount, ExposedTestResult result) {
+    List<Integer> includeMethods = result.getIncludeMethods();
+    if (includeMethods == null || invocationCount >= includeMethods.size()) {
+      return invocationCount;
+    }
+    return includeMethods.get(invocationCount);
+  }
+
   public void onConfigurationStart(ExposedTestResult result) {
-    onTestStart(result, null, -1, true);
+    onStartWithParameters(result, true);
   }
 
   public void onConfigurationSuccess(ExposedTestResult result) {
@@ -231,6 +243,7 @@ public class IDEATestNGRemoteListener {
   public void onTestSkipped(ExposedTestResult result) {
     if (!myParamsMap.containsKey(result)) {
       onTestStart(result);
+      mySkipped++;
     }
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
     onTestFinished(result);
@@ -253,17 +266,29 @@ public class IDEATestNGRemoteListener {
     return methodName;
   }
 
-  private static String getParamsString(Object[] parameters, int invocationCount) {
+  private static String getParamsString(Object[] parameters, boolean config, int invocationCount) {
     String paramString = "";
     if (parameters.length > 0) {
-      StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < parameters.length; i++) {
-        if (i > 0) {
-          buf.append(", ");
+      if (config) {
+        Object parameter = parameters[0];
+        if (parameter != null) {
+          Class<?> parameterClass = parameter.getClass();
+          if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass) || Method.class.isAssignableFrom(parameterClass)) {
+            try {
+              paramString = "[" + parameterClass.getMethod("getName").invoke(parameter) + "]";
+            }
+            catch (Throwable e) {
+              paramString = "";
+            }
+          }
+          else {
+            paramString = "[" + parameter.toString() + "]";
+          }
         }
-        buf.append(parameters[i]);
       }
-      paramString = "[" + buf.toString() + "]";
+      else {
+        paramString = Arrays.deepToString(parameters);
+      }
     }
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
@@ -301,6 +326,7 @@ public class IDEATestNGRemoteListener {
     String getFileName();
     String getXmlTestName();
     Throwable getThrowable();
+    List<Integer> getIncludeMethods();
   }
 
   protected DelegatedResult createDelegated(ITestResult result) {
@@ -366,6 +392,16 @@ public class IDEATestNGRemoteListener {
 
     public Throwable getThrowable() {
       return myResult.getThrowable();
+    }
+
+    public List<Integer> getIncludeMethods() {
+      IClass testClass = myResult.getTestClass();
+      if (testClass == null) return null;
+      XmlClass xmlClass = testClass.getXmlClass();
+      if (xmlClass == null) return null;
+      List<XmlInclude> includedMethods = xmlClass.getIncludedMethods();
+      if (includedMethods.isEmpty()) return null;
+      return includedMethods.get(0).getInvocationNumbers();
     }
 
     @Override

@@ -39,7 +39,7 @@ public final class ImageEditorManagerImpl {
     ui.getImageComponent().setGridVisible(gridOptions.isShowDefault());
     ui.getImageComponent().setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
 
-    ui.setImage(image, null);
+    ui.setImageProvider(ignore -> image, null);
     return ui;
   }
 }

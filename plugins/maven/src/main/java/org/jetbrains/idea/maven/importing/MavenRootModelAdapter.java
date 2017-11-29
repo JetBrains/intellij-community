@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -33,7 +34,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +113,11 @@ public class MavenRootModelAdapter {
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
-        if (m != null && !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
+        if (m != null &&
+            !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m) &&
+            ExternalSystemModulePropertyManager.getInstance(m).getExternalSystemId() == null) {
+          continue;
+        }
       }
 
       if (!jdkProcessed) {
@@ -328,7 +332,7 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void addLibraryDependency(MavenArtifact artifact,
+  public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                    DependencyScope scope,
                                    IdeModifiableModelsProvider provider,
                                    MavenProject project) {
@@ -338,7 +342,7 @@ public class MavenRootModelAdapter {
 
     Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
-      library = provider.createLibrary(libraryName);
+      library = provider.createLibrary(libraryName, getMavenExternalSource());
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
@@ -352,6 +356,8 @@ public class MavenRootModelAdapter {
     if (myOrderEntriesBeforeJdk.contains(libraryName)) {
       moveLastOrderEntryBeforeJdk();
     }
+
+    return e;
   }
 
   private void moveLastOrderEntryBeforeJdk() {
@@ -455,6 +461,10 @@ public class MavenRootModelAdapter {
 
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
+  }
+
+  public static ProjectModelExternalSource getMavenExternalSource() {
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
   @Nullable

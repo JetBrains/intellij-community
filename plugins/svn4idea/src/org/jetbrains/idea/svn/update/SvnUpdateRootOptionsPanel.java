@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
@@ -36,8 +37,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
@@ -61,57 +60,46 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myVcs = vcs;
 
     myURLText.setEditable(true);
-    myURLText.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseUrl();
-      }
-    });
+    myURLText.addActionListener(e -> chooseUrl());
 
     myBranchField.setEditable(false);
-    myBranchField.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        chooseBranch();
-      }
-    });
+    myBranchField.addActionListener(e -> chooseBranch());
     myBranchLabel.setLabelFor(myBranchField);
     myUrlLabel.setLabelFor(myURLText);
 
-    myUpdateToSpecificUrl.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myUpdateToSpecificUrl.isSelected()) {
-          myURLText.setEnabled(true);
-          myBranchField.setEnabled(mySourceUrl != null);
-        } else {
-          myURLText.setEnabled(false);
-          myBranchField.setEnabled(false);
-        }
+    myUpdateToSpecificUrl.addActionListener(e -> {
+      if (myUpdateToSpecificUrl.isSelected()) {
+        myURLText.setEnabled(true);
+        myBranchField.setEnabled(mySourceUrl != null);
+      }
+      else {
+        myURLText.setEnabled(false);
+        myBranchField.setEnabled(false);
       }
     });
 
-    myRevisionBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == myRevisionBox) {
-          myRevisionText.setEnabled(myRevisionBox.isSelected());
-          if (myRevisionBox.isSelected()) {
-            if (myRevisionText.getText().trim().isEmpty()) {
-              myRevisionText.setText("HEAD");
-            }
-            myRevisionText.getTextField().selectAll();
-            myRevisionText.requestFocus();
+    myRevisionBox.addActionListener(e -> {
+      if (e.getSource() == myRevisionBox) {
+        myRevisionText.setEnabled(myRevisionBox.isSelected());
+        if (myRevisionBox.isSelected()) {
+          if (myRevisionText.getText().trim().isEmpty()) {
+            myRevisionText.setText("HEAD");
           }
+          myRevisionText.getTextField().selectAll();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myRevisionText, true);
+          });
         }
       }
     });
 
-    myRevisionText.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Project project = vcs.getProject();
-        // todo check whether ok; rather shoudl be used if checkbox is turned on
-        final SvnRepositoryLocation location = new SvnRepositoryLocation(myURLText.getText());
-        final SvnChangeList repositoryVersion = SvnSelectRevisionUtil.chooseCommittedChangeList(project, location, myRoot.getVirtualFile());
-        if (repositoryVersion != null) {
-          myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
-        }
+    myRevisionText.addActionListener(e -> {
+      final Project project = vcs.getProject();
+      // todo check whether ok; rather shoudl be used if checkbox is turned on
+      final SvnRepositoryLocation location = new SvnRepositoryLocation(myURLText.getText());
+      final SvnChangeList repositoryVersion = SvnSelectRevisionUtil.chooseCommittedChangeList(project, location, myRoot.getVirtualFile());
+      if (repositoryVersion != null) {
+        myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
       }
     });
 
@@ -146,24 +134,22 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       myBranchField.setEnabled(false);
       return;
     }
-    SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
-        // TODO: It seems that we could reuse configuration passed as parameter to this callback
-        SvnBranchConfigurationNew branchConfiguration = getBranchConfiguration();
-        String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl.toString()) : null;
+    SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), (project, configuration, url, revision) -> {
+      // TODO: It seems that we could reuse configuration passed as parameter to this callback
+      SvnBranchConfigurationNew branchConfiguration = getBranchConfiguration();
+      String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl.toString()) : null;
 
-        if (mySourceUrl == null || branchRelativeUrl == null) {
-          myBranchField.setText("");
+      if (mySourceUrl == null || branchRelativeUrl == null) {
+        myBranchField.setText("");
+      }
+      else {
+        try {
+          myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toDecodedString());
         }
-        else {
-          try {
-            myURLText.setText(SVNURL.parseURIEncoded(url).appendPath(branchRelativeUrl, true).toDecodedString());
-          }
-          catch (SVNException e) {
-            LOG.error(e);
-          }
-          myBranchField.setText(SVNPathUtil.tail(url));
+        catch (SVNException e) {
+          LOG.error(e);
         }
+        myBranchField.setText(SVNPathUtil.tail(url));
       }
     }, SvnBundle.message("select.branch.popup.general.title"), myPanel);
   }

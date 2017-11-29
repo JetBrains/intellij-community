@@ -38,12 +38,12 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
   @NotNull
   private static PsiReferenceRegistrarImpl createRegistrar(Language language) {
-    PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl(language);
-    for (PsiReferenceContributor contributor : CONTRIBUTOR_EXTENSION.allForLanguage(language)) {
+    PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl();
+    for (PsiReferenceContributor contributor : CONTRIBUTOR_EXTENSION.allForLanguageOrAny(language)) {
       contributor.registerReferenceProviders(registrar);
     }
 
-    List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguage(language);
+    List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguageOrAny(language);
     for (final PsiReferenceProviderBean providerBean : referenceProviderBeans) {
       final ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
       if (pattern != null) {

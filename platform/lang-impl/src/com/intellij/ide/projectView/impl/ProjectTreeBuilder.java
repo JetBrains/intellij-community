@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -73,7 +72,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(getUpdater()), this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
     WolfTheProblemSolver.getInstance(project).addProblemListener(new MyProblemListener(), this);
 
@@ -128,11 +127,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     @Override
     public void bookmarkChanged(@NotNull Bookmark b) {
       updateForFile(b.getFile());
-    }
-
-    @Override
-    public void bookmarksOrderChanged() {
-      //do nothing
     }
 
     private void updateForFile(@NotNull VirtualFile file) {

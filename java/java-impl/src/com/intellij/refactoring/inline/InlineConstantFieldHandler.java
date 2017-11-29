@@ -107,7 +107,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  protected static PsiExpression getInitializer(PsiField field) {
+  public static PsiExpression getInitializer(PsiField field) {
     if (field.hasInitializer()) {
       return field.getInitializer();
     }

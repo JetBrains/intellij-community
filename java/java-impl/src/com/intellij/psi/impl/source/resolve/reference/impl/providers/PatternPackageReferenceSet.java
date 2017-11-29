@@ -44,17 +44,14 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
 
     if (packageName.contains("*")) {
       final Set<PsiPackage> packages = new LinkedHashSet<>();
-      int indexOf = packageName.indexOf("*");
-      if (indexOf == 0 || context.getQualifiedName().startsWith(packageName.substring(0, indexOf))) {
-        final Pattern pattern = PatternUtil.fromMask(packageName);
-        processSubPackages(context, psiPackage -> {
-          String name = psiPackage.getName();
-          if (name != null && pattern.matcher(name).matches()) {
-            packages.add(psiPackage);
-          }
-          return true;
-        });
-      }
+      final Pattern pattern = PatternUtil.fromMask(packageName);
+      processSubPackages(context, psiPackage -> {
+        String name = psiPackage.getName();
+        if (name != null && pattern.matcher(name).matches()) {
+          packages.add(psiPackage);
+        }
+        return true;
+      });
 
       return packages;
     }
@@ -63,9 +60,8 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
   }
 
   protected boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
-    if (!processor.process(pkg)) return false;
-
     for (final PsiPackage aPackage : pkg.getSubPackages(getResolveScope())) {
+      if (!processor.process(aPackage)) return false;
       if (!processSubPackages(aPackage, processor)) return false;
     }
     return true;

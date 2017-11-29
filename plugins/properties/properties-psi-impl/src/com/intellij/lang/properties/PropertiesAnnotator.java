@@ -46,7 +46,7 @@ import java.util.Collection;
 public class PropertiesAnnotator implements Annotator {
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!(element instanceof IProperty)) return;
+    if (!(element instanceof Property)) return;
     final Property property = (Property)element;
     PropertiesFile propertiesFile = property.getPropertiesFile();
     Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());

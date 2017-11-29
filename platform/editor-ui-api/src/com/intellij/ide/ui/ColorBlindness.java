@@ -22,7 +22,7 @@ public enum ColorBlindness {
   /**
    * Lacking the long-wavelength sensitive retinal cones,
    * those with this condition are unable to distinguish
-   * between colors in the green–yellow–red section of the spectrum.
+   * between colors in the green-yellow-red section of the spectrum.
    * Protanopes are more likely to confuse
    * <ul>
    * <li>black with many shades of red;</li>
@@ -35,7 +35,7 @@ public enum ColorBlindness {
   /**
    * Lacking the medium-wavelength sensitive retinal cones,
    * those with this condition are unable to distinguish
-   * between colors in the green–yellow–red section of the spectrum.
+   * between colors in the green-yellow-red section of the spectrum.
    * Deuteranopes are more likely to confuse
    * <ul>
    * <li>mid-reds with mid-greens;</li>

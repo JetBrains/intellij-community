@@ -96,12 +96,7 @@ public class SvnBindException extends VcsException {
 
   public boolean containsCategory(int category) {
     final int categoryCode = getCategoryCode(category);
-    Condition<Integer> belongsToCategoryCondition = new Condition<Integer>() {
-      @Override
-      public boolean value(Integer code) {
-        return getCategoryCode(code) == categoryCode;
-      }
-    };
+    Condition<Integer> belongsToCategoryCondition = code -> getCategoryCode(code) == categoryCode;
 
     return ContainerUtil.exists(errors.keySet(), belongsToCategoryCondition) ||
            ContainerUtil.exists(warnings.keySet(), belongsToCategoryCondition);

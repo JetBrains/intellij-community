@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public abstract class RequestBuilder {
   public abstract <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException;
 
   public int tryConnect() throws IOException {
-    return connect((request) -> {
+    return connect(request -> {
       URLConnection connection = request.getConnection();
       return connection instanceof HttpURLConnection ? ((HttpURLConnection)connection).getResponseCode() : -1;
     });
@@ -64,16 +64,16 @@ public abstract class RequestBuilder {
   }
 
   public void saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
-    connect((request) -> request.saveToFile(file, indicator));
+    connect(request -> request.saveToFile(file, indicator));
   }
 
   @NotNull
   public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
-    return connect((request) -> request.readBytes(indicator));
+    return connect(request -> request.readBytes(indicator));
   }
 
   @NotNull
   public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-    return connect((request) -> request.readString(indicator));
+    return connect(request -> request.readString(indicator));
   }
 }

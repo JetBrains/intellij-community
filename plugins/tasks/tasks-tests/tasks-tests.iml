@@ -5,13 +5,13 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="tasks-api" />
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="tasks-java" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
@@ -23,5 +23,7 @@
     <orderEntry type="module" module-name="git4idea" scope="TEST" />
     <orderEntry type="module" module-name="hg4idea" scope="TEST" />
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
+    <orderEntry type="module" module-name="tasks-platform-api" scope="TEST" />
+    <orderEntry type="module" module-name="tasks-platform-impl" scope="TEST" />
   </component>
 </module>

@@ -18,10 +18,6 @@ package org.jetbrains.plugins.javaFX.preloader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxPreloaderArtifactProperties extends JpsElementBase<JpsJavaFxPreloaderArtifactProperties> {
   protected MyState myState = new MyState();
 

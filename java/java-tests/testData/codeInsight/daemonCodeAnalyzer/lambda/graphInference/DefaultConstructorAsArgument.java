@@ -9,12 +9,12 @@ class Main2  {
     }
 
     interface Fun<T, R> {
-        R _(T t);
+        R f(T t);
     }
-    
+
     class Foo<K> implements Fun<K, Integer> {
         @Override
-        public Integer _(K k) {
+        public Integer f(K k) {
             return null;
         }
     }

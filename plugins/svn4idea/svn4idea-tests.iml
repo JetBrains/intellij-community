@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/testSource">
       <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="svn4idea" />
@@ -39,17 +39,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="jsch-agent-proxy" level="project" />
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/trileadsrc.zip!/trilead-ssh2/src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
   </component>
 </module>

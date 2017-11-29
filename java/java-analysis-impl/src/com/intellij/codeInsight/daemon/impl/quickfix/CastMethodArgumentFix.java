@@ -67,7 +67,11 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
         if (parameterType == null) return false;
       }
-      return parameterType.isConvertibleFrom(exprType);
+      if (parameterType.isConvertibleFrom(exprType)) {
+        return true;
+      }
+
+      return parameterType instanceof PsiEllipsisType && areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
     }
   }
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -11,6 +26,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstituti
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +54,9 @@ public class GlobalCompilingVisitor {
 
   private static final Pattern ourAlternativePattern = Pattern.compile("^\\((.+)\\)$");
   @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
-  private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
+  static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
   private CompileContext context;
-  private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<>();
+  private final List<PsiElement> myLexicalNodes = new SmartList<>();
 
   private int myCodeBlockLevel;
 
@@ -127,9 +143,7 @@ public class GlobalCompilingVisitor {
     assert profile != null;
     profile.compile(elements, this);
 
-    if (context.getPattern().getStrategy() == null) {
-      System.out.println();
-    }
+    assert context.getPattern().getStrategy() != null;
   }
 
   @Nullable
@@ -160,14 +174,14 @@ public class GlobalCompilingVisitor {
 
     SubstitutionHandler handler = null;
     while (matcher.find()) {
-      if (handlers == null) handlers = new ArrayList<>();
+      if (handlers == null) handlers = new SmartList<>();
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
       if (handler != null) handlers.add(handler);
 
       word = content.substring(start, matcher.start());
 
       if (word.length() > 0) {
-        buf.append(StructuralSearchUtil.shieldSpecialChars(word));
+        buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
         hasLiteralContent = true;
 
         processTokenizedName(word, false, kind);
@@ -193,7 +207,7 @@ public class GlobalCompilingVisitor {
 
     if (word.length() > 0) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.shieldSpecialChars(word));
+      buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
 
       processTokenizedName(word, false, kind);
     }
@@ -272,7 +286,7 @@ public class GlobalCompilingVisitor {
   }
 
   private static class WordTokenizer {
-    private final List<String> myWords = new ArrayList<>();
+    private final List<String> myWords = new SmartList<>();
 
     WordTokenizer(String text) {
       final StringTokenizer tokenizer = new StringTokenizer(text);

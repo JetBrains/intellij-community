@@ -14,14 +14,16 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,14 +43,27 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
 
   @NotNull private final String myProjectPath;
   private final boolean myIsPreviewMode;
+  @Nullable private final String myVmOptions;
+  @Nullable private final String myArguments;
 
   public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
                                           @NotNull Project project,
                                           @NotNull String projectPath,
                                           boolean isPreviewMode) {
+    this(externalSystemId, project, projectPath, null, null, isPreviewMode);
+  }
+
+  public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
+                                          @NotNull Project project,
+                                          @NotNull String projectPath,
+                                          @Nullable String vmOptions,
+                                          @Nullable String arguments,
+                                          boolean isPreviewMode) {
     super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
     myProjectPath = projectPath;
     myIsPreviewMode = isPreviewMode;
+    myVmOptions = vmOptions;
+    myArguments = arguments;
   }
 
   @SuppressWarnings("unchecked")
@@ -57,11 +72,17 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     Project ideProject = getIdeProject();
     RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
     ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
+    if(StringUtil.isNotEmpty(myVmOptions)) {
+      settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
+    }
+    if(StringUtil.isNotEmpty(myArguments)) {
+      settings.withArguments(ParametersListUtil.parse(myArguments));
+    }
 
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
       (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskId id = getId();
-    progressNotificationManager.onQueued(id, myProjectPath);
+    progressNotificationManager.onStart(id, myProjectPath);
     try {
       DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings);
       if (project != null) {
@@ -117,7 +138,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       final long currentTimeMillis = System.currentTimeMillis();
       projectInfo.setLastImportTimestamp(currentTimeMillis);
       projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
-      ProjectDataManager.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+      ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
     }
   }
 }

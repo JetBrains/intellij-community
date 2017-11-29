@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
   }
 
   @Nullable
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable,
-                                                                            @Nullable PsiExpression context) {
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
     return null;
   }
 
@@ -96,7 +94,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
           return descriptor;
         }
       }
-      return findConversionForMethod(from, to, method, methodName, context, labeler);
+      TypeConversionDescriptorBase conversionForMethod = findConversionForMethod(from, to, method, methodName, context, labeler);
+      return conversionForMethod != null ? conversionForMethod : getUnknownMethodConversion();
     } else if (context instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)context).getAnonymousClass();
       return anonymousClass == null ? null : findConversionForAnonymous(anonymousClass, labeler.getSettings(GuavaConversionSettings.class));
@@ -111,12 +110,14 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       if (context instanceof PsiReferenceExpression) {
         final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
         if (resolvedElement instanceof PsiVariable) {
-          return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
+          return findConversionForVariableReference(context);
         }
       }
     }
     return null;
   }
+
+  protected abstract TypeConversionDescriptorBase getUnknownMethodConversion();
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForAnonymous(@NotNull PsiAnonymousClass anonymousClass,

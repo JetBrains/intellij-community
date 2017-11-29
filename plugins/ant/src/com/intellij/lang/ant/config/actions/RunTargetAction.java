@@ -20,7 +20,6 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -61,7 +60,7 @@ public class RunTargetAction extends AnAction {
       antTarget.first, new String[] {antTarget.second.getName().getValue() },
       null,
       e.getDataContext(),
-      Collections.<BuildFileProperty>emptyList(),
+      Collections.emptyList(),
       AntBuildListener.NULL);
   }
 
@@ -75,10 +74,10 @@ public class RunTargetAction extends AnAction {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) {
       presentation.setEnabled(false);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", ""));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", ""));
     } else {
       presentation.setEnabled(true);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", "'" + antTarget.second.getName().getValue() + "'"));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", "'" + antTarget.second.getName().getValue() + "'"));
     }
   }
 

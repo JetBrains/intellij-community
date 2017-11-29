@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -96,7 +95,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         result.setShouldDestroyProcessRecursively(true);
         result.addProcessListener(new ProcessAdapter() {
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             updateProjectsFolders();
           }
         });
@@ -109,12 +108,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private void updateProjectsFolders() {
     MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
-  }
-
-  @Override
-  @NotNull
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
   }
 
   @Nullable

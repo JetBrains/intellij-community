@@ -16,9 +16,13 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -30,12 +34,15 @@ import static com.intellij.testFramework.PlatformTestUtil.SKIP_SLOW;
 import static org.junit.Assume.assumeFalse;
 
 public abstract class BareTestFixtureTestCase {
+  public static final Logger LOG = Logger.getInstance(BareTestFixtureTestCase.class);
   @Rule public final TestName myNameRule = new TestName();
 
   private BareTestFixture myFixture;
 
   @Before
   public final void setupFixture() throws Exception {
+    ApplicationInfoImpl.setInStressTest(UsefulTestCase.isPerformanceTest(null, getClass().getName()));
+
     boolean headless = SKIP_HEADLESS && getClass().getAnnotation(SkipInHeadlessEnvironment.class) != null;
     assumeFalse("Class '" + getClass().getName() + "' is skipped because it requires working UI environment", headless);
     boolean slow = SKIP_SLOW && getClass().getAnnotation(SkipSlowTestLocally.class) != null;
@@ -43,6 +50,7 @@ public abstract class BareTestFixtureTestCase {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     myFixture.setUp();
+    Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
   }
 
   @After

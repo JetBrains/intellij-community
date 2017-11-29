@@ -94,5 +94,6 @@ public interface IntentionAction extends FileModifier {
    *
    * @return true if the intention requires a write action, false otherwise.
    */
+  @Override
   boolean startInWriteAction();
 }

@@ -43,12 +43,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindowImpl myDocumentWindow;
-  private static final ThreadLocal<Boolean> disabledTemporarily = new ThreadLocal<Boolean>(){
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-  };
+  private static final ThreadLocal<Boolean> disabledTemporarily = ThreadLocal.withInitial(() -> false);
   private boolean myPatchingLeaves;
 
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
@@ -98,13 +93,10 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert hostElementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<>();
-    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        Document document = documentManager.getCachedDocument(injectedPsi);
-        if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
-          provider.set(injectedPsi.getViewProvider());
-        }
+    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+      Document document = documentManager.getCachedDocument(injectedPsi);
+      if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
+        provider.set(injectedPsi.getViewProvider());
       }
     };
     for (PsiElement current = hostElementCopy; current != null && current != hostPsiFileCopy; current = current.getParent()) {
@@ -179,7 +171,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     return isEventSystemEnabled();
   }
 
-  public void performNonPhysically(Runnable runnable) {
+  void performNonPhysically(Runnable runnable) {
     synchronized (myLock) {
       disabledTemporarily.set(true);
       try {

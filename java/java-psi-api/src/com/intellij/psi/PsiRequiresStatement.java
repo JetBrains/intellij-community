@@ -18,11 +18,11 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a {@code requires} statement of a Java module declaration.
+ * Represents a {@code requires} directive of a Java module declaration.
  *
  * @since 2016.3
  */
-public interface PsiRequiresStatement extends PsiModifierListOwner {
+public interface PsiRequiresStatement extends PsiModifierListOwner, PsiStatement {
   PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];
 
   @Nullable PsiJavaModuleReferenceElement getReferenceElement();

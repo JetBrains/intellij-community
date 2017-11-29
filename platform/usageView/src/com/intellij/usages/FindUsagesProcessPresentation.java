@@ -18,25 +18,18 @@ package com.intellij.usages;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author max
  */
 public class FindUsagesProcessPresentation {
-  @NonNls
-  public static final String NAME_WITH_MNEMONIC_KEY = "NameWithMnemonic";
   private final UsageViewPresentation myUsageViewPresentation;
 
-  private List<Action> myNotFoundActions;
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
@@ -47,16 +40,6 @@ public class FindUsagesProcessPresentation {
 
   public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
     myUsageViewPresentation = presentation;
-  }
-
-  public void addNotFoundAction(@NotNull Action action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
-    myNotFoundActions.add(action);
-  }
-
-  @NotNull
-  public List<Action> getNotFoundActions() {
-    return myNotFoundActions == null ? Collections.emptyList() : myNotFoundActions;
   }
 
   public boolean isShowNotFoundMessage() {

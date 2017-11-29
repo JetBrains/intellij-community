@@ -23,9 +23,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -60,22 +62,32 @@ public class RefreshWorker {
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean myCancelled;
+  private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
+    boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() && !(refreshRoot.getFileSystem() instanceof TempFileSystem);
+    myLocalFileSystemRefreshWorker = canUseNioRefresher && Registry.is("vfs.use.nio-based.local.refresh.worker") ?
+                                     new LocalFileSystemRefreshWorker(refreshRoot, isRecursive) : null;
     myIsRecursive = isRecursive;
     myRefreshQueue.addLast(pair(refreshRoot, null));
   }
 
   @NotNull
   public List<VFileEvent> getEvents() {
+    if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
     return myEvents;
   }
 
   public void cancel() {
+    if (myLocalFileSystemRefreshWorker != null) myLocalFileSystemRefreshWorker.cancel();
     myCancelled = true;
   }
 
   public void scan() {
+    if (myLocalFileSystemRefreshWorker != null) {
+      myLocalFileSystemRefreshWorker.scan();
+      return;
+    }
     NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
@@ -85,7 +97,7 @@ public class RefreshWorker {
       processQueue(fs, PersistentFS.getInstance());
     }
     catch (RefreshCancelledException e) {
-      LOG.debug("refresh cancelled");
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -96,7 +108,9 @@ public class RefreshWorker {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("file=" + file + " dirty=" + fileDirty);
+      }
       if (!fileDirty) continue;
 
       checkCancelled(file);
@@ -137,8 +151,8 @@ public class RefreshWorker {
 
       boolean currentWritable = persistence.isWritable(file);
       boolean upToDateWritable = attributes.isWritable();
-      if (LOG_ATTRIBUTES.isDebugEnabled()) {
-        LOG_ATTRIBUTES.debug("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
+      if (LOG_ATTRIBUTES.isTraceEnabled()) {
+        LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
       }
       if (currentWritable != upToDateWritable) {
         scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
@@ -212,7 +226,9 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("retry: " + dir);
+          }
           continue;
         }
 
@@ -224,7 +240,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory(), false);
+            scheduleCreation(dir, name, childAttributes.isDirectory());
           }
           else {
             LOG.warn("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -295,7 +311,9 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("retry: " + dir);
+          }
           continue;
         }
 
@@ -315,7 +333,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory(), false);
+            scheduleCreation(dir, name, childAttributes.isDirectory());
           }
         }
 
@@ -379,14 +397,14 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
-      scheduleCreation(parent, child.getName(), upToDateIsDirectory, true);
+      scheduleCreation(parent, child.getName(), upToDateIsDirectory);
       return true;
     }
 
     return false;
   }
 
-  private void scheduleAttributeChange(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
+  private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
@@ -396,9 +414,9 @@ public class RefreshWorker {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
-  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory, boolean isReCreation) {
+  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, isReCreation));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
   }
 
   private void scheduleDeletion(@Nullable VirtualFile file) {
@@ -413,6 +431,7 @@ public class RefreshWorker {
   @TestOnly
   public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
+    LocalFileSystemRefreshWorker.setCancellingCondition(condition);
     ourCancellingCondition = condition;
   }
 }

@@ -68,6 +68,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
       urls[row] = item.getUrl();
     }
     getModel().getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(urls);
+    fireConfigurationChanged();
   }
 
   @Override

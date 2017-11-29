@@ -4,20 +4,28 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author maxim
  */
-public abstract class AbstractReparseTestCase extends PsiTestCase {
+public abstract class AbstractReparseTestCase extends LightCodeInsightFixtureTestCase {
   protected FileType myFileType;
   protected PsiFile myDummyFile;
   private int myInsertOffset;
+
+  @Override
+  protected void tearDown() throws Exception {
+    myDummyFile = null;
+    myFileType = null;
+    super.tearDown();
+  }
 
   protected void setFileType(final FileType fileType) {
     myFileType = fileType;
@@ -28,18 +36,9 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
       String oldText = myDummyFile.getText();
       String expectedNewText = oldText.substring(0, myInsertOffset) + s + oldText.substring(myInsertOffset);
 
-      try {
-        doReparseAndCheck(s, expectedNewText, 0);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      doReparseAndCheck(s, expectedNewText, 0);
       myInsertOffset += s.length();
     }), "asd", null);
-  }
-
-  protected void moveEditPointLeft(int count) {
-    myInsertOffset -= count;
   }
 
   protected void moveEditPointRight(int count) {
@@ -60,29 +59,24 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
 
   private void doReparseAndCheck(final String s, final String expectedNewText, final int length) throws IncorrectOperationException {
     doReparse(s, length);
-    String foundStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), false);
+    String foundStructure = DebugUtil.treeToString(myDummyFile.getNode(), false);
     final PsiFile psiFile = createDummyFile(getName() + "." + myFileType.getDefaultExtension(), expectedNewText);
-    String expectedStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(psiFile), false);
-    if (!expectedStructure.equals(foundStructure)) {
-      System.out.println("expected: ");
-      System.out.println(expectedStructure);
-      System.out.println("found: ");
-      System.out.println(foundStructure);
-      assertEquals(expectedStructure, foundStructure);
-    }
+    String expectedStructure = DebugUtil.treeToString(psiFile.getNode(), false);
+    assertEquals(expectedStructure, foundStructure);
 
     assertEquals("Reparse tree should be equal to the document", expectedNewText, myDummyFile.getText());
   }
 
+  @NotNull
+  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
+    FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, type, text);
+  }
+
   protected void doReparse(final String s, final int length) {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
-      try {
-        blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      BlockSupport blockSupport = ServiceManager.getService(getProject(), BlockSupport.class);
+      blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
     }), "asd", null);
   }
 

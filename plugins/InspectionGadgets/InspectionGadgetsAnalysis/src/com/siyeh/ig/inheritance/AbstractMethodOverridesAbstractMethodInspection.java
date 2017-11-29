@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,34 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreJavaDoc = false;
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreAnnotations = false;
 
   @Override
   @NotNull
@@ -64,8 +66,6 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message(
       "abstract.method.overrides.abstract.method.ignore.different.javadoc.option"), "ignoreJavaDoc");
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "abstract.method.overrides.abstract.method.ignore.different.annotations.option"), "ignoreAnnotations");
     return panel;
   }
 
@@ -78,11 +78,29 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiElement method = methodNameIdentifier.getParent();
+      final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       assert method != null;
-      deleteElement(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      final List<PsiElement> elements =
+        references.stream().map(ref -> ref.getElement())
+          .filter(a -> a instanceof PsiDocMethodOrFieldRef)
+          .collect(Collectors.toCollection(() -> new SmartList<>()));
+      elements.add(method);
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
+        return;
+      }
+      WriteAction.run(() -> {
+        deleteElement(method);
+        references.forEach(a -> a.bindToElement(superMethods[0]));
+      });
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 
@@ -95,18 +113,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (method.isConstructor()) {
-        return;
-      }
-      if (!isAbstract(method)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
+      if (method.isConstructor() || !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       boolean overrideDefault = false;
@@ -114,7 +121,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         overrideDefault |= superMethod.hasModifierProperty(PsiModifier.DEFAULT);
-        if (!isAbstract(superMethod)) {
+        if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           continue;
         }
         if (overrideDefault) {
@@ -125,7 +132,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;
         }
-        if (ignoreAnnotations && !methodsHaveSameAnnotations(method, superMethod)) {
+        if (!methodsHaveSameAnnotationsAndModifiers(method, superMethod)) {
           return;
         }
       }
@@ -134,21 +141,17 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       }
     }
 
-    private boolean methodsHaveSameAnnotations(PsiMethod method, PsiMethod superMethod) {
-      if (!haveSameAnnotations(method, superMethod)) {
+    private boolean methodsHaveSameAnnotationsAndModifiers(PsiMethod method, PsiMethod superMethod) {
+      if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
         return false;
       }
-      final PsiParameterList superParameterList = superMethod.getParameterList();
-      final PsiParameter[] superParameters = superParameterList.getParameters();
-      final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length != superParameters.length) {
         return false;
       }
       for (int i = 0, length = superParameters.length; i < length; i++) {
-        final PsiParameter superParameter = superParameters[i];
-        final PsiParameter parameter = parameters[i];
-        if (!haveSameAnnotations(parameter, superParameter)) {
+        if (!haveSameAnnotations(parameters[i], superParameters[i])) {
           return false;
         }
       }
@@ -163,19 +166,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       } else if (modifierList == null) {
         return false;
       }
-      final PsiAnnotation[] superAnnotations = superModifierList.getAnnotations();
-      final PsiAnnotation[] annotations = modifierList.getAnnotations();
-      final Set<PsiAnnotation> annotationsSet = new HashSet<>(Arrays.asList(superAnnotations));
-      for (PsiAnnotation annotation : annotations) {
-        final String qualifiedName = annotation.getQualifiedName();
-        if (CommonClassNames.JAVA_LANG_OVERRIDE.equals(qualifiedName)) {
-          continue;
-        }
-        if (!annotationsSet.contains(annotation)) {
-          return false;
-        }
-      }
-      return true;
+      return AnnotationUtil.equal(modifierList.getAnnotations(), superModifierList.getAnnotations());
     }
 
     private boolean haveSameJavaDoc(PsiMethod method, PsiMethod superMethod) {
@@ -221,14 +212,6 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final PsiType type2 = method2.getReturnType();
       return Comparing.equal(type1, substitutor.substitute(type2));
-    }
-
-    private boolean isAbstract(PsiMethod method) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return true;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      return containingClass != null && containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.DEFAULT);
     }
   }
 }

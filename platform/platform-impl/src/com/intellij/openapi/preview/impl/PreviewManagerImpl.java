@@ -380,11 +380,11 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     public void paint(Graphics g) {
       boolean isDarkBackground = UIUtil.isUnderDarcula();
       UISettings.setupAntialiasing(g);
-      g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
-      g.setFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f));
-
-      UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
-      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
+      UIUtil.TextPainter painter = new UIUtil.TextPainter()
+        .withLineSpacing(1.5f)
+        .withColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160))
+        .withFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f))
+        .withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
       painter.appendLine("No files are open");//.underlined(new JBColor(Gray._150, Gray._180));
       painter.draw(g, (width, height) -> {

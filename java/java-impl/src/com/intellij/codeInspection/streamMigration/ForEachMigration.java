@@ -36,8 +36,8 @@ import static com.intellij.codeInspection.streamMigration.CollectMigration.getAd
 class ForEachMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(ForEachMigration.class);
 
-  protected ForEachMigration(String forEachMethodName) {
-    super(forEachMethodName);
+  protected ForEachMigration(boolean shouldWarn, String forEachMethodName) {
+    super(shouldWarn, forEachMethodName);
   }
 
   @Nullable
@@ -57,8 +57,8 @@ class ForEachMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
+    PsiStatement loopStatement = tb.getStreamSourceStatement();
     restoreComments(loopStatement, body);
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -84,6 +84,8 @@ class ForEachMigration extends BaseStreamApiMigration {
       return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
     }
 
+    tb.replaceContinueWithReturn(factory);
+
     String stream = tb.generate(true) + "." + getReplacement() + "(";
     PsiElement block = tb.convertToElement(factory);
 
@@ -99,9 +101,12 @@ class ForEachMigration extends BaseStreamApiMigration {
 
     if (expressions[0] instanceof PsiFunctionalExpression &&
         ((PsiFunctionalExpression)expressions[0]).getFunctionalInterfaceType() == null) {
-      callStatement =
-        (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
-          stream + "(" + tb.getVariable().getText() + ") -> " + wrapInBlock(block) + ");", callStatement));
+      PsiTypeElement typeElement = tb.getVariable().getTypeElement();
+      if (typeElement != null) {
+        String typedVariable = typeElement.getText() + " " + tb.getVariable().getName();
+        callStatement = (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
+          stream + "(" + typedVariable + ") -> " + wrapInBlock(block) + ");", callStatement));
+      }
     }
     return callStatement;
   }

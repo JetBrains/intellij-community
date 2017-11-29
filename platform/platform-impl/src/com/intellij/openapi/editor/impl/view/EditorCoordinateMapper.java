@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.geom.Point2D;
 import java.util.List;
 
@@ -97,7 +99,7 @@ class EditorCoordinateMapper {
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
       }
-      else if (fragment.getCurrentInlays() == null) {
+      else if (fragment.getCurrentInlay() == null) {
         int minColumn = fragment.getMinLogicalColumn();
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
@@ -139,7 +141,9 @@ class EditorCoordinateMapper {
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
     int maxOffset = offset;
+    LogicalPosition delayedResult = null;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
+      if (delayedResult != null) return delayedResult.leanForward(fragment.getCurrentInlay() == null);
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
       if (column < minColumn || column == minColumn && !pos.leansRight) {
@@ -148,11 +152,16 @@ class EditorCoordinateMapper {
       if (column > minColumn && column < maxColumn ||
           column == minColumn ||
           column == maxColumn && !pos.leansRight) {
-        return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(), 
-                                   fragment.visualToLogicalColumn(column),
-                                   fragment.isCollapsedFoldRegion() ? column < maxColumn :
-                                   fragment.getCurrentInlays() != null ? column == maxColumn :
-                                   fragment.isRtl() ^ pos.leansRight);
+        if (column == maxColumn && fragment.getCurrentInlay() != null) {
+          // for visual positions between adjacent inlays, we return same result as for visual position before the first one
+          delayedResult = new LogicalPosition(fragment.getEndLogicalLine(), fragment.getEndLogicalColumn(), true);
+        }
+        else {
+          return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
+                                     fragment.visualToLogicalColumn(column),
+                                     fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                                     fragment.getCurrentInlay() == null && fragment.isRtl() ^ pos.leansRight);
+        }
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
                          fragment.getMaxLogicalColumn();
@@ -248,7 +257,31 @@ class EditorCoordinateMapper {
   }
 
   private float getStartX(int line) {
-    return myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
+    return myView.getEditor().isRightAligned() ?
+           getRightAlignmentLineStartX(line) :
+           myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
+  }
+
+  float getRightAlignmentLineStartX(int visualLine) {
+    checkRightAlignment();
+    EditorImpl editor = myView.getEditor();
+    int max = getRightAlignmentMarginX();
+    float shift = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
+    if (visualLine >= editor.getVisibleLineCount()) return max - shift;
+    int lineWidth = myView.getSizeManager().getVisualLineWidth(new VisualLinesIterator(editor, visualLine), false);
+    return Math.max(max - lineWidth, 0);
+  }
+
+  int getRightAlignmentMarginX() {
+    checkRightAlignment();
+    EditorImpl editor = myView.getEditor();
+    JScrollBar vsb = editor.getScrollPane().getVerticalScrollBar();
+    int vsbWidth = vsb != null && editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT ? vsb.getWidth() : 0;
+    return editor.getContentComponent().getWidth() - myView.getInsets().right - editor.getSettings().getLineCursorWidth() - vsbWidth;
+  }
+
+  private void checkRightAlignment() {
+    if (!myView.getEditor().isRightAligned()) throw new IllegalStateException("Editor is not right-aligned");
   }
 
   @NotNull
@@ -260,7 +293,7 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
         if (px <= fragment.getStartX()) {
           if (fragment.getStartVisualColumn() == 0) {
             return new VisualPosition(visualLine, 0);
@@ -309,14 +342,14 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
         int startVisualColumn = fragment.getStartVisualColumn();
         if (column < startVisualColumn || column == startVisualColumn && !pos.leansRight) {
           break;
         }
         int endColumn = fragment.getEndVisualColumn();
         if (column < endColumn || column == endColumn && !pos.leansRight) {
-          return new Point2D.Float(fragment.visualColumnToX(column), y);
+          return new Point2D.Double(fragment.visualColumnToX(column), y);
         }
         x = fragment.getEndX();
         lastColumn = endColumn;
@@ -328,7 +361,7 @@ class EditorCoordinateMapper {
       }
     }
     int additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
-    return new Point2D.Float(x + additionalShift, y);
+    return new Point2D.Double(x + additionalShift, y);
   }
 
   @NotNull
@@ -342,7 +375,7 @@ class EditorCoordinateMapper {
     float x = getStartX(logicalLine);
     if (myDocument.getTextLength() > 0) {
       boolean firstFragment = true;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, true)) {
         if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
           x = fragment.getStartX();
           break;
@@ -350,7 +383,7 @@ class EditorCoordinateMapper {
         firstFragment = false;
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
-        if (fragment.getCurrentInlays() == null &&
+        if (fragment.getCurrentInlay() == null &&
             (offset > minOffset && offset < maxOffset ||
             offset == minOffset && leanTowardsLargerOffsets ||
             offset == maxOffset && !leanTowardsLargerOffsets)) {
@@ -362,6 +395,6 @@ class EditorCoordinateMapper {
         }
       }
     }
-    return new Point2D.Float(x, y);
+    return new Point2D.Double(x, y);
   }
 }

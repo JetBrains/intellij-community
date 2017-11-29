@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
@@ -30,7 +35,16 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("if.can.be.switch.quickfix");
   }
 
-  public void testComment() {
-    doTest();
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    super.tuneFixture(builder);
+    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
+
+  public void testComment() { doTest();}
+  public void testComments() { doTest(); }
+  public void testLong() { assertQuickfixNotAvailable(); }
+  public void testPolyadic() { doTest(); }
+  public void testStringEquality() { doTest(); }
+  public void testObjectsEquals() { doTest();}
 }

@@ -107,7 +107,7 @@ public interface ExternalDependency extends Serializable {
 
   /**
    * Allows to check if current dependency is transitive, i.e. is visible to the module which depends on module that has current dependency.
-   * @return <code>true</code> if current dependency is transitive; <code>false</code> otherwise
+   * @return {@code true} if current dependency is transitive; {@code false} otherwise
    */
   boolean getExported();
 }

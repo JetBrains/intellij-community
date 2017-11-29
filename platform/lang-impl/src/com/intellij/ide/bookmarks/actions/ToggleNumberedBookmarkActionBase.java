@@ -30,6 +30,7 @@ public abstract class ToggleNumberedBookmarkActionBase extends AnAction implemen
   private final int myNumber;
 
   public ToggleNumberedBookmarkActionBase(int n) {
+    setEnabledInModalContext(true);
     myNumber = n;
   }
 

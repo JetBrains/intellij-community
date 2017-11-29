@@ -16,10 +16,8 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -92,7 +90,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFString() throws Exception {
+  public void testFString() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
@@ -130,7 +128,7 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
   }
 
-  public void testUncommentWithSpace() throws Exception {   // PY-980
+  public void testUncommentWithSpace() {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
     PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
@@ -477,7 +475,7 @@ public class PyEditingTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE,
                               "import re\n" +
                               "re.compile(ur'\\U00010000<caret>')");
-    doTyping("t");
+    myFixture.type("t");
     myFixture.checkResult("import re\n" +
                           "re.compile(ur'\\U00010000t')");
   }
@@ -489,50 +487,28 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
-    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-        return file;
-      }
-    });
+    final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.getEditor().getCaretModel().moveToOffset(offset);
+    myFixture.type(character);
     return myFixture.getDocument(file).getText();
   }
 
   private void doTypingTest(final char character) {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(character);
+    myFixture.type(character);
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
   private void doTypingTest(@NotNull String text) {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(text);
+    myFixture.type(text);
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
   private void doDocStringTypingTest(final String text, @NotNull DocStringFormat format) {
     runWithDocStringFormat(format, () -> doTypingTest(text));
-  }
-
-  private void doTyping(final char character) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      myFixture.getEditor().getCaretModel().moveToOffset(offset);
-      myFixture.type(character);
-    });
-  }
-  
-  private void doTyping(final String text) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      myFixture.getEditor().getCaretModel().moveToOffset(offset);
-      myFixture.type(text);
-    });
   }
 
   public void testFirstParamClassmethod() {
@@ -568,6 +544,28 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testFirstParamDuplicateColon() {  // PY-2652
+    doTypingTest('(');
+  }
+
+  // PY-21269
+  public void testFirstParamMultipleMethods() {
+    doTypingTest('(');
+  }
+
+  // PY-15240
+  public void testFirstParamSpacesInsideParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    doTypingTest('(');
+  }
+
+  // PY-15240
+  public void testFirstParamSpacesInsideEmptyParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
+    doTypingTest('(');
+  }
+
+  // PY-21289
+  public void testPairedParenthesesMultipleCalls() {
     doTypingTest('(');
   }
 

@@ -25,12 +25,8 @@ import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -46,12 +42,11 @@ import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
-  private static final Key<String> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private static final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
-    String invariant = PRESENTATION_INVARIANT.get(o1);
+    PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
     assert invariant != null;
-    return StringUtil.naturalCompare(invariant, PRESENTATION_INVARIANT.get(o2));
+    return invariant.compareTo(PRESENTATION_INVARIANT.get(o2));
   };
   static final int MAX_PREFERRED_COUNT = 5;
   public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
@@ -67,6 +62,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
+  private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
@@ -90,7 +86,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @NotNull
   private CompletionSorterImpl obtainSorter(LookupElement element) {
-    return myProcess.getSorter(element);
+    //noinspection ConstantConditions
+    return element.getUserData(mySorterKey);
   }
 
   @NotNull
@@ -133,6 +130,10 @@ public class CompletionLookupArranger extends LookupArranger {
     return result;
   }
 
+  void associateSorter(LookupElement element, CompletionSorterImpl sorter) {
+    element.putUserData(mySorterKey, sorter);
+  }
+
   private static boolean haveSameWeights(List<Pair<LookupElement, Object>> pairs) {
     if (pairs.isEmpty()) return true;
 
@@ -149,10 +150,8 @@ public class CompletionLookupArranger extends LookupArranger {
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
-    String tail = getTailTextOrSpace(presentation);
-    String invariant = presentation.getItemText() + "\0###" + String.format("%02d", tail.length()) + tail + "###" + presentation.getTypeText();
+    PresentationInvariant invariant = new PresentationInvariant(presentation.getItemText(), presentation.getTailText(), presentation.getTypeText());
     element.putUserData(PRESENTATION_INVARIANT, invariant);
-    element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -199,19 +198,23 @@ public class CompletionLookupArranger extends LookupArranger {
 
       // restart completion on any prefix change
       myProcess.addWatchedPrefix(0, StandardPatterns.string());
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) printTestWarning();
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void printTestWarning() {
+    System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
+    System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");
+    System.err.println("2. Increase 'ide.completion.variant.limit' (using RegistryValue#setValue with a test root disposable).");
+    System.err.println("3. Ignore this warning.");
   }
 
   private void removeItem(LookupElement element, ProcessingContext context) {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     classifier.removeElement(element, context);
-  }
-
-  @NotNull
-  private static String getTailTextOrSpace(LookupElementPresentation presentation) {
-    String tailText = presentation.getTailText();
-    return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
   private List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
@@ -381,8 +384,8 @@ public class CompletionLookupArranger extends LookupArranger {
       }
 
       for (int i = 0; i < items.size(); i++) {
-        String invariant = PRESENTATION_INVARIANT.get(items.get(i));
-        if (invariant != null && invariant.equals(GLOBAL_PRESENTATION_INVARIANT.get(lastSelection))) {
+        PresentationInvariant invariant = PRESENTATION_INVARIANT.get(items.get(i));
+        if (invariant != null && invariant.equals(PRESENTATION_INVARIANT.get(lastSelection))) {
           return i;
         }
       }

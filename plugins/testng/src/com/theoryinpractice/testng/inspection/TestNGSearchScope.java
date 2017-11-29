@@ -24,9 +24,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-*/
 public class TestNGSearchScope extends GlobalSearchScope {
 
   private final ProjectFileIndex myFileIndex;
@@ -43,10 +40,12 @@ public class TestNGSearchScope extends GlobalSearchScope {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return false;
   }

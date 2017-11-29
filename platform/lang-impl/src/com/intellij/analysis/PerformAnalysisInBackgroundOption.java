@@ -1,8 +1,4 @@
 
-/*
- * User: anna
- * Date: 22-Jan-2007
- */
 package com.intellij.analysis;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;

@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 
@@ -67,7 +66,7 @@ public class PathInternerTest extends TestCase {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static void main(String[] args) throws InterruptedException, IOException {
+  public static void main(String[] args) throws IOException {
     final HashSet<String> hs = new HashSet<>();
     FileUtil.processFilesRecursively(new File(PathManager.getHomePath()), file -> {
       hs.add(file.getPath());

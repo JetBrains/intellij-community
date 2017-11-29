@@ -52,25 +52,29 @@ public enum ActionType {
   }
 
   public void process(XmlTag rootTag, Processor processor) {
-    final XmlTag[] actions = rootTag.findSubTags("actions");
-    for (XmlTag tag : actions) {
-      if (!tag.isPhysical()) continue;
-      final XmlTag[] components = tag.getSubTags();
-      for (XmlTag actionOrGroup : components) {
-        if (myName.equals(actionOrGroup.getName())) {
-          if (!processor.process(this, actionOrGroup)) {
-            return;
-          }
-        } else if (this == ACTION && GROUP.myName.equals(actionOrGroup.getName())) {
-          final XmlTag[] groupActions = actionOrGroup.findSubTags(myName);
-          for (XmlTag a : groupActions) {
-            if (!processor.process(this, a)) {
-              return;
-            }
-          }
+    for (XmlTag actionsTag : rootTag.findSubTags("actions")) {
+      if (!actionsTag.isPhysical()) continue;
+
+      final XmlTag[] actionOrGroupTags = actionsTag.getSubTags();
+      processRecursively(processor, actionOrGroupTags);
+    }
+  }
+
+  private boolean processRecursively(Processor processor, XmlTag[] tags) {
+    for (XmlTag tag : tags) {
+      if (myName.equals(tag.getName())) {
+        if (!processor.process(this, tag)) {
+          return false;
         }
       }
+
+      if (GROUP.myName.equals(tag.getName())) {
+        if (this == ACTION && !processRecursively(processor, tag.findSubTags(ACTION.myName))) return false;
+
+        if (!processRecursively(processor, tag.findSubTags(GROUP.myName))) return false;
+      }
     }
+    return true;
   }
 
   public void patchPluginXml(XmlFile pluginXml, PsiClass klass, ActionData dialog) throws IncorrectOperationException {

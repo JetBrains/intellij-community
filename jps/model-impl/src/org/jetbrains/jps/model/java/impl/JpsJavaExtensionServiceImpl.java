@@ -15,26 +15,30 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
-import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
-import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
-import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
-import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElementContainer;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.impl.compiler.JpsJavaCompilerConfigurationImpl;
+import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsTestModuleProperties;
+import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,8 +50,6 @@ import java.util.List;
  * @author nik
  */
 public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
-  private JavaModuleIndex myModuleIndex = null;
-
   @NotNull
   @Override
   public JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
@@ -239,10 +241,11 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   @Override
   public JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project, @NotNull File storageRoot) {
-    if (myModuleIndex == null) {
-      JpsCompilerExcludes excludes = getOrCreateCompilerConfiguration(project).getCompilerExcludes();
-      myModuleIndex = JavaModuleIndexImpl.load(storageRoot, excludes);
+    final JpsElementContainer container = project.getContainer();
+    final JavaModuleIndex index = container.getChild(JavaModuleIndexRole.INSTANCE);
+    if (index != null) {
+      return index;
     }
-    return myModuleIndex;
+    return container.setChild(JavaModuleIndexRole.INSTANCE, Pair.create(getOrCreateCompilerConfiguration(project), storageRoot));
   }
 }

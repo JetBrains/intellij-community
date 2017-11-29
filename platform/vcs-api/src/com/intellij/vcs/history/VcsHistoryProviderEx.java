@@ -32,5 +32,5 @@ public interface VcsHistoryProviderEx extends VcsHistoryProvider {
   
   void reportAppendableHistory(@NotNull FilePath path, 
                                @Nullable VcsRevisionNumber startingRevision, 
-                               @NotNull VcsAppendableHistorySessionPartner partner) throws VcsException;
+                               @NotNull VcsAppendableHistorySessionPartner partner);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
-  public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
   public String DEFAULT_PATCH_EXTENSION = PATCH;
   public boolean USE_CUSTOM_SHELF_PATH = false;
   public String CUSTOM_SHELF_PATH = null;
@@ -76,10 +75,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public int MAXIMUM_HISTORY_ROWS = 1000;
   public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
-  public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
+  public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
+  public boolean RELOAD_CONTEXT = true;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "path")
   @Tag("ignored-roots")
@@ -130,11 +130,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
-  public boolean CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = false;
-
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
-  public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
-
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
   public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();
@@ -220,9 +216,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class CommitInBackgroundOption implements PerformInBackgroundOption {
@@ -230,9 +223,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_COMMIT_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class EditInBackgroundOption implements PerformInBackgroundOption {

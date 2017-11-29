@@ -59,11 +59,6 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   }
 
   @Override
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.EmptyProjectType;
-  }
-
-  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Module;
   }

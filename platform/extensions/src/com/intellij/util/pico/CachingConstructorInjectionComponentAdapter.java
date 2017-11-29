@@ -119,6 +119,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     }
   }
 
+  @NotNull
   private Object[] getConstructorArguments(PicoContainer container, Constructor ctor) {
     Class[] parameterTypes = ctor.getParameterTypes();
     Object[] result = new Object[parameterTypes.length];
@@ -204,6 +205,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     return matchingConstructors;
   }
 
+  @NotNull
   private Constructor[] getConstructors() {
     return (Constructor[]) AccessController.doPrivileged(new PrivilegedAction() {
       public Object run() {

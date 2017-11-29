@@ -152,12 +152,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
-    ContainerUtil.sort(commitIds, new Comparator<CommitId>() {
-      @Override
-      public int compare(@NotNull CommitId o1, @NotNull CommitId o2) {
-        return Collections.min(upAdjacentNodes.get(o1)) - Collections.min(upAdjacentNodes.get(o2));
-      }
-    });
+    ContainerUtil.sort(commitIds, Comparator.comparingInt(o -> Collections.min(upAdjacentNodes.get(o))));
     for (CommitId notLoadCommit : commitIds) {
       int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
@@ -180,12 +175,6 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   @NotNull
   public PermanentLinearGraphImpl build() {
-    return build(new NotNullFunction<CommitId, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(CommitId dom) {
-        return Integer.MIN_VALUE;
-      }
-    });
+    return build(dom -> Integer.MIN_VALUE);
   }
 }

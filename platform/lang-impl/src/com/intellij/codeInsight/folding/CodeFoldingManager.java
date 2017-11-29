@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,4 +52,18 @@ public abstract class CodeFoldingManager {
   public abstract void buildInitialFoldings(@NotNull Editor editor);
   @Nullable
   public abstract CodeFoldingState buildInitialFoldings(@NotNull Document document);
+
+  /**
+   * For auto-generated regions (created by {@link com.intellij.lang.folding.FoldingBuilder}s), returns their 'collapsed by default'
+   * status, for other regions returns {@code null}.
+   */
+  @Nullable
+  public abstract Boolean isCollapsedByDefault(@NotNull FoldRegion region);
+
+  /**
+   * Schedules recalculation of foldings in editor ({@link com.intellij.codeInsight.daemon.impl.CodeFoldingPass CodeFoldingPass}), which
+   * will happen even if document (and other dependencies declared by {@link com.intellij.lang.folding.FoldingBuilder FoldingBuilder}) 
+   * haven't changed.
+   */
+  public abstract void scheduleAsyncFoldingUpdate(@NotNull Editor editor);
 }

@@ -1,4 +1,4 @@
-g++ -fPIC -D_REENTRANT -arch x86_64 -I. -c -o attach_linux_x86_64.o attach_linux.c
+g++ -fPIC -D_REENTRANT -arch x86_64 I. -c -o attach_linux_x86_64.o attach_linux.c
 g++ -dynamiclib -arch x86_64 -o attach_x86_64.dylib attach_linux_x86_64.o -lc
 
 

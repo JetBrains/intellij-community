@@ -1,0 +1,9 @@
+UFile (package = ) [public class Foo {...]
+    UClass (name = Foo) [public class Foo {...}]
+        UMethod (name = bar) [public static fun bar() : void {...}]
+            UBlockExpression [{...}] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UBinaryExpression (operator = =) [FOO_CLASS = Foo] = Undetermined
+                    USimpleNameReferenceExpression (identifier = FOO_CLASS) [FOO_CLASS] = external FOO_CLASS()
+                    UClassLiteralExpression [Foo] = Foo
+                        UTypeReferenceExpression (name = Foo) [Foo] = Undetermined

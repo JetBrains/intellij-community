@@ -31,10 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   @Override

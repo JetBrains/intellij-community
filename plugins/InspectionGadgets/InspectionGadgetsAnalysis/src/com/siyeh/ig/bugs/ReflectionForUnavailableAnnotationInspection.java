@@ -85,7 +85,7 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
       if (modifierList == null) {
         return;
       }
-      final PsiAnnotation retentionAnnotation = modifierList.findAnnotation("java.lang.annotation.Retention");
+      final PsiAnnotation retentionAnnotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);
       if (retentionAnnotation == null) {
         registerError(arg);
         return;

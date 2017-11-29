@@ -20,13 +20,16 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
   private final PackageReferenceSet myReferenceSet;
-  private final int myIndex;
+  protected final int myIndex;
 
   public PsiPackageReference(PackageReferenceSet set, TextRange range, int index) {
     super(set.getElement(), range, set.isSoft());
@@ -35,7 +38,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   }
 
   @NotNull
-  private Set<PsiPackage> getContext() {
+  protected Set<PsiPackage> getContext() {
     if (myIndex == 0) return myReferenceSet.getInitialContext();
     Set<PsiPackage> psiPackages = new HashSet<>();
     for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).doMultiResolve()) {
@@ -52,7 +55,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   public Object[] getVariants() {
     Set<PsiPackage> subPackages = new HashSet<>();
     for (PsiPackage psiPackage : getContext()) {
-      subPackages.addAll(Arrays.asList(psiPackage.getSubPackages(myReferenceSet.getResolveScope())));
+      ContainerUtil.addAll(subPackages, psiPackage.getSubPackages(myReferenceSet.getResolveScope()));
     }
     return subPackages.toArray();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -63,12 +62,6 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     final AntRunConfiguration configuration = (AntRunConfiguration)super.clone();
     configuration.mySettings = mySettings.copy();
     return configuration;
-  }
-
-  @NotNull
-  @Override
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
   }
 
   @NotNull

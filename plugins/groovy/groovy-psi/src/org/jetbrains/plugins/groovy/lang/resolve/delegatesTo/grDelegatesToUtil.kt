@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ArrayUtil
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult.EMPTY_RESULT
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -70,5 +70,5 @@ private fun doResolveActualCall(call: GrMethodCall): GroovyResolveResult {
   val type = expression.type ?: return result
 
   val calls = ResolveUtil.getMethodCandidates(type, "call", expression, *getArgumentTypes(expression, false))
-  return calls.singleOrNull() ?: EMPTY_RESULT
+  return calls.singleOrNull() ?: EmptyGroovyResolveResult
 }

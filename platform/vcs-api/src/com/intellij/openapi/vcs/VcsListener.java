@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.07.2006
- * Time: 14:48:30
- */
 package com.intellij.openapi.vcs;
 
 import java.util.EventListener;

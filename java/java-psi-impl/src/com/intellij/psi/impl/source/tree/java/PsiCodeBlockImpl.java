@@ -125,8 +125,8 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
         }
       }, ResolveState.initial(), this, this);
 
-      myClassesSet = set1 = classesSet.isEmpty() ? Collections.<String>emptySet() : classesSet;
-      myVariablesSet = set2 = localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet;
+      myClassesSet = set1 = classesSet.isEmpty() ? Collections.emptySet() : classesSet;
+      myVariablesSet = set2 = localsSet.isEmpty() ? Collections.emptySet() : localsSet;
       myConflict = wasConflict = conflict.get();
     }
     return wasConflict ? null : Couple.of(set1, set2);

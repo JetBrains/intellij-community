@@ -41,7 +41,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspectionBase extends B
   @SuppressWarnings("PublicField")
   public boolean onlyWarnOnBaseMethods = true;
 
-  List<String> questionList = new ArrayList(32);
+  List<String> questionList = new ArrayList<>(32);
 
   public NonBooleanMethodNameMayNotStartWithQuestionInspectionBase() {
     parseString(questionString, questionList);

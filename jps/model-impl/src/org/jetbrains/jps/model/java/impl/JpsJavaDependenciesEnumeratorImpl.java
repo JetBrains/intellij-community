@@ -42,7 +42,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   public JpsJavaDependenciesEnumeratorImpl(Collection<JpsModule> rootModules) {
     super(rootModules);
     List<JpsJavaDependenciesEnumerationHandler> handlers = JpsJavaDependenciesEnumerationHandler.createHandlers(rootModules);
-    myHandlers = handlers != null ? handlers : Collections.<JpsJavaDependenciesEnumerationHandler>emptyList();
+    myHandlers = handlers != null ? handlers : Collections.emptyList();
   }
 
   @NotNull

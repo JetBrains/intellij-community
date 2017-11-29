@@ -1,6 +1,5 @@
 package com.jetbrains.python.edu.debugger;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -43,7 +42,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   @Override
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
     return new PyEduStackFrame(getSession().getProject(), this, frameInfo,
-                               getPositionConverter().convertFromPython(frameInfo.getPosition()));
+                               getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
   }
 
   @Override
@@ -64,12 +63,9 @@ class PyEduDebugProcess extends PyDebugProcess {
       return Collections.emptyList();
     }
     final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
-    Collection<PyStackFrameInfo> filteredFrames = Collections2.filter(frames, new Predicate<PyStackFrameInfo>() {
-      @Override
-      public boolean apply(PyStackFrameInfo frame) {
-        String file = frame.getPosition().getFile();
-        return !FileUtil.isAncestor(helpersPath, file, false);
-      }
+    Collection<PyStackFrameInfo> filteredFrames = Collections2.filter(frames, frame -> {
+      String file = frame.getPosition().getFile();
+      return !FileUtil.isAncestor(helpersPath, file, false);
     });
     return !filteredFrames.isEmpty() ? filteredFrames : frames;
   }

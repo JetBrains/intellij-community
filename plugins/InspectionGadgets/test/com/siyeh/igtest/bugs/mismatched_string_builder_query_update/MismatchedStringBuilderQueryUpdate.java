@@ -19,6 +19,13 @@ import java.util.*;
 
 public class MismatchedStringBuilderQueryUpdate {
 
+  public void testAssert() {
+    StringBuilder finished = new StringBuilder();
+
+    finished.append("3 ");
+    Assert.assertEquals("expected", finished.toString());
+  }
+
   void foo() {
     final StringBuilder b = new StringBuilder();
     b.append("");
@@ -113,5 +120,10 @@ class EnumConstant {
     ITEM(sb); // passed as argument
 
     SomeEnum(StringBuilder sb) {}
+  }
+}
+class Assert {
+  static Object assertEquals(Object a, Object b) {
+    return a;
   }
 }

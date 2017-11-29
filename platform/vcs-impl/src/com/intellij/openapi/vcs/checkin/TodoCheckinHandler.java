@@ -151,7 +151,7 @@ public class TodoCheckinHandler extends CheckinHandler {
       return ReturnResult.COMMIT;
     }
     Collection<Change> changes = myCheckinProjectPanel.getSelectedChanges();
-    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, myTodoFilter, true);
+    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, myTodoFilter);
 
     Ref<Boolean> completed = Ref.create(Boolean.FALSE);
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Looking for New and Edited TODO Items...", true) {

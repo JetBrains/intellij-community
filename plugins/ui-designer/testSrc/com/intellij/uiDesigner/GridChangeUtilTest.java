@@ -21,8 +21,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import junit.framework.TestCase;
 
-import java.awt.Insets;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 public final class GridChangeUtilTest extends TestCase {
 
@@ -60,7 +59,7 @@ public final class GridChangeUtilTest extends TestCase {
     }
   }
 
-  public void test_invalid_parameters() throws Exception{
+  public void test_invalid_parameters() {
     final RadContainer grid = SampleGrid.create();
 
     try {
@@ -146,7 +145,7 @@ public final class GridChangeUtilTest extends TestCase {
     public static final int S4 = 3;
     public static final int S5 = 1;
 
-    public static RadContainer create() throws Exception{
+    public static RadContainer create() {
 
       final RadContainer grid = createGrid(ORIGINAL_ROWS, ORIGINAL_COLUMNS);
 
@@ -168,7 +167,7 @@ public final class GridChangeUtilTest extends TestCase {
     }
   }
 
-  public void test_split() throws Exception{
+  public void test_split() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.splitColumn(grid, 1);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
@@ -181,7 +180,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertComponentCellAndSpan(grid, 5, 0, 1);
   }
 
-  public void test_insert_1() throws Exception{
+  public void test_insert_1() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.insertRowOrColumn(grid, 1, false, false);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
@@ -195,7 +194,7 @@ public final class GridChangeUtilTest extends TestCase {
   }
 
   @SuppressWarnings({"PointlessArithmeticExpression"})
-  public void test_insert_first() throws Exception{
+  public void test_insert_first() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.insertRowOrColumn(grid, 0, false, true);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
@@ -209,7 +208,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertComponentCellAndSpan(grid, 5, SampleGrid.C5 + 1, SampleGrid.S5);
   }
 
-  public void test_insert_last() throws Exception{
+  public void test_insert_last() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.insertRowOrColumn(grid, SampleGrid.ORIGINAL_COLUMNS-1, false, false);
     assertGridDimensions(grid, SampleGrid.ORIGINAL_ROWS, SampleGrid.ORIGINAL_COLUMNS + 1);
@@ -223,7 +222,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertComponentCellAndSpan(grid, 5, SampleGrid.C5, SampleGrid.S5);
   }
 
-  public void test_insert_after_and_before() throws Exception{
+  public void test_insert_after_and_before() {
     for (int i=0; i < SampleGrid.ORIGINAL_COLUMNS-1; i++){
       final RadContainer afterCurrent = SampleGrid.create();
       GridChangeUtil.insertRowOrColumn(afterCurrent, i, false, false);
@@ -238,7 +237,7 @@ public final class GridChangeUtilTest extends TestCase {
     }
   }
 
-  public void test_delete() throws Exception{
+  public void test_delete() {
     {
       final RadContainer grid = SampleGrid.create();
 
@@ -276,7 +275,7 @@ public final class GridChangeUtilTest extends TestCase {
     }
   }
 
-  public void testMoveRowDown() throws Exception {
+  public void testMoveRowDown() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 3 }, 6);
     assertEquals(5, grid.getComponent(3).getConstraints().getRow());
@@ -284,7 +283,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertEquals(4, grid.getComponent(5).getConstraints().getRow());
   }
 
-  public void testMoveRowUp() throws Exception {
+  public void testMoveRowUp() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 5 }, 3);
     assertEquals(4, grid.getComponent(3).getConstraints().getRow());
@@ -292,7 +291,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertEquals(3, grid.getComponent(5).getConstraints().getRow());
   }
 
-  public void testMoveAdjacentRowsDown() throws Exception {
+  public void testMoveAdjacentRowsDown() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 3, 4 }, 6);
     assertEquals(4, grid.getComponent(3).getConstraints().getRow());
@@ -300,7 +299,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertEquals(3, grid.getComponent(5).getConstraints().getRow());
   }
 
-  public void testMoveAdjacentRowsUp() throws Exception {
+  public void testMoveAdjacentRowsUp() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 4, 5 }, 3);
     assertEquals(5, grid.getComponent(3).getConstraints().getRow());
@@ -308,7 +307,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertEquals(4, grid.getComponent(5).getConstraints().getRow());
   }
 
-  public void testMoveDisjointRowsDown() throws Exception {
+  public void testMoveDisjointRowsDown() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 0, 2 }, 5);
     assertEquals(3, grid.getComponent(0).getConstraints().getRow());
@@ -316,7 +315,7 @@ public final class GridChangeUtilTest extends TestCase {
     assertEquals(1, grid.getComponent(3).getConstraints().getRow());
   }
 
-  public void testMoveDisjointRowsUp() throws Exception {
+  public void testMoveDisjointRowsUp() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.moveCells(grid, true, new int[] { 2, 4 }, 0);
     assertEquals(0, grid.getComponent(2).getConstraints().getRow());

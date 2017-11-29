@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class Mock {
 
     @Override
     public boolean isValid() {
-      return false;
+      return true;
     }
 
     @Override
@@ -221,7 +221,7 @@ public class Mock {
 
     @Override
     public EditorWindow getCurrentWindow() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
@@ -239,18 +239,18 @@ public class Mock {
 
     @Override
     public void unsplitWindow() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void unsplitAllWindow() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     @NotNull
     public EditorWindow[] getWindows() {
-      return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
+      return new EditorWindow[0];
     }
 
     @Override
@@ -261,47 +261,47 @@ public class Mock {
 
     @Override
     public void createSplitter(int orientation, @Nullable EditorWindow window) {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void changeSplitterOrientation() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void flipTabs() {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public boolean tabsMode() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean isInSplitter() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public boolean hasOpenedFile() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override
     public VirtualFile getCurrentFile() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
     public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
     public boolean isChanged(@NotNull EditorComposite editor) {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+      return false;
     }
 
     @Override

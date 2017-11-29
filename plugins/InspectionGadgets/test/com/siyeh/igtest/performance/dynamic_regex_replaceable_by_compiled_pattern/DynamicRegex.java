@@ -8,7 +8,7 @@ class DynamicRegex {
     s.<warning descr="'replaceFirst()' could be replaced with compiled 'java.util.regex.Pattern' construct">replaceFirst</warning>("first", "second");
     s.split("a");
     s.split("\\\\");
-    "abba".<warning descr="'replace()' could be replaced with compiled 'java.util.regex.Pattern' construct">replace</warning>("bb", "aa");
+    "abba".replace("bb", "aa");
     "abba".replace('b', 'a');
   }
 }

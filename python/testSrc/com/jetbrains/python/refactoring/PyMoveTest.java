@@ -393,6 +393,31 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "b.py");
   }
 
+  // PY-24365
+  public void testOptimizeImportsAfterMoveInvalidatesMembersToBeMoved() {
+    doMoveSymbolsTest("dst.py", "Class1", "Class2");
+  }
+
+  // PY-24365
+  public void testCleanupImportsAfterMove() {
+    doMoveSymbolsTest("other.py", "C1", "C2");
+  }
+
+  // PY-18216
+  public void testMoveSymbolDoesntReorderImportsInOriginFile() {
+    doMoveSymbolTest("func", "other.py");
+  }
+
+  // PY-18216
+  public void testMoveSymbolDoesntReorderImportsInUsageFile() {
+    doMoveSymbolTest("func", "other.py");
+  }
+
+  // PY-18216
+  public void testMoveFileDoesntReorderImports() {
+    doMoveFileTest("b.py", "pkg");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);

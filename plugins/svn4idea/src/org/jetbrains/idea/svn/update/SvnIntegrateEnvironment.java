@@ -53,6 +53,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
         return SvnBundle.message("integrate.display.name");
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.dialogs.versionControl.integrate.project.subversion";
       }

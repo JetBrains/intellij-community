@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ public abstract class EvaluationInputComponent {
   }
 
   @NotNull
-  protected abstract XDebuggerEditorBase getInputEditor();
+  public abstract XDebuggerEditorBase getInputEditor();
+
+  public abstract JPanel getMainComponent();
 
   public abstract void addComponent(JPanel contentPanel, JPanel resultPanel);
 }

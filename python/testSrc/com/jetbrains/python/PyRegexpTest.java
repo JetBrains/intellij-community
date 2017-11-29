@@ -17,13 +17,9 @@ package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
@@ -203,17 +199,6 @@ public class PyRegexpTest extends PyTestCase {
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
     return injected;
-  }
-
-  @NotNull
-  private PsiElement getElementAtCaret() {
-    final Editor editor = myFixture.getEditor();
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
-    assertNotNull(file);
-    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(element);
-    return element;
   }
 
   private void doTestHighlighting() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
+@set:TestOnly
+var IS_EXTERNAL_STORAGE_ENABLED = false
+
 interface StreamProvider {
   val enabled: Boolean
     get() = true
@@ -35,6 +38,8 @@ interface StreamProvider {
    * @param size actual size of data
    */
   fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
+
+  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) = write(path, content.internalBuffer, content.size(), roamingType)
 
   /**
    * `true` if provider is applicable for file.
@@ -57,8 +62,4 @@ interface StreamProvider {
 @TestOnly
 fun StreamProvider.write(path: String, content: String) {
   write(path, content.toByteArray())
-}
-
-fun StreamProvider.write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) {
-  write(path, content.internalBuffer, content.size(), roamingType)
 }

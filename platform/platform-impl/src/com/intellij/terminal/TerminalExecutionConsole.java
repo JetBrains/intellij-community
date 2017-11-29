@@ -25,9 +25,11 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.HyperlinkStyle;
+import com.jediterm.terminal.TerminalKeyEncoder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
@@ -48,6 +50,12 @@ public class TerminalExecutionConsole implements ConsoleView {
   private Project myProject;
   private final AppendableTerminalDataStream myDataStream;
 
+  private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
+
+  {
+    myKeyEncoder.setAutoNewLine(true);
+  }
+
   public TerminalExecutionConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     myProject = project;
     final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
@@ -63,9 +71,19 @@ public class TerminalExecutionConsole implements ConsoleView {
     myTerminalWidget = new JBTerminalWidget(project, 200, 24, provider, this) {
       @Override
       protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-        return new TerminalStarter(terminal, connector, myDataStream);
+        return new TerminalStarter(terminal, connector, myDataStream) {
+          @Override
+          public byte[] getCode(int key, int modifiers) {
+            if (key == 10) {
+              return myKeyEncoder.getCode(key, modifiers);
+            } else {
+              return super.getCode(key, modifiers);
+            }
+          }
+        };
       }
     };
+    Disposer.register(myTerminalWidget, provider);
 
     TerminalSession session = myTerminalWidget
       .createTerminalSession(
@@ -73,12 +91,12 @@ public class TerminalExecutionConsole implements ConsoleView {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         session.start();
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         try {
           ConsoleViewContentType contentType = null;
           if (outputType != ProcessOutputTypes.STDOUT) {
@@ -97,12 +115,12 @@ public class TerminalExecutionConsole implements ConsoleView {
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         myTerminalWidget.getTerminalPanel().setCursorVisible(false);
       }
     });
   }
-  
+
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
     if (contentType != null) {
       myDataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));

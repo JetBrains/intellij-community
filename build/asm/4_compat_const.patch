@@ -1,0 +1,12 @@
+Index: org/objectweb/asm/Opcodes.java
+===================================================================
+--- org/objectweb/asm/Opcodes.java
++++ org/objectweb/asm/Opcodes.java
+@@ -60,6 +60,7 @@
+     int V1_7 = 0 << 16 | 51;
+     int V1_8 = 0 << 16 | 52;
+     int V9 = 0 << 16 | 53;
++    @Deprecated int V1_9 = V9;  //[JB: compatibility constant]
+
+     // access flags
+

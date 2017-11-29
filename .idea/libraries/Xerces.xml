@@ -2,7 +2,6 @@
   <library name="Xerces">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/xercesImpl.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/xml-apis.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

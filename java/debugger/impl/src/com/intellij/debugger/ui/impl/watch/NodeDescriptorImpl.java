@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -115,6 +116,11 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
       myIsSelected = that.myIsSelected;
       myIsVisible  = that.myIsVisible;
       myUserData = that.myUserData != null ? new HashMap<>(that.myUserData) : null;
+
+      // TODO introduce unified way to handle this
+      if (myUserData != null) {
+        myUserData.remove(OnDemandRenderer.ON_DEMAND_CALCULATED); // calculated flag should not be inherited
+      }
     }
   }
 

@@ -51,7 +51,7 @@ public class JdkBundleList {
     Pair<Version, Integer> versionUpdate = bundleDescriptor.getVersionUpdate();
     boolean updateVersionMap = versionUpdate != null;
     if (!bundleList.isEmpty() && updateVersionMap) {
-      JdkBundle latestJdk = nameVersionMap.get(bundleDescriptor.getNameVersion());
+      JdkBundle latestJdk = nameVersionMap.get(bundleDescriptor.getNameVersion().replaceFirst("\\(.*\\)", ""));
       if (latestJdk != null) {
         Pair<Version, Integer> latestVersionUpdate = latestJdk.getVersionUpdate();
         if (latestVersionUpdate != null) {

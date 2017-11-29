@@ -18,7 +18,6 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
@@ -49,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
@@ -68,6 +68,8 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
+
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
 
@@ -79,7 +81,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
-  private final String myKey = new String("DATA_SELECTOR");
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -149,7 +150,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
-    if (dataContext.getData(myKey) == this) return;
+    if (WRAPPER_DATA_KEY.getData(dataContext) == this) return;
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
     final VirtualFile[] files = hasFocus() ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
@@ -343,7 +344,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     if (myModuleStructureComponent == null && myStructureView == null) {
-      createSinglePanel(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER));
+      JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
+        @Override
+        public Color getBackground() {
+          return UIUtil.getTreeBackground();
+        }
+      };
+      panel.getEmptyText().setText("No structure");
+      createSinglePanel(panel);
     }
 
     for (int i = 0; i < myPanels.length; i++) {
@@ -409,7 +417,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     @Override
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(myKey)) return StructureViewWrapperImpl.this;
+      if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
     }
   }

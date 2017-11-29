@@ -21,16 +21,19 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.ServerPageFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NonJavaFileGroupingRule extends FileGroupingRule {
   public NonJavaFileGroupingRule(Project project) {
     super(project);
   }
 
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
-    final FileUsageGroup usageGroup = (FileUsageGroup)super.groupUsage(usage);
+  public UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    final FileUsageGroup usageGroup = (FileUsageGroup)super.getParentGroupFor(usage, targets);
     if (usageGroup != null) {
       final PsiFile psiFile = usageGroup.getPsiFile();
       if (psiFile instanceof PsiJavaFile && !(psiFile instanceof ServerPageFile)) {

@@ -1,5 +1,3 @@
-# Stubs for http.client (Python 3.4)
-
 from typing import (
     Any, Dict, IO, Iterable, List, Iterator, Mapping, Optional, Tuple, TypeVar,
     Union,
@@ -178,6 +176,7 @@ class HTTPSConnection(HTTPConnection):
                      check_hostname: Optional[bool] = ...) -> None: ...
 
 class HTTPException(Exception): ...
+error = HTTPException
 
 class NotConnected(HTTPException): ...
 class InvalidURL(HTTPException): ...

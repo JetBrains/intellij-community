@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,19 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(final PsiElement element) {
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiLiteralExpression) || !PsiUtil.isLanguageLevel7OrHigher(element)) {
       return false;
     }
 
-    if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
+    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+    if (literalExpression.getValue() == null) {
       return false;
     }
-
-    final PsiType type = ((PsiLiteralExpression)element).getType();
-    if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      final String text = element.getText();
-      return !(text.startsWith("0b") || text.startsWith("0B"));
+    final PsiType type = literalExpression.getType();
+    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      return false;
     }
-
-    return false;
+    final String text = element.getText();
+    return !(text.startsWith("0b") || text.startsWith("0B"));
   }
 }

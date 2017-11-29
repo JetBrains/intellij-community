@@ -23,11 +23,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -49,10 +51,10 @@ public class TransactionGuardImpl extends TransactionGuard {
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
   private boolean myErrorReported;
-  private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
+    myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
   }
 
   @NotNull
@@ -226,22 +228,32 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void assertWriteActionAllowed() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (areAssertionsEnabled() && !myWritingAllowed && !myErrorReported) {
-      String message = "Write access is allowed from write-safe contexts only. " +
-                       "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
-                       "See TransactionGuard documentation for details." +
-                       "\n  current modality=" + ModalityState.current() +
-                       "\n  known modalities=" + myWriteSafeModalities;
       // please assign exceptions here to Peter
-      LOG.error(message);
+      LOG.error(reportWriteUnsafeContext(ModalityState.current()));
       myErrorReported = true;
+    }
+  }
+
+  private String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+    return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
+           "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
+           "See TransactionGuard documentation for details." +
+           "\n  current modality=" + modality +
+           "\n  known modalities:\n" +
+           StringUtil.join(myWriteSafeModalities.entrySet(),
+                           entry -> String.format("    %s, writingAllowed=%s", entry.getKey(), entry.getValue()), ";\n");
+  }
+
+  @Override
+  public void assertWriteSafeContext(@NotNull ModalityState modality) {
+    if (!isWriteSafeModality(modality) && areAssertionsEnabled()) {
+      // please assign exceptions here to Peter
+      LOG.error(reportWriteUnsafeContext(modality));
     }
   }
 
   private static boolean areAssertionsEnabled() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() && !ourTestingTransactions) {
-      return false;
-    }
     if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
       return false;
     }
@@ -322,10 +334,6 @@ public class TransactionGuardImpl extends TransactionGuard {
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
       .toString();
-  }
-
-  public static void setTestingTransactions(boolean testingTransactions) {
-    ourTestingTransactions = testingTransactions;
   }
 
   private static class Transaction {

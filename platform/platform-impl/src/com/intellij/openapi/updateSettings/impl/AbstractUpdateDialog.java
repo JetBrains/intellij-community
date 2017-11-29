@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       "</head><body>" + messageBody + "</body></html>";
 
     area.setBackground(UIUtil.getPanelBackground());
-    area.setBorder(IdeBorderFactory.createEmptyBorder());
+    area.setBorder(JBUI.Borders.empty());
     area.setText(text);
     area.setCaretPosition(0);
     area.setEditable(false);

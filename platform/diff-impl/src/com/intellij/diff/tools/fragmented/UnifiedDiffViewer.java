@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
@@ -189,9 +189,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getToolbarActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
@@ -206,9 +204,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getPopupActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleExpandByDefaultAction());
 
     group.add(Separator.getInstance());
@@ -538,7 +534,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   // Typing
   //
 
-  private class MyOnesideDocumentListener extends DocumentAdapter {
+  private class MyOnesideDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (myDuringOnesideDocumentModification) return;
@@ -956,11 +952,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected int getEndLine(@NotNull UnifiedDiffChange change) {
       return change.getLine2();
-    }
-
-    @Override
-    protected void scrollToChange(@NotNull UnifiedDiffChange change) {
-      DiffUtil.scrollEditor(myEditor, change.getLine1(), true);
     }
   }
 

@@ -186,6 +186,14 @@ public class FileReferenceQuickFixProvider {
     private FileTemplate findTemplate(FileTemplateManager fileTemplateManager) {
       FileTemplate template = fileTemplateManager.getTemplate(myNewFileTemplateName);
       if (template == null) template = fileTemplateManager.findInternalTemplate(myNewFileTemplateName);
+      if (template == null) {
+        for (FileTemplate fileTemplate : fileTemplateManager.getAllJ2eeTemplates()) {
+          final String fileTemplateWithExtension = fileTemplate.getName() + '.' + fileTemplate.getExtension();
+          if (fileTemplateWithExtension.equals(myNewFileTemplateName)) {
+            return fileTemplate;
+          }
+        }
+      }
       return template;
     }
 

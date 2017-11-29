@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,6 +41,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -96,6 +98,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     else if (element instanceof Group) {
       annotateGroup((Group)element, holder);
+    }
+
+    if (element instanceof GenericDomValue) {
+      final GenericDomValue domValue = (GenericDomValue)element;
+
+      if (domValue.getConverter() instanceof PluginPsiClassConverter) {
+        annotatePsiClassValue(domValue, holder);
+      }
+    }
+  }
+
+  private static void annotatePsiClassValue(GenericDomValue domValue, DomElementAnnotationHolder holder) {
+    final Object value = domValue.getValue();
+    if (value instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)value;
+      if (psiClass.getContainingClass() != null &&
+          !StringUtil.containsChar(StringUtil.notNullize(domValue.getRawText()), '$')) {
+        holder.createProblem(domValue, "Inner class must be separated with '$'");
+      }
     }
   }
 
@@ -175,13 +196,22 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
         holder.createProblem(ideaVersion.getUntilBuild(), "Don't use '" + matcher.group(2) + "' in 'until-build', use '*' instead",
-                             new CorrectUntilBuildAttributeFix(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+                             new CorrectUntilBuildAttributeFix(
+                               IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
       }
       if (untilBuild.matches("\\d+")) {
         int branch = Integer.parseInt(untilBuild);
         String corrected = (branch - 1) + ".*";
-        String message = "Plain numbers in 'until-build' attribute may be misleading. '" + untilBuild + "' means the same as '" + untilBuild
-                         + ".0', so the plugin won't be compatible with " + untilBuild + ".* builds. It's better to specify '" + corrected + "' instead.";
+        String message = "Plain numbers in 'until-build' attribute may be misleading. '" +
+                         untilBuild +
+                         "' means the same as '" +
+                         untilBuild
+                         +
+                         ".0', so the plugin won't be compatible with " +
+                         untilBuild +
+                         ".* builds. It's better to specify '" +
+                         corrected +
+                         "' instead.";
         holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
       }
     }

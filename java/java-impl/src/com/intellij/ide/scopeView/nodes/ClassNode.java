@@ -19,10 +19,6 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 
-/**
- * User: anna
- * Date: 30-Jan-2006
- */
 public class ClassNode extends MemberNode<PsiClass> implements Comparable<ClassNode>{
   public ClassNode(final PsiClass aClass) {
     super(aClass);

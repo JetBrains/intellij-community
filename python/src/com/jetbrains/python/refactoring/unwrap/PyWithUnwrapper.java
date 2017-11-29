@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
@@ -30,7 +31,7 @@ public class PyWithUnwrapper extends PyUnwrapper {
     super(PyBundle.message("unwrap.with"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof PyWithStatement) {
       ASTNode n = e.getNode().findChildByType(PyElementTypes.STATEMENT_LISTS);
       if (n != null) {

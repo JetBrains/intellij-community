@@ -58,7 +58,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   private static Icon getJdkIcon(JdkOrderEntry entry) {
     final Sdk sdk = entry.getJdk();
     if (sdk == null) {
-      return AllIcons.General.Jdk;
+      return AllIcons.Nodes.UnknownJdk;
     }
     final SdkType sdkType = (SdkType) sdk.getSdkType();
     return sdkType.getIcon();
@@ -102,7 +102,9 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
       if (projectJdk != null) { //jdk not specified
         final String path = projectJdk.getHomePath();
         if (path != null) {
-          presentation.setLocationString(FileUtil.toSystemDependentName(path));
+          presentation.setLocationString(projectJdk.getSdkType().isLocalSdk(projectJdk) ?
+                                         FileUtil.toSystemDependentName(path) :
+                                         FileUtil.toSystemIndependentName(path));
         }
       }
       presentation.setTooltip(null);

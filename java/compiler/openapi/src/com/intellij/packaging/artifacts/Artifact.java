@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.artifacts;
 
+import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -26,7 +27,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public interface Artifact extends UserDataHolder {
+public interface Artifact extends UserDataHolder, ProjectModelElement {
   @NotNull
   ArtifactType getArtifactType();
 

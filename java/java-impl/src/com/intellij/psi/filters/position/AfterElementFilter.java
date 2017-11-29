@@ -18,13 +18,6 @@ package com.intellij.psi.filters.position;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.02.2003
- * Time: 18:33:46
- * To change this template use Options | File Templates.
- */
 public class AfterElementFilter extends PositionElementFilter{
   public AfterElementFilter(ElementFilter filter){
     setFilter(filter);

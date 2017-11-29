@@ -54,10 +54,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 5;
-  private static final int REFS_VERSION = 1;
-  @NotNull private static final String ROOT_STORAGE_KIND = "roots";
-
   public static final int NO_INDEX = -1;
+  private static final int REFS_VERSION = 1;
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
@@ -75,14 +73,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(commitIdKeyDescriptor, HASHES_STORAGE, logId, VERSION);
-    myRefsEnumerator =
-      PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor), REFS_STORAGE, logId,
-                                                VERSION + REFS_VERSION);
-
-    // cleanup old root storages, to remove after 2016.3 release
-    PersistentUtil
-      .cleanupOldStorageFile(ROOT_STORAGE_KIND, project.getName() + "." + project.getBaseDir().getPath().hashCode());
-
+    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
+                                                                 REFS_STORAGE, logId, VERSION + REFS_VERSION);
     Disposer.register(parent, this);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.cvsSupport2.ui.FormUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -61,7 +62,9 @@ public class SshConnectionSettingsPanel {
     else {
       myPathToPrivateKeyFile.setEnabled(true);
       myPathToPrivateKeyFile.getTextField().selectAll();
-      myPathToPrivateKeyFile.getTextField().requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myPathToPrivateKeyFile.getTextField(), true);
+      });
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +28,12 @@ public abstract class HighlightInfoProcessor {
   // HInfos for visible part of file/block are produced.
   // Will remove all range-highlighters from there and replace them with passed infos
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
+                                                     @Nullable Editor editor,
                                                      @NotNull List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange, int groupId) {}
   public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
+                                                      @Nullable Editor editor,
                                                       @NotNull List<HighlightInfo> infos,
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange, int groupId) {}
@@ -49,7 +52,9 @@ public abstract class HighlightInfoProcessor {
                                                @NotNull TextRange elementRange,
                                                @Nullable List<HighlightInfo> infos){}
 
-  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession, double progress){}
+  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
+                                 @Nullable Editor editor,
+                                 double progress){}
 
 
   private static final HighlightInfoProcessor EMPTY = new HighlightInfoProcessor() { };

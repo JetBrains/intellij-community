@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.testIntegration;
 
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
@@ -154,8 +155,13 @@ public class GroovyTestFramework extends JavaTestFramework {
   }
 
   @Override
-  public boolean isTestMethod(PsiElement element) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
+  }
+
+  @Override
+  public boolean isMyConfigurationType(ConfigurationType type) {
+    return "JUnit".equals(type.getId());
   }
 
   @Override

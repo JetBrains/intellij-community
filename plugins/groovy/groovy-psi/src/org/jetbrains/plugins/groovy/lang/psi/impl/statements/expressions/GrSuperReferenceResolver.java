@@ -31,9 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 15/06/14
- */
 public class GrSuperReferenceResolver {
   @Nullable("null if ref is not 'super' reference")
   public static GroovyResolveResult[] resolveSuperExpression(@NotNull GrReferenceExpression ref) {

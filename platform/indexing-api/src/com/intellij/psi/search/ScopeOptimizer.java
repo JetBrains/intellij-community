@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * A general interface to perform PsiElement's search scope optimization. The interface should be used only for optimization purposes.
@@ -35,6 +39,30 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ScopeOptimizer {
 
+  /**
+   * Please use {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)} instead
+   */
+  @Deprecated
   @Nullable("is null when given optimizer can't provide a scope to exclude")
-  GlobalSearchScope getScopeToExclude(@NotNull PsiElement element);
+  default GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Nullable("is null when given optimizer can't provide a scope to restrict")
+  default SearchScope getRestrictedUseScope(@NotNull PsiElement element) {
+    GlobalSearchScope scopeToExclude = getScopeToExclude(element);
+
+    return scopeToExclude == null ? null : GlobalSearchScope.notScope(scopeToExclude);
+  }
+
+  @Nullable
+  static SearchScope calculateOverallRestrictedUseScope(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
+    return Stream
+      .of(optimizers)
+      .peek(optimizer -> ProgressManager.checkCanceled())
+      .map(optimizer -> optimizer.getRestrictedUseScope(element))
+      .filter(Objects::nonNull)
+      .reduce((s1, s2) -> s1.intersectWith(s2))
+      .orElse(null);
+  }
 }

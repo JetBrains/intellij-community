@@ -83,7 +83,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     if (f != null) return;
 
     f = myFacetType.createFacet(module, myDefaultFacetName, myFacetType.createDefaultConfiguration(), null);
-    model.addFacet(f);
+    model.addFacet(f, MavenRootModelAdapter.getMavenExternalSource());
     setupFacet(f, mavenProject);
   }
 

@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -38,8 +39,9 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   private final LightProjectDescriptor myProjectDescriptor;
   private CodeStyleSettings myOldCodeStyleSettings;
   private CodeInsightSettings myOldCodeInsightSettings;
+  private SdkLeakTracker myOldSdks;
 
-  public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
+  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
   }
 
@@ -56,10 +58,11 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     myOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
 
     application.setDataProvider(new TestDataProvider(getProject()));
+    myOldSdks = new SdkLeakTracker();
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
@@ -69,9 +72,10 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
     new RunAll()
       .append(() -> UsefulTestCase.checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
+      .append(super::tearDown) // call all disposables' dispose() while the project is still open
       .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(super::tearDown)
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
       .append(() -> PersistentFS.getInstance().clearIdCache())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))

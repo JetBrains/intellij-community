@@ -20,10 +20,6 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
-/**
- * User: zolotov
- * Date: 1/31/13
- */
 public class LoremGenerator {
   static final String[] COMMON_P = "lorem ipsum dolor sit amet consectetur adipisicing elit".split(" ");
   private static final String[] WORDS = new String[]{"exercitationem", "perferendis", "perspiciatis", "laborum", "eveniet",

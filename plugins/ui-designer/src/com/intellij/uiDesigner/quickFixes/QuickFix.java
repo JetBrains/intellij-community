@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladimir Kondratyev
  */
 public abstract class QuickFix {
-  public static final QuickFix[] EMPTY_ARRAY = new QuickFix[]{};
+  public static final QuickFix[] EMPTY_ARRAY = {};
 
   protected final GuiEditor myEditor;
   private final String myName;

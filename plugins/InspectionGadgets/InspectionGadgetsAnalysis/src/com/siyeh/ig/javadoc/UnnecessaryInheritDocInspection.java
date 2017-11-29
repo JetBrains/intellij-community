@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 Bas Leijdekkers
+ * Copyright 2009-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,15 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.inherit.doc.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.inherit.doc.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     switch ((WarningType)infos[0]) {
+      case MODULE:
+        return InspectionGadgetsBundle.message("unnecessary.inherit.doc.module.invalid.problem.descriptor");
       case CLASS:
         return InspectionGadgetsBundle.message("unnecessary.inherit.doc.class.invalid.problem.descriptor");
       case FIELD:
@@ -63,7 +64,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
   }
 
   enum WarningType {
-    CLASS, FIELD, CONSTRUCTOR, EMPTY, NO_SUPER
+    MODULE, CLASS, FIELD, CONSTRUCTOR, EMPTY, NO_SUPER
   }
 
   @Override
@@ -129,6 +130,10 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
         return;
       }
       final PsiJavaDocumentedElement owner = docComment.getOwner();
+      if (owner instanceof PsiJavaModule) {
+        registerError(tag, WarningType.MODULE);
+        return;
+      }
       if (owner instanceof PsiField) {
         registerError(tag, WarningType.FIELD);
         return;

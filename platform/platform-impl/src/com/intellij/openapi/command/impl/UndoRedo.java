@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ abstract class UndoRedo {
   }
 
   private Set<DocumentReference> getDecRefs() {
-    return myEditor == null ? Collections.<DocumentReference>emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
+    return myEditor == null ? Collections.emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
   }
 
   protected abstract UndoRedoStacksHolder getStackHolder();
@@ -107,7 +107,7 @@ abstract class UndoRedo {
       if (!askUser()) return false;
     }
     else {
-      if (restore(getBeforeState())) {
+      if (restore(getBeforeState(), true)) {
         setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
         return true;
       }
@@ -143,7 +143,7 @@ abstract class UndoRedo {
 
     performAction();
 
-    restore(getAfterState());
+    restore(getAfterState(), false);
 
     return true;
   }
@@ -209,12 +209,12 @@ abstract class UndoRedo {
     return isOk[0];
   }
 
-  private boolean restore(EditorAndState pair) {
-    if (myEditor == null ||
-        !myEditor.isValid() || // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
-        pair == null || pair.getEditor() == null) {
-      return false;
-    }
+  private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
+    // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
+    if (pair == null || myEditor == null || !myEditor.isValid()) return false;
+
+    FileEditor editor = pair.getEditor();
+    if (editor == null) return false;
 
     // we cannot simply compare editors here because of the following scenario:
     // 1. make changes in editor for file A
@@ -222,16 +222,18 @@ abstract class UndoRedo {
     // 3. close editor
     // 4. re-open editor for A via Ctrl-E
     // 5. undo -> position is not affected, because instance created in step 4 is not the same!!!
-    if (!myEditor.getClass().equals(pair.getEditor().getClass())) {
-      return false;
-    }
+    if (!myEditor.getClass().equals(editor.getClass())) return false;
 
+    VirtualFile myFile = myEditor.getFile();
+    VirtualFile file = editor.getFile();
+    if (myFile != null && file != null && !myFile.equals(file)) return false;
+    
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
     // not possible to restore it. For example, it's not possible to
     // restore scroll proportion if editor doesn not have scrolling any more.
     FileEditorState currentState = myEditor.getState(FileEditorStateLevel.UNDO);
-    if (currentState.equals(pair.getState())) {
+    if (onlyIfDiffers && currentState.equals(pair.getState())) {
       return false;
     }
 

@@ -15,28 +15,13 @@
  */
 package com.intellij.openapi.diff.impl.settings
 
-import com.intellij.diff.DiffTestCase
+import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer
 import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 
-class DiffColorSettingsTest : DiffTestCase() {
-  private var projectFixture: IdeaProjectTestFixture? = null
-
-  override fun setUp() {
-    super.setUp()
-    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).fixture
-    projectFixture!!.setUp()
-  }
-
-  override fun tearDown() {
-    projectFixture?.tearDown()
-    super.tearDown()
-  }
-
+class DiffColorSettingsTest : HeavyDiffTestCase() {
   fun testChanges() {
     var panel: DiffPreviewPanel? = null
     try {
@@ -63,6 +48,8 @@ class DiffColorSettingsTest : DiffTestCase() {
       assertContainsMarkerColor(viewer, TextDiffType.INSERTED)
       assertContainsMarkerColor(viewer, TextDiffType.DELETED)
       assertContainsMarkerColor(viewer, TextDiffType.CONFLICT)
+
+      assertContainsFoldedFragment(viewer)
     }
     finally {
       panel?.disposeUIResources()
@@ -96,5 +83,11 @@ class DiffColorSettingsTest : DiffTestCase() {
       })
     }
     assertTrue(ranges.isNotEmpty())
+  }
+
+  private fun assertContainsFoldedFragment(viewer: SimpleThreesideDiffViewer) {
+    assertTrue(viewer.editors.all {
+      it.foldingModel.allFoldRegions.any { !it.isExpanded }
+    })
   }
 }

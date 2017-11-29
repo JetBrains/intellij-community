@@ -324,20 +324,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
-    if (!myViewer.canResolveConflictedChange(this)) return null;
+    if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
     return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
       myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {
-        myViewer.resolveConflictedChange(this);
+        myViewer.resolveChangeAutomatically(this, ThreeSide.BASE);
       });
     });
   }
 
-  @Nullable
-  private GutterIconRenderer createIconRenderer(@NotNull final String text,
-                                                @NotNull final Icon icon,
-                                                boolean ctrlClickVisible,
-                                                @NotNull final Runnable perform) {
+  @NotNull
+  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+                                                       @NotNull final Icon icon,
+                                                       boolean ctrlClickVisible,
+                                                       @NotNull final Runnable perform) {
     final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override

@@ -34,36 +34,36 @@ public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "lineMarker/";
   }
 
-  public void testInterface() throws Throwable {
+  public void testInterface() {
     doSimpleTest(3);}
-  public void testGStringMethodName() throws Throwable {
+  public void testGStringMethodName() {
     doSimpleTest(3);}
-  public void testStringMethodName() throws Throwable {
+  public void testStringMethodName() {
     doSimpleTest(3);}
-  public void testAllGStringMethodName() throws Throwable {
+  public void testAllGStringMethodName() {
     doSimpleTest(3);}
 
-  public void testJavaToGroovy() throws Throwable {
+  public void testJavaToGroovy() {
     myFixture.configureByFiles(getTestName(false)+".groovy", getTestName(false)+".java");
     doTest(1);
   }
 
-  public void testGroovyToJava() throws Throwable {
+  public void testGroovyToJava() {
     myFixture.configureByFiles(getTestName(false)+".groovy", getTestName(false)+".java");
     doTest(2);
   }
 
-  public void testJavaToGroovy2() throws Throwable {
+  public void testJavaToGroovy2() {
     myFixture.configureByFiles("JavaToGroovy.java", "JavaToGroovy.groovy");
     doTest(2);
   }
 
-  public void testGroovyToJava2() throws Throwable {
+  public void testGroovyToJava2() {
     myFixture.configureByFiles("GroovyToJava.java", "GroovyToJava.groovy");
     doTest(1);
   }
 
-  private void doSimpleTest(int count) throws Throwable{
+  private void doSimpleTest(int count) {
     myFixture.configureByFile(getTestName(false)+".groovy");
     doTest(count);
   }

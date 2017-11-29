@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -100,6 +99,11 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @TestOnly
+  public static Sdk getMockJdk9() {
+    return createMockJdk("java 9", getMockJdk9Path().getPath());
+  }
+
+  @TestOnly
   public static Sdk getMockJdk14() {
     return createMockJdk("java 1.4", getMockJdk14Path().getPath());
   }
@@ -114,6 +118,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static File getMockJdk18Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
+  }
+
+  public static File getMockJdk9Path() {
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
   }
 
   public static String getMockJdkVersion(String path) {
@@ -165,9 +173,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final Sdk sdk = rootManager.getSdk();
     final String oldVersionString = sdk.getVersionString();
-    ((ProjectJdkImpl)sdk).setVersionString(testVersion.getDescription());
+
+    // hack
+    ((SdkModificator)sdk).setVersionString(testVersion.getDescription());
+
     assert JavaSdk.getInstance().getVersion(sdk) == testVersion;
-    Disposer.register(parentDisposable, () -> ((ProjectJdkImpl)sdk).setVersionString(oldVersionString));
+    Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
   }
 
 
@@ -177,7 +188,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
     for (String path : paths) {
-      if (JdkUtil.checkForJdk(new File(path))) {
+      if (JdkUtil.checkForJdk(path)) {
         return path;
       }
     }

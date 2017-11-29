@@ -16,7 +16,7 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.remoteServer.ServerType;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class DeployToServerConfigurationTypesRegistrar implements ApplicationComponentAdapter {
+public class DeployToServerConfigurationTypesRegistrar implements ApplicationComponent {
   @Override
   public void initComponent() {
     //todo[nik] improve this: configuration types should be loaded lazily

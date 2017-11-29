@@ -23,7 +23,6 @@ import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
@@ -31,7 +30,6 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.*;
@@ -39,6 +37,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -49,11 +48,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
+  public static final CompositeElement[] EMPTY_ARRAY = new CompositeElement[0];
 
   private TreeElement firstChild;
   private TreeElement lastChild;
 
-  private volatile int myModificationsCount;
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
@@ -66,10 +65,6 @@ public class CompositeElement extends TreeElement {
     super(type);
   }
 
-  public int getModificationCount() {
-    return myModificationsCount;
-  }
-
   @NotNull
   @Override
   public CompositeElement clone() {
@@ -77,7 +72,6 @@ public class CompositeElement extends TreeElement {
 
     clone.firstChild = null;
     clone.lastChild = null;
-    clone.myModificationsCount = 0;
     clone.myWrapper = null;
     for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
       clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
@@ -97,6 +91,7 @@ public class CompositeElement extends TreeElement {
         }
         else if (psi instanceof PsiFile) {
           ((PsiFile)psi).subtreeChanged();
+          assertThreading((PsiFile)psi);
         }
       }
 
@@ -106,49 +101,31 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void clearCaches() {
-    assertThreading();
     myCachedLength = -1;
 
-    myModificationsCount++;
     myHC = -1;
 
     clearRelativeOffsets(rawFirstChild());
   }
 
-  private void assertThreading() {
+  private static void assertThreading(@NotNull PsiFile file) {
     if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected(file);
       if (!ok) {
-        LOG.error("Threading assertion. " + getThreadingDiagnostics());
+        LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
       }
     }
   }
 
-  private String getThreadingDiagnostics() {
-    FileElement fileElement;PsiFile psiFile;
-    return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-           "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
-           "; wrapper: " + myWrapper +
-           "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
-           "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +
-           "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
-           "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
-           "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical()) +
-           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected();
+  private static String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
+    return "psiFile: " + psiFile +
+           "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
+           "; psiFile.isPhysical(): " + psiFile.isPhysical() +
+           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected(psiFile);
   }
 
-  private boolean isNonPhysicalOrInjected() {
-    FileElement fileElement = TreeUtil.getFileElement(this);
-    if (fileElement == null || fileElement instanceof DummyHolderElement) return true;
-    if (fileElement.getTreeParent() != null) return true; // dummy holder
-    PsiElement wrapper = this instanceof PsiElement ? (PsiElement)this : myWrapper;
-    if (wrapper == null) return true;
-    PsiFile psiFile = wrapper.getContainingFile();
-    return
-      psiFile ==  null ||
-      psiFile instanceof DummyHolder ||
-      psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
-      !psiFile.isPhysical();
+  private static boolean isNonPhysicalOrInjected(@NotNull PsiFile psiFile) {
+    return psiFile instanceof DummyHolder || psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider || !psiFile.isPhysical();
   }
 
   @Override
@@ -221,12 +198,7 @@ public class CompositeElement extends TreeElement {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
 
-    ASTNode child = anchor;
-    while (true) {
-      if (child == null) return null;
-      if (type == child.getElementType()) return child;
-      child = child.getTreeNext();
-    }
+    return TreeUtil.findSibling(anchor, type);
   }
 
   @Override
@@ -247,12 +219,7 @@ public class CompositeElement extends TreeElement {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    ASTNode child = anchor;
-    while (true) {
-      if (child == null) return null;
-      if (typesSet.contains(child.getElementType())) return child;
-      child = child.getTreeNext();
-    }
+    return TreeUtil.findSibling(anchor, typesSet);
   }
 
   @Override
@@ -289,20 +256,8 @@ public class CompositeElement extends TreeElement {
   @NotNull
   public char[] textToCharArray() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    int startStamp = myModificationsCount;
 
     final int len = getTextLength();
-
-    if (startStamp != myModificationsCount) {
-      throw new AssertionError(
-        "Tree changed while calculating text. startStamp:"+startStamp+
-        "; current:"+myModificationsCount+
-        "; myHC:"+myHC+
-        "; assertThreading:"+ASSERT_THREADING+
-        "; this: " + this + 
-        "\n" + getThreadingDiagnostics());
-    }
-
     char[] buffer = new char[len];
     final int endOffset;
     try {
@@ -310,7 +265,6 @@ public class CompositeElement extends TreeElement {
     }
     catch (ArrayIndexOutOfBoundsException e) {
       @NonNls String msg = "Underestimated text length: " + len;
-      msg += diagnoseTextInconsistency(new String(buffer), startStamp);
       try {
         int length = AstBufferUtil.toBuffer(this, new char[len], 0);
         msg += ";\n repetition gives success (" + length + ")";
@@ -322,16 +276,15 @@ public class CompositeElement extends TreeElement {
     }
     if (endOffset != len) {
       @NonNls String msg = "len=" + len + ";\n endOffset=" + endOffset;
-      msg += diagnoseTextInconsistency(new String(buffer, 0, Math.min(len, endOffset)), startStamp);
+      msg += diagnoseTextInconsistency(new String(buffer, 0, Math.min(len, endOffset)));
       throw new AssertionError(msg);
     }
     return buffer;
   }
 
-  private String diagnoseTextInconsistency(String text, int startStamp) {
+  private String diagnoseTextInconsistency(String text) {
     @NonNls String msg = "";
-    msg += ";\n changed=" + (startStamp != myModificationsCount);
-    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
+    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected(SharedImplUtil.getContainingFile(this));
     msg += ";\n buffer=" + text;
     try {
       msg += ";\n this=" + this;
@@ -606,8 +559,24 @@ public class CompositeElement extends TreeElement {
       }
 
       TreeElement next = cur.getTreeNext();
-      cur = next != null ? drillDown(next) : cur.getTreeParent();
+      cur = next != null ? drillDown(next) : getNotNullParent(cur);
     }
+  }
+
+  private static TreeElement getNotNullParent(TreeElement cur) {
+    TreeElement parent = cur.getTreeParent();
+    if (parent == null) {
+      diagnoseNullParent(cur);
+    }
+    return parent;
+  }
+
+  private static void diagnoseNullParent(TreeElement cur) {
+    PsiElement psi = cur.getPsi();
+    if (psi != null) {
+      PsiUtilCore.ensureValid(psi);
+    }
+    throw new IllegalStateException("Null parent of " + cur + " " + cur.getClass());
   }
 
   void setCachedLength(int cachedLength) {

@@ -66,7 +66,7 @@ public class ScreenReader {
         try {
           properties.load(in);
         } finally {
-          if (in != null) in.close();
+          in.close();
         }
       }
       catch (Exception ignore) {

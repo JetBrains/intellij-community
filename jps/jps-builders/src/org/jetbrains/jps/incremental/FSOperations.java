@@ -116,10 +116,14 @@ public class FSOperations {
   }
 
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
+      markDirty(context, round, target, filter);
     }
+  }
+
+  public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
   }
 
   /**

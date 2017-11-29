@@ -1,7 +1,6 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.LocalTask;
@@ -61,9 +60,6 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
       c.setIcon(LayeredIcon.create(TasksIcons.Unknown, AllIcons.Actions.New));
       c.append(GotoTaskAction.CREATE_NEW_TASK_ACTION.getActionText());
       panel.add(c, BorderLayout.CENTER);
-    }
-    else if (ChooseByNameBase.NON_PREFIX_SEPARATOR == value) {
-      return ChooseByNameBase.renderNonPrefixSeparatorComponent(UIUtil.getListBackground());
     }
 
     return panel;

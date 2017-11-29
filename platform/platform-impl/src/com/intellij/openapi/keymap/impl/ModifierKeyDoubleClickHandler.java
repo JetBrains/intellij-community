@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -42,14 +28,19 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 /**
  * Support for keyboard shortcuts like Control-double-click or Control-double-click+A
  *
  * Timings that are used in the implementation to detect double click were tuned for SearchEverywhere
  * functionality (invoked on double Shift), so if you need to change them, please make sure
  * SearchEverywhere behaviour remains intact.
+ *
+ * @author Dmitry Batrak
+ * @author Konstantin Bulenkov
  */
-public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationComponentAdapter {
+public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
   private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
   static {
@@ -164,7 +155,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
             resetState();
             return false;
           }
-          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 500) {
+          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 100) {
             resetState();
             return false;
           }
@@ -259,6 +250,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
         myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ShortcutsCollector.recordDoubleShortcut(anActionEvent);
         return true;
       }
       finally {
@@ -267,7 +259,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
     }
 
     private boolean shouldSkipIfActionHasShortcut() {
-      return mySkipIfActionHasShortcut && KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId).length > 0;
+      return mySkipIfActionHasShortcut && getActiveKeymapShortcuts(myActionId).getShortcuts().length > 0;
     }
 
     @Override

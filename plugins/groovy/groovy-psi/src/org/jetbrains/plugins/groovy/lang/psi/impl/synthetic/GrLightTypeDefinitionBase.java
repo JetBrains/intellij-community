@@ -219,6 +219,7 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return myTypeParameterList;
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return GrClassImplUtil.getInterfaces(this);

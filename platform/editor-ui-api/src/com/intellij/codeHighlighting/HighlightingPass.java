@@ -29,7 +29,7 @@ public interface HighlightingPass {
    * This method is called from a background thread.
    *
    * @param progress to check if highlighting process is cancelled. Pass is to check progress.isCanceled() as often as possible and
-   *                 throw {@link com.intellij.openapi.progress.ProcessCanceledException} if <code>true</code> is returned.
+   *                 throw {@link com.intellij.openapi.progress.ProcessCanceledException} if {@code true} is returned.
    *                 See also {@link com.intellij.openapi.progress.ProgressIndicator#checkCanceled()}.
    */
   void collectInformation(@NotNull ProgressIndicator progress);

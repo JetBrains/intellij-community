@@ -22,16 +22,18 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
@@ -45,7 +47,7 @@ import static java.lang.Math.max;
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disposable {
+public class UpdateCheckerComponent implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.HOUR * 8; // Android Studio: check every 8 hours
@@ -121,7 +123,7 @@ public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disp
         // Android Studio: always check for update at startup
         myCheckRunnable.run();  /*
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
         long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
         if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {

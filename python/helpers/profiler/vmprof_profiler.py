@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import vmprof
 
-import six
+import prof_six as six
 from _prof_imports import TreeStats, CallTreeStat
 
 

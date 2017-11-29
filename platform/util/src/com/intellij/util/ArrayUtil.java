@@ -466,6 +466,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
   private static <T> T[] createArray(@NotNull Class<?> type, int length) {
     //noinspection unchecked
     return (T[])Array.newInstance(type, length);
@@ -786,6 +787,15 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+
+  @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
@@ -960,10 +970,12 @@ public class ArrayUtil extends ArrayUtilRt {
     int n = time.length;
     Arrays.sort(time);
     long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+    int start = n / 2 - n / part / 2;
+    int end = n / 2 + n / part / 2;
+    for (int i = start; i < end; i++) {
       total += time[i];
     }
-    int middlePartLength = n / part;
+    int middlePartLength = end - start;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
@@ -972,10 +984,12 @@ public class ArrayUtil extends ArrayUtilRt {
     int n = time.length;
     Arrays.sort(time);
     long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+    int start = n / 2 - n / part / 2;
+    int end = n / 2 + n / part / 2;
+    for (int i = start; i < end; i++) {
       total += time[i];
     }
-    int middlePartLength = n / part;
+    int middlePartLength = end - start;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 

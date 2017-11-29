@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +44,69 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     assertTrue(palette.getColors(EditorColorPalette.ORDER_NONE).contains(sampleColor));
     assertFalse(palette.getColors(EditorColorPalette.ORDER_NONE).contains(nonConflictingColor));
   }
-  
+
+  public void testResolveConflictingColor() {
+    final EditorColorsScheme colorsScheme = (EditorColorsScheme)EditorColorsManager.getInstance().getScheme("Default").clone();
+    final Color newColorInPalette = EditorColorPaletteFactory.getInstance().getPalette(colorsScheme, Language.ANY)
+      .withBackgroundColors()
+      .withForegroundColors()
+      .getClosestNonConflictingColor(Color.YELLOW);
+
+    final TextAttributes newColorAttrInPallete = new TextAttributes();
+    newColorAttrInPallete.setForegroundColor(newColorInPalette);
+    
+    // rainbow color generator can reuse LOCAL_VARIABLE or PARAM foreground color 
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, newColorAttrInPallete);
+    checkUsed(colorsScheme, newColorInPalette, true);
+
+    // rainbow color generator can not reuse any other foreground color
+    final TextAttributes bcOrigAttr = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+    checkUsed(colorsScheme, bcOrigAttr.getForegroundColor(), false);
+
+    final TextAttributesKey generatedRainbowKey = new RainbowHighlighter(null).getRainbowTempKeys()[0];
+    
+    // make BLOCK_COMMENT the same as LOCAL_VARIABLE => has conflict with non-rainbow BLOCK_COMMENT color 
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, newColorAttrInPallete);
+    checkUsed(colorsScheme, newColorInPalette, false);
+    // rainbow generated colors are cached:
+    assertNotNull(colorsScheme.getAttributes(generatedRainbowKey));
+    
+    // chage in colorsScheme for non-mutable key drops generated cache      
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, bcOrigAttr);
+    // there are no rainbow generated colors:
+    assertNull(colorsScheme.getAttributes(generatedRainbowKey));  
+
+    // resolve conflict for BLACK color (checking overflow)
+    final TextAttributes blackColorAttrInPallete = new TextAttributes();
+    blackColorAttrInPallete.setForegroundColor(Color.BLACK);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, blackColorAttrInPallete);
+    checkUsed(colorsScheme, Color.BLACK, false);
+
+    // resolve conflict for WHITE color (checking overflow)
+    final TextAttributes whiteColorAttrInPallete = new TextAttributes();
+    whiteColorAttrInPallete.setForegroundColor(Color.WHITE);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, whiteColorAttrInPallete);
+    checkUsed(colorsScheme, Color.WHITE, false);
+  }
+
+  private static void checkUsed(@NotNull EditorColorsScheme colorsScheme, @NotNull Color testColor, boolean needToBeReused) {
+    assertNotNull(testColor);
+    colorsScheme.setAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[0], RainbowHighlighter.createRainbowAttribute(testColor));
+    final Color[] colors = RainbowHighlighter.testRainbowGenerateColors(colorsScheme);
+    final double minimalColorDistance = 0.02;
+    int i = 0;
+    for (Color color : colors) {
+      if (needToBeReused) {
+        assertEquals(testColor, color);
+        break;
+      } 
+      else {
+        assertTrue(i++ + ": " + testColor + " vs " + color,
+                   RainbowHighlighter.colorDistance01(testColor, color) >= minimalColorDistance);
+      }
+    }
+  }
+
   private static void checkSchemeBackgrounds(@NotNull String schemeName, int minIntensity, int maxIntensity) {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(schemeName);
     EditorColorPalette palette = EditorColorPaletteFactory.getInstance().getPalette(defaultScheme, Language.ANY).withBackgroundColors();

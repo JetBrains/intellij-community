@@ -67,7 +67,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     return client;
   }
 
-  protected final void reconfigureClient() {
+  public final void reconfigureClient() {
     synchronized (myClient) {
       configureHttpClient(myClient);
     }

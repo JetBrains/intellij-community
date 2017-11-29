@@ -76,6 +76,54 @@ class EqualsReplaceableByObjectsCall {
     return <warning descr="'A.B.c == s || A.B.c != null && A.B.c.equals(s)' replaceable by 'Objects.equals()' expression">A.B.c == s || A.B.c != null && A.B.c.equals(s)</warning>;
   }
 
+  boolean literal(Object o) {
+    return "literal".equals(o);
+  }
+
+  boolean boxed(Object o) {
+    final Integer n = 1;
+    return n.equals(o);
+  }
+
+  static final String CONSTANT = "constant";
+  boolean constant(Object o) {
+    return CONSTANT.equals(o);
+  }
+
+  boolean constantLiteral(Object o) {
+    return ("a" + "b").equals(o);
+  }
+
+  static final String CONSTANT_EXPR = CONSTANT + 1;
+  boolean constantExpr(Object o) {
+    return CONSTANT_EXPR.equals(o);
+  }
+
+  static final String NULL_CONSTANT = null;
+  boolean nullConstant(Object o) {
+    return <warning descr="'NULL_CONSTANT.equals(o)' replaceable by 'Objects.equals()' expression">NULL_CONSTANT.equals(o)</warning>;
+  }
+
+  static final Object NEW_CONSTANT = new Object();
+  boolean newConstant(Object o) {
+    return NEW_CONSTANT.equals(o);
+  }
+
+  static final Object[] ARRAY_CONSTANT = {};
+  boolean arrayConstant(Object o) {
+    return ARRAY_CONSTANT.equals(o);
+  }
+
+  static final Class<?> CLASS_CONSTANT = String.class;
+  boolean stringConstant(Object o) {
+    return CLASS_CONSTANT.equals(o);
+  }
+
+  final String FINAL_FIELD = "finalField";
+  boolean finalField(Object o) {
+    return FINAL_FIELD.equals(o);
+  }
+
   static class Ternary {
     String s;
     boolean eq1(Ternary t) {

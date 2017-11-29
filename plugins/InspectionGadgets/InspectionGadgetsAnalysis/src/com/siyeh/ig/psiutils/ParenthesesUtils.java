@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ParenthesesUtils {
-
-  public static final Map<IElementType, IElementType> tokenMap = new HashMap<>();
 
   private ParenthesesUtils() {}
 
@@ -53,20 +52,6 @@ public class ParenthesesUtils {
 
   private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<>(NUM_PRECEDENCES);
 
-
-  static {
-    tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
-    tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
-    tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
-    tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
-    tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
-    tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
-    tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
-    tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
-    tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
-    tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
-    tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
-  }
 
   static {
     s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
@@ -115,12 +100,18 @@ public class ParenthesesUtils {
   }
 
   public static boolean isCommutativeOperator(@NotNull IElementType token) {
-    return !(token.equals(JavaTokenType.MINUS) ||
-             token.equals(JavaTokenType.DIV) ||
-             token.equals(JavaTokenType.PERC) ||
-             token.equals(JavaTokenType.LTLT) ||
-             token.equals(JavaTokenType.GTGT) ||
-             token.equals(JavaTokenType.GTGTGT));
+    return token == JavaTokenType.PLUS || token == JavaTokenType.ASTERISK ||
+           token == JavaTokenType.EQEQ || token == JavaTokenType.NE ||
+           token == JavaTokenType.AND || token == JavaTokenType.OR || token == JavaTokenType.XOR;
+  }
+
+  public static boolean isCommutativeOperation(PsiPolyadicExpression expression) {
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!isCommutativeOperator(tokenType)) {
+      return false;
+    }
+    final PsiType type = expression.getType();
+    return type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 
   public static boolean isAssociativeOperation(PsiPolyadicExpression expression) {
@@ -555,12 +546,12 @@ public class ParenthesesUtils {
     return parentPrecedence < childPrecedence;
   }
 
-  public static boolean areParenthesesNeeded(PsiJavaToken sign, PsiExpression rhs) {
+  public static boolean areParenthesesNeeded(PsiJavaToken compoundAssignmentToken, PsiExpression rhs) {
     if (rhs instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
       final int precedence1 = getPrecedenceForOperator(binaryExpression.getOperationTokenType());
-      final IElementType signTokenType = sign.getTokenType();
-      final IElementType newOperatorToken = tokenMap.get(signTokenType);
+      final IElementType signTokenType = compoundAssignmentToken.getTokenType();
+      final IElementType newOperatorToken = TypeConversionUtil.convertEQtoOperation(signTokenType);
       final int precedence2 = getPrecedenceForOperator(newOperatorToken);
       return precedence1 >= precedence2 || !isCommutativeOperator(newOperatorToken);
     }

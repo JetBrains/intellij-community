@@ -21,11 +21,9 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.TestFileType;
 
-import java.io.IOException;
-
 public class BlockSelectionEditingTest extends AbstractEditorTest {
 
-  public void testBlockRemovalAndCollapsedFoldRegionsBefore() throws IOException {
+  public void testBlockRemovalAndCollapsedFoldRegionsBefore() {
     // Inspired by IDEA-69371
     String initialText =
       "fold line #1\n" +
@@ -59,7 +57,7 @@ public class BlockSelectionEditingTest extends AbstractEditorTest {
     assertEquals(foldEndOffset, foldRegion.getEndOffset());
   }
 
-  public void testBlockSelectionAndCollapsedFolding() throws IOException {
+  public void testBlockSelectionAndCollapsedFolding() {
     String text =
       "class Test {\n" +
       "    private class Inner1 {\n" +

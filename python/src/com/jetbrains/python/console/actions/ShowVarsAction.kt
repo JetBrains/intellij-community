@@ -26,16 +26,15 @@ import com.jetbrains.python.console.PythonConsoleView
  * Created by Yuli Fiterman on 9/18/2016.
  */
 class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction("Show Variables", "Shows active console variables", AllIcons.Debugger.Watches), DumbAware {
-  private var mySelected = false
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return mySelected
+    return consoleView.isShowVars
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    mySelected = state
+    consoleView.isShowVars = state
 
-    if (mySelected) {
+    if (state) {
       consoleView.showVariables(consoleComm)
     }
     else {

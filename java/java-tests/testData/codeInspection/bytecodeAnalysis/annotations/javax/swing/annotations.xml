@@ -1,4 +1,9 @@
 <root>
+    <item name='javax.swing.AbstractButton boolean getHideActionText()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.AbstractButton boolean isBorderPainted()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -21,6 +26,21 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.AbstractButton boolean isRolloverEnabled()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton boolean shouldUpdateSelectedStateFromAction()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton int checkHorizontalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton int checkVerticalKey(int, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -101,6 +121,15 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.AbstractButton void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 2'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='javax.swing.AbstractButton void init(java.lang.String, javax.swing.Icon) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -114,6 +143,88 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.AbstractButton void updateUI()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton boolean setCurrentAccessibleValue(java.lang.Number)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null-&gt;true;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton boolean setCurrentAccessibleValue(java.lang.Number) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton int getAccessibleActionCount()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton int getCaretPosition()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton int getSelectionEnd()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton int getSelectionStart()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.Number getMaximumAccessibleValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.Number getMinimumAccessibleValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getAccessibleActionDescription(int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getAfterIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getAtIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getBeforeIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getSelectedText()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getText(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton java.lang.String getTitledBorderText()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton.ButtonKeyBinding ButtonKeyBinding(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.AccessibleAbstractButton.ButtonKeyBinding int getAccessibleKeyBindingCount()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.ButtonChangeListener ButtonChangeListener()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton.Handler Handler()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -170,6 +281,14 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.JComponent boolean isComponentObtainingGraphicsFrom(java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent boolean isComponentObtainingGraphicsFrom(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='javax.swing.JComponent boolean isDoubleBuffered()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -189,6 +308,11 @@
         </annotation>
     </item>
     <item name='javax.swing.JComponent boolean isOptimizedDrawingEnabled()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent boolean isPaintingForPrint()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -225,9 +349,7 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -243,6 +365,25 @@
     </item>
     <item name='javax.swing.JComponent java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JComponent void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent void clientPropertyChanged(java.lang.Object, java.lang.Object, java.lang.Object) 2'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent void dndDone()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.JComponent void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -267,11 +408,65 @@
     <item name='javax.swing.JComponent.AccessibleJComponent java.lang.String getTitledBorderText()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='javax.swing.JComponent.AccessibleJComponent java.lang.String getToolTipText()'>
+    <item name='javax.swing.JComponent.AccessibleJComponent.AccessibleContainerHandler AccessibleContainerHandler()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='javax.swing.JComponent.AccessibleJComponent.AccessibleFocusHandler AccessibleFocusHandler()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin ActionStandin(java.awt.event.ActionListener, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin java.lang.Object getValue(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;null&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin java.lang.Object getValue(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin void putValue(java.lang.String, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin void putValue(java.lang.String, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin void putValue(java.lang.String, java.lang.Object) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JComponent.ActionStandin void setEnabled(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.IntVector IntVector()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.IntVector int elementAt(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.IntVector int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JComponent.KeyboardState KeyboardState()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.JDialog JDialog(java.awt.Frame) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -310,6 +505,16 @@
     </item>
     <item name='javax.swing.JFrame java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JLabel int checkHorizontalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel int checkVerticalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.JLabel int getDisplayedMnemonic()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -372,6 +577,52 @@
     </item>
     <item name='javax.swing.JLabel void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel int getCaretPosition()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel int getSelectionEnd()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel int getSelectionStart()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getAfterIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getAtIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getBeforeIndex(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getSelectedText()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getText(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel java.lang.String getTitledBorderText()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel.LabelKeyBinding LabelKeyBinding(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel.AccessibleJLabel.LabelKeyBinding int getAccessibleKeyBindingCount()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.JPanel java.lang.String getUIClassID()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -440,17 +691,22 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.JTable boolean getAutoCreateRowSorter()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JTable boolean getDragEnabled()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='javax.swing.JTable boolean getRowSelectionAllowed()'>
+    <item name='javax.swing.JTable boolean getFillsViewportHeight()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='javax.swing.JTable boolean getScrollableTracksViewportHeight()'>
+    <item name='javax.swing.JTable boolean getRowSelectionAllowed()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -475,10 +731,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.JTable boolean getUpdateSelectionOnSort()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JTable boolean isEditing()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='javax.swing.JTable int convertRowIndexToView(int, javax.swing.JTable.ModelChange) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.JTable int getAutoResizeMode()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -541,6 +805,11 @@
     <item name='javax.swing.JTable javax.swing.JScrollPane createScrollPaneForTable(javax.swing.JTable) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='javax.swing.JTable javax.swing.JTable.DropLocation getDropLocation()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JTable javax.swing.table.TableModel createDefaultDataModel()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -549,8 +818,26 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.JTable void adjustSizes(long, javax.swing.JTable.Resizable2, boolean) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void adjustSizes(long, javax.swing.JTable.Resizable3, boolean) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void notifySorter(javax.swing.JTable.ModelChange) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='javax.swing.JTable void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void repaintSortedRows(javax.swing.JTable.ModelChange) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void restoreSortingSelection(int[], int, javax.swing.JTable.ModelChange) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable void restoreSortingSelection(int[], int, javax.swing.JTable.ModelChange) 2'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.JTable void setIntercellSpacing(java.awt.Dimension) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -564,11 +851,184 @@
     <item name='javax.swing.JTable void setUIProperty(java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='javax.swing.JTable void updateSubComponentUI(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='javax.swing.JTable void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable int getAccessibleColumnExtentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable int getAccessibleRowExtentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableCell int getAccessibleIndexInParent()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableCell java.awt.Dimension getSize()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableCell java.util.Locale getLocale()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableHeaderCell int getAccessibleIndexInParent()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableHeaderCell java.awt.Component getCurrentComponent()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableHeaderCell java.awt.Dimension getSize()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableHeaderCell java.lang.String getAccessibleName()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableHeaderCell java.util.Locale getLocale()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange AccessibleJTableModelChange(int, int, int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange int getFirstColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange int getFirstRow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange int getLastColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange int getLastRow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleJTableModelChange int getType()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader boolean isAccessibleColumnSelected(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader boolean isAccessibleRowSelected(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader boolean isAccessibleSelected(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int getAccessibleColumnExtentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int getAccessibleRowCount()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int getAccessibleRowExtentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int[] getSelectedAccessibleColumns()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int[] getSelectedAccessibleRows()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.BooleanRenderer java.awt.Component getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.BooleanRenderer java.awt.Component getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.BooleanRenderer java.awt.Component getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.DateRenderer void setValue(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.DoubleRenderer void setValue(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.DropLocation boolean isInsertColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.DropLocation boolean isInsertRow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.DropLocation int getColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.DropLocation int getRow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.DropLocation java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.JTable.GenericEditor java.awt.Component getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null,_,_,_,_-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.GenericEditor java.lang.Object getCellEditorValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JTable.IconRenderer void setValue(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.JTable.SortManager void restoreSelection(javax.swing.JTable.ModelChange) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities SwingUtilities()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.SwingUtilities boolean isDescendingFrom(java.awt.Component, java.awt.Component)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -620,16 +1080,28 @@
     <item name='javax.swing.SwingUtilities java.awt.Container getAncestorNamed(java.lang.String, java.awt.Component) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class, java.awt.Component)'>
+    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class&lt;?&gt;, java.awt.Component)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class, java.awt.Component) 0'>
+    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class&lt;?&gt;, java.awt.Component) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class, java.awt.Component) 1'>
+    <item name='javax.swing.SwingUtilities java.awt.Container getAncestorOfClass(java.lang.Class&lt;?&gt;, java.awt.Component) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities java.awt.Container getUnwrappedParent(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.SwingUtilities java.awt.Container getValidateRoot(java.awt.Container, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null,_-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities java.awt.Container getValidateRoot(java.awt.Container, boolean) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.SwingUtilities java.awt.Window getWindowAncestor(java.awt.Component)'>
@@ -644,10 +1116,24 @@
     <item name='javax.swing.SwingUtilities java.awt.Window windowForComponent(java.awt.Component) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='javax.swing.SwingUtilities javax.swing.JComponent getPaintingOrigin(javax.swing.JComponent)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities javax.swing.JComponent getPaintingOrigin(javax.swing.JComponent) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='javax.swing.SwingUtilities void updateComponentTreeUI(java.awt.Component) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.SwingUtilities void updateComponentTreeUI0(java.awt.Component) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities void updateRendererOrEditorUI(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.SwingUtilities.SharedOwnerFrame void show()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
 </root>

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 09-Jul-2007
- */
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;

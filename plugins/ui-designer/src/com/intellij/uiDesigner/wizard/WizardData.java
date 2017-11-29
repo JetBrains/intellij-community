@@ -36,7 +36,7 @@ public final class WizardData {
   @NotNull public final VirtualFile myFormFile;
 
   /**
-   * If <code>true</code> then {@link #myShortClassName} and {@link #myPackageName} should be
+   * If {@code true} then {@link #myShortClassName} and {@link #myPackageName} should be
    * used, otherwise {@link #myBeanClass} should be used.
    */
   public boolean myBindToNewBean;
@@ -50,7 +50,7 @@ public final class WizardData {
   public String myPackageName;
 
   /**
-   * Bean's class. If <code>null</code> then bean's class is't defined yet.
+   * Bean's class. If {@code null} then bean's class is't defined yet.
    */
   public PsiClass myBeanClass;
   @NotNull public final FormProperty2BeanProperty[] myBindings;

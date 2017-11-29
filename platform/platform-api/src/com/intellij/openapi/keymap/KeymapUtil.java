@@ -17,6 +17,8 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -198,8 +200,18 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
+    Application application = ApplicationManager.getApplication();
+    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    if (keymapManager == null || actionId == null) {
+      return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
+    }
+    return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  }
+
+  @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null? "" : getShortcutText(shortcut);
   }
@@ -239,11 +251,11 @@ public class KeymapUtil {
   }
 
   /**
-   * Factory method. It parses passed string and creates <code>MouseShortcut</code>.
+   * Factory method. It parses passed string and creates {@code MouseShortcut}.
    *
    * @param keystrokeString       target keystroke
    * @return                      shortcut for the given keystroke
-   * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
+   * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
@@ -286,6 +298,49 @@ public class KeymapUtil {
       }
     }
     return new MouseShortcut(button, modifiers, clickCount);
+  }
+
+  /**
+   * @return string representation of passed mouse shortcut. This method should
+   *         be used only for serializing of the {@code MouseShortcut}
+   */
+  public static String getMouseShortcutString(MouseShortcut shortcut) {
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    // modifiers
+    int modifiers = shortcut.getModifiers();
+    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(SHIFT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
+      buffer.append(CONTROL);
+      buffer.append(' ');
+    }
+    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
+      buffer.append(META);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT_GRAPH);
+      buffer.append(' ');
+    }
+
+    // button
+    buffer.append("button").append(shortcut.getButton()).append(' ');
+
+    if (shortcut.getClickCount() > 1) {
+      buffer.append(DOUBLE_CLICK);
+    }
+    return buffer.toString().trim(); // trim trailing space (if any)
   }
 
   public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
@@ -385,6 +440,12 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+    String text = getFirstKeyboardShortcutText(actionId);
+    return text.isEmpty() ? name : name + " (" + text + ")";
+  }
+
+  @NotNull
   public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
@@ -436,7 +497,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -444,7 +505,7 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @return <code>true</code> if the action is reassigned successfully
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
@@ -455,7 +516,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -463,8 +524,8 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @param muteOldKeystroke if <code>true</code> old keystroke wouldn't work anymore
-   * @return <code>true</code> if the action is reassigned successfully
+   * @param muteOldKeystroke if {@code true} old keystroke wouldn't work anymore
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,

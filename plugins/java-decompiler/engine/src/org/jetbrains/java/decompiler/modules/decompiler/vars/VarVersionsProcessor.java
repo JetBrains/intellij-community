@@ -130,8 +130,7 @@ public class VarVersionsProcessor {
     Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
     Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
 
-    Set<VarVersionPair> set = new HashSet<>(mapExprentMinTypes.keySet());
-    for (VarVersionPair paar : set) {
+    for (VarVersionPair paar : new ArrayList<>(mapExprentMinTypes.keySet())) {
       VarType type = mapExprentMinTypes.get(paar);
       VarType maxType = mapExprentMaxTypes.get(paar);
 
@@ -238,8 +237,7 @@ public class VarVersionsProcessor {
     Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
 
     // map var-version pairs on new var indexes
-    Set<VarVersionPair> set = new HashSet<>(mapExprentMinTypes.keySet());
-    for (VarVersionPair pair : set) {
+    for (VarVersionPair pair : new ArrayList<>(mapExprentMinTypes.keySet())) {
 
       if (pair.version >= 0) {
         int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);

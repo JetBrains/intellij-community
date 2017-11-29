@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author nik
  */
 public class ModulePointerTest extends PlatformTestCase {
-  public void testCreateByName() throws Exception {
+  public void testCreateByName() {
     final ModulePointer pointer = getPointerManager().create("m");
     assertSame(pointer, getPointerManager().create("m"));
     assertNull(pointer.getModule());
@@ -41,7 +41,7 @@ public class ModulePointerTest extends PlatformTestCase {
     assertEquals("m", pointer.getModuleName());
   }
 
-  public void testCreateByModule() throws Exception {
+  public void testCreateByModule() {
     final Module module = addModule("x");
     final ModulePointer pointer = getPointerManager().create(module);
     assertSame(pointer, getPointerManager().create(module));
@@ -70,7 +70,7 @@ public class ModulePointerTest extends PlatformTestCase {
     assertEquals("xyz", pointer.getModuleName());
   }
 
-  public void testDisposePointerFromUncommittedModifiableModel() throws Exception {
+  public void testDisposePointerFromUncommittedModifiableModel() {
     ModulePointerManager pointerManager = getPointerManager();
     final ModulePointer pointer = pointerManager.create("xxx");
 

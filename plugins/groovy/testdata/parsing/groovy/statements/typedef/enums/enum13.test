@@ -14,5 +14,7 @@ Groovy script
       PsiElement({)('{')
       Enumeration constants
         Enumeration constant
+          Modifiers
+            <empty list>
           PsiElement(identifier)('CONST')
       PsiElement(})('}')

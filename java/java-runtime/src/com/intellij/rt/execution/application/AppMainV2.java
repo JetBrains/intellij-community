@@ -62,7 +62,7 @@ public class AppMainV2 {
             try {
               while (true) {
                 String msg = reader.readLine();
-                if ("TERM".equals(msg)) {
+                if (msg == null || "TERM".equals(msg)) {
                   return;
                 }
                 else if ("BREAK".equals(msg)) {

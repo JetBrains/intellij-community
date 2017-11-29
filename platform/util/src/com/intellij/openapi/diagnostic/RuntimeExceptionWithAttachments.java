@@ -29,6 +29,11 @@ public class RuntimeExceptionWithAttachments extends RuntimeException implements
     myAttachments = attachments;
   }
 
+  public RuntimeExceptionWithAttachments(Throwable cause, Attachment... attachments) {
+    super(cause);
+    myAttachments = attachments;
+  }
+
   @NotNull
   @Override
   public Attachment[] getAttachments() {

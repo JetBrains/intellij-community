@@ -39,7 +39,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   private final ProcessAdapter myProcessListener = new ProcessAdapter() {
     @Override
-    public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+    public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
       myConsole.print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
     }
   };

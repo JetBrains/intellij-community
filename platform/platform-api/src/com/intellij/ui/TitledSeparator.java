@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class TitledSeparator extends JPanel {
   public static final int SEPARATOR_LEFT_INSET = 6;
   public static final int SEPARATOR_RIGHT_INSET = 3;
 
-  public static final Border EMPTY_BORDER = IdeBorderFactory.createEmptyBorder(TOP_INSET, 0, BOTTOM_INSET, 0);
+  public static final Border EMPTY_BORDER = JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
 
   protected final JBLabel myLabel = new JBLabel() {
     @Override

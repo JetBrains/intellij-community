@@ -20,42 +20,25 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The element of the branch popup which allows to show branches of the selected repository.
  * It is available only in projects with multiple roots.
- *
- * @author Kirill Likhodedov
- * @author Nadya Zabrodina
  */
 public class RootAction<T extends Repository> extends ActionGroup implements PopupElementWithAdditionalInfo {
 
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;
-  @NotNull private final String myBranchText;
+  @Nullable private final String myBranchText;
 
-  /**
-   * @param currentRepository Pass null in the case of common repositories - none repository will be highlighted then.
-   * @param actionsGroup
-   * @param branchText
-   */
-  public RootAction(@NotNull T repository, @Nullable T currentRepository, @NotNull ActionGroup actionsGroup, @NotNull String branchText) {
+  public RootAction(@NotNull T repository, @NotNull ActionGroup actionsGroup, @Nullable String branchText) {
     super("", true);
     myRepository = repository;
     myGroup = actionsGroup;
     myBranchText = branchText;
-    if (repository.equals(currentRepository)) {
-      getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
-    }
     getTemplatePresentation().setText(DvcsUtil.getShortRepositoryName(repository), false);
-  }
-
-  @NotNull
-  public String getCaption() {
-    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " + getInfoText();
   }
 
   @NotNull
@@ -64,7 +47,7 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
     return myGroup.getChildren(e);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getInfoText() {
     return myBranchText;

@@ -674,9 +674,4 @@ public class CodeBlockGenerator extends Generator {
       }
     }
   }
-
-  @Override
-  public void visitVariable(@NotNull GrVariable variable) {
-    super.visitVariable(variable);    //To change body of overridden methods use File | Settings | File Templates.
-  }
 }

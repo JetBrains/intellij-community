@@ -15,7 +15,9 @@
  */
 package com.intellij.diff.tools.util.base;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Condition;
@@ -30,7 +32,13 @@ public enum HighlightingLevel {
   }),
 
   ADVANCED("Syntax", AllIcons.Ide.HectorSyntax, rangeHighlighter -> {
-    return rangeHighlighter.getLayer() <= HighlighterLayer.ADDITIONAL_SYNTAX;
+    if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
+    Object tooltip = rangeHighlighter.getErrorStripeTooltip();
+    if (tooltip instanceof HighlightInfo) {
+      HighlightInfo info = (HighlightInfo)tooltip;
+      if (info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) >= 0) return false;
+    }
+    return true;
   }),
 
   SIMPLE("None", AllIcons.Ide.HectorOff, rangeHighlighter -> {

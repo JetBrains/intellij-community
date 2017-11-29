@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -23,62 +24,78 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Collectors;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
+  @NonNls
+  @NotNull
+  private static final String STORE_LOCAL_REGISTRY_OPTION = "ruby.store.local.run.conf.in.modules";
   private static final String SHARED = "shared";
   private static final String LOCAL = "local";
-  private static final Object LOCK = new Object();
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NotNull
   private final Module myModule;
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
-  @NotNull
-  private final RunManagerImpl myManager;
-  @Nullable
-  private List<Element> myUnloadedElements = null;
 
-  public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
+  public ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
-    myManager = runManager;
-
     myModule.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
-          LOG.debug("time to remove something from project (" + project + ")");
-          synchronized (LOCK) {
-            getModuleRunConfigurationSettings().forEach(settings -> myManager.removeConfiguration(settings));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("time to remove something from project (" + project + ")");
           }
+          getRunManager().removeConfigurations(getModuleRunConfigurationSettings());
         }
       }
     });
+  }
+
+  static class ModuleRunConfigurationManagerStartupActivity implements StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (!project.isDefault()) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (!module.isDisposed()) {
+            ModuleServiceManager.getService(module, ModuleRunConfigurationManager.class);
+          }
+        }
+      }
+    }
   }
 
   @Nullable
   @Override
   public Element getState() {
     try {
-      return new Element("state")
-        .addContent(writeExternal(new Element(SHARED), true))
-        .addContent(writeExternal(new Element(LOCAL), false))
-        ;
+      Element element = new Element("state")
+        .addContent(writeExternal(new Element(SHARED), true));
+
+      if (Registry.is(STORE_LOCAL_REGISTRY_OPTION)) {
+        element.addContent(writeExternal(new Element(LOCAL), false));
+      }
+
+      return element;
     }
     catch (WriteExternalException e1) {
       LOG.error(e1);
@@ -98,7 +115,12 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(getRunManager().getAllSettings(), myModuleConfigCondition);
+  }
+
+  @NotNull
+  private RunManagerImpl getRunManager() {
+    return (RunManagerImpl)RunManager.getInstance(myModule.getProject());
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -108,42 +130,34 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
-    getModuleRunConfigurationSettings().stream()
-      .filter(settings -> myManager.isConfigurationShared(settings) == isShared)
-      .forEach(settings -> myManager.addConfigurationElement(element, settings));
-    if (myUnloadedElements != null) {
-      myUnloadedElements.forEach(unloadedElement -> element.addContent(unloadedElement.clone()));
-    }
+    getRunManager().writeConfigurations(
+      element,
+      getModuleRunConfigurationSettings().stream()
+        .filter(settings -> settings.isShared() == isShared)
+        .collect(Collectors.toList())
+    );
     return element;
   }
 
-  public void readExternal(@NotNull final Element element) {
-    synchronized (LOCK) {
-      myUnloadedElements = null;
-      Element sharedElement = element.getChild(SHARED);
-      if (sharedElement != null) {
-        doReadExternal(sharedElement, true);
-      }
-      Element localElement = element.getChild(LOCAL);
-      if (localElement != null) {
-        doReadExternal(localElement, false);
-      }
+  public void readExternal(@NotNull Element element) {
+    Element sharedElement = element.getChild(SHARED);
+    if (sharedElement != null) {
+      doReadExternal(sharedElement, true);
+    }
+    Element localElement = element.getChild(LOCAL);
+    if (localElement != null) {
+      doReadExternal(localElement, false);
     }
   }
 
   private void doReadExternal(@NotNull Element element, boolean isShared) {
     LOG.debug("readExternal(" + myModule + ");  shared: " + isShared);
 
-    for (final Element child : element.getChildren()) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, isShared);
-      if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
-        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<>(2);
-        myUnloadedElements.add(element);
-      }
+    RunManagerImpl runManager = getRunManager();
+    for (final Element child : element.getChildren(RunManagerImpl.CONFIGURATION)) {
+      runManager.loadConfiguration(child, isShared);
     }
 
-    // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
-    myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
+    runManager.requestSort();
   }
 }

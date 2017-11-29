@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -87,7 +88,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     }
 
     final Collection<AbstractTreeNode> children = getChildrenImpl();
-    return children != null ? children : Collections.<AbstractTreeNode>emptyList();
+    return children != null ? children : Collections.emptyList();
   }
 
   @Override
@@ -164,14 +165,17 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
 
       for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
-        decorator.decorate(this, data);
+        try {
+          decorator.decorate(this, data);
+        }
+        catch (IndexNotReadyException ignored) {}
       }
     });
   }
 
   @Iconable.IconFlags
   protected int getIconableFlags() {
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
+    int flags = Registry.is("ide.projectView.show.visibility") ? Iconable.ICON_FLAG_VISIBILITY : 0;
     if (isMarkReadOnly()) {
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }

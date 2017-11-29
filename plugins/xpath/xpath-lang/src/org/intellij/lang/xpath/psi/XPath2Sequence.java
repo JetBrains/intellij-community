@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.01.11
-*/
 public interface XPath2Sequence extends XPathExpression {
   @NotNull
   XPathExpression[] getSequence();

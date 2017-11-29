@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Dec-2009
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -64,7 +60,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
-  private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
@@ -265,7 +261,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
     if (languageLevelModuleExtension.getLanguageLevel() != null) {
       //noinspection ConstantConditions
-      XmlSerializer.serializeInto(languageLevelModuleExtension.getState(), root);
+      XmlSerializer.serializeStateInto(languageLevelModuleExtension, root);
       isModified = true;
     }
 

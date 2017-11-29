@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -366,12 +367,13 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private void hidePopupsIfNeeded() {
     if (!SystemInfo.isMac) return;
 
-    StackingPopupDispatcher.getInstance().hidePersistentPopups();
+    final StackingPopupDispatcher stackingPopupDispatcher = StackingPopupDispatcher.getInstance();
+    stackingPopupDispatcher.hidePersistentPopups();
 
     Disposer.register(myDialog, new Disposable() {
       @Override
       public void dispose() {
-        StackingPopupDispatcher.getInstance().restorePersistentPopups();
+        stackingPopupDispatcher.restorePersistentPopups();
       }
     });
   }
@@ -518,7 +520,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
         myTransparentPane.repaint();
 
         if (myPreviouslyFocusedComponent != null) {
-          myPreviouslyFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myPreviouslyFocusedComponent, true);
+          });
           myPreviouslyFocusedComponent = null;
         }
 
@@ -578,8 +582,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
-      setVisible(false);
       remove(getContentPane());
+      setVisible(false);
       DialogWrapper.unregisterKeyboardActions(myWrapperPane);
       myRootPane = null;
     }

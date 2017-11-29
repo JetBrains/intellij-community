@@ -37,11 +37,11 @@ import java.io.File;
  * @author nik
  */
 public class MavenEjbArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
-
   @Nullable
   @Override
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
                                                 @NotNull File root,
+                                                @NotNull File targetDirectory,
                                                 @NotNull JpsPackagingElement contextElement,
                                                 @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {

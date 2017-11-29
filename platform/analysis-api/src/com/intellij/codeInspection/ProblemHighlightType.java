@@ -42,5 +42,8 @@ public enum ProblemHighlightType {
   WEAK_WARNING,
 
   /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#DO_NOT_SHOW} severity level */
-  INFORMATION
+  INFORMATION,
+
+  /** JEP 277 enhanced deprecation */
+  LIKE_MARKED_FOR_REMOVAL
 }

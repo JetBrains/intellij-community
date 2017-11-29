@@ -20,11 +20,6 @@ import com.intellij.lang.ASTNode;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.RncNsDecl;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.08.2007
- */
 public class RncNsDeclImpl extends RncDeclImpl implements RncNsDecl {
   public RncNsDeclImpl(ASTNode node) {
     super(node);

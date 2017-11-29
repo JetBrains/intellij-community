@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -66,7 +65,8 @@ public class JsonPsiImplUtils {
       @Nullable
       @Override
       public String getLocationString() {
-        return null;
+        final JsonValue value = property.getValue();
+        return value instanceof JsonLiteral ? value.getText() : null;
       }
 
       @Nullable

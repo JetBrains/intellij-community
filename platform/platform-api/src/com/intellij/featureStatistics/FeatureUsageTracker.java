@@ -19,10 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: anna
- * Date: Jan 28, 2005
- */
 public abstract class FeatureUsageTracker {
   public boolean SHOW_IN_COMPILATION_PROGRESS = true;
   public boolean SHOW_IN_OTHER_PROGRESS = true;

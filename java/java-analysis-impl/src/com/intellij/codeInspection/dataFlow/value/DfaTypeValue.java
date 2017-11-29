@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 6:32:01 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -89,6 +81,10 @@ public class DfaTypeValue extends DfaValue {
   @NotNull
   public Nullness getNullness() {
     return myNullness;
+  }
+
+  public DfaTypeValue withNullness(Nullness nullness) {
+    return nullness == myNullness ? this : myFactory.getTypeFactory().createTypeValue(myType, nullness);
   }
 
   @NonNls

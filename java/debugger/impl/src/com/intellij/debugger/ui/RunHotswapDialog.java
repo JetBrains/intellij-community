@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,17 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-
-/**
- * User: lex
- * Date: Oct 6, 2003
- * Time: 5:58:17 PM
- */
-
-
 
 public class RunHotswapDialog extends OptionsDialog {
   private final JPanel myPanel;
@@ -55,7 +49,7 @@ public class RunHotswapDialog extends OptionsDialog {
     }
     items.sort(Comparator.comparing(debuggerSession -> debuggerSession.getSession().getSessionName()));
     myElementsChooser = new ElementsChooser<>(items, true);
-    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 5, 0));
+    myPanel.setBorder(JBUI.Borders.empty(10, 0, 5, 0));
     //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     if (sessions.size() > 0) {
       myElementsChooser.selectElements(items.subList(0, 1));

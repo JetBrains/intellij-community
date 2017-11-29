@@ -16,17 +16,12 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -34,8 +29,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-
-import java.util.Arrays;
 
 /**
  * @author yole
@@ -78,20 +71,14 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
 
   private PsiClass addClass(@NonNls final String rootPath, @NotNull @NonNls final String classText) {
     final String qName =
-      ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
-          final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, classText);
-          return javaFile.getClasses()[0].getQualifiedName();
-        }
+      ReadAction.compute(() -> {
+        final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+        final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, classText);
+        return javaFile.getClasses()[0].getQualifiedName();
       });
     assert qName != null;
     final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-            public PsiClass compute() {
-              return ((PsiJavaFile)psiFile).getClasses()[0];
-            }
-          });
+    return ReadAction.compute(() -> ((PsiJavaFile)psiFile).getClasses()[0]);
   }
 
   @Override
@@ -110,15 +97,4 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return aPackage;
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
-      });
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 }

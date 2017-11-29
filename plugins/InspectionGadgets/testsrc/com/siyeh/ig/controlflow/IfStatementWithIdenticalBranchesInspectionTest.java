@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class IfStatementWithIdenticalBranchesInspectionTest extends LightInspectionTestCase {
 
-  public void testIfStatementWithIdenticalBranches() throws Exception {
+  public void testIfStatementWithIdenticalBranches() {
     doTest();
   }
 

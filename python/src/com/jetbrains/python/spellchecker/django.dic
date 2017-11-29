@@ -9,6 +9,7 @@ attname
 authenhandler
 autodiscover
 autoinc
+backends
 bidi
 blankout
 bookmarklets
@@ -23,6 +24,7 @@ checkindex
 checklogin
 classonlymethod
 clearable
+clickjacking
 closepolygons
 cntry
 cofa
@@ -34,6 +36,7 @@ coordtransform
 createdir
 createnull
 createsuperuser
+csrf
 databrowse
 datadict
 dbfield
@@ -229,8 +232,11 @@ sofi
 spaceless
 spatia
 spatialite
+sqlite
+sqlite3
 srid
 srlist
+startproject
 staticfiles
 stddev
 stopwords
@@ -281,5 +287,5 @@ wktwriter
 wordcount
 wordwrap
 writeable
+wsgi
 xheaders
-zipcode

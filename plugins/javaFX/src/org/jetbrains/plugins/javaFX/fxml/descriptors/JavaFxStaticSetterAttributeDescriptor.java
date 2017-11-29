@@ -21,10 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiUtil;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxStaticSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private final PsiMethod mySetter;
   

@@ -98,35 +98,35 @@ public class PatienceIntLCSTest extends TestCase {
     checkChange(change, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, new int[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
   }
 
-  public void testNotAbortedEqual() throws FilesTooBigForDiffException {
+  public void testNotAbortedEqual() {
     checkAborted(false, new int[]{1, 2, 3}, new int[]{1, 2, 3});
   }
 
-  public void testNotAbortedSimple() throws FilesTooBigForDiffException {
+  public void testNotAbortedSimple() {
     checkAborted(false, new int[]{100, 1, 2, 3, 4, 5, 100}, new int[]{1, 2, 3, 4});
   }
 
-  public void testAbortedNoMatches() throws FilesTooBigForDiffException {
+  public void testAbortedNoMatches() {
     checkAborted(true, new int[]{4, 1, 2, 3}, new int[]{500, 100, 600,});
   }
 
-  public void testAbortedSimple() throws FilesTooBigForDiffException {
+  public void testAbortedSimple() {
     checkAborted(true, new int[]{4, 1, 2, 3, 100}, new int[]{5, 1, 6, 8, 9, 10});
   }
 
-  public void testNotAbortedSecondStep() throws FilesTooBigForDiffException {
+  public void testNotAbortedSecondStep() {
     checkAborted(false,
                  new int[]{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 100},
                  new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
   }
 
-  public void testNotAbortedThirdStep() throws FilesTooBigForDiffException {
+  public void testNotAbortedThirdStep() {
     checkAborted(false,
                  new int[]{100, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},
                  new int[]{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2});
   }
 
-  public void testAbortedForthStep() throws FilesTooBigForDiffException {
+  public void testAbortedForthStep() {
     checkAborted(true,
                  new int[]{100, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 1, 0, 100},
                  new int[]{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 0, 2});

@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -55,29 +54,20 @@ public class SvnCompatibilityChecker {
         myCounter = 0;
         ++ myInvocationCounter;
         final Application application = ApplicationManager.getApplication();
-        application.executeOnPooledThread(new Runnable() {
-          public void run() {
-            final List<VirtualFile> suspicious = new ArrayList<>();
-            for (VirtualFile vf : result) {
-              if (SvnUtil.seemsLikeVersionedDir(vf)) {
-                suspicious.add(vf);
-              }
+        application.executeOnPooledThread(() -> {
+          final List<VirtualFile> suspicious = new ArrayList<>();
+          for (VirtualFile vf : result) {
+            if (SvnUtil.seemsLikeVersionedDir(vf)) {
+              suspicious.add(vf);
             }
-            if (! suspicious.isEmpty()) {
-              final String message = (suspicious.size() == 1) ?
-                                     "Root '" + suspicious.get(0).getPresentableName() + "' is likely to be of unsupported Subversion format" :
-                                     "Some roots are likely to be of unsupported Subversion format";
-              application.invokeLater(new Runnable() {
-                public void run() {
-                  new VcsBalloonProblemNotifier(myProject, message, MessageType.WARNING).run();
-                }
-              }, ModalityState.NON_MODAL, new Condition() {
-                @Override
-                public boolean value(Object o) {
-                  return (! myProject.isOpen()) || myProject.isDisposed();
-                }
-              });
-            }
+          }
+          if (!suspicious.isEmpty()) {
+            final String message = (suspicious.size() == 1)
+                                   ? "Root '" + suspicious.get(0).getPresentableName() + "' is likely to be of unsupported Subversion format"
+                                   : "Some roots are likely to be of unsupported Subversion format";
+            application
+              .invokeLater(() -> new VcsBalloonProblemNotifier(myProject, message, MessageType.WARNING).run(), ModalityState.NON_MODAL,
+                           o -> (!myProject.isOpen()) || myProject.isDisposed());
           }
         });
       }

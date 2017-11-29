@@ -81,7 +81,7 @@ public class TemplateContext {
   // used during initialization => no sync
   @VisibleForTesting
   public void setDefaultContext(@NotNull TemplateContext defContext) {
-    HashMap<String, Boolean> copy = new HashMap<>(myContextStates);
+    Map<String, Boolean> copy = new THashMap<>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
     myContextStates.putAll(copy);
@@ -107,7 +107,7 @@ public class TemplateContext {
    */
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
-    Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
+    Map<String, Boolean> explicitStates = new THashMap<>();
     for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
       explicitStates.put(type.getContextId(), false);
     }
@@ -175,7 +175,7 @@ public class TemplateContext {
    * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
    * Base value is `false`.
    *
-   * If default value is defined (as in our example) — we must not take base value in account.
+   * If default value is defined (as in our example)  we must not take base value in account.
    * Because on init `setDefaultContext` will be called and we will have own value.
    * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.

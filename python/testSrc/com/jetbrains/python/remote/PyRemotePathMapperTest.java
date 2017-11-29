@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  */
 public class PyRemotePathMapperTest {
   @Test
-  public void testFromSettings() throws Exception {
+  public void testFromSettings() {
     PathMappingSettings settings = new PathMappingSettings();
     PyRemotePathMapper emptyMapper = PyRemotePathMapper.fromSettings(settings, PyPathMappingType.USER_DEFINED);
 
@@ -49,7 +49,7 @@ public class PyRemotePathMapperTest {
   }
 
   @Test
-  public void testReplicatedFolderInsideSysPath() throws Exception {
+  public void testReplicatedFolderInsideSysPath() {
     PyRemotePathMapper mapper = new PyRemotePathMapper();
     mapper.addMapping("C:\\Users\\J.S.\\.PyCharm\\system\\remote_sources\\-114", "/development/lib", PyPathMappingType.SYS_PATH);
     mapper.addMapping("C:\\Users\\J.S.\\.PyCharm\\system\\remote_sources\\-27315", "/development/src/project/module",

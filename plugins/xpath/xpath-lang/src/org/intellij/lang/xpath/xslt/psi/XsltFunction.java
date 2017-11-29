@@ -20,11 +20,6 @@ import org.intellij.lang.xpath.psi.XPathFunction;
 
 import javax.xml.namespace.QName;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 11.01.11
-*/
 public interface XsltFunction extends XsltElement, XPathFunction, Function {
 
   QName getQName();

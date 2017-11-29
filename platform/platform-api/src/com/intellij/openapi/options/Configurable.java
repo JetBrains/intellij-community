@@ -165,7 +165,9 @@ public interface Configurable extends UnnamedConfigurable {
    * because it causes loading additional classes during the building a setting tree.
    * Use XML attributes instead if possible.
    */
+  @FunctionalInterface
   interface Composite {
+    @NotNull
     Configurable[] getConfigurables();
   }
 

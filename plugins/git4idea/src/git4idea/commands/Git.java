@@ -137,6 +137,7 @@ public interface Git {
                         @NotNull String spec,
                         boolean force,
                         boolean updateTracking,
+                        boolean skipHook,
                         @Nullable String tagMode,
                         GitLineHandlerListener... listeners);
 
@@ -203,5 +204,11 @@ public interface Git {
 
   @NotNull
   GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult revert(@NotNull GitRepository repository,
+                          @NotNull String commit,
+                          boolean autoCommit,
+                          @NotNull GitLineHandlerListener... listeners);
 
 }

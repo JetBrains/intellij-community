@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +19,6 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nls;
@@ -48,7 +32,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 @SuppressWarnings("DialogTitleCapitalization")
-public class GuavaInspection extends BaseJavaLocalInspectionTool {
+public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
   private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
 
@@ -270,6 +254,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   }
 
   public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
+    public static final String FAMILY_NAME = "Migrate Guava's type to Java";
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -312,7 +297,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Migrate Guava's type to Java";
+      return FAMILY_NAME;
     }
 
     @Override
@@ -349,34 +334,19 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     }
 
     private void performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
-      PsiFile containingFile = null;
-      for (PsiElement element : elements) {
-        final PsiFile currentContainingFile = element.getContainingFile();
-        if (containingFile == null) {
-          containingFile = currentContainingFile;
-        }
-        else {
-          LOG.assertTrue(containingFile.isEquivalentTo(currentContainingFile));
-        }
-      }
-      LOG.assertTrue(containingFile != null);
-      if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
-      try {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(containingFile.getProject())
-                              .union(GlobalSearchScopesCore.projectTestScope(containingFile.getProject())));
-        rules.addConversionRuleSettings(new GuavaConversionSettings(ignoreJavaxNullable));
-        TypeMigrationProcessor.runHighlightingTypeMigration(containingFile.getProject(),
-                                                            null,
-                                                            rules,
-                                                            elements.toArray(new PsiElement[elements.size()]),
-                                                            createMigrationTypeFunction(elements, types),
-                                                            true);
-        UndoUtil.markPsiFileForUndo(containingFile);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+      final Project project = elements.get(0).getProject();
+      final TypeMigrationRules rules = new TypeMigrationRules(project);
+      rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(project)
+                            .union(GlobalSearchScopesCore.projectTestScope(project)));
+      rules.addConversionRuleSettings(new GuavaConversionSettings(ignoreJavaxNullable));
+      TypeMigrationProcessor.runHighlightingTypeMigration(project,
+                                                          null,
+                                                          rules,
+                                                          elements.toArray(new PsiElement[elements.size()]),
+                                                          createMigrationTypeFunction(elements, types),
+                                                          true,
+                                                          true);
     }
 
     private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,

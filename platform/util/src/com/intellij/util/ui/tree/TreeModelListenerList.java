@@ -49,10 +49,23 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @param listener a listener to remove
    */
   public void remove(TreeModelListener listener) {
-    if (listener != null) {
+    if (listener != null && !myDequeEmpty) {
       synchronized (myDeque) {
         myDeque.remove(listener);
         myDequeEmpty = myDeque.isEmpty();
+      }
+    }
+  }
+
+  /**
+   * Removes all added listeners.
+   * This method is safe for use by multiple concurrent threads.
+   */
+  public void clear() {
+    if (!myDequeEmpty) {
+      synchronized (myDeque) {
+        myDeque.clear();
+        myDequeEmpty = true;
       }
     }
   }

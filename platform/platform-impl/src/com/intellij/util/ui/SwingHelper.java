@@ -210,7 +210,7 @@ public class SwingHelper {
     rootPane.revalidate();
     rootPane.repaint();
 
-    LOG.info("DialogWrapper '" + dialogWrapper.getTitle() + "' has been re-sized (added width: " + dw + ", added height: " + dh + ")");
+    LOG.debug("DialogWrapper '" + dialogWrapper.getTitle() + "' has been re-sized (added width: " + dw + ", added height: " + dh + ")");
   }
 
   public static void resizeDialogToFitTextFor(@NotNull final JComponent... components) {
@@ -378,7 +378,7 @@ public class SwingHelper {
     }
   }
 
-  private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
+  public static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {

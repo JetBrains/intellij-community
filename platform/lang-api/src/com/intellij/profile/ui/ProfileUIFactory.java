@@ -24,10 +24,6 @@ import com.intellij.openapi.util.Condition;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 01-Dec-2005
- */
 public abstract class ProfileUIFactory implements ApplicationComponent {
   public static ProfileUIFactory getInstance() {
     return ApplicationManager.getApplication().getComponent(ProfileUIFactory.class);

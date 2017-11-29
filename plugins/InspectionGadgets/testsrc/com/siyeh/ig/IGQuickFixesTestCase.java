@@ -16,20 +16,15 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-
-import java.util.List;
 
 /**
  * @author anna
@@ -109,23 +104,11 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
-    final IntentionAction action = findIntention(hint);
+    final IntentionAction action = myFixture.getAvailableIntention(hint);
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
-
-  public IntentionAction findIntention(@NotNull final String hint) {
-    final List<IntentionAction> allIntentions = myFixture.getAvailableIntentions();
-    final List<IntentionAction> intentions =
-      ContainerUtil.findAll(allIntentions,
-                            intentionAction -> intentionAction instanceof QuickFixWrapper &&
-                                               intentionAction.getText().equals(hint));
-    Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());
-    Assert.assertFalse("Too many quickfixes found for \"" + hint + "\": " + intentions + "]", intentions.size() > 1);
-    return intentions.get(0);
-  }
-
 
   protected void doExpressionTest(
     @NotNull String hint,
@@ -153,7 +136,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
                         @NotNull String fileName) {
     before = before.replace("/**/", "<caret>");
     myFixture.configureByText(fileName, before);
-    final IntentionAction intention = findIntention(hint);
+    IntentionAction intention = myFixture.getAvailableIntention(hint);
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResult(after);

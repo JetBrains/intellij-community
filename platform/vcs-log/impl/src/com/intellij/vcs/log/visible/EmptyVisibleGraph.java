@@ -68,7 +68,7 @@ public class EmptyVisibleGraph implements VisibleGraph<Integer> {
 
   private static class DumbActionController implements ActionController<Integer> {
 
-    private static ActionController<Integer> INSTANCE = new DumbActionController();
+    private static final ActionController<Integer> INSTANCE = new DumbActionController();
 
     @NotNull
     @Override
@@ -86,7 +86,7 @@ public class EmptyVisibleGraph implements VisibleGraph<Integer> {
     }
 
     private static class EmptyGraphAnswer implements GraphAnswer<Integer> {
-      private static EmptyGraphAnswer INSTANCE = new EmptyGraphAnswer();
+      private static final EmptyGraphAnswer INSTANCE = new EmptyGraphAnswer();
 
       @Nullable
       @Override

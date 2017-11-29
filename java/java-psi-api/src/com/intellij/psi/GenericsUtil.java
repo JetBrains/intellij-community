@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +34,7 @@ import java.util.*;
  */
 public class GenericsUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + GenericsUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
   private GenericsUtil() {}
 
@@ -111,38 +110,46 @@ public class GenericsUtil {
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       PsiClassType[] conjuncts = new PsiClassType[supers.length];
-      for (int i = 0; i < supers.length; i++) {
-        PsiClass aSuper = supers[i];
-        PsiSubstitutor subst1 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, aClass, classResolveResult1.getSubstitutor());
-        PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
-        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      Set<Couple<PsiType>> siblings = new HashSet<>();
+      try {
+        for (int i = 0; i < supers.length; i++) {
+          PsiClass aSuper = supers[i];
+          PsiSubstitutor subst1 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, aClass, classResolveResult1.getSubstitutor());
+          PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
 
-        final Couple<PsiType> types = Couple.<PsiType>of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
+          final Couple<PsiType> types = Couple.of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
+          boolean skip = compared.contains(types);
 
-        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aSuper)) {
-          PsiType mapping1 = subst1.substitute(parameter);
-          PsiType mapping2 = subst2.substitute(parameter);
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aSuper)) {
+            PsiType mapping1 = subst1.substitute(parameter);
+            PsiType mapping2 = subst2.substitute(parameter);
 
-          if (mapping1 != null && mapping2 != null) {
-            if (compared.contains(types)) {
-              substitutor = substitutor.put(parameter, PsiWildcardType.createUnbounded(manager));
+            if (mapping1 != null && mapping2 != null) {
+              if (skip) {
+                substitutor = substitutor.put(parameter, PsiWildcardType.createUnbounded(manager));
+              }
+              else {
+                compared.add(types);
+                try {
+                  PsiType argument = getLeastContainingTypeArgument(mapping1, mapping2, compared, manager);
+                  substitutor = substitutor.put(parameter, argument);
+                }
+                finally {
+                  siblings.add(types);
+                }
+              }
             }
             else {
-              compared.add(types);
-              try {
-                substitutor = substitutor.put(parameter, getLeastContainingTypeArgument(mapping1, mapping2, compared, manager));
-              }
-              finally {
-                compared.remove(types);
-              }
+              substitutor = substitutor.put(parameter, null);
             }
           }
-          else {
-            substitutor = substitutor.put(parameter, null);
-          }
-        }
 
-        conjuncts[i] = elementFactory.createType(aSuper, substitutor);
+          conjuncts[i] = elementFactory.createType(aSuper, substitutor);
+        }
+      }
+      finally {
+        compared.removeAll(siblings);
       }
 
       return PsiIntersectionType.createIntersection(conjuncts);
@@ -463,8 +470,12 @@ public class GenericsUtil {
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
+    //4.10.2
+    //Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri is a wildcard
+    //type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn>.
+    PsiType capturedType = PsiUtil.captureToplevelWildcards(type, referenceParameterList);
     //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(type, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
+    return checkNotInBounds(capturedType, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {

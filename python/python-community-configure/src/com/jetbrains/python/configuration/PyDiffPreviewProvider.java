@@ -15,23 +15,20 @@
  */
 package com.jetbrains.python.configuration;
 
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewProvider;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
 public class PyDiffPreviewProvider extends DiffPreviewProvider {
+  @NotNull
   @Override
   public DiffContent[] createContents() {
-    return new DiffContent[]{createContent(LEFT_TEXT), createContent(CENTER_TEXT), createContent(RIGHT_TEXT)};
-  }
-
-  private static SimpleContent createContent(final String text) {
-    return new SimpleContent(text, PythonFileType.INSTANCE);
+    return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, PythonFileType.INSTANCE);
   }
 
   @NonNls private static final String LEFT_TEXT =   "class MyClass\n" +
@@ -47,7 +44,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "\n" +
                                                     "    print a\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
   @NonNls private static final String CENTER_TEXT = "class MyClass\n" +
                                                     "  value = 123\n" +
                                                     "\n" +
@@ -60,7 +60,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "\n" +
                                                     "    print a\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
   @NonNls private static final String RIGHT_TEXT =  "class MyClass\n" +
                                                     "  value = -123\n" +
                                                     "\n" +
@@ -74,5 +77,8 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def bar(self, a, b)\n" +
                                                     "    print a\n" +
                                                     "\n" +
-                                                    "    print b";
+                                                    "    print b\n" +
+                                                    "\n" +
+                                                    "\n" +
+                                                    "\n";
 }

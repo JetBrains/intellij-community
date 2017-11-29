@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ReadActionProcessor<T> implements Processor<T> {
   @Override
   public boolean process(final T t) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> processInReadAction(t));
+    return ReadAction.compute(() -> processInReadAction(t));
   }
   public abstract boolean processInReadAction(T t);
 
   @NotNull
   public static <T> Processor<T> wrapInReadAction(@NotNull final Processor<T> processor) {
-    return t -> ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> processor.process(t));
+    return t -> ReadAction.compute(() -> processor.process(t));
   }
 }

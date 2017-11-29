@@ -22,10 +22,9 @@
       <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager</implementation-class>
-      <headless-implementation-class/>
-      <skipForDefaultProject/>
-    </component>
   </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
+  </extensions>
 </idea-plugin>

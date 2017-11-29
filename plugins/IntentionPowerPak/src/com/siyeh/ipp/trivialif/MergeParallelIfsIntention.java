@@ -38,8 +38,7 @@ public class MergeParallelIfsIntention extends Intention {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement firstStatement = (PsiIfStatement)token.getParent();
     final PsiIfStatement secondStatement =
-      (PsiIfStatement)PsiTreeUtil.skipSiblingsForward(firstStatement,
-                                                      PsiWhiteSpace.class);
+      (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(firstStatement);
     final String statement =
       mergeIfStatements(firstStatement, secondStatement);
     assert firstStatement != null;

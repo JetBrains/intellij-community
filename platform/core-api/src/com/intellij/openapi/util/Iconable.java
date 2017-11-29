@@ -29,6 +29,8 @@ public interface Iconable {
   @Deprecated int ICON_FLAG_OPEN = 0x0004;
   @Deprecated int ICON_FLAG_CLOSED = 0x0008;
 
+  Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
+
   @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS})
   @interface IconFlags {}
 
@@ -52,7 +54,7 @@ public interface Iconable {
       }
       else {
         if (map == null) {
-          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.<Icon>createConcurrentIntObjectMap());
+          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.createConcurrentIntObjectMap());
         }
         map.put(flags, icon);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
@@ -47,6 +48,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
   protected final Project myProject;
   private volatile PackageDirectoryCache myCache;
@@ -58,7 +60,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         clearCache();
@@ -71,7 +73,13 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
-      myCache = cache = createCache(calcClassRoots());
+      List<VirtualFile> roots = calcClassRoots();
+      List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
+      if (!invalidRoots.isEmpty()) {
+        roots.removeAll(invalidRoots);
+        LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
+      }
+      myCache = cache = createCache(roots);
     }
     return cache;
   }

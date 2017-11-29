@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="external-system-api" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="external-system-impl" scope="TEST" />
+    <orderEntry type="module" module-name="lang-tests" scope="TEST" />
   </component>
 </module>

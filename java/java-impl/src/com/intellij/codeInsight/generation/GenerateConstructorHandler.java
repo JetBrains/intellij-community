@@ -183,10 +183,14 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, aClass);
         constructors.add(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
       }
-      return filterOutAlreadyInsertedConstructors(aClass, constructors);
+      List<? extends GenerationInfo> constructorsToCreate = filterOutAlreadyInsertedConstructors(aClass, constructors);
+      if (!constructorsToCreate.isEmpty()) {
+        //allow to create constructor not matching super
+        return constructorsToCreate;
+      }
     }
     final List<GenerationInfo> constructors =
-      Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
+      Collections.singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
     return filterOutAlreadyInsertedConstructors(aClass, constructors);
   }
 

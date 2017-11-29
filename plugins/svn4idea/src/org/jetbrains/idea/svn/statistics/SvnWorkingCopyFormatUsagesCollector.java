@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.svn.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
@@ -33,7 +31,7 @@ import java.util.Set;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class SvnWorkingCopyFormatUsagesCollector extends AbstractApplicationUsagesCollector {
+public class SvnWorkingCopyFormatUsagesCollector extends AbstractProjectsUsagesCollector {
 
   private static final String GROUP_ID = "svn working copy format";
 
@@ -48,18 +46,9 @@ public class SvnWorkingCopyFormatUsagesCollector extends AbstractApplicationUsag
 
     // do not track roots with errors (SvnFileUrlMapping.getErrorRoots()) as they are "not usable" until errors are resolved
     // skip externals and switched directories as they will have the same format
-    List<RootUrlInfo> roots = ContainerUtil.filter(vcs.getSvnFileUrlMapping().getAllWcInfos(), new Condition<RootUrlInfo>() {
-      @Override
-      public boolean value(RootUrlInfo info) {
-        return info.getType() == null || NestedCopyType.inner.equals(info.getType());
-      }
-    });
+    List<RootUrlInfo> roots = ContainerUtil
+      .filter(vcs.getSvnFileUrlMapping().getAllWcInfos(), info -> info.getType() == null || NestedCopyType.inner.equals(info.getType()));
 
-    return ContainerUtil.map2Set(roots, new Function<RootUrlInfo, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(RootUrlInfo info) {
-        return new UsageDescriptor(info.getFormat().toString(), 1);
-      }
-    });
+    return ContainerUtil.map2Set(roots, info -> new UsageDescriptor(info.getFormat().toString(), 1));
   }
 }

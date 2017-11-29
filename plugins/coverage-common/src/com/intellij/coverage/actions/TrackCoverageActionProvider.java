@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 28-Aug-2009
- */
 package com.intellij.coverage.actions;
 
 import com.intellij.execution.testframework.ToggleModelActionProvider;

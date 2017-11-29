@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -30,34 +31,52 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
+public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
+  @Nullable private final Function<T, String> myToStringConvertor;
 
-public class ListSpeedSearch extends SpeedSearchBase<JList> {
-  private final Convertor<Object, String> myToStringConvertor;
-
-  public ListSpeedSearch(JList list) {
-    this(list, (Convertor<Object, String>)null);
+  public ListSpeedSearch(JList<T> list) {
+    super(list);
+    myToStringConvertor = null;
+    registerSelectAll(list);
   }
 
-  public ListSpeedSearch(final JList list, @NotNull Function<Object, String> convertor) {
-    this(list, (Convertor<Object, String>)convertor::fun);
-  }
-
-  public ListSpeedSearch(final JList list, @Nullable Convertor<Object, String> convertor) {
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public ListSpeedSearch(final JList<T> list, @NotNull Function<T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
+    registerSelectAll(list);
+  }
 
+  /**
+   * @deprecated use {@link #ListSpeedSearch(JList, Function)}
+   */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<T, String> convertor) {
+    super(list);
+    myToStringConvertor = convertor == null ? null : convertor::convert;
+    registerSelectAll(list);
+  }
+
+  private void registerSelectAll(JList<T> list) {
     new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
-    ScrollingUtil.selectItem(myComponent, element);
+    if (element != null) {
+      ScrollingUtil.selectItem(myComponent, element);
+    }
+    else {
+      myComponent.clearSelection();
+    }
   }
 
+  @Override
   protected int getSelectedIndex() {
     return myComponent.getSelectedIndex();
   }
 
+  @Override
   protected Object[] getAllElements() {
     return getAllListElements(myComponent);
   }
@@ -76,9 +95,11 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     }
   }
 
+  @Override
   protected String getElementText(Object element) {
     if (myToStringConvertor != null) {
-      return myToStringConvertor.convert(element);
+      //noinspection unchecked
+      return myToStringConvertor.fun((T)element);
     }
     return element == null ? null : element.toString();
   }
@@ -100,17 +121,20 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     @NotNull private final JList myList;
     @NotNull private final ListSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
+    MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
       myList = list;
       mySearch = search;
-      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);
+      if (action != null) {
+        copyShortcutFrom(action);
+      }
       setEnabledInModalContext(true);
     }
 
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
-                                     myList.getSelectionModel().getSelectionMode() == MULTIPLE_INTERVAL_SELECTION);
+                                     myList.getSelectionModel().getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override

@@ -132,28 +132,30 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   @Override
-  protected void doPaintTooltipImage(final Component rComponent,
-                                     final Rectangle cellBounds,
-                                     final Graphics2D g,
+  protected void doPaintTooltipImage(Component rComponent,
+                                     Rectangle cellBounds,
+                                     Graphics2D g,
                                      Integer key) {
-    final boolean opaque = rComponent.isOpaque();
+    boolean opaque = rComponent.isOpaque();
     if (rComponent instanceof JComponent) {
       ((JComponent)rComponent).setOpaque(true);
     }
 
     if (myComponent.isRowSelected(key)) {
       rComponent.setBackground(UIUtil.getTreeSelectionBackground(myComponent.hasFocus()));
-    } else {
+    }
+    else {
       Color bg = UIUtil.getTreeTextBackground();
       if (myComponent instanceof Tree && ((Tree)myComponent).isFileColorsEnabled()) {
-          final Color color = ((Tree)myComponent).getFileColorForPath(myComponent.getPathForRow(key));
-          if (color != null) {
-            bg = color;
-          }
+        TreePath path = myComponent.getPathForRow(key);
+        Color color = path == null ? null : ((Tree)myComponent).getFileColorForPath(path);
+        if (color != null) {
+          bg = color;
+        }
       }
       rComponent.setBackground(bg);
     }
-    
+
     super.doPaintTooltipImage(rComponent, cellBounds, g, key);
 
     if (rComponent instanceof JComponent) {

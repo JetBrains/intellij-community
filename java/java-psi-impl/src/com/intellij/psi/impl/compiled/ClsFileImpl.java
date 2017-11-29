@@ -19,7 +19,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +51,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -370,9 +370,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {
-      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
+      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
       ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-      return CachedValueProvider.Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
+      return CachedValueProvider.Result.create(target, this, target.getContainingFile(), tracker);
     });
   }
 
@@ -556,9 +556,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return stubTree;
   }
 
+  @NotNull
   @Override
-  public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
-    return null;
+  public StubbedSpine getStubbedSpine() {
+    return getStubTree().getSpine();
   }
 
   @Override
@@ -651,7 +652,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
           if (visitor.getResult() != null) return stub;
         }
-        catch (OutOfOrderInnerClassException ignored) { }
+        catch (OutOfOrderInnerClassException e) {
+          if (LOG.isTraceEnabled()) LOG.trace(file.getPath());
+        }
       }
 
       return null;

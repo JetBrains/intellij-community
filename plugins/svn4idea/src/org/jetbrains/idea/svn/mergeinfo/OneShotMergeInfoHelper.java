@@ -194,10 +194,10 @@ public class OneShotMergeInfoHelper implements MergeChecker {
         }
       }
 
-      public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+      public void handleProperty(SVNURL url, PropertyData property) {
       }
 
-      public void handleProperty(long revision, PropertyData property) throws SVNException {
+      public void handleProperty(long revision, PropertyData property) {
       }
 
       @NotNull

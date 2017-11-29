@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.designer.palette;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -107,27 +108,31 @@ public class PaletteGroupComponent extends JCheckBox {
     public void actionPerformed(ActionEvent e) {
       KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       Container container = kfm.getCurrentFocusCycleRoot();
-      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-      if (policy == null) {
-        policy = kfm.getDefaultFocusTraversalPolicy();
-      }
 
-      Component next = myMoveDown
-                       ? policy.getComponentAfter(container, PaletteGroupComponent.this)
-                       : policy.getComponentBefore(container, PaletteGroupComponent.this);
-      if (next instanceof PaletteItemsComponent) {
-        PaletteItemsComponent list = (PaletteItemsComponent)next;
-        if (list.getModel().getSize() != 0) {
-          list.takeFocusFrom(list == myItemsComponent ? 0 : -1);
-          return;
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+
+        FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+        if (policy == null) {
+          policy = kfm.getDefaultFocusTraversalPolicy();
         }
-        else {
-          next = myMoveDown ? policy.getComponentAfter(container, next) : policy.getComponentBefore(container, next);
+
+        Component next = myMoveDown
+                         ? policy.getComponentAfter(container, PaletteGroupComponent.this)
+                         : policy.getComponentBefore(container, PaletteGroupComponent.this);
+        if (next instanceof PaletteItemsComponent) {
+          PaletteItemsComponent list = (PaletteItemsComponent)next;
+          if (list.getModel().getSize() != 0) {
+            list.takeFocusFrom(list == myItemsComponent ? 0 : -1);
+            return;
+          }
+          else {
+            next = myMoveDown ? policy.getComponentAfter(container, next) : policy.getComponentBefore(container, next);
+          }
         }
-      }
-      if (next instanceof PaletteGroupComponent) {
-        next.requestFocus();
-      }
+        if (next instanceof PaletteGroupComponent) {
+          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
+        }
+      });
     }
   }
 

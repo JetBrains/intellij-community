@@ -15,12 +15,12 @@
  */
 package git4idea
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector
 import com.intellij.internal.statistic.UsageTrigger
 import com.intellij.internal.statistic.beans.GroupDescriptor
 import com.intellij.internal.statistic.beans.UsageDescriptor
-import com.intellij.internal.statistic.getBooleanUsage
-import com.intellij.internal.statistic.getCountingUsage
+import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.project.Project
 import git4idea.config.GitVcsSettings
 
@@ -28,7 +28,7 @@ fun reportUsage(key: String) {
   UsageTrigger.trigger(key)
 }
 
-class GitStatisticsCollector : AbstractApplicationUsagesCollector() {
+class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
   private val ID = GroupDescriptor.create("Git")
 
   override fun getProjectUsages(project: Project): Set<UsageDescriptor> {

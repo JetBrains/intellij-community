@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +130,7 @@ public class RunContentExecutor implements Disposable {
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(myAfterCompletion);
         }
       });
@@ -153,7 +152,7 @@ public class RunContentExecutor implements Disposable {
   }
 
   private static JComponent createToolbar(ActionGroup actions) {
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, false);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
     return actionToolbar.getComponent();
   }
 
@@ -190,7 +189,7 @@ public class RunContentExecutor implements Disposable {
 
     @Override
     public boolean isDumbAware() {
-      return Registry.is("dumb.aware.run.configurations");
+      return true;
     }
   }
 

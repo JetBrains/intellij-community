@@ -17,7 +17,6 @@ package git4idea.tests;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
 
 public class GitChangeProviderConflictTest extends GitChangeProviderTest {
 
@@ -30,7 +29,6 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
    * 5. Merge the branch on master.
    * Merge conflict "modify-modify" happens.
    */
-  @Test
   public void testConflictMM() throws Exception {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY);
     assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
@@ -39,7 +37,6 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   /**
    * Modify-Delete conflict.
    */
-  @Test
   public void testConflictMD() throws Exception {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE);
     assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
@@ -48,7 +45,6 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   /**
    * Delete-Modify conflict.
    */
-  @Test
   public void testConflictDM() throws Exception {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY);
     assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
@@ -57,21 +53,18 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   /**
    * Create a file with conflicting content.
    */
-  @Test
   public void testConflictCC() throws Exception {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
     VirtualFile zfile = myProjectRoot.findChild("z.txt");
     assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
-  @Test
   public void testConflictRD() throws Exception {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
     VirtualFile newfile = myProjectRoot.findChild("a.txt_master_new"); // renamed in master
     assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
-  @Test
   public void testConflictDR() throws Exception {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
     VirtualFile newFile = myProjectRoot.findChild("a.txt_feature_new"); // deleted in master, renamed in feature

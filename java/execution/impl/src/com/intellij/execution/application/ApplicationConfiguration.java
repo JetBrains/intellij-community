@@ -21,6 +21,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.KillableProcessHandler;
@@ -34,6 +35,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.psi.PsiClass;
@@ -51,7 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;
@@ -60,6 +62,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
   public boolean ENABLE_SWING_INSPECTOR;
+
+  private ShortenCommandLine myShortenCommandLine = null;
 
   public String ENV_VARIABLES;
   private final Map<String,String> myEnvs = new LinkedHashMap<>();
@@ -243,15 +247,34 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
+    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
   }
 
   @Override
-  public void writeExternal(final Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
+
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+
+    Map<String, String> envs = getEnvs();
+    //if (!envs.isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, envs);
+    //}
+
+    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+  }
+
+  @Nullable
+  @Override
+  public ShortenCommandLine getShortenCommandLine() {
+    return myShortenCommandLine;
+  }
+
+  @Override
+  public void setShortenCommandLine(ShortenCommandLine mode) {
+    myShortenCommandLine = mode;
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
@@ -262,7 +285,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      params.setUseClasspathJar(true);
+      T configuration = getConfiguration();
+      params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
@@ -285,6 +309,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       return params;
     }
 
+    @Override
+    protected GeneralCommandLine createCommandLine() throws ExecutionException {
+      GeneralCommandLine line = super.createCommandLine();
+      Map<String, String> content = line.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+      if (content != null) {
+        content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
+      }
+      return line;
+    }
+
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
@@ -297,15 +331,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
       if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
-        PsiClass mainClass = module.findClass(params.getMainClass());
-        if (mainClass != null) {
-          PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
-          if (mainModule != null) {
-            params.setModuleName(mainModule.getName());
-            PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
-            modulePath.addAll(classPath.getPathList());
-            classPath.clear();
-          }
+        PsiJavaModule mainModule = DumbService.getInstance(module.getProject()).computeWithAlternativeResolveEnabled(
+          () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass())));
+        if (mainModule != null) {
+          params.setModuleName(mainModule.getName());
+          PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
+          modulePath.addAll(classPath.getPathList());
+          classPath.clear();
         }
       }
     }

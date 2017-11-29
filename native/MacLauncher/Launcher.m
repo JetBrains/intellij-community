@@ -341,6 +341,10 @@ NSString *getDefaultFilePath(NSString *fileName) {
     return fullFileName;
 }
 
+NSString *getToolboxVMOptionsPath() {
+    return [NSString stringWithFormat:@"%@.vmoptions", [[NSBundle mainBundle] bundlePath]];
+}
+
 NSString *getApplicationVMOptionsPath() {
     return getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
 }
@@ -357,25 +361,28 @@ NSString *getOverrideVMOptionsPath() {
 }
 
 NSArray *parseVMOptions() {
-    NSArray *files = @[getApplicationVMOptionsPath(),
-                       getUserVMOptionsPath(),
-                       getOverrideVMOptionsPath()];
+    NSString *vmOptionsFile = getOverrideVMOptionsPath();
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
+        vmOptionsFile = getToolboxVMOptionsPath();
+    }
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
+        vmOptionsFile = getUserVMOptionsPath();
+    }
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
+        vmOptionsFile = getApplicationVMOptionsPath();
+    }
 
     NSMutableArray *options = [NSMutableArray array];
-    NSMutableArray *used = [NSMutableArray array];
 
-    for (NSString *file in files) {
-        NSLog(@"Processing VMOptions file at %@", file);
-        NSArray *contents = [VMOptionsReader readFile:file];
-        if (contents != nil) {
-            NSLog(@"Done");
-            [used addObject:file];
-            [options addObjectsFromArray:contents];
-        } else {
-            NSLog(@"No content found");
-        }
+    NSLog(@"Processing VMOptions file at %@", vmOptionsFile);
+    NSArray *contents = [VMOptionsReader readFile:vmOptionsFile];
+    if (contents != nil) {
+        NSLog(@"Done");
+        [options addObjectsFromArray:contents];
+        [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", vmOptionsFile]];
+    } else {
+        NSLog(@"No content found at %@", vmOptionsFile);
     }
-    [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", [used componentsJoinedByString:@","]]];
 
     return options;
 }
@@ -400,9 +407,9 @@ NSString *getOverridePropertiesPath() {
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
-
-    [args_array addObjectsFromArray:[[jvmInfo objectForKey:@"VMOptions"] componentsSeparatedByString:@" "]];
     [args_array addObjectsFromArray:parseVMOptions()];
+    NSString *bootJar = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/Contents/lib/boot.jar"];
+    [args_array addObject:[NSString stringWithFormat:@"-Xbootclasspath/a:%@", bootJar]];
 
     NSString *properties = getOverridePropertiesPath();
     if (properties != nil) {
@@ -426,15 +433,15 @@ NSString *getOverridePropertiesPath() {
 
 - (const char *)mainClassName {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
-    
+
     NSString *mainClass = [jvmInfo objectForKey:@"MainClass"];
     if (mainClass == nil || mainClass == NULL) {
         NSLog(@"Info.plist is corrupted, Absent MainClass key.");
         exit(-1);
     }
-    
+
     char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
-    
+
     char *cur = answer;
     while (*cur) {
         if (*cur == '.') {
@@ -442,7 +449,7 @@ NSString *getOverridePropertiesPath() {
         }
         cur++;
     }
-    
+
     return answer;
 }
 

@@ -23,10 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class ParenthesisExprSurrounder extends GroovyExpressionSurrounder {
   @Override
   protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {

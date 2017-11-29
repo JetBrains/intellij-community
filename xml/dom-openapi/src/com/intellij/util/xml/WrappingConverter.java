@@ -59,7 +59,7 @@ public abstract class WrappingConverter extends Converter<Object> {
   @NotNull
   public List<Converter> getConverters(@NotNull final GenericDomValue domElement) {
     final Converter converter = getConverter(domElement);
-    return converter == null ? Collections.<Converter>emptyList() : Collections.singletonList(converter);
+    return converter == null ? Collections.emptyList() : Collections.singletonList(converter);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.progress;
 
 /**
@@ -23,17 +22,15 @@ public interface PerformInBackgroundOption {
   PerformInBackgroundOption DEAF = new PerformInBackgroundOption() {
     @Override
     public boolean shouldStartInBackground() { return false; }
-    @Override
-    public void processSentToBackground() {}
   };
 
   PerformInBackgroundOption ALWAYS_BACKGROUND = new PerformInBackgroundOption() {
     @Override
     public boolean shouldStartInBackground() { return true; }
-    @Override
-    public void processSentToBackground() {}
   };
 
   boolean shouldStartInBackground();
-  void processSentToBackground();
+
+  default void processSentToBackground() {
+  }
 }

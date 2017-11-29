@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.concurrency.ResultConsumer;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -55,7 +56,7 @@ class DebuggerTreeCreatorImpl implements DebuggerTreeCreator<Pair<NodeDescriptor
       final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
       context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
         @Override
-        public void threadAction() {
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           try {
             final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(debuggerTreeNode, context);
             resultConsumer.onSuccess(Pair.create(debuggerTreeNode.getDescriptor(), evaluationText.getText()));

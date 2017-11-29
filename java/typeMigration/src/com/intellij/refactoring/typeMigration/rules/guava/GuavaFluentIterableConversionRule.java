@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       myFluentIterableReturnType = fluentIterableReturnType;
     }
 
-    public TypeConversionDescriptor create() {
-      GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor(myStringToReplace, myReplaceByString);
+    public TypeConversionDescriptor create(PsiExpression context) {
+      GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor(myStringToReplace, myReplaceByString, context);
       if (!myWithLambdaParameter) {
         descriptor = descriptor.setConvertParameterAsLambda(false);
       }
@@ -125,14 +125,13 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
 
-    return getOneMethodDescriptor(methodName, method, from, to, context);
+    return getOneMethodDescriptor(methodName, method, from, context);
   }
 
   @Nullable
   private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull String methodName,
                                                                      @NotNull PsiMethod method,
                                                                      @NotNull PsiType from,
-                                                                     @Nullable PsiType to,
                                                                      @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
@@ -176,7 +175,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       needSpecifyType = false;
     }
     else if (methodName.equals("transformAndConcat")) {
-      descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
+      descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule(context);
     } else if (methodName.equals("toArray")) {
       descriptorBase = FluentIterableConversionUtil.getToArrayDescriptor(from, context);
       needSpecifyType = false;
@@ -250,7 +249,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     else {
       final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
       if (base != null) {
-        final TypeConversionDescriptor descriptor = base.create();
+        final TypeConversionDescriptor descriptor = base.create(context);
         needSpecifyType = base.isChainedMethod();
         if (needSpecifyType && !base.isFluentIterableReturnType()) {
           conversionType = GuavaConversionUtil.addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
@@ -327,7 +326,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       }
       TypeConversionDescriptorBase descriptor = null;
       if (FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
-        descriptor = getOneMethodDescriptor(methodName, method, current.getType(), null, current);
+        descriptor = getOneMethodDescriptor(methodName, method, current.getType(), current);
         if (descriptor == null) {
           return null;
         }
@@ -435,5 +434,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   @Override
   public String ruleToClass() {
     return StreamApiConstants.JAVA_UTIL_STREAM_STREAM;
+  }
+
+  @Override
+  protected TypeConversionDescriptorBase getUnknownMethodConversion() {
+    return null;
   }
 }

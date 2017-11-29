@@ -44,5 +44,5 @@ if __name__ == "__main__":
     # Report files affected/created by commands. This info is used on Java side.
     changed_files = file_changes_tracker.get_changed_files()
     if changed_files:
-        print(jb_escape_output(",".join(changed_files)))
+        print("\n" + jb_escape_output(",".join(changed_files)))
 

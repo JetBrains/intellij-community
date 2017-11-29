@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,6 +148,12 @@ public class LookupCellRenderer implements ListCellRenderer {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
+
+          //In Darcula: default monospaced bold fonts are very similar to their regular versions.
+          //We need to tune foreground colors here to tell bold elements from regular
+          if (presentation.isItemTextBold() && UIUtil.isUnderDarcula()) {
+            presentation.setItemTextForeground(ColorUtil.brighter(presentation.getItemTextForeground(), 2));
+          }
         }
         catch (ProcessCanceledException e) {
           LOG.info(e);

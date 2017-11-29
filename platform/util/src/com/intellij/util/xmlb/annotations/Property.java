@@ -30,6 +30,11 @@ import java.lang.annotation.Target;
 public @interface Property {
   boolean surroundWithTag() default true;
 
+  /**
+   * Serialize into parent element. Allowed only for bean properties (not primitive types).
+   */
+  boolean flat() default false;
+
   Class<? extends SerializationFilter> filter() default SerializationFilter.class;
   
   boolean alwaysWrite() default false;

@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 14:28:03
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,6 +45,7 @@ public class RefactoringHierarchyUtil {
                                             boolean includeSubclasses) {
     PsiElement parent = place;
     while (parent != null) {
+      //noinspection SuspiciousMethodCalls
       if (membersToMove.contains(parent)) return true;
       if (parent instanceof PsiModifierList) return false; //see IDEADEV-12448
       if (parent instanceof PsiClass && targetClass != null) {
@@ -170,11 +163,6 @@ public class RefactoringHierarchyUtil {
   }
 
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
-    processSuperTypes(type, visitor, new HashSet<>());
-  }
-  private static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
-    if (visited.contains(type)) return;
-    visited.add(type);
     if (type instanceof PsiPrimitiveType) {
       int index = PRIMITIVE_TYPES.indexOf(type);
       if (index >= 0) {
@@ -184,11 +172,10 @@ public class RefactoringHierarchyUtil {
       }
     }
     else {
-      final PsiType[] superTypes = type.getSuperTypes();
-      for (PsiType superType : superTypes) {
-        visitor.visitType(superType);
-        processSuperTypes(superType, visitor, visited);
-      }
+      InheritanceUtil.processSuperTypes(type, false, aType -> {
+        visitor.visitType(aType);
+        return true;
+      });
     }
   }
 

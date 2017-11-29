@@ -21,9 +21,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Set;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class DomElementsNavigationManager {
   public static String DEFAULT_PROVIDER_NAME = "DEFAULT_PROVIDER_NAME";
 

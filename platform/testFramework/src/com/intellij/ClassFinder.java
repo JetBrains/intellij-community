@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jun 7, 2002
- * Time: 8:27:57 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,10 +34,10 @@ public class ClassFinder {
   private final int startPackageName;
   private final boolean includeUnconventionallyNamedTests;
 
-  public ClassFinder(final File classPathRoot, final String packageRoot, boolean includeUnconventionallyNamedTests) throws IOException {
+  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) throws IOException {
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
     startPackageName = classPathRoot.getAbsolutePath().length() + 1;
-    String directoryOffset = packageRoot.replace('.', File.separatorChar);
+    String directoryOffset = rootPackage.replace('.', File.separatorChar);
     findAndStoreTestClasses(new File(classPathRoot, directoryOffset));
   }
 

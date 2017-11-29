@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
@@ -192,7 +192,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
 
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             context.initCaches();
             DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
           }
@@ -403,8 +403,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void dispose() {
     getProcess().dispose();
     Disposer.dispose(myUpdateAlarm);
-    DebuggerInvocationUtil.swingInvokeLater(getProject(),
-                                            () -> getContextManager().setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null));
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      myContextManager.setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);
+      myContextManager.dispose();
+    });
   }
 
   // ManagerCommands
@@ -483,7 +485,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
-            XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
+            XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
               DebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
               DebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
               NotificationType.INFORMATION, new NotificationListener() {
@@ -493,7 +495,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
                     notification.expire();
                     getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
                       @Override
-                      public void contextAction() throws Exception {
+                      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
                         final DebuggerContextImpl debuggerContext =
                           DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
 

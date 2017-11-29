@@ -240,6 +240,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       }
     }
 
+    if (PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class, false) != null) return UsageType.CLASS_IMPORT;
+
     return null;
   }
 

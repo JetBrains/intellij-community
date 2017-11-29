@@ -33,10 +33,6 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 4/18/13
- */
 public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
   @Nullable
   @Override

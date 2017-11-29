@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,10 +61,10 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
   @NotNull private final Alarm                     myAlarm;
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
-  @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<>();
+  @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = ContainerUtil.createWeakMap();
 
   private final Map<Editor, Reference<PsiElement> /* PSI element which is located under the current mouse position */> myActiveElements
-    = new WeakHashMap<>();
+    = ContainerUtil.createWeakMap();
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
@@ -84,8 +83,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(
-      ApplicationActivationListener.TOPIC,
-      new ApplicationActivationListener.Adapter() {
+      ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           myApplicationActive = true;
@@ -285,7 +283,6 @@ public class QuickDocOnMouseOverManager {
     private final int offset;
     @NotNull private final PsiElement originalElement;
     @NotNull private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
-    private final HintManager myHintManager = HintManager.getInstance();
 
     private MyShowQuickDocRequest(@NotNull DocumentationManager docManager, @NotNull Editor editor, int offset, 
                                   @NotNull PsiElement originalElement) {
@@ -394,7 +391,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyCaretListener extends CaretAdapter {
+  private class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       Editor editor = getEditor();
@@ -405,7 +402,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(DocumentEvent e) {
       Editor editor = getEditor();

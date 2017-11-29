@@ -23,6 +23,7 @@ class Test {
   public void method(){}
   public void method2(A a, B b){}
   void method1(){}
+  private void method0(C c) {}
 }
 
 class A {}

@@ -31,18 +31,18 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Tagir Valeev
  */
 class FindFirstMigration extends BaseStreamApiMigration {
-  FindFirstMigration() {super("findFirst()");}
+  FindFirstMigration(boolean shouldWarn) {super(shouldWarn, "findFirst()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    PsiLoopStatement loopStatement = tb.getMainLoop();
+    PsiStatement loopStatement = tb.getStreamSourceStatement();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
       if (value == null) return null;
-      PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(loopStatement);
+      PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(loopStatement);
       if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
@@ -50,7 +50,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
       restoreComments(loopStatement, body);
       boolean sibling = nextReturnStatement.getParent() == loopStatement.getParent();
       PsiElement replacement = loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));
-      if(sibling || !isReachable(nextReturnStatement)) {
+      if(sibling || !ControlFlowUtils.isReachable(nextReturnStatement)) {
         nextReturnStatement.delete();
       }
       return replacement;
@@ -80,7 +80,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
           (status != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSimpleExpression(initializer))) {
         falseExpression = initializer;
       } else {
-        PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);
+        PsiElement maybeAssignment = PsiTreeUtil.skipWhitespacesAndCommentsBackward(loopStatement);
         PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
         if (prevRValue != null) {
           maybeAssignment.delete();

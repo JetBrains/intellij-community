@@ -48,6 +48,7 @@ grammar {
         SVG.Cursor.attrib,
         SVG.XLinkEmbed.attrib,
         SVG.External.attrib,
+        (common.attrs.aria.implicit.img | common.attrs.aria)?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
         attribute width { Length.datatype },

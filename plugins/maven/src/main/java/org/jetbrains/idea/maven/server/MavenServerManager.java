@@ -147,12 +147,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
 
       @Override
-      protected String getName(Object file) {
+      protected String getName(@NotNull Object file) {
         return MavenServerManager.class.getSimpleName();
       }
 
       @Override
-      protected RunProfileState getRunProfileState(Object target, Object configuration, Executor executor) {
+      protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
         return createRunProfileState();
       }
     };

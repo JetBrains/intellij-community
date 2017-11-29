@@ -19,7 +19,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class HardcodedLineSeparatorsInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/portability/hardcoded_line_separators", new HardcodedLineSeparatorsInspection());
   }
 }

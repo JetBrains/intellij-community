@@ -49,22 +49,18 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
   }
 
   public void paused(SuspendContextImpl suspendContext) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void resumed(SuspendContextImpl suspendContext) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread
   public void processAttached(DebugProcessImpl process) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   //executed in manager thread

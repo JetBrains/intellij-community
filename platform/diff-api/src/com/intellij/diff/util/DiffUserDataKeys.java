@@ -57,6 +57,8 @@ public interface DiffUserDataKeys {
   // Both data from DiffContext / DiffRequest will be used. Data from DiffRequest will be used first.
   //
 
+  Key<Boolean> THREESIDE_DIFF_WITH_RESULT = Key.create("Diff.ThreesideDiffWithResult");
+
   Key<Side> MASTER_SIDE = Key.create("Diff.MasterSide");
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");

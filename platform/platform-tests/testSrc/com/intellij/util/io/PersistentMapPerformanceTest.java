@@ -135,7 +135,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
       }
       assertTrue(!map.makesSenseToCompact());
-      System.out.println(System.currentTimeMillis() - started);
+      LOG.debug(String.valueOf(System.currentTimeMillis() - started));
       for (int i = 0; i < stringsCount; ++i) {
         if (i >= 2 * stringsCount / 3) {
           Integer s = intGetter.readValue(map, i);
@@ -212,7 +212,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       });
       assertTrue(result);
       map.close();
-      System.out.println("Done:" + (System.currentTimeMillis() - started));
+      LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
@@ -234,7 +234,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       });
       assertTrue(result);
 
-      System.out.println("Done 2:" + (System.currentTimeMillis() - started));
+      LOG.debug("Done 2:" + (System.currentTimeMillis() - started));
     }
     finally {
       clearMap(file, map);

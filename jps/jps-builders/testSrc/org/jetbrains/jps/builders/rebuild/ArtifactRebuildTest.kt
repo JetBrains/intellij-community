@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.rebuild
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
+import com.intellij.util.io.directoryContent
 import java.io.File
 import java.io.FileInputStream
 import java.util.jar.Attributes
@@ -29,10 +30,10 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
   fun testArtifactIncludesArchiveArtifact() {
     val name = "artifactIncludesArchiveArtifact"
     try {
-      doTest("$name/${name}.ipr", fs {
+      doTest("$name/${name}.ipr", directoryContent {
         dir("artifacts") {
           dir("data") {
-            archive("a.jar") {
+            zip("a.jar") {
               file("a.txt")
             }
           }
@@ -49,7 +50,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     loadProject("artifactWithoutOutput/artifactWithoutOutput.ipr", mapOf("OUTPUT_DIR" to outDir))
 
     rebuild()
-    assertOutput(outDir, fs {
+    assertOutput(outDir, directoryContent {
       dir("artifacts") {
         dir("main") {
           file("data.txt")
@@ -60,7 +61,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
   }
 
   fun testExtractDir() {
-    doTest("extractDirTest/extractDirTest.ipr", fs {
+    doTest("extractDirTest/extractDirTest.ipr", directoryContent {
       dir("artifacts") {
         dir("extractDir") {
           file("b.txt", "b")
@@ -74,12 +75,12 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
           }
         }
         dir("packedDir") {
-          archive("packedDir.jar") {
+          zip("packedDir.jar") {
             file("b.txt", "b")
           }
         }
         dir("packedRoot") {
-          archive("packedRoot.jar") {
+          zip("packedRoot.jar") {
             dir("dir") {
               file("b.txt", "b")
             }
@@ -103,7 +104,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
   }
 
   fun testOverwriteArtifacts() {
-    doTest("overwriteTest/overwriteTest.ipr", fs {
+    doTest("overwriteTest/overwriteTest.ipr", directoryContent {
       dir("artifacts") {
         dir("classes") {
           file("a.xml", "<root2/>")
@@ -132,7 +133,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
 
   fun testPathVariablesInArtifact() {
     val externalDir = "${testDataRootPath}/pathVariables/external"
-    doTest("pathVariables/pathVariables.ipr", mapOf("EXTERNAL_DIR" to externalDir), fs {
+    doTest("pathVariables/pathVariables.ipr", mapOf("EXTERNAL_DIR" to externalDir), directoryContent {
       dir("artifacts") {
         dir("fileCopy") {
           dir("dir") {
@@ -144,7 +145,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
   }
 
   fun testModuleTestOutputElement() {
-    doTest("moduleTestOutput/moduleTestOutput.ipr", fs {
+    doTest("moduleTestOutput/moduleTestOutput.ipr", directoryContent {
       dir("artifacts") {
         dir("tests") {
           file("MyTest.class")

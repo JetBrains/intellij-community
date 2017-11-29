@@ -4,7 +4,8 @@
     2,
     3
   ],
-  "singleLineObj": {},
+  "emptyObjectWithComma": {},
+  "emptyArrayWithComma": [],
   "multiLineObj": {
     "foo": ""
     //comment

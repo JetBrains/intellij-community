@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.typing;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +47,9 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+    // Handles only string literals containing quoted types
     final PyInjectionUtil.InjectionResult result = super.registerInjection(registrar, context);
+    
     if (result == PyInjectionUtil.InjectionResult.EMPTY && context.getContainingFile() instanceof PyFile && 
         context instanceof PsiComment && context instanceof PsiLanguageInjectionHost) {
       return registerCommentInjection(registrar, (PsiLanguageInjectionHost)context);
@@ -78,15 +79,15 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       if (annotationText != null) {
         final int start = m.start(1);
         final int end = m.end(1);
-        if (start < end && allowInjectionInComment(host)) {
-          Language language = null;
+        if (start < end) {
+          final Language language;
           if ("ignore".equals(annotationText)) {
             language = null;
           }
           else if (isFunctionTypeComment(host)) {
             language = PyFunctionTypeAnnotationDialect.INSTANCE;
           }
-          else if (isTypingAnnotation(annotationText)) {
+          else {
             language = PyDocstringLanguageDialect.getInstance();
           }
           if (language != null) {
@@ -108,11 +109,5 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   private static boolean isTypingAnnotation(@NotNull String s) {
     return RE_TYPING_ANNOTATION.matcher(s).matches();
-  }
-
-  private static boolean allowInjectionInComment(@NotNull PsiLanguageInjectionHost host) {
-    // XXX: Don't inject PyDocstringLanguage during completion inside comments due to an exception related to finding ShredImpl's
-    // hostElementPointer
-    return CompletionUtil.getOriginalOrSelf(host) == host;
   }
 }

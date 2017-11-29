@@ -52,7 +52,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +82,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private TableView<VirtualFile> myTable;
   private JBLabel myDescriptionLabel;
   private final MergeProvider myProvider;
-  private final MergeSession myMergeSession;
+  @Nullable private final MergeSession myMergeSession;
   private final List<VirtualFile> myFiles;
   private final ListTableModel<VirtualFile> myModel;
   @Nullable
@@ -155,7 +154,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       myMergeSession = null;
     }
     myModel = new ListTableModel<>(columns.toArray(new ColumnInfo[columns.size()]));
-    myModel.setItems(files);
+    myModel.setItems(new ArrayList<>(myFiles));
     myTable.setModelAndUpdateColumns(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());
     myTable.setRowHeight(myVirtualFileRenderer.getPreferredSize().height);
@@ -192,14 +191,11 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         return true;
       }
     }.installOn(myTable);
-    new TableSpeedSearch(myTable, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object o) {
-        if (o instanceof VirtualFile) {
-          return ((VirtualFile)o).getName();
-        }
-        return null;
+    new TableSpeedSearch(myTable, o -> {
+      if (o instanceof VirtualFile) {
+        return ((VirtualFile)o).getName();
       }
+      return null;
     });
   }
 
@@ -278,7 +274,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private void acceptFileRevision(@NotNull VirtualFile file, boolean isCurrent) throws Exception {
-    if (myProvider instanceof MergeProvider2 && !myMergeSession.canMerge(file)) return;
+    if (myMergeSession != null && !myMergeSession.canMerge(file)) return;
 
     if (!DiffUtil.makeWritable(myProject, file)) {
       throw new IOException("File is read-only: " + file.getPresentableName());
@@ -309,7 +305,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void markFileProcessed(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) {
     myFiles.remove(file);
-    if (myProvider instanceof MergeProvider2) {
+    if (myMergeSession != null) {
       myMergeSession.conflictResolvedForFile(file, resolution);
     }
     else {
@@ -327,7 +323,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     }
     else {
       int selIndex = myTable.getSelectionModel().getMinSelectionIndex();
-      myModel.setItems(myFiles);
+      myModel.setItems(new ArrayList<>(myFiles));
       if (selIndex >= myFiles.size()) {
         selIndex = myFiles.size() - 1;
       }

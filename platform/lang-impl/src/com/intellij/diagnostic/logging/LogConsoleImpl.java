@@ -26,10 +26,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-/**
- * User: anna
- * Date: Apr 19, 2005
- */
 public abstract class LogConsoleImpl extends LogConsoleBase {
   private final String myPath;
   @NotNull

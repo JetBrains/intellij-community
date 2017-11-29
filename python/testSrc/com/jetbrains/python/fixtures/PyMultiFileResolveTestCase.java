@@ -49,7 +49,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
         FileType fileType = file.getFileType();
         return fileType == PythonFileType.INSTANCE;
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     final PsiElement result;
     if (ref instanceof PsiPolyVariantReference) {
       final ResolveResult[] resolveResults = ((PsiPolyVariantReference)ref).multiResolve(false);
@@ -58,7 +58,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     else {
       result = ref.resolve();
     }
-    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
+    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myFixture.getTestRootDisposable());
     return result;
   }
 

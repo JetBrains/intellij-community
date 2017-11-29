@@ -15,7 +15,7 @@
  */
 package com.intellij.core;
 
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -35,6 +35,6 @@ class MockDocumentCommitProcessor implements DocumentCommitProcessor {
   public void commitAsynchronously(@NotNull Project project,
                                    @NotNull Document document,
                                    @NonNls @NotNull Object reason,
-                                   @NotNull ModalityState currentModalityState) {
+                                   @NotNull TransactionId context) {
   }
 }

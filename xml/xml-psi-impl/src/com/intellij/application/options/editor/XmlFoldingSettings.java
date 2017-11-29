@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,6 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
 
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
-  }
-
-  public XmlFoldingSettings() {
-    // todo: remove after 2017.1 release
-    CssFoldingSettings cssFoldingSettings = CssFoldingSettings.getInstance();
-    if (cssFoldingSettings != null) {
-      myState.COLLAPSE_DATA_URI = cssFoldingSettings.isCollapseDataUri();
-    }
   }
 
   @Override

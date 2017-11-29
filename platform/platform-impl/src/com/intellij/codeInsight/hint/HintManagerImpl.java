@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -26,15 +12,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -109,10 +95,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myAnActionListener = new MyAnActionListener();
     actionManagerEx.addAnActionListener(myAnActionListener);
 
-    myCaretMoveListener = new CaretAdapter() {
+    myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        hideHints(HIDE_BY_ANY_KEY, false, false);
+        hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
       }
     };
 
@@ -120,7 +106,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
     for (Project project : projectManager.getOpenProjects()) {
       projectManagerListener.projectOpened(project);
     }
-    projectManager.addProjectManagerListener(projectManagerListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, projectManagerListener);
 
     myEditorMouseListener = new EditorMouseAdapter() {
       @Override
@@ -169,7 +156,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    myEditorDocumentListener = new DocumentAdapter() {
+    myEditorDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
@@ -613,21 +600,32 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                       @NotNull Editor editor,
                                       @NotNull LogicalPosition pos,
                                       @PositionFlags short constraint) {
+    VisualPosition visualPos = editor.logicalToVisualPosition(pos);
+    return getHintPosition(hint, editor, visualPos, visualPos, constraint);
+  }
+
+  /**
+   * @return position of hint in layered pane coordinate system
+   */
+  public static Point getHintPosition(@NotNull LightweightHint hint,
+                                      @NotNull Editor editor,
+                                      @NotNull VisualPosition pos,
+                                      @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
   private static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
-                                       @NotNull LogicalPosition pos1,
-                                       @NotNull LogicalPosition pos2,
+                                       @NotNull VisualPosition pos1,
+                                       @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
   }
 
   private static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
-                                       @NotNull LogicalPosition pos1,
-                                       @NotNull LogicalPosition pos2,
+                                       @NotNull VisualPosition pos1,
+                                       @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
@@ -665,28 +663,24 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private static Point _getHintPosition(@NotNull LightweightHint hint,
                                         @NotNull Editor editor,
-                                        @NotNull LogicalPosition pos1,
-                                        @NotNull LogicalPosition pos2,
+                                        @NotNull VisualPosition pos1,
+                                        @NotNull VisualPosition pos2,
                                         @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
-    int line1 = pos1.line;
-    int col1 = pos1.column;
-    int line2 = pos2.line;
-    int col2 = pos2.column;
 
     Point location;
     JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line2, col2));
+      Point p = editor.visualPositionToXY(pos2);
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
       location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
+      Point p = editor.visualPositionToXY(pos1);
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }
@@ -757,8 +751,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
                             int timeout) {
     JComponent label = HintUtil.createErrorLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
-    final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
-    final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
+    final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
+    final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
     showEditorHint(hint, editor, p, flags, timeout, false);
   }
@@ -777,8 +771,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                @NotNull final LightweightHint hint,
                                @NotNull final QuestionAction action,
                                @PositionFlags short constraint) {
-    final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
-    final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
+    final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
+    final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
     showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
@@ -928,10 +922,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.
    */
-  private final class MyProjectManagerListener extends ProjectManagerAdapter {
+  private final class MyProjectManagerListener implements ProjectManagerListener {
     @Override
     public void projectOpened(Project project) {
-      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     @Override

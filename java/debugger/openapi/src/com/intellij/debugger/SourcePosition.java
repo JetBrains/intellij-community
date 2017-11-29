@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Oct 24, 2003
- * Time: 8:23:06 PM
- */
 public abstract class SourcePosition implements Navigatable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
   @NotNull
@@ -60,6 +55,7 @@ public abstract class SourcePosition implements Navigatable{
 
   private abstract static class SourcePositionCache extends SourcePosition {
     @NotNull private final PsiFile myFile;
+    @Nullable private final SmartPsiElementPointer<PsiFile> myFilePointer;
     private long myModificationStamp = -1L;
 
     private WeakReference<PsiElement> myPsiElementRef;
@@ -68,13 +64,16 @@ public abstract class SourcePosition implements Navigatable{
 
     public SourcePositionCache(@NotNull PsiFile file) {
       myFile = file;
+      myFilePointer = ReadAction.compute(
+        () -> file.isValid() ? SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(file) : null);
       updateData();
     }
 
     @Override
     @NotNull
     public PsiFile getFile() {
-      return myFile;
+      PsiFile file = myFilePointer != null ? myFilePointer.getElement() : null;
+      return file != null ? file : myFile; // in case of full invalidation, rollback to the original psiFile
     }
 
     @Override
@@ -117,7 +116,7 @@ public abstract class SourcePosition implements Navigatable{
 
     private void updateData() {
       if(dataUpdateNeeded()) {
-        myModificationStamp = myFile.getModificationStamp();
+        myModificationStamp = getFile().getModificationStamp();
         myLine = null;
         myOffset = null;
         myPsiElementRef = null;
@@ -125,7 +124,7 @@ public abstract class SourcePosition implements Navigatable{
     }
 
     private boolean dataUpdateNeeded() {
-      if (myModificationStamp != myFile.getModificationStamp()) {
+      if (myModificationStamp != getFile().getModificationStamp()) {
         return true;
       }
       PsiElement psiElement = SoftReference.dereference(myPsiElementRef);

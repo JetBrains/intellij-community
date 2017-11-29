@@ -15,9 +15,14 @@
  */
 
 package org.jetbrains.plugins.groovy.lang.overriding
+
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -68,5 +73,29 @@ class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixtureTestCas
     myFixture.addFileToProject("a.groovy", "interface I { void foo(); }; class C { static void bar(I i) {}}")
     myFixture.addFileToProject("a.java", "class D {{  C.bar(() -> {}); }")
     assertSize(1, FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll())
+  }
+
+  void 'test find sub classes works even in local scope'() {
+    def t = myFixture.addFileToProject('x/T.groovy', 'package x; trait T {}')
+    def t2 = myFixture.addFileToProject('x/T2.groovy', 'package x; class T2 implements T {}')
+
+    PsiClass classT = ((GroovyFile)t).classes[0]
+    PsiClass classT2 = ((GroovyFile)t2).classes[0]
+    PsiClass superClass = classT2.getSuperClass()
+    assertTrue(Arrays.asList(classT2.getSupers()).contains(classT))
+
+    PsiElement[] files = [t, t2]
+    SearchScope scope = new LocalSearchScope(files)
+    Collection<PsiClass> subClasses = DirectClassInheritorsSearch.search(classT, scope).findAll()
+    PsiClass subClass = assertOneElement(subClasses)
+    assertEquals("T2", subClass.getName())
+  }
+
+  void "test find groovy inheritor of java class in local scope"() {
+    def superClass = myFixture.addClass("class Super {}");
+    def file = myFixture.addFileToProject("a.groovy", "class Foo extends Super {}")
+    
+    assert ClassInheritorsSearch.search(superClass).findAll().size() == 1
+    assert ClassInheritorsSearch.search(superClass, new LocalSearchScope(file), true).findAll().size() == 1
   }
 }

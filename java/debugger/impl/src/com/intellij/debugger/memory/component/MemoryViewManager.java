@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"))
-public class MemoryViewManager extends ApplicationComponent.Adapter
-  implements PersistentStateComponent<MemoryViewManagerState> {
+public class MemoryViewManager implements ApplicationComponent, PersistentStateComponent<MemoryViewManagerState> {
   public static final String MEMORY_VIEW_CONTENT = "MemoryView";
 
   private final EventDispatcher<MemoryViewManagerListener> myDispatcher =

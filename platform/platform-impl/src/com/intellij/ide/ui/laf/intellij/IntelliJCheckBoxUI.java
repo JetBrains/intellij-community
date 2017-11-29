@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,5 +49,10 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
     g.setPaint(getCheckSignColor(enabled, true));
     g.drawLine(x1, y1 - 2, x2, y2 - 2);
     g.drawLine(x2, y2 - 2, w - JBUI.scale(2) - 1, JBUI.scale(5) - 2);
+  }
+
+  @Override
+  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
+    return true;
   }
 }

@@ -18,10 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.InputSource;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -73,7 +70,7 @@ public class JBScrollPane extends JScrollPane {
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
-  private InputSource myInputSource = InputSource.UNKNOWN;
+  private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
   private double myWheelRotation;
 
   private int myViewportBorderWidth = -1;
@@ -107,7 +104,7 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getViewport();
         if (child != null) {
@@ -278,18 +275,16 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
-    boolean hasAbsoluteDelta = ComponentSettings.getInstance().isPixelPerfectScrollingEnabled() &&
-                               MouseWheelEventEx.getAbsoluteDelta(e) != 0.0D;
-    myInputSource = hasAbsoluteDelta ? InputSource.PRECISION_TOUCHPAD : InputSource.MOUSE_WHEEL;
+    boolean hasAbsoluteDelta = ScrollSettings.isPixelPerfectEnabled();
+    myScrollSource = hasAbsoluteDelta ? ScrollSource.TOUCHPAD : ScrollSource.MOUSE_WHEEL;
     myWheelRotation = e.getPreciseWheelRotation();
     super.processMouseWheelEvent(e);
-    myInputSource = InputSource.UNKNOWN;
+    myScrollSource = ScrollSource.UNKNOWN;
   }
 
   int getInitialDelay(boolean valueIsAdjusting) {
-    InputSource source = valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
-    ComponentSettings settings = ComponentSettings.getInstance();
-    return !settings.isInterpolationEnabledFor(source) ? 0 : settings.getInterpolationDelay(source, myWheelRotation);
+    ScrollSource source = valueIsAdjusting ? ScrollSource.SCROLLBAR : myScrollSource;
+    return source.getInterpolationDelay(myWheelRotation);
   }
 
   private static class Corner extends JPanel {
@@ -474,7 +469,7 @@ public class JBScrollPane extends JScrollPane {
       }
       Rectangle vsbBounds = new Rectangle(0, bounds.y - insets.top, 0, 0);
       if (vsb != null) {
-        if (!SystemInfo.isMac && view instanceof JTable) vsb.setOpaque(true);
+        if (isAlwaysOpaque(view)) vsb.setOpaque(true);
         vsbOpaque = vsb.isOpaque();
         if (vsbNeeded) {
           adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
@@ -494,7 +489,7 @@ public class JBScrollPane extends JScrollPane {
       }
       Rectangle hsbBounds = new Rectangle(bounds.x - insets.left, 0, 0, 0);
       if (hsb != null) {
-        if (!SystemInfo.isMac && view instanceof JTable) hsb.setOpaque(true);
+        if (isAlwaysOpaque(view)) hsb.setOpaque(true);
         hsbOpaque = hsb.isOpaque();
         if (hsbNeeded) {
           adjustForHSB(bounds, insets, hsbBounds, hsbOpaque, hsbOnTop);
@@ -566,7 +561,7 @@ public class JBScrollPane extends JScrollPane {
         if (hsbOpaque) {
           Component corner = hsbOnTop ? (vsbOnLeft ? upperRight : upperLeft) : (vsbOnLeft ? lowerRight : lowerLeft);
           fillLowerCorner = corner == null && UIManager.getBoolean("ScrollPane.fillLowerCorner");
-          if (!fillLowerCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+          if (!fillLowerCorner && ScrollSettings.isHeaderOverCorner(viewport)) {
             if (hsbOnTop) rowHeadBounds.y -= hsbBounds.height;
             rowHeadBounds.height += hsbBounds.height;
           }
@@ -582,7 +577,7 @@ public class JBScrollPane extends JScrollPane {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);
           fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner");
-          if (!fillUpperCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+          if (!fillUpperCorner && ScrollSettings.isHeaderOverCorner(viewport)) {
             if (vsbOnLeft) colHeadBounds.x -= vsbBounds.width;
             colHeadBounds.width += vsbBounds.width;
           }
@@ -676,6 +671,124 @@ public class JBScrollPane extends JScrollPane {
       }
     }
 
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      /* Sync the (now obsolete) policy fields with the
+         * JScrollPane.
+         */
+      JScrollPane scrollPane = (JScrollPane)parent;
+      vsbPolicy = scrollPane.getVerticalScrollBarPolicy();
+      hsbPolicy = scrollPane.getHorizontalScrollBarPolicy();
+
+      Insets insets = parent.getInsets();
+      int prefWidth = insets.left + insets.right;
+      int prefHeight = insets.top + insets.bottom;
+
+        /* Note that viewport.getViewSize() is equivalent to
+         * viewport.getView().getPreferredSize() modulo a null
+         * view or a view whose size was explicitly set.
+         */
+
+      Dimension extentSize = null;
+      Dimension viewSize = null;
+      Component view = null;
+
+      if (viewport != null) {
+        extentSize = viewport.getPreferredSize();
+        view = viewport.getView();
+        if (view != null) {
+          viewSize = view.getPreferredSize();
+        } else {
+          viewSize = new Dimension(0, 0);
+        }
+      }
+
+        /* If there's a viewport add its preferredSize.
+         */
+
+      if (extentSize != null) {
+        prefWidth += extentSize.width;
+        prefHeight += extentSize.height;
+      }
+
+        /* If there's a JScrollPane.viewportBorder, add its insets.
+         */
+
+      Border viewportBorder = scrollPane.getViewportBorder();
+      if (viewportBorder != null) {
+        Insets vpbInsets = viewportBorder.getBorderInsets(parent);
+        prefWidth += vpbInsets.left + vpbInsets.right;
+        prefHeight += vpbInsets.top + vpbInsets.bottom;
+      }
+
+        /* If a header exists and it's visible, factor its
+         * preferred size in.
+         */
+
+      if ((rowHead != null) && rowHead.isVisible()) {
+        prefWidth += rowHead.getPreferredSize().width;
+      }
+
+      if ((colHead != null) && colHead.isVisible()) {
+        prefHeight += colHead.getPreferredSize().height;
+      }
+
+        /* If a scrollbar is going to appear, factor its preferred size in.
+         * If the scrollbars policy is AS_NEEDED, this can be a little
+         * tricky:
+         *
+         * - If the view is a Scrollable then scrollableTracksViewportWidth
+         * and scrollableTracksViewportHeight can be used to effectively
+         * disable scrolling (if they're true) in their respective dimensions.
+         *
+         * - Assuming that a scrollbar hasn't been disabled by the
+         * previous constraint, we need to decide if the scrollbar is going
+         * to appear to correctly compute the JScrollPanes preferred size.
+         * To do this we compare the preferredSize of the viewport (the
+         * extentSize) to the preferredSize of the view.  Although we're
+         * not responsible for laying out the view we'll assume that the
+         * JViewport will always give it its preferredSize.
+         */
+
+      if ((vsb != null) && (vsbPolicy != VERTICAL_SCROLLBAR_NEVER)) {
+        boolean considerVsbWidth = vsb.isOpaque() || isAlwaysOpaque(view);
+        if (vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
+          if (considerVsbWidth) prefWidth += vsb.getPreferredSize().width;
+        }
+        else if ((viewSize != null) && (extentSize != null)) {
+          boolean canScroll = true;
+          if (view instanceof Scrollable) {
+            canScroll = !((Scrollable)view).getScrollableTracksViewportHeight();
+          }
+          if (canScroll && viewSize.height > extentSize.height && considerVsbWidth) {
+            prefWidth += vsb.getPreferredSize().width;
+          }
+        }
+      }
+
+      if ((hsb != null) && (hsbPolicy != HORIZONTAL_SCROLLBAR_NEVER)) {
+        boolean considerHsbHeight = hsb.isOpaque() || isAlwaysOpaque(view);
+        if (hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS && considerHsbHeight) {
+          prefHeight += hsb.getPreferredSize().height;
+        }
+        else if ((viewSize != null) && (extentSize != null)) {
+          boolean canScroll = true;
+          if (view instanceof Scrollable) {
+            canScroll = !((Scrollable)view).getScrollableTracksViewportWidth();
+          }
+          if (canScroll && (viewSize.width > extentSize.width) && considerHsbHeight) {
+            prefHeight += hsb.getPreferredSize().height;
+          }
+        }
+      }
+
+      return new Dimension(prefWidth, prefHeight);
+    }
+
+    private static boolean isAlwaysOpaque(Component view) {
+      return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
+    }
+
     private static void updateCornerBounds(Rectangle bounds, int x, int y) {
       bounds.width = Math.abs(bounds.x - x);
       bounds.height = Math.abs(bounds.y - y);
@@ -733,14 +846,9 @@ public class JBScrollPane extends JScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore) {
-      ComponentSettings settings = ComponentSettings.getInstance();
-      if (settings.isSmoothScrollingSupported()) {
-        if (settings.isPixelPerfectScrollingEnabled() || settings.isHighPrecisionScrollingEnabled()) {
-          double rotation = event.getPreciseWheelRotation();
-          ignore = rotation == 0.0D || !Double.isFinite(rotation);
-        }
-      }
+    if (ignore && (ScrollSettings.isPixelPerfectEnabled() || ScrollSettings.isHighPrecisionEnabled())) {
+      double rotation = event.getPreciseWheelRotation();
+      ignore = rotation == 0.0D || !Double.isFinite(rotation);
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }

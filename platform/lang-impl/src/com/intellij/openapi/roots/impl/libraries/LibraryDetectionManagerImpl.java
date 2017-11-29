@@ -55,7 +55,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
         if (result != null) {
           return null;
         }
-        result = Pair.<LibraryType<?>, LibraryProperties<?>>create(type, properties);
+        result = Pair.create(type, properties);
       }
     }
     return result;

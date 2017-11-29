@@ -185,7 +185,7 @@ public class FileNameCacheMicroBenchmark {
   private abstract static class TestIteration {
     abstract void doTest(int threadNumber, int[] ids, Random threadRandom, int queryCount);
     static void failure() {
-      System.out.println("Failure");
+      System.err.println("Failure");
       assert false;
     }
   }

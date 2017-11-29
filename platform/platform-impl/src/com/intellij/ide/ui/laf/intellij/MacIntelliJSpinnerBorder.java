@@ -15,28 +15,30 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.util.ui.JBUI;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 
-import javax.swing.border.Border;
-import javax.swing.plaf.UIResource;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerBorder implements Border, UIResource {
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-
+public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
+  @Override boolean isFocused(Component c) {
+    return DarculaSpinnerBorder.isFocused(c);
   }
 
-  @Override
-  public Insets getBorderInsets(Component c) {
-    return JBUI.insets(0).asUIResource();
+  @Override Area getButtonBounds(Component c) {
+    Rectangle bounds = null;
+    if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI) {
+      MacIntelliJSpinnerUI ui = (MacIntelliJSpinnerUI)((JSpinner)c).getUI();
+      bounds = ui.getArrowButtonBounds();
+    }
+    return bounds != null ? new Area(bounds) : new Area();
   }
 
-  @Override
-  public boolean isBorderOpaque() {
-    return false;
+  @Override boolean isRound(Component c) {
+    return true;
   }
 }

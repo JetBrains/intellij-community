@@ -59,7 +59,7 @@ public class JsonPsiUtilTest extends JsonTestCase {
     myFixture.checkResult(after);
   }
 
-  public void testGetOtherSiblingPropertyNames() throws Exception {
+  public void testGetOtherSiblingPropertyNames() {
     myFixture.configureByText(JsonFileType.INSTANCE, "{\"firs<caret>t\" : 1, \"second\" : 2}");
     PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     JsonProperty property = PsiTreeUtil.getParentOfType(atCaret, JsonProperty.class);

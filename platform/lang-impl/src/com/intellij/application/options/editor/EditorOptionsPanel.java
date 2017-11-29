@@ -28,11 +28,9 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
@@ -48,7 +46,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
-import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -257,7 +254,6 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     // Display
 
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
-    ComponentSettings.getInstance().setSmoothScrollingEnabled(myCbSmoothScrolling.isSelected());
 
 
     // Brace Highlighting
@@ -400,10 +396,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
   }
 
   public static void reinitAllEditors() {
-    Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    for (Editor editor : editors) {
-      ((EditorEx)editor).reinitSettings();
-    }
+    EditorFactory.getInstance().refreshAllEditors();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class KeymapManager {
   public static final String DEFAULT_IDEA_KEYMAP = "$default";
   public static final String MAC_OS_X_KEYMAP = "Mac OS X";
+  public static final String MAC_OS_X_10_5_PLUS_KEYMAP = "Mac OS X 10.5+";
   public static final String X_WINDOW_KEYMAP = "Default for XWin";
   public static final String KDE_KEYMAP = "Default for KDE";
-  public static final String MAC_OS_X_10_5_PLUS_KEYMAP = "Mac OS X 10.5+";
+  public static final String GNOME_KEYMAP = "Default for GNOME";
 
   public abstract Keymap getActiveKeymap();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
-public class LocalHistoryImpl extends LocalHistory implements ApplicationComponent {
+public class LocalHistoryImpl extends LocalHistory implements ApplicationComponent, Disposable {
   private final MessageBus myBus;
   private MessageBusConnection myConnection;
   private ChangeList myChangeList;
@@ -70,7 +70,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    myShutdownTask = () -> disposeComponent();
+    myShutdownTask = () -> doDispose();
     ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
 
     initHistory();
@@ -93,13 +93,13 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     myEventDispatcher = new LocalHistoryEventDispatcher(myVcs, myGateway);
 
-    CommandProcessor.getInstance().addCommandListener(myEventDispatcher);
+    CommandProcessor.getInstance().addCommandListener(myEventDispatcher, this);
 
     myConnection = myBus.connect();
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myEventDispatcher);
 
     VirtualFileManager fm = VirtualFileManager.getInstance();
-    fm.addVirtualFileManagerListener(myEventDispatcher);
+    fm.addVirtualFileManagerListener(myEventDispatcher, this);
   }
 
   public File getStorageDir() {
@@ -111,16 +111,17 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
+    doDispose();
+  }
+
+  private void doDispose() {
     if (!isInitialized.getAndSet(false)) return;
 
     long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
 
     myConnection.disconnect();
     myConnection = null;
-    VirtualFileManager fm = VirtualFileManager.getInstance();
-    fm.removeVirtualFileManagerListener(myEventDispatcher);
-    CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
@@ -132,7 +133,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   @TestOnly
   public void cleanupForNextTest() {
-    disposeComponent();
+    doDispose();
     FileUtil.delete(getStorageDir());
     initComponent();
   }
@@ -198,13 +199,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private boolean isInitialized() {
     return isInitialized.get();
   }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "Local History";
-  }
-
+  
   @Nullable
   public LocalHistoryFacade getFacade() {
     return myVcs;

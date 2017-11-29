@@ -16,7 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -158,15 +157,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   protected void doAction() {
     final String path = FileUtil.toSystemIndependentName(myDestDirectoryField.getText());
     final Project project = myDirectory.getProject();
-    PsiDirectory directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      public PsiDirectory compute() {
-        try {
-          return DirectoryUtil.mkdirs(PsiManager.getInstance(project), path);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return null;
-        }
+    PsiDirectory directory = WriteAction.compute(() -> {
+      try {
+        return DirectoryUtil.mkdirs(PsiManager.getInstance(project), path);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
       }
     });
     if (directory == null) {

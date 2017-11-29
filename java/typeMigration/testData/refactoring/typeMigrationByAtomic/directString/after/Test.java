@@ -4,7 +4,7 @@ class Test {
     AtomicReference<String> s = new AtomicReference<String>("");
 
     void foo() {
-        if (s == null) {
+        if (s.get() == null) {
            System.out.println(s.get());
         }
     }

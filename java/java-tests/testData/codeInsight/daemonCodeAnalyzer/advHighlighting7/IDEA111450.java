@@ -32,7 +32,7 @@ class Test {
     System.out.println((<warning descr="Casting 'c1' to 'char' is redundant">char</warning>) c1 == (char) o);
 
     // Although a reference comparison, the cast on the wrapper has a side effect; not redundant.
-    System.out.println(o == (char) c1);
-    System.out.println((char) c1 == o);
+    System.out.println(o <warning descr="Comparision between Object and primitive is illegal and is accepted in java 7 only">==</warning> (char) c1);
+    System.out.println((char) c1 <warning descr="Comparision between Object and primitive is illegal and is accepted in java 7 only">==</warning> o);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 
-/**
- * User: anna
- * Date: 3/4/13
- */
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
   public abstract boolean canGeneratePrototypeFor(PsiField field);
@@ -52,14 +49,14 @@ public abstract class GetterSetterPrototypeProvider {
 
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
-                                                  boolean invalidTemplate) {
+                                                  boolean ignoreInvalidTemplate) {
     for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, invalidTemplate) :
-                           GenerateMembersUtil.generateSetterPrototype(field, invalidTemplate)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate) :
+                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {
@@ -78,7 +75,7 @@ public abstract class GetterSetterPrototypeProvider {
         if (getterSetter != null) return getterSetter;
       }
     }
-    final PsiMethod propertyGetterSetter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
+    final PsiMethod propertyGetterSetter = PropertyUtilBase.findPropertyGetter(aClass, propertyName, isStatic, false);
     if (propertyGetterSetter != null) {
       return new PsiMethod[] {propertyGetterSetter};
     }

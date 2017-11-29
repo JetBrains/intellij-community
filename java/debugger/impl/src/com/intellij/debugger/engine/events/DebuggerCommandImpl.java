@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.impl.DebuggerTaskImpl;
+import org.jetbrains.annotations.Debugger;
 
 /**
  * @author lex
@@ -40,6 +41,7 @@ public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
     }
   }
 
+  @Debugger.Insert(group = "com.intellij.debugger.impl.InvokeThread.schedule")
   public final void run() throws Exception{
     try {
       action();

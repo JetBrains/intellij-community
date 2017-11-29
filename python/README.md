@@ -1,3 +1,5 @@
+[![official JetBrains project](http://jb.gg/badges/official-plastic.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+
 # PyCharm Community Edition
 
 The "python" directory in the source repository contains the source code of PyCharm Community Edition and the Python plugin for

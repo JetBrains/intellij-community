@@ -22,16 +22,14 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,17 +39,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
-  private ChangesTreeList<Change> myChangesTree;
+  private ChangesTreeImpl<Change> myChangesTree;
   private JScrollPane myChangesTreeScrollPane;
   private ActionToolbar myToolBar;
 
@@ -74,7 +70,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     JPanel p = new JPanel(new BorderLayout());
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(root), true);
+    myToolBar = ActionManager.getInstance().createActionToolbar("DirectoryHistoryDiffPanel", createChangesTreeActions(root), true);
     JPanel toolBarPanel = new JPanel(new BorderLayout());
     toolBarPanel.add(myToolBar.getComponent(), BorderLayout.CENTER);
 
@@ -87,7 +83,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     p.add(toolBarPanel, BorderLayout.NORTH);
     p.add(myChangesTreeScrollPane = ScrollPaneFactory.createScrollPane(myChangesTree), BorderLayout.CENTER);
 
-    return Pair.create((JComponent)p, toolBarPanel.getPreferredSize());
+    return Pair.create(p, toolBarPanel.getPreferredSize());
   }
 
   protected boolean showSearchField() {
@@ -110,43 +106,16 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         });
       }
     });
-
-    new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        field.requestFocusInWindow();
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
+    DumbAwareAction.create(e -> field.requestFocusInWindow())
+      .registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
 
     return field;
   }
 
   private void initChangesTree(JComponent root) {
-    myChangesTree = createChangesTree();
+    myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
     myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
     myChangesTree.installPopupHandler(createChangesTreeActions(root));
-  }
-
-  private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(myProject, Collections.<Change>emptyList(), false, false, null, null) {
-      @Override
-      protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
-        return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), cc, changeNodeDecorator);
-      }
-
-      @Override
-      protected List<Change> getSelectedObjects(ChangesBrowserNode node) {
-        return node.getAllChangesUnder();
-      }
-
-      protected Change getLeadSelectedObject(final ChangesBrowserNode node) {
-        final Object o = node.getUserObject();
-        if (o instanceof Change) {
-          return (Change)o;
-        }
-        return null;
-      }
-    };
   }
 
   private ActionGroup createChangesTreeActions(JComponent root) {

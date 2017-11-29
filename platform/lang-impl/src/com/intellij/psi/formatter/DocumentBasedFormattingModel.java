@@ -204,6 +204,9 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           if (line > 0) {
             createWhiteSpace(whiteSpaceLength + shift, buffer);
           }
+          else {
+            createWhiteSpace(whiteSpaceLength, buffer);
+          }
           buffer.append(afterWhiteSpace.toString());
           insideWhiteSpace = true;
           whiteSpaceLength = 0;
@@ -233,7 +236,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           afterWhiteSpace.append(c);
       }
     }
-    if (line > 0 && afterWhiteSpace.length() > 0) {
+    if (line > 0 && afterWhiteSpace.length() > 0 ) {
       createWhiteSpace(whiteSpaceLength + shift, buffer);
       buffer.append(afterWhiteSpace.toString());
     }

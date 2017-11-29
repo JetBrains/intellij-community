@@ -150,14 +150,9 @@ public class InstanceofChainInspection extends BaseInspection {
           condition = parenthesizedExpression.getExpression();
           continue;
         }
-        else if (condition instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
-          condition = prefixExpression.getOperand();
-          continue;
-        }
-        else if (condition instanceof PsiPostfixExpression) {
-          final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)condition;
-          condition = postfixExpression.getOperand();
+        else if (condition instanceof PsiUnaryExpression) {
+          final PsiUnaryExpression unaryOperation = (PsiUnaryExpression)condition;
+          condition = unaryOperation.getOperand();
           continue;
         }
         return Check.NEITHER;

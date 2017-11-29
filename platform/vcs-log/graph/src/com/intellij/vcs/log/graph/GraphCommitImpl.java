@@ -15,21 +15,54 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.google.common.primitives.Ints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implements GraphCommit<CommitId> {
-
-  @NotNull private final CommitId myId;
-  @NotNull private final Object myParents;
+abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> implements GraphCommit<CommitId> {
   private final long myTimestamp;
 
-  public GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
-    myId = id;
+  AbstractGraphCommit(long timestamp) {
     myTimestamp = timestamp;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return myTimestamp;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || !(o instanceof GraphCommit)) return false;
+    GraphCommit commit = (GraphCommit)o;
+    return getId().equals(commit.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return getId().hashCode();
+  }
+
+  @NotNull
+  @Override
+  public List<CommitId> getParents() {
+    return this;
+  }
+
+}
+
+public class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
+  @NotNull private final CommitId myId;
+  @NotNull private final Object myParents;
+
+  // use createCommit
+  private GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
+    super(timestamp);
+    myId = id;
     if (parents.isEmpty()) {
       myParents = ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -46,12 +79,6 @@ public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implement
   @Override
   public CommitId getId() {
     return myId;
-  }
-
-  @NotNull
-  @Override
-  public List<CommitId> getParents() {
-    return this;
   }
 
   @SuppressWarnings("unchecked")
@@ -75,21 +102,75 @@ public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implement
     return myParents instanceof Object[] ? ((Object[])myParents).length : 1;
   }
 
-  @Override
-  public long getTimestamp() {
-    return myTimestamp;
+  @NotNull
+  public static <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
+    if (id instanceof Integer) {
+      //noinspection unchecked
+      return createIntCommit((Integer)id, (List)parents, timestamp);
+    }
+    return new GraphCommitImpl<>(id, parents, timestamp);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || !(o instanceof GraphCommit)) return false;
-    GraphCommit commit = (GraphCommit)o;
-    return myId.equals(commit.getId());
+  @NotNull
+  public static GraphCommit<Integer> createIntCommit(int id, @NotNull List<Integer> parents, long timestamp) {
+    if (parents.size() == 1) {
+      return new IntGraphCommit.SingleParent(timestamp, id, parents.get(0));
+    }
+    return new IntGraphCommit.MultiParent(timestamp, id, Ints.toArray(parents));
+  }
+}
+
+abstract class IntGraphCommit extends AbstractGraphCommit<Integer> {
+  private final int myId;
+
+  private IntGraphCommit(long timestamp, int id) {
+    super(timestamp);
+    myId = id;
   }
 
+  @NotNull
   @Override
-  public int hashCode() {
-    return myId.hashCode();
+  public Integer getId() {
+    return myId;
   }
+
+  static class SingleParent extends IntGraphCommit {
+    private final int myParentId;
+
+    SingleParent(long timestamp, int id, int parentId) {
+      super(timestamp, id);
+      myParentId = parentId;
+    }
+
+    @Override
+    public int size() {
+      return 1;
+    }
+
+    @Override
+    public Integer get(int index) {
+      if (index != 0) throw new ArrayIndexOutOfBoundsException(index);
+      return myParentId;
+    }
+  }
+
+  static class MultiParent extends IntGraphCommit {
+    private final int[] myParents;
+
+    MultiParent(long timestamp, int id, int[] parents) {
+      super(timestamp, id);
+      myParents = parents;
+    }
+
+    @Override
+    public int size() {
+      return myParents.length;
+    }
+
+    @Override
+    public Integer get(int index) {
+      return myParents[index];
+    }
+  }
+
 }

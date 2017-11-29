@@ -66,7 +66,11 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   @Nullable
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
 
-  boolean keepChangeListAfterCommit(ChangeList changeList);
+  /**
+   * @deprecated use {@link com.intellij.openapi.vcs.VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}
+   */
+  @Deprecated
+  default boolean keepChangeListAfterCommit(ChangeList changeList) {return false;}
 
   /**
    * @return true if VFS refresh has to be performed after commit, because files might have changed during commit

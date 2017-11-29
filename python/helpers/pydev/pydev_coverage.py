@@ -43,13 +43,17 @@ def execute():
 
         import traceback;traceback.print_exc()
         return
+    
+    version = tuple(map(int, coverage.__version__.split('.'))[:2])
+    if version < (4, 3):
+        sys.stderr.write('Error: minimum supported coverage version is 4.3.\nFound: %s\nLocation: %s' % ('.'.join(str(x) for x in version), coverage.__file__))
+        sys.exit(1)
 
     #print(coverage.__version__) TODO: Check if the version is a version we support (should be at least 3.4) -- note that maybe the attr is not there.
     from coverage.cmdline import main #@UnresolvedImport
 
     if files is not None:
-        sys.argv.append('-r')
-        sys.argv.append('-m')
+        sys.argv.append('xml')
         sys.argv += files
 
     main()

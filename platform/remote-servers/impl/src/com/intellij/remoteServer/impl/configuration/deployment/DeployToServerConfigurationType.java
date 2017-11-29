@@ -23,37 +23,68 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
+import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class DeployToServerConfigurationType extends ConfigurationTypeBase {
-  private final DeployToServerConfigurationType.DeployToServerConfigurationFactory myFactory;
-
-  public static String getId(ServerType<?> serverType) {
-    return serverType.getId() + "-deploy";
-  }
-
   private final ServerType<?> myServerType;
+  private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
+  private final Map<SingletonDeploymentSourceType, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
-    super(getId(serverType), serverType.getPresentableName() + " Deployment",
+    super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
           "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
-    myFactory = new DeployToServerConfigurationFactory();
-    addFactory(myFactory);
+
     myServerType = serverType;
+    if (myServerType.mayHaveProjectSpecificDeploymentSources()) {
+      myMultiSourcesFactory = new MultiSourcesConfigurationFactory();
+      addFactory(myMultiSourcesFactory);
+    }
+    else {
+      myMultiSourcesFactory = null;
+    }
+
+    for (SingletonDeploymentSourceType next : serverType.getSingletonDeploymentSourceTypes()) {
+      SingletonTypeConfigurationFactory nextFactory = new SingletonTypeConfigurationFactory(next);
+      addFactory(nextFactory);
+      myPerTypeFactories.put(next, nextFactory);
+    }
   }
 
+  /**
+   * @param sourceType hint for a type of deployment source or null if unknown
+   */
+  @NotNull
+  public ConfigurationFactoryEx getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
+    ConfigurationFactoryEx result = null;
+    if (sourceType instanceof SingletonDeploymentSourceType && myServerType.getSingletonDeploymentSourceTypes().contains(sourceType)) {
+      result = myPerTypeFactories.get(sourceType);
+    }
+    if (result == null) {
+      result = myMultiSourcesFactory;
+    }
+    assert result != null : "server type: " + myServerType + ", requested source type: " + sourceType;
+    return result;
+  }
+
+  /**
+   * Will be removed after 2017.3
+   *
+   * @deprecated use {@link #getFactoryForType(DeploymentSourceType)}
+   */
+  @Deprecated
   public ConfigurationFactoryEx getFactory() {
-    return myFactory;
+    return getFactoryForType(null);
   }
 
   @NotNull
@@ -68,12 +99,12 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public boolean isApplicable(@NotNull Project project) {
-      return !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
+      return myServerType.canAutoDetectConfiguration() || !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
     }
 
     @Override
     public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-      DeployToServerRunConfiguration<?,?> deployConfiguration = (DeployToServerRunConfiguration<?,?>)configuration;
+      DeployToServerRunConfiguration<?, ?> deployConfiguration = (DeployToServerRunConfiguration<?, ?>)configuration;
       if (deployConfiguration.getServerName() == null) {
         RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
         if (server != null) {
@@ -86,7 +117,9 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
       }
     }
 
-    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(@NotNull RunConfiguration configuration, DeployToServerRunConfiguration<S, D> deployConfiguration) {
+    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(
+      @NotNull RunConfiguration configuration, @NotNull DeployToServerRunConfiguration<S, D> deployConfiguration) {
+
       DeploymentConfigurator<D, S> deploymentConfigurator = deployConfiguration.getDeploymentConfigurator();
       List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
       DeploymentSource source = ContainerUtil.getFirstItem(sources);
@@ -100,9 +133,47 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     }
 
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    @NotNull
+    public DeployToServerRunConfiguration createTemplateConfiguration(@NotNull Project project) {
       DeploymentConfigurator<?, ?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
+      //noinspection unchecked
       return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
     }
   }
+
+  public class MultiSourcesConfigurationFactory extends DeployToServerConfigurationFactory {
+    @Override
+    public String getId() {
+      //compatibility reasons, before 173 it was the only configuration factory stored with this ID
+      return DeployToServerConfigurationType.this.getDisplayName();
+    }
+  }
+
+  public class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
+    private final SingletonDeploymentSourceType mySourceType;
+
+    public SingletonTypeConfigurationFactory(@NotNull SingletonDeploymentSourceType sourceType) {
+      mySourceType = sourceType;
+    }
+
+    @Override
+    public String getId() {
+      return mySourceType.getId();
+    }
+
+    @Nls
+    @Override
+    public String getName() {
+      return mySourceType.getPresentableName();
+    }
+
+    @NotNull
+    @Override
+    public DeployToServerRunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      DeployToServerRunConfiguration result = super.createTemplateConfiguration(project);
+      result.lockDeploymentSource(mySourceType);
+      return result;
+    }
+  }
 }
+

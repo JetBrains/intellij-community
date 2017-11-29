@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -31,12 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
 
-/**
- * @author Elena Shaverdova
- * @author Nikolay Matveev
- */
 public final class ScriptRunnerUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
@@ -71,7 +69,7 @@ public final class ScriptRunnerUtil {
     final StringBuilder outputBuilder = new StringBuilder();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputTypeFilter.value(outputType)) {
           final String text = event.getText();
           outputBuilder.append(text);
@@ -91,7 +89,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {
-    return execute(exePath, workingDirectory, scriptFile, parameters, null);
+    return execute(exePath, workingDirectory, scriptFile, parameters, null, commandLine -> new ColoredProcessHandler(commandLine));
   }
 
   @NotNull
@@ -99,18 +97,10 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
-                                         @Nullable Charset charset) throws ExecutionException {
-    exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
-    return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
-  }
-
-  @NotNull
-  private static OSProcessHandler doExecute(@NotNull String exePath,
-                                            @Nullable String workingDirectory,
-                                            @Nullable VirtualFile scriptFile,
-                                            String[] parameters,
-                                            @Nullable Charset charset) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
+                                         @Nullable Charset charset,
+                                         @NotNull ThrowableNotNullFunction<GeneralCommandLine, OSProcessHandler, ExecutionException> creator)
+    throws ExecutionException {
+    GeneralCommandLine commandLine = getBasicCommandLine(exePath);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }
@@ -127,17 +117,39 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
-    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
+    final OSProcessHandler processHandler = creator.fun(commandLine);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           LOG.debug(outputType + ": " + event.getText());
         }
       });
     }
 
     return processHandler;
+  }
+
+  @NotNull
+  private static GeneralCommandLine getBasicCommandLine(@NotNull String exePath) {
+    exePath = PathEnvironmentVariableUtil.toLocatableExePath(exePath);
+    exePath = PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath);
+    return new GeneralCommandLine(exePath);
+  }
+
+  public static boolean isExecutableInPath(@NotNull String exePath) {
+    String initialExePath = exePath;
+    GeneralCommandLine commandLine = getBasicCommandLine(exePath);
+    exePath = commandLine.getExePath();
+
+    if (!initialExePath.equals(exePath)) {
+      //it was resolved with PathEnvironmentVariableUtil.toLocatableExePath or PathEnvironmentVariableUtil.findExecutableInWindowsPath
+      return true;
+    }
+
+    String path = commandLine.getEffectiveEnvironment().get("PATH");
+    File file = PathEnvironmentVariableUtil.findInPath(exePath, path, null);
+    return file != null;
   }
 
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,
@@ -189,7 +201,7 @@ public final class ScriptRunnerUtil {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       final String text = event.getText();
       if (myScriptOutputType.value(outputType)) {
         myFilteredOutput.append(text);

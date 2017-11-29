@@ -21,6 +21,7 @@ import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
+import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,14 +34,25 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
     super(JDialogFixture.class, robot, jDialog);
   }
 
+  public void waitTillGone() {
+    String title = target().getTitle();
+    GenericTypeMatcher<JDialog> matcher = getMatcher(title);
+    Pause.pause(new Condition("Wait till dialog with title '" + title+ "' gone ") {
+      @Override
+      public boolean test() {
+        return robot().finder().findAll(matcher).isEmpty();
+      }
+    });
+  }
+
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
-    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
-      @Override
-      protected boolean isMatching(@NotNull JDialog dialog) {
-        return title.equals(dialog.getTitle()) && dialog.isShowing();
-      }
-    };
+    return find(robot, title, GuiTestUtil.SHORT_TIMEOUT);
+  }
+
+  @NotNull
+  public static JDialogFixture find(@NotNull Robot robot, String title, Timeout timeout) {
+    GenericTypeMatcher<JDialog> matcher = getMatcher(title);
 
     Pause.pause(new Condition("Finding for JDialogFixture with title \"" + title + "\"") {
       @Override
@@ -48,11 +60,40 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
         Collection<JDialog> dialogs = robot.finder().findAll(matcher);
         return !dialogs.isEmpty();
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, timeout);
 
     JDialog dialog = robot.finder().find(matcher);
     return new JDialogFixture(robot, dialog);
   }
 
+  @NotNull
+  public static JDialogFixture findByPartOfTitle(@NotNull Robot robot, String partTitle, Timeout timeout) {
+    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return dialog.getTitle().contains(partTitle) && dialog.isShowing();
+      }
+    };
+
+    Pause.pause(new Condition("Finding for JDialogFixture with part of title \"" + partTitle + "\"") {
+      @Override
+      public boolean test() {
+        Collection<JDialog> dialogs = robot.finder().findAll(matcher);
+        return !dialogs.isEmpty();
+      }
+    }, timeout);
+
+    JDialog dialog = robot.finder().find(matcher);
+    return new JDialogFixture(robot, dialog);
+  }
+
+  private static GenericTypeMatcher<JDialog> getMatcher(String title) {
+    return new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return title.equals(dialog.getTitle()) && dialog.isShowing();
+      }
+    };
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,50 +17,20 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim.mossienko
- * Date: Oct 12, 2005
- * Time: 4:44:19 PM
- * To change this template use File | Settings | File Templates.
- */
-public class TagValueFilter extends XmlElementVisitor implements NodeFilter {
-  private boolean result;
+public class TagValueFilter implements NodeFilter {
 
-  @Override public void visitXmlText(XmlText text) {
-    result = true;
-  }
+  private static final NodeFilter INSTANCE = new TagValueFilter();
 
-  @Override public void visitXmlTag(XmlTag tag) {
-    result = true;
-  }
+  private TagValueFilter() {}
 
   @Override
-  public void visitElement(PsiElement element) {
-    // e.g. css inside <style> html tag
-    if (element.getParent() instanceof XmlTag) {
-      result = true;
-    }
-  }
-
-  private static class NodeFilterHolder {
-    private static final NodeFilter instance = new TagValueFilter();
+  public boolean accepts(PsiElement element) {
+    return element.getParent() instanceof XmlTag || element instanceof XmlTag;
   }
 
   public static NodeFilter getInstance() {
-    return NodeFilterHolder.instance;
-  }
-
-  private TagValueFilter() {
-  }
-
-  public boolean accepts(PsiElement element) {
-    result = false;
-    if (element!=null) element.accept(this);
-    return result;
+    return INSTANCE;
   }
 }

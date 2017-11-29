@@ -18,11 +18,9 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.Implementation;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -43,13 +41,7 @@ class ImplementationClassCache {
 
 
   private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<>();
-  private final SofterCache<Class, Class> myCache = SofterCache.create(new NotNullFunction<Class, Class>() {
-    @NotNull
-    @Override
-    public Class fun(Class dom) {
-      return calcImplementationClass(dom);
-    }
-  });
+  private final SofterCache<Class, Class> myCache = SofterCache.create(dom -> calcImplementationClass(dom));
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
     for (DomImplementationClassEP ep : epName.getExtensions()) {

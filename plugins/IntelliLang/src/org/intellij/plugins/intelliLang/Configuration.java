@@ -28,6 +28,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
@@ -41,7 +42,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -59,6 +63,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -187,12 +193,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
   @NonNls private static final String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
 
-  private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
-    @Override
-    protected List<BaseInjection> create(final String key) {
-      return ContainerUtil.createLockFreeCopyOnWriteList();
-    }
-  };
+  private final Map<String, List<BaseInjection>> myInjections =
+    ConcurrentFactoryMap.createMap(key -> ContainerUtil.createLockFreeCopyOnWriteList());
 
   protected Collection<BaseInjection> getAllInjections() {
     List<BaseInjection> injections = new ArrayList<>();
@@ -280,6 +282,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
               stream = url.openStream();
               cfgList.add(load(stream));
             }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
             catch (Exception e) {
               LOG.warn(e);
             }
@@ -290,6 +295,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
             }
           }
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -353,7 +361,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
-    final Element rootElement = JDOMUtil.load(is);
+    final Element rootElement = loadElement(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
       state = rootElement;
@@ -373,12 +381,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   private void importPlaces(final List<BaseInjection> injections) {
-    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), new Convertor<BaseInjection, String>() {
-      @Override
-      public String convert(final BaseInjection o) {
-        return o.getSupportId();
-      }
-    });
+    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), o -> o.getSupportId());
     List<BaseInjection> originalInjections = new ArrayList<>();
     List<BaseInjection> newInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {

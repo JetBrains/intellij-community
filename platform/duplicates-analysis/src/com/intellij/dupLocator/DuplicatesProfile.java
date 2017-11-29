@@ -26,13 +26,6 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: 15.05.2009
- * Time: 14:53:00
- * To change this template use File | Settings | File Templates.
- */
 public abstract class DuplicatesProfile {
   public static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
 

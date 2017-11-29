@@ -22,12 +22,6 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/20/12
- * Time: 12:10 PM
- */
 public class SvnRemoteFileAnnotation extends BaseSvnFileAnnotation {
   private final VirtualFile myCurrentFile;
 

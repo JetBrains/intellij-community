@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, requestFocus, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus, boolean singleParameterHint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -88,7 +94,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       file,
       offset,
       lbraceOffset,
-      requestFocus
+      requestFocus,
+      singleParameterHint
     );
 
     context.setHighlightedElement(highlightedElement);
@@ -136,13 +143,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                            final Project project,
                                            ParameterInfoHandler handler,
                                            boolean requestFocus) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
-    component.update();
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, false);
+    component.update(false);
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
+    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(project, editor, null, hint, true, HintManager.DEFAULT, true);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!editor.getComponent().isShowing()) return;
       hintManager.showEditorHint(hint, editor, pos.getFirst(),
@@ -160,15 +167,5 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     if (handlers.isEmpty()) return null;
     return handlers.toArray(new ParameterInfoHandler[handlers.size()]);
   }
-
-  interface BestLocationPointProvider {
-    @NotNull
-    Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                            final PsiElement list,
-                                            int offset,
-                                            final boolean awtTooltip,
-                                            short preferredPosition);
-  }
-
 }
 

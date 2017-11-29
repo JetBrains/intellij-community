@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>5</line>
+    <problem_class>Redundant type cast</problem_class>
+    <description>Casting &lt;code&gt;a&lt;/code&gt; to &lt;code&gt;AA&lt;/code&gt; is redundant</description>
+  </problem>
+</problems>

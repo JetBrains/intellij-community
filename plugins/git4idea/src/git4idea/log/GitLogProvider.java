@@ -45,7 +45,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import gnu.trove.THashSet;
@@ -108,7 +108,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, params);
+    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
@@ -292,9 +292,18 @@ public class GitLogProvider implements VcsLogProvider {
     StopWatch sw = StopWatch.start("loading commits on tagged branch in " + root.getName());
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
-    params.addAll(unmatchedTags);
+
+    Set<VcsRef> refs = ContainerUtil.newHashSet();
+    Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
+    VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
+      String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
+      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
+      refs.addAll(logData.getRefs());
+      commits.addAll(logData.getCommits());
+    });
+
     sw.report();
-    return GitHistoryUtils.loadMetadata(myProject, root, ArrayUtil.toStringArray(params));
+    return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
   }
 
   @Override
@@ -304,13 +313,13 @@ public class GitLogProvider implements VcsLogProvider {
       return LogDataImpl.empty();
     }
 
-    List<String> parameters = new ArrayList<>(GitHistoryUtils.LOG_ALL);
+    List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
     Set<VcsUser> userRegistry = newHashSet();
     Set<VcsRef> refs = newHashSet();
-    GitHistoryUtils.readCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
+    GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
                                 commit -> commitConsumer.consume(parentFixer.fixCommit(commit)));
     return new LogDataImpl(refs, userRegistry);
   }
@@ -321,25 +330,19 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitHistoryUtils.loadDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL));
+    GitLogUtil.readFullDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-    VcsFileUtil
-      .foreachChunk(hashes, 1, hashesChunk -> {
-        String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-        List<String> parameters = new ArrayList<>();
-        parameters.add(noWalk);
-        parameters.addAll(hashesChunk);
-        GitHistoryUtils.loadDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(parameters));
-      });
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, fast);
   }
 
   @NotNull
@@ -347,14 +350,14 @@ public class GitLogProvider implements VcsLogProvider {
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     //noinspection Convert2Lambda
-    return VcsFileUtil
-      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
-        @NotNull
-        @Override
-        public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
-          return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
-        }
-      });
+    return VcsFileUtil.foreachChunk(hashes,
+                                    new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
+                                      @NotNull
+                                      @Override
+                                      public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+                                        return GitLogUtil.collectShortDetails(myProject, root, hashes);
+                                      }
+                                    });
   }
 
   @NotNull
@@ -443,7 +446,7 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
     else {
-      filterParameters.addAll(GitHistoryUtils.LOG_ALL);
+      filterParameters.addAll(GitLogUtil.LOG_ALL);
     }
 
     if (filterCollection.getDateFilter() != null) {
@@ -498,20 +501,20 @@ public class GitLogProvider implements VcsLogProvider {
         filterParameters.add("--simplify-merges");
         filterParameters.add("--");
         for (FilePath file : files) {
-          filterParameters.add(file.getPath());
+          filterParameters.add(VcsFileUtil.relativePath(root, file));
         }
       }
     }
 
     List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
-    GitHistoryUtils.readCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
+    GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
   }
 
   @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
     return myUserRegistry.getOrReadUser(root);
   }
 
@@ -531,6 +534,12 @@ public class GitLogProvider implements VcsLogProvider {
       return "HEAD";
     }
     return currentBranchName;
+  }
+
+  @Nullable
+  @Override
+  public VcsLogDiffHandler getDiffHandler() {
+    return new GitLogDiffHandler(myProject);
   }
 
   @SuppressWarnings("unchecked")

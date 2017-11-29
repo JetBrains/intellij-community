@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ abstract class RemappedSourcePosition extends SourcePosition {
   private SourcePosition myDelegate;
   private boolean myMapped = false;
 
-  public RemappedSourcePosition(SourcePosition delegate) {
+  public RemappedSourcePosition(@NotNull SourcePosition delegate) {
     myDelegate = delegate;
   }
 

@@ -1,9 +1,25 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
 import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -13,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * match options
- */
 public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
 
@@ -27,7 +40,7 @@ public class MatchOptions implements JDOMExternalizable {
   private Language myDialect = null;
 
   private SearchScope scope;
-  private String searchCriteria = "";
+  private String pattern = "";
   @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
 
   private String myPatternContext;
@@ -92,7 +105,7 @@ public class MatchOptions implements JDOMExternalizable {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "match options:\n" +
-           "pattern:\n" + searchCriteria +
+           "pattern:\n" + pattern +
            "\nscope:\n" + ((scope != null) ? scope.toString() : "undefined scope") +
            "\nrecursive: " + recursiveSearch +
            "\ncase sensitive: " + caseSensitiveMatch +
@@ -116,11 +129,15 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void setSearchPattern(String text) {
-    searchCriteria = text;
+    pattern = text;
   }
 
   public String getSearchPattern() {
-    return searchCriteria;
+    return pattern;
+  }
+
+  public void fillSearchCriteria(String criteria) {
+    StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
 
   public boolean isResultIsContextMatch() {
@@ -139,10 +156,11 @@ public class MatchOptions implements JDOMExternalizable {
     this.scope = scope;
   }
 
+  @Override
   public void writeExternal(Element element) {
-    element.setAttribute(TEXT_ATTRIBUTE_NAME, searchCriteria);
+    element.setAttribute(TEXT_ATTRIBUTE_NAME, pattern);
     if (!looseMatching) {
-      element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, String.valueOf(looseMatching));
+      element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, String.valueOf(false));
     }
     element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
     element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
@@ -167,8 +185,9 @@ public class MatchOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void readExternal(Element element) {
-    searchCriteria = element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue();
+    pattern = element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue();
 
     Attribute attr = element.getAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME);
     if (attr != null) {
@@ -195,8 +214,7 @@ public class MatchOptions implements JDOMExternalizable {
 
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
     if (attr!=null) {
-      String value = attr.getValue();
-      myFileType = getFileTypeByName(value);
+      myFileType = getFileTypeByName(attr.getValue());
     }
 
     attr = element.getAttribute(DIALECT_ATTR_NAME);
@@ -206,13 +224,10 @@ public class MatchOptions implements JDOMExternalizable {
 
     // @TODO deserialize scope
 
-    List<Element> elements = element.getChildren(CONSTRAINT_TAG_NAME);
-    if (elements!=null && !elements.isEmpty()) {
-      for (final Element element1 : elements) {
-        final MatchVariableConstraint constraint = new MatchVariableConstraint();
-        constraint.readExternal(element1);
-        addVariableConstraint(constraint);
-      }
+    for (final Element element1 : element.getChildren(CONSTRAINT_TAG_NAME)) {
+      final MatchVariableConstraint constraint = new MatchVariableConstraint();
+      constraint.readExternal(element1);
+      addVariableConstraint(constraint);
     }
   }
 
@@ -240,7 +255,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
     // @TODO support scope
 
-    if (searchCriteria != null ? !searchCriteria.equals(matchOptions.searchCriteria) : matchOptions.searchCriteria != null) return false;
+    if (pattern != null ? !pattern.equals(matchOptions.pattern) : matchOptions.pattern != null) return false;
     if (variableConstraints != null ? !variableConstraints.equals(matchOptions.variableConstraints) : matchOptions.variableConstraints !=
                                                                                                       null) {
       return false;
@@ -265,7 +280,7 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     // @TODO support scope
-    result = 29 * result + (searchCriteria != null ? searchCriteria.hashCode() : 0);
+    result = 29 * result + (pattern != null ? pattern.hashCode() : 0);
     result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();

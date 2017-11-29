@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Irina.Chernushina on 1/20/2017.
  */
-public abstract class VirtualFileContentsChangedAdapter extends VirtualFileAdapter {
+public abstract class VirtualFileContentsChangedAdapter implements VirtualFileListener {
   @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     onFileChange(event.getFile());

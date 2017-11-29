@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,11 +133,13 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   private void installImpl(Component component){
     if(component instanceof Container){
       Container container=(Container)component;
-      int componentCount=container.getComponentCount();
-      for(int i=0;i<componentCount;i++){
-        installImpl(container.getComponent(i));
+      synchronized (container.getTreeLock()) {
+        int componentCount = container.getComponentCount();
+        for (int i = 0; i < componentCount; i++) {
+          installImpl(container.getComponent(i));
+        }
+        container.addContainerListener(this);
       }
-      container.addContainerListener(this);
     }
     if(component instanceof JMenuItem||component instanceof JMenuBar){
       return;

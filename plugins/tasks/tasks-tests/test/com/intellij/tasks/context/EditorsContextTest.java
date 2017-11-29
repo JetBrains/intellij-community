@@ -28,7 +28,7 @@ import org.jdom.Element;
 @SkipInHeadlessEnvironment
 public class EditorsContextTest extends FileEditorManagerTestCase {
 
-  public void testDockableContainer() throws Exception {
+  public void testDockableContainer() {
 
     VirtualFile file = getFile("/foo.txt");
     myManager.openFile(file, false);

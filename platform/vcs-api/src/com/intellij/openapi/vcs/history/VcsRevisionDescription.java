@@ -20,13 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/11
- * Time: 12:38 AM
- * To change this template use File | Settings | File Templates.
- */
 public interface VcsRevisionDescription {
   @NotNull
   VcsRevisionNumber getRevisionNumber();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ import java.util.List;
  * @since 10-Aug-2007
  */
 public class PluginDownloader {
-  private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
+  private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private static final String FILENAME = "filename=";
 
@@ -239,7 +239,7 @@ public class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).productNameAsUserAgent().connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         request.saveToFile(file, indicator);
@@ -349,7 +349,7 @@ public class PluginDownloader {
       uriBuilder.addParameter("action", "download");
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
-      uriBuilder.addParameter("uuid", PermanentInstallationID.get());
+      uriBuilder.addParameter("uuid", PermanentInstallationIDImpl.INSTALLATION_ID);
       return uriBuilder.build().toString();
     }
   }

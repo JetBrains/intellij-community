@@ -29,10 +29,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * User: anna
- * Date: 22-Mar-2006
- */
 public class LogFilter implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.logging.LogFilter");
 

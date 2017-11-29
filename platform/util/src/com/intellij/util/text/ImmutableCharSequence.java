@@ -25,7 +25,7 @@ public abstract class ImmutableCharSequence implements CharSequence {
     return isImmutable(cs) ? cs : cs.toString();
   }
 
-  public static boolean isImmutable(@NotNull final CharSequence cs) {
+  private static boolean isImmutable(@NotNull final CharSequence cs) {
     return cs instanceof ImmutableCharSequence ||
            cs instanceof CharSequenceSubSequence && isImmutable(((CharSequenceSubSequence)cs).getBaseSequence());
   }

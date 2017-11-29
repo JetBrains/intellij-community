@@ -21,11 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Represents a package access control statement ({@code exports} or {@code opens}) of a Java module declaration.
+ * Represents a package access control directive ({@code exports} or {@code opens}) of a Java module declaration.
  *
  * @since 2017.1
  */
-public interface PsiPackageAccessibilityStatement extends PsiElement {
+public interface PsiPackageAccessibilityStatement extends PsiStatement {
   PsiPackageAccessibilityStatement[] EMPTY_ARRAY = new PsiPackageAccessibilityStatement[0];
 
   enum Role {EXPORTS, OPENS}

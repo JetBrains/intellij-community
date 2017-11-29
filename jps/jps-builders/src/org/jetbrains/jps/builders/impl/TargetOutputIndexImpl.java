@@ -65,6 +65,6 @@ public class TargetOutputIndexImpl implements TargetOutputIndex {
       }
       current = FileUtilRt.getParentFile(current);
     }
-    return result != null ? result : Collections.<BuildTarget<?>>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 }

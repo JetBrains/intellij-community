@@ -41,8 +41,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
 import static com.intellij.openapi.util.Pair.create;
@@ -142,16 +140,15 @@ public class SelectLocationDialog extends DialogWrapper {
     final Ref<SVNURL> result = new Ref<>();
     final Ref<SvnBindException> excRef = new Ref<>();
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        try {
-          result.set(SvnUtil.getRepositoryRoot(SvnVcs.getInstance(project), url));
-        } catch (SvnBindException e) {
-          excRef.set(e);
-        }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        result.set(SvnUtil.getRepositoryRoot(SvnVcs.getInstance(project), url));
+      }
+      catch (SvnBindException e) {
+        excRef.set(e);
       }
     }, "Detecting repository root", true, project);
-    if (! excRef.isNull()) {
+    if (!excRef.isNull()) {
       throw excRef.get();
     }
     return result.get();
@@ -159,19 +156,14 @@ public class SelectLocationDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
-    final String urlString = myURL.toString();
     if (myAllowActions) {
       // initialize repo browser this way - to make actions work correctly
-      myRepositoryBrowser.setRepositoryURLs(new SVNURL[]{myURL}, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString), true);
+      myRepositoryBrowser.setRepositoryURLs(new SVNURL[]{myURL}, myIsShowFiles, new UrlOpeningExpander.Factory(myURL), true);
     }
     else {
-      myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString));
+      myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(myURL));
     }
-    myRepositoryBrowser.addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-    });
+    myRepositoryBrowser.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
   }
 
   @Override

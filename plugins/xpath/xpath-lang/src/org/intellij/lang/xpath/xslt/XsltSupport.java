@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.*;
@@ -95,11 +94,9 @@ public class XsltSupport {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
       final List<PsiFile> files = new SmartList<>();
-      InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          if (injectedPsi instanceof XPathFile) {
-            files.add(injectedPsi);
-          }
+      InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+        if (injectedPsi instanceof XPathFile) {
+          files.add(injectedPsi);
         }
       });
       return files.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(files);
@@ -108,7 +105,8 @@ public class XsltSupport {
   }
 
   public static boolean isXsltAttribute(@NotNull XmlAttribute attribute) {
-    return isXsltTag(attribute.getParent());
+    XmlTag parent = attribute.getParent();
+    return parent != null && isXsltTag(parent);
   }
 
   public static boolean isXsltTag(@NotNull XmlTag tag) {

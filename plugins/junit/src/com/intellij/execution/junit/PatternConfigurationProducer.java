@@ -18,12 +18,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -37,24 +35,9 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
-  protected boolean isTestClass(PsiClass psiClass) {
-    return JUnitUtil.isTestClass(psiClass);
-  }
-
-  @Override
-  protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
-    return JUnitUtil.getTestMethod(psiElement, checkAbstract) != null;
-  }
-
-  @Override
   protected String getMethodPresentation(PsiMember psiMember) {
     return psiMember instanceof PsiMethod ? JUnitConfiguration.Data.getMethodPresentation((PsiMethod)psiMember)
                                           : super.getMethodPresentation(psiMember);
-  }
-
-  @Override
-  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return !other.isProducedBy(TestMethodConfigurationProducer.class);
   }
 
   @Override
@@ -92,6 +75,7 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
     final TestObject testobject = unitConfiguration.getTestObject();
     if (testobject instanceof TestsPattern) {
+      if (differentParamSet(unitConfiguration, context.getLocation())) return false;
       final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
       if (isConfiguredFromContext(context, patterns)) return true;
     }

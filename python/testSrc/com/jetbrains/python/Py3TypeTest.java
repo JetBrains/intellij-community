@@ -1,29 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
@@ -483,7 +468,7 @@ public class Py3TypeTest extends PyTestCase {
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("Union[D2, D1]",
+    doTest("Union[D1, D2]",
            "class D1(object):\n" +
            "    pass\n" +
            "class D2(object):\n" +
@@ -519,6 +504,35 @@ public class Py3TypeTest extends PyTestCase {
            "    print(expr)");
   }
 
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "@asyncio.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "import types\n" +
+                                                              "@types.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
   // PY-22513
   public void testGenericKwargs() {
     doTest("Dict[str, Union[int, str]]",
@@ -532,6 +546,79 @@ public class Py3TypeTest extends PyTestCase {
            "expr = generic_kwargs(a=1, b='foo')\n");
   }
 
+  // PY-19323
+  public void testReturnedTypingCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> Any",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithUnknownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[..., int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithKnownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(int, str) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[[int, str], int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  // PY-24445
+  public void testIsSubclassInsideListComprehension() {
+    doTest("List[Type[A]]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if issubclass(e, A)]");
+  }
+
+  public void testIsInstanceInsideListComprehension() {
+    doTest("List[A]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if isinstance(e, A)]");
+  }
+
+  // PY-24405
+  public void testAsyncWithType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "class AContext:\n" +
+                   "    async def __aenter__(self) -> str:\n" +
+                   "        pass\n" +
+                   "async def foo():\n" +
+                   "    async with AContext() as c:\n" +
+                   "        expr = c")
+    );
+  }
+
+  // PY-26847
+  public void testAwaitOnImportedCoroutine() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Any",
+                            "from mycoroutines import mycoroutine\n" +
+                            "\n" +
+                            "async def main():\n" +
+                            "    expr = await mycoroutine()")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
@@ -541,9 +628,8 @@ public class Py3TypeTest extends PyTestCase {
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
   }
 
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals(expectedType, actualType);
+  private void doMultiFileTest(@NotNull String expectedType, @NotNull String text) {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    doTest(expectedType, text);
   }
 }

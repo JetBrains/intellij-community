@@ -30,9 +30,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-/**
- * User: anna
- */
 public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
   @NotNull
   @Override

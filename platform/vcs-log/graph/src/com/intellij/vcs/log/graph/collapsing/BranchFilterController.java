@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeController;
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
@@ -28,26 +29,26 @@ import java.util.Set;
 
 public class BranchFilterController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
-  private final Set<Integer> myIdsOfVisibleBranches;
+  @Nullable private final Set<Integer> myIdsOfVisibleBranches;
 
-  public BranchFilterController(@NotNull CascadeController delegateLinearGraphController,
-                                @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+  public BranchFilterController(@NotNull LinearGraphController delegateLinearGraphController,
+                                @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                                 @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myIdsOfVisibleBranches = idsOfVisibleBranches;
-    updateCollapsedGraph();
+    myCollapsedGraph = updateCollapsedGraph();
   }
 
-  private void updateCollapsedGraph() {
-    UnsignedBitSet initVisibility =
-      ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
+  @NotNull
+  private CollapsedGraph updateCollapsedGraph() {
+    UnsignedBitSet initVisibility = ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
+    return CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull
   @Override
   protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
-    if (delegateAnswer.getGraphChanges() != null) updateCollapsedGraph();
+    if (delegateAnswer.getGraphChanges() != null) myCollapsedGraph = updateCollapsedGraph();
     return delegateAnswer;
   }
 

@@ -96,7 +96,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
         if (!(statement instanceof PsiSwitchLabelStatement)) {
           continue;
         }
-        final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
+        final PsiElement previousSibling = PsiTreeUtil.skipWhitespacesBackward(statement);
         if (previousSibling instanceof PsiComment) {
           final PsiComment comment = (PsiComment)previousSibling;
           final String commentText = comment.getText();

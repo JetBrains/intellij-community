@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.render.CachedEvaluator;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XExpression;
-import com.sun.jdi.BooleanValue;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,15 +49,15 @@ public class ConditionCheckerImpl implements ConditionChecker {
   }
 
   @Override
-  public CheckingResult check(@NotNull ObjectReference ref) {
+  public CheckingResult check(@NotNull Value ref) {
     myDebugProcess.getManagerThread().invokeAndWait(new MyCheckerCommand(ref));
     return myResultReference.get();
   }
 
   private class MyCheckerCommand extends DebuggerContextCommandImpl {
-    private final ObjectReference myReference;
+    private final Value myReference;
 
-    protected MyCheckerCommand(@NotNull ObjectReference ref) {
+    protected MyCheckerCommand(@NotNull Value ref) {
       super(myDebugProcess.getDebuggerContext());
       myReference = ref;
     }
@@ -70,17 +69,11 @@ public class ConditionCheckerImpl implements ConditionChecker {
 
     @Override
     public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-      ExpressionEvaluator evaluator;
       try {
-        evaluator = myEvaluator.getEvaluator();
-        Value result =
-          evaluator.evaluate(new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy(), myReference));
-        if (result instanceof BooleanValue && ((BooleanValue)result).value()) {
-          myResultReference.set(CheckingResultImpl.SUCCESS);
-        }
-        else {
-          myResultReference.set(CheckingResultImpl.FAIL);
-        }
+        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy(), myReference);
+        myResultReference.set(DebuggerUtilsEx.evaluateBoolean(myEvaluator.getEvaluator(), evaluationContext)
+                              ? CheckingResultImpl.SUCCESS
+                              : CheckingResultImpl.FAIL);
       }
       catch (EvaluateException e) {
         myResultReference.set(CheckingResultImpl.error(e.getMessage()));

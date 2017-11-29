@@ -19,12 +19,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:30 PM
- */
 public class QuicklyDisposableISVNCanceller extends QuicklyDisposableProxy<ISVNCanceller> implements ISVNCanceller {
   public QuicklyDisposableISVNCanceller(ISVNCanceller canceller) {
     super(canceller);

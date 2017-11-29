@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -52,11 +51,11 @@ public class PathMacrosCollector extends PathMacroMap {
   @NotNull
   public static Set<String> getMacroNames(@NotNull final Element e) {
     return getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(MACRO_FILTER_EXTENSION_POINT_NAME)),
-                         PathMacros.getInstance());
+                         PathMacrosImpl.getInstanceEx());
   }
 
   @NotNull
-  public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull PathMacros pathMacros) {
+  public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter);
     Set<String> preResult = collector.myMacroMap.keySet();
@@ -67,7 +66,7 @@ public class PathMacrosCollector extends PathMacroMap {
     Set<String> result = new SmartHashSet<>(preResult);
     result.removeAll(pathMacros.getSystemMacroNames());
     result.removeAll(pathMacros.getLegacyMacroNames());
-    result.removeAll(PathMacrosImpl.getToolMacroNames());
+    result.removeAll(pathMacros.getToolMacroNames());
     result.removeAll(pathMacros.getIgnoredMacroNames());
     return result;
   }

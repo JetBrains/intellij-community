@@ -24,9 +24,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 
-/**
- * User: spLeaner
- */
 public class StatusBarUI extends ComponentUI {
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 23);
   private static final Dimension MIN_SIZE = new Dimension(100, 23);

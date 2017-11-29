@@ -25,9 +25,6 @@ import org.testng.IMethodSelector;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-/**
- * User: anna
- */
 public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
   private static XmlAttributeValuePattern ourTestClassPattern =
     xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("class")

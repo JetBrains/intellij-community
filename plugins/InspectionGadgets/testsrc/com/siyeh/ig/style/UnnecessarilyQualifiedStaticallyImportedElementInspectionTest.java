@@ -20,28 +20,28 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/simple",
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }
 
-  public void testSameMemberNames() throws Exception {
+  public void testSameMemberNames() {
     doTest(getTestName(true));
   }
 
-  public void testMethodRef() throws Exception {
+  public void testMethodRef() {
     doTest(getTestName(true));
   }
 
-  public void testChainedMethodCall() throws Exception {
+  public void testChainedMethodCall() {
     doTest(getTestName(true));
   }
 
-  public void testOverriding() throws Exception {
+  public void testOverriding() {
     doTest(getTestName(true));
   }
 
-  private void doTest(String testName) throws Exception {
+  private void doTest(String testName) {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }

@@ -64,7 +64,7 @@ public class ParameterListAnnotator extends PyAnnotator {
             if (hadSingleStar) {
               hadParamsAfterSingleStar = true;
             }
-            if (hadPositionalContainer && !languageLevel.isPy3K()) {
+            if (hadPositionalContainer && languageLevel.isPython2()) {
               markError(parameter, PyBundle.message("ANN.regular.param.after.vararg"));
             }
             else if (hadKeywordContainer) {
@@ -74,7 +74,7 @@ public class ParameterListAnnotator extends PyAnnotator {
               hadDefaultValue = true;
             }
             else {
-              if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer) && inTuple == 0) {
+              if (hadDefaultValue && !hadSingleStar && (languageLevel.isPython2() || !hadPositionalContainer) && inTuple == 0) {
                 markError(parameter, PyBundle.message("ANN.non.default.param.after.default"));
               }
             }

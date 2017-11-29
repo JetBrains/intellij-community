@@ -10,7 +10,7 @@ public class Test {
 
         // comment2
         System.out.println("hello");
-            /*in return */
+        /*in return */
         String s = "foo" + //inline
                               "bar";
     }

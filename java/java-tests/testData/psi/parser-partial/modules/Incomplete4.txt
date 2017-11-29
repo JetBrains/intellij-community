@@ -11,5 +11,5 @@ PsiJavaFile:Incomplete4.java
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')
-    PsiErrorElement:Module statement expected
+    PsiErrorElement:Module directive expected
       PsiIdentifier:junk('junk')

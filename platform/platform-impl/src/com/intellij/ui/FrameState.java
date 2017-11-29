@@ -60,7 +60,6 @@ public class FrameState {
       state = ((Frame)component).getExtendedState();
       if (SystemInfo.isMacOSLion) {
         // workaround: frame.state is not updated by jdk so get it directly from peer
-        @SuppressWarnings("deprecation")
         ComponentPeer peer = component.getPeer();
         if (peer instanceof FramePeer) {
           state = ((FramePeer)peer).getState();

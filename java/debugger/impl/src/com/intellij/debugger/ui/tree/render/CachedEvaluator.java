@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,22 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Dec 27, 2003
- * Time: 7:56:13 PM
- * To change this template use Options | File Templates.
- */
 public abstract class CachedEvaluator {
-  private final CodeFragmentFactory myDefaultFragmentFactory;
-
-  public CachedEvaluator() {
-    myDefaultFragmentFactory = new CodeFragmentFactoryContextWrapper(DefaultCodeFragmentFactory.getInstance());
-  }
-
   private static class Cache {
     protected ExpressionEvaluator myEvaluator;
     protected EvaluateException   myException;
@@ -67,15 +60,26 @@ public abstract class CachedEvaluator {
     final Cache cache = new Cache();
     try {
       Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
-      if (psiClassAndType.first == null) {
+      PsiElement context = psiClassAndType.first;
+      if (context == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }
-      cache.myPsiChildrenExpression = null;
-      JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, psiClassAndType.first, project);
+      CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(myReferenceExpression, context);
+      JavaCodeFragment codeFragment = factory.createCodeFragment(myReferenceExpression, overrideContext(context), project);
       codeFragment.setThisType(psiClassAndType.second);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
-      cache.myEvaluator = myDefaultFragmentFactory.getEvaluatorBuilder().build(codeFragment, null);
+
+      try {
+        cache.myEvaluator = factory.getEvaluatorBuilder().build(codeFragment, null);
+      }
+      catch (UnsupportedExpressionException ex) {
+        ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, element -> codeFragment);
+        if (eval != null) {
+          cache.myEvaluator = eval;
+        }
+        throw ex;
+      }
     }
     catch (EvaluateException e) {
       cache.myException = e;
@@ -83,6 +87,10 @@ public abstract class CachedEvaluator {
 
     myCache = new SoftReference<>(cache);
     return cache;
+  }
+
+  protected PsiElement overrideContext(PsiElement context) {
+    return context;
   }
 
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {

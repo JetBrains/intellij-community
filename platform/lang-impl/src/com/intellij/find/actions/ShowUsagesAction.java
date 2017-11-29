@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -49,6 +35,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -74,10 +61,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +83,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   public static final String ID = "ShowUsages";
-  public static final int USAGES_PAGE_SIZE = 100;
+
+  public static int getUsagesPageSize() {
+    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+  }
 
   static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
@@ -145,7 +132,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   };
 
   private final boolean myShowSettingsDialogBefore;
-  private final UsageViewSettings myUsageViewSettings;
   private Runnable mySearchEverywhereRunnable;
 
   // used from plugin.xml
@@ -157,15 +143,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private ShowUsagesAction(boolean showDialogBefore) {
     setInjectedContext(true);
     myShowSettingsDialogBefore = showDialogBefore;
-
-    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
-    myUsageViewSettings = new UsageViewSettings();
-    myUsageViewSettings.loadState(usageViewSettings);
-    myUsageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
-    myUsageViewSettings.GROUP_BY_MODULE = false;
-    myUsageViewSettings.GROUP_BY_PACKAGE = false;
-    myUsageViewSettings.GROUP_BY_USAGE_TYPE = false;
-    myUsageViewSettings.GROUP_BY_SCOPE = false;
   }
 
   @Override
@@ -207,14 +184,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, element -> {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
         return false;
       });
     }
     else if (ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget) {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       if (element != null) {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
       }
     }
   }
@@ -242,10 +219,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                  @NotNull final FindUsagesOptions options) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
+    final ShowUsagesSettings showUsagesSettings = ShowUsagesSettings.getInstance();
     final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
     savedGlobalSettings.loadState(usageViewSettings);
-    usageViewSettings.loadState(myUsageViewSettings);
+    usageViewSettings.loadState(showUsagesSettings.getState());
 
     final Project project = handler.getProject();
     UsageViewManager manager = UsageViewManager.getInstance(project);
@@ -262,7 +240,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     Disposer.register(usageView, () -> {
-      myUsageViewSettings.loadState(usageViewSettings);
+      showUsagesSettings.loadState(usageViewSettings);
       usageViewSettings.loadState(savedGlobalSettings);
     });
 
@@ -1072,7 +1050,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 int maxUsages,
                                 @NotNull FindUsagesOptions options) {
     TransactionGuard.submitTransaction(handler.getProject(), () ->
-      showElementUsages(editor, popupPosition, handler, maxUsages + USAGES_PAGE_SIZE, options));
+      showElementUsages(editor, popupPosition, handler, maxUsages + getUsagesPageSize(), options));
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {
@@ -1196,7 +1174,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
       Component component = super.prepareRenderer(renderer, row, column);
       if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
+        ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       }
       return component;
     }

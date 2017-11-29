@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -55,7 +56,9 @@ public class CommitCompletionContributor extends CompletionContributor {
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
     for (ChangeList list : lists) {
+      ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
+        ProgressManager.checkCanceled();
         ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
         if (revision != null) {
           FilePath filePath = revision.getFile();

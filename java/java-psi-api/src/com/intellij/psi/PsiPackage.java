@@ -90,6 +90,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    *
    * @since 14.1
    */
+  @NotNull
   PsiFile[] getFiles(@NotNull GlobalSearchScope scope);
 
   /**
@@ -114,6 +115,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    *
    * @return the array of virtual files for the source roots.
    */
+  @NotNull
   VirtualFile[] occursInPackagePrefixes();
 
   @Override

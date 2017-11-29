@@ -18,9 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: cdr
- */
 public class TruncatingIcon implements Icon {
   private final int myWidth;
   private final int myHeight;

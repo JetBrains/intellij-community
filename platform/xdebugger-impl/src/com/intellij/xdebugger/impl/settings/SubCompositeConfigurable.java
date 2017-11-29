@@ -72,6 +72,7 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return children != null && children.length == 1;
   }
 
+  @NotNull
   @Override
   public final Configurable[] getConfigurables() {
     if (children == null) {

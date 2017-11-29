@@ -224,7 +224,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertTrue(focusRequestedRef.get());
   }
 
-  public void testRuby_1767() throws InterruptedException {
+  public void testRuby_1767() {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
 
     myEventsProcessor.onStartTesting();
@@ -251,7 +251,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
   }
 
-  public void testExpandIfOnlyOneRootChild() throws InterruptedException {
+  public void testExpandIfOnlyOneRootChild() {
     myEventsProcessor.onStartTesting();
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite1", null));
     myResultsViewer.performUpdate();
@@ -288,10 +288,10 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   }
 
   //with test tree build before start actual tests
-  public void testPrependTreeAndSameTestsStartFinish() throws Exception {
+  public void testPrependTreeAndSameTestsStartFinish() {
     //send tree
-    myEventsProcessor.onSuiteTreeStarted("suite1", null);
-    myEventsProcessor.onSuiteTreeNodeAdded("test1", null);
+    myEventsProcessor.onSuiteTreeStarted("suite1", null, "suite1", "0");
+    myEventsProcessor.onSuiteTreeNodeAdded("test1", null, "test1", "suite1");
     myEventsProcessor.onSuiteTreeEnded("suite1");
 
     //start testing

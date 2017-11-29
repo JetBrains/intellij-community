@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
@@ -79,6 +80,10 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @Override
+  public boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping) {
+    return isMyContext(callback.getContext(), wrapping);
+  }
+
   public boolean isMyContext(@NotNull PsiElement context, boolean wrapping) {
     return isMyLanguage(context.getLanguage()) && (wrapping || HtmlTextContextType.isInContext(context));
   }

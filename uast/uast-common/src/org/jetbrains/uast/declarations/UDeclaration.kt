@@ -24,37 +24,37 @@ import org.jetbrains.uast.visitor.UastTypedVisitor
  * A [PsiElement] declaration wrapper.
  */
 interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
-    /**
-     * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
-     */
-    override val psi: PsiModifierListOwner
-    
-    override fun getOriginalElement(): PsiElement? = psi.originalElement
+  /**
+   * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
+   */
+  override val psi: PsiModifierListOwner
 
-    /**
-     * Returns the declaration name identifier, or null if the declaration is anonymous.
-     */
-    val uastAnchor: UElement?
+  override fun getOriginalElement(): PsiElement? = psi.originalElement
 
-    /**
-     * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
-     */
-    val isStatic: Boolean
-        get() = hasModifierProperty(PsiModifier.STATIC)
+  /**
+   * Returns the declaration name identifier, or null if the declaration is anonymous.
+   */
+  val uastAnchor: UElement?
 
-    /**
-     * Returns `true` if this declaration has a [PsiModifier.FINAL] modifier.
-     */
-    val isFinal: Boolean
-        get() = hasModifierProperty(PsiModifier.FINAL)
+  /**
+   * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
+   */
+  val isStatic: Boolean
+    get() = hasModifierProperty(PsiModifier.STATIC)
 
-    /**
-     * Returns a declaration visibility.
-     */
-    val visibility: UastVisibility
-        get() = UastVisibility[this]
+  /**
+   * Returns `true` if this declaration has a [PsiModifier.FINAL] modifier.
+   */
+  val isFinal: Boolean
+    get() = hasModifierProperty(PsiModifier.FINAL)
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitDeclaration(this, data)
+  /**
+   * Returns a declaration visibility.
+   */
+  val visibility: UastVisibility
+    get() = UastVisibility[this]
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitDeclaration(this, data)
 }
 
 fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()

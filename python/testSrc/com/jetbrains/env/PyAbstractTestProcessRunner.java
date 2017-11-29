@@ -105,6 +105,16 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   }
 
   /**
+   * Ensures all tests passed or skipped
+   */
+  public void assertNoFailures() {
+    final String consoleText = getAllConsoleText();
+    int notPassed = myProxyManager.getProxy().getChildren(Filter.NOT_PASSED).size();
+    int ignored = myProxyManager.getProxy().getChildren(Filter.IGNORED).size();
+    Assert.assertEquals(getFormattedTestTree() + consoleText, 0, notPassed - ignored);
+  }
+
+  /**
    * Searches for test by its name recursevly in {@link #myTestProxy}
    *
    * @param testName test name to find
@@ -205,11 +215,8 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       return null;
     }
 
+    assert getFailedTestsCount() > 0: String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
     final Logger logger = Logger.getInstance(PyAbstractTestProcessRunner.class);
-    if (getFailedTestsCount() == 0) {
-      logger
-        .warn(String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep));
-    }
     logger.info(String.format("Starting iteration %s", myCurrentRerunStep));
 
     myCurrentRerunStep++;

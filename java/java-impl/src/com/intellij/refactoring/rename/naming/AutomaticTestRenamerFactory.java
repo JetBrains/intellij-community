@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
  */
 public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(@NotNull final PsiElement element) {
+    if (element instanceof PsiTypeParameter) return false;
     return element instanceof PsiClass && TestFrameworks.detectFramework((PsiClass)element) == null;
   }
 
@@ -69,8 +71,10 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
 
         HashSet<String> names = new HashSet<>();
         cache.getAllClassNames(names);
+        int count = 0;
         for (String eachName : names) {
           if (pattern.matcher(eachName).matches()) {
+            if (count ++ > 1000) break;
             for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
               if (TestFrameworks.detectFramework(eachClass) != null) {
                 myElements.add(eachClass);

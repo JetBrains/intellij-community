@@ -124,7 +124,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     super.tearDown();
   }
 
-  public void testEmptyProblemDescriptorInTheBeginning() throws Throwable {
+  public void testEmptyProblemDescriptorInTheBeginning() {
     assertEmptyHolder(myAnnotationsManager.getProblemHolder(myElement));
   }
 
@@ -133,7 +133,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertEmpty(holder.getAllProblems());
   }
 
-  public void testProblemDescriptorIsCreated() throws Throwable {
+  public void testProblemDescriptorIsCreated() {
     myAnnotationsManager.appendProblems(myElement, createHolder(), MyDomElementsInspection.class);
     final DomElementsProblemsHolderImpl holder = assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement));
     assertEmpty(holder.getAllProblems());
@@ -148,14 +148,14 @@ public class DomHighlightingLiteTest extends DomTestCase {
     return assertInstanceOf(holder1, DomElementsProblemsHolderImpl.class);
   }
 
-  public void testInspectionMarkedAsPassedAfterAppend() throws Throwable {
+  public void testInspectionMarkedAsPassedAfterAppend() {
     myAnnotationsManager.appendProblems(myElement, createHolder(), MyDomElementsInspection.class);
     final DomElementsProblemsHolderImpl holder = (DomElementsProblemsHolderImpl)myAnnotationsManager.getProblemHolder(myElement);
     assertTrue(holder.isInspectionCompleted(MyDomElementsInspection.class));
     assertFalse(holder.isInspectionCompleted(DomElementsInspection.class));
   }
 
-  public void testHolderRecreationAfterChange() throws Throwable {
+  public void testHolderRecreationAfterChange() {
     myAnnotationsManager.appendProblems(myElement, createHolder(), MyDomElementsInspection.class);
     assertTrue(DomElementAnnotationsManagerImpl.isHolderUpToDate(myElement));
     final DomElementsProblemsHolder holder = myAnnotationsManager.getProblemHolder(myElement);
@@ -168,23 +168,23 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertNotSame(holder, assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement)));
   }
 
-  public void testMockDomInspection() throws Throwable {
+  public void testMockDomInspection() {
     myElement.setFileDescription(new MyNonHighlightingDomFileDescription());
     assertInstanceOf(myAnnotationsManager.getMockInspection(myElement), MockDomInspection.class);
   }
 
-  public void testMockAnnotatingDomInspection() throws Throwable {
+  public void testMockAnnotatingDomInspection() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     assertInstanceOf(myAnnotationsManager.getMockInspection(myElement), MockAnnotatingDomInspection.class);
   }
 
-  public void testNoMockInspection() throws Throwable {
+  public void testNoMockInspection() {
     myElement.setFileDescription(new MyNonHighlightingDomFileDescription());
     myInspectionProfile.setInspectionTools(new LocalInspectionToolWrapper(new MyDomElementsInspection()));
     assertNull(myAnnotationsManager.getMockInspection(myElement));
   }
 
-  public void testDefaultAnnotator() throws Throwable {
+  public void testDefaultAnnotator() {
     final DefaultDomAnnotator annotator = new DefaultDomAnnotator() {
       @Override
       protected DomElementAnnotationsManagerImpl getAnnotationsManager(final DomElement element) {
@@ -211,21 +211,21 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertEmpty(toFill);
   }
 
-  public void testHighlightStatus_MockDomInspection() throws Throwable {
+  public void testHighlightStatus_MockDomInspection() {
     myElement.setFileDescription(new MyNonHighlightingDomFileDescription());
     assertEquals(DomHighlightStatus.NONE, myAnnotationsManager.getHighlightStatus(myElement));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockDomInspection.class);
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
-  public void testHighlightStatus_MockAnnotatingDomInspection() throws Throwable {
+  public void testHighlightStatus_MockAnnotatingDomInspection() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
 
-  public void testHighlightStatus_OtherInspections() throws Throwable {
+  public void testHighlightStatus_OtherInspections() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
@@ -258,7 +258,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
   }
 
-  public void testHighlightStatus_OtherInspections2() throws Throwable {
+  public void testHighlightStatus_OtherInspections2() {
     myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
@@ -282,7 +282,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
 
-  public void testRequiredAttributeWithoutAttributeValue() throws Throwable {
+  public void testRequiredAttributeWithoutAttributeValue() {
     final MyElement element = createElement("<a id />", MyElement.class);
     new MyBasicDomElementsInspection().checkDomElement(element.getId(), createHolder(), DomHighlightingHelperImpl.INSTANCE);
   }

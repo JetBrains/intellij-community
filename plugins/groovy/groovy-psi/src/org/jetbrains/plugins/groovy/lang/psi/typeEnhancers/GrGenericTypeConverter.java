@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Iterator;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+
 /**
  * @author Max Medvedev
  */
@@ -36,6 +38,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
       case METHOD_PARAMETER:
+      case GENERIC_PARAMETER:
       case ASSIGNMENT:
       case RETURN_VALUE:
         return true;
@@ -53,7 +56,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
-
+    if (isCompileStatic(context) ) return null;
     PsiClass lclass = ((PsiClassType)ltype).resolve();
     PsiClass rclass = ((PsiClassType)rtype).resolve();
 

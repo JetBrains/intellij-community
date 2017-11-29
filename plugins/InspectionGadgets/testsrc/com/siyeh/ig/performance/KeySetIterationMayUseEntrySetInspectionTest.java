@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class KeySetIterationMayUseEntrySetInspectionTest extends LightInspectionTestCase {
 
-  public void testKeySetIterationMayUseEntrySet() throws Exception {
+  public void testKeySetIterationMayUseEntrySet() {
     doTest();
   }
 

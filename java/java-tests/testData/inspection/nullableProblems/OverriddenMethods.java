@@ -22,14 +22,9 @@ class PPP2 extends P2 {
 
 ///////  in library
 interface Foo {
-    @NotNull
-    String getTitle();
+    @NotNull Object get(int i );
 }
-<error descr="Unhandled exception: java.awt.HeadlessException">class FooImpl extends java.awt.Frame implements Foo</error> {
-//    public String getTitle() {
-//        return super.getTitle();    //To change body of overridden methods use File | Settings | File Templates.
-//    }
-}
+class FooImpl extends java.util.ArrayList implements Foo { }
 
 
 interface I1 {

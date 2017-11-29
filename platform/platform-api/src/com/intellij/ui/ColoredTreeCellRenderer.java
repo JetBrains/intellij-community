@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,12 +109,6 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
-
-    if (tree.getUI() instanceof WideSelectionTreeUI && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      setMyBorder(null);
-      setIpad(new Insets(0, 2,  0, 2));
-    }
-
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     return this;
@@ -168,6 +162,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       super.append(fragment, attributes, isMainText);
     }
+  }
+
+  @Override
+  void revalidateAndRepaint() {
+    // no need for this in a renderer
   }
 
   /**

@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:29:03 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -39,7 +32,7 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       int endOffset = editor.getDocument().getTextLength();
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets()) {

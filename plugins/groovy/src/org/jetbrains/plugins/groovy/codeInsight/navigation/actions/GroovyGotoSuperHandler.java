@@ -53,7 +53,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
   protected GotoData getSourceAndTargetElements(Editor editor, PsiFile file) {
     final PsiMember e = findSource(editor, file);
     if (e == null) return null;
-    return new GotoData(e, findTargets(e), Collections.<AdditionalAction>emptyList());
+    return new GotoData(e, findTargets(e), Collections.emptyList());
   }
 
   @NotNull

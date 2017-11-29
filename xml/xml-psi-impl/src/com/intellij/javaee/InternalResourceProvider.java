@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class InternalResourceProvider implements StandardResourceProvider{
   @Override
   public void registerResources(ResourceRegistrar registrar) {
     ResourceRegistrarImpl impl = (ResourceRegistrarImpl)registrar;
-    
+
     impl.addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
     impl.addInternalResource(XmlUtil.XSLT_URI,"2.0", "xslt-2_0.xsd");
     impl.addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");

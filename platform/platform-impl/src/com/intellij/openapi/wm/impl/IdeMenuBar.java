@@ -55,8 +55,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,15 +80,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private boolean myDisabled = false;
+  private boolean myDisabled;
 
   @Nullable private final ClockPanel myClockPanel;
   @Nullable private final MyExitFullScreenButton myButton;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
-  private double myProgress = 0;
-  private boolean myActivated = false;
+  private double myProgress;
+  private boolean myActivated;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
@@ -107,11 +105,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myButton = new MyExitFullScreenButton();
       add(myClockPanel);
       add(myButton);
-      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
-        @Override public void propertyChange(PropertyChangeEvent evt) {
-          updateState();
-        }
-      });
+      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, evt -> updateState());
       addMouseListener(new MyMouseListener());
     }
     else {
@@ -247,7 +241,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public Dimension getPreferredSize() {
     Dimension dimension = super.getPreferredSize();
     if (getState().isInProgress()) {
-      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? (1 - myProgress) : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
+      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? 1 - myProgress : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
     }
     else if (getState() == State.COLLAPSED) {
       dimension.height = COLLAPSED_HEIGHT;
@@ -493,7 +487,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private class MyAnimator extends Animator {
-    public MyAnimator() {
+    MyAnimator() {
       super("MenuBarAnimator", 16, 300, false);
     }
 
@@ -577,13 +571,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private static class MyExitFullScreenButton extends JButton {
     private MyExitFullScreenButton() {
       setFocusable(false);
-      addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Window window = SwingUtilities.getWindowAncestor(MyExitFullScreenButton.this);
-          if (window instanceof IdeFrameEx) {
-            ((IdeFrameEx)window).toggleFullScreen(false);
-          }
+      addActionListener(e -> {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof IdeFrameEx) {
+          ((IdeFrameEx)window).toggleFullScreen(false);
         }
       });
       addMouseListener(new MouseAdapter() {

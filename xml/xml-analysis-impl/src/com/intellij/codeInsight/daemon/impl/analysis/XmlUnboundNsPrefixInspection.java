@@ -84,6 +84,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         }
 
         XmlTag tag = attribute.getParent();
+        if (tag == null) return;
         XmlElementDescriptor elementDescriptor = tag.getDescriptor();
         if (elementDescriptor == null ||
             elementDescriptor instanceof AnyXmlElementDescriptor) {

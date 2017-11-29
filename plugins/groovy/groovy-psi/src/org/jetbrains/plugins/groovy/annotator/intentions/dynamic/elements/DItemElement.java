@@ -20,10 +20,6 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 13.02.2008
- */
 
 /*
  * Base class for Dynamic property and method

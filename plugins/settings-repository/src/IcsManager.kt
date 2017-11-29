@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -74,7 +73,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
     }
@@ -146,18 +145,17 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-  fun newStreamProvider() {
-    val application = ApplicationManager.getApplication()
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  fun setApplicationLevelStreamProvider() {
+    val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
+    // just to be sure
+    storageManager.removeStreamProvider(ApplicationLevelProvider::class.java)
+    storageManager.addStreamProvider(ApplicationLevelProvider(), first = true)
   }
 
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
-    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
-      storage.streamProvider = ApplicationLevelProvider()
-    }
+    application.stateStore.stateStorageManager.addStreamProvider(ApplicationLevelProvider())
 
     val messageBusConnection = application.messageBus.connect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -245,8 +243,8 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
-      LOG.catchAndLog {
-        val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
+      LOG.runAndLogException {
+        val oldPluginDir = appSystemDir.resolve("settingsRepository")
         if (oldPluginDir.exists()) {
           oldPluginDir.move(pluginSystemDir)
         }

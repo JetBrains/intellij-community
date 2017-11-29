@@ -57,11 +57,7 @@ public abstract class StickyHeadGetter {
       final String branchRoot = getTagStart(myStickyData);
       if (branchRoot == null) return myStickyData;
 
-      return getBranchHeadRevision(parent, name, new Convertor<CvsRevisionNumber, Boolean>() {
-        public Boolean convert(CvsRevisionNumber o) {
-          return o.asString().startsWith(branchRoot);
-        }
-      });
+      return getBranchHeadRevision(parent, name, o -> o.asString().startsWith(branchRoot));
     }
   }
 

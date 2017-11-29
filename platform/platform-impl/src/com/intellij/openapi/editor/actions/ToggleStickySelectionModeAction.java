@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to toggle {@link EditorEx#isStickySelection() sticky selection} for editors.
@@ -37,7 +38,7 @@ public class ToggleStickySelectionModeAction extends EditorAction {
 
   static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }

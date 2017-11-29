@@ -17,15 +17,9 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.util.net.HttpConfigurable;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/31/13
- * Time: 3:37 PM
- */
 public class SvnAndProxyTest extends Svn17TestCase {
   @Test
-  public void testDirectWhenIdeaHaveProxy() throws Exception {
+  public void testDirectWhenIdeaHaveProxy() {
 
 
   }

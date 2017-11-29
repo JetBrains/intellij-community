@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ExpandRegionRecursivelyAction extends EditorAction {
   public ExpandRegionRecursivelyAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
         assert editor.getProject() != null;
         CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(editor.getProject());
         foldingManager.updateFoldRegions(editor);

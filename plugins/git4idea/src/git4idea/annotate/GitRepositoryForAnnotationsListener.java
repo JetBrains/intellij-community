@@ -15,6 +15,7 @@
  */
 package git4idea.annotate;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -23,12 +24,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/26/12
- * Time: 2:11 PM
- */
 public class GitRepositoryForAnnotationsListener {
   private final Project myProject;
   private final GitRepositoryChangeListener myListener;
@@ -47,7 +42,7 @@ public class GitRepositoryForAnnotationsListener {
     return new GitRepositoryChangeListener() {
       @Override
       public void repositoryChanged(@NotNull GitRepository repository) {
-        final VcsAnnotationRefresher refresher = myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
+        final VcsAnnotationRefresher refresher = BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
         refresher.dirtyUnder(repository.getRoot());
       }
     };

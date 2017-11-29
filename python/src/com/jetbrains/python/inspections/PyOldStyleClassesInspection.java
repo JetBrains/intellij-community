@@ -65,7 +65,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
     @Override
     public void visitPyClass(final PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
-      List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyConvertToNewStyleQuickFix());
+      List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
@@ -96,7 +96,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
           if (qName != null && qName.contains("PyQt")) return;
           if (!(type instanceof PyClassType)) return;
         }
-        List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyConvertToNewStyleQuickFix());
+        List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
         if (!types.isEmpty()) {
           quickFixes.add(new PyChangeBaseClassQuickFix());
         }

@@ -53,6 +53,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     myState.mySaveCallSignatures = state.mySaveCallSignatures;
     myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
     myState.mySupportQtDebugging = state.mySupportQtDebugging;
+    myState.myPyQtBackend = state.myPyQtBackend;
   }
 
   public static class State {
@@ -60,6 +61,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
     public boolean mySupportQtDebugging = true;
+    public String myPyQtBackend = "Auto";
   }
 
 
@@ -93,6 +95,14 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
 
   public void setSupportQtDebugging(boolean supportQtDebugging) {
     myState.mySupportQtDebugging = supportQtDebugging;
+  }
+
+  public String getPyQtBackend() {
+    return myState.myPyQtBackend;
+  }
+
+  public void setPyQtBackend(String backend) {
+    myState.myPyQtBackend = backend;
   }
 }
 

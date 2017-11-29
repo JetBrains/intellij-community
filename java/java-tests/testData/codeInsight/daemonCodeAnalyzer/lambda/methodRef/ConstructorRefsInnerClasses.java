@@ -60,11 +60,11 @@ class StaticInner1 {
     }
 
     interface I1 {
-      Inner _(StaticInner1 rec);
+      Inner m(StaticInner1 rec);
     }
 
     interface I2 {
-      Inner _();
+      Inner m();
     }
 
     static void call3(I1 s) {}
@@ -130,7 +130,7 @@ class NonStaticInner3 {
     interface I2<X> {
         X m();
     }
-    
+
     interface I3<X> {
         X m(NonStaticInner3 rec, int i);
     }

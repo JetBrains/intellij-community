@@ -293,7 +293,7 @@ public class BuildFSState {
     if (context == null) {
       return false;
     }
-    Set<? extends BuildTarget<?>> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<BuildTarget<?>>emptySet());
+    Set<? extends BuildTarget<?>> targets = CONTEXT_TARGETS_KEY.get(context, Collections.emptySet());
     return targets.contains(rd.getTarget());
   }
 

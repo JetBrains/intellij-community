@@ -9,6 +9,8 @@ class A {
   }
 
   public static void main(String[] args) {
-    submit((Runnable) () -> new A());
+    submit(() -> {
+      new A();
+    });
   }
 }

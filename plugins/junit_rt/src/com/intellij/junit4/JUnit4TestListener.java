@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 03-Jun-2009
- */
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;

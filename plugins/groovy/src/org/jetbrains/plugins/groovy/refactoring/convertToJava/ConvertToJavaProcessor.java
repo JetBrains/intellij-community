@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,6 +36,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.statictics.GroovyStatisticsIds;
 
 import java.util.Set;
 
@@ -77,6 +79,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   //private static String
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
+    UsageTrigger.trigger(GroovyStatisticsIds.CONVERT_GROOVY_TO_JAVA_ID);
     final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
 
     ExpressionContext context = new ExpressionContext(myProject, myFiles);

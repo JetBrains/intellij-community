@@ -33,9 +33,9 @@ public interface LineMarkerProvider {
    * Get line markers for this PsiElement.
    * <p/>
    * NOTE for implementers:
-   * Please return line marker info for the exact element you were asked for, which is as small as possible.
-   * For example, instead of returning method marker for PsiMethod,
-   * return it for the PsiIdentifier which is a name of this method.
+   * Please create line marker info for leaf elements only - i.e. the smallest possible elements.
+   * For example, instead of returning method marker for {@code PsiMethod},
+   * create the marker for the {@code PsiIdentifier} which is a name of this method.
    * <p/>
    * More technical details:<p>
    * Highlighting (specifically, LineMarkersPass) queries all LineMarkerProviders in two passes (for performance reasons):
@@ -43,15 +43,41 @@ public interface LineMarkerProvider {
    * <li>first pass for all elements in visible area</li>
    * <li>second pass for all the rest elements</li>
    * </ul>
-   * If providers returned nothing for both areas, its line markers are cleared.
+   * If provider returned nothing for both areas, its line markers are cleared.
    * <p/>
-   * So if, for example, a method is half-visible (e.g. its name is visible but a part of its body isn't) and
-   * some poorly written LineMarkerProvider returned info for the PsiMethod instead of PsiIdentifier then following would happen:
+   * So imagine a {@code LineMarkerProvider} which (incorrectly) written like this:
+   * <pre>
+   * {@code class MyBadLineMarkerProvider implements LineMarkerProvider {
+   *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+   *       if (element instanceof PsiMethod) return // ACTUALLY DONT!
+   *            new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
+   *       else return null;
+   *     }
+   *     ...
+   *   }
+   * }
+   * </pre>
+   * Note that it create LIneMarkerInfo for the whole method body.
+   * Following will happen when this method is half-visible (e.g. its name is visible but a part of its body isn't):
    * <ul>
    * <li>the first pass would remove line marker info because the whole PsiMethod isn't visible</li>
    * <li>the second pass would try to add line marker info back because LineMarkerProvider was called for the PsiMethod at last</li>
    * </ul>
-   * As a result, line marker icon would blink annoyingly.
+   * As a result, line marker icon will blink annoyingly.
+   * Instead, write this:
+   * <pre>
+   * {@code class MyGoodLineMarkerProvider implements LineMarkerProvider {
+   *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+   *       if (element instanceof PsiIdentifier &&
+   *           (parent = element.getParent()) instanceof PsiMethod &&
+   *           ((PsiMethod)parent).getMethodIdentifier() == element)) // aha, we are at method name
+   *            return new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
+   *       else return null;
+   *     }
+   *     ...
+   *   }
+   * }
+   * </pre>
    */
   @Nullable
   LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element);

@@ -15,27 +15,28 @@
  */
 package com.intellij.internal.tree;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ExpandAll extends AnAction {
+public class ExpandAll extends DumbAwareAction {
+
+  public ExpandAll() {
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Component c = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (c != null) {
-      final JTree tree = UIUtil.getParentOfType(JTree.class, c);
-      if (tree != null) {
-        TreeUtil.expandAll(tree);
-      }
+    JTree tree = UIUtil.getParentOfType(JTree.class, e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    if (tree != null) {
+      TreeUtil.expandAll(tree);
     }
   }
 }

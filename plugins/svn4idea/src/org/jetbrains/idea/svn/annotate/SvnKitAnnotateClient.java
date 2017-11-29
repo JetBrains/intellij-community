@@ -54,7 +54,7 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
     if (handler != null) {
       result = new ISVNAnnotateHandler() {
         @Override
-        public void handleLine(Date date, long revision, String author, String line) throws SVNException {
+        public void handleLine(Date date, long revision, String author, String line) {
           // deprecated - not called
         }
 
@@ -77,12 +77,12 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
         }
 
         @Override
-        public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+        public boolean handleRevision(Date date, long revision, String author, File contents) {
           return false;
         }
 
         @Override
-        public void handleEOF() throws SVNException {
+        public void handleEOF() {
         }
       };
     }

@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="12" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="544"/>
+      <xy x="20" y="20" width="500" height="554"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -13,7 +13,8 @@
           <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="8bb86" binding="myConditionPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="8bb86" binding="myConditionPanel" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -22,18 +23,35 @@
           <size top="0" left="0" bottom="0" right="4"/>
         </border>
         <children>
-          <grid id="5547c" binding="myConditionEnabledPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints border-constraint="West"/>
+          <grid id="fc2d5" binding="myConditionCheckboxPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="5482b" binding="myConditionExpressionPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints border-constraint="Center"/>
+          <grid id="a37c3" binding="myLanguageChooserPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </grid>
+          <grid id="cf906" binding="myConditionExpressionPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+          <hspacer id="e0668">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
       <nested-form id="11152" form-file="com/intellij/xdebugger/impl/breakpoints/ui/XSuspendPolicyPanel.form" binding="mySuspendPolicyPanel">

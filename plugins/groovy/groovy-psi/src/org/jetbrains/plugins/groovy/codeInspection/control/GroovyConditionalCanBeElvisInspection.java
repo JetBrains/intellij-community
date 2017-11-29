@@ -42,12 +42,6 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be elvis #loc";
   }

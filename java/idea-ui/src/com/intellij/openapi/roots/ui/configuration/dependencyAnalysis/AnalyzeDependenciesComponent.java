@@ -666,7 +666,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public SdkFilterAction() {
-      super("Include SDK", "If selected, the SDK classes are included", AllIcons.General.Jdk);
+      super("Include SDK", "If selected, the SDK classes are included", AllIcons.Nodes.PpJdk);
     }
 
     /**

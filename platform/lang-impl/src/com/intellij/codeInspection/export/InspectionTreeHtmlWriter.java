@@ -44,7 +44,6 @@ public class InspectionTreeHtmlWriter {
   private final StringBuffer myBuilder = new StringBuffer();
   private final InspectionProfile myProfile;
   private final RefManager myManager;
-  private final ExcludedInspectionTreeNodesManager myExcludedManager;
 
   public InspectionTreeHtmlWriter(InspectionResultsView view,
                                   String outputDir) {
@@ -52,14 +51,13 @@ public class InspectionTreeHtmlWriter {
     myOutputDir = outputDir;
     myProfile = view.getCurrentProfile();
     myManager = view.getGlobalInspectionContext().getRefManager();
-    myExcludedManager = view.getExcludedManager();
     serializeTreeToHtml();
   }
 
   private void traverseInspectionTree(final InspectionTreeNode node,
                                              final Consumer<InspectionTreeNode> preAction,
                                              final Consumer<InspectionTreeNode> postAction) {
-    if (node.isExcluded(myExcludedManager)) {
+    if (node.isExcluded()) {
       return;
     }
     preAction.accept(node);
@@ -99,14 +97,14 @@ public class InspectionTreeHtmlWriter {
                                }
                                builder.append(" onclick=\"navigate(").append(nodeId).append(")\" ");
                                builder.append(" id=\"").append(nodeId).append("\" />");
-                               if (n instanceof RefElementAndDescriptorAware) {
-                                 RefEntity e = ((RefElementAndDescriptorAware)n).getElement();
+                               if (n instanceof SuppressableInspectionTreeNode) {
+                                 RefEntity e = ((SuppressableInspectionTreeNode)n).getElement();
                                  if (e != null) {
                                    builder
                                      .append("<div id=\"d")
                                      .append(nodeId)
                                      .append("\" style=\"display:none\">");
-                                   ((RefElementAndDescriptorAware)n).getPresentation().getComposer().compose(builder, e);
+                                   ((SuppressableInspectionTreeNode)n).getPresentation().getComposer().compose(builder, e);
                                    builder.append("</div>");
                                  }
                                }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,17 +49,17 @@ final class TestInfoHolder {
 
   private static final int VERSION = 4;
 
-  TestInfoHolder(String basePath, boolean readOnly, Object lock) {
+  TestInfoHolder(@NotNull Path basePath, boolean readOnly, Object lock) {
     myLock = lock;
-    final File versionFile = getVersionFile(basePath);
-    versionFile.getParentFile().mkdirs();
-    final File methodQNameToTestNameFile = new File(basePath + File.separator + "methodQNameToTestName.data");
-    final File testNameToUsedClassesAndMethodMapFile = new File(basePath + File.separator + "testToCalledMethodNames.data");
-    final File classNameEnumeratorFile = new File(basePath + File.separator + "classNameEnumerator.data");
-    final File methodNameEnumeratorFile = new File(basePath + File.separator + "methodNameEnumerator.data");
-    final File testNameEnumeratorFile = new File(basePath + File.separator + "testNameEnumerator.data");
-    final File moduleNameEnumeratorFile = new File(basePath + File.separator + "moduleNameEnumerator.data");
-    final File testNameToNearestModuleFile = new File(basePath + File.separator + "testNameToNearestModule.data");
+    final Path versionFile = getVersionFile(basePath);
+    PathKt.createDirectories(basePath);
+    final File methodQNameToTestNameFile = basePath.resolve("methodQNameToTestName.data").toFile();
+    final File testNameToUsedClassesAndMethodMapFile = basePath.resolve("testToCalledMethodNames.data").toFile();
+    final File classNameEnumeratorFile = basePath.resolve("classNameEnumerator.data").toFile();
+    final File methodNameEnumeratorFile = basePath.resolve("methodNameEnumerator.data").toFile();
+    final File testNameEnumeratorFile = basePath.resolve("testNameEnumerator.data").toFile();
+    final File moduleNameEnumeratorFile = basePath.resolve("moduleNameEnumerator.data").toFile();
+    final File testNameToNearestModuleFile = basePath.resolve("testNameToNearestModule.data").toFile();
 
     try {
       int version = readVersion(versionFile);
@@ -196,36 +198,20 @@ final class TestInfoHolder {
     }
   }
 
-  private static void writeVersion(File versionFile) throws IOException {
-    final java.io.DataOutputStream versionOut = new java.io.DataOutputStream(new FileOutputStream(versionFile));
-
-    try {
+  private static void writeVersion(@NotNull Path versionFile) throws IOException {
+    try (final DataOutputStream versionOut = new DataOutputStream(PathKt.outputStream(versionFile))) {
       DataInputOutputUtil.writeINT(versionOut, VERSION);
-    }
-    finally {
-      try {
-        versionOut.close();
-      }
-      catch (IOException ignore) {
-      }
     }
   }
 
-  private static int readVersion(File versionFile) throws IOException {
-    if (!versionFile.exists()) return 0;
-    final DataInputStream versionInput = new DataInputStream(new FileInputStream(versionFile));
-    int version;
-    try {
-      version = DataInputOutputUtil.readINT(versionInput);
+  private static int readVersion(@NotNull Path versionFile) throws IOException {
+    InputStream inputStream = PathKt.inputStreamIfExists(versionFile);
+    if (inputStream == null) {
+      return 0;
     }
-    finally {
-      try {
-        versionInput.close();
-      }
-      catch (IOException ignore) {
-      }
+    try (DataInputStream versionInput = new DataInputStream(inputStream)) {
+      return DataInputOutputUtil.readINT(versionInput);
     }
-    return version;
   }
 
   void dispose() {
@@ -286,10 +272,11 @@ final class TestInfoHolder {
     return myDisposed;
   }
 
-  public static boolean isValidPath(String path) {
+  public static boolean isValidPath(@NotNull Path path) {
     try {
       return readVersion(getVersionFile(path)) == VERSION;
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       return false;
     }
   }
@@ -392,8 +379,8 @@ final class TestInfoHolder {
   }
 
   @NotNull
-  static File getVersionFile(String path) {
-    return new File(path + File.separator + "index.version");
+  static Path getVersionFile(Path path) {
+    return path.resolve("index.version");
   }
 
   static long createKey(int classQName, int methodName) {

@@ -32,9 +32,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class TopAnomaliesAction extends ActionGroup {
   private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
     int i = o2.getSecond() - o1.getSecond();

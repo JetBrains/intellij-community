@@ -27,6 +27,7 @@ import git4idea.repo.GitRepository
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import com.intellij.vcs.test.cleanupForAssertion
 import git4idea.test.git
+import git4idea.test.resolveConflicts
 import org.mockito.Mockito
 import kotlin.properties.Delegates
 
@@ -139,13 +140,13 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
         assertFalse(facedConflictInUltimate)
         facedConflictInUltimate = true
         assertNoRebaseInProgress(myCommunity)
-        resolveConflicts(myUltimate)
+        myUltimate.resolveConflicts()
       }
       else if (myCommunity.hasConflict("c.txt")) {
         assertFalse(facedConflictInCommunity)
         facedConflictInCommunity = true
         assertNoRebaseInProgress(myUltimate)
-        resolveConflicts(myCommunity)
+        myCommunity.resolveConflicts()
       }
     })
 
@@ -194,7 +195,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     var mergeDialogShown = false
     vcsHelper.onMerge {
       mergeDialogShown = true
-      resolveConflicts(myCommunity)
+      myCommunity.resolveConflicts()
     }
     GitRebaseUtils.continueRebase(myProject)
 

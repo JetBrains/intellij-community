@@ -9,6 +9,8 @@ _B = Union[bytes, bytearray]
 # TODO more precise type for object of hashlib
 _Hash = Any
 
+digest_size: None
+
 if sys.version_info >= (3, 4):
     def new(key: _B, msg: Optional[_B] = ...,
             digestmod: Optional[Union[str, Callable[[], _Hash], ModuleType]] = ...) -> HMAC: ...

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class TemplateConfigurable extends BaseRCSettingsConfigurable {
 
   @Override
   void patchElementsIfNeed(Element originalElement, Element snapshotElement) {
-    snapshotElement.setAttribute(RunnerAndConfigurationSettingsImpl.TEMPLATE_FLAG_ATTRIBUTE, "true");
+    snapshotElement.setAttribute(RunnerAndConfigurationSettingsImplKt.getTEMPLATE_FLAG_ATTRIBUTE(), "true");
   }
 
   @Override

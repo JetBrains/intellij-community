@@ -109,6 +109,11 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_KEYWORD_ARGUMENT = TextAttributesKey.createTextAttributesKey("PY.KEYWORD_ARGUMENT", PARAMETER);
 
+  public static final TextAttributesKey PY_FUNCTION_CALL = TextAttributesKey.createTextAttributesKey("PY.FUNCTION_CALL", FUNCTION_CALL);
+  public static final TextAttributesKey PY_METHOD_CALL = TextAttributesKey.createTextAttributesKey("PY.METHOD_CALL", PY_FUNCTION_CALL);
+
+  public static final TextAttributesKey PY_ANNOTATION = TextAttributesKey.createTextAttributesKey("PY.ANNOTATION", IDENTIFIER);
+
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);

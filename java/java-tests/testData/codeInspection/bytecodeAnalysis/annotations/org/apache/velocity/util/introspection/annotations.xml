@@ -32,6 +32,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.util.introspection.Info Info(java.lang.String, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.Info Info(org.apache.velocity.runtime.parser.node.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -51,6 +56,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.util.introspection.Info java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.util.introspection.IntrospectionCacheData IntrospectionCacheData()'>
@@ -86,6 +94,11 @@
     <item name='org.apache.velocity.util.introspection.IntrospectorCacheImpl org.apache.velocity.util.introspection.ClassMap put(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.util.introspection.LinkingUberspector LinkingUberspector(org.apache.velocity.util.introspection.Uberspect, org.apache.velocity.util.introspection.Uberspect)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.MethodMap boolean isConvertible(java.lang.Class, java.lang.Class, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -97,6 +110,11 @@
     </item>
     <item name='org.apache.velocity.util.introspection.MethodMap int compare(java.lang.Class[], java.lang.Class[]) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.util.introspection.MethodMap.AmbiguousException AmbiguousException()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.util.introspection.SecureIntrospectorImpl boolean checkObjectExecutePermission(java.lang.Class, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -171,6 +189,16 @@
     <item name='org.apache.velocity.util.introspection.UberspectImpl void setRuntimeLogger(org.apache.velocity.runtime.RuntimeLogger) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl.VelGetterImpl VelGetterImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl.VelGetterImpl VelGetterImpl(org.apache.velocity.runtime.parser.node.AbstractExecutor)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl.VelGetterImpl boolean isCacheable()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -179,6 +207,11 @@
     <item name='org.apache.velocity.util.introspection.UberspectImpl.VelGetterImpl java.lang.String getMethodName()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl.VelMethodImpl VelMethodImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl.VelMethodImpl boolean isCacheable()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -186,6 +219,16 @@
     </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl.VelMethodImpl java.lang.Object[] handleVarArg(java.lang.Class, int, java.lang.Object[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl.VelSetterImpl VelSetterImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl.VelSetterImpl VelSetterImpl(org.apache.velocity.runtime.parser.node.SetExecutor)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl.VelSetterImpl boolean isCacheable()'>
         <annotation name='org.jetbrains.annotations.Contract'>

@@ -60,15 +60,8 @@ public class AssignmentToSuperclassFieldInspection extends  BaseInspection {
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
-      final PsiExpression operand = expression.getOperand();
-      checkSuperclassField(operand);
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       final PsiExpression operand = expression.getOperand();
       checkSuperclassField(operand);
     }

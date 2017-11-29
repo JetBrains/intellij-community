@@ -23,14 +23,16 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -88,19 +90,51 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return someChildContainsFile(file, false);
+    List<Module> modules = getModulesByFile(file);
+    List<String> thisGroupPath = getValue().getGroupPathList();
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
+    for (Module module : modules) {
+      if (ContainerUtil.startsWith(grouper.getGroupPath(module), thisGroupPath)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
+  public boolean validate() {
+    return getValue() != null;
+  }
+
+  @NotNull
+  protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
+
+  @Override
   public void update(PresentationData presentation) {
-    final String[] groupPath = getValue().getGroupPath();
-    presentation.setPresentableText(groupPath[groupPath.length-1]);
+    presentation.setPresentableText(getPresentableName());
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+  }
+
+  @NotNull
+  private String getPresentableName() {
+    return StringUtil.join(getRelativeGroupPath(), ".");
+  }
+
+  private List<String> getRelativeGroupPath() {
+    AbstractTreeNode parent = getParent();
+    List<String> thisPath = getValue().getGroupPathList();
+    if (parent instanceof ModuleGroupNode) {
+      List<String> parentPath = ((ModuleGroupNode)parent).getValue().getGroupPathList();
+      if (ContainerUtil.startsWith(thisPath, parentPath)) {
+        return thisPath.subList(parentPath.size(), thisPath.size());
+      }
+    }
+    return thisPath;
   }
 
   @Override
   public String getTestPresentation() {
-    return "Group: " + getValue();
+    return "Group: " + getPresentableName();
   }
 
   @Override

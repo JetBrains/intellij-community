@@ -16,10 +16,10 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -27,7 +27,7 @@ import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
+import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
@@ -66,41 +66,38 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * this method adds a scroll bars for created component.
    */
   public static JComponent createConfigurableComponent(Configurable configurable) {
-    return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        JComponent component = null;
-        long time = System.currentTimeMillis();
-        try {
-          component = configurable.createComponent();
-        }
-        catch (Exception unexpected) {
-          LOG.error("cannot create configurable component", unexpected);
-        }
-        finally {
-          warn(configurable, "create", time);
-        }
-        if (component != null) {
-          reset(configurable);
-          if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
-            if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-              if (!component.getClass().equals(JPanel.class)) {
-                // some custom components do not support borders
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(BorderLayout.CENTER, component);
-                component = panel;
-              }
-              component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
+    return configurable == null ? null : ReadAction.compute(() -> {
+      JComponent component = null;
+      long time = System.currentTimeMillis();
+      try {
+        component = configurable.createComponent();
+      }
+      catch (Exception unexpected) {
+        LOG.error("cannot create configurable component", unexpected);
+      }
+      finally {
+        warn(configurable, "create", time);
+      }
+      if (component != null) {
+        reset(configurable);
+        if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
+          if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
+            if (!component.getClass().equals(JPanel.class)) {
+              // some custom components do not support borders
+              JPanel panel = new JPanel(new BorderLayout());
+              panel.add(BorderLayout.CENTER, component);
+              component = panel;
             }
-            if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
-              JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-              scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
-              component = scroll;
-            }
+            component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
+          }
+          if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
+            JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
+            scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+            component = scroll;
           }
         }
-        return component;
       }
+      return component;
     });
   }
 

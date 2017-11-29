@@ -41,8 +41,13 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
 
   @Nullable
   RepositoryLocation getLocationFor(FilePath root);
+
+  @SuppressWarnings("unused")
+  @Deprecated // Required for compatibility with external plugins.
   @Nullable
-  RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath);
+  default RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
+    return getLocationFor(root);
+  }
 
   @Nullable
   VcsCommittedListsZipper getZipper();

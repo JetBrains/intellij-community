@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
@@ -31,9 +32,16 @@ public class RestoreViewAction extends DumbAwareAction {
   private final Content myContent;
   private final CellTransform.Restore myRestoreAction;
 
+  private boolean myAlert;
+
   public RestoreViewAction(final Content content, CellTransform.Restore restore) {
     myContent = content;
     myRestoreAction = restore;
+    myContent.addPropertyChangeListener(l -> {
+      if (Content.PROP_ALERT.equals(l.getPropertyName())) {
+        myAlert = true;
+      }
+    });
   }
 
   @Override
@@ -42,6 +50,9 @@ public class RestoreViewAction extends DumbAwareAction {
     p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
     p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
     Icon icon = myContent.getIcon();
+    if (myAlert) {
+      icon = new LayeredIcon(icon, AllIcons.Nodes.TabAlert);
+    }
     p.setIcon(icon == null ? AllIcons.Debugger.RestoreLayout : icon);
   }
 

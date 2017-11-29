@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBase {
 
-  private static final Logger LOG = Logger.getInstance("#" + RemoteAgentReflectiveProxyFactory.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoteAgentReflectiveProxyFactory.class);
 
   private final RemoteAgentClassLoaderCache myClassLoaderCache;
 

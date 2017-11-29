@@ -31,15 +31,31 @@ public abstract class LibraryTablesRegistrar {
     return ServiceManager.getService(LibraryTablesRegistrar.class);
   }
 
+  /**
+   * Returns the table containing application-level libraries. These libraries are shown in 'Project Structure' | 'Platform Settings' | 'Global Libraries'
+   * and may be added to dependencies of modules in any project.
+   */
   @NotNull
   public abstract LibraryTable getLibraryTable();
 
+  /**
+   * Returns the table containing project-level libraries for given {@code project}. These libraries are shown in 'Project Structure'
+   * | 'Project Settings' | 'Libraries' and may be added to dependencies of the corresponding project's modules only.
+   */
   @NotNull
   public abstract LibraryTable getLibraryTable(@NotNull Project project);
 
+  /**
+   * Returns a custom library table registered by {@link #registerLibraryTable(LibraryTable)}.
+   */
   @Nullable
   public abstract LibraryTable getLibraryTableByLevel(@NonNls String level, @NotNull Project project);
 
+  /**
+   * Register a custom library table. The platform doesn't provide editors for libraries from custom tables and doesn't save their configurations
+   * automatically, so a plugin providing such a table must implement this functionality on its own. Modules from custom tables may be added to
+   * dependencies of modules in any project in 'Project Structure' dialog.
+   */
   public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
   public abstract List<LibraryTable> getCustomLibraryTables();

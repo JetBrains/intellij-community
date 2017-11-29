@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -173,7 +172,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (element != null && isSuppressedFor(element)) {
             return;
           }
-          final RangeMarker rangeMarker = document.createRangeMarker(new TextRange(i, escapeEnd));
+          final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
           registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }

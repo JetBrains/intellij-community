@@ -15,10 +15,8 @@
  */
 package git4idea.repo;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -31,14 +29,15 @@ import git4idea.GitStandardRemoteBranch;
 import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.test.GitExecutor.git;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class GitConfigTest extends GitPlatformTest {
 
@@ -57,7 +56,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   //inspired by IDEA-135557
-  public void test_branch_with_hash_symbol() throws IOException {
+  public void test_branch_with_hash_symbol() {
     createRepository();
     addRemote("http://example.git");
     git("update-ref refs/remotes/origin/a#branch HEAD");
@@ -70,17 +69,12 @@ public class GitConfigTest extends GitPlatformTest {
     GitBranchState state = reader.readState(config.parseRemotes());
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
-               ContainerUtil.exists(trackInfos, new Condition<GitBranchTrackInfo>() {
-                 @Override
-                 public boolean value(GitBranchTrackInfo info) {
-                   return info.getLocalBranch().getName().equals("a#branch") &&
-                          info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch");
-                 }
-               }));
+               ContainerUtil.exists(trackInfos, info -> info.getLocalBranch().getName().equals("a#branch") &&
+                                                    info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch")));
   }
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
-  public void test_remote_unspecified_section() throws Exception {
+  public void test_remote_unspecified_section() {
     createRepository();
     addRemote("git@github.com:foo/bar.git");
     git("config remote.pushdefault origin");
@@ -88,7 +82,7 @@ public class GitConfigTest extends GitPlatformTest {
     assertSingleRemoteInConfig();
   }
 
-  public void test_invalid_section_with_remote_prefix_is_ignored() throws Exception {
+  public void test_invalid_section_with_remote_prefix_is_ignored() {
     createRepository();
     addRemote("git@github.com:foo/bar.git");
     git("config remote-cfg.newkey newval");
@@ -96,8 +90,55 @@ public class GitConfigTest extends GitPlatformTest {
     assertSingleRemoteInConfig();
   }
 
+  public void test_config_options_are_case_insensitive() {
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
+    String pushUrl = "git@github.com:foo/push.git";
+    git("config remote.origin.pushurl " + pushUrl);
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertSameElements("pushurl parsed incorrectly", remote.getPushUrls(), singletonList(pushUrl));
+  }
+
+  public void test_config_values_are_case_sensitive() {
+    createRepository();
+    String url = "git@GITHUB.com:foo/bar.git";
+    addRemote(url);
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertSameElements(remote.getUrls(), singletonList(url));
+  }
+
+  public void test_config_sections_are_case_insensitive() throws IOException {
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
+    File configFile = configFile();
+    FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"));
+
+    assertSingleRemoteInConfig();
+  }
+
+  public void test_config_section_values_are_case_sensitive() {
+    createRepository();
+    String expectedName = "ORIGIN";
+    addRemote(expectedName, "git@github.com:foo/bar.git");
+
+    GitConfig config = readConfig();
+    GitRemote remote = getFirstItem(config.parseRemotes());
+    assertNotNull(remote);
+    assertEquals("Remote name is incorrect", expectedName, remote.getName());
+  }
+
   private static void addRemote(@NotNull String url) {
-    git("remote add origin " + url);
+    addRemote("origin", url);
+  }
+
+  private static void addRemote(@NotNull String name, @NotNull String url) {
+    git(String.format("remote add %s %s", name, url));
   }
 
   private void createRepository() {
@@ -105,16 +146,26 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
-    assertEquals(1, remotes.size());
-    GitRemote remote = ContainerUtil.getFirstItem(remotes);
+    assertEquals("Number of remotes is incorrect", 1, remotes.size());
+    GitRemote remote = getFirstItem(remotes);
     assertNotNull(remote);
     assertEquals("origin", remote.getName());
     assertEquals("git@github.com:foo/bar.git", remote.getFirstUrl());
   }
 
-  private void assertSingleRemoteInConfig() {
+  @NotNull
+  private GitConfig readConfig() {
+    return GitConfig.read(configFile());
+  }
+
+  @NotNull
+  private File configFile() {
     File gitDir = new File(myProjectPath, ".git");
-    Collection<GitRemote> remotes = GitConfig.read(new File(gitDir, "config")).parseRemotes();
+    return new File(gitDir, "config");
+  }
+
+  private void assertSingleRemoteInConfig() {
+    Collection<GitRemote> remotes = readConfig().parseRemotes();
     assertSingleRemote(remotes);
   }
 
@@ -125,19 +176,13 @@ public class GitConfigTest extends GitPlatformTest {
 
   private void doTestBranches(String testName, File configFile, File resultFile) throws IOException {
     Collection<GitBranchTrackInfo> expectedInfos = readBranchResults(resultFile);
-    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitLocalBranch>() {
-      @Override
-      public GitLocalBranch apply(@Nullable GitBranchTrackInfo input) {
-        assert input != null;
-        return input.getLocalBranch();
-      }
+    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, input -> {
+      assert input != null;
+      return input.getLocalBranch();
     });
-    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitRemoteBranch>() {
-      @Override
-      public GitRemoteBranch apply(@Nullable GitBranchTrackInfo input) {
-        assert input != null;
-        return input.getRemoteBranch();
-      }
+    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, input -> {
+      assert input != null;
+      return input.getRemoteBranch();
     });
 
     VcsTestUtil.assertEqualCollections(testName,
@@ -160,12 +205,7 @@ public class GitConfigTest extends GitPlatformTest {
 
   @NotNull
   public static Collection<TestSpec> loadConfigData(@NotNull File dataFolder) throws IOException {
-    File[] tests = dataFolder.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return !name.startsWith(".");
-      }
-    });
+    File[] tests = dataFolder.listFiles((dir, name) -> !name.startsWith("."));
     Collection<TestSpec> data = ContainerUtil.newArrayList();
     for (File testDir : tests) {
       File descriptionFile = null;
@@ -253,11 +293,11 @@ public class GitConfigTest extends GitPlatformTest {
     if (StringUtil.isEmptyOrSpaces(line)) {
       return Collections.emptyList();
     }
-    return Arrays.asList(line.split(" "));
+    return asList(line.split(" "));
   }
 
   private static List<String> getSingletonOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
+    return array.length < i + 1 ? Collections.emptyList() : singletonList(array[i]);
   }
 
   private static class TestSpec {

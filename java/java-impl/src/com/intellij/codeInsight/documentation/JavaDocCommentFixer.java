@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -43,11 +30,11 @@ import java.util.*;
  * @since 9/20/12 8:44 PM
  */
 public class JavaDocCommentFixer implements DocCommentFixer {
-
-  @NotNull private static final String PARAM_TAG = "@param";
+  private static final String PARAM_TAG = "@param";
+  private static final String PARAM_TAG_NAME = "param";
 
   /**
-   * Lists tags eligible for moving caret to after javadoc fixing. The main idea is that we want to locate caret at the 
+   * Lists tags eligible for moving caret to after javadoc fixing. The main idea is that we want to locate caret at the
    * incomplete tag description after fixing the doc comment.
    * <p/>
    * Example:
@@ -64,12 +51,10 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    *   }
    * </pre>
    */
-  @NotNull private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
+  private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
 
-  @NotNull private static final Comparator<PsiElement> COMPARATOR =
+  private static final Comparator<PsiElement> COMPARATOR =
     (e1, e2) -> e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
-
-  @NotNull private static final String PARAM_TAG_NAME = "param";
 
   @Override
   public void fixComment(@NotNull Project project, @NotNull Editor editor, @NotNull PsiComment comment) {
@@ -79,41 +64,23 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
     PsiDocComment docComment = (PsiDocComment)comment;
     PsiJavaDocumentedElement owner = docComment.getOwner();
-    if (owner == null) {
-      return;
-    }
-    
-    PsiFile file = comment.getContainingFile();
-    if (file == null) {
-      return;
-    }
-    
-    JavaDocReferenceInspection referenceInspection = new JavaDocReferenceInspection();
-    JavaDocLocalInspection localInspection = getDocLocalInspection();
+    if (owner == null) return;
+    PsiFile file = owner.getContainingFile();
+    if (file == null) return;
 
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
-    ProblemDescriptor[] referenceProblems = null;
-    ProblemDescriptor[] otherProblems = null;
-    if (owner instanceof PsiClass) {
-      referenceProblems = referenceInspection.checkClass(((PsiClass)owner), inspectionManager, false);
-      otherProblems = localInspection.checkClass(((PsiClass)owner), inspectionManager, false);
+    ProblemsHolder referenceProblems = new ProblemsHolder(inspectionManager, file, false);
+    owner.accept(new JavaDocReferenceInspection().buildVisitor(referenceProblems, referenceProblems.isOnTheFly()));
+    ProblemsHolder commonProblems = new ProblemsHolder(inspectionManager, file, false);
+    owner.accept(getDocLocalInspection().buildVisitor(commonProblems, commonProblems.isOnTheFly()));
+
+    if (referenceProblems.getResultCount() > 0) {
+      fixReferenceProblems(referenceProblems.getResults(), project);
     }
-    else if (owner instanceof PsiField) {
-      referenceProblems = referenceInspection.checkField(((PsiField)owner), inspectionManager, false);
-      otherProblems = localInspection.checkField(((PsiField)owner), inspectionManager, false);
-    }
-    else if (owner instanceof PsiMethod) {
-      referenceProblems = referenceInspection.checkMethod((PsiMethod)owner, inspectionManager, false);
-      otherProblems = localInspection.checkMethod((PsiMethod)owner, inspectionManager, false);
+    if (commonProblems.getResultCount() > 0) {
+      fixCommonProblems(commonProblems.getResults(), comment, editor.getDocument(), project);
     }
 
-    if (referenceProblems != null) {
-      fixReferenceProblems(referenceProblems, project);
-    }
-    if (otherProblems != null) {
-      fixCommonProblems(otherProblems, comment, editor.getDocument(), project);
-    }
-    
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     ensureContentOrdered(docComment, editor.getDocument());
     locateCaret(docComment, editor, file);
@@ -129,7 +96,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     localInspection.FIELD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
     localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
     //endregion
-    
+
     localInspection.setIgnoreEmptyDescriptions(true);
 
     //region class type arguments
@@ -140,12 +107,12 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       localInspection.INNER_CLASS_OPTIONS.REQUIRED_TAGS += PARAM_TAG;
     }
     //endregion
-    
+
     return localInspection;
   }
 
   @SuppressWarnings("unchecked")
-  private static void fixReferenceProblems(@NotNull ProblemDescriptor[] problems, @NotNull Project project) {
+  private static void fixReferenceProblems(@NotNull List<ProblemDescriptor> problems, @NotNull Project project) {
     for (ProblemDescriptor problem : problems) {
       QuickFix[] fixes = problem.getFixes();
       if (fixes != null) {
@@ -158,14 +125,14 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to nonexistent
    * method parameter or non-declared checked exception). Another one handles all other cases (parameter documentation is missing;
    * parameter doesn't have a description etc). This method handles result of the second exception
-   * 
-   * @param problems  detected problems
-   * @param comment   target comment to fix
-   * @param document  target document which contains text of the comment being fixed
-   * @param project   current project
+   *
+   * @param problems detected problems
+   * @param comment  target comment to fix
+   * @param document target document which contains text of the comment being fixed
+   * @param project  current project
    */
   @SuppressWarnings("unchecked")
-  private static void fixCommonProblems(@NotNull ProblemDescriptor[] problems,
+  private static void fixCommonProblems(@NotNull List<ProblemDescriptor> problems,
                                         @NotNull PsiComment comment,
                                         @NotNull final Document document,
                                         @NotNull Project project)
@@ -194,7 +161,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
         }
       }
     }
-    
+
     if (toRemove.isEmpty()) {
       return;
     }
@@ -297,7 +264,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   private static Pair<TextRange, String> parseTagValue(@NotNull PsiDocTag tag, @NotNull Document document) {
     PsiDocTagValue valueElement = tag.getValueElement();
     assert valueElement != null;
-    
+
     int startOffset = valueElement.getTextRange().getStartOffset();
     int endOffset = tag.getTextRange().getEndOffset();
     // Javadoc PSI is rather weird...
@@ -306,10 +273,10 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     if (i > 0 && text.charAt(i) == '\n') {
       endOffset = i;
     }
-    
+
     return Pair.create(TextRange.create(startOffset, endOffset), text.subSequence(startOffset, endOffset).toString());
   }
-  
+
   private static void locateCaret(@NotNull PsiDocComment comment, @NotNull Editor editor, @NotNull PsiFile file) {
     Document document = editor.getDocument();
     int lineToNavigate = -1;
@@ -320,16 +287,14 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       }
       boolean good = false;
       PsiElement[] dataElements = tag.getDataElements();
-      if (dataElements != null) {
-        PsiDocTagValue valueElement = tag.getValueElement();
-        for (PsiElement element : dataElements) {
-          if (element == valueElement) {
-            continue;
-          }
-          if (!StringUtil.isEmptyOrSpaces(element.getText())) {
-            good = true;
-            break;
-          }
+      PsiDocTagValue valueElement = tag.getValueElement();
+      for (PsiElement element : dataElements) {
+        if (element == valueElement) {
+          continue;
+        }
+        if (!StringUtil.isEmptyOrSpaces(element.getText())) {
+          good = true;
+          break;
         }
       }
       if (!good) {

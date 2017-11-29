@@ -191,6 +191,7 @@ public class StdArrangementTokens {
     @NotNull public static final ArrangementSettingsToken PACKAGE_PRIVATE = invertible("PACKAGE_PRIVATE", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken STATIC          = invertible("STATIC", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken FINAL           = invertible("FINAL", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken READONLY        = invertible("READONLY", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken TRANSIENT       = invertible("TRANSIENT", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken VOLATILE        = invertible("VOLATILE", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", StdArrangementTokenType.MODIFIER);

@@ -110,7 +110,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     }
     return root;
   }
- 
+
   private static void fixPlatformSpecificValues(@NotNull Element root) {
     List<Element> fontOptions = new ArrayList<>(root.getChildren("option"));
     for (Element option : fontOptions) {

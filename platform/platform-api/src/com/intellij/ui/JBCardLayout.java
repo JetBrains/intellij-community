@@ -33,9 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JBCardLayout extends CardLayout {
   public enum SwipeDirection {FORWARD, BACKWARD, AUTO}
 

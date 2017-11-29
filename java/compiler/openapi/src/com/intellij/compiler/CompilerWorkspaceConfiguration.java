@@ -46,6 +46,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public int COMPILER_PROCESS_HEAP_SIZE = 700;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
   public boolean REBUILD_ON_DEPENDENCY_CHANGE = true;
+  public boolean COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = true;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

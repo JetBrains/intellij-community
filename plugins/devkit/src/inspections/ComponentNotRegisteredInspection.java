@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,21 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -39,6 +45,7 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.util.Map;
 import java.util.Set;
 
 public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
@@ -52,8 +59,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 
     final JCheckBox ignoreNonPublic = new JCheckBox(
-            DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
-            IGNORE_NON_PUBLIC);
+      DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
+      IGNORE_NON_PUBLIC);
     ignoreNonPublic.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         IGNORE_NON_PUBLIC = ignoreNonPublic.isSelected();
@@ -61,8 +68,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     });
 
     final JCheckBox checkJavaActions = new JCheckBox(
-            DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
-            CHECK_ACTIONS);
+      DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
+      CHECK_ACTIONS);
     checkJavaActions.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         boolean selected = checkJavaActions.isSelected();
@@ -78,80 +85,115 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    PsiFile psiFile = checkedClass.getContainingFile();
     PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
-    if (checkedClass.getQualifiedName() != null &&
-        classIdentifier != null &&
-        psiFile != null &&
-        psiFile.getVirtualFile() != null &&
-        !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT))
-    {
-      if (PsiUtil.isInnerClass(checkedClass)) {
-        // don't check inner classes (make this an option?)
-        return null;
-      }
+    if (classIdentifier != null &&
+        checkedClass.getQualifiedName() != null &&
+        checkedClass.getContainingFile().getVirtualFile() != null &&
+        !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+        !checkedClass.isEnum() &&
+        !PsiUtil.isInnerClass(checkedClass)) {
 
-      PsiManager psiManager = checkedClass.getManager();
       GlobalSearchScope scope = checkedClass.getResolveScope();
 
-      if (CHECK_ACTIONS) {
-        PsiClass actionClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnAction.class.getName(), scope);
+      if (shouldCheckActionClass(checkedClass)) {
+        PsiClass actionClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(AnAction.class.getName(), scope);
         if (actionClass == null) {
           // stop if action class cannot be found (non-devkit module/project)
           return null;
         }
         if (checkedClass.isInheritor(actionClass, true)) {
-          if (IGNORE_NON_PUBLIC && !checkedClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-            return null;
-          }
           if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
             LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
-            ProblemDescriptor problem = manager.createProblemDescriptor(
-                    classIdentifier,
-                    DevKitBundle.message("inspections.component.not.registered.message",
-                                         DevKitBundle.message("new.menu.action.text")),
-                    fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+            ProblemDescriptor problem =
+              manager.createProblemDescriptor(classIdentifier,
+                                              DevKitBundle.message("inspections.component.not.registered.message",
+                                                                   DevKitBundle.message("new.menu.action.text")),
+                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             return new ProblemDescriptor[]{problem};
-          } else {
-            // action IS registered, stop here
-            return null;
           }
+          // action IS registered, stop here
+          return null;
         }
       }
 
-      ComponentType[] types = ComponentType.values();
-      for (ComponentType type : types) {
-        PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(type.myClassName, scope);
-        if (compClass == null) {
-          // stop if component classes cannot be found (non-devkit module/project)
+      PsiClass compClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(BaseComponent.class.getName(), scope);
+      if (compClass == null) {
+        // stop if component class cannot be found (non-devkit module/project)
+        return null;
+      }
+      if (!checkedClass.isInheritor(compClass, true)) {
+        return null;
+      }
+
+      for (ComponentType componentType : ComponentType.values()) {
+        if (!InheritanceUtil.isInheritor(checkedClass, componentType.myClassName)) {
+          continue;
+        }
+
+        if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
           return null;
         }
-        if (checkedClass.isInheritor(compClass, true)) {
-          if (RegistrationCheckerUtil.getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
-            LocalQuickFix fix = new RegisterComponentFix(type, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
-            ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
-                                                                              DevKitBundle.message("inspections.component.not.registered.message",
-                                                                                                   DevKitBundle.message(type.myPropertyKey)),
-                                                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-            return new ProblemDescriptor[]{problem};
-          } else {
-            // component IS registered, stop here
-            return null;
-          }
+
+        if (!canFix(checkedClass)) {
+          return null;
         }
+        LocalQuickFix fix = new RegisterComponentFix(componentType, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+        ProblemDescriptor problem =
+          manager.createProblemDescriptor(classIdentifier,
+                                          DevKitBundle.message("inspections.component.not.registered.message",
+                                                               DevKitBundle.message(componentType.myPropertyKey)),
+                                          fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+        return new ProblemDescriptor[]{problem};
       }
     }
     return null;
   }
 
-  private static boolean isActionRegistered(PsiClass psiClass) {
-    final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(psiClass, true);
-    if (registrationTypes != null) {
-      for (PsiClass type : registrationTypes) {
-        if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
-        if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
+  private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
+    ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
+      .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)
+      .put(ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT)
+      .put(ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT)
+      .build();
+
+  private static PsiClass findRegistrationType(@Nullable PsiClass checkedClass, RegistrationCheckerUtil.RegistrationType type) {
+    final Set<PsiClass> types = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, type);
+    return ContainerUtil.getFirstItem(types);
+  }
+
+  private boolean shouldCheckActionClass(PsiClass psiClass) {
+    if (!CHECK_ACTIONS) return false;
+    if (IGNORE_NON_PUBLIC && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+    return true;
+  }
+
+  private static boolean isActionRegistered(PsiClass actionClass) {
+    final PsiClass registrationType = findRegistrationType(actionClass, RegistrationCheckerUtil.RegistrationType.ACTION);
+    if (registrationType != null) {
+      return true;
+    }
+
+    // search code usages: 1) own CTOR calls  2) usage via "new ActionClass()"
+    for (PsiMethod method : actionClass.getConstructors()) {
+      final Query<PsiReference> search = MethodReferencesSearch.search(method);
+      if (search.findFirst() != null) {
+        return true;
       }
     }
+
+    final Query<PsiReference> search = ReferencesSearch.search(actionClass);
+    for (PsiReference reference : search) {
+      if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
+
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);
+      if (newExpression != null) {
+        final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+        if (classReference != null && classReference.getQualifiedName().equals(actionClass.getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -160,6 +202,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
-    return PluginModuleType.isPluginModuleOrDependency(module);
+    return PluginModuleType.isPluginModuleOrDependency(module) ||
+           module != null && org.jetbrains.idea.devkit.util.PsiUtil.isPluginModule(module);
   }
 }

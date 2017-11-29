@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +18,8 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -42,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Tagir Valeev
  */
-public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + OptionalIsPresentInspection.class.getName());
+public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(OptionalIsPresentInspection.class);
 
   private static final OptionalIsPresentCase[] CASES = {
     new ReturnCase(),
@@ -135,7 +125,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (statement == null) {
       PsiStatement thenStatement = extractThenStatement(ifStatement, false);
       if (thenStatement instanceof PsiReturnStatement) {
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement);
         if (nextElement instanceof PsiStatement) {
           statement = ControlFlowUtils.stripBraces((PsiStatement)nextElement);
         }
@@ -189,8 +179,14 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       return isOptionalGetCall(e.getParent().getParent(), optionalVariable);
     });
     if(!hasNoBadRefs) return ProblemType.NONE;
-    if(hasOptionalReference.get() && lambdaCandidate instanceof PsiExpression) return ProblemType.WARNING;
-    return ProblemType.INFO;
+    if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
+    PsiExpression expression = (PsiExpression)lambdaCandidate;
+    if (falseExpression != null && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+      // falseExpression == null is "consumer" case (to be replaced with ifPresent()),
+      // in this case we don't care about expression nullness
+      return ProblemType.INFO;
+    }
+    return ProblemType.WARNING;
   }
 
   @NotNull
@@ -198,10 +194,8 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     PsiType type = optionalVariable.getType();
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(trueValue.getProject());
     SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-    if (info.names.length == 0) {
-      info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, "value", null, type);
-    }
-    String paramName = javaCodeStyleManager.suggestUniqueVariableName(info, trueValue, true).names[0];
+    String baseName = ObjectUtils.coalesce(ArrayUtil.getFirstElement(info.names), "value");
+    String paramName = javaCodeStyleManager.suggestUniqueVariableName(baseName, trueValue, true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
@@ -360,8 +354,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
       PsiExpression trueExpression = (PsiExpression)trueElement;
       PsiExpression falseExpression = (PsiExpression)falseElement;
-      return (isSimpleOrUnchecked(falseExpression)) ?
-             getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression) : ProblemType.NONE;
+      PsiType trueType = trueExpression.getType();
+      PsiType falseType = falseExpression.getType();
+      if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
+        return ProblemType.NONE;
+      }
+      return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
     }
 
     @Override

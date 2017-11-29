@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -85,7 +85,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   public GroovyDslFileIndex() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         final VirtualFile file = event.getFile();
@@ -154,7 +154,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     app.invokeLater(() -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.putUserData(SCRIPTS_CACHE, null);
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        PsiManagerEx.getInstanceEx(project).dropPsiCaches();
       }
     }, app.getDisposed());
   }
@@ -354,7 +354,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static List<GroovyDslScript> getDslScripts(final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, () -> {
       if (GdslUtil.ourGdslStopped) {
-        return CachedValueProvider.Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
+        return CachedValueProvider.Result.create(Collections.emptyList(), ModificationTracker.NEVER_CHANGED);
       }
 
       // eagerly initialize some services used by background gdsl parsing threads

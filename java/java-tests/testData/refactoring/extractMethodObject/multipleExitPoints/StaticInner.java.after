@@ -3,8 +3,8 @@ class Test {
       int i = 0;
 
        Inner inner = new Inner(i).invoke();
-       int k = inner.getK();
        int j = inner.getJ();
+       int k = inner.getK();
       
       int m = k + j;
    }

@@ -30,13 +30,6 @@ public class GroovyUnreachableStatementInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return VALIDITY_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Unreachable Statement";
   }

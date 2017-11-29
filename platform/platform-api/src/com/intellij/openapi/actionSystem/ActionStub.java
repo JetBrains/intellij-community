@@ -85,9 +85,9 @@ public class ActionStub extends AnAction{
   }
 
   /**
-   * Copies template presentation and shortcuts set to <code>targetAction</code>.
+   * Copies template presentation and shortcuts set to {@code targetAction}.
    *
-   * @param targetAction cannot be <code>null</code>
+   * @param targetAction cannot be {@code null}
    */
   public final void initAction(@NotNull AnAction targetAction) {
     Presentation sourcePresentation = getTemplatePresentation();

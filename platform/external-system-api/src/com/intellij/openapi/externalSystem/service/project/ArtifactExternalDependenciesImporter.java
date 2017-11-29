@@ -31,7 +31,7 @@ import java.util.List;
  */
 public interface ArtifactExternalDependenciesImporter {
   @Nullable
-  public ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context);
+  ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context);
 
   List<PackagingElement<?>> getExternalDependenciesList(@NotNull Artifact artifact);
 

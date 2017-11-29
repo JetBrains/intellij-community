@@ -35,6 +35,10 @@ public class FocusTracesAction extends AnAction implements DumbAware {
   private static boolean myActive = false;
   private AWTEventListener myFocusTracker;
 
+  public FocusTracesAction() {
+    setEnabledInModalContext(true);
+  }
+
   public static boolean isActive() {
     return myActive;
   }

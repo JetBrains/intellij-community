@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * User: cdr
- */
 public class UsageDataUtil {
   @Nullable
   public static VirtualFile[] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
@@ -318,7 +320,9 @@ public abstract class EditorComposite implements Disposable {
     }
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
-      wrapper.setBorder(createTopBottomSideBorder(top));
+      if (!Boolean.TRUE.equals(component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED))) {
+        wrapper.setBorder(createTopBottomSideBorder(top));
+      }
       container.add(wrapper, calcComponentInsertionIndex(component, container));
     }
     container.revalidate();
@@ -442,7 +446,9 @@ public abstract class EditorComposite implements Disposable {
     @Override
     public void requestFocus() {
       if (myFocusComponent != null) {
-        myFocusComponent.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true);
+        });
       }
     }
 
@@ -515,7 +521,9 @@ public abstract class EditorComposite implements Disposable {
     return new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP) {
       @Override
       public Color getLineColor() {
-        Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);
+        if (result == null) result = scheme.getColor(EditorColors.TEARLINE_COLOR);
         return result == null ? JBColor.BLACK : result;
       }
     };

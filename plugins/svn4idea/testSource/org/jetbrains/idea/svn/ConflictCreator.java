@@ -36,12 +36,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 2:02 PM
- */
 public class ConflictCreator {
   private final Project myProject;
   private final VirtualFile myTheirsDir;

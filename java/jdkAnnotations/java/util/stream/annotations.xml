@@ -1,0 +1,20 @@
+<root>
+    <item name='java.util.stream.BaseStream S onClose(java.lang.Runnable)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.stream.BaseStream S parallel()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.stream.BaseStream S sequential()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.stream.BaseStream S unordered()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.stream.BaseStream java.util.Iterator&lt;T&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.stream.BaseStream java.util.Spliterator&lt;T&gt; spliterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+</root>

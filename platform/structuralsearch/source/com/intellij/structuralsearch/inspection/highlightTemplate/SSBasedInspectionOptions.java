@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,18 +71,10 @@ public class SSBasedInspectionOptions {
     if (!dialog.showAndGet()) {
       return;
     }
-    Configuration configuration = dialog.getConfiguration();
 
-    if (configuration.getName() == null || configuration.getName().equals(SearchDialog.USER_DEFINED)) {
-      String name = dialog.showSaveTemplateAsDialog();
-
-      if (name != null) {
-        name = ConfigurationManager.findAppropriateName(myConfigurations, name, dialog.getProject());
-      }
-      if (name == null) return;
-      configuration.setName(name);
+    if (!ConfigurationManager.showSaveTemplateAsDialog(myConfigurations, dialog.getConfiguration(), dialog.getProject())) {
+      return;
     }
-    myConfigurations.add(configuration);
 
     configurationsChanged(dialog.getSearchContext());
   }
@@ -253,8 +245,7 @@ public class SSBasedInspectionOptions {
     }
     final Configuration newConfiguration = dialog.getConfiguration();
     final int index = myConfigurations.indexOf(configuration);
-    myConfigurations.remove(index);
-    myConfigurations.add(index, newConfiguration);
+    myConfigurations.set(index, newConfiguration);
     final SearchContext context = dialog.getSearchContext();
     SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
     configurationsChanged(context);

@@ -36,8 +36,7 @@ public class MockDelayingChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
-                         @NotNull final ChangeListManagerGate addGate)
-    throws VcsException {
+                         @NotNull final ChangeListManagerGate addGate) {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
         return;
@@ -62,14 +61,12 @@ public class MockDelayingChangeProvider implements ChangeProvider {
       if (runnable == null) {
         myExecuteInsideUpdate = null;
       } else {
-        myExecuteInsideUpdate = new Thread(new Runnable() {
-          public void run() {
-            // wait until starter sleeps
-            synchronized (myLock) {
-              runnable.run();
-            }
+        myExecuteInsideUpdate = new Thread(() -> {
+          // wait until starter sleeps
+          synchronized (myLock) {
+            runnable.run();
           }
-        },"vcs delaying execute");
+        }, "vcs delaying execute");
       }
     }
   }

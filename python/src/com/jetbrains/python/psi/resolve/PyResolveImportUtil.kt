@@ -82,8 +82,8 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val pythonResults = listOf(relativeResults,
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
-  val allResults = foreignResults + pythonResults
-  val results = if (name.componentCount > 0) foreignResults + findFirstResults(pythonResults) else allResults
+  val allResults = pythonResults + foreignResults
+  val results = if (name.componentCount > 0) findFirstResults(pythonResults) + foreignResults else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -119,7 +119,7 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
     if (component == null) empty
     else seekers.flatMap {
       val children = ResolveImportUtil.resolveChildren(it, component, context.footholdFile, !context.withMembers,
-                                                       !context.withPlainDirectories, context.withoutStubs)
+                                                       !context.withPlainDirectories, context.withoutStubs, context.withoutForeign)
       PyUtil.filterTopPriorityResults(children.toTypedArray())
     }
   }
@@ -184,7 +184,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
         val sdk = PythonSdkType.findPythonSdk(footholdFile) ?: return emptyList()
         val skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
-        return resolveModuleAt(absoluteName, skeletonsDir, context)
+        return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
       }
     }
   }
@@ -250,9 +250,10 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 
   val visitor = RootVisitor { root, module, sdk, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
+    val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
         root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
-        sdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, sdk)) {
+        effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }
     results.addAll(resolveInRoot(name, root, context))
@@ -313,7 +314,7 @@ private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? 
     context.module != null ->
       if (context.effectiveSdk != context.sdk) null else PythonModulePathCache.getInstance(context.module)
     context.footholdFile != null -> {
-      val sdk = PyBuiltinCache.findSdkForNonModuleFile(context.footholdFile)
+      val sdk = PyBuiltinCache.findSdkForNonModuleFile(context.footholdFile!!)
       if (sdk != null) PythonSdkPathCache.getInstance(context.project, sdk) else null
     }
     else -> null

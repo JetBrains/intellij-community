@@ -149,23 +149,23 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
-  public void testRuby14864() throws Throwable {
+  public void testRuby14864() {
     doTest();
   }
 
-  public void testRuby15402() throws Throwable {
+  public void testRuby15402() {
     doTest();
   }
 
-  public void testRuby17389() throws Throwable {
+  public void testRuby17389() {
     doTest();
   }
 
-  public void testRuby19105() throws Throwable {
+  public void testRuby19105() {
     doTest();
   }
 
-  public void testEmptyMultiline() throws Throwable {
+  public void testEmptyMultiline() {
     doTest();
   }
 

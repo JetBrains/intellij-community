@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.siyeh.ig.naming;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,22 +64,25 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
-      int functionalIndex = -1;
+      final IntArrayList functionalIndices = new IntArrayList(2);
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         if (LambdaUtil.isFunctionalType(parameter.getType())) {
-          functionalIndex = i;
-          break;
+          functionalIndices.add(i);
         }
       }
-       if (functionalIndex < 0) {
-         return;
-       }
+      if (functionalIndices.isEmpty()) {
+        return;
+      }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return;
       }
+      if (MethodUtils.hasSuper(method)) {
+        return;
+      }
       final String name = method.getName();
+      outer:
       for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, true)) {
         if (method.equals(sameNameMethod) || PsiSuperMethodUtil.isSuperMethod(method, sameNameMethod)) {
           continue;
@@ -87,18 +92,29 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
           continue;
         }
         final PsiParameter[] otherParameters = otherParameterList.getParameters();
-        final PsiType otherFunctionalType = otherParameters[functionalIndex].getType();
-        final PsiType functionalType = parameters[functionalIndex].getType();
-        if (!areOtherParameterTypesConvertible(parameters, otherParameters, functionalIndex) ||
-            !LambdaUtil.isFunctionalType(otherFunctionalType) ||
-            Objects.equals(functionalType, otherFunctionalType)) {
+        if (!areOtherParameterTypesConvertible(parameters, otherParameters, functionalIndices)) {
+          continue;
+        }
+        final int max = functionalIndices.size();
+        boolean equalTypes = true;
+        for (int i = 0; i < max; i++) {
+          final int index = functionalIndices.get(i);
+          final PsiType otherFunctionalType = otherParameters[index].getType();
+          if (!LambdaUtil.isFunctionalType(otherFunctionalType)) {
+            continue outer;
+          }
+          final PsiType functionalType = parameters[index].getType();
+          if (!areSameShapeFunctionalTypes(functionalType, otherFunctionalType)) {
+            continue outer;
+          }
+          equalTypes &= Objects.equals(TypeConversionUtil.erasure(functionalType), TypeConversionUtil.erasure(otherFunctionalType));
+        }
+        if (equalTypes) {
           continue;
         }
 
-        if (areSameShapeFunctionalTypes(functionalType, otherFunctionalType)) {
-          registerMethodError(method, method);
-          return;
-        }
+        registerMethodError(method, method);
+        return;
       }
     }
 
@@ -116,9 +132,10 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
       return method1.getParameterList().getParametersCount() == method2.getParameterList().getParametersCount();
     }
 
-    private static boolean areOtherParameterTypesConvertible(PsiParameter[] parameters, PsiParameter[] otherParameters, int notThisOne) {
+    private static boolean areOtherParameterTypesConvertible(PsiParameter[] parameters, PsiParameter[] otherParameters,
+                                                             IntArrayList ignores) {
       for (int i = 0; i < parameters.length; i++) {
-        if (i == notThisOne) {
+        if (ignores.contains(i)) {
           continue;
         }
         final PsiType type = TypeConversionUtil.erasure(parameters[i].getType());

@@ -81,10 +81,10 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
    *   def foo(a) {}
    *   def foo() {}
    * </pre>
-   * Initializer for '<code>a</code>' is used only when <code>foo</code> called without arguments,
-   * we do not care if <code>foo</code> is called with one, two ot three arguments.
+   * Initializer for '{@code a}' is used only when {@code foo} called without arguments,
+   * we do not care if {@code foo} is called with one, two ot three arguments.
    * <p>
-   * In case of <code>b</code> we search <code>foo()</code> or <code>foo(1)</code> calls.
+   * In case of {@code b} we search {@code foo()} or {@code foo(1)} calls.
    * <p>
    * The general idea: search usages of last N reflected methods where N is number of current parameter among other default parameters.
    */

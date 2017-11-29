@@ -30,6 +30,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUI.ScaleContextAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +39,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+
+import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static java.lang.Math.ceil;
 
 
 /**
@@ -51,7 +56,7 @@ public class IconUtil {
     if (was == null) {
       if (project.isInitialized()) {
         was = true;
-        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, was);
+        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, true);
       }
       else {
         was = false;
@@ -67,28 +72,35 @@ public class IconUtil {
       return icon;
     }
 
-    final int w = Math.min(icon.getIconWidth(), maxWidth);
-    final int h = Math.min(icon.getIconHeight(), maxHeight);
+    Image image = toImage(icon);
+    if (image == null) return icon;
 
-    final BufferedImage image = GraphicsEnvironment
-      .getLocalGraphicsEnvironment()
-      .getDefaultScreenDevice()
-      .getDefaultConfiguration()
-      .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
-    icon.paintIcon(new JPanel(), g, 0, 0);
-    g.dispose();
+    double scale = 1f;
+    if (image instanceof JBHiDPIScaledImage) {
+      scale = ((JBHiDPIScaledImage)image).getScale();
+      image = ((JBHiDPIScaledImage)image).getDelegate();
+    }
+    BufferedImage bi = ImageUtil.toBufferedImage(image);
+    final Graphics2D g = bi.createGraphics();
+
+    int imageWidth = ImageUtil.getRealWidth(image);
+    int imageHeight = ImageUtil.getRealHeight(image);
+
+    final int w = Math.min(imageWidth, maxWidth);
+    final int h = Math.min(imageHeight, maxHeight);
+    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxWidth * scale);
+    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxHeight * scale);
 
     final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
-    final int offX = icon.getIconWidth() > maxWidth ? (icon.getIconWidth() - maxWidth) / 2 : 0;
-    final int offY = icon.getIconHeight() > maxHeight ? (icon.getIconHeight() - maxHeight) / 2 : 0;
+    final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;
+    final int offY = imageHeight > maxHeight ? (imageHeight - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
       for (int row = 0; row < h; row++) {
-        img.setRGB(col, row, image.getRGB(col + offX, row + offY));
+        img.setRGB(col, row, bi.getRGB(col + offX, row + offY));
       }
     }
-
-    return new ImageIcon(img);
+    g.dispose();
+    return new JBImageIcon(RetinaImage.createFrom(img, scale, null));
   }
 
   @NotNull
@@ -132,7 +144,7 @@ public class IconUtil {
 
   private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
     final VirtualFile file = key.getFile();
-    final int flags = key.getFlags();
+    final int flags = filterFileIconFlags(file, key.getFlags());
     final Project project = key.getProject();
 
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
@@ -162,6 +174,15 @@ public class IconUtil {
 
     return icon;
   };
+
+  @Iconable.IconFlags
+  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
+    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
+    int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
+    int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
+    //noinspection MagicConstant
+    return flags & ~flagIgnoreMask;
+  }
 
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
@@ -202,6 +223,7 @@ public class IconUtil {
     private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
   }
 
+  @NotNull
   private static FileIconProvider[] getProviders() {
     return FileIconProviderHolder.myProviders;
   }
@@ -210,6 +232,7 @@ public class IconUtil {
     private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
   }
 
+  @NotNull
   private static FileIconPatcher[] getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
   }
@@ -428,15 +451,63 @@ public class IconUtil {
 
   /**
    * Returns a scaled icon instance.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * In the following example:
+   * <pre>
+   * Icon myIcon = new MyIcon();
+   * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
+   * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
+   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth()); // compare the scale of the icons
+   * </pre>
+   * The result of the assertion depends on {@code MyIcon} implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
+   * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
+   * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
+   * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
+   * But recursive scale should better be avoided.
    *
    * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
    * @param scale the scale factor
-   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
    * @return the scaled icon
    */
   @NotNull
-  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
-    if (smartScale && icon instanceof ScalableIcon) {
+  public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof ScaleContextAware) {
+        ((ScaleContextAware)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
+      }
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
+  }
+
+  /**
+   * Returns a scaled icon instance, in scale of the provided font size.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * Refer to {@link #scale(Icon, Component, float)} for more details.
+   *
+   * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
+   * @param fontSize the reference font size
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
+    float scale = JBUI.getFontScale(fontSize);
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof ScaleContextAware) {
+        ScaleContextAware ctxIcon = (ScaleContextAware)icon;
+        ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
+        // take into account the user scale of the icon
+        double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
+        scale /= usrScale;
+      }
       return ((ScalableIcon)icon).scale(scale);
     }
     return scale(icon, scale);
@@ -579,12 +650,12 @@ public class IconUtil {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {
-        return getImage() instanceof JBHiDPIScaledImage ? super.getIconWidth() / 2 : super.getIconWidth();
+        return ImageUtil.getUserWidth(getImage());
       }
 
       @Override
       public int getIconHeight() {
-        return getImage() instanceof JBHiDPIScaledImage ? super.getIconHeight() / 2: super.getIconHeight();
+        return ImageUtil.getUserHeight(getImage());
       }
     };
   }

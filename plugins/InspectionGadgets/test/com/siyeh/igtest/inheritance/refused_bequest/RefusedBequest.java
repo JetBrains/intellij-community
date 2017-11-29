@@ -41,3 +41,9 @@ class E extends C {
     r.run();
   }
 }
+class Deny extends ArrayList {
+  @Override
+  public int size() {
+    throw new UnsupportedOperationException();
+  }
+}

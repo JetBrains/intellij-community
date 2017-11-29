@@ -35,11 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class RngReferenceConverter implements CustomReferenceConverter {
   @Override
   @NotNull

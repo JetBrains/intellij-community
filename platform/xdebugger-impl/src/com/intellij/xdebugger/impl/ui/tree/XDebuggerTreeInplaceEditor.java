@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
@@ -27,6 +28,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.tree.TreePath;
 
@@ -41,7 +43,8 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   public XDebuggerTreeInplaceEditor(final XDebuggerTreeNode node, @NonNls final String historyId) {
     myNode = node;
     myTree = myNode.getTree();
-    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition(), false);
+    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId,
+                                                         myTree.getSourcePosition(), false, true);
   }
 
   @Override
@@ -144,5 +147,18 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   @Override
   protected Project getProject() {
     return myNode.getTree().getProject();
+  }
+
+  protected final int getAfterIconX() {
+    Icon icon = myNode.getIcon();
+    if (icon != null) {
+      SimpleColoredComponent iconLabel = new SimpleColoredComponent();
+      iconLabel.getIpad().right = 0;
+      iconLabel.getIpad().left = 0;
+      iconLabel.setIcon(myNode.getIcon());
+      Border border = iconLabel.getMyBorder();
+      return iconLabel.getPreferredSize().width - (border != null ? border.getBorderInsets(iconLabel).right : 0);
+    }
+    return 0;
   }
 }

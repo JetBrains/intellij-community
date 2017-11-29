@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
  */
 public class ThreadInvocationHandler implements InvocationHandler {
 
-  private static final Logger LOG = Logger.getInstance("#" + ThreadInvocationHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ThreadInvocationHandler.class);
 
   private final ExecutorService myTaskExecutor;
   private final ClassLoader myCallerClassLoader;

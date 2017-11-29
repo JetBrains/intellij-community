@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class WhiteSpaceFormattingStrategyFactory {
 
-  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
+  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.asList(
     new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n')
   );
 

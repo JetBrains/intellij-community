@@ -323,22 +323,29 @@ public class GitMergeProvider implements MergeProvider2 {
     assert repository != null;
 
     File rebaseApply = repository.getRepositoryFiles().getRebaseApplyDir();
-    GitRevisionNumber rebaseRevision = readRevisionFromFile(new File(rebaseApply, "original-commit"));
+    GitRevisionNumber rebaseRevision = readRevisionFromFile(root, new File(rebaseApply, "original-commit"));
     if (rebaseRevision != null) return rebaseRevision;
 
     File rebaseMerge = repository.getRepositoryFiles().getRebaseMergeDir();
-    GitRevisionNumber mergeRevision = readRevisionFromFile(new File(rebaseMerge, "stopped-sha"));
+    GitRevisionNumber mergeRevision = readRevisionFromFile(root, new File(rebaseMerge, "stopped-sha"));
     if (mergeRevision != null) return mergeRevision;
 
     return null;
   }
 
   @Nullable
-  private static GitRevisionNumber readRevisionFromFile(@NotNull File file) {
+  private GitRevisionNumber readRevisionFromFile(@NotNull VirtualFile root, @NotNull File file) {
     if (!file.exists()) return null;
     String revision = DvcsUtil.tryLoadFileOrReturn(file, null, CharsetToolkit.UTF8);
     if (revision == null) return null;
-    return new GitRevisionNumber(revision);
+
+    try {
+      return GitRevisionNumber.resolve(myProject, root, revision);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't resolve revision  '" + revision + "' in " + root + ": " + e.getMessage());
+      return null;
+    }
   }
 
   @Nullable

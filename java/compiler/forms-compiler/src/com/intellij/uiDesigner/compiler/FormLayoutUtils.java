@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 25.07.2006
- * Time: 18:27:54
- */
 package com.intellij.uiDesigner.compiler;
 
 import com.jgoodies.forms.layout.FormLayout;

@@ -25,7 +25,6 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class DigesterTest extends UpdaterTestCase {
-
   @Test
   public void testBasics() throws Exception {
     Digester digester = new Digester(null);
@@ -35,7 +34,6 @@ public class DigesterTest extends UpdaterTestCase {
     assertEquals(Digester.DIRECTORY, digester.digestRegularFile(libDir, true));
 
     assertEquals(CHECKSUMS.README_TXT, digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
-    assertEquals(CHECKSUMS.FOCUS_KILLER_DLL, digester.digestRegularFile(new File(binDir, "focuskiller.dll"), false));
     assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BIN, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
     assertEquals(CHECKSUMS.ANNOTATIONS_JAR, digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
     assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
@@ -53,7 +51,6 @@ public class DigesterTest extends UpdaterTestCase {
   public void testMD5() throws Exception {
     Digester digester = new Digester("md5");
     assertEquals(MD5CHECKSUMS.README_TXT, digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
-    assertEquals(MD5CHECKSUMS.FOCUS_KILLER_DLL, digester.digestRegularFile(new File(dataDir, "/bin/focuskiller.dll"), false));
     assertEquals(MD5CHECKSUMS.BOOTSTRAP_JAR, digester.digestZipFile(new File(dataDir, "/lib/bootstrap.jar")));
     assertEquals(MD5CHECKSUMS.BOOTSTRAP_JAR_BINARY, digester.digestRegularFile(new File(dataDir, "/lib/bootstrap.jar"), false));
   }
@@ -66,7 +63,7 @@ public class DigesterTest extends UpdaterTestCase {
   }
 
   @Test
-  public void testHelpers() throws Exception {
+  public void testHelpers() {
     assertTrue(Digester.isFile(CHECKSUMS.README_TXT));
     assertTrue(Digester.isFile(CHECKSUMS.ANNOTATIONS_JAR));
     assertFalse(Digester.isFile(Digester.INVALID));

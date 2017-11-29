@@ -2,9 +2,9 @@
 # $1 - communityHome
 
 communityHome="$1"
-nsis="$communityHome/nsis"
+nsis="$communityHome/build/tools/nsis"
 nsisVersion=3.01
-scons="$communityHome/scons"
+scons="$communityHome/build/tools/scons"
 sconsVersion=2.5.0
 
 

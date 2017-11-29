@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,25 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
-import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
 import javax.swing.JTextField
-import javax.swing.event.DocumentEvent
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
   override fun getColumnClass() = Boolean::class.java
@@ -62,19 +60,25 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
     override fun getItemClass() = ReadonlySource::class.java
 
     override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
-      val dialogBuilder = DialogBuilder()
       val urlField = TextFieldWithBrowseButton(JTextField(20))
       urlField.addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()))
-      urlField.textField.document.addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(event: DocumentEvent) {
-          dialogBuilder.setOkActionEnabled(checkUrl(urlField.text.nullize()))
-        }
-      })
 
-      dialogBuilder.title("Add read-only source").resizable(false).centerPanel(FormBuilder.createFormBuilder().addLabeledComponent("URL:", urlField).panel).setPreferredFocusComponent(urlField)
-      if (dialogBuilder.showAndGet()) {
-        mutator.`fun`(item).url = urlField.text
+      val panel = panel {
+        row("URL:") {
+          urlField()
+        }
       }
+
+      dialog(title = "Add read-only source", panel = panel, focusedComponent = urlField) {
+        val url = urlField.text.nullize(true)
+        if (!validateUrl(url, null)) {
+          return@dialog false
+        }
+
+        mutator.`fun`(item).url = url
+        return@dialog true
+      }
+        .show()
     }
 
     override fun applyEdited(oldItem: ReadonlySource, newItem: ReadonlySource) {
@@ -119,7 +123,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           indicator.text = "Deleting old repositories"
           for (path in toDelete) {
             indicator.checkCanceled()
-            LOG.catchAndLog {
+            LOG.runAndLogException {
               indicator.text2 = path
               root.resolve(path).delete()
             }
@@ -129,7 +133,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         if (toCheckout.isNotEmpty()) {
           for (source in toCheckout) {
             indicator.checkCanceled()
-            LOG.catchAndLog {
+            LOG.runAndLogException {
               indicator.text = "Cloning ${source.url!!.trimMiddle(255)}"
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {

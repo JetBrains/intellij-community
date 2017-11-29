@@ -22,12 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
+public class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();

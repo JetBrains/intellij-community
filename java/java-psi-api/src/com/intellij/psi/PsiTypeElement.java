@@ -55,4 +55,17 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
    */
   @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
+
+
+  /**
+   * Returns {@code true} when a variable is declared as {@code var name;}
+   * 
+   * The actual type should be inferred according to the JEP 286: Local-Variable Type Inference
+   * (http://openjdk.java.net/jeps/286). 
+   * 
+   * Applicable to local variables with initializers, foreach parameters, try-with-resources variables 
+   */
+  default boolean isInferredType() {
+    return false;
+  }
 }

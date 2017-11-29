@@ -24,10 +24,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Andrey.Vokin
- * Date: 3/20/12
- */
 public abstract class AbstractIndentParser implements PsiParser {
   protected PsiBuilder myBuilder;
 

@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 21-Jun-2006
- */
 public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
 
   public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {

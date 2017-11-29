@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
@@ -104,7 +103,7 @@ final class ParamsValue implements Value {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null) return false;
+    if (!(o instanceof ParamsValue)) return false;
     ParamsValue that = (ParamsValue)o;
     return (this.size == that.size && Arrays.equals(this.params, that.params));
   }
@@ -133,7 +132,7 @@ final class IParamsValue implements Value {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null) return false;
+    if (!(o instanceof IParamsValue)) return false;
     IParamsValue that = (IParamsValue)o;
     return (this.size == that.size && this.params == that.params);
   }
@@ -309,7 +308,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   final int shift;
 
   IParametersUsage(MethodNode methodNode) {
-    super(Opcodes.API_VERSION);
+    super(API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
     shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
     rangeStart = shift;
@@ -472,6 +471,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
       case INVOKESPECIAL:
       case INVOKEVIRTUAL:
       case INVOKEINTERFACE:
+      case INVOKEDYNAMIC:
         for (IParamsValue value : values) {
           leaking |= value.params;
         }
@@ -540,14 +540,15 @@ class LeakingParametersCollector extends ParametersUsage {
       case AALOAD:
       case BALOAD:
       case CALOAD:
-      case SALOAD:
+      case SALOAD: {
         boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
         break;
-      case PUTFIELD:
-        params = value1.params;
+      }
+      case PUTFIELD: {
+        boolean[] params = value1.params;
         for (int i = 0; i < arity; i++) {
           leaking[i] |= params[i];
         }
@@ -556,6 +557,7 @@ class LeakingParametersCollector extends ParametersUsage {
           nullableLeaking[i] |= params[i];
         }
         break;
+      }
       default:
     }
     return super.binaryOperation(insn, value1, value2);

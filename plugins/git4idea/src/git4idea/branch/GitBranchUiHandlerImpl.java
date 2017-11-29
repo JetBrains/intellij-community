@@ -35,13 +35,10 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.ui.ChangesBrowserWithRollback;
-import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
@@ -133,17 +130,18 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     return myProgressIndicator;
   }
 
+  @NotNull
   @Override
-  public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
-                                      @NotNull String operation, @Nullable String forceButtonTitle) {
-    JComponent fileBrowser;
-    if (!changes.isEmpty()) {
-      fileBrowser = new ChangesBrowserWithRollback(project, changes);
-    }
-    else {
-      fileBrowser = new GitSimplePathsBrowser(project, paths);
-    }
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, forceButtonTitle);
+  public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
+                                                                 @NotNull List<Change> changes,
+                                                                 @NotNull Collection<String> paths,
+                                                                 @NotNull String operation,
+                                                                 @Nullable String forceButtonTitle) {
+    Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle));
+    });
+    return exitCode.get();
   }
 
   @Override
@@ -163,7 +161,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                                 @NotNull Collection<String> trackingBranches,
                                                                 @NotNull Collection<GitRepository> repositories) {
     String title = "Delete Remote Branch";
-    String message = "Delete remote branch " + branchName;
+    String message = "Delete remote branch " + branchName + "?";
 
     if (trackingBranches.isEmpty()) {
       return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;

@@ -20,11 +20,6 @@ import com.icl.saxon.om.NodeInfo;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.AbstractFrame;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 02.06.2007
- */
 class AbstractSaxonFrame<F extends Debugger.Frame, N extends NodeInfo> extends AbstractFrame<F> {
   protected final N myElement;
 

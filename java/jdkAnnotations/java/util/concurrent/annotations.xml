@@ -15,6 +15,9 @@
   <item name="java.util.concurrent.BlockingQueue int drainTo(java.util.Collection&lt;? super E&gt;, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; poll(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

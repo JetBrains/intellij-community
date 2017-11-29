@@ -25,13 +25,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.BlockUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveInitializerFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveInitializerFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoveInitializerFix.class);
 
   @Override
   @NotNull
@@ -90,8 +91,9 @@ public class RemoveInitializerFix implements LocalQuickFix {
           parent.replace(statementFromText);
         }
         else {
-          declaration.getParent().addBefore(statementFromText, declaration);
           elementToDelete.delete();
+          PsiElement grandParent = declaration.getParent();
+          BlockUtils.addBefore(((PsiStatement) (grandParent instanceof PsiForStatement ? grandParent : declaration)), statementFromText);
         }
       }
     });

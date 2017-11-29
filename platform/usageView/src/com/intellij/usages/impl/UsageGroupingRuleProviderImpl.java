@@ -17,6 +17,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -66,7 +67,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       rules.add(new UsageTypeGroupingRule());
     }
     if (supportsModuleRule() && UsageViewSettings.getInstance().GROUP_BY_MODULE) {
-      rules.add(new ModuleGroupingRule());
+      rules.add(new ModuleGroupingRule(project, UsageViewSettings.getInstance().FLATTEN_MODULES));
     }
     if (UsageViewSettings.getInstance().GROUP_BY_PACKAGE) {
       rules.add(DirectoryGroupingRule.getInstance(project));
@@ -111,6 +112,9 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       ContainerUtil.addIfNotNull(result, groupByUsageTypeAction);
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
+      if (supportsModuleRule()) {
+        result.add(new FlattenModulesAction(impl));
+      }
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
       ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
     }
@@ -174,6 +178,28 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     @Override
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_MODULE = value;
+    }
+  }
+
+  private static class FlattenModulesAction extends RuleAction {
+    private FlattenModulesAction(UsageViewImpl view) {
+      super(view, UsageViewBundle.message("action.flatten.modules"), AllIcons.ObjectBrowser.FlattenModules);
+    }
+
+    @Override
+    protected boolean getOptionValue() {
+      return UsageViewSettings.getInstance().FLATTEN_MODULES;
+    }
+
+    @Override
+    protected void setOptionValue(boolean value) {
+      UsageViewSettings.getInstance().FLATTEN_MODULES = value;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(UsageViewSettings.getInstance().GROUP_BY_MODULE);
     }
   }
 

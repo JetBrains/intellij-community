@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
  *         Date: Dec 19, 2007
  */
 abstract class PersistentMapTestBase extends TestCase {
+  protected static final Logger LOG = Logger.getInstance(PersistentMapTestBase.class);
   protected PersistentHashMap<String, String> myMap;
   protected File myFile;
   protected File myDataFile;
@@ -43,6 +45,7 @@ abstract class PersistentMapTestBase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     clearMap(myFile, myMap);
+    myMap = null;
     super.tearDown();
   }
 

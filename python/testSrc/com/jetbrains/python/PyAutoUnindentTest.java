@@ -15,11 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -29,35 +24,35 @@ import com.jetbrains.python.fixtures.PyTestCase;
  */
 public class PyAutoUnindentTest extends PyTestCase {
 
-  public void testSingleElse() throws Exception{
+  public void testSingleElse() {
     doTypingTest();
   }
 
-  public void testNestedElse() throws Exception{
+  public void testNestedElse() {
     doTypingTest();
   }
 
-  public void testMisplacedElse() throws Exception{
+  public void testMisplacedElse() {
     doTypingTest();
   }
 
-  public void testSimpleElif() throws Exception{
+  public void testSimpleElif() {
     doTypingTest();
   }
 
-  public void testInnerElif() throws Exception{
+  public void testInnerElif() {
     doTypingTest();
   }
 
-  public void testSimpleExcept() throws Exception{
+  public void testSimpleExcept() {
     doTypingTest();
   }
 
-  public void testSimpleFinally() throws Exception{
+  public void testSimpleFinally() {
     doTypingTest();
   }
 
-  public void testNestedFinally() throws Exception{
+  public void testNestedFinally() {
     doTypingTest();
   }
 
@@ -69,30 +64,10 @@ public class PyAutoUnindentTest extends PyTestCase {
 
 
 
-  private void doTypingTest() throws Exception {
+  private void doTypingTest() {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(':');
+    myFixture.type(':');
     myFixture.checkResultByFile(testName + ".after.py");
   }
-
-  private void doTyping(final char character) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-        return myFixture.getFile();
-      }
-    });
-  }
-
-  private void doCompletionTest() throws Exception {
-    final String testName = "editing/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    LookupElement[] variants = myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultByFile(testName + ".after.py");
-  }
-
 }

@@ -192,7 +192,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (!myFilteringPattern.equals(pattern)) {
       myFilteringPattern = pattern;
       myMatcher = NameUtil.buildMatcher("*" + pattern).build();
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
       if (getSelectedClass() == null && getRowCount() > 0) {
         getSelectionModel().setSelectionInterval(0, 0);
       }
@@ -202,21 +202,21 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   void setFilteringByInstanceExists(boolean value) {
     if (value != myOnlyWithInstances) {
       myOnlyWithInstances = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
   void setFilteringByDiffNonZero(boolean value) {
     if (myOnlyWithDiff != value) {
       myOnlyWithDiff = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
   void setFilteringByTrackingState(boolean value) {
     if (myOnlyTracked != value) {
       myOnlyTracked = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
@@ -262,13 +262,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     showContent();
 
-    if (newSelectedIndex != -1 && !myModel.isHided()) {
+    if (newSelectedIndex != -1 && !myModel.isHidden()) {
       final int ix = convertRowIndexToView(newSelectedIndex);
       changeSelection(ix,
                       DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
 
-    getRowSorter().allRowsChanged();
+    fireTableDataChanged();
   }
 
   @Nullable
@@ -296,13 +296,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   public void clean() {
-    if (!myItems.isEmpty()) {
-      clearSelection();
-      myItems = Collections.emptyList();
-      myCounts.clear();
-      myModel.mySelectedClassWhenHidden = null;
-      getRowSorter().allRowsChanged();
-    }
+    clearSelection();
+    myItems = Collections.emptyList();
+    myCounts.clear();
+    myModel.mySelectedClassWhenHidden = null;
+    fireTableDataChanged();
   }
 
   @Override
@@ -316,6 +314,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return myInstancesTracker.getTrackingType(ref.name());
   }
 
+  private void fireTableDataChanged() {
+    myModel.fireTableDataChanged();
+  }
 
   class DiffViewTableModel extends AbstractTableModelWithColumns {
     final static int CLASSNAME_COLUMN_INDEX = 0;
@@ -365,11 +366,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     void show() {
       if (!myIsWithContent) {
         myIsWithContent = true;
-        getRowSorter().allRowsChanged();
+        fireTableDataChanged();
       }
     }
 
-    boolean isHided() {
+    boolean isHidden() {
       return !myIsWithContent;
     }
 

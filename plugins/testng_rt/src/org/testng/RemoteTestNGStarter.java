@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Jul-2009
- */
 package org.testng;
 
 import com.beust.jcommander.JCommander;

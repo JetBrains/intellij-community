@@ -85,9 +85,12 @@ public class JsonFormattingTest extends JsonTestCase {
   }
 
   public void testRemoveTrailingCommas() {
-    getCustomCodeStyleSettings().REMOVE_TRAILING_COMMA = true;
     doTest();
   }
+
+  public void testReformatIncompleteJson1() { doTest();}
+
+  public void testReformatIncompleteJson2() { doTest();}
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".json");

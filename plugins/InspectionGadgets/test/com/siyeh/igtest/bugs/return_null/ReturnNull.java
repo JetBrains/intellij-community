@@ -13,3 +13,11 @@ public class ReturnNull
         return <warning descr="Return of 'null'">null</warning>;
     }
 }
+interface A<T> {
+    T m();
+}
+class B implements A<Void> {
+    public Void m() {
+        return  null;
+    }
+}

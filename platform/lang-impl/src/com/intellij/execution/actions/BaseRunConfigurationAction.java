@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
-  protected static final Logger LOG = Logger.getInstance("#" + BaseRunConfigurationAction.class.getName());
+  protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,10 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
 
 fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: CredentialsProvider? = null, progressMonitor: ProgressMonitor? = null): FetchResult? {
   try {
-    val transport = Transport.open(this, remoteConfig)
-    try {
+    Transport.open(this, remoteConfig).use { transport ->
       transport.credentialsProvider = credentialsProvider
       transport.isRemoveDeletedRefs = true
       return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
-    }
-    finally {
-      transport.close()
     }
   }
   catch (e: TransportException) {
@@ -90,18 +86,6 @@ fun Repository.disableAutoCrLf(): Repository {
   config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
   config.save()
   return this
-}
-
-fun createBareRepository(dir: Path): Repository {
-  val repository = FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build()
-  repository.create(true)
-  return repository
-}
-
-fun createGitRepository(dir: Path): Repository {
-  val repository = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
-  repository.create()
-  return repository
 }
 
 fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
@@ -369,4 +353,33 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
       close()
     }
   }
+}
+
+// FileRepositoryBuilder must be not used directly - using of system config must be disabled (no need, to avoid git exe discovering - it can cause https://youtrack.jetbrains.com/issue/IDEA-170795)
+fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path? = null, mustExists: Boolean = false): Repository {
+  return with(FileRepositoryBuilder().setUseSystemConfig(false)) {
+    if (bare) {
+      setBare()
+    }
+    else {
+      workTree?.let {
+        setWorkTree(it.toFile())
+      }
+    }
+    gitDir?.let {
+      setGitDir(gitDir.toFile())
+    }
+
+    isMustExist = mustExists
+
+    build()
+  }
+}
+
+fun buildBareRepository(gitDir: Path) = buildRepository(bare = true, gitDir = gitDir)
+
+fun createBareRepository(dir: Path): Repository {
+  val repository = buildRepository(bare = true, gitDir = dir)
+  repository.create(true)
+  return repository
 }

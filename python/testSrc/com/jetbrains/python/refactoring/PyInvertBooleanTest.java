@@ -40,7 +40,7 @@ public class PyInvertBooleanTest extends PyTestCase {
   public void testImport() { doTest(Lists.newArrayList("refactoring/invertBoolean/my_file.py")); }
 
   private void doTest() {
-    doTest(Lists.<String>newArrayList());
+    doTest(Lists.newArrayList());
   }
 
   private void doTest(List<String> files) {

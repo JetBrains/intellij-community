@@ -27,7 +27,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +106,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       return true;
     };
 
-    processGroovyClassUsages(clazz, searchScope, collector, newExpressionProcessor, literalProcessor);
+    processGroovyClassUsages(clazz, onlyGroovy, collector, newExpressionProcessor, literalProcessor);
 
     //this()
     if (clazz instanceof GrTypeDefinition) {

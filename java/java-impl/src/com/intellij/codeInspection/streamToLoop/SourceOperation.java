@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
@@ -107,6 +107,14 @@ abstract class SourceOperation extends Operation {
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
       return new ForEachSource(args[0]);
     }
+    if (name.equals("stream") &&
+        args.length == 3 &&
+        CommonClassNames.JAVA_UTIL_ARRAYS.equals(className) &&
+        args[0].getType() != null &&
+        PsiType.INT.equals(args[1].getType()) &&
+        PsiType.INT.equals(args[2].getType())) {
+      return new ArraySliceSource(args[0], args[1], args[2]);
+    }
     if (supportUnknownSources) {
       PsiType type = StreamApiUtil.getStreamElementType(call.getType(), false);
       if (type != null) {
@@ -175,19 +183,19 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String type = outVar.getType();
+      PsiType type = outVar.getType();
       String iterationParameter;
       PsiExpressionList argList = myCall.getArgumentList();
-      if (TypeConversionUtil.isPrimitive(type)) {
+      if (type instanceof PsiPrimitiveType) {
         // Not using argList.getExpressions() here as we want to preserve comments and formatting between the expressions
         PsiElement[] children = argList.getChildren();
         // first and last children are (parentheses), we need to remove them
         iterationParameter = StreamEx.of(children, 1, children.length - 1)
           .map(PsiElement::getText)
-          .joining("", "new " + type + "[] {", "}");
+          .joining("", "new " + type.getCanonicalText() + "[] {", "}");
       }
       else {
-        iterationParameter = "java.util.Arrays.<" + type + ">asList" + argList.getText();
+        iterationParameter = "java.util.Arrays.<" + type.getCanonicalText() + ">asList" + argList.getText();
       }
       return context.getLoopLabel() +
              "for(" + outVar.getDeclaration() + ": " + iterationParameter + ") {" + code + "}\n";
@@ -304,7 +312,7 @@ abstract class SourceOperation extends Operation {
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String bound = myBound.getText();
       if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
-        bound = context.declare("bound", outVar.getType(), bound);
+        bound = context.declare("bound", outVar.getType().getCanonicalText(), bound);
       }
       String loopVar = outVar.getName();
       String reassign = "";
@@ -313,10 +321,58 @@ abstract class SourceOperation extends Operation {
         reassign = outVar.getDeclaration(loopVar);
       }
       return context.getLoopLabel() +
-             "for(" + outVar.getType() + " " + loopVar + " = " + myOrigin.getText() + ";" +
+             "for(" + outVar.getType().getCanonicalText() + " " + loopVar + " = " + myOrigin.getText() + ";" +
              loopVar + (myInclusive ? "<=" : "<") + bound + ";" +
              loopVar + "++) {\n" +
              reassign +
+             code + "}\n";
+    }
+  }
+
+  static class ArraySliceSource extends SourceOperation {
+    private @NotNull PsiExpression myArray;
+    private @NotNull PsiExpression myOrigin;
+    private @NotNull PsiExpression myBound;
+    private @NotNull PsiType myArrayType;
+
+    ArraySliceSource(@NotNull PsiExpression array, @NotNull PsiExpression origin, @NotNull PsiExpression bound) {
+      myOrigin = origin;
+      myBound = bound;
+      myArray = array;
+      myArrayType = Objects.requireNonNull(myArray.getType());
+    }
+
+    @Override
+    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+      myOrigin = replaceVarReference(myOrigin, oldName, newName, context);
+      myBound = replaceVarReference(myBound, oldName, newName, context);
+      myArray = replaceVarReference(myArray, oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myOrigin);
+      consumer.accept(myBound);
+      consumer.accept(myArray);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String bound = myBound.getText();
+      String array = myArray.getText();
+      if (!ExpressionUtils.isSimpleExpression(context.createExpression(array))) {
+        array = context.declare("array", myArrayType.getCanonicalText(), array);
+      }
+      if (!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+        bound = context.declare("bound", "int", bound);
+      }
+      String loopVar = context.registerVarName(Arrays.asList("i", "j", "idx"));
+      String element = outVar.getDeclaration(array + "[" + loopVar + "]");
+      return context.getLoopLabel() +
+             "for(" + "int " + loopVar + " = " + myOrigin.getText() + ";" +
+             loopVar + "<" + bound + ";" +
+             loopVar + "++) {\n" +
+             element +
              code + "}\n";
     }
   }

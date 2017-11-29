@@ -98,7 +98,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
       if (localRepositoryInitializer == null) {
         try {
-          // we commit before even if sync "OVERWRITE_LOCAL" — preserve history and ability to undo
+          // we commit before even if sync "OVERWRITE_LOCAL" - preserve history and ability to undo
           repositoryManager.commit(indicator, syncType)
           // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
         }

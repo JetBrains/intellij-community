@@ -37,6 +37,7 @@ import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.*;
 import org.kohsuke.rngom.nc.NameClass;
@@ -355,6 +356,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern.hashCode();
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     if (myDeclaration != null) {

@@ -1,1 +1,1 @@
-.. note::
+.. attention::

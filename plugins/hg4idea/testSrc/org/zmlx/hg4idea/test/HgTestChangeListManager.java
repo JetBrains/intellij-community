@@ -86,13 +86,8 @@ public class HgTestChangeListManager {
     }
     final LocalChangeList list = peer.getDefaultChangeList();
     assertNotNull(list);
-    list.setComment("A comment to a commit");
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(list, changes));
-      }
-    });
+    peer.editComment(list.getName(), "A comment to a commit");
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> Assert.assertTrue(peer.commitChangesSynchronouslyWithResult(list, changes)));
     ensureUpToDate();
   }
 

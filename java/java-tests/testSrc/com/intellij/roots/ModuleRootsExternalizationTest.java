@@ -46,7 +46,7 @@ import java.util.Iterator;
 public class ModuleRootsExternalizationTest extends ModuleTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ExternalizationTest");
 
-  public void testEmptyModuleWrite() throws Exception {
+  public void testEmptyModuleWrite() {
     try {
       ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
       Element root = new Element("root");
@@ -65,7 +65,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
   }
 
-  public void testContentWrite() throws Exception {
+  public void testContentWrite() {
     File content = getTestRoot();
     File source = new File(content, "source");
     File testSource = new File(content, "testSource");
@@ -119,7 +119,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         module);
   }
 
-  public void testModuleLibraries() throws Exception {
+  public void testModuleLibraries() {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
@@ -172,7 +172,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "</root>", module);
   }
 
-  public void testCompilerOutputInheritance() throws Exception {
+  public void testCompilerOutputInheritance() {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =

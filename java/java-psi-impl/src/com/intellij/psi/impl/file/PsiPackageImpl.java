@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -85,9 +86,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return CachedValuesManager.getManager(myManager.getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
-      getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor, includeLibrarySources);
-      return CachedValueProvider.Result
-        .create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(PsiPackageImpl.this));
+      getFacade().processPackageDirectories(this, allScope(), processor, includeLibrarySources);
+      return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);
   }
 
@@ -101,6 +101,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] occursInPackagePrefixes() {
     return PsiPackageImplementationHelper.getInstance().occursInPackagePrefixes(this);
@@ -110,7 +111,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public PsiPackageImpl getParentPackage() {
     return (PsiPackageImpl)super.getParentPackage();
   }
-
 
   @Override
   protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
@@ -125,7 +125,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) || !getAllDirectories(true).isEmpty();
+    return !myManager.getProject().isDisposed() &&
+           (PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) ||
+            !getAllDirectories(true).isEmpty());
   }
 
   @Override
@@ -160,6 +162,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().getClasses(this, scope);
   }
 
+  @NotNull
   @Override
   public PsiFile[] getFiles(@NotNull GlobalSearchScope scope) {
     return getFacade().getPackageFiles(this, scope);
@@ -211,6 +214,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
+  @NotNull
   private PsiClass[] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {
@@ -303,11 +307,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (providedName != null) {
         final PsiClass[] classes = findClassByShortName(providedName, scope);
-        if (!processClasses(processor, state, classes, Conditions.<String>alwaysTrue())) return false;
+        if (!processClasses(processor, state, classes, Conditions.alwaysTrue())) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.<String>alwaysTrue())) return false;
+        if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.alwaysTrue())) return false;
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
@@ -344,7 +348,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         try {
           if (!processor.execute(aClass, state)) return false;
         }
-        catch (ProcessCanceledException e) {
+        catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
         }
         catch (Exception e) {

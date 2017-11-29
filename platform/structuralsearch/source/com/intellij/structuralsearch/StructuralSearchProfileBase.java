@@ -1,6 +1,20 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
-import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
@@ -27,7 +41,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -51,7 +64,6 @@ import java.util.regex.Pattern;
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String DELIMETER_CHARS = ",;.[]{}():";
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
-  private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
   public void compile(PsiElement[] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
@@ -127,19 +139,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   @NotNull
   @Override
-  public PsiElementVisitor getLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
-    if (myLexicalNodesFilter == null) {
-      myLexicalNodesFilter = new PsiElementVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          if (DuplocatorUtil.isIgnoredNode(element)) {
-            filter.setResult(true);
-          }
-        }
-      };
-    }
-    return myLexicalNodesFilter;
+  public NodeFilter getLexicalNodesFilter() {
+    return element -> DuplocatorUtil.isIgnoredNode(element);
   }
 
   public static boolean containsOnlyDelimeters(String s) {
@@ -500,7 +501,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       final Pattern[] patterns = new Pattern[prefixes.length];
 
       for (int i = 0; i < prefixes.length; i++) {
-        final String s = StructuralSearchUtil.shieldSpecialChars(prefixes[i]);
+        final String s = StructuralSearchUtil.shieldRegExpMetaChars(prefixes[i]);
         patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
       }
       return patterns;
@@ -575,7 +576,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
         if (descriptor1 != null && descriptor2 != null) {
           final boolean result = DuplocatorUtil
-            .match(descriptor1, descriptor2, myGlobalVisitor, Collections.<PsiElementRole>emptySet(), null);
+            .match(descriptor1, descriptor2, myGlobalVisitor, Collections.emptySet(), null);
           myGlobalVisitor.setResult(result);
           return;
         }

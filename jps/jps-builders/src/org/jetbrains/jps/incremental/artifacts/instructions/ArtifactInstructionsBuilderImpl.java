@@ -104,6 +104,23 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
     return FileCopyingHandler.DEFAULT;
   }
 
+  @NotNull
+  @Override
+  public FileCopyingHandler createCopyingHandler(@NotNull File file,
+                                                 @NotNull JpsPackagingElement contextElement,
+                                                 @NotNull ArtifactCompilerInstructionCreator instructionCreator) {
+    File targetDirectory = instructionCreator.getTargetDirectory();
+    if (targetDirectory == null) return FileCopyingHandler.DEFAULT;
+
+    for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
+      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, targetDirectory, contextElement, myModel, myBuildDataPaths);
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return FileCopyingHandler.DEFAULT;
+  }
+
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
                                                            @NotNull String pathInJar,
                                                            @NotNull SourceFileFilter filter,

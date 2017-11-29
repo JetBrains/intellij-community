@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
 
 package org.jetbrains.idea.devkit.dom;
 
@@ -68,7 +65,7 @@ public interface Action extends ActionOrGroup {
 	@Attribute ("class")
 	@Required
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
-            instantiatable = true, allowNonPublic = true, allowAbstract = false, allowInterface = false)
+		allowNonPublic = true, allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
@@ -91,14 +88,6 @@ public interface Action extends ActionOrGroup {
 	@Required
 	@Stubbed
 	GenericAttributeValue<String> getId();
-
-	///**
-	// * Returns the value of the overrides child.
-	// * Attribute overrides
-	// * @return the value of the overrides child.
-	// */
-	//@NotNull
-	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.
@@ -124,19 +113,6 @@ public interface Action extends ActionOrGroup {
 	 * @return created child
 	 */
 	MouseShortcut addMouseShortcut();
-
-
-	/**
-	 * Returns the list of shortcut children.
-	 * @return the list of shortcut children.
-	 */
-	@NotNull
-	List<Shortcut> getShortcuts();
-	/**
-	 * Adds new child to the list of shortcut children.
-	 * @return created child
-	 */
-	Shortcut addShortcut();
 
         /**
  	 * Returns the list of abbreviation children.

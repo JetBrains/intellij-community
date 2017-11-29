@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class NegatedIfElseInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final NegatedIfElseInspection tool = new NegatedIfElseInspection();
     tool.m_ignoreNegatedNullComparison = true;
     tool.m_ignoreNegatedZeroComparison = true;

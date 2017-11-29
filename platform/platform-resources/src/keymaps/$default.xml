@@ -66,9 +66,6 @@
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control shift J"/>
   </action>
-  <action id="EditorChooseLookupItemCompleteStatement">
-    <keyboard-shortcut first-keystroke="control shift ENTER"/>
-  </action>
   <action id="EditorChooseLookupItemDot">
     <keyboard-shortcut first-keystroke="control PERIOD"/></action>
   <action id="EditorCompleteStatement">
@@ -79,6 +76,9 @@
   </action>
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
+
+  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="alt P"/></action>
+  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="alt N"/></action>
 
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
@@ -211,6 +211,11 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ExpandAll">
+    <keyboard-shortcut first-keystroke="control ADD"/>
+    <keyboard-shortcut first-keystroke="control EQUALS"/>
+  </action>
+  <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
@@ -442,6 +447,11 @@
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>
+  <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
   <action id="CollapseRegion">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
@@ -501,6 +511,9 @@
   </action>
   <action id="Stop">
     <keyboard-shortcut first-keystroke="control F2"/>
+  </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="control shift F2"/>
   </action>
   <action id="EditorTextStartWithSelection">
     <keyboard-shortcut first-keystroke="control shift HOME"/>
@@ -1022,6 +1035,10 @@
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
   </action>
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="F2"/>
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
 
   <action id="Console.Open"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
@@ -1045,5 +1062,21 @@
 
   <action id="QuickActionPopup">
     <keyboard-shortcut first-keystroke="control alt ENTER"/>
+  </action>
+
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="DirDiffMenu.SynchronizeDiff">
+    <keyboard-shortcut first-keystroke="ENTER"/>
+  </action>
+  <action id="DirDiffMenu.SynchronizeDiff.All">
+    <keyboard-shortcut first-keystroke="control ENTER"/>
+  </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
 </keymap>

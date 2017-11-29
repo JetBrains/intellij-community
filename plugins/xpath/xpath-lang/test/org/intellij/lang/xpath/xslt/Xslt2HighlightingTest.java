@@ -21,11 +21,6 @@ import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.06.2008
-*/
 public class Xslt2HighlightingTest extends TestBase {
   @Override
   protected void setUp() throws Exception {
@@ -37,43 +32,43 @@ public class Xslt2HighlightingTest extends TestBase {
     });
   }
 
-  public void testCurrentMode() throws Throwable {
+  public void testCurrentMode() {
     doXsltHighlighting();
   }
 
-  public void testXslt2Example() throws Throwable {
+  public void testXslt2Example() {
     doXsltHighlighting();
   }
 
-  public void testNonDuplicateVariable() throws Throwable {
+  public void testNonDuplicateVariable() {
     doXsltHighlighting();
   }
 
-  public void testTypeResolving() throws Throwable {
+  public void testTypeResolving() {
     doXsltHighlighting();
   }
 
-  public void testEscapedXPathString() throws Throwable {
+  public void testEscapedXPathString() {
     doXsltHighlighting();
   }
 
-  public void testWildcardNamespace() throws Throwable {
+  public void testWildcardNamespace() {
     doXsltHighlighting();
   }
 
-  public void testUnknownSchemaType() throws Throwable {
+  public void testUnknownSchemaType() {
     doXsltHighlighting();
   }
 
-  public void testAttributeValueTemplateWithComment() throws Throwable {
+  public void testAttributeValueTemplateWithComment() {
     doXsltHighlighting();
   }
 
-  public void testSchemaTypeWithDashes() throws Throwable {
+  public void testSchemaTypeWithDashes() {
     doXsltHighlighting("move-def.xsd");
   }
 
-  private void doXsltHighlighting(String... moreFiles) throws Throwable {
+  private void doXsltHighlighting(String... moreFiles) {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, ArrayUtil.mergeArrays(new String[]{ name + ".xsl" }, moreFiles));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 
-public abstract class MavenSimpleProjectComponent extends AbstractProjectComponent {
+public abstract class MavenSimpleProjectComponent {
+  protected final Project myProject;
+
   protected MavenSimpleProjectComponent(Project project) {
-    super(project);
+    myProject = project;
   }
 
   protected boolean isNormalProject() {

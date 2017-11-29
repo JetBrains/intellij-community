@@ -34,11 +34,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.11.2007
- */
 public class AdvancedDtdOptions implements AdvancedOptions {
   @NonNls
   private static final String COLON_REPLACEMENT = "colon-replacement";
@@ -105,7 +100,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       }
     });
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("RelaxNgDtdOptions", group, false);
     myToolbar.add(toolbar.getComponent());
   }
 

@@ -5,7 +5,7 @@ class A {
   public static void main(String[] args) {
     B<? extends CharSequence> q = new B<>();
 
-    Func x = q::<error descr="Invalid method reference: CharSequence cannot be converted to capture of ? extends CharSequence">foo</error>;
+    Func x = q::<error descr="Cannot resolve method 'foo'">foo</error>;
     x.invoke("");
   }
 

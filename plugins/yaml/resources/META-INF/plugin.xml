@@ -13,6 +13,7 @@
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
     <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
     <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
+    <lang.findUsagesProvider language="yaml" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
     <lang.foldingBuilder language="yaml" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
     <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>

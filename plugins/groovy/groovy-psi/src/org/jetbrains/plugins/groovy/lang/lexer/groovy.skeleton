@@ -76,10 +76,7 @@
     zzAtEOF  = false;
     zzAtBOL = true;
     zzEndRead = end;
-    clearStacks();
-    braceCount.clear();
-    afterComment = YYINITIAL;
-    java.util.Arrays.fill(zzFin, false);
+    resetState();
     yybegin(initialState);
   }
 

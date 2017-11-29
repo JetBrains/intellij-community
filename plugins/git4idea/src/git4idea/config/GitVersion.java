@@ -81,11 +81,11 @@ public final class GitVersion implements Comparable<GitVersion> {
   private final int myMinor;
   private final int myRevision;
   private final int myPatchLevel;
-  private final Type myType;
+  @NotNull private final Type myType;
 
   private final int myHashCode;
 
-  public GitVersion(int major, int minor, int revision, int patchLevel, Type type) {
+  public GitVersion(int major, int minor, int revision, int patchLevel, @NotNull Type type) {
     myMajor = major;
     myMinor = minor;
     myRevision = revision;
@@ -105,7 +105,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Parses output of "git version" command.
    */
   @NotNull
-  public static GitVersion parse(String output) throws ParseException {
+  public static GitVersion parse(@NotNull String output) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -129,7 +129,7 @@ public final class GitVersion implements Comparable<GitVersion> {
 
   // Utility method used in parsing - checks that the given capture group exists and captured something - then returns the captured value,
   // otherwise returns 0.
-  private static int getIntGroup(Matcher matcher, int group) {
+  private static int getIntGroup(@NotNull Matcher matcher, int group) {
     if (group > matcher.groupCount()+1) {
       return 0;
     }
@@ -141,7 +141,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   }
 
   @NotNull
-  public static GitVersion identifyVersion(String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
+  public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(gitExecutable);
     commandLine.addParameter("--version");
@@ -184,7 +184,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Types are considered equal also if one of them is undefined. Otherwise they are compared.
    */
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (!(obj instanceof GitVersion)) {
       return false;
     }
@@ -235,10 +235,16 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myPatchLevel - o.myPatchLevel;
   }
 
+  @NotNull
+  public String getPresentation() {
+    String presentation = myMajor + "." + myMinor + "." + myRevision;
+    if (myPatchLevel > 0) presentation += "." + myPatchLevel;
+    return presentation;
+  }
+
   @Override
   public String toString() {
-    final String msysIndicator = (myType == Type.MSYS ? ".msysgit" : "");
-    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + msysIndicator;
+    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + " (" + myType + ")";
   }
 
   /**
@@ -255,6 +261,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return version != null && compareTo(version) >= 0;
   }
 
+  @NotNull
   public Type getType() {
     return myType;
   }

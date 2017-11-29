@@ -61,6 +61,11 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     return myExternalProjectPath;
   }
 
+  @Nullable
+  public String getNullSafeExternalProjectPath() {
+    return myExternalProjectPath;
+  }
+
   @Override
   @Nullable
   public DataNode<ProjectData> getExternalProjectStructure() {

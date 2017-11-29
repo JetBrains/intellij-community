@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
-import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionNodeInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
@@ -141,7 +141,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         if (ref != null) {
           String description = TooltipLinkHandlerEP.getDescription(ref, editor);
           if (description != null) {
-            description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(new Html(description).setKeepFont(true)));
+            description = InspectionNodeInfo.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(new Html(description).setKeepFont(true)));
             text += UIUtil.getHtmlBody(new Html(problem).setKeepFont(true)).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
                     END_MARKER + "<p>" + description + UIUtil.BORDER_LINE;

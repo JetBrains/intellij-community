@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import org.apache.tools.ant.types.ArchiveFileSet
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.ZipFileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -32,7 +18,6 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
-
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -48,10 +33,12 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
+  private final List<PluginLayout> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, List<PluginLayout> pluginsToPublish) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
+    this.pluginsToPublish = pluginsToPublish
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -80,9 +67,9 @@ class DistributionJARsBuilder {
     }
 
     def productLayout = buildContext.productProperties.productLayout
-
-    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(productLayout.enabledPluginModules).collectMany { plugin ->
-      plugin.getActualModules(productLayout.enabledPluginModules).values().collectMany {
+    def enabledPluginModules = getEnabledPluginModules()
+    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
+      plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
           !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
@@ -90,7 +77,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.includedPluginModules + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -138,11 +125,24 @@ class DistributionJARsBuilder {
     }
   }
 
-  List<String> getPlatformModules() {
-    (platform.moduleJars.values() as List<String>) +
-    ["java-runtime", "platform-main", /*required to build searchable options index*/
-     "updater", "updater-ui"] + buildContext.productProperties.productLayout.mainModules
+  private Set<String> getEnabledPluginModules() {
+    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
+  }
 
+  List<String> getPlatformModules() {
+    (platform.moduleJars.values() as List<String>) + toolModules
+  }
+
+  /**
+   * @return module names which are required to run necessary tools from build scripts
+   */
+  static List<String> getToolModules() {
+    ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater",
+     "updater-ui"]  // Android Studio: added by Change If9fe9db0 / commit 520343f
+  }
+
+  Collection<String> getIncludedProjectArtifacts() {
+    platform.includedArtifacts.keySet() + pluginsToPublish.collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
@@ -172,7 +172,7 @@ class DistributionJARsBuilder {
         arg(value: targetDirectory)
         arg(value: ignoredJarsFile.parent)
         classpath {
-          buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
+          buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
             pathelement(location: it)
           }
         }
@@ -184,8 +184,9 @@ class DistributionJARsBuilder {
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-        def generator = new LibraryLicensesListGenerator(buildContext.projectBuilder, buildContext.project, productProperties.allLibraryLicenses)
-        generator.generateLicensesTable("$buildContext.paths.artifacts/${buildContext.applicationInfo.productName}-third-party-libraries.txt", usedModules)
+        def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
+        def artifactNamePrefix = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+        generator.generateLicensesTable("$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.txt", usedModules)
       }
     }
 
@@ -211,7 +212,7 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptions(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
@@ -226,7 +227,7 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("platform-resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars)
+    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -243,19 +244,18 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-    buildPlugins(layoutBuilder, getPluginsByModules(productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
+    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
   void buildNonBundledPlugins() {
-    def ant = buildContext.ant
     def productLayout = buildContext.productProperties.productLayout
+    def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-      def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
         pluginsToPublish.each { plugin ->
-          def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
+          def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
           def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
           if (!new File(pluginXmlPath)) {
             buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
@@ -270,27 +270,31 @@ class DistributionJARsBuilder {
         }
       }
 
-      def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
+      def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
       buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
-      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
+      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
       pluginsToPublish.each { plugin ->
         def directory = plugin.directoryName
         String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
-        ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
+        def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
+        ant.zip(destfile: destFile) {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
+        buildContext.notifyArtifactBuilt(destFile)
       }
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
+        buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
   }
 
   private String getPluginVersion(PluginLayout plugin) {
-    return plugin.version != null ? plugin.version : buildContext.buildNumber
+    return plugin.versionEvaluator.apply(buildContext)
   }
 
-  private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
+  static List<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
     def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
@@ -298,11 +302,15 @@ class DistributionJARsBuilder {
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
-    def enabledModulesSet = buildContext.productProperties.productLayout.enabledPluginModules
+    def enabledModulesSet = enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
       checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars)
+      List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
+        File resourceFile = it.first.generateResources(buildContext)
+        resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
+      }
+      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars, generatedResources)
     }
   }
 
@@ -321,14 +329,19 @@ class DistributionJARsBuilder {
   }
 
   private boolean containsFileInOutput(String moduleName, String filePath, Collection<String> excludes) {
-    def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false))
+    def moduleOutput = new File(buildContext.getModuleOutputPath(buildContext.findRequiredModule(moduleName)))
     def fileInOutput = new File(moduleOutput, filePath)
     return fileInOutput.exists() && (excludes == null || excludes.every {
       createFileSet(it, moduleOutput).iterator().every { !(it instanceof FileProvider && FileUtil.filesEqual(it.file, fileInOutput))}
     })
   }
 
-  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars) {
+  /**
+   * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
+   * @param additionalResources pairs of resources files and corresponding relative output paths
+   */
+  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars,
+                             List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
@@ -383,6 +396,13 @@ class DistributionJARsBuilder {
         layout.includedProjectLibraries.each {
           projectLibrary(it)
         }
+        layout.includedArtifacts.entrySet().each {
+          def artifactName = it.key
+          def relativePath = it.value
+          dir(relativePath) {
+            artifact(artifactName)
+          }
+        }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
         moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
@@ -424,6 +444,17 @@ class DistributionJARsBuilder {
           }
         }
       }
+      additionalResources.each {
+        File resource = it.first
+        dir(it.second) {
+          if (resource.isFile()) {
+            ant.fileset(file: resource.absolutePath)
+          }
+          else {
+            ant.fileset(dir: resource.absolutePath)
+          }
+        }
+      }
     }
   }
 
@@ -431,7 +462,7 @@ class DistributionJARsBuilder {
     moduleExcludes.entrySet().each { entry ->
       String module = entry.key
       entry.value.each { pattern ->
-        def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false))
+        def moduleOutput = new File(buildContext.getModuleOutputPath(buildContext.findRequiredModule(module)))
         if (!moduleOutput.exists()) {
           buildContext.messages.error("There are excludes defined for module '$module', but the module wasn't compiled; " +
                                       "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
@@ -444,6 +475,7 @@ class DistributionJARsBuilder {
   }
 
   private FileSet createFileSet(String pattern, File baseDir) {
+    // Android Studio: modified by Change I0b4e1498 / commit ed89b54
     def fileSet = new ZipFileSet()
     if (baseDir.getName().endsWith(".jar")) {
       fileSet.setSrc(baseDir)
@@ -458,7 +490,6 @@ class DistributionJARsBuilder {
   static String basePath(BuildContext buildContext, String moduleName) {
     JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first())
   }
-
 
   private LayoutBuilder createLayoutBuilder() {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
@@ -506,7 +537,7 @@ class DistributionJARsBuilder {
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
-    def sourceFile = new File("${buildContext.projectBuilder.moduleOutput(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
+    def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
@@ -55,12 +56,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
-    PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiModifierListOwner.class);
-    if (scope instanceof PsiAnonymousClass) {
-      scope = PsiTreeUtil.getParentOfType(scope, PsiModifierListOwner.class, true);
-    }
-    return scope instanceof PsiMethod || scope instanceof PsiClassInitializer ||
-           scope instanceof PsiLocalVariable;
+    return PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null;
   }
 
   @Override
@@ -117,7 +113,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
+      CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS &&
+      !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);

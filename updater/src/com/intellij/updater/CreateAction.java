@@ -73,7 +73,7 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
-  protected boolean isModified(File toFile) throws IOException {
+  protected boolean isModified(File toFile) {
     return false;
   }
 

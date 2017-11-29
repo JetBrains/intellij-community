@@ -25,9 +25,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 class DirElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
@@ -55,10 +52,7 @@ class DirElementInfo extends SmartPointerElementInfo {
 
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    if (other instanceof DirElementInfo) {
-      return Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
   @Override

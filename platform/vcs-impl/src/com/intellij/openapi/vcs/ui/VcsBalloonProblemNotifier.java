@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -70,11 +69,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
                            @Nullable final NamedRunnable[] notificationListener) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment()) return;
-    final Runnable showErrorAction = new Runnable() {
-      public void run() {
-        new VcsBalloonProblemNotifier(project, message, type, notificationListener).run();
-      }
-    };
+    final Runnable showErrorAction = () -> new VcsBalloonProblemNotifier(project, message, type, notificationListener).run();
     if (application.isDispatchThread()) {
       showErrorAction.run();
     }
@@ -86,35 +81,33 @@ public class VcsBalloonProblemNotifier implements Runnable {
   public void run() {
     final Notification notification;
     if (myNotificationListener != null && myNotificationListener.length > 0) {
-      final NotificationType type = myMessageType.toNotificationType();
       final StringBuilder sb = new StringBuilder(myMessage);
       for (NamedRunnable runnable : myNotificationListener) {
         final String name = runnable.toString();
         sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>");
       }
-      notification = NOTIFICATION_GROUP.createNotification(type.name(), sb.toString(), myMessageType.toNotificationType(),
-        new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
-            if (myNotificationListener.length == 1) {
-              myNotificationListener[0].run();
-            } else {
-              final String description = event.getDescription();
-              if (description != null) {
-                for (NamedRunnable runnable : myNotificationListener) {
-                  if (description.equals(runnable.toString())) {
-                    runnable.run();
-                    break;
-                  }
+      NotificationListener listener = (currentNotification, event) -> {
+        if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
+          if (myNotificationListener.length == 1) {
+            myNotificationListener[0].run();
+          }
+          else {
+            final String description = event.getDescription();
+            if (description != null) {
+              for (NamedRunnable runnable : myNotificationListener) {
+                if (description.equals(runnable.toString())) {
+                  runnable.run();
+                  break;
                 }
               }
             }
-            notification.expire();
           }
+          currentNotification.expire();
         }
-      });
-    } else {
+      };
+      notification = NOTIFICATION_GROUP.createNotification("", sb.toString(), myMessageType.toNotificationType(), listener);
+    }
+    else {
       notification = NOTIFICATION_GROUP.createNotification(myMessage, myMessageType);
     }
     notification.notify(myProject.isDefault() ? null : myProject);

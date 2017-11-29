@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public abstract class LanguageLevelProjectExtension {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.LanguageLevelProjectExtension");
 
   public static LanguageLevelProjectExtension getInstance(Project project) {
     return ServiceManager.getService(project, LanguageLevelProjectExtension.class);
@@ -48,6 +52,9 @@ public abstract class LanguageLevelProjectExtension {
 
   public void setDefault(@Nullable Boolean value) {
     myDefault = value;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.debug("Set " + value + "\n" + ExceptionUtil.currentStackTrace());
+    }
   }
 
   public boolean isDefault() {

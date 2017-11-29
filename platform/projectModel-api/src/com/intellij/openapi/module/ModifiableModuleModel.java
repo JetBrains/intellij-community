@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ public interface ModifiableModuleModel {
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
@@ -53,7 +52,7 @@ public interface ModifiableModuleModel {
    * bring the changes in effect.
    *
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId ID of the module type to create.
    * @param options map of module options to be used when creating the module
    * @return the module instance.
@@ -66,7 +65,6 @@ public interface ModifiableModuleModel {
    *
    * @param filePath the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException if the data in the .iml file is semantically incorrect.
    * @throws IOException if an I/O error occurred when loading the module file.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */

@@ -27,6 +27,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -67,6 +68,19 @@ public class TestMethods extends TestMethod {
     return javaParameters;
   }
 
+  @Override
+  protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof SMTestProxy) {
+      JUnitConfiguration configuration = getConfiguration();
+      Location location = ((SMTestProxy)element).getLocation(configuration.getProject(),
+                                                             configuration.getConfigurationModule().getSearchScope());
+      if (location != null) {
+        return location.getPsiElement();
+      }
+    }
+    return super.retrievePsiElement(element);
+  }
+
   @Nullable
   @Override
   public SourceScope getSourceScope() {
@@ -89,9 +103,9 @@ public class TestMethods extends TestMethod {
                                                                                                                                : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
-        final String methodName = ((PsiMethod)element).getName();
+        final String methodWithSignaturePresentation = JUnitConfiguration.Data.getMethodPresentation(((PsiMethod)element));
         return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
-               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
+               (proxyName.contains(methodWithSignaturePresentation) ? proxyName.substring(proxyName.indexOf(methodWithSignaturePresentation)) : methodWithSignaturePresentation);
       }
     }
     return null;

@@ -86,9 +86,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private final PsiFile myHostPsiFile;
   private ReferenceInjector myReferenceInjector;
 
-  MultiHostRegistrarImpl(@NotNull Project project,
-                         @NotNull PsiFile hostPsiFile,
-                         @NotNull PsiElement contextElement) {
+  public MultiHostRegistrarImpl(@NotNull Project project,
+                                @NotNull PsiFile hostPsiFile,
+                                @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
@@ -388,7 +388,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
+  public void addToResults(Place place, PsiFile psiFile, @NotNull MultiHostRegistrarImpl from) {
     addToResults(place, psiFile);
     myReferenceInjector = from.myReferenceInjector;
   }
@@ -496,7 +496,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);
@@ -508,6 +507,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     int suffixLength = 0;
     TextRange rangeInsideHost = null;
     int shredEndOffset = -1;
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
       while (range != null && !range.isEmpty()) {
@@ -582,5 +582,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
     Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl) shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, window.isOneLine(), place);
+  }
+
+  boolean isValid() {
+    List<Pair<Place, PsiFile>> result = getResult();
+    if (result == null) return false;
+    for (Pair<Place, PsiFile> pair : result) {
+      if (!pair.getFirst().isValid()) return false;
+    }
+    return true;
   }
 }

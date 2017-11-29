@@ -15,7 +15,6 @@
  */
 package com.intellij.remote.ext;
 
-import com.intellij.remote.RemoteCredentials;
 import com.intellij.remote.WebDeploymentCredentialsHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -23,15 +22,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class WebDeploymentCredentialsHandler extends RemoteCredentialsHandlerBase<WebDeploymentCredentialsHolder> {
 
-  public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
-
   public WebDeploymentCredentialsHandler(WebDeploymentCredentialsHolder credentials) {
     super(credentials);
   }
 
   @Override
   public String getId() {
-    return constructSftpCredentialsFullPath();
+    return getCredentials().getCredentialsId();
   }
 
   @Override
@@ -41,7 +38,7 @@ public class WebDeploymentCredentialsHandler extends RemoteCredentialsHandlerBas
 
   @Override
   public String getPresentableDetails(String interpreterPath) {
-    return "(" + constructSftpCredentialsFullPath() + interpreterPath + ")";
+    return "(" + getCredentials().getCredentialsId() + interpreterPath + ")";
   }
 
   @Override
@@ -54,11 +51,5 @@ public class WebDeploymentCredentialsHandler extends RemoteCredentialsHandlerBas
       credentials.setWebServerConfigId("");
       credentials.setWebServerConfigName("Invalid");
     }
-  }
-
-  @NotNull
-  private String constructSftpCredentialsFullPath() {
-    RemoteCredentials cred = getCredentials().getSshCredentials();
-    return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 }

@@ -31,10 +31,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: Mar 18, 2005
- */
 public class ActionUrl implements JDOMExternalizable {
   public static final int ADDED = 1;
   public static final int DELETED = -1;

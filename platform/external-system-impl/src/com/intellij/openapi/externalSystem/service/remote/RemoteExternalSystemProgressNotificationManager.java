@@ -19,11 +19,7 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
 
   RemoteExternalSystemProgressNotificationManager NULL_OBJECT = new RemoteExternalSystemProgressNotificationManager() {
     @Override
-    public void onQueued(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException {
-    }
-
-    @Override
-    public void onStart(@NotNull ExternalSystemTaskId id) {
+    public void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException {
     }
 
     @Override
@@ -55,9 +51,7 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
     }
   };
 
-  void onQueued(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
-
-  void onStart(@NotNull ExternalSystemTaskId id) throws RemoteException;
+  void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
 
   void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) throws RemoteException;
 

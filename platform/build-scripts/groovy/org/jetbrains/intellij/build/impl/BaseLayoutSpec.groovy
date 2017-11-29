@@ -31,7 +31,7 @@ class BaseLayoutSpec {
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
-   * but don't use this for new plugins; this parameter is temporary added to keep layout of old plugins.
+   * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
    * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
    * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
@@ -69,5 +69,14 @@ class BaseLayoutSpec {
    */
   void excludeFromModule(String moduleName, String excludedPattern) {
     layout.moduleExcludes.put(moduleName, excludedPattern)
+  }
+
+  /**
+   * Include an artifact output to the plugin distribution.
+   * @param artifactName name of the project configuration  
+   * @param relativeOutputPath target path relative to 'lib' directory
+   */
+  void withArtifact(String artifactName, String relativeOutputPath) {
+    layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
 }

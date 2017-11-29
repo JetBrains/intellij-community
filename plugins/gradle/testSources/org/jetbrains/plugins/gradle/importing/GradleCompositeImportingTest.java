@@ -52,19 +52,19 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../my-utils/settings.gradle",
                          "rootProject.name = 'my-utils'\n" +
                          "include 'number-utils', 'string-utils' ");
-    createProjectSubFile("../my-utils/build.gradle",
-                         "subprojects {\n" +
-                         "  apply plugin: 'java'\n" +
-                         "\n" +
-                         "  group 'org.sample'\n" +
-                         "  version '1.0'\n" +
-                         "}\n" +
-                         "\n" +
-                         "project(':string-utils') {\n" +
-                         "  dependencies {\n" +
-                         "    compile 'org.apache.commons:commons-lang3:3.4'\n" +
-                         "  }\n" +
-                         "} ");
+    createProjectSubFile("../my-utils/build.gradle", injectRepo(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "\n" +
+      "  group 'org.sample'\n" +
+      "  version '1.0'\n" +
+      "}\n" +
+      "\n" +
+      "project(':string-utils') {\n" +
+      "  dependencies {\n" +
+      "    compile 'org.apache.commons:commons-lang3:3.4'\n" +
+      "  }\n" +
+      "} "));
 
     importProject();
 
@@ -120,34 +120,45 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../my-utils/settings.gradle",
                          "rootProject.name = 'my-utils'\n" +
                          "include 'number-utils', 'string-utils', 'api'");
-    createProjectSubFile("../my-utils/build.gradle",
-                         "subprojects {\n" +
-                         "  apply plugin: 'java'\n" +
-                         "\n" +
-                         "  group 'org.sample'\n" +
-                         "  version '1.0'\n" +
-                         "}\n" +
-                         "\n" +
-                         "project(':string-utils') {\n" +
-                         "  dependencies {\n" +
-                         "    compile 'org.apache.commons:commons-lang3:3.4'\n" +
-                         "  }\n" +
-                         "}\n" +
-                         "project(':api') {\n" +
-                         "  dependencies {\n" +
-                         "    compile 'junit:junit:4.11'\n" +
-                         "  }\n" +
-                         "}");
+    createProjectSubFile("../my-utils/build.gradle", injectRepo(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "\n" +
+      "  group 'org.sample'\n" +
+      "  version '1.0'\n" +
+      "}\n" +
+      "\n" +
+      "project(':string-utils') {\n" +
+      "  dependencies {\n" +
+      "    compile 'org.apache.commons:commons-lang3:3.4'\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':api') {\n" +
+      "  dependencies {\n" +
+      "    compile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}"));
 
     importProject();
 
-    assertModules("adhoc", "api", "api_main", "api_test",
-                  "my-app", "my-app_main", "my-app_test",
-                  "my-app-api", "my-app-api~1", "my-app-api_main",
-                  "my-utils",
-                  "string-utils", "string-utils_main", "string-utils_test",
-                  "number-utils", "number-utils_main", "number-utils_test",
-                  "my-utils-api", "my-utils-api_main", "my-utils-api_test");
+    if (isGradle40orNewer()) {
+      assertModules("adhoc", "api",
+                    "my-app", "my-app_main", "my-app_test",
+                    "my-app-api", "my-app-api~1", "my-app-api_main", "my-app-api_main~1", "my-app-api_test",
+                    "my-utils",
+                    "string-utils", "string-utils_main", "string-utils_test",
+                    "number-utils", "number-utils_main", "number-utils_test",
+                    "my-utils-api", "my-utils-api_main", "my-utils-api_test");
+    }
+    else {
+      assertModules("adhoc", "api", "api_main", "api_test",
+                    "my-app", "my-app_main", "my-app_test",
+                    "my-app-api", "my-app-api~1", "my-app-api_main",
+                    "my-utils",
+                    "string-utils", "string-utils_main", "string-utils_test",
+                    "number-utils", "number-utils_main", "number-utils_test",
+                    "my-utils-api", "my-utils-api_main", "my-utils-api_test");
+    }
 
     String[] emptyModules =
       new String[]{"api", "adhoc", "my-app", "my-app-api", "my-app-api_main", "my-app-api~1", "my-utils", "my-utils-api", "string-utils",
@@ -162,9 +173,15 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("my-app_main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     // my-app api project
-    assertModuleModuleDeps("api_main");
-    assertModuleLibDeps("api_main", "Gradle: commons-lang:commons-lang:2.6");
-    assertModuleLibDepScope("api_main", "Gradle: commons-lang:commons-lang:2.6", COMPILE);
+    if (isGradle40orNewer()) {
+      assertModuleModuleDeps("my-app-api_main~1");
+      assertModuleLibDeps("my-app-api_main~1", "Gradle: commons-lang:commons-lang:2.6");
+      assertModuleLibDepScope("my-app-api_main~1", "Gradle: commons-lang:commons-lang:2.6", COMPILE);
+    } else {
+      assertModuleModuleDeps("api_main");
+      assertModuleLibDeps("api_main", "Gradle: commons-lang:commons-lang:2.6");
+      assertModuleLibDepScope("api_main", "Gradle: commons-lang:commons-lang:2.6", COMPILE);
+    }
 
     assertModuleModuleDeps("my-utils-api_main");
     //assertModuleLibDeps("my-utils-api_main", "Gradle: junit:junit:4.11");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,11 @@ class TextComponentEmptyText extends StatusText {
   @Override
   protected Rectangle getTextComponentBound() {
     Rectangle b = myOwner.getBounds();
-    return new Rectangle(myOwner.getInsets().left >> 1, 0, b.width, b.height);
+    Insets insets = myOwner.getInsets();
+    int left = insets.left >> 1;
+    int right = insets.right >> 1;
+    return new Rectangle(left, insets.top, 
+                         b.width - left - right, 
+                         b.height - insets.top - insets.bottom);
   }
 }

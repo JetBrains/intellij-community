@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -30,20 +16,23 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessDynamicProperties;
 
 /**
  * @author ilyas
@@ -102,33 +91,35 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    if (!shouldProcessBindings(this, processor, lastParent, place)) return true;
+    return processLValue(processor, state, place, (GroovyFileImpl)getParent(), getLValue());
+  }
+
+  static boolean shouldProcessBindings(@NotNull PsiElement owner,
+                                       @NotNull PsiScopeProcessor processor,
+                                       @Nullable PsiElement lastParent,
+                                       @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    if (!ResolveUtil.shouldProcessProperties(classHint)) return true;
-    final DynamicMembersHint dynamicMembersHint = processor.getHint(DynamicMembersHint.KEY);
-    if (dynamicMembersHint != null && !dynamicMembersHint.shouldProcessProperties()) return true;
+    if (!ResolveUtil.shouldProcessProperties(classHint)) return false;
+    if (!shouldProcessDynamicProperties(processor)) return false;
 
-    if (!(getParent() instanceof GroovyFileImpl)) return true;
-    final GroovyFileImpl file = (GroovyFileImpl)getParent();
-    if (!file.isInScriptBody(lastParent, place)) return true;
+    PsiElement parent = owner.getParent();
+    if (!(parent instanceof GroovyFileImpl)) return false;
 
-    final GrExpression lValue = getLValue();
-    if (!processLValue(processor, state, place, file, lValue)) return false;
-    if (lValue instanceof GrTupleExpression) {
-      for (GrExpression expression : ((GrTupleExpression)lValue).getExpressions()) {
-        if (!processLValue(processor, state, place, file, expression)) return false;
-      }
-    }
+    final GroovyFileImpl file = (GroovyFileImpl)parent;
+    if (!file.isInScriptBody(lastParent, place)) return false;
 
     return true;
   }
 
-  private static boolean processLValue(@NotNull PsiScopeProcessor processor,
-                                       @NotNull ResolveState state,
-                                       @NotNull PsiElement place,
-                                       @NotNull GroovyFileImpl file,
-                                       @NotNull GrExpression lValue) {
+
+  static boolean processLValue(@NotNull PsiScopeProcessor processor,
+                               @NotNull ResolveState state,
+                               @NotNull PsiElement place,
+                               @NotNull GroovyFileImpl file,
+                               @NotNull GrExpression lValue) {
     if (!(lValue instanceof GrReferenceExpression)) return true;
 
     final GrReferenceExpression lReference = (GrReferenceExpression)lValue;
@@ -154,18 +145,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Nullable
   @Override
   public PsiType getLeftType() {
-    final GrExpression lValue = getLValue();
-    if (lValue instanceof GrIndexProperty) {
-      // now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
-      // by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
-      return ((GrIndexProperty)lValue).getGetterType();
-    }
-    else if (lValue instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression)lValue).getRValueType();
-    }
-    else {
-      return lValue.getType();
-    }
+    return getLValue().getType();
   }
 
   @Nullable

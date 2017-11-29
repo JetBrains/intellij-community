@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,14 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +145,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericType() {
-    doTest("TypeVar('A')",
+    doTest("A",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('A')\n" +
@@ -161,7 +155,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericBoundedType() {
-    doTest("TypeVar('T', int, str)",
+    doTest("T",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T', int, str)\n" +
@@ -341,6 +335,28 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-16585
+  public void testCommentAfterComprehensionInAssignment() {
+    doTest("int",
+           "from typing import List\n" +
+           "\n" +
+           "xs = [expr for expr in range(10)]  # type: List[int]");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInForLoop() {
+    doTest("int",
+           "for _ in [str(expr) for expr in range(10)]:  # type: str\n" +
+           "    pass");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInWithStatement() {
+    doTest("int",
+           "with f([expr for expr in range(10)]) as _: # type: str\n" +
+           "    pass");
+  }
+
   public void testStringLiteralInjection() {
     doTestInjectedText("class C:\n" +
                        "    def foo(self, expr: '<caret>C'):\n" +
@@ -362,6 +378,32 @@ public class PyTypingTest extends PyTestCase {
     doTestNoInjectedText("class C:\n" +
                          "    def foo(self, expr: '<caret>foo bar'):\n" +
                          "        pass\n");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionTuple() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionParenthesisedTuple() {
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+                       "(int, int)");
+  }
+
+  // PY-22620
+  public void testForTypeCommentInjectionTuple() {
+    doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
+                       "    pass", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testWithTypeCommentInjectionTuple() {
+    doTestInjectedText("with undefined() as (x, y):  # type: int,<caret> int\n" +
+                       "    pass",
+                       "int, int");
   }
 
   // PY-16125
@@ -797,7 +839,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[TypeVar('T', int)]",
+    doTest("Type[T]",
            "from typing import Type, TypeVar\n" +
            "\n" +
            "T = TypeVar('T', bound=int)\n" +
@@ -909,6 +951,40 @@ public class PyTypingTest extends PyTestCase {
            "expr = f(True, 1, 'foo')\n");
   }
 
+  // PY-24260
+  public void testGenericClassParameterTakenFromGenericClassObject() {
+    doTest("MyClass[T]",
+           "from typing import TypeVar, Generic, Type\n" +
+           "\n" +
+           "T = TypeVar(\"T\")\n" +
+           "\n" +
+           "class MyClass(Generic[T]):\n" +
+           "    def __init__(self, type: Type[T]):\n" +
+           "        pass\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = MyClass(x)\n");
+  }
+
+  // PY-18816
+  public void testLocalTypeAlias() {
+    doTest("int",
+           "def func(g):\n" +
+           "    Alias = int\n" +
+           "    expr: Alias = g()");
+  }
+
+  // TODO same test for variable type comments
+  // PY-18816
+  public void testLocalTypeAliasInFunctionTypeComment() {
+    doTest("int",
+           "def func():\n" +
+           "    Alias = int\n" +
+           "    def g(x):\n" +
+           "        # type: (Alias) -> None\n" +
+           "        expr = x\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -928,30 +1004,13 @@ public class PyTypingTest extends PyTestCase {
     assertEquals(expected, injected.getText());
   }
 
-  @NotNull
-  private PsiElement getElementAtCaret() {
-    final Editor editor = myFixture.getEditor();
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
-    assertNotNull(file);
-    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(element);
-    return element;
-  }
-
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
-    assertType(expectedType, expr, codeAnalysis, "code analysis");
-    assertType(expectedType, expr, userInitiated, "user initiated");
-  }
-
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context, String contextName) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("Failed in " + contextName + " context", expectedType, actualType);
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }
 }

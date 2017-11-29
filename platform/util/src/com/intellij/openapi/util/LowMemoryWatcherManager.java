@@ -29,6 +29,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.util.MissingResourceException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,10 +59,10 @@ public class LowMemoryWatcherManager implements Disposable {
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
-          long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
+          long max = bean.getUsage().getMax();
+          long threshold = Math.min((long) (max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
           if (threshold > 0) {
             bean.setUsageThreshold(threshold);
-            bean.setCollectionUsageThreshold(threshold);
           }
         }
       }
@@ -76,8 +77,8 @@ public class LowMemoryWatcherManager implements Disposable {
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
     @Override
     public void handleNotification(Notification notification, Object __) {
-      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType()) ||
-          MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+
         if (Registry.is("low.memory.watcher.sync", true)) {
           handleEventImmediately();
           return;
@@ -91,6 +92,15 @@ public class LowMemoryWatcherManager implements Disposable {
       }
     }
   };
+
+  private static double getOccupiedMemoryThreshold() {
+    try {
+      return Registry.doubleValue("low.memory.watcher.notification.threshold");
+    }
+    catch (MissingResourceException e) {
+      return 0.95;
+    }
+  }
 
   private void handleEventImmediately() {
     if (myProcessing.compareAndSet(false, true)) {

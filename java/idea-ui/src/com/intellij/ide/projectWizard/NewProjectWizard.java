@@ -39,8 +39,9 @@ public class NewProjectWizard extends AbstractProjectWizard {
     init(modulesProvider);
   }
 
-  public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider) {
+  public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider, String defaultModuleName) {
     super(IdeBundle.message("title.add.module"), project, dialogParent);
+    myWizardContext.setDefaultModuleName(defaultModuleName);
     init(modulesProvider);
   }
 

@@ -22,8 +22,8 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Apply <code>info</code> to the corresponded tool button and decarator.
- * Command uses freezed copy of passed <code>info</code> object.
+ * Apply {@code info} to the corresponded tool button and decarator.
+ * Command uses freezed copy of passed {@code info} object.
  */
 public final class ApplyWindowInfoCmd extends FinalizableCommand {
   private final WindowInfoImpl myInfo;

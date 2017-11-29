@@ -20,10 +20,6 @@ import com.intellij.openapi.util.Condition;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 01-Dec-2005
- */
 public interface AbstractProfileMapping extends UnnamedConfigurable {
   String getProfileColumnTitle();
   String getScopeColumnTitle();

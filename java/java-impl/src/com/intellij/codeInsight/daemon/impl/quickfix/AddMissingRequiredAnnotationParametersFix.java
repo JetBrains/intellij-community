@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,9 +90,12 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
         final PsiAnnotationParameterList parameterList = myAnnotation.getParameterList();
         parameterList.deleteChildRange(addedParameters[0], addedParameters[addedParameters.length - 1]);
         for (final PsiNameValuePair addedParameter : addedParameters) {
-          final String name = addedParameter.getName();
+          String name = addedParameter.getName();
           final PsiAnnotationMemberValue value = addedParameter.getValue();
-          if (name == null || value == null) {
+          if (name == null) {
+            name = "value";
+          }
+          if (value == null) {
             LOG.error(String.format("Invalid annotation parameter name = %s, value = %s", name, value));
             continue;
           }
@@ -102,8 +105,8 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
     }
 
     final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
-    for (final String misssedParameter : myMissedElements) {
-      newParameters.add(Pair.create(misssedParameter, nullValue));
+    for (final String missedParameter : myMissedElements) {
+      newParameters.add(Pair.create(missedParameter, nullValue));
     }
 
     TemplateBuilderImpl builder = null;

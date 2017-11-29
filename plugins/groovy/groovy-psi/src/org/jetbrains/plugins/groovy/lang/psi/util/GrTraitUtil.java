@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class GrTraitUtil {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
           if (annotation != null) {
             result.addAll(
-              GrAnnotationUtil.getClassArrayValue(annotation, "value")
+              GrAnnotationUtil.getClassArrayValue(annotation, "value", false)
             );
           }
         }

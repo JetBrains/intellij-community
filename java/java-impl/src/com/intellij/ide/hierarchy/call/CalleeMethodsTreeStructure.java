@@ -93,8 +93,6 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
 
-
-
   private static void visitor(final PsiElement element, final ArrayList<PsiMethod> methods) {
     final PsiElement[] children = element.getChildren();
     for (final PsiElement child : children) {
@@ -112,6 +110,12 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
         final PsiMethod method = newExpression.resolveConstructor();
         if (method != null) {
           methods.add(method);
+        }
+      }
+      else if (child instanceof PsiMethodReferenceExpression) {
+        PsiElement method = ((PsiMethodReferenceExpression)child).resolve();
+        if (method instanceof PsiMethod) {
+          methods.add((PsiMethod)method);
         }
       }
     }

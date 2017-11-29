@@ -377,7 +377,7 @@ public class MultiMap<K, V> implements Serializable {
       @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
-        return new WeakHashMap<K, Collection<V>>();
+        return ContainerUtil.createWeakMap();
       }
     };
   }

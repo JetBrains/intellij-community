@@ -79,7 +79,7 @@ class OutputFilesSink implements OutputFileConsumer {
               myOutputConsumer.registerCompiledClass(rootDescriptor.target, new CompiledClass(fileObject.getFile(), srcFile, fileObject.getClassName(), content)); // todo: avoid array copying?
             }
             else {
-              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), Collections.<String>singleton(sourcePath));
+              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), Collections.singleton(sourcePath));
             }
           }
         }

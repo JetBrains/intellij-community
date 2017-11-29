@@ -21,6 +21,7 @@ import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration
@@ -38,6 +39,8 @@ class WarModelBuilderImpl implements ModelBuilderService {
 
   private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
+  private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
+
 
   @Override
   boolean canBuild(String modelName) {
@@ -99,9 +102,17 @@ class WarModelBuilderImpl implements ModelBuilderService {
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {
-          def writer = new StringWriter()
-          manifest.writeTo(writer)
-          warModel.manifestContent = writer.toString()
+          if(is4OrBetter) {
+            if(manifest instanceof org.gradle.api.java.archives.internal.ManifestInternal) {
+              ByteArrayOutputStream baos = new ByteArrayOutputStream()
+              manifest.writeTo(baos)
+              warModel.manifestContent = baos.toString(manifest.contentCharset)
+            }
+          } else {
+            def writer = new StringWriter()
+            manifest.writeTo(writer)
+            warModel.manifestContent = writer.toString()
+          }
         }
         warModels.add(warModel)
       }

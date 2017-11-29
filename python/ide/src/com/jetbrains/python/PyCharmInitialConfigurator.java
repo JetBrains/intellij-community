@@ -75,6 +75,10 @@ public class PyCharmInitialConfigurator {
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
     }
 
+    if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V7")) {
+      propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
+    }
+
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
@@ -87,7 +91,6 @@ public class PyCharmInitialConfigurator {
       });
     }
 
-    Registry.get("ide.scratch.enabled").setValue(true);
     Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 

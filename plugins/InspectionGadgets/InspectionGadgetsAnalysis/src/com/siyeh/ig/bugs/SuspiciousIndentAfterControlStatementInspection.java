@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,18 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousIndentAfterControlStatementInspection
-  extends BaseInspection {
+public class SuspiciousIndentAfterControlStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "suspicious.indent.after.control.statement.display.name");
+    return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "suspicious.indent.after.control.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.problem.descriptor");
   }
 
   @Override
@@ -44,8 +41,7 @@ public class SuspiciousIndentAfterControlStatementInspection
     return new SuspiciousIndentAfterControlStatementVisitor();
   }
 
-  private static class SuspiciousIndentAfterControlStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class SuspiciousIndentAfterControlStatementVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
@@ -54,15 +50,13 @@ public class SuspiciousIndentAfterControlStatementInspection
     }
 
     @Override
-    public void visitDoWhileStatement(
-      PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       checkLoopStatement(statement);
     }
 
     @Override
-    public void visitForeachStatement(
-      PsiForeachStatement statement) {
+    public void visitForeachStatement(PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       checkLoopStatement(statement);
     }
@@ -82,13 +76,8 @@ public class SuspiciousIndentAfterControlStatementInspection
       }
       else if (elseStatement == null) {
         final PsiStatement thenStatement = statement.getThenBranch();
-        if (thenStatement instanceof PsiBlockStatement) {
+        if (thenStatement instanceof PsiBlockStatement || thenStatement == null || !isWhitespaceSuspicious(statement, thenStatement)) {
           return;
-        }
-        else if (thenStatement != null) {
-          if (!isWhitespaceSuspicious(statement, thenStatement)) {
-            return;
-          }
         }
       }
       else {
@@ -96,9 +85,7 @@ public class SuspiciousIndentAfterControlStatementInspection
           return;
         }
       }
-      final PsiStatement nextStatement =
-        PsiTreeUtil.getNextSiblingOfType(statement,
-                                         PsiStatement.class);
+      final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
       if (nextStatement == null) {
         return;
       }
@@ -113,17 +100,14 @@ public class SuspiciousIndentAfterControlStatementInspection
       if (!isWhitespaceSuspicious(statement, body)) {
         return;
       }
-      final PsiStatement nextStatement =
-        PsiTreeUtil.getNextSiblingOfType(statement,
-                                         PsiStatement.class);
+      final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
       if (nextStatement == null) {
         return;
       }
       registerStatementError(nextStatement);
     }
 
-    private static boolean isWhitespaceSuspicious(PsiStatement statement,
-                                                  PsiStatement body) {
+    private static boolean isWhitespaceSuspicious(PsiStatement statement, PsiStatement body) {
       final boolean lineBreakBeforeBody;
       PsiElement prevSibling = body.getPrevSibling();
       if (!(prevSibling instanceof PsiWhiteSpace)) {
@@ -147,9 +131,7 @@ public class SuspiciousIndentAfterControlStatementInspection
           lineBreakBeforeBody = true;
         }
       }
-      final PsiStatement nextStatement =
-        PsiTreeUtil.getNextSiblingOfType(statement,
-                                         PsiStatement.class);
+      final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
       if (nextStatement == null) {
         return false;
       }
@@ -158,7 +140,6 @@ public class SuspiciousIndentAfterControlStatementInspection
       if (index < 0) {
         return false;
       }
-      final String indent = text.substring(index + 1);
       final PsiElement nextSibling = nextStatement.getPrevSibling();
       if (!(nextSibling instanceof PsiWhiteSpace)) {
         return false;
@@ -169,6 +150,7 @@ public class SuspiciousIndentAfterControlStatementInspection
         return false;
       }
       final String nextIndent = nextText.substring(nextIndex + 1);
+      final String indent = text.substring(index + 1);
       if (lineBreakBeforeBody) {
         return indent.equals(nextIndent);
       }

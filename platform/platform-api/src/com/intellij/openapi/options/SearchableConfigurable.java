@@ -32,7 +32,8 @@ import javax.swing.*;
  */
 public interface SearchableConfigurable extends Configurable {
   @NotNull
-  @NonNls String getId();
+  @NonNls
+  String getId();
 
   /**
    * @param option setting search query
@@ -80,6 +81,7 @@ public interface SearchableConfigurable extends Configurable {
         myKids = null;
       }
 
+      @NotNull
       @Override
       public final Configurable[] getConfigurables() {
         if (myKids != null) return myKids;

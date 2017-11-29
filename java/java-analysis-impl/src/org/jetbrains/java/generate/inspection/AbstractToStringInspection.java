@@ -16,6 +16,8 @@
 package org.jetbrains.java.generate.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,5 +31,11 @@ public abstract class AbstractToStringInspection extends LocalInspectionTool {
     @NotNull
     public String getGroupDisplayName() {
         return "toString() issues";
+    }
+
+    protected static LocalQuickFix[] createFixes(@NotNull ProblemsHolder holder) {
+        return holder.isOnTheFly()
+               ? new LocalQuickFix[]{GenerateToStringQuickFix.getInstance()}
+               : LocalQuickFix.EMPTY_ARRAY;
     }
 }

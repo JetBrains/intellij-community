@@ -18,13 +18,11 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.CompositeDiffPanel;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -35,15 +33,13 @@ import com.intellij.util.config.AbstractProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/13/12
- * Time: 3:17 PM
- */
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   public final static String ourDefaultTab = "Contents";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");
@@ -82,8 +78,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
         public void actionPerformed(final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                  diffPanel.getComponent());
+      }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
       diffPanel.setDiffRequest(request);
       FrameDiffTool.showDiffDialog(builder, hints);
     } else {
@@ -101,8 +96,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
         public void actionPerformed(final AnActionEvent e) {
           Disposer.dispose(frameWrapper);
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                  diffPanel.getComponent());
+      }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
 
       frameWrapper.show();
     }

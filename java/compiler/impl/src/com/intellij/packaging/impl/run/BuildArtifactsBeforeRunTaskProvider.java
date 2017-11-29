@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,18 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,13 +94,13 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
 
   public static void setBuildArtifactBeforeRun(@NotNull Project project, @NotNull RunConfiguration configuration, @NotNull Artifact artifact) {
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    final List<BuildArtifactsBeforeRunTask> buildArtifactsTasks = runManager.getBeforeRunTasks(configuration, ID);
-    if (buildArtifactsTasks.isEmpty()) { //Add new task if absent
+    final List<BuildArtifactsBeforeRunTask> buildArtifactsTasks = new ArrayList<>(runManager.getBeforeRunTasks(configuration, ID));
+    if (runManager.getBeforeRunTasks(configuration, ID).isEmpty()) { //Add new task if absent
       BuildArtifactsBeforeRunTask task = new BuildArtifactsBeforeRunTask(project);
       buildArtifactsTasks.add(task);
-      List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration);
+      List<BeforeRunTask> tasks = new ArrayList<>(runManager.getBeforeRunTasks(configuration));
       tasks.add(task);
-      runManager.setBeforeRunTasks(configuration, tasks, false);
+      runManager.setBeforeRunTasks(configuration, tasks);
     }
 
     for (BuildArtifactsBeforeRunTask task : buildArtifactsTasks) {
@@ -114,7 +115,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
   }
 
   @Override
-  protected CompileScope createCompileScope(Project project, List<Artifact> artifacts) {
-    return ArtifactCompileScope.createArtifactsScope(project, artifacts);
+  protected ProjectTask createProjectTask(Project project, List<Artifact> artifacts) {
+    return ProjectTaskManager.getInstance(project).createArtifactsBuildTask(true, artifacts.toArray(new Artifact[artifacts.size()]));
   }
 }

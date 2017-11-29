@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Sep 6, 2010
- */
 public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
 
   @NotNull  C createInitialChangeInfo(final @NotNull PsiElement element);

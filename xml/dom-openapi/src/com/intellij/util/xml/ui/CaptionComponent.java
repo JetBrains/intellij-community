@@ -23,9 +23,6 @@ import com.intellij.util.xml.DomElement;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class CaptionComponent extends JPanel implements Committable, Highlightable {
   private JPanel myRootPanel;
   private JLabel myCaptionLabel;

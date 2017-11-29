@@ -18,8 +18,11 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicLookAndFeel;
@@ -37,12 +40,21 @@ public class IntelliJLaf extends DarculaLaf {
 
   @Override
   protected String getPrefix() {
-    return isWindowsNativeLook() ? "intellijlaf_native" : "intellijlaf";
+    return UIUtil.isUnderWin10LookAndFeel() ? "intellijlaf_native" : "intellijlaf";
   }
 
   @Override
   protected BasicLookAndFeel createBaseLookAndFeel() {
-    if (isWindowsNativeLook()) {
+    Registry.get("ide.intellij.laf.win10.ui").addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(RegistryValue value) {
+        try { // Update UI
+          UIManager.setLookAndFeel(UIManager.getLookAndFeel());
+        } catch (UnsupportedLookAndFeelException ignored) {}
+      }
+    }, myDisposable);
+
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
       try {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
@@ -73,9 +85,5 @@ public class IntelliJLaf extends DarculaLaf {
   public static Color getSelectedControlColor() {
     // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
     return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
-  }
-
-  public static boolean isWindowsNativeLook() {
-    return SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui");
   }
 }

@@ -176,7 +176,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       final String moduleName = cvsElement.getElementPath();
       final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
       CvsFilePath filePath = new CvsFilePath(virtualFile.getPath(), virtualFile.isDirectory(), location);
-      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, filePath, vcs, null);
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, filePath, vcs);
     }
   }
 

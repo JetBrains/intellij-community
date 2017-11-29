@@ -236,7 +236,7 @@ public abstract class AbstractLayoutCodeProcessor {
           if (!previousTask.get() || previousTask.isCancelled()) return false;
         }
 
-        ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
+        ApplicationManager.getApplication().runWriteAction(currentTask);
 
         return currentTask.get() && !currentTask.isCancelled();
       }
@@ -311,6 +311,8 @@ public abstract class AbstractLayoutCodeProcessor {
 
 
   private void runProcessFile(@NotNull final PsiFile file) {
+    assert file.isValid() : "Invalid " + file.getLanguage() + " PSI file " + file.getName();
+
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
     if (document == null) {

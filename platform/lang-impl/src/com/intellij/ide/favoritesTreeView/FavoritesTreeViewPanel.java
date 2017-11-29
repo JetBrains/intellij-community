@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
@@ -60,6 +61,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -217,9 +219,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
     final JPanel panel = decorator.createPanel();
 
-    panel.setBorder(IdeBorderFactory.createEmptyBorder());
+    panel.setBorder(JBUI.Borders.empty());
     add(panel, BorderLayout.CENTER);
-    setBorder(IdeBorderFactory.createEmptyBorder());
+    setBorder(JBUI.Borders.empty());
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
@@ -366,6 +368,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     ArrayList<PsiElement> result = new ArrayList<>();
     for (Object element : elements) {
+      if (element instanceof Bookmark) {
+        element = ((Bookmark)element).getFile();
+      }
       if (element instanceof PsiElement) {
         result.add((PsiElement)element);
       }

@@ -44,8 +44,7 @@ public class CustomRegionStructureUtil {
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
     if (customRegions.size() > 0) {
-      List<StructureViewTreeElement> result = new ArrayList<>();
-      result.addAll(customRegions);
+      List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : originalElements) {
         boolean isInCustomRegion = false;
         for (CustomRegionTreeElement customRegion : customRegions) {
@@ -78,8 +77,11 @@ public class CustomRegionStructureUtil {
   }
 
   private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
+    TextRange rootRange = getTextRange(rootElement);
     Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
-      .filter(element -> isCustomRegionCommentCandidate(element) && !isInsideRanges(element, ranges))
+      .filter(element -> isCustomRegionCommentCandidate(element) &&
+                         rootRange.contains(element.getTextRange()) &&
+                         !isInsideRanges(element, ranges))
       .iterator();
 
     List<CustomRegionTreeElement> customRegions = ContainerUtil.newSmartList();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
+import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -41,16 +43,22 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.*;
+import com.intellij.xml.XmlExtension.AttributeValuePresentation;
 import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -227,12 +235,17 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         String attributeName = attributeDecl.getName(tag);
 
         boolean shouldBeInserted = extension.shouldBeInserted(attributeDecl);
-        if (shouldBeInserted && (tag == null || tag.getAttributeValue(attributeName) == null)) {
+        if (!shouldBeInserted) continue;
+
+        AttributeValuePresentation presenter =
+          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(htmlCode));
+
+        if (tag == null || tag.getAttributeValue(attributeName) == null) {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
-              template.addTextSegment(" " + attributeName + "=" + XmlAttributeInsertHandler.getAttributeQuote(htmlCode));
-              template.addVariable(new MacroCallNode(new CompleteMacro()), true);
-              template.addTextSegment(XmlAttributeInsertHandler.getAttributeQuote(htmlCode));
+              template.addTextSegment(" " + attributeName + "=" + presenter.getPrefix());
+              template.addVariable(presenter.showAutoPopup() ? new MacroCallNode(new CompleteMacro()) : new EmptyExpression(), true);
+              template.addTextSegment(presenter.getPostfix());
             }
             else {
               if (indirectRequiredAttrs == null) indirectRequiredAttrs = new StringBuilder();
@@ -240,9 +253,9 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
             }
           }
         }
-        else if (shouldBeInserted && attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
-          template.addTextSegment(" " + attributeName + "=" + XmlAttributeInsertHandler.getAttributeQuote(false) +
-                                  attributeDecl.getDefaultValue() + XmlAttributeInsertHandler.getAttributeQuote(false));
+        else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
+          template.addTextSegment(" " + attributeName + "=" +
+                                  presenter.getPrefix() + attributeDecl.getDefaultValue() + presenter.getPostfix());
         }
       }
     }
@@ -287,7 +300,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     else if (completionChar == '/') {
-      template.addTextSegment("/>");
+      template.addTextSegment(closeTag(tag));
     }
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
@@ -298,7 +311,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag.getName())) {
-        template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : "/>");
+        template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
       }
       else {
         if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
@@ -315,12 +328,21 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     return false;
   }
 
+  @NotNull
+  private static String closeTag(XmlTag tag) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(tag.getProject());
+    boolean html = HtmlUtil.isHtmlTag(tag);
+    boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
+                         (!html && settings.getCustomSettings(XmlCodeStyleSettings.class).XML_SPACE_INSIDE_EMPTY_TAG);
+    return needsSpace ? " />" : "/>";
+  }
+
   private static void completeAttribute(Template template, boolean htmlCode) {
     template.addTextSegment(" ");
     template.addVariable(new MacroCallNode(new CompleteMacro()), true);
-    template.addTextSegment("=" + XmlAttributeInsertHandler.getAttributeQuote(htmlCode));
+    template.addTextSegment("=" + XmlEditUtil.getAttributeQuote(htmlCode));
     template.addEndVariable();
-    template.addTextSegment(XmlAttributeInsertHandler.getAttributeQuote(htmlCode));
+    template.addTextSegment(XmlEditUtil.getAttributeQuote(htmlCode));
   }
 
   private static boolean needAlLeastOneAttribute(XmlTag tag) {
@@ -373,7 +395,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         return;
       case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
         if (completeIt) {
-          template.addTextSegment("/>");
+          template.addTextSegment(closeTag(context));
         }
         break;
       case XmlElementDescriptor.CONTENT_TYPE_MIXED:

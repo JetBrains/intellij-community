@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -35,13 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
  */
 public class GroovyAccessibilityInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   private static final String SHORT_NAME = "GroovyAccessibility";
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return BaseInspection.PROBABLE_BUGS;
-  }
 
   @Nls
   @NotNull

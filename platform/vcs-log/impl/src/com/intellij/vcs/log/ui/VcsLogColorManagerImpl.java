@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -19,7 +18,7 @@ import java.util.List;
 public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
-  private static Color[] ROOT_COLORS =
+  private static final Color[] ROOT_COLORS =
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
   @NotNull private final List<VirtualFile> myRoots;

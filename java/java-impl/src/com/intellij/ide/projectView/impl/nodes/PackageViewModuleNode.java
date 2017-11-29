@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
@@ -44,12 +46,14 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots()), myProject, getSettings(), getValue(), false);
-    if (getSettings().isShowLibraryContents()) {
-      result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
-    }
-    return result;
-
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
+      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots());
+      final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), getValue(), false);
+      if (getSettings().isShowLibraryContents()) {
+        result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
+      }
+      return result;
+    });
   }
 
   @Override

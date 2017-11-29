@@ -26,7 +26,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
-  private static final Logger LOG = Logger.getInstance("#" + MoveRenameUsageInfo.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveRenameUsageInfo.class);
   private SmartPsiElementPointer myReferencedElementPointer = null;
   private PsiElement myReferencedElement;
 

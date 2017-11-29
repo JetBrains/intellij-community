@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.facade.JvmFacade;
+import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -22,6 +25,7 @@ import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -57,6 +61,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
+  private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
+  private final JvmPsiConversionHelper myConversionHelper;
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManager psiManager,
@@ -65,6 +71,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myProject = project;
     myFileManager = javaFileManager;
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
+    myJvmFacade = AtomicNotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
+    myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
 
@@ -85,7 +93,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.<PsiElementFinder>emptyList()) {
+    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.emptyList()) {
       @NotNull
       @Override
       protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {
@@ -161,10 +169,38 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (shouldUseSlowResolve()) {
-      return findClassesInDumbMode(qualifiedName, scope);
+    List<PsiClass> allClasses = findClassesWithJvmFacade(qualifiedName, scope);
+    return allClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : allClasses.toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private List<PsiClass> findClassesWithJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    List<PsiClass> result = null;
+
+    final List<PsiClass> ownClasses = findClassesWithoutJvmFacade(qualifiedName, scope);
+    if (!ownClasses.isEmpty()) {
+      result = new ArrayList<>(ownClasses);
     }
 
+    final List<JvmClass> jvmClasses = myJvmFacade.getValue().findClassesWithoutJavaFacade(qualifiedName, scope);
+    if (!jvmClasses.isEmpty()) {
+      final List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.convertTypeDeclaration(it));
+      if (result == null) {
+        result = new ArrayList<>(jvmPsiClasses);
+      }
+      else {
+        result.addAll(jvmPsiClasses);
+      }
+    }
+
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  @NotNull
+  public List<PsiClass> findClassesWithoutJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (shouldUseSlowResolve()) {
+      return Arrays.asList(findClassesInDumbMode(qualifiedName, scope));
+    }
     List<PsiElementFinder> finders = finders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
@@ -177,7 +213,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
     }
 
-    return result == null || result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result == null ? Collections.emptyList() : result;
   }
 
   private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {

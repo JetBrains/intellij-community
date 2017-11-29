@@ -29,10 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Jan 16, 2005
- */
 public class BackwardDependenciesAction extends BaseAnalysisAction {
   private AdditionalSettingsPanel myPanel;
 

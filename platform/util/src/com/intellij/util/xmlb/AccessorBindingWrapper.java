@@ -24,10 +24,17 @@ import java.util.List;
 class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final Binding myBinding;
 
-  public AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding) {
+  private final boolean myFlat;
+
+  public AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding, boolean flat) {
     super(accessor);
 
     myBinding = binding;
+    myFlat = flat;
+  }
+
+  public boolean isFlat() {
+    return myFlat;
   }
 
   @Nullable
@@ -37,7 +44,13 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     if (value == null) {
       throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
     }
-    return myBinding.serialize(value, context, filter);
+    if (myFlat) {
+      ((BeanBinding)myBinding).serializeInto(value, (Element)context, filter);
+      return null;
+    }
+    else {
+      return myBinding.serialize(value, context, filter);
+    }
   }
 
   @Override

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,8 @@ public class TerminateRemoteProcessDialog {
     AtomicBoolean alreadyGone = new AtomicBoolean(false);
     Runnable dialogRemover = Messages.createMessageDialogRemover(project);
     ProcessAdapter listener = new ProcessAdapter() {
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
         alreadyGone.set(true);
         dialogRemover.run();
       }

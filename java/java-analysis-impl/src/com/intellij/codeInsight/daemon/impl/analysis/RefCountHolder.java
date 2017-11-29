@@ -308,6 +308,7 @@ class RefCountHolder {
     ProgressIndicator result;
     if (myState.compareAndSet(EMPTY, indicator)) {
       if (!file.getTextRange().equals(dirtyScope)) {
+        log(" RefCountHolder: invalid scope " + dirtyScope);
         // empty holder needs filling before it can be used, so restart daemon to re-analyze the whole file
         myState.set(EMPTY);
         return false;

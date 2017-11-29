@@ -12,7 +12,7 @@ import com.intellij.util.text.CharArrayCharSequence;
  */
 public class FileBasedIndexTest extends LightCodeInsightFixtureTestCase {
 
-  public void testSurviveOnFileTypeChange() throws Exception {
+  public void testSurviveOnFileTypeChange() {
     myFixture.configureByText("Foo.java", "class Foo { String bar; }");
     myFixture.testHighlighting();
     FileTypeIndexTest.addAndRemoveFileType();
@@ -20,7 +20,7 @@ public class FileBasedIndexTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testLargeFile() throws Exception {
+  public void testLargeFile() {
     char[] text = new char[FileUtilRt.LARGE_FOR_CONTENT_LOADING + 42];
     final String clazz = "class Foo { String bar; }";
     for (int i = 0; i < text.length; i++) {

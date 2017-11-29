@@ -110,7 +110,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
 
         @Override
         public TreeState getState() {
-            return state != null ? state : new TreeState();
+            return state != null ? state : TreeState.createFrom(null);
         }
 
         @Override

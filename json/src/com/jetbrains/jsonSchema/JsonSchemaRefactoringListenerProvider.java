@@ -18,7 +18,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
@@ -38,27 +38,25 @@ public class JsonSchemaRefactoringListenerProvider implements RefactoringElement
     if (element == null) {
       return null;
     }
-    VirtualFile fileAtElement = PsiUtilBase.asVirtualFile(element);
-    if (fileAtElement == null || !(fileAtElement.getFileType() instanceof LanguageFileType) ||
-      !(((LanguageFileType)fileAtElement.getFileType()).getLanguage().isKindOf(JsonLanguage.INSTANCE))) {
+    final VirtualFile oldFile = PsiUtilBase.asVirtualFile(element);
+    if (oldFile == null || !(oldFile.getFileType() instanceof LanguageFileType) ||
+      !(((LanguageFileType)oldFile.getFileType()).getLanguage().isKindOf(JsonLanguage.INSTANCE))) {
       return null;
     }
-    Project project = element.getProject();
-    final JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo schemaInfo = configuration.getSchemaBySchemaFile(fileAtElement);
-    if (schemaInfo != null && project.getBaseDir() != null) {
+    final Project project = element.getProject();
+    if (project.getBaseDir() == null) return null;
+
+    final String oldRelativePath = VfsUtilCore.getRelativePath(oldFile, project.getBaseDir());
+    if (oldRelativePath != null) {
+      final JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
       return new UndoRefactoringElementAdapter() {
         @Override
         protected void refactored(@NotNull PsiElement element, @Nullable String oldQualifiedName) {
-          VirtualFile newFile = PsiUtilBase.asVirtualFile(element);
+          final VirtualFile newFile = PsiUtilBase.asVirtualFile(element);
           if (newFile != null) {
-            final String relativePath = VfsUtil.getRelativePath(newFile, project.getBaseDir());
-            if (relativePath != null) {
-              configuration.removeSchema(schemaInfo);
-              final JsonSchemaMappingsConfigurationBase.SchemaInfo newSchema =
-                new JsonSchemaMappingsConfigurationBase.SchemaInfo(schemaInfo.getName(), relativePath, schemaInfo.isApplicationLevel(),
-                                                                   schemaInfo.getPatterns());
-              configuration.addSchema(newSchema);
+            final String newRelativePath = VfsUtilCore.getRelativePath(newFile, project.getBaseDir());
+            if (newRelativePath != null) {
+              configuration.schemaFileMoved(project, oldRelativePath, newRelativePath);
             }
           }
         }

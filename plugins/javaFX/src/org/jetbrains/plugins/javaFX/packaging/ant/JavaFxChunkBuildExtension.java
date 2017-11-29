@@ -47,10 +47,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/14/13
- */
 public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   @NonNls public static final String ARTIFACT_VENDOR_SIGN_PROPERTY = "artifact.sign.vendor";

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -74,14 +58,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
-    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return findFileByPath(path);
+    return findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
   }
 
   @NotNull
   protected static File convertToIOFile(@NotNull final VirtualFile file) {
     String path = file.getPath();
-    if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && (SystemInfo.isWindows || SystemInfo.isOS2)) {
+    if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
@@ -643,6 +626,24 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
+  private static final List<String> ourRootPaths = new ArrayList<>();
+
+  {
+    List<String> persistentFsRoots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
+    sortRootsLongestFirst(persistentFsRoots);
+    for(String persistentFsRoot:persistentFsRoots) ourRootPaths.add(persistentFsRoot);
+  }
+
+  private static void sortRootsLongestFirst(List<String> persistentFsRoots) {
+    Collections.sort(persistentFsRoots, (o1, o2) -> o2.length() - o1.length());
+  }
+
+  @VisibleForTesting
+  public void registerCustomRootPath(@NotNull String path) {
+    ourRootPaths.add(path);
+    sortRootsLongestFirst(ourRootPaths);
+  }
+
   @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
@@ -653,6 +654,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    for(String customRootPath:ourRootPaths) {
+      if (path.startsWith(customRootPath)) return customRootPath;
     }
 
     if (SystemInfo.isWindows) {
@@ -696,19 +701,22 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   @Override
-  public String getCanonicallyCasedName(@NotNull final VirtualFile file) {
+  public String getCanonicallyCasedName(@NotNull VirtualFile file) {
     if (isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 
-    final String originalFileName = file.getName();
+    String originalFileName = file.getName();
+    long t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
     try {
-      final File ioFile = convertToIOFile(file);
-      final File ioCanonicalFile = ioFile.getCanonicalFile();
-      String canonicalFileName = ioCanonicalFile.getName();
+      File ioFile = convertToIOFile(file);
+
+      File canonicalFile = ioFile.getCanonicalFile();
+      String canonicalFileName = canonicalFile.getName();
       if (!SystemInfo.isUnix) {
         return canonicalFileName;
       }
+
       // linux & mac support symbolic links
       // unfortunately canonical file resolves sym links
       // so its name may differ from name of origin file
@@ -722,10 +730,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
       // Ok, names are not equal. Let's try to find corresponding file name
       // among original file parent directory
-      final File parentFile = ioFile.getParentFile();
+      File parentFile = ioFile.getParentFile();
       if (parentFile != null) {
         // I hope ls works fast on Unix
-        final String[] canonicalFileNames = parentFile.list();
+        String[] canonicalFileNames = parentFile.list();
         if (canonicalFileNames != null) {
           for (String name : canonicalFileNames) {
             // if names are equals
@@ -743,6 +751,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
     catch (IOException e) {
       return originalFileName;
+    }
+    finally {
+      if (t != 0) {
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("getCanonicallyCasedName(" + file + "): " + t + " mks");
+      }
     }
   }
 

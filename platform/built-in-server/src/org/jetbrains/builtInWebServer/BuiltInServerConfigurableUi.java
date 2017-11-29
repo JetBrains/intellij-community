@@ -12,9 +12,16 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
   private PortField builtInServerPort;
   private JCheckBox builtInServerAvailableExternallyCheckBox;
   private JCheckBox allowUnsignedRequestsCheckBox;
+  private JLabel portLabel;
 
   public BuiltInServerConfigurableUi() {
+    portLabel.setLabelFor(builtInServerPort);
     builtInServerPort.setMin(1024);
+    builtInServerPort.addChangeListener(e -> {
+      boolean isEnabled = builtInServerPort.getNumber() < BuiltInServerOptions.DEFAULT_PORT;
+      builtInServerAvailableExternallyCheckBox.setEnabled(isEnabled);
+      builtInServerAvailableExternallyCheckBox.setToolTipText(isEnabled ? null : "Can’t be enabled for default port (port number >= 63342). Please change it.");
+    });
   }
 
   @Override

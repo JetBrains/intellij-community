@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
   @NonNls private static final String FEATURE_ID = "featureType";
@@ -39,8 +36,8 @@ public class UnknownFeaturesCollector implements PersistentStateComponent<Elemen
     return ServiceManager.getService(project, UnknownFeaturesCollector.class);
   }
 
-  public void registerUnknownRunConfiguration(String configurationName) {
-    registerUnknownFeature("com.intellij.configurationType", configurationName, "Run Configuration");
+  public void registerUnknownRunConfiguration(String configurationId) {
+    registerUnknownFeature("com.intellij.configurationType", configurationId, "Run Configuration");
   }
   
   public void registerUnknownFeature(String featureType, String implementationName, String featureDisplayName) {

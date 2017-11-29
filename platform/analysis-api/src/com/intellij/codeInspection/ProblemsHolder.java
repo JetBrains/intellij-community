@@ -127,6 +127,10 @@ public class ProblemsHolder {
     registerProblem(reference, unresolvedReferenceMessage(reference), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
+  public void registerProblem(@NotNull PsiReference reference, @NotNull ProblemHighlightType highlightType) {
+    registerProblem(reference, unresolvedReferenceMessage(reference), highlightType);
+  }
+
   @NotNull
   public static String unresolvedReferenceMessage(@NotNull PsiReference reference) {
     String message;

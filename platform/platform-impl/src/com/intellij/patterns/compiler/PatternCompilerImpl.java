@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.patterns.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,7 +60,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     catch (Exception ex) {
       final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
       LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
-      return new LazyPresentablePattern<>(new Node(ERROR_NODE, text, null));
+      return new LazyPresentablePattern<>(new Node(ERROR_NODE, text, null), Collections.emptySet());
     }
   }
 
@@ -83,28 +82,25 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   @Override
   public synchronized ElementPattern<T> compileElementPattern(final String text) {
-    Node node = processElementPatternText(text, new Function<Frame, Object>() {
-      public Node fun(final Frame frame) {
-        final Object[] args = frame.params.toArray();
-        for (int i = 0, argsLength = args.length; i < argsLength; i++) {
-          args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
-        }
-        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
+    Node node = processElementPatternText(text, frame -> {
+      final Object[] args = frame.params.toArray();
+      for (int i = 0, argsLength = args.length; i < argsLength; i++) {
+        args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
       }
+      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
     });
     if (node == null) node = new Node(ERROR_NODE, text, null);
-    return new LazyPresentablePattern<>(node);
+    return new LazyPresentablePattern<>(node, myStaticMethods);
   }
 
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
-    return new THashSet<>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
-      public Collection<Method> fun(final Class aClass) {
-        return ContainerUtil.findAll(aClass.getMethods(), method -> Modifier.isStatic(method.getModifiers())
-                                                                    && Modifier.isPublic(method.getModifiers())
-                                                                    && !Modifier.isAbstract(method.getModifiers())
-                                                                    && ElementPattern.class.isAssignableFrom(method.getReturnType()));
-      }
-    }));
+    return new THashSet<>(ContainerUtil.concat(
+      patternClasses,
+      aClass -> ContainerUtil.findAll(aClass.getMethods(),
+                              method -> Modifier.isStatic(method.getModifiers()) &&
+                                        Modifier.isPublic(method.getModifiers()) &&
+                                        !Modifier.isAbstract(method.getModifiers()) &&
+                                        ElementPattern.class.isAssignableFrom(method.getReturnType()))));
   }
 
   private enum State {
@@ -166,7 +162,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         case param_start:
           if (Character.isWhitespace(ch)) {
           }
-          else if (Character.isDigit(ch) || ch == '\"') {
+          else if (Character.isDigit(ch) || ch == '-' || ch == '\"') {
             curFrame.state = State.literal;
             curString.append(ch);
           }
@@ -230,6 +226,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         case invoke:
           curResult = executor.fun(curFrame);
           if (ch == 0 && stack.isEmpty()) {
+            //noinspection unchecked
             return (T)curResult;
           }
           else if (ch == '.') {
@@ -254,6 +251,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           break;
         case invoke_end:
           if (ch == 0 && stack.isEmpty()) {
+            //noinspection unchecked
             return (T)curResult;
           }
           else if (ch == ')') {
@@ -289,7 +287,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     try {
       return Integer.valueOf(s);
     }
-    catch (NumberFormatException e) {}
+    catch (NumberFormatException ignored) {}
     return s;
   }
 
@@ -412,7 +410,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     }
     int implementsIdx = 1;
     for (Type superInterface : aClass.getGenericInterfaces()) {
-      final Class rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superClass);
+      final Class rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superInterface);
       if (classes.containsKey(rawSuperInterface)) {
         if (implementsIdx++ == 1) sb.append(isInterface? " extends " : " implements ");
         else sb.append(", ");
@@ -540,7 +538,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     final String method;
     final Object[] args;
 
-    private Node(final Node target, final String method, final Object[] args) {
+    Node(@Nullable Node target, @Nullable String method, @Nullable Object[] args) {
       this.target = target;
       this.method = method;
       this.args = args;
@@ -571,14 +569,17 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
 
-  public class LazyPresentablePattern<T> implements ElementPattern<T> {
+  public static class LazyPresentablePattern<T> implements ElementPattern<T> {
 
-    private ElementPattern<T> myCompiledPattern;
     private final Node myNode;
+    private final Set<Method> myStaticMethods;
     private final long myHashCode;
 
-    public LazyPresentablePattern(@NotNull Node node) {
+    private ElementPattern<T> myCompiledPattern;
+
+    public LazyPresentablePattern(@NotNull Node node, @NotNull Set<Method> staticMethods) {
       myNode = node;
+      myStaticMethods = staticMethods;
       myHashCode = StringHash.calc(toString());
     }
 
@@ -599,7 +600,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
     public ElementPattern<T> getCompiledPattern() {
       if (myCompiledPattern == null) {
-        Object result;
+        ElementPattern<?> result;
         try {
           result = compile();
         }
@@ -607,35 +608,42 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           LOG.warn(toString(), throwable);
           result = ALWAYS_FALSE;
         }
+        //noinspection unchecked
         myCompiledPattern = (ElementPattern<T>)result;
       }
       return myCompiledPattern;
     }
 
     public ElementPattern<?> compile() throws Throwable {
-      return myNode.target == ERROR_NODE? ALWAYS_FALSE : (ElementPattern<?>)execute(myNode);
+      return myNode.target == ERROR_NODE ? ALWAYS_FALSE : (ElementPattern<?>)execute(myNode);
     }
 
     @Override
     public String toString() {
-      return toString(myNode, new StringBuilder()).toString();
+      if (myNode.target == ERROR_NODE && myNode.args == null) {
+        return myNode.method;
+      }
+      StringBuilder sb = new StringBuilder();
+      appendNode(myNode, sb);
+      return sb.toString();
     }
 
-    private StringBuilder toString(final Node node, final StringBuilder sb) {
+    private static void appendNode(Node node, StringBuilder sb) {
       if (node.target == ERROR_NODE) {
-        return sb.append(node.method);
+        sb.append(node.method);
+        return;
       }
-      if (node.target != null) {
-        toString(node.target, sb);
+      else if (node.target != null) {
+        appendNode(node.target, sb);
         sb.append('.');
       }
       sb.append(node.method).append('(');
       boolean first = true;
-      for (Object arg : node.args) {
+      for (Object arg : (node.args == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : node.args)) {
         if (first) first = false;
         else sb.append(',').append(' ');
         if (arg instanceof Node) {
-          toString((Node)arg, sb);
+          appendNode((Node)arg, sb);
         }
         else if (arg instanceof String) {
           sb.append('\"').append(StringUtil.escapeStringCharacters((String)arg)).append('\"');
@@ -645,7 +653,6 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         }
       }
       sb.append(')');
-      return sb;
     }
 
     private Object execute(final Node node) throws Throwable {

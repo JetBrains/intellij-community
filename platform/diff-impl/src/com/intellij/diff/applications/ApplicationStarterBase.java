@@ -20,19 +20,26 @@ import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class ApplicationStarterBase extends ApplicationStarterEx {
@@ -127,7 +134,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @Nullable
-  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
+  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = getFile(path, currentDirectory);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (virtualFile == null) {
@@ -151,7 +158,26 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @Nullable
-  protected Project getProject() {
-    return null; // TODO: try to guess project
+  protected static Project guessProject(@NotNull List<VirtualFile> files) {
+    Set<Project> projects = new HashSet<>();
+    for (VirtualFile file : files) {
+      projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));
+    }
+
+    if (projects.isEmpty()) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      projects.addAll(ContainerUtil.filter(openProjects, project -> project.isInitialized() && !project.isDisposed()));
+    }
+    if (projects.isEmpty()) return null;
+
+    Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    if (recentFocusedWindow instanceof IdeFrame) {
+      Project recentFocusedProject = ((IdeFrame)recentFocusedWindow).getProject();
+      if (recentFocusedProject != null && projects.contains(recentFocusedProject)) {
+        return recentFocusedProject;
+      }
+    }
+
+    return projects.iterator().next();
   }
 }

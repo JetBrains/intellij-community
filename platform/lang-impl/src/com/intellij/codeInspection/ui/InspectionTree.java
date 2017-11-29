@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 4, 2001
- * Time: 5:19:35 PM
- */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -47,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -58,16 +51,14 @@ public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
   @NotNull private final GlobalInspectionContextImpl myContext;
-  @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
-  public InspectionTree(@NotNull Project project,
-                        @NotNull GlobalInspectionContextImpl context,
+  public InspectionTree(@NotNull GlobalInspectionContextImpl context,
                         @NotNull InspectionResultsView view) {
+    Project project = context.getProject();
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
-    myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
@@ -213,14 +204,17 @@ public class InspectionTree extends Tree {
     }
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
     return getSelectedDescriptors(false, null, true, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     return getSelectedDescriptors(false, null, false, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
                                                           @Nullable Set<VirtualFile> readOnlyFilesSink,
                                                           boolean allowResolved,
@@ -345,7 +339,7 @@ public class InspectionTree extends Tree {
 
   private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
     return node.isValid() && (allowResolved ||
-                              (!node.isExcluded(myExcludedManager) &&
+                              (!node.isExcluded() &&
                                (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
                                !node.isQuickFixAppliedFromView()));
   }
@@ -355,7 +349,7 @@ public class InspectionTree extends Tree {
   }
 
   public void queueUpdate() {
-    ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
@@ -376,13 +370,13 @@ public class InspectionTree extends Tree {
 
   private class ExpandListener implements TreeWillExpandListener {
     @Override
-    public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+    public void treeWillExpand(TreeExpansionEvent event) {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().add(node.getUserObject());
     }
 
     @Override
-    public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+    public void treeWillCollapse(TreeExpansionEvent event) {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().remove(node.getUserObject());
     }

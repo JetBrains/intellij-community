@@ -37,11 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 20.06.2007
- */
 public class ReplaceWithXslAttribute implements IntentionAction {
     @NotNull
     public String getText() {

@@ -41,7 +41,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   @NotNull
-  public List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
+  public Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
     if (baseDir != null && vcsName.equals(mappingList.getVcsFor(baseDir))) {

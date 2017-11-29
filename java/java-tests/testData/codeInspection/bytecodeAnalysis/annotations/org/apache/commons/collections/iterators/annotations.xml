@@ -24,14 +24,57 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getKey()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object next()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object previous()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object setValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void add(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void add(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void remove()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void reset()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void set(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author Nikolay Matveev
  */
-public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector {
+public class FileTypeUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "file-type";
 
   @NotNull

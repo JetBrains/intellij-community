@@ -39,8 +39,8 @@ public class BegScrollPaneUI extends MetalScrollPaneUI {
 
   /**
    * If the border of the scrollpane is an instance of
-   * <code>MetalBorders.ScrollPaneBorder</code>, the client property
-   * <code>FREE_STANDING_PROP</code> of the scrollbars
+   * {@code MetalBorders.ScrollPaneBorder}, the client property
+   * {@code FREE_STANDING_PROP} of the scrollbars
    * is set to false, otherwise it is set to true.
    */
   private void updateScrollbarsFreeStanding() {

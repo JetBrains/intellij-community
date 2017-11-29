@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ import java.util.*;
  * @author Rustam Vishnyakov
  */
 public class CustomFoldingRegionsPopup {
-  private final @NotNull JBList myRegionsList;
+  private final @NotNull JBList<MyFoldingDescriptorWrapper> myRegionsList;
   private final @NotNull JBPopup myPopup;
   private final @NotNull Editor myEditor;
 
@@ -44,9 +45,8 @@ public class CustomFoldingRegionsPopup {
                             @NotNull final Editor editor,
                             @NotNull final Project project) {
     myEditor = editor;
-    myRegionsList = new JBList();
-    //noinspection unchecked
-    myRegionsList.setModel(new MyListModel(orderByPosition(descriptors)));
+    myRegionsList = new JBList<>();
+    myRegionsList.setModel(new MyListModel(descriptors));
     myRegionsList.setSelectedIndex(0);
 
     final PopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createListPopupBuilder(myRegionsList);
@@ -67,20 +67,25 @@ public class CustomFoldingRegionsPopup {
     myPopup.showInBestPositionFor(myEditor);
   }
 
-  private static class MyListModel extends DefaultListModel {
+  private static class MyListModel extends DefaultListModel<MyFoldingDescriptorWrapper> {
     private MyListModel(Collection<FoldingDescriptor> descriptors) {
+      descriptors = orderByPosition(descriptors);
+      Stack<FoldingDescriptor> stack = new Stack<>();
       for (FoldingDescriptor descriptor : descriptors) {
-        //noinspection unchecked
-        super.addElement(new MyFoldingDescriptorWrapper(descriptor));
+        while (!stack.isEmpty() && descriptor.getRange().getStartOffset() >= stack.peek().getRange().getEndOffset()) stack.pop();
+        super.addElement(new MyFoldingDescriptorWrapper(descriptor, stack.size()));
+        stack.push(descriptor);
       }
     }
   }
 
   private static class MyFoldingDescriptorWrapper {
     private final @NotNull FoldingDescriptor myDescriptor;
+    private final int myIndent;
 
-    private MyFoldingDescriptorWrapper(@NotNull FoldingDescriptor descriptor) {
+    private MyFoldingDescriptorWrapper(@NotNull FoldingDescriptor descriptor, int indent) {
       myDescriptor = descriptor;
+      myIndent = indent;
     }
 
     @NotNull
@@ -91,14 +96,14 @@ public class CustomFoldingRegionsPopup {
     @Nullable
     @Override
     public String toString() {
-      return myDescriptor.getPlaceholderText();
+      return StringUtil.repeat("   ", myIndent) + myDescriptor.getPlaceholderText();
     }
   }
 
   @Nullable
   public PsiElement getNavigationElement() {
     Object selection = myRegionsList.getSelectedValue();
-    if (selection instanceof MyFoldingDescriptorWrapper) {
+    if (selection != null) {
       return  ((MyFoldingDescriptorWrapper)selection).getDescriptor().getElement().getPsi();
     }
     return null;

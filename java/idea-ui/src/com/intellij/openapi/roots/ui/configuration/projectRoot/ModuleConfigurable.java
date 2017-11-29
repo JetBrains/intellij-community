@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 04-Jun-2006
- */
 public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
   private final ModuleGrouper myModuleGrouper;
@@ -51,8 +48,8 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     super(true, updateTree);
     myModule = module;
     myModuleGrouper = moduleGrouper;
-    myModuleName = myModule.getName();
     myConfigurator = modulesConfigurator;
+    myModuleName = ObjectUtils.notNull(myConfigurator.getModuleModel().getNewName(myModule), myModule.getName());
     myContext = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
     myProjectStructureElement = new ModuleProjectStructureElement(myContext, myModule);
   }

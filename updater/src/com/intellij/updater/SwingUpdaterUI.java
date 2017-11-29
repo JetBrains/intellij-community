@@ -21,135 +21,240 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection"})
-public abstract class SwingUpdaterUI implements UpdaterUI {
-
+@SuppressWarnings({"UndesirableClassUsage", "UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
+public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
 
+  private static final Color VALIDATION_ERROR_COLOR = new Color(255, 175, 175);
+  private static final Color VALIDATION_CONFLICT_COLOR = new Color(255, 240, 240);
+
   private static final String TITLE = "Update";
-
   private static final String CANCEL_BUTTON_TITLE = "Cancel";
-
+  private static final String EXIT_BUTTON_TITLE = "Exit";
+  private static final String RETRY_BUTTON_TITLE = "Retry";
   private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
-  private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+  private final JLabel myProcessTitle;
+  private final JProgressBar myProcessProgress;
+  private final JLabel myProcessStatus;
+  private final JButton myCancelButton;
+  private final JFrame myFrame;
 
-  protected abstract Component getParentComponent();
-  protected abstract void notifyCancelled();
-  protected abstract void exit();
+  private volatile boolean myCancelled = false;
+  private volatile boolean myPaused = false;
 
-  @Override
-  public boolean showWarning(String message) {
-    Object[] choices = {"Retry", "Exit"};
-    int choice = JOptionPane.showOptionDialog(null, message, "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-    return choice == 0;
+  public SwingUpdaterUI() {
+    myProcessTitle = new JLabel(" ");
+    myProcessProgress = new JProgressBar(0, 100);
+    myProcessStatus = new JLabel(" ");
+
+    myCancelButton = new JButton(CANCEL_BUTTON_TITLE);
+    myCancelButton.addActionListener(e -> doCancel());
+
+    JPanel processPanel = new JPanel();
+    processPanel.setLayout(new BoxLayout(processPanel, BoxLayout.Y_AXIS));
+    processPanel.add(myProcessTitle);
+    processPanel.add(myProcessProgress);
+    processPanel.add(myProcessStatus);
+    for (Component each : processPanel.getComponents()) {
+      ((JComponent)each).setAlignmentX(Component.LEFT_ALIGNMENT);
+    }
+
+    JPanel buttonsPanel = new JPanel();
+    buttonsPanel.setBorder(BUTTONS_BORDER);
+    buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+    buttonsPanel.add(Box.createHorizontalGlue());
+    buttonsPanel.add(myCancelButton);
+
+    myFrame = new JFrame();
+    myFrame.setTitle(TITLE);
+    myFrame.setLayout(new BorderLayout());
+    myFrame.getRootPane().setBorder(FRAME_BORDER);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    myFrame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        doCancel();
+      }
+    });
+    myFrame.add(processPanel, BorderLayout.CENTER);
+    myFrame.add(buttonsPanel, BorderLayout.SOUTH);
+    myFrame.setMinimumSize(new Dimension(500, 50));
+    myFrame.pack();
+    myFrame.setLocationRelativeTo(null);
+    myFrame.setVisible(true);
+
+    invokeAndWait(() -> {});
+  }
+
+  private void doCancel() {
+    if (!myCancelled) {
+      myPaused = true;
+      String message = "The patch has not been applied yet.\nAre you sure you want to abort the operation?";
+      int result = JOptionPane.showConfirmDialog(myFrame, message, TITLE, JOptionPane.YES_NO_OPTION);
+      if (result == JOptionPane.YES_OPTION) {
+        myCancelled = true;
+        myCancelButton.setEnabled(false);
+      }
+      myPaused = false;
+    }
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
-    Map<String, ValidationResult.Option> result = new HashMap<>();
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-        boolean proceed = true;
-        for (ValidationResult result1 : validationResults) {
-          if (result1.options.contains(ValidationResult.Option.NONE)) {
-            proceed = false;
-            break;
-          }
-        }
+  public void setDescription(String oldBuildDesc, String newBuildDesc) {
+    invokeLater(() -> myProcessTitle.setText("Updating " + oldBuildDesc + " to " + newBuildDesc + " ..."));
+  }
 
-        Component parent = getParentComponent();
-        final JDialog dialog = parent instanceof Frame ? new JDialog((Frame)parent, TITLE, true)
-                               : new JDialog((Dialog)parent, TITLE, true);
-        dialog.setLayout(new BorderLayout());
-        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+  @Override
+  public void startProcess(String title) {
+    invokeLater(() -> {
+      myProcessStatus.setText(title);
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(0);
+    });
+  }
 
-        JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setBorder(BUTTONS_BORDER);
-        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-        buttonsPanel.add(Box.createHorizontalGlue());
+  @Override
+  public void setProgress(int percentage) {
+    invokeLater(() -> {
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(percentage);
+    });
+  }
 
-        JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
-        cancelButton.addActionListener(e -> {
-          isCancelled.set(true);
-          notifyCancelled();
-          dialog.setVisible(false);
-        });
-        buttonsPanel.add(cancelButton);
-
-        if (proceed) {
-          JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
-          proceedButton.addActionListener(e -> dialog.setVisible(false));
-          buttonsPanel.add(proceedButton);
-          dialog.getRootPane().setDefaultButton(proceedButton);
-        }
-        else {
-          dialog.getRootPane().setDefaultButton(cancelButton);
-        }
-
-        JTable table = new JTable();
-
-        table.setCellSelectionEnabled(true);
-        table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
-        table.setDefaultRenderer(Object.class, new MyCellRenderer());
-        MyTableModel model = new MyTableModel(validationResults);
-        table.setModel(model);
-
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-          TableColumn each = table.getColumnModel().getColumn(i);
-          each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
-        }
-
-        String message = "<html>Some conflicts were found in the installation area.<br><br>";
-        if (proceed) {
-          message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
-                     " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
-                     "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-        }
-        else {
-          message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                     "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
-        }
-
-        JLabel label = new JLabel(message);
-        label.setBorder(LABEL_BORDER);
-        dialog.add(label, BorderLayout.NORTH);
-        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
-        dialog.add(buttonsPanel, BorderLayout.SOUTH);
-
-        dialog.getRootPane().setBorder(FRAME_BORDER);
-
-        dialog.setSize(new Dimension(600, 400));
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
-        result.putAll(model.getResult());
-      });
-    }
-    catch (InterruptedException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-    checkCancelled();
-    return result;
+  @Override
+  public void setProgressIndeterminate() {
+    invokeLater(() -> myProcessProgress.setIndeterminate(true));
   }
 
   @Override
   public void checkCancelled() throws OperationCancelledException {
-    if (isCancelled.get()) throw new OperationCancelledException();
+    while (myPaused) Utils.pause(10);
+    if (myCancelled) throw new OperationCancelledException();
   }
 
-  @FunctionalInterface
-  public interface InstallOperation {
-    boolean execute(UpdaterUI ui) throws OperationCancelledException;
+  @Override
+  public void showError(String message) {
+    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, message, "Update Error", JOptionPane.ERROR_MESSAGE));
+  }
+
+  @Override
+  public void askUser(String message) throws OperationCancelledException {
+    invokeAndWait(() -> {
+      if (myCancelled) return;
+
+      Object[] choices = {RETRY_BUTTON_TITLE, EXIT_BUTTON_TITLE};
+      int choice = JOptionPane.showOptionDialog(
+        myFrame, message, TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
+
+      if (choice != 0) {
+        myCancelled = true;
+        myCancelButton.setEnabled(false);
+      }
+    });
+
+    checkCancelled();
+  }
+
+  @Override
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+    boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
+    Map<String, ValidationResult.Option> result = new HashMap<>();
+
+    invokeAndWait(() -> {
+      if (myCancelled) return;
+
+      JDialog dialog = new JDialog(myFrame, TITLE, true);
+      dialog.setLayout(new BorderLayout());
+      dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+      JPanel buttonsPanel = new JPanel();
+      buttonsPanel.setBorder(BUTTONS_BORDER);
+      buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+      buttonsPanel.add(Box.createHorizontalGlue());
+
+      JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
+      cancelButton.addActionListener(e -> {
+        myCancelled = true;
+        myCancelButton.setEnabled(false);
+        dialog.setVisible(false);
+      });
+      buttonsPanel.add(cancelButton);
+
+      if (canProceed) {
+        JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
+        proceedButton.addActionListener(e -> dialog.setVisible(false));
+        buttonsPanel.add(proceedButton);
+        dialog.getRootPane().setDefaultButton(proceedButton);
+      }
+      else {
+        dialog.getRootPane().setDefaultButton(cancelButton);
+      }
+
+      JTable table = new JTable();
+      table.setCellSelectionEnabled(true);
+      table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
+      table.setDefaultRenderer(Object.class, new MyCellRenderer());
+
+      MyTableModel model = new MyTableModel(validationResults);
+      table.setModel(model);
+
+      for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+        TableColumn each = table.getColumnModel().getColumn(i);
+        each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
+      }
+
+      String message = "<html>Some conflicts were found in the installation area.<br><br>";
+      if (canProceed) {
+        message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
+                   " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
+                   "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
+      }
+      else {
+        message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
+                   "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
+      }
+      JLabel label = new JLabel(message);
+      label.setBorder(LABEL_BORDER);
+
+      dialog.add(label, BorderLayout.NORTH);
+      dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+      dialog.add(buttonsPanel, BorderLayout.SOUTH);
+      dialog.getRootPane().setBorder(FRAME_BORDER);
+      dialog.setSize(new Dimension(600, 400));
+      dialog.setLocationRelativeTo(null);
+      dialog.setVisible(true);
+
+      model.collectOptions(result);
+    });
+
+    checkCancelled();
+    return result;
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void invokeLater(Runnable runnable) {
+    SwingUtilities.invokeLater(runnable);
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void invokeAndWait(Runnable runnable) {
+    try {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    catch (InterruptedException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static class MyTableModel extends AbstractTableModel {
@@ -230,12 +335,10 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
       return item.validationResult.options;
     }
 
-    public Map<String, ValidationResult.Option> getResult() {
-      Map<String, ValidationResult.Option> result = new HashMap<>();
+    public void collectOptions(Map<String, ValidationResult.Option> result) {
       for (Item each : myItems) {
         result.put(each.validationResult.path, each.option);
       }
-      return result;
     }
 
     private static class Item {
@@ -273,20 +376,17 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (!isSelected) {
-        MyTableModel tableModel = (MyTableModel)table.getModel();
-        Color color = table.getBackground();
 
-        ValidationResult.Kind kind = tableModel.getKind(row);
+      if (!isSelected) {
+        ValidationResult.Kind kind = ((MyTableModel)table.getModel()).getKind(row);
         if (kind == ValidationResult.Kind.ERROR) {
-          color = new Color(255, 175, 175);
+          result.setBackground(VALIDATION_ERROR_COLOR);
         }
         else if (kind == ValidationResult.Kind.CONFLICT) {
-          color = new Color(255, 240, 240);
+          result.setBackground(VALIDATION_CONFLICT_COLOR);
         }
-
-        result.setBackground(color);
       }
+
       return result;
     }
   }

@@ -17,63 +17,59 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.options.SchemeImportUtil;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class CodeStyleSettingsLoader {
 
   public CodeStyleSettings loadSettings(@NotNull VirtualFile file) throws SchemeImportException {
-    Element rootElement = loadSchemeDom(file);
+    Element rootElement = SchemeImportUtil.loadSchemeDom(file);
     CodeStyleSettings settings = new CodeStyleSettings();
     loadSettings(rootElement, settings);
     return settings;
   }
 
-  @NotNull
-  protected static Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
-    InputStream inputStream = null;
+  protected static void loadSettings(@NotNull Element rootElement, @NotNull CodeStyleSettings settings) throws SchemeImportException {
     try {
-      inputStream = file.getInputStream();
-      final Document document = JDOMUtil.loadDocument(inputStream);
-      final Element root = document.getRootElement();
-      inputStream.close();
-      return root;
-    }
-    catch (IOException | JDOMException e) {
-      throw new SchemeImportException(getErrorMessage(e, file));
-    }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException e) {
-          // ignore
-        }
-      }
-    }
-  }
-
-  private static String getErrorMessage(@NotNull Exception e, @NotNull VirtualFile file) {
-    return "Can't read from" + file.getName() + ", " + e.getMessage();
-  }
-
-  protected void loadSettings(@NotNull Element rootElement, @NotNull CodeStyleSettings settings) throws SchemeImportException {
-    try {
-      settings.readExternal(rootElement);
+      settings.readExternal(findSchemeRoot(rootElement));
     }
     catch (InvalidDataException e) {
       throw new SchemeImportException(ApplicationBundle.message("settings.code.style.import.xml.error.can.not.load", e.getMessage()));
     }
   }
 
+  protected static Element findSchemeRoot(@NotNull Element rootElement) throws SchemeImportException {
+    String rootName = rootElement.getName();
+    //
+    // Project code style 172.x and earlier
+    //
+    if ("project".equals(rootName)) {
+      Element child = rootElement.getChild("component");
+      if (child != null && "ProjectCodeStyleSettingsManager".equals(child.getAttributeValue("name"))) {
+        child = child.getChild("option");
+        if (child != null && "PER_PROJECT_SETTINGS".equals(child.getAttributeValue("name"))) {
+          child = child.getChild("value");
+          if (child != null) return child;
+        }
+      }
+      throw new SchemeImportException("Invalid scheme root: " + rootName);
+    }
+    //
+    // Project code style 173.x and later
+    //
+    else if ("component".equals(rootName)) {
+      if ("ProjectCodeStyleConfiguration".equals(rootElement.getAttributeValue("name"))) {
+        Element child = rootElement.getChild("code_scheme");
+        if (child != null) {
+          return child;
+        }
+      }
+      throw new SchemeImportException("Invalid scheme root: " + rootName);
+    }
+    return rootElement;
+  }
 }

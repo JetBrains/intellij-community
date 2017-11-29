@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -47,10 +48,10 @@ public final class ShowJavadocAction extends AnAction {
     final IntrospectedProperty introspectedProperty = inspector.getSelectedIntrospectedProperty();
     final PsiClass aClass = inspector.getComponentClass();
 
-    final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
+    final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
     LOG.assertTrue(getter != null);
 
-    final PsiMethod setter = PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
+    final PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     LOG.assertTrue(setter != null);
 
     final DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());

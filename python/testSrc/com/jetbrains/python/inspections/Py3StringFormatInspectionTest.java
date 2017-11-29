@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
  */
-public class Py3StringFormatInspectionTest extends PyTestCase {
+public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
 
   @Nullable
@@ -37,9 +38,60 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyStringFormatInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+  public void testIndexElementWithPackedReferenceExpr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedDictLiteralInsideDictLiteral() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedDictCallInsideDictLiteral() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedListInsideList() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedTupleInsideList() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedTupleInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedListInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideList()  {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideTuple()  {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-20599
+  public void testPy3kAsciiFormatSpecifier() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyStringFormatInspection.class;
+  }
+
+  @Override
+  protected String getTestCaseDirectory() {
+    return TEST_DIRECTORY;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

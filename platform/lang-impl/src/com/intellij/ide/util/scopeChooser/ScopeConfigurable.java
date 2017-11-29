@@ -36,10 +36,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 01-Jul-2006
- */
 public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private final Disposable myDisposable = Disposer.newDisposable();
   private NamedScope myScope;

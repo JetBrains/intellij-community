@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,14 +30,14 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     settings.STATIC_FIELD_NAME_PREFIX = "qwe";
     settings.STATIC_FIELD_NAME_SUFFIX = "asd";
   }
 
   @Override
   protected void tearDown() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     settings.STATIC_FIELD_NAME_PREFIX = "";
     settings.STATIC_FIELD_NAME_SUFFIX = "";
     super.tearDown();

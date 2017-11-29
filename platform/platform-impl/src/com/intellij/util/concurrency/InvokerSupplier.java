@@ -15,9 +15,15 @@
  */
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Sergey.Malenkov
  */
 public interface InvokerSupplier {
+  /**
+   * @return preferable invoker to be used to access the supplier
+   */
+  @NotNull
   Invoker getInvoker();
 }

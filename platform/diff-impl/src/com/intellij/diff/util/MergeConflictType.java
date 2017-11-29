@@ -21,20 +21,26 @@ public class MergeConflictType {
   @NotNull private final TextDiffType myType;
   private final boolean myLeftChange;
   private final boolean myRightChange;
-
-  public MergeConflictType(@NotNull TextDiffType type) {
-    this(type, true, true);
-  }
+  private final boolean myCanBeResolved;
 
   public MergeConflictType(@NotNull TextDiffType type, boolean leftChange, boolean rightChange) {
+    this(type, leftChange, rightChange, true);
+  }
+
+  public MergeConflictType(@NotNull TextDiffType type, boolean leftChange, boolean rightChange, boolean canBeResolved) {
     myType = type;
     myLeftChange = leftChange;
     myRightChange = rightChange;
+    myCanBeResolved = canBeResolved;
   }
 
   @NotNull
   public TextDiffType getDiffType() {
     return myType;
+  }
+
+  public boolean canBeResolved() {
+    return myCanBeResolved;
   }
 
   public boolean isChange(@NotNull Side side) {

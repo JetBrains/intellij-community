@@ -28,13 +28,13 @@ import java.util.List;
 public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
   private DirectoryHistoryDialogModel m;
 
-  public void testTitle() throws IOException {
+  public void testTitle() {
     VirtualFile dir = createDirectory("dir");
     initModelFor(dir);
     assertEquals(FileUtil.toSystemDependentName(dir.getPath()), m.getTitle());
   }
 
-  public void testNoDifference() throws IOException {
+  public void testNoDifference() {
     VirtualFile dir = createDirectory("dir");
 
     getVcs().getChangeListInTests().purgeObsolete(0);

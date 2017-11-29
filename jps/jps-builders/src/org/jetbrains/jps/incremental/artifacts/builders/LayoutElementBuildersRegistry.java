@@ -127,7 +127,7 @@ public class LayoutElementBuildersRegistry {
                                                        @NotNull JpsPackagingElement contextElement) {
     if (outputUrl != null) {
       File directory = JpsPathUtil.urlToFile(outputUrl);
-      creator.addDirectoryCopyInstructions(directory, null, creator.getInstructionsBuilder().createCopyingHandler(directory, contextElement));
+      creator.addDirectoryCopyInstructions(directory, null, creator.getInstructionsBuilder().createCopyingHandler(directory, contextElement, creator));
     }
   }
 
@@ -178,7 +178,7 @@ public class LayoutElementBuildersRegistry {
       final String dirPath = element.getDirectoryPath();
       if (dirPath != null) {
         final File directory = new File(dirPath);
-        instructionCreator.addDirectoryCopyInstructions(directory, null, instructionCreator.getInstructionsBuilder().createCopyingHandler(directory, element));
+        instructionCreator.addDirectoryCopyInstructions(directory, null, instructionCreator.getInstructionsBuilder().createCopyingHandler(directory, element, instructionCreator));
       }
     }
 
@@ -207,7 +207,7 @@ public class LayoutElementBuildersRegistry {
         final String fileName = element.getRenamedOutputFileName();
         String outputFileName = fileName != null ? fileName : file.getName();
         instructionCreator.addFileCopyInstruction(file, outputFileName,
-                                                  instructionCreator.getInstructionsBuilder().createCopyingHandler(file, element));
+                                                  instructionCreator.getInstructionsBuilder().createCopyingHandler(file, element, instructionCreator));
       }
     }
 

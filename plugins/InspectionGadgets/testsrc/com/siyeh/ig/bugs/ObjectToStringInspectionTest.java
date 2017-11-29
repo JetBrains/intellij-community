@@ -23,23 +23,23 @@ import org.jetbrains.annotations.Nullable;
 
 public class ObjectToStringInspectionTest extends LightInspectionTestCase {
 
-  public void testObjectToString() throws Exception {
+  public void testObjectToString() {
     doTest();
   }
 
-  public void testObjectToString_IGNORE_TOSTRING() throws Exception {
+  public void testObjectToString_IGNORE_TOSTRING() {
     doTest();
   }
 
-  public void testObjectToString_IGNORE_EXCEPTION() throws Exception {
+  public void testObjectToString_IGNORE_EXCEPTION() {
     doTest();
   }
 
-  public void testObjectToString_IGNORE_ASSERT() throws Exception {
+  public void testObjectToString_IGNORE_ASSERT() {
     doTest();
   }
 
-  public void testObjectToString_IGNORE_NONNLS() throws Exception {
+  public void testObjectToString_IGNORE_NONNLS() {
     doTest();
   }
 

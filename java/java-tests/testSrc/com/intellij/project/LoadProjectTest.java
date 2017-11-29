@@ -22,7 +22,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -34,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class LoadProjectTest extends PlatformTestCase {
@@ -45,12 +48,24 @@ public class LoadProjectTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
+    Project project = getProject();
     myProject = null;
-    super.tearDown();
+
+    new RunAll(
+      () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
+      () -> ProjectManagerEx.getInstanceEx().closeAndDispose(project),
+      () -> checkNoPsiFilesInProjectReachable(project),
+      () -> super.tearDown()).run();
   }
 
-  public void testLoadProject() throws Exception {
+  private static void checkNoPsiFilesInProjectReachable(Project project) {
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
+                                    psiFile.getProject() == project);
+  }
+
+  public void testLoadProject() {
     VirtualFile src = ProjectRootManager.getInstance(getProject()).getContentSourceRoots()[0];
 
     VirtualFile a = src.findFileByRelativePath("/x/AClass.java");
@@ -78,12 +93,5 @@ public class LoadProjectTest extends PlatformTestCase {
     FileEditor[] allEditors = FileEditorManager.getInstance(getProject()).getAllEditors();
     assertEquals(2, allEditors.length);
 
-    FileEditorManager.getInstance(getProject()).closeFile(a);
-    FileEditorManager.getInstance(getProject()).closeFile(b);
-    ProjectManagerEx.getInstanceEx().closeAndDispose(getProject());
-
-    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
-                                    psiFile.getProject() == getProject());
   }
 }

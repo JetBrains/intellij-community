@@ -24,9 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 
 public class RestoreBundledExtensionsAction extends DumbAwareAction {
-  RestoreBundledExtensionsAction() {
-    super("Restore Default Extensions", "Restore bundled extensions for this directory", null);
-  }
 
   @Override
   public void update(AnActionEvent e) {

@@ -2,10 +2,9 @@ package com.intellij.dupLocator.util;
 
 import com.intellij.dupLocator.DuplicatesProfile;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,13 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Mar 26, 2004
- * Time: 4:58:00 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class PsiFragment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.PsiFragment");
 
@@ -53,11 +45,7 @@ public abstract class PsiFragment {
   }
 
   protected PsiAnchor createAnchor(final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiAnchor>() {
-      public PsiAnchor compute() {
-        return PsiAnchor.create(element);
-      }
-    });
+    return ReadAction.compute(() -> PsiAnchor.create(element));
   }
 
   public PsiFragment(List<? extends PsiElement> elements) {

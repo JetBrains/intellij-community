@@ -34,7 +34,6 @@ import com.intellij.lang.ASTNode;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"ComponentNotRegistered"})
 public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVariableOptions> {
 
     public String getRefactoringName() {

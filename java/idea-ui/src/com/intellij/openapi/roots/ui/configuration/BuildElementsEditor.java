@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 28-Jun-2006
- * Time: 19:03:32
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;
@@ -76,6 +70,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
+        fireConfigurationChanged();
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
@@ -83,6 +78,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
+        fireConfigurationChanged();
       }
     });
 
@@ -91,6 +87,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       @Override
       public void actionPerformed(final ActionEvent e) {
         getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
+        fireConfigurationChanged();
       }
     });
 
@@ -187,6 +184,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myCbExcludeOutput.setEnabled(enabled);
     getCompilerExtension().inheritCompilerOutputPath(!enabled);
     updateOutputPathPresentation();
+    fireConfigurationChanged();
   }
 
   private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {

@@ -18,7 +18,9 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -33,6 +35,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -43,6 +46,7 @@ import java.util.regex.Pattern;
  */
 public class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+  private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
@@ -78,17 +82,42 @@ public class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    if (testRunningSettings.isPassSystemProperties() && isEnabled(plugin, "systemPropertyVariables")) {
-      Element systemPropertyVariables = config.getChild("systemPropertyVariables");
-      if (systemPropertyVariables != null) {
-        for (Element element : systemPropertyVariables.getChildren()) {
-          String propertyName = element.getName();
-
-          if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
-            String value = resolvePluginProperties(plugin, element.getValue(), domModel);
-            value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-            if (isResolved(plugin, value)) {
-              javaParameters.getVMParametersList().addProperty(propertyName, value);
+    if (testRunningSettings.isPassSystemProperties()) {
+      if (isEnabled(plugin, "systemPropertyVariables")) {
+        Element systemPropertyVariables = config.getChild("systemPropertyVariables");
+        if (systemPropertyVariables != null) {
+          for (Element element : systemPropertyVariables.getChildren()) {
+            String propertyName = element.getName();
+            if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
+              String value = resolvePluginProperties(plugin, element.getValue(), domModel);
+              value = resolveVmProperties(javaParameters.getVMParametersList(), value);
+              if (isResolved(plugin, value)) {
+                javaParameters.getVMParametersList().addProperty(propertyName, value);
+              }
+            }
+          }
+        }
+      }
+      if (isEnabled(plugin, "systemPropertiesFile")) {
+        Element systemPropertiesFile = config.getChild("systemPropertiesFile");
+        if (systemPropertiesFile != null) {
+          String systemPropertiesFilePath = systemPropertiesFile.getTextTrim();
+          if (StringUtil.isNotEmpty(systemPropertiesFilePath) && !FileUtil.isAbsolute(systemPropertiesFilePath)) {
+            systemPropertiesFilePath = mavenProject.getDirectory() + '/' + systemPropertiesFilePath;
+          }
+          if (StringUtil.isNotEmpty(systemPropertiesFilePath) && new File(systemPropertiesFilePath).exists()) {
+            try {
+              Reader fis = new BufferedReader(new FileReader(systemPropertiesFilePath));
+              try {
+                Map<String, String> properties = FileUtil.loadProperties(fis);
+                properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
+              }
+              finally {
+                fis.close();
+              }
+            }
+            catch (IOException e) {
+              LOG.warn("Can't read property file '" + systemPropertiesFilePath + "': " + e.getMessage());
             }
           }
         }

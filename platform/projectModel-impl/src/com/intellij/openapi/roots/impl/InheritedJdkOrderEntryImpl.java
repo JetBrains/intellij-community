@@ -34,33 +34,27 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  */
 public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.INHERITED_JDK_TYPE;
-  private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 
-  InheritedJdkOrderEntryImpl(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  InheritedJdkOrderEntryImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     myProjectRootManagerImpl.addProjectJdkListener(myListener);
-    myProjectRootManagerImpl.addJdkTableListener(myJdkTableListener);
+    myProjectRootManagerImpl.addJdkTableListener(new MyJdkTableListener(), this);
     init();
   }
 
-  /**
-   * @param element
-   * @param rootModel
-   * @param projectRootManager
-   * @throws InvalidDataException
-   */
-  InheritedJdkOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+  InheritedJdkOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     this(rootModel, projectRootManager);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException(element.getName());
     }
   }
 
+  @NotNull
   @Override
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager);
   }
 
@@ -75,7 +69,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitInheritedJdkOrderEntry(this, initialValue);
   }
 
@@ -112,28 +106,27 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   @Override
   public void dispose() {
     super.dispose();
-    myProjectRootManagerImpl.removeJdkTableListener(myJdkTableListener);
     myProjectRootManagerImpl.removeProjectJdkListener(myListener);
   }
 
 
   private class MyJdkTableListener implements ProjectJdkTable.Listener {
     @Override
-    public void jdkRemoved(Sdk jdk) {
+    public void jdkRemoved(@NotNull Sdk jdk) {
       if (jdk.equals(getJdk())) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
     @Override
-    public void jdkAdded(Sdk jdk) {
+    public void jdkAdded(@NotNull Sdk jdk) {
       if (isAffectedByJdk(jdk)) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
     @Override
-    public void jdkNameChanged(Sdk jdk, String previousName) {
+    public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
       if (isAffectedByJdk(jdk)) {
         // if current name matches my name
         updateFromRootProviderAndSubscribe();

@@ -32,10 +32,6 @@ import java.awt.image.Kernel;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 10-Feb-2006
- */
 public class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;

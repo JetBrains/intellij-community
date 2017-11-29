@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ExtensionsAreaTest {
   @Test
-  public void testGetComponentAdapterDoesntDuplicateAdapters() throws Exception {
+  public void testGetComponentAdapterDoesntDuplicateAdapters() {
     MutablePicoContainer picoContainer =
       new ExtensionsAreaImpl("foo", null, new DefaultPicoContainer(), new Extensions.SimpleLogProvider()).getPicoContainer();
     picoContainer.registerComponentImplementation("runnable", ExtensionsAreaTest.class);

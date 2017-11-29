@@ -18,9 +18,6 @@ package com.intellij.util.indexing.containers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.ValueContainer;
 
-/**
-* Created by Maxim.Mossienko on 5/27/2014.
-*/
 class IdBitSet implements Cloneable, RandomAccessIntContainer {
   private static final int SHIFT = 6;
   private static final int BITS_PER_WORD = 1 << SHIFT;

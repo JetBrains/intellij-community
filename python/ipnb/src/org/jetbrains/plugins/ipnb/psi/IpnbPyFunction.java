@@ -2,10 +2,10 @@ package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
@@ -21,10 +21,6 @@ public class IpnbPyFunction extends PyFunctionImpl {
     super(stub);
   }
 
-  public IpnbPyFunction(PyFunctionStub stub, IStubElementType nodeType) {
-    super(stub, nodeType);
-  }
-
   @Override
   public void navigate(boolean requestFocus) {
     final IpnbCodeSourcePanel sourcePanel = ((IpnbPyFragment)getContainingFile()).getCodeSourcePanel();
@@ -36,7 +32,13 @@ public class IpnbPyFunction extends PyFunctionImpl {
     codePanel.setEditing(true);
     filePanel.setSelectedCellPanel(codePanel);
     super.navigate(false);
-    UIUtil.requestFocus(editor.getContentComponent());
+    FocusManagerImpl.getInstance().requestFocus(editor.getContentComponent(), true);
+  }
+
+  @Nullable
+  @Override
+  public PyFunctionStub getStub() {
+    return null;
   }
 }
 

@@ -119,18 +119,12 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         hasSideEffects = true;
-      }
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
-        hasSideEffects = true;
+      } else {
+        super.visitUnaryExpression(expression);
       }
     }
   }
@@ -158,7 +152,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
       if (hasSideEffects) {
         return;
       }
@@ -166,19 +160,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         checkExpression(expression.getOperand());
       }
-      super.visitPrefixExpression(expression);
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      if (hasSideEffects) {
-        return;
-      }
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
-        checkExpression(expression.getOperand());
-      }
-      super.visitPostfixExpression(expression);
+      super.visitUnaryExpression(expression);
     }
 
     private void checkExpression(PsiExpression operand) {

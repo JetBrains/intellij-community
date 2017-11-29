@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -90,33 +91,49 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      restoreSettingsFile();
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          restoreSettingsFile();
+          setUpInWriteAction();
         }
-        catch (IOException e) {
+        catch (Throwable e) {
+          try {
+            tearDown();
+          }
+          catch (Exception e1) {
+            e1.printStackTrace();
+          }
           throw new RuntimeException(e);
         }
-
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            setUpInWriteAction();
-          }
-          catch (Throwable e) {
-            try {
-              tearDown();
-            }
-            catch (Exception e1) {
-              e1.printStackTrace();
-            }
-            throw new RuntimeException(e);
-          }
-        });
-      }
+      });
     });
 
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
+      myProject = null;
+      EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures());
+
+      MavenIndicesManager.getInstance().clear();
+    }
+    finally {
+      super.tearDown();
+      FileUtil.delete(myDir);
+      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+      if (myDir.exists()) {
+        System.err.println("Cannot delete " + myDir);
+        //printDirectoryContent(myDir);
+        myDir.deleteOnExit();
+      }
+      resetClassFields(getClass());
+    }
   }
 
   private void ensureTempDirCreated() throws IOException {
@@ -136,40 +153,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      MavenServerManager.getInstance().shutdown(true);
-      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
-      myProject = null;
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            tearDownFixtures();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
-
-      MavenIndicesManager.getInstance().clear();
-    }
-    finally {
-      super.tearDown();
-      FileUtil.delete(myDir);
-      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
-      if (myDir.exists()) {
-        System.err.println("Cannot delete " + myDir);
-        //printDirectoryContent(myDir);
-        myDir.deleteOnExit();
-      }
-      resetClassFields(getClass());
-    }
   }
 
   private static void printDirectoryContent(File dir) {
@@ -242,7 +225,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -311,7 +294,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
-  protected void deleteSettingsXml() throws IOException {
+  protected void deleteSettingsXml() {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
@@ -342,11 +325,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     updateSettingsXml("");
   }
 
-  protected Module createModule(String name) throws IOException {
+  protected Module createModule(String name) {
     return createModule(name, StdModuleTypes.JAVA);
   }
 
-  protected Module createModule(final String name, final ModuleType type) throws IOException {
+  protected Module createModule(final String name, final ModuleType type) {
     return new WriteCommandAction<Module>(myProject) {
       @Override
       protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
@@ -358,15 +341,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }.execute().getResultObject();
   }
 
-  protected VirtualFile createProjectPom(@NonNls String xml) throws IOException {
+  protected VirtualFile createProjectPom(@NonNls String xml) {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected VirtualFile createModulePom(String relativePath, String xml) throws IOException {
+  protected VirtualFile createModulePom(String relativePath, String xml) {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected VirtualFile createPomFile(final VirtualFile dir, String xml) throws IOException {
+  protected VirtualFile createPomFile(final VirtualFile dir, String xml) {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
@@ -393,35 +376,35 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "</project>";
   }
 
-  protected VirtualFile createProfilesXmlOldStyle(String xml) throws IOException {
+  protected VirtualFile createProfilesXmlOldStyle(String xml) {
     return createProfilesFile(myProjectRoot, xml, true);
   }
 
-  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
+  protected VirtualFile createProfilesXmlOldStyle(String relativePath, String xml) {
     return createProfilesFile(createProjectSubDir(relativePath), xml, true);
   }
 
-  protected VirtualFile createProfilesXml(String xml) throws IOException {
+  protected VirtualFile createProfilesXml(String xml) {
     return createProfilesFile(myProjectRoot, xml, false);
   }
 
-  protected VirtualFile createProfilesXml(String relativePath, String xml) throws IOException {
+  protected VirtualFile createProfilesXml(String relativePath, String xml) {
     return createProfilesFile(createProjectSubDir(relativePath), xml, false);
   }
 
-  private static VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
+  private static VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) {
     return createProfilesFile(dir, createValidProfiles(xml, oldStyle));
   }
 
-  protected VirtualFile createFullProfilesXml(String content) throws IOException {
+  protected VirtualFile createFullProfilesXml(String content) {
     return createProfilesFile(myProjectRoot, content);
   }
 
-  protected VirtualFile createFullProfilesXml(String relativePath, String content) throws IOException {
+  protected VirtualFile createFullProfilesXml(String relativePath, String content) {
     return createProfilesFile(createProjectSubDir(relativePath), content);
   }
 
-  private static VirtualFile createProfilesFile(final VirtualFile dir, String content) throws IOException {
+  private static VirtualFile createProfilesFile(final VirtualFile dir, String content) {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
@@ -452,7 +435,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "</profilesXml>";
   }
 
-  protected void deleteProfilesXml() throws IOException {
+  protected void deleteProfilesXml() {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
@@ -494,7 +477,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return file;
   }
 
-  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
+  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -549,6 +532,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());
+  }
+
+  protected static void assertUnorderedLinesWithFile(String filePath, String expectedText) {
+    try {
+      assertSameLinesWithFile(filePath, expectedText);
+    }
+    catch (FileComparisonFailure e) {
+      String expected = e.getExpected();
+      String actual = e.getActual();
+      assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
+    }
   }
 
   protected boolean ignore() {

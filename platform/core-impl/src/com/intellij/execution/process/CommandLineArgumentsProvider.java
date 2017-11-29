@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -33,6 +34,7 @@ public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)
    */
+  @NotNull
   public String[] getArguments() { return ArrayUtil.EMPTY_STRING_ARRAY; }
 
   public boolean passParentEnvs() { return false; }

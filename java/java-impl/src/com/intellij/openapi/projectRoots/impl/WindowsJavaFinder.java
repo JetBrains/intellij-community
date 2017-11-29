@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,14 +29,9 @@ class WindowsJavaFinder extends JavaHomeFinder {
   @NotNull
   @Override
   protected List<String> findExistingJdks() {
-    String property = System.getProperty("java.home");
-    if (property == null)
-      return Collections.emptyList();
+    File javaHome = getJavaHome();
+    if (javaHome == null) return Collections.emptyList();
 
-    File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
-    if (javaHome == null || !javaHome.isDirectory() || javaHome.getParentFile() == null) {
-      return Collections.emptyList();
-    }
     ArrayList<String> result = new ArrayList<>();
     File javasFolder = javaHome.getParentFile();
     scanFolder(javasFolder, result);
@@ -57,7 +52,7 @@ class WindowsJavaFinder extends JavaHomeFinder {
         scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
       }
     }
-    result.sort((o1, o2) -> Comparing.compare(JdkVersionUtil.getVersion(o2), JdkVersionUtil.getVersion(o1)));
+    result.sort((o1, o2) -> Comparing.compare(JavaSdkVersion.fromVersionString(o2), JavaSdkVersion.fromVersionString(o1)));
     return result;
   }
 }

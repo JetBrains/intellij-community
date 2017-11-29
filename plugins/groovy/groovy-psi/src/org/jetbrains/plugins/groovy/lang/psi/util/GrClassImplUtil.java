@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -23,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
@@ -179,6 +167,7 @@ public class GrClassImplUtil {
   }
 
 
+  @NotNull
   public static PsiClass[] getInterfaces(GrTypeDefinition grType) {
     final PsiClassType[] implementsListTypes = grType.getImplementsListTypes();
     List<PsiClass> result = new ArrayList<>(implementsListTypes.length);
@@ -208,10 +197,10 @@ public class GrClassImplUtil {
                                             @NotNull ResolveState state,
                                             @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
-    if (place instanceof GrCodeReferenceElement && lastParent instanceof GrModifierList) {
+    if (place instanceof GrCodeReferenceElement) {
       final PsiElement possibleAnnotation = PsiTreeUtil.skipParentsOfType(place, GrCodeReferenceElement.class);
-      if (possibleAnnotation instanceof GrAnnotation && possibleAnnotation.getParent() == lastParent) {
-        return true; //don't process class members while resolving annotation which annotates current class
+      if (possibleAnnotation instanceof GrAnnotation) {
+        return true; //don't process class members while resolving annotation
       }
     }
 
@@ -393,7 +382,14 @@ public class GrClassImplUtil {
       for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, includeSynthetic).values()) {
         final PsiClass inner = (PsiClass)info.getElement();
         final PsiClass containingClass = inner.getContainingClass();
-        assert containingClass != null;
+        if (containingClass == null) {
+          PsiFile file = grType.getContainingFile();
+          LOG.error(
+            "Contating class must not be null. Name: " + inner.getName() + ", class: :" + inner.getClass(),
+            new Attachment(file.getVirtualFile().getPresentableUrl(), DebugUtil.psiToString(file, false))
+          );
+          continue;
+        }
 
         if (lastParent == null || !containingClass.isInterface() || PsiTreeUtil.isAncestor(containingClass, place, false)) {
           ContainerUtil.addIfNotNull(result, inner);
@@ -557,7 +553,11 @@ public class GrClassImplUtil {
   }
 
   public static PsiField[] getAllFields(GrTypeDefinition grType) {
-    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
+    return getAllFields(grType, true);
+  }
+
+  public static PsiField[] getAllFields(GrTypeDefinition grType, boolean includeSynthetic) {
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType, includeSynthetic);
     return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, entry -> (PsiField)entry.getElement());
   }
 

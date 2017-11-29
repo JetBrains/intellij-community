@@ -9,10 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: evgeny.zakrevsky
- * Date: 9/24/12
- */
 public final class MantisProject {
   // Used for "All projects" option in settings
   public static final int UNSPECIFIED_PROJECT_ID = 0;
@@ -75,7 +71,7 @@ public final class MantisProject {
   @Transient
   @NotNull
   public List<MantisFilter> getFilters() {
-    return myFilters == null? Collections.<MantisFilter>emptyList() : myFilters;
+    return myFilters == null ? Collections.emptyList() : myFilters;
   }
 
   public void setFilters(@NotNull List<MantisFilter> filters) {

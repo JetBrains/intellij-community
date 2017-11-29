@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,36 +42,31 @@ public class PyDebugSupportUtils {
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
+    return ReadAction.compute(() -> {
 
-        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
-        return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
-      }
+      final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
+      return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
     });
   }
 
   @Nullable
   public static TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-      @Nullable
-      public TextRange compute() {
+    return ReadAction.compute(() -> {
 
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile != null) {
-          PsiElement element = psiFile.findElementAt(offset);
-          if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
-            element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
-          }
-          if (element != null && element instanceof PyLiteralExpression) {
-            return null;
-          }
-          if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
-            return element.getTextRange();
-          }
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        PsiElement element = psiFile.findElementAt(offset);
+        if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
+          element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
         }
-        return null;
+        if (element != null && element instanceof PyLiteralExpression) {
+          return null;
+        }
+        if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
+          return element.getTextRange();
+        }
       }
+      return null;
     });
   }
 
@@ -85,13 +83,11 @@ public class PyDebugSupportUtils {
   // is expression a variable reference and can be evaluated
   // todo: use patterns (?)
   public static boolean canSaveToTemp(final Project project, final String expression) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
+    return ReadAction.compute(() -> {
 
-        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
-        final PsiElement root = file.getFirstChild();
-        return !isVariable(root) && (root instanceof PyExpressionStatement);
-      }
+      final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
+      final PsiElement root = file.getFirstChild();
+      return !isVariable(root) && (root instanceof PyExpressionStatement);
     });
   }
 
@@ -119,6 +115,19 @@ public class PyDebugSupportUtils {
       return true;
     }
 
+    return false;
+  }
+
+  public static boolean isPythonConfigurationSelected(Project project) {
+    if (project != null) {
+      RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
+      if (settings != null) {
+        RunConfiguration runConfiguration = settings.getConfiguration();
+        if (runConfiguration instanceof AbstractPythonRunConfiguration) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 }

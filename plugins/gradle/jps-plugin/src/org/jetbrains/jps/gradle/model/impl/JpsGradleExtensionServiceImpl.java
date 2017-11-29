@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -49,13 +48,7 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
   private final Map<File, GradleProjectConfiguration> myLoadedConfigs =
     new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
-  private final FactoryMap<File, Boolean> myConfigFileExists = new ConcurrentFactoryMap<File, Boolean>() {
-    @Nullable
-    @Override
-    protected Boolean create(File key) {
-      return key.exists();
-    }
-  };
+  private final Map<File, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> key.exists());
 
   public JpsGradleExtensionServiceImpl() {
     ResourcesBuilder.registerEnabler(new StandardResourceBuilderEnabler() {
@@ -121,11 +114,13 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
       config = myLoadedConfigs.get(configFile);
       if (config == null) {
         config = new GradleProjectConfiguration();
-        try {
-          XmlSerializer.deserializeInto(config, JDOMUtil.load(configFile));
-        }
-        catch (Exception e) {
-          LOG.info(e);
+        if (configFile.exists()) {
+          try {
+            XmlSerializer.deserializeInto(config, JDOMUtil.load(configFile));
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
         }
         myLoadedConfigs.put(configFile, config);
       }

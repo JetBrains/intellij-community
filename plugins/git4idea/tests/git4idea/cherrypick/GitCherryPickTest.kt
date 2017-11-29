@@ -17,7 +17,6 @@ package git4idea.cherrypick
 
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.testFramework.vcs.MockChangeListManager
-import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.test.*
 
@@ -33,7 +32,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     cherryPick(commit)
 
-    assertErrorNotification("Cherry-pick failed", """
+    assertErrorNotification("Cherry-pick Failed", """
       ${shortHash(commit)} fix #1
       Your local changes would be overwritten by cherry-pick.
       Commit your changes or stash them to proceed.""")
@@ -69,7 +68,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun `check resolve conflicts and commit`() {
     val commit = prepareConflict()
-    vcsHelper.onMerge { git("add -u .") }
+    `mark as resolved on merge`()
     vcsHelper.onCommit { msg ->
       git("commit -am '$msg'")
       true
@@ -77,7 +76,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     cherryPick(commit)
 
-    assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+    `assert commit dialog was shown`()
     assertLastMessage("""
       on_master
 
@@ -88,7 +87,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
   }
 
   protected fun cherryPick(hashes: List<String>) {
-    val details = readFullDetails(hashes)
+    val details = readDetails(hashes)
     GitCherryPicker(myProject, myGit).cherryPick(details)
   }
 
@@ -134,8 +133,4 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     assertNotNull("Didn't find changelist with name '$name' among :$changeLists", list)
     return list!!
   }
-
-  private fun readFullDetails(hashes: List<String>): List<VcsFullCommitDetails> =
-    findGitLogProvider(myProject).readFullDetails(myProjectRoot, hashes)
-
 }

@@ -100,6 +100,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return myNameElement;
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     return PsiElement.EMPTY_ARRAY;

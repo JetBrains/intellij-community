@@ -50,7 +50,7 @@ public class IndentImpl extends Indent {
   /**
    * @return    {@code 'isAbsolute'} property value as defined during {@link IndentImpl} object construction
    */
-  boolean isAbsolute(){
+  public boolean isAbsolute() {
     return myIsAbsolute;
   }
 

@@ -89,7 +89,7 @@ public class UpdateEventHandler implements ProgressTracker {
    * TODO: UPDATE_STARTED event in some code paths.
    */
   public void startUpdate() {
-    myFilesWaitingForRevision.push(ContainerUtil.<Pair<String, String>>newArrayList());
+    myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
   }
 
   public void finishUpdate() {
@@ -189,7 +189,7 @@ public class UpdateEventHandler implements ProgressTracker {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
-      myFilesWaitingForRevision.push(ContainerUtil.<Pair<String, String>>newArrayList());
+      myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
       myExternalsCount++;
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }

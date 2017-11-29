@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +108,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     myResultPanel = new JPanel(new CardLayout());
     myResultPanel.add(ROOTS_FOUND_CARD, panel);
     JPanel notFoundPanel = new JPanel(new BorderLayout());
-    notFoundPanel.setBorder(IdeBorderFactory.createEmptyBorder(5));
+    notFoundPanel.setBorder(JBUI.Borders.empty(5));
     notFoundPanel.add(BorderLayout.NORTH, new MultiLineLabel(IdeBundle.message("label.project.roots.not.found")));
     myResultPanel.add(ROOTS_NOT_FOUND_CARD, notFoundPanel);
     return myResultPanel;

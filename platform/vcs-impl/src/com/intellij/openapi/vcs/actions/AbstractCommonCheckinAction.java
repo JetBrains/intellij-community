@@ -25,14 +25,24 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
+
+import static com.intellij.util.ArrayUtil.isEmpty;
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static com.intellij.util.containers.UtilKt.stream;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toSet;
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   
@@ -60,14 +70,29 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected void performCheckIn(@NotNull VcsContext context, @NotNull Project project, @NotNull FilePath[] roots) {
     LOG.debug("invoking commit dialog after update");
     LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
-    Change[] changes = context.getSelectedChanges();
-
-    if (changes != null && changes.length > 0) {
-      CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), initialSelection, getExecutor(project), null);
+    Change[] selectedChanges = context.getSelectedChanges();
+    List<Change> selectedChangesList = isEmpty(selectedChanges) ? emptyList() : asList(selectedChanges);
+    List<VirtualFile> selectedUnversioned = context.getSelectedUnversionedFiles();
+    Collection<Change> changesToCommit;
+    Collection<?> included;
+    if (!isEmpty(selectedChangesList) || !isEmpty(selectedUnversioned)) {
+      changesToCommit = selectedChangesList;
+      included = concat(selectedChangesList, selectedUnversioned);
     }
     else {
-      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
+      changesToCommit = getChangesIn(project, roots);
+      included = changesToCommit;
     }
+
+    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialSelection, getExecutor(project), null);
+  }
+
+  @NotNull
+  private static Set<Change> getChangesIn(@NotNull Project project, @NotNull FilePath[] roots) {
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+    return stream(roots)
+      .flatMap(path -> manager.getChangesIn(path).stream())
+      .collect(toSet());
   }
 
   @NotNull
@@ -92,13 +117,13 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     ChangeList[] changeLists = context.getSelectedChangeLists();
 
-    if (!ArrayUtil.isEmpty(changeLists)) {
+    if (!isEmpty(changeLists)) {
       // convert copy to real
       result = manager.findChangeList(changeLists[0].getName());
     }
     else {
       Change[] changes = context.getSelectedChanges();
-      result = !ArrayUtil.isEmpty(changes) ? manager.getChangeList(changes[0]) : manager.getDefaultChangeList();
+      result = !isEmpty(changes) ? manager.getChangeList(changes[0]) : manager.getDefaultChangeList();
     }
 
     return result;

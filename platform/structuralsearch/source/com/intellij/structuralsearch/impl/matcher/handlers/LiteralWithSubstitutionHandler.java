@@ -7,13 +7,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jun 30, 2004
- * Time: 5:07:33 PM
- * To change this template use File | Settings | File Templates.
- */
 public class LiteralWithSubstitutionHandler extends MatchingHandler {
   private final String matchExpression;
   private Matcher matcher;

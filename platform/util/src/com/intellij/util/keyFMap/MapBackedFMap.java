@@ -21,9 +21,11 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 import static com.intellij.util.keyFMap.ArrayBackedFMap.getKeysByIndices;
 
-class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
+final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int exclude) {
     super(oldMap.size());
     oldMap.forEachEntry(new TIntObjectProcedure<Object>() {
@@ -73,10 +75,12 @@ class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     }
     if (oldSize == ArrayBackedFMap.ARRAY_THRESHOLD + 1) {
       int[] keys = keys();
-      Object[] values = getValues();
-      int i = ArrayUtil.indexOf(keys, keyCode);
-      keys = ArrayUtil.remove(keys, i);
-      values = ArrayUtil.remove(values, i);
+      keys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
+      Arrays.sort(keys);
+      Object[] values = new Object[keys.length];
+      for (int i = 0; i < keys.length; i++) {
+        values[i] = get(keys[i]);
+      }
       return new ArrayBackedFMap(keys, values);
     }
     return new MapBackedFMap(this, keyCode);
@@ -92,6 +96,32 @@ class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   @Override
   public Key[] getKeys() {
     return getKeysByIndices(keys());
+  }
+
+  @Override
+  public int getValueIdentityHashCode() {
+    final int[] hash = {0};
+    forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
+        return true;
+      }
+    });
+    return hash[0];
+  }
+
+  @Override
+  public boolean equalsByReference(KeyFMap other) {
+    if(other == this) return true;
+    if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
+    final MapBackedFMap map = (MapBackedFMap)other;
+    return forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        return map.get(key) == value;
+      }
+    });
   }
 
   @Override

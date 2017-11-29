@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
@@ -176,7 +177,7 @@ public abstract class AutoScrollToSourceHandler {
 
   protected void scrollToSource(final Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    getReady(dataContext).doWhenDone(() -> {
+    getReady(dataContext).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
       DataContext context = DataManager.getInstance().getDataContext(tree);
       final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
       if (vFile != null) {
@@ -198,7 +199,7 @@ public abstract class AutoScrollToSourceHandler {
         }
       }
       OpenSourceUtil.navigate(false, true, navigatables);
-    });
+    }));
   }
 
   @NotNull

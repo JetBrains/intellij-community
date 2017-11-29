@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -41,6 +38,8 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
+
+  private boolean storeProjectFilesExternally = false;
 
   @Nullable
   public String getGradleHome() {
@@ -107,6 +106,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
     result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
     return result;
+  }
+
+  @Transient
+  public boolean isStoreProjectFilesExternally() {
+    return storeProjectFilesExternally;
+  }
+
+  public void setStoreProjectFilesExternally(boolean value) {
+    storeProjectFilesExternally = value;
   }
 
   @Tag("compositeBuild")

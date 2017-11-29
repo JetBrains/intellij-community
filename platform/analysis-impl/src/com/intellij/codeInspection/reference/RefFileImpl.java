@@ -64,7 +64,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   @Nullable
-  public static RefElement fileFromExternalName(final RefManager manager, final String fqName) {
+  static RefElement fileFromExternalName(final RefManager manager, final String fqName) {
     final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(PathMacroManager.getInstance(manager.getProject()).expandPath(fqName));
     if (virtualFile != null) {
       final PsiFile psiFile = PsiManager.getInstance(manager.getProject()).findFile(virtualFile);

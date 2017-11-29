@@ -47,6 +47,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     registerError(statementToken, args);
   }
 
+  @Deprecated
   protected void registerClassError(GrTypeDefinition aClass, Object... args) {
     final PsiElement statementToken = aClass.getNameIdentifierGroovy();
     registerError(statementToken, args);

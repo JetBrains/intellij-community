@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspectionTest extends LightInspectionTestCase {
   public void testUnnecessarySemicolon() { doTest(); }
+  public void testNoWarningOnRedCode() { doTest(); }
   public void testModuleInfo() { doNamedTest("module-info"); }
 
   @NotNull

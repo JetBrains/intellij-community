@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   private static final Object LOCK = new Object();
 
   public EnforcedPlainTextFileTypeManager() {
-    ProjectManager.getInstance().addProjectManagerListener(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, this);
   }
 
   public boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
@@ -94,7 +94,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectPlainTextFileTypeManager projectManager = ProjectPlainTextFileTypeManager.getInstance(project);
       for (VirtualFile file : files) {
-        if (projectManager.isInContent(file)) {
+        if (projectManager.isInContent(file) || projectManager.isInLibrarySource(file)) {
           ensureProjectFileSetAdded(project, projectManager);
           if (isAdded ?
               projectManager.addFile(file) :

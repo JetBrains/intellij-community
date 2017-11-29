@@ -517,7 +517,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   public static <T> T getData(@Nullable PsiElement method, @NotNull Object kind) {
     if (method instanceof GrLightMethodBuilder) {
       if (kind.equals(((GrLightMethodBuilder)method).getMethodKind())) {
-        return ((GrLightMethodBuilder)method).<T>getData();
+        return ((GrLightMethodBuilder)method).getData();
       }
     }
     return null;

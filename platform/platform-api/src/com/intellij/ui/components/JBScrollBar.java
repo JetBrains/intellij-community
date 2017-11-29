@@ -18,8 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.ui.ComponentSettings;
-import com.intellij.ui.InputSource;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -35,15 +33,13 @@ import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
-
 /**
  * Our implementation of a scroll bar with the custom UI.
  * Also it provides a method to create custom UI for our custom L&Fs.
  *
  * @see #createUI(JComponent)
  */
-public class JBScrollBar extends JScrollBar implements TopComponent, Interpolable, FinelyAdjustable {
+public class JBScrollBar extends JScrollBar implements TopComponent, Interpolable {
   /**
    * This key defines a region painter, which is used by the custom ScrollBarUI
    * to draw additional paintings (i.e. error stripes) on the scrollbar's track.
@@ -51,10 +47,25 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @see UIUtil#putClientProperty
    */
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
+  /**
+   * This constraint should be used to add a component that will be shown before the scrollbar's track.
+   * Note that the previously added leading component will be removed.
+   *
+   * @see #addImpl(Component, Object, int)
+   */
+  public static final String LEADING = "JB_SCROLL_BAR_LEADING_COMPONENT";
+  /**
+   * This constraint should be used to add a component that will be shown after the scrollbar's track.
+   * Note that the previously added trailing component will be removed.
+   *
+   * @see #addImpl(Component, Object, int)
+   */
+  public static final String TRAILING = "JB_SCROLL_BAR_TRAILING_COMPONENT";
 
   private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-  private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
+  private double myFractionalRemainder;
+  private boolean wasPositiveDelta;
   private boolean isUnitIncrementSet;
   private boolean isBlockIncrementSet;
 
@@ -68,8 +79,19 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation, int value, int extent, int min, int max) {
     super(orientation, value, extent, min, max);
-    if (isTrueSmoothScrollingEnabled()) setModel(new Model(value, extent, min, max));
+    setModel(new Model(value, extent, min, max));
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
+  }
+
+  @Override
+  protected void addImpl(Component component, Object name, int index) {
+    Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
+    if (key != null) {
+      Component old = UIUtil.getClientProperty(this, key);
+      UIUtil.putClientProperty(this, key, component);
+      if (old != null) remove(old);
+    }
+    super.addImpl(component, name, index);
   }
 
   @Override
@@ -165,11 +187,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (parent instanceof JBScrollPane) {
       JBScrollPane pane = (JBScrollPane)parent;
       JViewport viewport = pane.getViewport();
-      if (viewport != null) {
-        ComponentSettings settings = ComponentSettings.getInstance();
-        if (settings.isTrueSmoothScrollingEligibleFor(viewport.getView()) && settings.isInterpolationEligibleFor(this)) {
-          delay = pane.getInitialDelay(getValueIsAdjusting());
-        }
+      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
+        delay = pane.getInitialDelay(getValueIsAdjusting());
       }
     }
     if (delay > 0) {
@@ -183,17 +202,12 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   @Override
   public void setCurrentValue(int value) {
     super.setValue(value);
-    myAdjuster.reset();
+    myFractionalRemainder = 0.0;
   }
 
   @Override
   public int getTargetValue() {
     return myInterpolator.getTarget();
-  }
-
-  @Override
-  public void adjustValue(double delta) {
-    myAdjuster.adjustValue(delta);
   }
 
   /**
@@ -205,17 +219,32 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public boolean handleMouseWheelEvent(MouseWheelEvent event) {
     if (MouseWheelEvent.WHEEL_UNIT_SCROLL != event.getScrollType()) return false;
     if (event.isShiftDown() == (orientation == VERTICAL)) return false;
-
-    ComponentSettings settings = ComponentSettings.getInstance();
-    if (!settings.isTrueSmoothScrollingEligibleFor(this)) return false;
+    if (!ScrollSettings.isEligibleFor(this)) return false;
 
     double delta = getPreciseDelta(event);
     if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
-    double minDelta = (double)getMinimum() - value;
-    double maxDelta = (double)getMaximum() - getVisibleAmount() - value;
-    adjustValue(Math.max(minDelta, Math.min(maxDelta, delta)));
+    double minDelta = (double)(getMinimum() - value);
+    double maxDelta = (double)(getMaximum() - getVisibleAmount() - value);
+    double deltaAdjusted = Math.max(minDelta, Math.min(maxDelta, delta));
+    if (deltaAdjusted != 0.0) {
+      boolean isPositiveDelta = deltaAdjusted > 0.0;
+      if (wasPositiveDelta != isPositiveDelta) {
+        // reset accumulator if scrolling direction is changed
+        wasPositiveDelta = isPositiveDelta;
+        myFractionalRemainder = 0.0;
+      }
+      deltaAdjusted += myFractionalRemainder;
+      int valueAdjusted = (int)deltaAdjusted;
+      if (valueAdjusted == 0) {
+        myFractionalRemainder = deltaAdjusted;
+      }
+      else {
+        myFractionalRemainder = deltaAdjusted - (double)valueAdjusted;
+        setValue(value + valueAdjusted);
+      }
+    }
     event.consume();
     return true;
   }
@@ -251,8 +280,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   private double getPreciseDelta(MouseWheelEvent event) {
     double rotation = event.getPreciseWheelRotation();
-    ComponentSettings settings = ComponentSettings.getInstance();
-    if (settings.isPixelPerfectScrollingEnabled()) {
+    if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible
       if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
@@ -264,7 +292,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
-    if (settings.isHighPrecisionScrollingEnabled()) {
+    if (ScrollSettings.isHighPrecisionEnabled()) {
       // calculate a relative delta if possible
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
@@ -291,7 +319,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
      */
     @Override
     protected void fireStateChanged() {
-      if (getValueIsAdjusting() && ComponentSettings.getInstance().isInterpolationEnabledFor(InputSource.SCROLLBAR)) {
+      if (getValueIsAdjusting() && ScrollSource.SCROLLBAR.isInterpolationEnabled()) {
         Object[] listeners = listenerList.getListenerList();
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
           if (listeners[i] == ChangeListener.class) {

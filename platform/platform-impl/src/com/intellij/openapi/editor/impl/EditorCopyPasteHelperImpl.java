@@ -25,6 +25,9 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -104,6 +107,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
         @Override
         public void perform(Caret caret) {
           String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
+          normalizedText = trimTextIfNeed(editor, normalizedText);
           int caretOffset = caret.getOffset();
           ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
           EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
@@ -114,8 +118,20 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     else {
       int caretOffset = editor.getCaretModel().getOffset();
       String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
+      normalizedText = trimTextIfNeed(editor, normalizedText);
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
+  }
+
+  private static String trimTextIfNeed(Editor editor, String text) {
+    JComponent contentComponent = editor.getContentComponent();
+    if (contentComponent instanceof JTextComponent) {
+      Document document = ((JTextComponent)contentComponent).getDocument();
+      if (document != null && document.getProperty(TRIM_TEXT_ON_PASTE_KEY) == Boolean.TRUE) {
+        return text.trim();
+      }
+    }
+    return text;
   }
 }

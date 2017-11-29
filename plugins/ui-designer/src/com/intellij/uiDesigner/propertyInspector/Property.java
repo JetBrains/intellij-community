@@ -69,7 +69,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * Do not invoke this method outside Property class, bacuse
-   * <code>setValue(Component,Object)</code> does some additional work.
+   * {@code setValue(Component,Object)} does some additional work.
    * This method exists only for convenience.
    *
    * @see #setValue(RadComponent,Object)
@@ -78,14 +78,14 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
 
   /**
-   * Sets the <code>value</code> of the property. This method is invoked
+   * Sets the {@code value} of the property. This method is invoked
    * after editing is complete.
    *
    * @param component component which property should be set
    * @param value new propertie's value
    *
-   * @exception Exception if passed <code>value</code> cannot
-   * be applied to the <code>component</code>. Note, the exception's
+   * @exception Exception if passed {@code value} cannot
+   * be applied to the {@code component}. Note, the exception's
    * message will be shown to the user.
    */
   public final void setValue(final T component, final V value) throws Exception{
@@ -118,7 +118,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * @return property which is the parent for this property.
-   * The method can return <code>null</code> if the property
+   * The method can return {@code null} if the property
    * doesn't have parent.
    */
   @Nullable
@@ -141,7 +141,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   public abstract PropertyRenderer<V> getRenderer();
 
   /**
-   * @return property's editor. The method allows to return <code>null</code>.
+   * @return property's editor. The method allows to return {@code null}.
    * In this case property is not editable.
    */
   @Nullable

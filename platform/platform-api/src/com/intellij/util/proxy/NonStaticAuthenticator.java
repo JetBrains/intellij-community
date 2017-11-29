@@ -20,12 +20,6 @@ import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/21/13
- * Time: 11:17 PM
- */
 public abstract class NonStaticAuthenticator {
   private String requestingHost;
   private InetAddress requestingSite;

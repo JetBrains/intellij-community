@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,24 +114,39 @@ public class FormatterImpl extends FormatterEx
 
   @Override
   public int getSpacingForBlockAtOffset(FormattingModel model, int offset) {
+    SpacingImpl spacing = getSpacingBeforeBlockAtOffset(model, offset);
+    if (spacing != null) {
+      int minSpaces = spacing.getMinSpaces();
+      if (minSpaces >= 0) {
+        return minSpaces;
+      }
+    }
+    return -1;
+  }
+
+  @Override
+  public int getMinLineFeedsBeforeBlockAtOffset(FormattingModel model, int offset) {
+    SpacingImpl spacing = getSpacingBeforeBlockAtOffset(model, offset);
+    if (spacing != null) {
+      int minLineFeeds = spacing.getMinLineFeeds();
+      if (minLineFeeds >= 0) {
+        return minLineFeeds;
+      }
+    }
+    return -1;
+  }
+
+  private static SpacingImpl getSpacingBeforeBlockAtOffset(FormattingModel model, int offset) {
     Couple<Block> blockWithParent = getBlockAtOffset(null, model.getRootBlock(), offset);
     if (blockWithParent != null) {
       Block parentBlock = blockWithParent.first;
       Block targetBlock = blockWithParent.second;
       if (parentBlock != null && targetBlock != null) {
         Block prevBlock = findPreviousSibling(parentBlock, targetBlock);
-        if (prevBlock != null) {
-          SpacingImpl spacing = (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
-          if (spacing != null) {
-            int minSpaces = spacing.getMinSpaces();
-            if (minSpaces > 0) {
-              return minSpaces;
-            }
-          }
-        }
+        if (prevBlock != null) return (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
       }
     }
-    return 0;
+    return null;
   }
 
   @Nullable
@@ -536,7 +551,7 @@ public class FormatterImpl extends FormatterEx
 
   private static boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
     return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getEndOffset()) &&
-           documentModel.getTextLength() != offset;
+           documentModel.getTextLength() != whiteSpace.getEndOffset();
   }
 
   @Override

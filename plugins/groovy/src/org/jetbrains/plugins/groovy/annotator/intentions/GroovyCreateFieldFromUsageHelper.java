@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -46,7 +47,7 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
-                                    PsiSubstitutor substitutor) {
+                                    @NotNull PsiSubstitutor substitutor) {
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
 
@@ -63,8 +64,8 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
       builder.replaceElement(typeElement, expr);
     }
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {
-      new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, substitutor, builder,
-                                                        context, targetClass);
+      new GuessTypeParameters(project, factory, builder, substitutor).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes,
+                                                                                       context, targetClass);
     }
     if (createConstantField) {
       field.setInitializerGroovy(factory.createExpressionFromText("0", null));
@@ -78,7 +79,9 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
     if (expectedTypes instanceof ExpectedTypeInfo[]) {
-      if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
+      if (!Registry.is("ide.create.field.enable.shortening") && ((ExpectedTypeInfo[])expectedTypes).length > 1) {
+        template.setToShortenLongNames(false);
+      }
     }
     return template;
   }

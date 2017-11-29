@@ -15,30 +15,9 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-
 import javax.swing.*;
-import javax.swing.plaf.ProgressBarUI;
-import java.awt.*;
 
+@Deprecated
 public class JBProgressBar extends JProgressBar {
-  private static final int NATIVE_LAF_HEIGHT = 12;
-
-  @Override
-  public void setUI(ProgressBarUI ui) {
-    boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || SystemInfo.isMac || UIUtil.isUnderGTKLookAndFeel();
-    if (nativeLaf) {
-      ui = new DarculaProgressBarUI();
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        setBorder(JBUI.Borders.empty());
-      }
-    }
-    super.setUI(ui);
-    if (nativeLaf) {
-      setPreferredSize(new Dimension(getPreferredSize().width, JBUI.scale(NATIVE_LAF_HEIGHT)));
-    }
-  }
+  // TODO: Remove this class. Left for compatibility.
 }

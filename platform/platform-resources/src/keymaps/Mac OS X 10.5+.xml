@@ -381,6 +381,7 @@
   </action>
   <action id="Resume">
     <keyboard-shortcut first-keystroke="meta alt R"/>
+    <keyboard-shortcut first-keystroke="F9"/>
   </action>
 
   <action id="ChooseRunConfiguration">
@@ -593,5 +594,16 @@
 
   <action id="EmojiAndSymbols">
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
+  </action>
+
+  <action id="MethodOverloadSwitchUp">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="MethodOverloadSwitchDown">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
 </keymap>

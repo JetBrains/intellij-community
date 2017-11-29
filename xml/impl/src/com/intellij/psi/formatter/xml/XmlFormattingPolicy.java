@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -96,9 +97,15 @@ public abstract class XmlFormattingPolicy {
     return 0;
   }
 
-  public abstract boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute);
+  @Nullable
+  public Spacing getSpacingBeforeFirstAttribute(XmlAttribute attribute) {
+    return null;
+  }
 
-  public abstract boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute);
+  @Nullable
+  public Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
+    return null;
+  }
 
   public abstract boolean insertLineBreakAfterTagBegin(XmlTag tag);
 
@@ -153,6 +160,10 @@ public abstract class XmlFormattingPolicy {
   }
 
   public abstract boolean shouldSaveSpacesBetweenTagAndText();
+
+  public boolean allowWrapBeforeText() {
+    return true;
+  }
 
   public boolean processJavaTree() {
     return myProcessJavaTree;

@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class ModuleGraphTest extends ModuleRootManagerTestCase {
 
-  public void testOuts() throws Exception {
+  public void testOuts() {
 
     Module a = createModule("a");
     Module b = createModule("b");

@@ -16,17 +16,16 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesSelection;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,7 +51,7 @@ public interface VcsDataKeys {
   DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
-  DataKey<ChangesSelection> CHANGES_SELECTION = DataKey.create("vcs.ChangesSelection");
+  DataKey<ListSelection<Change>> CHANGES_SELECTION = DataKey.create("vcs.ChangesSelection");
   DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
   DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = DataKey.create("ChangeListView.SelectedChangesWithMovedSubtrees");
   @NonNls DataKey<List<Change>> CHANGES_IN_LIST_KEY = DataKey.create("ChangeListView.ChangesInList");
@@ -62,8 +61,8 @@ public interface VcsDataKeys {
   DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");
   DataKey<Boolean> HAVE_SELECTED_CHANGES = DataKey.create("ChangeListView.HaveSelectedChanges");
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
-  DataKey<String> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
-  DataKey<Iterable<Pair<VirtualFilePointer, FileStatus>>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
+  DataKey<FilePath> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
+  DataKey<Iterable<Pair<FilePath, FileStatus>>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
   DataKey<Object> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
   DataKey<Object> LABEL_AFTER = DataKey.create("LABEL_AFTER");
   DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
@@ -74,4 +73,5 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<VcsHistoryProvider> HISTORY_PROVIDER = DataKey.create("VCS_HISTORY_PROVIDER");
   DataKey<Stream<VirtualFile>> VIRTUAL_FILE_STREAM = DataKey.create("virtualFileStream");
+  DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");
 }

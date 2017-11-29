@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,12 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -48,6 +30,9 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class SimplifyExprentsHelper {
 
@@ -813,8 +798,7 @@ public class SimplifyExprentsHelper {
                 }
 
                 if (found) {
-                  List<Exprent> data = new ArrayList<>();
-                  data.addAll(stif.getFirst().getExprents());
+                  List<Exprent> data = new ArrayList<>(stif.getFirst().getExprents());
 
                   data.add(new AssignmentExprent(ifvar, new FunctionExprent(FunctionExprent.FUNCTION_IIF,
                                                                             Arrays.asList(
@@ -854,8 +838,12 @@ public class SimplifyExprentsHelper {
                 return false;
               }
 
-              List<Exprent> data = new ArrayList<>();
-              data.addAll(stif.getFirst().getExprents());
+              // avoid flattening to 'iff' if any of the branches is an 'iff' already
+              if (isIff(ifex.getValue()) || isIff(elseex.getValue())) {
+                return false;
+              }
+
+              List<Exprent> data = new ArrayList<>(stif.getFirst().getExprents());
 
               data.add(new ExitExprent(ifex.getExitType(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
                                                                                Arrays.asList(
@@ -878,6 +866,10 @@ public class SimplifyExprentsHelper {
     }
 
     return false;
+  }
+
+  private static boolean isIff(Exprent exp) {
+    return exp.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent) exp).getFuncType() == FunctionExprent.FUNCTION_IIF;
   }
 
   static {
@@ -917,9 +909,8 @@ public class SimplifyExprentsHelper {
       FieldExprent fieldexpr = (FieldExprent)class14Builder.getVariableValue("$field$");
 
       assfirst.replaceExprent(assfirst.getRight(), new ConstExprent(VarType.VARTYPE_CLASS, class_name, null));
-      
-      List<Exprent> data = new ArrayList<>();
-      data.addAll(stat.getFirst().getExprents());
+
+      List<Exprent> data = new ArrayList<>(stat.getFirst().getExprents());
 
       stat.setExprents(data);
 

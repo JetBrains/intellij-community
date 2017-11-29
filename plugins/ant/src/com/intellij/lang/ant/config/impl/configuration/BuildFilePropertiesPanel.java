@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -132,6 +131,8 @@ public class BuildFilePropertiesPanel {
     private JPanel myTabsPlace;
     private JPanel myWholePanel;
     private JLabel myHeapSizeLabel;
+    private JCheckBox myColoredOutputMessages;
+    private JCheckBox myCollapseFinishedTargets;
     private final Tab[] myTabs;
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final TabbedPaneWrapper myWrapper;
@@ -151,6 +152,8 @@ public class BuildFilePropertiesPanel {
 
       myBinding.bindBoolean(myRunInBackground, AntBuildFileImpl.RUN_IN_BACKGROUND);
       myBinding.bindBoolean(myCloseOnNoError, AntBuildFileImpl.CLOSE_ON_NO_ERRORS);
+      myBinding.bindBoolean(myColoredOutputMessages, AntBuildFileImpl.TREE_VIEW_ANSI_COLOR);
+      myBinding.bindBoolean(myCollapseFinishedTargets, AntBuildFileImpl.TREE_VIEW_COLLAPSE_TARGETS);
       myBinding.bindInt(myXmx, AntBuildFileImpl.MAX_HEAP_SIZE);
       myBinding.bindInt(myXss, AntBuildFileImpl.MAX_STACK_SIZE);
 
@@ -401,11 +404,7 @@ public class BuildFilePropertiesPanel {
       myAntCommandLine.setDialogCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);
 
-      myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, new Convertor<Sdk, String>() {
-        public String convert(Sdk jdk) {
-          return jdk != null ? jdk.getName() : "";
-        }
-      }, String.CASE_INSENSITIVE_ORDER) {
+      myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, jdk -> jdk != null ? jdk.getName() : "", String.CASE_INSENSITIVE_ORDER) {
         public Iterator<Sdk> getAllListItems() {
           Application application = ApplicationManager.getApplication();
           if (application == null) {

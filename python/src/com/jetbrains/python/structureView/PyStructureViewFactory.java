@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyStructureViewFactory implements PsiStructureViewFactory {
   @Override
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     return new TreeBasedStructureViewBuilder() {
 
       @Override

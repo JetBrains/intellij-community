@@ -132,7 +132,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   @NotNull
   public List<Library> getSelectedLibraries() {
-    return myResult == null? Collections.<Library>emptyList() : myResult;
+    return myResult == null ? Collections.emptyList() : myResult;
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {

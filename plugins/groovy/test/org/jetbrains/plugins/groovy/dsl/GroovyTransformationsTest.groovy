@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,15 +61,4 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
   void testBindableTransform() throws Throwable { doPlainTest() }
 
   void testVetoableTransform() throws Throwable { doPlainTest() }
-
-  void testNewifyTransform1() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.completeBasic()
-    assert myFixture.lookupElementStrings.containsAll(['newInstance', 'new', 'new', 'newInstance'])
-  }
-
-  void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
-
-  void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
-
 }

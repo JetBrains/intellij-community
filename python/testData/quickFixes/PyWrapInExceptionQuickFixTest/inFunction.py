@@ -1,2 +1,2 @@
 def foo():
-    raise <warning descr="Raising a string exception">"String"<caret> "String1"</warning>
+    raise <error descr="Raising a string exception">"String"<caret> "String1"</error>

@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -24,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -75,8 +79,8 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
   private class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
-      super.visitPolyadicExpression(expression);
+    public void visitBinaryExpression(PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.MINUS) || isSafeSubtraction(expression)) {
         return;
@@ -97,17 +101,28 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
       registerError(expression);
     }
 
-    private boolean isSafeSubtraction(PsiPolyadicExpression polyadicExpression) {
-      final PsiType type = polyadicExpression.getType();
-      if (!(PsiType.INT).equals(type)) {
-        return false;
+    private boolean isSafeSubtraction(PsiBinaryExpression binaryExpression) {
+      final PsiType type = binaryExpression.getType();
+      if (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
+        // Difference of floats and doubles never overflows.
+        // It may lose a precision, but it's not the case when we compare the result with zero
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(binaryExpression.getParent());
+        if(parent instanceof PsiTypeCastExpression) {
+          PsiType castType = ((PsiTypeCastExpression)parent).getType();
+          if(PsiType.INT.equals(castType) || PsiType.LONG.equals(castType)) {
+            // Precision is lost if result is cast to int/long (e.g. (int)(1.0 - 0.5) == 0)
+            return false;
+          }
+        }
+        return true;
       }
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      if (operands.length != 2) {
-        return false;
+      if (ExpressionUtils.isEvaluatedAtCompileTime(binaryExpression)) {
+        // If compile time expression overflows, we have separate NumericOverflowInspection for this
+        return true;
       }
-      final PsiExpression lhs = operands[0];
-      final PsiExpression rhs = operands[1];
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) return true;
       final PsiType lhsType = lhs.getType();
       final PsiType rhsType = rhs.getType();
       if (lhsType == null || rhsType == null) {
@@ -117,7 +132,33 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
           (PsiType.BYTE.equals(rhsType) || PsiType.SHORT.equals(rhsType) || PsiType.CHAR.equals(rhsType))) {
         return true;
       }
-      return isSafeOperand(lhs) && isSafeOperand(rhs);
+      if (isSafeOperand(lhs) && isSafeOperand(rhs)) return true;
+      LongRangeSet leftRange = CommonDataflow.getExpressionFact(lhs, DfaFactType.RANGE);
+      LongRangeSet rightRange = CommonDataflow.getExpressionFact(rhs, DfaFactType.RANGE);
+      if (leftRange != null && !leftRange.isEmpty() && rightRange != null && !rightRange.isEmpty()) {
+        long leftMin = leftRange.min();
+        long leftMax = leftRange.max();
+        long rightMin = rightRange.min();
+        long rightMax = rightRange.max();
+        if (PsiType.INT.equals(type) && !overflowsInt(leftMin, rightMax) && !overflowsInt(leftMax, rightMin)) {
+          return true;
+        }
+        if (PsiType.LONG.equals(type) && !overflowsLong(leftMin, rightMax) && !overflowsLong(leftMax, rightMin)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean overflowsInt(long a, long b) {
+      long diff = a - b;
+      return diff < Integer.MIN_VALUE || diff > Integer.MAX_VALUE;
+    }
+
+    private boolean overflowsLong(long a, long b) {
+      long diff = a - b;
+      // Hacker's Delight 2nd Edition, 2-13 Overflow Detection
+      return ((a ^ b) & (a ^ diff)) < 0;
     }
 
     private boolean isSafeOperand(PsiExpression operand) {
@@ -126,20 +167,7 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
         return methodMatcher.matches(methodCallExpression);
       }
-      else if (operand instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
-        final String name = referenceExpression.getReferenceName();
-        if (!"length".equals(name)) {
-          return false;
-        }
-        final PsiExpression qualifier = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
-        if (!(qualifier instanceof PsiReferenceExpression)) {
-          return false;
-        }
-        final PsiType type = qualifier.getType();
-        return type instanceof PsiArrayType;
-      }
-      return false;
+      return ExpressionUtils.getArrayFromLengthExpression(operand) != null;
     }
   }
 }

@@ -80,17 +80,6 @@ public class GroovyTypeCheckVisitorHelper {
     }
   }
 
-  public static boolean isOnlyOneMapParam(GrExpression[] exprs) {
-    if (!(exprs.length == 1)) return false;
-
-    final GrExpression e = exprs[0];
-    return TypesUtil.isAssignableByMethodCallConversion(
-      TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, e),
-      e.getType(),
-      e
-    );
-  }
-
   @NotNull
   public static PsiElement getExpressionPartToHighlight(@NotNull GrExpression expr) {
     if (expr instanceof GrClosableBlock) {

@@ -21,12 +21,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Created with IntelliJ IDEA.
- * User: vladimir.dubovik
- * Date: 4/9/2014
- * Time: 2:30 AM
- */
 public class MavenExplicitProfiles implements Serializable {
   public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.<String>emptySet());
 

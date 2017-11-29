@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,21 @@ package com.jetbrains.python.psi.stubs;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public interface PyNamedTupleStub extends CustomTargetExpressionStub {
 
+  /**
+   * @return namedtuple's name.
+   */
   @NotNull
   String getName();
 
+  /**
+   * @return fields' names and their types.
+   * Iteration order repeats the declaration order.
+   */
   @NotNull
-  List<String> getFields();
+  Map<String, Optional<String>> getFields();
 }

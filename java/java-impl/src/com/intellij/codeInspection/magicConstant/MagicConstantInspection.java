@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -60,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
+public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
 
   @Nls
@@ -465,7 +451,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         if (!(initializer instanceof PsiLiteralExpression)) return null;
         Object val = ((PsiLiteralExpression)initializer).getValue();
         if (!(val instanceof String)) return null;
-        PsiMethod setter = PropertyUtil.findPropertySetter(method.getContainingClass(), (String)val, false, false);
+        PsiMethod setter = PropertyUtilBase.findPropertySetter(method.getContainingClass(), (String)val, false, false);
         if (setter == null) return null;
         // try the @beaninfo of the corresponding setter
         PsiElement navigationElement = setter.getNavigationElement();
@@ -482,12 +468,12 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
-    if (PropertyUtil.isSimplePropertyGetter(method)) {
-      List<PsiMethod> setters = PropertyUtil.getSetters(aClass, PropertyUtil.getPropertyNameByGetter(method));
+    if (PropertyUtilBase.isSimplePropertyGetter(method)) {
+      List<PsiMethod> setters = PropertyUtilBase.getSetters(aClass, PropertyUtilBase.getPropertyNameByGetter(method));
       if (setters.size() != 1) return null;
       method = setters.get(0);
     }
-    if (!PropertyUtil.isSimplePropertySetter(method)) return null;
+    if (!PropertyUtilBase.isSimplePropertySetter(method)) return null;
     PsiDocComment doc = method.getDocComment();
     if (doc == null) return null;
     PsiDocTag beaninfo = doc.findTagByName("beaninfo");

@@ -22,15 +22,15 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author Alexey.Ivanov
@@ -42,8 +42,9 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   @Override
-  public void visitPyElement(PyElement node) {
-    setVersionsToProcess(Arrays.asList(LanguageLevel.forElement(node)));
+  public synchronized void annotateElement(PsiElement psiElement, AnnotationHolder holder) {
+    setVersionsToProcess(Collections.singletonList(LanguageLevel.forElement(psiElement)));
+    super.annotateElement(psiElement, holder);
   }
 
   @Override

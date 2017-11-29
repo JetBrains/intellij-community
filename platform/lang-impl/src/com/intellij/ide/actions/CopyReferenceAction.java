@@ -290,7 +290,7 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null; 
+    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null;
     if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
       return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
     }

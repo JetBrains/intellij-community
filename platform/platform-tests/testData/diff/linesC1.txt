@@ -1,0 +1,6 @@
+      if (token.length() == 1 && DELIMITERS_SET.contains(token.charAt(0))) delimiters.append(token);
+      else {
+        if (delimiters.length() > 0) {
+          result.add(delimiters.toString());
+          delimiters.setLength(0);
+        }

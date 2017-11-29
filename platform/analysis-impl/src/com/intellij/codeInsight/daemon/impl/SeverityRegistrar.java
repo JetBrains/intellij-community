@@ -42,10 +42,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 24-Feb-2006
- */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.

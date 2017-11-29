@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -20,7 +19,7 @@ import org.jdom.Element;
  *         Date: 02.08.13
  */
 public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
-  public void testInjectReference() throws Exception {
+  public void testInjectReference() {
     myFixture.configureByText("foo.xml", "<foo xmlns=\"http://foo.bar\" \n" +
                                          "     xxx=\"ba<caret>r\"/>");
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -41,7 +40,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(myFixture.getReferenceAtCaretPosition());
   }
 
-  public void testSurviveSerialization() throws Exception {
+  public void testSurviveSerialization() {
     myFixture.configureByText("foo.xml", "<foo xmlns=\"http://foo.bar\" \n" +
                                          "     xxx=\"ba<caret>r\"/>");
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -53,14 +52,14 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     Element element = configuration.getState();
     configuration.loadState(element);
 
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
+    PsiManager.getInstance(getProject()).dropPsiCaches();
     assertTrue(myFixture.getReferenceAtCaretPosition() instanceof FileReference);
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
   }
 
-  public void testInjectIntoTagValue() throws Exception {
+  public void testInjectIntoTagValue() {
     myFixture.configureByText("foo.xml", "<foo xmlns=\"http://foo.bar\" <bar>x<caret>xx</bar>/>");
     assertNull(myFixture.getReferenceAtCaretPosition());
 
@@ -71,7 +70,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(myFixture.getReferenceAtCaretPosition());
   }
 
-  public void testInjectIntoJava() throws Exception {
+  public void testInjectIntoJava() {
     myFixture.configureByText("Foo.java", "class Foo {\n" +
                                           "    String bar() {\n" +
                                           "        return \"ba<caret>r.xml\";\n" +
@@ -88,7 +87,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(getInjectedReferences());
   }
 
-  public void testInjectByAnnotation() throws Exception {
+  public void testInjectByAnnotation() {
     myFixture.configureByText("Foo.java", "class Foo {\n" +
                                           "    @org.intellij.lang.annotations.Language(\"file-reference\")\n" +
                                           "    String bar() {\n" +
@@ -98,7 +97,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testTernary() throws Exception {
+  public void testTernary() {
     myFixture.configureByText("Foo.java", "class Foo {\n" +
                                           "    void bar() {\n" +
                                           "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +
@@ -108,7 +107,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
-  public void testEmptyLiteral() throws Exception {
+  public void testEmptyLiteral() {
     myFixture.configureByText("Foo.java", "class Foo {\n" +
                                           "    void bar() {\n" +
                                           "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +

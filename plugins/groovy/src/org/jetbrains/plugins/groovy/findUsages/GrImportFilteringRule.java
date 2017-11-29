@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.PsiElementUsage;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
  */
 public class GrImportFilteringRule extends ImportFilteringRule {
   @Override
-  public boolean isVisible(@NotNull Usage usage) {
+  public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PsiFile containingFile = psiElement.getContainingFile();

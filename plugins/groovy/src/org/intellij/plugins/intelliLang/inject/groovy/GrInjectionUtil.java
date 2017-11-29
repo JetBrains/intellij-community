@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 
 import java.util.Map;
 
-/**
- * Created by Max Medvedev on 9/12/13
- */
 public class GrInjectionUtil {
   static int findParameterIndex(PsiElement arg, GrCall call) {
     final GroovyResolveResult result = call.advancedResolve();

@@ -54,7 +54,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   public static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
   public static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
-  private static final Logger LOG = Logger.getInstance("#" + JavaPushDownDelegate.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaPushDownDelegate.class);
 
   @Override
   public boolean isApplicableForSource(@NotNull PsiElement sourceClass) {
@@ -340,7 +340,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   @Override
   public PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {
-    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName());
+    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName(), false);
   }
 
   private static boolean leaveOverrideAnnotation(PsiClass aClass, PsiSubstitutor substitutor, PsiMethod method) {

@@ -17,12 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Key;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 5:08 PM
- */
 public interface LineProcessEventListener extends ProcessEventListener {
   /**
    * This method is invoked when line (as separated by \n or \r) becomes available.

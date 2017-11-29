@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 
-import java.util.List;
-
 /**
  * @author spleaner
 */
@@ -36,9 +34,7 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
     RefactoringElementListenerComposite composite = null;
-    final List<RunConfiguration> configurations = RunManager.getInstance(element.getProject()).getAllConfigurationsList();
-
-    for (RunConfiguration configuration : configurations) {
+    for (RunConfiguration configuration : RunManager.getInstance(element.getProject()).getAllConfigurationsList()) {
       if (configuration instanceof RefactoringListenerProvider) { // todo: perhaps better way to handle listeners?
         RefactoringElementListener listener;
         try {

@@ -15,13 +15,13 @@
  */
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,46 +33,21 @@ public class HgBranchUtil {
    */
   @NotNull
   public static List<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
-    Collection<String> commonBranches = null;
-    for (HgRepository repository : repositories) {
-      Collection<String> names = repository.getOpenedBranches();
-      if (commonBranches == null) {
-        commonBranches = names;
-      }
-      else {
-        commonBranches = ContainerUtil.intersection(commonBranches, names);
-      }
-    }
-    if (commonBranches != null) {
-      ArrayList<String> common = new ArrayList<>(commonBranches);
-      Collections.sort(common);
-      return common;
-    }
-    else {
-      return Collections.emptyList();
-    }
+    return getCommonNames(repositories, false);
   }
 
   @NotNull
   public static List<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
-    Collection<String> commonBookmarkNames = null;
+    return getCommonNames(repositories, true);
+  }
+
+  private static List<String> getCommonNames(@NotNull Collection<HgRepository> repositories, boolean bookmarkType) {
+    Collection<String> common = null;
     for (HgRepository repository : repositories) {
-      Collection<HgNameWithHashInfo> bookmarksInfo = repository.getBookmarks();
-      Collection<String> names = HgUtil.getSortedNamesWithoutHashes(bookmarksInfo);
-      if (commonBookmarkNames == null) {
-        commonBookmarkNames = names;
-      }
-      else {
-        commonBookmarkNames = ContainerUtil.intersection(commonBookmarkNames, names);
-      }
+      Collection<String> names =
+        bookmarkType ? HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()) : repository.getOpenedBranches();
+      common = common == null ? names : ContainerUtil.intersection(common, names);
     }
-    if (commonBookmarkNames != null) {
-      ArrayList<String> common = new ArrayList<>(commonBookmarkNames);
-      Collections.sort(common);
-      return common;
-    }
-    else {
-      return Collections.emptyList();
-    }
+    return common != null ? StreamEx.of(common).sorted(StringUtil::naturalCompare).toList() : Collections.emptyList();
   }
 }

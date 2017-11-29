@@ -40,6 +40,7 @@ public abstract class FileTypeRegistry {
    *
    * @return The list of file types.
    */
+  @NotNull
   public abstract FileType[] getRegisteredFileTypes();
 
   /**
@@ -54,8 +55,18 @@ public abstract class FileTypeRegistry {
   /**
    * Returns the file type for the specified file name.
    *
-   * @param fileName The file name for which the type is requested.
+   * @param fileNameSeq The file name for which the type is requested.
    * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
+   */
+  @NotNull
+  public FileType getFileTypeByFileName(@NotNull @NonNls CharSequence fileNameSeq) {
+    return getFileTypeByFileName(fileNameSeq.toString());
+  }
+
+  /**
+   * Same as {@linkplain FileTypeRegistry#getFileTypeByFileName(CharSequence)} but receives String parameter.
+   *
+   * Consider to use the method above in case when you want to get VirtualFile's file type by file name.
    */
   @NotNull
   public abstract FileType getFileTypeByFileName(@NotNull @NonNls String fileName);

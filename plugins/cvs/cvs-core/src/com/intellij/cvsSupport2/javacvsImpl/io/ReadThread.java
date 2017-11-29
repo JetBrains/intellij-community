@@ -195,7 +195,7 @@ public class ReadThread implements Runnable {
     return myLastIndex - myFirstIndex;
   }
 
-  public synchronized void close() throws IOException {
+  public synchronized void close() {
     myIsClosed = true;
     if (myAtEndOfStream) return;
     myAtEndOfStream = true;

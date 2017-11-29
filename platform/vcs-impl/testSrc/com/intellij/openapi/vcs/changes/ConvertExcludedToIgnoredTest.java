@@ -41,7 +41,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     PsiTestUtil.addContentRoot(myModule, myContentRoot);
   }
 
-  public void testExcludedFolder() throws IOException {
+  public void testExcludedFolder() {
     VirtualFile excluded = createChildDirectory(myContentRoot, "exc");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     getChangeListManager().convertExcludedToIgnored();
@@ -50,7 +50,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     assertIgnored(excluded);
   }
 
-  public void testModuleOutput() throws IOException {
+  public void testModuleOutput() {
     VirtualFile output = createChildDirectory(myContentRoot, "out");
     PsiTestUtil.setCompilerOutputPath(myModule, output.getUrl(), false);
     getChangeListManager().convertExcludedToIgnored();
@@ -78,7 +78,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     assertIgnored(output);
   }
 
-  public void testModuleOutputUnderExcluded() throws IOException {
+  public void testModuleOutputUnderExcluded() {
     VirtualFile excluded = createChildDirectory(myContentRoot, "target");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     VirtualFile moduleOutput = createChildDirectory(excluded, "classes");
@@ -89,7 +89,7 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     assertIgnored(excluded);
   }
 
-  public void testDoNotIgnoreInnerModuleExplicitlyMarkedAsExcludedFromOuterModule() throws IOException {
+  public void testDoNotIgnoreInnerModuleExplicitlyMarkedAsExcludedFromOuterModule() {
     VirtualFile inner = createChildDirectory(myContentRoot, "inner");
     PsiTestUtil.addModule(myProject, ModuleType.EMPTY, "inner", inner);
     PsiTestUtil.addExcludedRoot(myModule, inner);

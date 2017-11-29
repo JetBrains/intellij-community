@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + FixableUsagesRefactoringProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(FixableUsagesRefactoringProcessor.class);
 
   protected FixableUsagesRefactoringProcessor(Project project) {
     super(project);

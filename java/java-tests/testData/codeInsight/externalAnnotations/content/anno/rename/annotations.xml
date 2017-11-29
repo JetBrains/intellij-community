@@ -1,0 +1,5 @@
+<root>
+    <item name='rename.Foo'>
+      <annotation name='java.lang.Deprecated'/>
+    </item>
+</root>

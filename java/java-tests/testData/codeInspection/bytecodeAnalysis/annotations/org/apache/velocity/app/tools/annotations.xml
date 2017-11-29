@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.velocity.app.tools.VelocityFormatter VelocityFormatter(org.apache.velocity.context.Context)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.Object isNull(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;!null,_-&gt;!null&quot;"/>
@@ -29,11 +34,6 @@
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String formatVector(java.util.List, java.lang.String, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null,_-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -49,10 +49,25 @@
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String makeAutoAlternator(java.lang.String, java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator VelocityAlternator(java.lang.String[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator java.lang.String alternate()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAutoAlternator VelocityAutoAlternator(java.lang.String[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAutoAlternator java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

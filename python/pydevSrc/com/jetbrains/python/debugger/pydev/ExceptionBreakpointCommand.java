@@ -23,8 +23,13 @@ public class ExceptionBreakpointCommand extends AbstractCommand {
     payload.add(myException);
   }
 
-  public static ExceptionBreakpointCommand addExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, String exception, AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy notifyPolicy) {
-    return new AddExceptionBreakpointCommand(debugger, exception, notifyPolicy);
+  public static ExceptionBreakpointCommand
+  addExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger,
+                                String exception,
+                                String condition,
+                                String logExpression,
+                                AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy notifyPolicy) {
+    return new AddExceptionBreakpointCommand(debugger, exception, condition, logExpression, notifyPolicy);
   }
 
   public static ExceptionBreakpointCommand removeExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, String exception) {

@@ -88,7 +88,7 @@ def f():
 # PY-4208
 def f(g):
     try:
-        raise
+        raise ValueError
     finally:
         g()
     <warning descr="This code is unreachable">g()</warning>

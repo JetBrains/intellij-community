@@ -36,9 +36,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * User: spLeaner
- */
 public class TreeComboBox extends ComboBoxWithWidePopup {
   private static final int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;

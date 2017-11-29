@@ -15,21 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,12 +105,9 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   private static List<? extends Module> getNotAddedModules(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
                                                           final Module... allModules) {
     final Set<Module> modules = new HashSet<>(Arrays.asList(allModules));
-    ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
-      @Override
-      public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
-        modules.remove(moduleOutputPackagingElement.findModule(context));
-        return true;
-      }
+    ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, moduleOutputPackagingElement -> {
+      modules.remove(moduleOutputPackagingElement.findModule(context));
+      return true;
     }, context, true);
     return new ArrayList<>(modules);
   }

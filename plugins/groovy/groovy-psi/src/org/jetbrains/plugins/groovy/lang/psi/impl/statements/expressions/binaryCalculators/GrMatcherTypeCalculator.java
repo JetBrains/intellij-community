@@ -20,9 +20,6 @@ import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrMatcherTypeCalculator implements Function<GrOperatorExpression, PsiType> {
   public static final GrMatcherTypeCalculator INSTANCE = new GrMatcherTypeCalculator();
 

@@ -48,7 +48,7 @@ public interface OrderRootsEnumerator {
   PathsList getPathsList();
 
   /**
-   * Add all source roots processed by this enumerator to <code>list</code>
+   * Add all source roots processed by this enumerator to {@code list}
    * @param list list
    */
   void collectPaths(@NotNull PathsList list);
@@ -74,7 +74,7 @@ public interface OrderRootsEnumerator {
   OrderRootsEnumerator withoutSelfModuleOutput();
 
   /**
-   * Use <code>provider</code> to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
+   * Use {@code provider} to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
    * this option won't affect result of {@link #getUrls()} method
    * @param provider function to evaluate roots for an order entry
    * @return this instance

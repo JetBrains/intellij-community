@@ -29,14 +29,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lene
- * Date: 04.04.11
- * Time: 17:40
- */
 public class ForcedBuildFileAttribute {
-  private static final Logger LOG = Logger.getInstance("#" + ForcedBuildFileAttribute.class.getName());
+  private static final Logger LOG = Logger.getInstance(ForcedBuildFileAttribute.class);
 
   private static final FileAttribute FRAMEWORK_FILE_ATTRIBUTE = new FileAttribute("forcedBuildFileFrameworkAttribute", 2, false);
   private static final Key<String> FRAMEWORK_FILE_MARKER = Key.create("forcedBuildFileFrameworkAttribute");

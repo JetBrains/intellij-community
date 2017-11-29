@@ -21,7 +21,6 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.VcsError;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -59,10 +58,10 @@ public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepos
         commits = GitHistoryUtils.history(myProject, repository.getRoot(),
                                           source, "--not", "--remotes=" + target.getBranch().getRemote().getName(), "--max-count=" + 1000);
       }
-      return new OutgoingResult(commits, Collections.<VcsError>emptyList());
+      return new OutgoingResult(commits, Collections.emptyList());
     }
     catch (VcsException e) {
-      return new OutgoingResult(Collections.<VcsFullCommitDetails>emptyList(),
+      return new OutgoingResult(Collections.emptyList(),
                                 Collections.singletonList(new VcsError(GitUtil.cleanupErrorPrefixes(e.getMessage()))));
     }
   }

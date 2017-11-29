@@ -28,15 +28,15 @@ public class RemoveUnnecessaryBracesInGStringTest extends GrIntentionTestCase {
     return TestUtils.getTestDataPath() + "intentions/removeUnnecessaryBraces/";
   }
 
-  public void testIntention() throws Exception {
+  public void testIntention() {
     doTest("Remove unnecessary braces in GString", true);
   }
 
-  public void testRefWithQualifier() throws Exception {
+  public void testRefWithQualifier() {
     doTest("Remove unnecessary braces in GString", true);
   }
 
-  public void testNoIntention() throws Exception {
+  public void testNoIntention() {
     doTest("Remove unnecessary braces in GString", false);
   }
 }

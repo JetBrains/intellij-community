@@ -17,9 +17,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -158,8 +158,10 @@ public class PluginDescriptorChooser {
       final Module module1 = o1.getModule();
       final Module module2 = o2.getModule();
 
-      if (currentModule.equals(module1)) return -1;
-      if (currentModule.equals(module2)) return 1;
+      if (!Comparing.equal(module1, module2)) {
+        if (currentModule.equals(module1)) return -1;
+        if (currentModule.equals(module2)) return 1;
+      }
 
       if (module1 != null && module2 != null) {
         int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),

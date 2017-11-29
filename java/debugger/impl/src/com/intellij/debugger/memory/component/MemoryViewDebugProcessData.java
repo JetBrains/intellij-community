@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.memory.component;
 
-import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.util.Key;
 import com.sun.jdi.ObjectReference;
@@ -34,16 +33,6 @@ public class MemoryViewDebugProcessData {
   public static final Key<MemoryViewDebugProcessData> KEY = Key.create("MemoryView.DebugProcessData");
 
   private final TrackedStacksContainer myStacksContainer = new MyStackContainer();
-  private final ClassesFilteredView myClassesFilteredView;
-
-  public MemoryViewDebugProcessData(@NotNull ClassesFilteredView classesView) {
-    myClassesFilteredView = classesView;
-  }
-
-  @NotNull
-  public ClassesFilteredView getClassesFilteredView() {
-    return myClassesFilteredView;
-  }
 
   @NotNull
   public TrackedStacksContainer getTrackedStacks() {

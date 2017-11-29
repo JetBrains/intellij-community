@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -109,10 +110,27 @@ public abstract class LexerTestCase extends UsefulTestCase {
     StringBuilder result = new StringBuilder();
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      result.append(tokenType).append(" ('").append(getTokenText(lexer)).append("')\n");
+      result.append(printSingleToken(text, tokenType, lexer.getTokenStart(), lexer.getTokenEnd()));
       lexer.advance();
     }
     return result.toString();
+  }
+
+  @NotNull
+  public static String printTokens(@NotNull HighlighterIterator iterator) {
+    CharSequence text = iterator.getDocument().getCharsSequence();
+    StringBuilder result = new StringBuilder();
+    IElementType tokenType;
+    while (!iterator.atEnd()) {
+      tokenType = iterator.getTokenType();
+      result.append(printSingleToken(text, tokenType, iterator.getStart(), iterator.getEnd()));
+      iterator.advance();
+    }
+    return result.toString();
+  }
+
+  public static String printSingleToken(CharSequence fileText, IElementType tokenType, int start, int end) {
+    return tokenType + " ('" + getTokenText(tokenType, fileText, start, end) + "')\n";
   }
 
   protected void doFileTest(@NonNls String fileExt) {
@@ -137,15 +155,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return true;
   }
 
-  private static String getTokenText(Lexer lexer) {
-    final IElementType tokenType = lexer.getTokenType();
+  @NotNull
+  private static String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
     if (tokenType instanceof TokenWrapper) {
       return ((TokenWrapper)tokenType).getValue();
     }
 
-    String text = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
-    text = StringUtil.replace(text, "\n", "\\n");
-    return text;
+    return StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 
   protected abstract Lexer createLexer();

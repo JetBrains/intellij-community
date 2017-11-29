@@ -68,7 +68,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       if (!changes.isEmpty) {
         runBatchUpdate(project.messageBus) {
           for ((store, storages) in changes.entrySet()) {
-            if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed ?: false) {
+            if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
               continue
             }
 

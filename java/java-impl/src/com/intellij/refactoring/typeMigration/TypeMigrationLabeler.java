@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -21,7 +7,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -35,10 +20,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriddenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -67,6 +52,7 @@ public class TypeMigrationLabeler {
   private boolean myShowWarning = true;
   private volatile MigrateException myException;
   private final Semaphore myDialogSemaphore = new Semaphore();
+  private final Project myProject;
 
   public TypeMigrationRules getRules() {
     return myRules;
@@ -74,6 +60,7 @@ public class TypeMigrationLabeler {
 
   private final TypeMigrationRules myRules;
   private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
+  @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final Map<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
@@ -88,19 +75,25 @@ public class TypeMigrationLabeler {
     new HashMap<>();
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<>();
+  private final Set<PsiTypeParameter> myDisappearedTypeParameters = new HashSet<>();
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules, PsiType rootType) {
-    this(rules, Functions.constant(rootType));
+  public TypeMigrationLabeler(TypeMigrationRules rules, PsiType rootType, Project project) {
+    this(rules, Functions.constant(rootType), null, project);
   }
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> migrationRootTypeFunction) {
+  public TypeMigrationLabeler(TypeMigrationRules rules,
+                              Function<PsiElement, PsiType> migrationRootTypeFunction,
+                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
+    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
 
     myConversions = new LinkedHashMap<>();
     myFailedConversions = new LinkedHashMap<>();
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
+    myProject = project;
   }
 
   public boolean hasFailedConversions() {
@@ -455,6 +448,13 @@ public class TypeMigrationLabeler {
     if (originalType.equals(PsiType.NULL)) {
       if (migrationType instanceof PsiPrimitiveType) {
         markFailedConversion(Pair.create(originalType, migrationType), expr);
+        return;
+      }
+      if (place instanceof PsiVariable) {
+        PsiType type = ((PsiVariable)place).getType();
+        if (((PsiVariable)place).getInitializer() == expr && myRules.shouldConvertNull(type, migrationType, expr)) {
+          convertExpression(expr, migrationType, type, isCovariant);
+        }
       }
       return;
     }
@@ -554,11 +554,11 @@ public class TypeMigrationLabeler {
     convertExpression(expr, migrationType, originalType, isCovariant);
   }
 
-  private static boolean isGenericsArrayType(final PsiType elemenType) {
-    if (elemenType instanceof PsiClassType && ((PsiClassType)elemenType).hasParameters()) {
+  private static boolean isGenericsArrayType(final PsiType elementType) {
+    if (elementType instanceof PsiClassType && ((PsiClassType)elementType).hasParameters()) {
       return true;
-    } else if (elemenType instanceof PsiArrayType) {
-      final PsiType componentType = ((PsiArrayType)elemenType).getComponentType();
+    } else if (elementType instanceof PsiArrayType) {
+      final PsiType componentType = ((PsiArrayType)elementType).getComponentType();
       return isGenericsArrayType(componentType);
     }
     return false;
@@ -574,6 +574,9 @@ public class TypeMigrationLabeler {
                            boolean alreadyProcessed,
                            final boolean isContraVariantPosition,
                            final boolean userDefinedType) {
+    if (myAllowedRoots != null && !myAllowedRoots.contains(element)) {
+      return false;
+    }
     if (type.equals(PsiType.NULL)) {
       return false;
     }
@@ -585,27 +588,12 @@ public class TypeMigrationLabeler {
     LOG.assertTrue(originalType != null);
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
-    if (!userDefinedType) {
-      final Set<PsiTypeParameter> collector;
-      if (type instanceof PsiClassType) {
-        collector = type.accept(new PsiExtendedTypeVisitor<Set<PsiTypeParameter>>() {
-          private final Set<PsiTypeParameter> myResult = new HashSet<>();
-
-          @Override
-          public Set<PsiTypeParameter> visitClassType(PsiClassType classType) {
-            super.visitClassType(classType);
-            final PsiClass resolved = classType.resolve();
-            if (resolved instanceof PsiTypeParameter) {
-              myResult.add((PsiTypeParameter) resolved);
-            }
-            return myResult;
-          }
-        });
-      } else {
-        collector = Collections.emptySet();
-      }
-      if (typeContainsTypeParameters(originalType, collector)) return false;
+    if (userDefinedType) {
+      Set<PsiTypeParameter> disappearedTypeParameters = getTypeParameters(originalType);
+      disappearedTypeParameters.removeAll(getTypeParameters(type));
+      myDisappearedTypeParameters.addAll(disappearedTypeParameters);
     }
+    else if (typeContainsTypeParameters(originalType, getTypeParameters(type))) return false;
 
     if (type instanceof PsiCapturedWildcardType) {
       return false;
@@ -709,6 +697,16 @@ public class TypeMigrationLabeler {
     }
   }
 
+  @NotNull
+  private static Set<PsiTypeParameter> getTypeParameters(@NotNull PsiType type) {
+    if (type instanceof PsiClassType) {
+      PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+      type.accept(searcher);
+      return searcher.getTypeParameters();
+    }
+    return Collections.emptySet();
+  }
+
   @Nullable
   private String isMethodNameCanBeChanged(PsiMethod method) {
     if (myCurrentRoot == null) {
@@ -750,17 +748,13 @@ public class TypeMigrationLabeler {
     return null;
   }
 
-  static boolean typeContainsTypeParameters(@Nullable PsiType originalType, @NotNull Set<PsiTypeParameter> excluded) {
-    if (originalType instanceof PsiClassType) {
-      final PsiClassType psiClassType = (PsiClassType)originalType;
-      if (psiClassType.resolve() instanceof PsiTypeParameter) {
+  private boolean typeContainsTypeParameters(@Nullable PsiType type, @NotNull Set<PsiTypeParameter> excluded) {
+    if (!(type instanceof PsiClassType)) return false;
+    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+    type.accept(searcher);
+    for (PsiTypeParameter parameter : searcher.getTypeParameters()) {
+      if (!excluded.contains(parameter) && !myDisappearedTypeParameters.contains(parameter)) {
         return true;
-      }
-      for (PsiType paramType : psiClassType.getParameters()) {
-        if (paramType instanceof PsiClassType) {
-          final PsiClass resolved = ((PsiClassType)paramType).resolve();
-          if (resolved instanceof PsiTypeParameter && !excluded.contains(resolved)) return true;
-        }
       }
     }
     return false;
@@ -892,8 +886,7 @@ public class TypeMigrationLabeler {
   }
 
   public PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType) {
-    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(
-      PsiReference.EMPTY_ARRAY));
+    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(PsiReference.EMPTY_ARRAY));
   }
 
   PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType, final PsiReference[] refs) {
@@ -1061,11 +1054,13 @@ public class TypeMigrationLabeler {
   private void migrate(boolean autoMigrate, final PsiElement... victims) {
 
     myMigrationRoots = new LinkedList<>();
-    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
+    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
 
-
+    SmartTypePointerManager smartTypePointerManager = SmartTypePointerManager.getInstance(myProject);
     for (PsiElement victim : victims) {
-      addMigrationRoot(victim, myMigrationRootTypeFunction.fun(victim), null, false, true, true);
+      // use deeply immediate types
+      PsiType migrationType = smartTypePointerManager.createSmartTypePointer(myMigrationRootTypeFunction.fun(victim)).getType();
+      addMigrationRoot(victim, migrationType, null, false, true, true);
     }
 
     if (autoMigrate) {
@@ -1076,6 +1071,11 @@ public class TypeMigrationLabeler {
 
     myDialogSemaphore.waitFor();
     checkInterrupted();
+  }
+
+  @NotNull
+  private PsiReference[] findReferences(PsiElement element) {
+    return ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public TypeEvaluator getTypeEvaluator() {
@@ -1119,12 +1119,11 @@ public class TypeMigrationLabeler {
     return refs;
   }
 
-  private boolean canBeRoot(@Nullable PsiElement element, @NotNull SearchScope migrationScope) {
+  private static boolean canBeRoot(@Nullable PsiElement element, @NotNull SearchScope migrationScope) {
     if (element == null) return false;
     return element.isValid() &&
            element.isPhysical() &&
-           PsiSearchScopeUtil.isInScope(migrationScope, element) &&
-           ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInSourceContent(element.getContainingFile().getVirtualFile());
+           PsiSearchScopeUtil.isInScope(migrationScope, element);
   }
 
   @TestOnly

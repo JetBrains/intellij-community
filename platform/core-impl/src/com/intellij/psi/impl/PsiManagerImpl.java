@@ -19,6 +19,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -107,6 +108,12 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
     beforeChange(true);
     beforeChange(false);
+  }
+
+  @Override
+  public void dropPsiCaches() {
+    dropResolveCaches();
+    WriteAction.run(() -> ((PsiModificationTrackerImpl)myModificationTracker).incCounter());
   }
 
   @Override
@@ -359,8 +366,16 @@ public class PsiManagerImpl extends PsiManagerEx {
       for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
         preprocessor.treeChanged(event);
       }
+      boolean enableOutOfCodeBlockTracking = ((PsiModificationTrackerImpl)myModificationTracker).isEnableCodeBlockTracker();
       for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
+        if (!enableOutOfCodeBlockTracking && preprocessor instanceof PsiTreeChangePreprocessorBase) continue;
         preprocessor.treeChanged(event);
+      }
+      if (!enableOutOfCodeBlockTracking) {
+        for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
+          if (!(preprocessor instanceof PsiTreeChangePreprocessorBase)) continue;
+          ((PsiTreeChangePreprocessorBase)preprocessor).onOutOfCodeBlockModification(event);
+        }
       }
 
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {
@@ -493,6 +508,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void cleanupForNextTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileManager.cleanupForNextTest();
-    dropResolveCaches();
+    dropPsiCaches();
   }
 }

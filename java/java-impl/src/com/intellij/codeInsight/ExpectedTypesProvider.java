@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,9 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -155,6 +153,7 @@ public class ExpectedTypesProvider {
     return visitor.getResult();
   }
 
+  @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project) {
     LinkedHashSet<PsiType> set = new LinkedHashSet<>();
@@ -411,8 +410,8 @@ public class ExpectedTypesProvider {
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
         NullableComputable<String> expectedName;
-        if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-          expectedName = () -> PropertyUtil.getPropertyName(scopeMethod);
+        if (PropertyUtilBase.isSimplePropertyAccessor(scopeMethod)) {
+          expectedName = () -> PropertyUtilBase.getPropertyName(scopeMethod);
         }
         else {
           expectedName = ExpectedTypeInfoImpl.NULL;
@@ -468,7 +467,7 @@ public class ExpectedTypesProvider {
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
-        if (iterableClass != null && iterableClass.getTypeParameters().length == 1) {
+        if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
           Map<PsiTypeParameter, PsiType> map = new HashMap<>();
           map.put(iterableClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, type));
           PsiType iterableType = factory.createType(iterableClass, factory.createSubstitutor(map));
@@ -1084,76 +1083,16 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    private static PsiType getTypeParameterValue(@NotNull PsiClass rootClass, @NotNull PsiClass derivedClass, PsiSubstitutor substitutor, int index) {
-      final PsiTypeParameter[] typeParameters = rootClass.getTypeParameters();
-      if (typeParameters.length > index) {
-        final PsiSubstitutor psiSubstitutor = TypeConversionUtil.getClassSubstitutor(rootClass, derivedClass, substitutor);
-        if (psiSubstitutor != null) {
-          PsiType type = psiSubstitutor.substitute(typeParameters[index]);
-          if (type != null) return type;
-        }
-      }
-      return null;
-    }
-
-    @Nullable
-    protected static PsiType checkMethod(@NotNull PsiMethod method, @NotNull @NonNls final String className, @NotNull final NullableFunction<PsiClass,PsiType> function) {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return null;
-
-      if (className.equals(containingClass.getQualifiedName())) {
-        return function.fun(containingClass);
-      }
-      final PsiType[] type = {null};
-      DeepestSuperMethodsSearch.search(method).forEach(psiMethod -> {
-        final PsiClass rootClass = psiMethod.getContainingClass();
-        assert rootClass != null;
-        if (className.equals(rootClass.getQualifiedName())) {
-          type[0] = function.fun(rootClass);
-          return false;
-        }
-        return true;
-      });
-      return type[0];
-    }
-
-    @Nullable
     private static PsiType getDefaultType(@NotNull final PsiMethod method, final PsiSubstitutor substitutor, @NotNull final PsiType parameterType,
                                           @NotNull final PsiExpression argument, @NotNull PsiExpression[] args, int index) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return parameterType;
 
-      @NonNls final String name = method.getName();
-      if ("contains".equals(name) || "remove".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_COLLECTION,
-                                         psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, 0));
-        if (type != null) return type;
-      }
-      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP,
-                                         psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0));
-        if (type != null) return type;
-      }
+      PsiType hardcoded = HardcodedDefaultTypesKt.getDefaultType(method, substitutor, index, argument);
+      if (hardcoded != null) return hardcoded;
 
+      @NonNls final String name = method.getName();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-      if ("equals".equals(name)) {
-        final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, psiClass -> {
-          final PsiElement parent = argument.getParent().getParent();
-          if (parent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
-            final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
-            if (qualifierExpression != null) {
-              return qualifierExpression.getType();
-            }
-            final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
-            if (aClass != null) {
-              return factory.createType(aClass);
-            }
-          }
-          return null;
-        });
-        if (type != null) return type;
-      }
       int argCount = Math.max(index + 1, args.length);
       if ("assertEquals".equals(name) || "assertSame".equals(name) && method.getParameterList().getParametersCount() == argCount) {
         if (argCount == 2 ||
@@ -1175,7 +1114,7 @@ public class ExpectedTypesProvider {
               typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
             PsiClass classClass = ((PsiClassType)parameterType).resolve();
-            if (placeClass != null && classClass != null) {
+            if (placeClass != null && classClass != null && classClass.getTypeParameters().length == 1) {
               return factory.createType(classClass, factory.createType(placeClass));
             }
           }
@@ -1206,7 +1145,7 @@ public class ExpectedTypesProvider {
       return parameterType;
     }
 
-    @Nullable
+    @NotNull
     private static NullableComputable<String> getPropertyName(@NotNull final PsiVariable variable) {
       return () -> {
         final String name = variable.getName();

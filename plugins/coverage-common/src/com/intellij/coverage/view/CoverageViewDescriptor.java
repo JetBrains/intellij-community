@@ -4,10 +4,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageViewDescriptor extends NodeDescriptor {
   private final Object myClassOrPackage;
  

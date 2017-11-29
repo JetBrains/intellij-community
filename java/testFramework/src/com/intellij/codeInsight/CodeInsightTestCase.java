@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -39,18 +25,22 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -459,25 +449,24 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         VirtualFile vFile = findVirtualFile(filePath);
 
         VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
-        String ft;
+        String expectedText;
         try {
-          ft = VfsUtilCore.loadText(vFile);
+          expectedText = VfsUtilCore.loadText(vFile);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
 
-        String fileText = StringUtil.convertLineSeparators(ft);
-        Document document = EditorFactory.getInstance().createDocument(fileText);
+        expectedText = StringUtil.convertLineSeparators(expectedText);
+        Document document = EditorFactory.getInstance().createDocument(expectedText);
 
         EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
-        String newFileText = document.getText();
-        String newFileText1 = newFileText;
+        expectedText = document.getText();
         if (stripTrailingSpaces) {
-          Document document1 = EditorFactory.getInstance().createDocument(newFileText);
+          Document document1 = EditorFactory.getInstance().createDocument(expectedText);
           ((DocumentImpl)document1).stripTrailingSpaces(getProject());
-          newFileText1 = document1.getText();
+          expectedText = document1.getText();
         }
 
         if (myEditor instanceof EditorWindow) {
@@ -485,10 +474,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
         myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
 
-        String text = myFile.getText();
-        text = StringUtil.convertLineSeparators(text);
+        String actualText = StringUtil.convertLineSeparators(myFile.getText());
 
-        assertEquals("Text mismatch in file " + filePath, newFileText1, text);
+        if (!Comparing.equal(expectedText, actualText)) {
+            throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+        }
 
         EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
       }
@@ -534,7 +524,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   @NotNull
-  private VirtualFile findVirtualFile(@NotNull String filePath) {
+  protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
     allowRootAccess(absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
@@ -617,5 +607,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
+  }
+
+  protected void setLanguageLevel(LanguageLevel level) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

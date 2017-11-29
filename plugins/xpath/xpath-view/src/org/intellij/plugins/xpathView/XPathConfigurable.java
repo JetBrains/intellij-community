@@ -30,6 +30,7 @@ public class XPathConfigurable implements SearchableConfigurable {
         return "XPath Viewer";
     }
 
+  @Override
   @Nullable
     public String getHelpTopic() {
         return "xpath.settings";

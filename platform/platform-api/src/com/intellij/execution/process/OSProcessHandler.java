@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -23,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.BaseOutputReader;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,14 +69,12 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   private static boolean isPtyProcess(Process process) {
     Class c = process.getClass();
-    
     while (c != null) {
       if ("com.pty4j.unix.UnixPtyProcess".equals(c.getName()) || "com.pty4j.windows.WinPtyProcess".equals(c.getName())) {
         return true;
       }
       c = c.getSuperclass();
     }
-    
     return false;
   }
 
@@ -172,5 +169,17 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @Override
   protected BaseOutputReader.Options readerOptions() {
     return myHasPty ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
+  }
+
+  /**
+   * Registers a file to delete after the given command line finishes.
+   * In order to have an effect, the command line has to be executed with {@link #OSProcessHandler(GeneralCommandLine)}.
+   */
+  public static void deleteFileOnTermination(@NotNull GeneralCommandLine commandLine, @NotNull File fileToDelete) {
+    Set<File> set = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
+    if (set == null) {
+      commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set = new THashSet<>());
+    }
+    set.add(fileToDelete);
   }
 }

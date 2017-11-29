@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +101,7 @@ public class UseOfCloneInspection extends BaseInspection {
 
     @Override
     public void visitMethod(PsiMethod method) {
-      if (!CloneUtils.isClone(method) || CloneUtils.onlyThrowsException(method)) {
+      if (!CloneUtils.isClone(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
       }
       registerMethodError(method, method);

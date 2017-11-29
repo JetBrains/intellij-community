@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -57,16 +56,6 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
     String path = file.getPath();
     VirtualFile vf = LocalFileSystem.getInstance().findFileByPath(path);
     return createFilePath(path, vf != null ? vf.isDirectory() : file.isDirectory());
-  }
-
-  @Override
-  @NotNull
-  public FilePath createFilePathOn(@NotNull final File file, @NotNull final NotNullFunction<File, Boolean> detector) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    if (virtualFile != null) {
-      return createFilePathOn(virtualFile);
-    }
-    return createFilePathOn(file, detector.fun(file).booleanValue());
   }
 
   @Override
@@ -102,7 +91,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   @NotNull
   public LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull final String name) {
-    return LocalChangeListImpl.createEmptyChangeListImpl(project, name);
+    return LocalChangeListImpl.createEmptyChangeListImpl(project, name, null);
   }
 
   @NotNull

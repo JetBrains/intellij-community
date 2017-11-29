@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 /**
  * @author Dmitry Batkovich
@@ -74,10 +73,10 @@ public class QuickFixPreviewPanelFactory {
       return myEmpty;
     }
 
-    private boolean fillPanel(@Nullable QuickFixAction[] fixes,
+    private boolean fillPanel(@NotNull QuickFixAction[] fixes,
                               CommonProblemDescriptor[] descriptors,
                               @NotNull InspectionResultsView view) {
-      boolean hasFixes = fixes != null && fixes.length != 0;
+      boolean hasFixes = fixes.length != 0;
       int problemCount = descriptors.length;
       boolean multipleDescriptors = problemCount > 1;
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
@@ -98,7 +97,7 @@ public class QuickFixPreviewPanelFactory {
         actions.add(suppressionCombo);
       }
       if (actions.getChildrenCount() != 0) {
-        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);
         add(component);
@@ -106,7 +105,10 @@ public class QuickFixPreviewPanelFactory {
       }
 
       if (hasComponents) {
-        setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 2 : 9, (hasFixes || problemCount > 1) ? 8 : 5, hasFixes ? 0 : 8, 0));
+        int top = hasFixes ? 2 : 9;
+        int left = (hasFixes || problemCount > 1) ? 8 : 5;
+        int bottom = hasFixes ? 0 : 8;
+        setBorder(JBUI.Borders.empty(top, left, bottom, 0));
       }
       return !hasComponents;
     }
@@ -116,24 +118,24 @@ public class QuickFixPreviewPanelFactory {
       final AnActionEvent
         event = AnActionEvent.createFromDataContext(ActionPlaces.CODE_INSPECTION, null, DataManager.getInstance().getDataContext(view));
       final AnAction[] suppressors = new SuppressActionWrapper().getChildren(event);
-      final Stream<AnAction> suppressActionStream = Arrays.stream(suppressors).filter(s -> {
+      final AnAction[] availableSuppressors = Arrays.stream(suppressors).filter(s -> {
+        event.getPresentation().setEnabled(false);
         s.update(event);
         return event.getPresentation().isEnabled();
-      });
-      if (!suppressActionStream.findFirst().isPresent()) {
+      }).toArray(AnAction[]::new);
+      if (availableSuppressors.length == 0) {
         return null;
       }
       final ComboBoxAction action = new ComboBoxAction() {
         {
           getTemplatePresentation().setText("Suppress");
-          getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
         }
 
         @NotNull
         @Override
         protected DefaultActionGroup createPopupActionGroup(JComponent button) {
           DefaultActionGroup group = new DefaultCompactActionGroup();
-          group.addAll(suppressors);
+          group.addAll(availableSuppressors);
           return group;
         }
       };
@@ -176,7 +178,7 @@ public class QuickFixPreviewPanelFactory {
     private LoadingInProgressPreview(InspectionResultsView view) {
       myView = view;
       setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
+      setBorder(JBUI.Borders.empty(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
       myWaitingLabel = getLabel(myView.getTree().getSelectedProblemCount(false));
@@ -211,7 +213,7 @@ public class QuickFixPreviewPanelFactory {
   private static SimpleColoredComponent getLabel(int problemsCount) {
     SimpleColoredComponent label = new SimpleColoredComponent();
     appendTextToLabel(label, problemsCount);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    label.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
     return label;
   }
 

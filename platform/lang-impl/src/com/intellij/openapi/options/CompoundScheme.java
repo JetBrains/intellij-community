@@ -121,7 +121,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   }
 
   public static final class MutatorHelper<T extends CompoundScheme<E>, E extends SchemeElement> {
-    private final THashMap<T, T> copiedToOriginal = new THashMap<>(ContainerUtil.identityStrategy());
+    private final THashMap<T, T> copiedToOriginal = ContainerUtil.newIdentityTroveMap();
 
     @NotNull
     public T copy(@NotNull T scheme) {

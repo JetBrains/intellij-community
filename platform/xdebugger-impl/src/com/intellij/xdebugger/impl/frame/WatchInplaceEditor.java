@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * @author nik
@@ -64,5 +66,18 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
       myWatchesView.addWatchExpression(expression, index, false);
     }
     TreeUtil.selectNode(myTree, myNode);
+  }
+
+  @Nullable
+  @Override
+  protected Rectangle getEditorBounds() {
+    Rectangle bounds = super.getEditorBounds();
+    if (bounds == null) {
+      return null;
+    }
+    int afterIconX = getAfterIconX();
+    bounds.x += afterIconX;
+    bounds.width -= afterIconX;
+    return bounds;
   }
 }

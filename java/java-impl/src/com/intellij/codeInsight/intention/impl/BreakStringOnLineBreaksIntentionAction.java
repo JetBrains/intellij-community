@@ -78,7 +78,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
     }
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    token.replace(factory.createExpressionFromText(breakOnLineBreaks(text), element));
+    token.getParent().replace(factory.createExpressionFromText(breakOnLineBreaks(text), element));
   }
 
 

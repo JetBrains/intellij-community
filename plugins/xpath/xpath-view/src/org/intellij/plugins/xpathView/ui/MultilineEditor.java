@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
@@ -132,7 +133,9 @@ public class MultilineEditor extends JPanel {
         SwingUtilities.invokeLater(() -> {
             final Editor editor = myEditorTextField.getEditor();
             if (editor != null) {
-                editor.getContentComponent().requestFocus();
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+              });
             }
             myEditorTextField.selectAll();
         });

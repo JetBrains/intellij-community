@@ -69,7 +69,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
         add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
       }
-      myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
+      myHasAccessibleStaticCorrectCandidate |= isAccessible;// && !staticProblem;
     }
   }
 

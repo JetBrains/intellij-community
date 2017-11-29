@@ -48,6 +48,7 @@ public class LightTypeParameterListBuilder extends LightElement implements PsiTy
     }
   }
 
+  @NotNull
   @Override
   public PsiTypeParameter[] getTypeParameters() {
     if (cached == null) {

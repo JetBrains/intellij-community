@@ -33,10 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.reflect.Type;
 
-/**
- * User: Sergey.Vasiliev
- * Date: Mar 1, 2006
- */
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   public DefaultAddAction() {

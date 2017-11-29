@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: cdr
- */
 public class SliceTooComplexDFAUsage extends SliceUsage {
   public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     super(element, parent);

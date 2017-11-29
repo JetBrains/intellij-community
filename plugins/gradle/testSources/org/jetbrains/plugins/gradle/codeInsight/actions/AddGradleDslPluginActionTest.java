@@ -28,11 +28,11 @@ import java.io.File;
  */
 public class AddGradleDslPluginActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testApplyPlugin() throws Exception {
+  public void testApplyPlugin() {
     doTest("testApplyPlugin.gradle", "java");
   }
 
-  public void testApplyPluginInsideClosure() throws Exception {
+  public void testApplyPluginInsideClosure() {
     myFixture.configureByFile("testApplyPluginInsideClosure.gradle");
     doTest("testApplyPluginInsideClosure.gradle", "java");
   }

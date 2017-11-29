@@ -15,10 +15,10 @@ public class Main {
       boolean seen = false;
       int best = 0;
       for (Index index : set.asList()) {
-          int i = index.asInteger();
-          if (!seen || i < best) {
+          int asInteger = index.asInteger();
+          if (!seen || asInteger < best) {
               seen = true;
-              best = i;
+              best = asInteger;
           }
       }
       return seen ? OptionalInt.of(best) : OptionalInt.empty();

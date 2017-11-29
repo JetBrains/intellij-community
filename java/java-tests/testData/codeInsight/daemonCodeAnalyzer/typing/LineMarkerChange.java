@@ -1,12 +1,5 @@
  import java.util.concurrent.Callable;
 
- /**
-  * Created by IntelliJ IDEA.
-  * User: cdr
-  * Date: May 19, 2009
-  * Time: 2:59:31 PM
-  * To change this template use File | Settings | File Templates.
-  */
  class LineMarkers implements Runnable, Callable, CharSequence{
     <caret>
 

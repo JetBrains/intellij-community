@@ -130,6 +130,12 @@ public class MockGitRepository implements GitRepository {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public Collection<GitSubmoduleInfo> getSubmodules() {
+    throw new UnsupportedOperationException();
+  }
+
   @Nullable
   @Override
   public String getCurrentRevision() {

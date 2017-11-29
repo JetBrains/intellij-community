@@ -41,12 +41,8 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
       manager.addToolWindowManagerListener(new MyListener(manager, project));
     }
     else {
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          activateProjectToolWindow(project, toolWindow);
-        }
-      });
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(
+        (DumbAwareRunnable)() -> activateProjectToolWindow(project, toolWindow));
     }
   }
 

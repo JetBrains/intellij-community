@@ -285,7 +285,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     };
 
     if (myExecuteInDispatchThread) {
-      UIUtil.invokeLaterIfNeeded(toRun);
+      UIUtil.invokeAndWaitIfNeeded(toRun);
     }
     else {
       toRun.run();

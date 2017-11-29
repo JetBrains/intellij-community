@@ -18,6 +18,7 @@ package git4idea.config;
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import git4idea.commands.GitHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return doCheckExecutable(executable, Collections.singletonList("--version"));
+    return doCheckExecutable(executable, Collections.singletonList("--version"), GitHandler.getCommonEnvironment());
   }
 
   /**

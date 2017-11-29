@@ -16,35 +16,37 @@
 package com.intellij.openapi.roots;
 
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
 public class RootPolicy<R> {
-  public R visitOrderEntry(OrderEntry orderEntry, R value) {
+  public R visitOrderEntry(@NotNull OrderEntry orderEntry, R value) {
     return value;
   }
 
-  public R visitModuleSourceOrderEntry(ModuleSourceOrderEntry moduleSourceOrderEntry, R value) {
+  public R visitModuleSourceOrderEntry(@NotNull ModuleSourceOrderEntry moduleSourceOrderEntry, R value) {
     return visitOrderEntry(moduleSourceOrderEntry, value);
   }
 
-  public R visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, R value) {
+  public R visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, R value) {
     return visitOrderEntry(libraryOrderEntry, value);
   }
 
-  public R visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, R value) {
+  public R visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, R value) {
     return visitOrderEntry(moduleOrderEntry, value);
   }
 
-  public R visitJdkOrderEntry(JdkOrderEntry jdkOrderEntry, R value) {
+  public R visitJdkOrderEntry(@NotNull JdkOrderEntry jdkOrderEntry, R value) {
     return visitOrderEntry(jdkOrderEntry, value);
   }
 
-  public R visitModuleJdkOrderEntry(ModuleJdkOrderEntry jdkOrderEntry, R value) {
+  public R visitModuleJdkOrderEntry(@NotNull ModuleJdkOrderEntry jdkOrderEntry, R value) {
     return visitJdkOrderEntry(jdkOrderEntry, value);
   }
 
-  public R visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, R initialValue) {
+  public R visitInheritedJdkOrderEntry(@NotNull InheritedJdkOrderEntry inheritedJdkOrderEntry, R initialValue) {
     return visitJdkOrderEntry(inheritedJdkOrderEntry, initialValue);
   }
 }

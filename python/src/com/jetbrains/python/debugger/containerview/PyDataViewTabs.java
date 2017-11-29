@@ -18,14 +18,19 @@ package com.jetbrains.python.debugger.containerview;
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 class PyDataViewTabs extends JBRunnerTabs {
+  public static final String EMPTY_TEXT = "Run console or debugger to view available data ";
+  private static final String HELP_ID = "reference.toolWindows.PyDataView";
+
   public PyDataViewTabs(@NotNull Project project) {
     super(project, ActionManager.getInstance(), IdeFocusManager.findInstance(), project);
   }
@@ -35,7 +40,16 @@ class PyDataViewTabs extends JBRunnerTabs {
     super.paintComponent(g);
     if (isEmptyVisible()) {
       UISettings.setupAntialiasing(g);
-      UIUtil.drawCenteredString((Graphics2D)g, g.getClipBounds(), PyDataViewToolWindowFactory.EMPTY_TEXT);
+      UIUtil.drawCenteredString((Graphics2D)g, g.getClipBounds(), EMPTY_TEXT);
     }
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
+    }
+    return super.getData(dataId);
   }
 }

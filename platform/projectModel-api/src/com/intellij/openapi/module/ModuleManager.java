@@ -20,11 +20,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *
-   * @param filePath     the path at which the module is created.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
@@ -124,8 +126,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Checks if one of the specified modules directly depends on the other module.
    *
    * @param module   the module to check the dependency for.
-   * @param onModule the module on which <code>module</code> may depend.
-   * @return true if <code>module</code> directly depends on <code>onModule</code>, false otherwise.
+   * @param onModule the module on which {@code module} may depend.
+   * @return true if {@code module} directly depends on {@code onModule}, false otherwise.
    */
   public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 
@@ -170,4 +172,24 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   public abstract String[] getModuleGroupPath(@NotNull Module module);
 
   public abstract boolean hasModuleGroups();
+
+  /**
+   * @return description of all modules in the project including unloaded
+   */
+  @ApiStatus.Experimental
+  public abstract Collection<ModuleDescription> getAllModuleDescriptions();
+
+  @ApiStatus.Experimental
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  @ApiStatus.Experimental
+  @Nullable
+  public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
+
+  /**
+   * Specify list of modules which will be unloaded from the project.
+   * @see UnloadedModuleDescription
+   */
+  @ApiStatus.Experimental
+  public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
 }

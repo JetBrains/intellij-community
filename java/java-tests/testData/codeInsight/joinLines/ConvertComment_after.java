@@ -1,6 +1,6 @@
 class Foo {
   void f() {
-    if (ff) { /*comment*/ return null;
+    if (ff) { /*comment*/return null;
     }
   }
 }

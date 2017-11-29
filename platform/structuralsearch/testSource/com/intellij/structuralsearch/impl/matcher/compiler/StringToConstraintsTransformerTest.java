@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 /**
  * @author Bas Leijdekkers
@@ -35,7 +33,7 @@ public class StringToConstraintsTransformerTest {
   private MatchOptions myOptions;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myOptions = new MatchOptions();
   }
 
@@ -230,23 +228,25 @@ public class StringToConstraintsTransformerTest {
 
   @Test
   public void testInvert() {
-    test("'a:[!read&&write]");
+    test("'a:[!regexw(a)&&formal(*List)]");
     assertEquals("$a$", myOptions.getSearchPattern());
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
-    assertTrue(constraint.isReadAccess());
-    assertTrue(constraint.isInvertReadAccess());
-    assertTrue(constraint.isWriteAccess());
-    assertFalse(constraint.isInvertWriteAccess());
+    assertTrue(constraint.isWholeWordsOnly());
+    assertEquals("a", constraint.getRegExp());
+    assertTrue(constraint.isInvertRegExp());
+    assertTrue(constraint.isFormalArgTypeWithinHierarchy());
+    assertFalse(constraint.isInvertFormalType());
+    assertEquals("List", constraint.getNameOfFormalArgType());
   }
 
   @Test(expected = MalformedPatternException.class)
   public void testAmpersandsExpected() {
-    test("'a:[read write]");
+    test("'a:[regex(a) regex(b)]");
   }
 
   @Test(expected = MalformedPatternException.class)
   public void testUnexpectedAmpersands() {
-    test("'a:[&&read]");
+    test("'a:[&&regex(a)]");
   }
 
   @Test(expected = MalformedPatternException.class)
@@ -266,8 +266,7 @@ public class StringToConstraintsTransformerTest {
     assertEquals("a", constraint.getRegExp());
   }
 
-  private void test(String pattern) {
-    myOptions.setSearchPattern(pattern);
-    StringToConstraintsTransformer.transformOldPattern(myOptions);
+  private void test(String criteria) {
+    StringToConstraintsTransformer.transformCriteria(criteria, myOptions);
   }
 }

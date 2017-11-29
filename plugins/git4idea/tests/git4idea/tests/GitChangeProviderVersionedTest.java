@@ -22,21 +22,18 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcsUtil.VcsUtil;
-import org.testng.annotations.Test;
 
 import static com.intellij.openapi.vcs.FileStatus.*;
 import static git4idea.test.GitExecutor.add;
 
 public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
-  @Test
   public void testCreateFile() throws Exception {
     VirtualFile file = create(myRootDir, "new.txt");
     add(file.getPath());
     assertChanges(file, ADDED);
   }
 
-  @Test
   public void testCreateFileInDir() throws Exception {
     VirtualFile dir = createDir(myRootDir, "newdir");
     dirty(dir);
@@ -45,38 +42,26 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
   }
 
-  @Test
   public void testEditFile() throws Exception {
     edit(atxt, "new content");
     assertChanges(atxt, MODIFIED);
   }
 
-  @Test
   public void testDeleteFile() throws Exception {
     deleteFile(atxt);
     assertChanges(atxt, DELETED);
   }
 
-  @Test
   public void testDeleteDirRecursively() throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile dir = myProjectRoot.findChild("dir");
-            myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
-            FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
-          }
-        });
-      }
-    });
+    GuiUtils.runOrInvokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile dir = myProjectRoot.findChild("dir");
+      myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
+      FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
+    }));
     assertChanges(new VirtualFile[] { dir_ctxt, subdir_dtxt },
                   new FileStatus[] { DELETED, DELETED });
   }
 
-  @Test
   public void testMoveNewFile() throws Exception {
     // IDEA-59587
     // Reproducibility of the bug (in the original roots cause) depends on the order of new and old paths in the dirty scope.
@@ -90,7 +75,6 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     assertChanges(file, ADDED);
   }
 
-  @Test
   public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
     edit(atxt, "new afile content");
     edit(dir_ctxt, "new cfile content");

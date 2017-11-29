@@ -166,7 +166,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("java-lib-model-builder", "sdk-tools.jar")
       withModule("usb-devices", "sdk-tools.jar")
 
-      withJpsModule("android-gradle-jps")
       withJpsModule("android-jps-plugin")
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries

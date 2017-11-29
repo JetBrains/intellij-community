@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -125,10 +125,15 @@ public class LibrariesUtil {
   }
 
   private static VirtualFile getLocalFor(VirtualFile virtualFile) {
-    VirtualFileSystem fileSystem = virtualFile == null ? null : virtualFile.getFileSystem();
-    return fileSystem instanceof LocalFileProvider ? ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(virtualFile) : null;
-  }
+    if (virtualFile != null) {
+      VirtualFileSystem fileSystem = virtualFile.getFileSystem();
+      if (fileSystem instanceof ArchiveFileSystem) {
+        return ((ArchiveFileSystem)fileSystem).getLocalByEntry(virtualFile);
+      }
+    }
 
+    return null;
+  }
 
   @Nullable
   public static String getGroovyHomePath(@NotNull Module module) {

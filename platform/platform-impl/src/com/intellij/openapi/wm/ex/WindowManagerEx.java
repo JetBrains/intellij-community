@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,21 +49,21 @@ public abstract class WindowManagerEx extends WindowManager {
       AppIcon.getInstance().requestAttention(project, critical);
   }
 
-  public abstract IdeFrameImpl allocateFrame(Project project);
+  public abstract IdeFrameImpl allocateFrame(@NotNull Project project);
 
   public abstract void releaseFrame(IdeFrameImpl frame);
 
   /**
    * @return focus owner of the specified window.
-   * @exception IllegalArgumentException if <code>window</code> is <code>null</code>.
+   * @exception IllegalArgumentException if {@code window} is {@code null}.
    */
   public abstract Component getFocusedComponent(@NotNull Window window);
 
   /**
-   * @param project may be <code>null</code> when no project is opened.
+   * @param project may be {@code null} when no project is opened.
    * @return focused component for the project. If project isn't specified then
    * the method returns focused component in window which has no project.
-   * If there is no focused component at all then the method returns <code>null</code>.
+   * If there is no focused component at all then the method returns {@code null}.
    */
   @Nullable
   public abstract Component getFocusedComponent(@Nullable Project project);
@@ -81,18 +81,18 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract DesktopLayout getLayout();
 
   /**
-   * Copies <code>layout</code> into internal default layout.
+   * Copies {@code layout} into internal default layout.
    */
   public abstract void setLayout(DesktopLayout layout);
 
   /**
-   * This method is invoked by <code>IdeEventQueue</code> to notify window manager that
+   * This method is invoked by {@code IdeEventQueue} to notify window manager that
    * some window activity happens. <u><b>Do not invoke it in other places!!!<b></u>
    */
   public abstract void dispatchComponentEvent(ComponentEvent e);
 
   /**
-   * @return union of bounds of all default screen devices. Note that <code>x</code> and/or <code>y</code>
+   * @return union of bounds of all default screen devices. Note that {@code x} and/or {@code y}
    * coordinates can be negative. It depends on physical configuration of graphics devices.
    * For example, the left monitor has negative coordinates on Win32 platform with dual monitor support
    * (right monitor is the primer one) .

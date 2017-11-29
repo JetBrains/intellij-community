@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
@@ -31,6 +32,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,18 +62,20 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
     else {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
-      final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
-      if (creator != null && creator.isAvailable(file.getProject(), editor, file)) {
+      for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
+        if (!creator.isAvailable(file.getProject(), editor, file)) continue;
         actions.add(new AdditionalAction() {
           @NotNull
           @Override
           public String getText() {
-            return "Create New Test...";
+            String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
+            return ObjectUtils.notNull(text, "Create New Test...");
           }
 
           @Override
           public Icon getIcon() {
-            return AllIcons.Actions.IntentionBulb;
+            Icon icon = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getIcon(false) : null;
+            return ObjectUtils.notNull(icon, AllIcons.Actions.IntentionBulb);
           }
 
           @Override

@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +41,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/27/12
- * Time: 12:59 PM
- */
 public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
@@ -104,15 +97,12 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       return;
     }
 
-    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<Info>() {
-      @Override
-      public void consume(Info info) {
-        try {
-          handler.consume(info);
-        }
-        catch (SVNException e) {
-          throw new SvnExceptionWrapper(e);
-        }
+    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, info -> {
+      try {
+        handler.consume(info);
+      }
+      catch (SVNException e) {
+        throw new SvnExceptionWrapper(e);
       }
     });
 
@@ -189,7 +179,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     @Nullable private Info myInfo;
 
     @Override
-    public void consume(Info info) throws SVNException {
+    public void consume(Info info) {
       myInfo = info;
     }
 

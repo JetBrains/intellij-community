@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +38,13 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myItems = null;
     try {
       LookupManager.getInstance(myProject).hideActiveLookup();
     }
     finally {
       super.tearDown();
     }
-    myItems = null;
   }
 
   @Override

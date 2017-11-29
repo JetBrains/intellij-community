@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
@@ -30,7 +31,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   
   override fun getHintInfo(element: PsiElement): MethodInfo? {
     if (element is PsiCallExpression) {
-      val resolvedElement = element.resolveMethodGenerics().element
+      val resolvedElement = CompletionMemory.getChosenMethod(element) ?: element.resolveMethodGenerics ().element
       if (resolvedElement is PsiMethod) {
         return getMethodInfo(resolvedElement)
       }
@@ -40,12 +41,16 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getParameterHints(element: PsiElement): List<InlayInfo> {
     if (element is PsiCallExpression) {
-      return JavaInlayHintsProvider.createHints(element).toList()
+      return JavaInlayHintsProvider.hints(element).toList()
     }
     return emptyList()
   }
 
-  private fun getMethodInfo(method: PsiMethod): MethodInfo? {
+  override fun canShowHintsWhenDisabled(): Boolean {
+    return true
+  }
+
+  fun getMethodInfo(method: PsiMethod): MethodInfo? {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 
@@ -86,6 +91,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.endsWith(*)",
       "*.equals(*)",
       "*.equal(*)",
+      "*.compareTo(*)",
+      "*.compare(*,*)",
 
       "java.lang.Math.*",
       "org.slf4j.Logger.*",
@@ -97,7 +104,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.ImmutableList.of",
       "*.ImmutableMultiset.of",
       "*.ImmutableSortedMultiset.of",
-      "*.ImmutableSortedSet.of"
+      "*.ImmutableSortedSet.of",
+      "*.Arrays.asList"
   )
   
   val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
@@ -111,12 +119,18 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   val isDoNotShowForBuilderLikeMethods = Option("java.build.like.method",
                                                 "Do not show for builder-like methods",
                                                 true)
-  
+
+
+  val ignoreOneCharOneDigitHints = Option("java.simple.sequentially.numbered",
+                                          "Do not show for methods with same-named numbered parameters",
+                                          true)
+
   override fun getSupportedOptions(): List<Option> {
     return listOf(
-      isDoNotShowIfMethodNameContainsParameterName, 
+      isDoNotShowIfMethodNameContainsParameterName,
       isShowForParamsWithSameType,
-      isDoNotShowForBuilderLikeMethods
+      isDoNotShowForBuilderLikeMethods,
+      ignoreOneCharOneDigitHints
     )
   }
 }

@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
 * @author Konstantin Kolosovsky.
 */
@@ -94,7 +96,7 @@ public abstract class ElementWithBranchComparer {
   protected void beforeCompare() {
   }
 
-  protected abstract void compare() throws SVNException, VcsException;
+  protected abstract void compare() throws VcsException;
 
   protected abstract void showResult();
 
@@ -106,24 +108,23 @@ public abstract class ElementWithBranchComparer {
   @Nullable
   protected SVNURL resolveElementUrl() throws SVNException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-    final File file = new File(myVirtualFile.getPath());
+    final File file = virtualToIoFile(myVirtualFile);
     final SVNURL fileUrl = urlMapping.getUrlForFile(file);
     if (fileUrl == null) {
       return null;
     }
 
-    final String fileUrlString = fileUrl.toString();
-    final RootUrlInfo rootMixed = urlMapping.getWcRootForUrl(fileUrlString);
+    final RootUrlInfo rootMixed = urlMapping.getWcRootForUrl(fileUrl);
     if (rootMixed == null) {
       return null;
     }
 
-    final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrlString);
+    final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrl);
     if (thisBranchForUrl == null) {
       return null;
     }
 
-    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrlString);
+    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrl.toString());
     return SVNURL.parseURIEncoded(SVNPathUtil.append(myBranchUrl, relativePath));
   }
 
@@ -141,23 +142,16 @@ public abstract class ElementWithBranchComparer {
   }
 
   protected void reportGeneralException(final Exception e) {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject, e.getMessage(),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+      () -> Messages
+        .showMessageDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null,
+      myProject);
     LOG.info(e);
   }
 
   private void reportNotFound() {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject,
-                                   SvnBundle
-                                     .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+      .showMessageDialog(myProject, SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+                         SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null, myProject);
   }
 }

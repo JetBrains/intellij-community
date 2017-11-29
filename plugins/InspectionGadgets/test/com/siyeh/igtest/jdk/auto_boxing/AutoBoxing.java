@@ -1,6 +1,6 @@
 package com.siyeh.igtest.jdk.auto_boxing;
 
-
+import java.util.Arrays;
 
 
 public class AutoBoxing {
@@ -86,5 +86,9 @@ public class AutoBoxing {
     A(<warning descr="Auto-boxing '3'">3</warning>);
     NumberedLetter(Integer i) {
     }
+  }
+
+  void varargs() {
+      Arrays.asList(<warning descr="Auto-boxing ''a''">'a'</warning>, <warning descr="Auto-boxing ''b''">'b'</warning>, <warning descr="Auto-boxing ''c''">'c'</warning>);
   }
 }

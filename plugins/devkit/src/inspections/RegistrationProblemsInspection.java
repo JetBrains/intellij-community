@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -112,17 +113,24 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
 
     if (CHECK_JAVA_CODE &&
-            nameIdentifier != null &&
-            checkedClass.getQualifiedName() != null &&
-            checkedClass.getContainingFile().getVirtualFile() != null)
-    {
-      final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS);
-      if (componentClasses != null) {
-        List<ProblemDescriptor> problems = null;
+        nameIdentifier != null &&
+        checkedClass.getQualifiedName() != null &&
+        checkedClass.getContainingFile().getVirtualFile() != null &&
+        !checkedClass.isInterface() &&
+        !checkedClass.isEnum() &&
+        !checkedClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !checkedClass.hasModifierProperty(PsiModifier.PROTECTED) &&
+        !PsiUtil.isInnerClass(checkedClass) ) {
+      final RegistrationCheckerUtil.RegistrationType registrationType =
+        CHECK_ACTIONS ? RegistrationCheckerUtil.RegistrationType.ALL : RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS;
+      final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, registrationType);
+      if (componentClasses != null && !componentClasses.isEmpty()) {
+        List<ProblemDescriptor> problems = new SmartList<>();
 
         for (PsiClass compClass : componentClasses) {
-          if (!checkedClass.isInheritor(compClass, true)) {
-            problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
+          if (ActionType.ACTION.myClassName.equals(compClass.getQualifiedName()) &&
+              !checkedClass.isInheritor(compClass, true)) {
+            problems.add(manager.createProblemDescriptor(nameIdentifier,
                     DevKitBundle.message("inspections.registration.problems.incompatible.message",
                             compClass.isInterface() ?
                                     DevKitBundle.message("keyword.implement") :
@@ -133,26 +141,21 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
         if (ActionType.ACTION.isOfType(checkedClass)) {
           if (ConstructorType.getNoArgCtor(checkedClass) == null) {
-            problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
-                    DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
-                    new CreateConstructorFix(checkedClass, isOnTheFly),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+            problems.add(manager.createProblemDescriptor(nameIdentifier,
+                                                         DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
+                                                         new CreateConstructorFix(checkedClass, isOnTheFly),
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
         }
         if (isAbstract(checkedClass)) {
-          problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
-                  DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          problems.add(manager.createProblemDescriptor(nameIdentifier,
+                                                       DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly,
+                                                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
-        return problems != null ? problems.toArray(new ProblemDescriptor[problems.size()]) : null;
+        return ArrayUtil.toObjectArray(problems, ProblemDescriptor.class);
       }
     }
     return null;
-  }
-
-  private static List<ProblemDescriptor> addProblem(List<ProblemDescriptor> problems, ProblemDescriptor problemDescriptor) {
-    if (problems == null) problems = new SmartList<>();
-    problems.add(problemDescriptor);
-    return problems;
   }
 
   @Nullable

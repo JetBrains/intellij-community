@@ -38,10 +38,6 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Alexander Podkhalyuzin
- * Date: 22.11.11
- */
 public abstract class JvmSmartStepIntoHandler {
   public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 

@@ -18,10 +18,5 @@ package org.intellij.plugins.relaxNG.compact.psi;
 
 import org.intellij.plugins.relaxNG.model.Div;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public interface RncDiv extends RncElement, Div<RncElement> {
 }

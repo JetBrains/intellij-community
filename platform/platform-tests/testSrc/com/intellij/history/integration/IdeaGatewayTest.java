@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
-  public void testFindingFile() throws Exception {
+  public void testFindingFile() {
     assertEquals(myRoot, myGateway.findVirtualFile(myRoot.getPath()));
     assertNull(myGateway.findVirtualFile(myRoot.getPath() + "/nonexistent"));
   }

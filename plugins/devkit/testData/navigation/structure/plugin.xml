@@ -1,0 +1,68 @@
+<idea-plugin>
+  <id>plugin.id</id>
+  <name>MyPlugin</name>
+  <version>1.0</version>
+  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+
+  <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <depends>com.intellij.java-i18n</depends>
+  <depends optional="true">com.intellij.javaee</depends>
+  <idea-version until-build="130.0" since-build="125.5"/>
+
+  <extensions defaultExtensionNs="plugin.id">
+    <toolWindow id="someToolWindow" factoryClass="com.jetbrains.test.SomeToolWindowFactory"/>
+    <projectConfigurable id="someConfigurable" instance="com.jetbrains.test.SomeConfigurable"/>
+    <fileEditorProvider implementation="com.jetbrains.test.SomeFileEditorProvider"/>
+    <mockApplicationService serviceImplementation="com.jetbrains.test.SomeApplicationService"/>
+    <dom.extender id="DomExtenderId" domClass="com.jetbrains.test.SomeDomClass" extenderClass="com.jetbrains.test.SomeExtenderClass"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.test.MyExtensionPointClass" name="someExtensionPoint"/>
+
+    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP">
+      <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
+      <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
+    </extensionPoint>
+    <extensionPoint name="projectConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP"
+                    area="IDEA_PROJECT">
+      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+    <extensionPoint name="fileEditorProvider"
+                    interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
+    <extensionPoint name="mockApplicationService"  beanClass="a.b.MockServiceDescriptor">
+      <with attribute="serviceImplementation" />
+    </extensionPoint>
+    <extensionPoint name="dom.extender"
+                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
+      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <application-components>
+    <component>
+      <interface-class>com.jetbrains.test.SomeApplicationComponentInterface</interface-class>
+      <implementation-class>com.jetbrains.test.SomeApplicationComponentImplementation</implementation-class>
+    </component>
+  </application-components>
+
+  <actions>
+    <group id="MyPlugin.MyGroup" text="My Group">
+      <action class="com.jetbrains.test.SomeAction1Class" id="SomeAction1" icon="AllIcons.Actions.Back"/>
+      <add-to-group group-id="MainMenu"/>
+    </group>
+    <action class="com.jetbrains.test.SomeAction2Class" id="SomeAction2"/>
+  </actions>
+</idea-plugin>

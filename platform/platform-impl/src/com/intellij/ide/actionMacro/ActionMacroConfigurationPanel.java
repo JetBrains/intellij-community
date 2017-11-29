@@ -35,13 +35,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 22, 2003
- * Time: 4:01:10 PM
- * To change this template use Options | File Templates.
- */
 public class ActionMacroConfigurationPanel implements Disposable {
   private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
   private Splitter mySplitter;

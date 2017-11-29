@@ -46,7 +46,7 @@ public class DomFileDescription<T> {
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
-  private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<>();
+  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;

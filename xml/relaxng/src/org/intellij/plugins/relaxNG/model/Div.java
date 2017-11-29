@@ -18,10 +18,5 @@ package org.intellij.plugins.relaxNG.model;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.09.2007
- */
 public interface Div<E extends PsiElement> extends CommonElement<E> {
 }

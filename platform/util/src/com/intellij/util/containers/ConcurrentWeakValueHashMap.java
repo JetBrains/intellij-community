@@ -16,35 +16,18 @@
 
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Map;
 
 /**
  * Concurrent strong key:K -> weak value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
  */
-public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
-  public ConcurrentWeakValueHashMap(@NotNull Map<K, V> map) {
-    super(map);
-  }
-
-  public ConcurrentWeakValueHashMap() {
-  }
-
-  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    super(initialCapacity, loadFactor, concurrencyLevel);
-  }
-
-  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
+final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   private static class MyWeakReference<K, V> extends WeakReference<V> implements ValueReference<K, V> {
     private final K key;
     private MyWeakReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {
@@ -75,7 +58,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
 
   @NotNull
   @Override
-  protected ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
+  ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MyWeakReference<K,V>(key, value, myQueue);
   }
 }

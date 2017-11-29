@@ -163,7 +163,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     }
                 }
                 holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(holder));
             }
         };
     }

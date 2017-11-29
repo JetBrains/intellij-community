@@ -15,15 +15,5 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
-
-public interface PsiLiteral extends PsiAnnotationMemberValue {
-  /**
-   * Returns the value of the literal expression (an Integer for an integer constant, a String
-   * for a string literal, and so on).
-   *
-   * @return the value of the expression, or null if the parsing of the literal failed.
-   */
-  @Nullable
-  Object getValue();
+public interface PsiLiteral extends PsiAnnotationMemberValue, PsiLiteralValue {
 }

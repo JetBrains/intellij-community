@@ -79,21 +79,22 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   private void doCloseCommunication() {
     if (myPydevConsoleCommunication != null) {
 
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myPydevConsoleCommunication.close();
-            Thread.sleep(300);
-          }
-          catch (Exception e1) {
-            // Ignore
-          }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          myPydevConsoleCommunication.close();
+          Thread.sleep(300);
+        }
+        catch (Exception e1) {
+          // Ignore
         }
       });
 
       // waiting for REPL communication before destroying process handler
     }
+  }
+
+  public PydevConsoleCommunication getPydevConsoleCommunication() {
+    return myPydevConsoleCommunication;
   }
 }
 

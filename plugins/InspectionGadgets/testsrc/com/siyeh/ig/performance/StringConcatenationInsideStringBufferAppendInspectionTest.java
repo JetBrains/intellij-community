@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringConcatenationInsideStringBufferAppendInspectionTest extends LightInspectionTestCase {
 
-  public void testStringConcatenationInsideStringBufferAppend() throws Exception {
+  public void testStringConcatenationInsideStringBufferAppend() {
     doTest();
   }
 

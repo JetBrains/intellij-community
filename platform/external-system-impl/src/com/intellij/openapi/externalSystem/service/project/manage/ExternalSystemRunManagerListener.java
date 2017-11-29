@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,17 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.ExternalProjectsStateProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +43,13 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  * @since 11/14/2014
  */
 class ExternalSystemRunManagerListener implements RunManagerListener {
+  private Disposable eventDisposable;
 
-  private ExternalProjectsManager myManager;
+  private ExternalProjectsManagerImpl myManager;
   private final Map<Integer, Pair<String, RunnerAndConfigurationSettings>> myMap;
 
   public ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
-    myManager = manager;
+    myManager = (ExternalProjectsManagerImpl)manager;
     myMap = ContainerUtil.newConcurrentMap();
   }
 
@@ -61,7 +64,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
       final Pair<String, RunnerAndConfigurationSettings> pair = myMap.remove(System.identityHashCode(settings));
       if (pair == null) return;
 
-      final ExternalProjectsManager.ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
+      final ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
       final ExternalSystemTaskExecutionSettings taskExecutionSettings =
         ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings();
 
@@ -87,7 +90,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
     if (settings.getConfiguration() instanceof ExternalSystemRunConfiguration) {
       final Pair<String, RunnerAndConfigurationSettings> pair = myMap.get(System.identityHashCode(settings));
       if (pair != null) {
-        final ExternalProjectsManager.ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
+        final ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
         final ExternalSystemTaskExecutionSettings taskExecutionSettings =
           ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings();
 
@@ -126,12 +129,18 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
       }
     }
 
-    ((RunManagerEx)RunManager.getInstance(myManager.getProject())).addRunManagerListener(this);
+    eventDisposable = Disposer.newDisposable();
+    myManager.getProject().getMessageBus().connect(eventDisposable).subscribe(RunManagerListener.TOPIC, this);
   }
 
   public void detach() {
     myMap.clear();
-    ((RunManagerEx)RunManager.getInstance(myManager.getProject())).removeRunManagerListener(this);
+
+    Disposable disposable = eventDisposable;
+    if (disposable != null) {
+      eventDisposable = null;
+      Disposer.dispose(disposable);
+    }
   }
 
   private static void add(@NotNull Map<Integer, Pair<String, RunnerAndConfigurationSettings>> map,

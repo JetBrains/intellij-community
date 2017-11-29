@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.SoftHashMap;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author Dmitry Batkovich
@@ -42,56 +40,37 @@ public abstract class InspectionTreeTailRenderer {
   private final static JBColor TREE_RED = new JBColor(new Color(184, 66, 55), new Color(204, 102, 102));
   private final static JBColor TREE_GRAY = new JBColor(Gray._153, Gray._117);
 
-  private final Map<HighlightSeverity, String> myPluralizedSeverityNames = new SoftHashMap<>();
-  private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = new SoftHashMap<>();
+  private final Map<HighlightSeverity, String> myPluralizedSeverityNames = ContainerUtil.createSoftMap();
+  private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = ContainerUtil.createSoftMap();
 
-  private final FactoryMap<HighlightDisplayLevel, Integer> myItemCounter;
   private final SeverityRegistrar myRegistrar;
   private final GlobalInspectionContextImpl myContext;
 
   public InspectionTreeTailRenderer(GlobalInspectionContextImpl context) {
     myRegistrar = SeverityRegistrar.getSeverityRegistrar(context.getProject());
     myContext = context;
-    myItemCounter = new FactoryMap<HighlightDisplayLevel, Integer>() {
-
-      @Nullable
-      @Override
-      protected Integer create(HighlightDisplayLevel key) {
-        return 0;
-      }
-
-      @Override
-      protected Map<HighlightDisplayLevel, Integer> createMap() {
-        return new TreeMap<>((o1, o2) -> -myRegistrar.compare(o1.getSeverity(), o2.getSeverity()));
-      }
-    };
   }
 
   public void appendTailText(InspectionTreeNode node) {
     appendText("  ");
-    final String customizedTailText = node.getCustomizedTailText();
+    final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
       appendText("  ");
       appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
-      myItemCounter.clear();
-      node.visitProblemSeverities(myItemCounter);
-      if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-        appendText(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                             myItemCounter.values().stream().mapToInt(Integer::intValue).sum()) + " ",
-                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      LevelAndCount[] problemLevels = node.getProblemLevels();
+      if (problemLevels.length > MAX_LEVEL_TYPES) {
+        int sum = Arrays.stream(problemLevels).mapToInt(LevelAndCount::getCount).sum();
+        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
       else {
-        for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
-          final HighlightDisplayLevel level = entry.getKey();
-          final Integer occur = entry.getValue();
-
+        for (LevelAndCount levelAndCount : problemLevels) {
           SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-          attrs = attrs.derive(-1, level == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
+          attrs = attrs.derive(-1, levelAndCount.getLevel() == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
                                    ? TREE_RED
                                    : TREE_GRAY, null, null);
-          appendText(occur + " " + getPresentableName(level, occur > 1) + " ", attrs);
+          appendText(levelAndCount.getCount() + " " + getPresentableName(levelAndCount.getLevel(), levelAndCount.getCount() > 1) + " ", attrs);
         }
       }
     }

@@ -65,7 +65,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   }
 
   @Override
-  public void notifyTextAvailable(String text, Key outputType) {
+  public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
     if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
       super.notifyTextAvailable(text, outputType);
     }

@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="aether-dependency-resolver" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Guava" level="project" />

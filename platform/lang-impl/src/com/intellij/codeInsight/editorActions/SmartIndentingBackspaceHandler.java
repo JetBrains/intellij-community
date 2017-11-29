@@ -16,10 +16,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -29,8 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +55,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     }
     PsiDocumentManager.getInstance(project).commitDocument(document);
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    myReplacement = codeStyleFacade.getLineIndent(document, lineStartOffset);
+    myReplacement = codeStyleFacade.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
     if (myReplacement == null) {
       return;
     }
@@ -80,7 +75,8 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
       if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
-        myReplacement = getSpacing(file, endOffset);
+        int spacing = CodeStyleManager.getInstance(project).getSpacing(file, endOffset);
+        myReplacement = StringUtil.repeatSymbol(' ', Math.max(0, spacing));
       }
     }
   }
@@ -99,17 +95,6 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     caretModel.moveToOffset(myStartOffset + myReplacement.length());
 
     return true;
-  }
-
-  private static String getSpacing(PsiFile file, int offset) {
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder == null) {
-      return "";
-    }
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    FormattingModel model = builder.createModel(file, settings);
-    int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
-    return StringUtil.repeatSymbol(' ', spacing);
   }
 
   private static int getWidth(@NotNull String indent, int tabSize) {

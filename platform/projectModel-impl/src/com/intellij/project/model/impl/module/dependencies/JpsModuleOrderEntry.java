@@ -22,12 +22,10 @@ import com.intellij.openapi.roots.OrderRootsEnumerator;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.model.JpsModelManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 
 /**
@@ -40,9 +38,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
 
   @Override
   public Module getModule() {
-    final JpsModule module = myDependencyElement.getModule();
-    if (module != null) return null;
-    return JpsModelManager.getInstance(myRootModel.getProject()).getModuleManager().getModule(module);
+    return null;
   }
 
   @Override
@@ -58,7 +54,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
 
   @Override
   @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     final OrderRootsEnumerator enumerator = getEnumerator(type);
     return enumerator != null ? enumerator.getRoots() : VirtualFile.EMPTY_ARRAY;
   }
@@ -73,13 +69,13 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
 
   @Override
   @NotNull
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     final OrderRootsEnumerator enumerator = getEnumerator(rootType);
     return enumerator != null ? enumerator.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
     return policy.visitModuleOrderEntry(this, initialValue);
   }
 }

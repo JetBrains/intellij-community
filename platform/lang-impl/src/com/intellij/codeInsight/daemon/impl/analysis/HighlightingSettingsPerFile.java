@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,11 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
+  private final MessageBus myBus;
+
+  public HighlightingSettingsPerFile(MessageBus bus) {
+    myBus = bus;
+  }
 
   public static HighlightingSettingsPerFile getInstance(Project project){
     return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
@@ -121,6 +127,8 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     else {
       myHighlightSettings.put(virtualFile, defaults);
     }
+
+    myBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
   }
 
   @Override

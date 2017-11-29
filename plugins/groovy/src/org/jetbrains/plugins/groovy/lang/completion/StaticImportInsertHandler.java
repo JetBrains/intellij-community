@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
-/**
-* Created by Max Medvedev on 14/05/14
-*/
 class StaticImportInsertHandler implements InsertHandler<JavaGlobalMemberLookupElement> {
   public static final InsertHandler<JavaGlobalMemberLookupElement> INSTANCE = new StaticImportInsertHandler();
 

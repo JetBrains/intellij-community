@@ -20,9 +20,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
@@ -58,9 +59,9 @@ import java.util.LinkedList;
 public final class SwingCleanuper {
   private final Alarm myAlarm;
 
-  public SwingCleanuper(@NotNull Application application, ProjectManager projectManager) {
+  public SwingCleanuper(@NotNull Application application) {
     myAlarm = new Alarm(application);
-    projectManager.addProjectManagerListener(new ProjectManagerAdapter(){
+    application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
           myAlarm.cancelAllRequests();
@@ -82,7 +83,11 @@ public final class SwingCleanuper {
                 final Application app = ApplicationManager.getApplication();
                 if (app != null && app.isActive()) {
                   StatusBar statusBar = frame.getStatusBar();
-                  if (statusBar != null) ((JComponent)statusBar).requestFocus();
+                  if (statusBar != null) {
+                    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                      IdeFocusManager.getGlobalInstance().requestFocus((JComponent)statusBar, true);
+                    });
+                  }
                 }
               }
 

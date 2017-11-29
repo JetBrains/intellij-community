@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,12 +87,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
-      ArrayUtil.toStringArray(manager.getNotNulls())){
-      @Override
-      public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-        return ReturnNullInspectionBase.this.shouldAnnotateBaseMethod(method, superMethod);
-      }
-    });
+      ArrayUtil.toStringArray(manager.getNotNulls())));
   }
 
   private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
@@ -203,7 +198,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
           registerError(value, value);
         }
       }
-      else {
+      else if (!returnType.equalsToText("java.lang.Void")){
         if (m_reportObjectMethods) {
           registerError(value, value);
         }

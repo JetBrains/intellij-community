@@ -38,18 +38,20 @@ public interface GutterDraggableObject {
    *
    * @param line the line over which the icon has been dropped.
    * @param file the DnD target file
+   * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return true if the drag and drop operation has completed successfully, false otherwise.
    * @since 10.0.3
    */
-  boolean copy(int line, VirtualFile file);
+  boolean copy(int line, VirtualFile file, int actionId);
 
   /**
    * Returns the cursor to show when the drag is over the specified line.
    *
    * @param line the line over which the drag is performed.
+   * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return the cursor to show.
    */
-  Cursor getCursor(int line);
+  Cursor getCursor(int line, int actionId);
 
   default void remove() {};
 

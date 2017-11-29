@@ -15,15 +15,21 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.ide.highlighter.*;
+import com.intellij.ide.highlighter.JShellFileType;
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class JavaFileTypeFactory extends FileTypeFactory {
   @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(JavaClassFileType.INSTANCE, "class");
-    consumer.consume(JavaFileType.INSTANCE, "java");
+    for (FileType ft : Arrays.asList(JavaClassFileType.INSTANCE, JavaFileType.INSTANCE, JShellFileType.INSTANCE)) {
+      consumer.consume(ft, ft.getDefaultExtension());
+    }
   }
 }

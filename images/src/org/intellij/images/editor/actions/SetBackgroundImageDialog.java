@@ -98,12 +98,14 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     }
     targetChanged(null);
     init();
+    myEditorPreview.getPanel().setPreferredSize(new Dimension(0, 0));
+    pack();
   }
 
   @NotNull
   @Override
   protected Action[] createActions() {
-    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear") {
+    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear and Close") {
       @Override
       public void actionPerformed(ActionEvent e) {
         doClearAction();

@@ -17,8 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
@@ -33,12 +31,8 @@ import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.vcsUtil.VcsUtil;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class LocalChangesUnderRootsTest extends PlatformTestCase {
 
   private LocalChangesUnderRoots myLocalChangesUnderRoots;
@@ -51,23 +45,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
 
     myChangeListManager = new MockChangeListManager();
     myBaseDir = myProject.getBaseDir();
-    myLocalChangesUnderRoots = new LocalChangesUnderRoots(ChangeListManager.getInstance(myProject),
-                                                          ProjectLevelVcsManager.getInstance(myProject));
-
-    substituteChangeListManager();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
-    super.tearDown();
-  }
-
-  // This is not good, but declaring MockChangeListManager might break other tests
-  private void substituteChangeListManager() throws NoSuchFieldException, IllegalAccessException {
-    Field myChangeManager = LocalChangesUnderRoots.class.getDeclaredField("myChangeManager");
-    myChangeManager.setAccessible(true);
-    myChangeManager.set(myLocalChangesUnderRoots, myChangeListManager);
+    myLocalChangesUnderRoots = new LocalChangesUnderRoots(myChangeListManager, ProjectLevelVcsManager.getInstance(myProject));
   }
 
   public void testChangesInTwoGitRoots() {

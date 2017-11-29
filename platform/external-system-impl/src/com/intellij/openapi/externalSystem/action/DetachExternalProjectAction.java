@@ -17,20 +17,18 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -50,6 +48,17 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
     getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if(this.getClass() != DetachExternalProjectAction.class) return;
+
+    ProjectSystemId systemId = getSystemId(e);
+    final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
+    Presentation presentation = e.getPresentation();
+    presentation.setText(ExternalSystemBundle.message("action.detach.external.project.text", systemIdName));
   }
 
   @Override
@@ -75,7 +84,7 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
       forgetExternalProjects(Collections.singleton(projectData.getLinkedExternalProjectPath()));
     ExternalSystemApiUtil.getSettings(project, projectSystemId).unlinkExternalProject(projectData.getLinkedExternalProjectPath());
 
-    ExternalProjectsManager.getInstance(project).forgetExternalProjectData(projectSystemId, projectData.getLinkedExternalProjectPath());
+    ExternalProjectsManagerImpl.getInstance(project).forgetExternalProjectData(projectSystemId, projectData.getLinkedExternalProjectPath());
 
     // Process orphan modules.
     List<Module> orphanModules = ContainerUtilRt.newArrayList();
@@ -90,8 +99,8 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
 
     if (!orphanModules.isEmpty()) {
       projectNode.getGroup().remove(projectNode);
-      ProjectDataManager.getInstance().removeData(
-        ProjectKeys.MODULE, orphanModules, Collections.<DataNode<ModuleData>>emptyList(), projectData, project, false);
+      ProjectDataManagerImpl.getInstance().removeData(
+        ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
     }
   }
 }

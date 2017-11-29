@@ -30,6 +30,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.LayeredIcon;
@@ -212,6 +213,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
+    if (frame == null || !frame.isActive()) return false;
+
     if (myToolWindowManager.isEditorComponentActive()) return false;
     return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
   }
@@ -383,8 +388,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   /**
-   * @return <code>true</code> if the component passed into constructor is not instance of
-   *         <code>ContentManager</code> class. Otherwise it delegates the functionality to the
+   * @return {@code true} if the component passed into constructor is not instance of
+   *         {@code ContentManager} class. Otherwise it delegates the functionality to the
    *         passed content manager.
    */
   @Override
@@ -437,8 +442,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
-      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != Math.floor(JBUI.scale(13f)) ||
-                                                                                icon.getIconWidth() != Math.floor(JBUI.scale(13f)))) {
+      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != Math.ceil(JBUI.scale(13f)) ||
+                                                                                icon.getIconWidth() != Math.ceil(JBUI.scale(13f)))) {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }
     }

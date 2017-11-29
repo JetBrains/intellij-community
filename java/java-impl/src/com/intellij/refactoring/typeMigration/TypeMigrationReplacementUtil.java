@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ import java.util.Map;
  * Date: 04-Apr-2008
  */
 public class TypeMigrationReplacementUtil {
-  public static final Logger LOG = Logger.getInstance("#" + TypeMigrationReplacementUtil.class.getName());
+  public static final Logger LOG = Logger.getInstance(TypeMigrationReplacementUtil.class);
 
   private TypeMigrationReplacementUtil() {
   }
@@ -156,7 +157,7 @@ public class TypeMigrationReplacementUtil {
         final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         final PsiType componentType = changeType.getDeepComponentType();
         if (classReference != null) {
-          final PsiElement psiElement = changeType.equals(expression.getType())
+          final PsiElement psiElement = changeType.equals(RefactoringChangeUtil.getTypeByExpression(expression))
                                         ? classReference
                                         : replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);

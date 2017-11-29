@@ -18,7 +18,7 @@ package org.intellij.lang.xpath
 class XPath2CompletionTest extends TestBase {
 
   void testCastInsert() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable())
+    TestNamespaceContext.install(myFixture.getTestRootDisposable())
     configure()
     assert myFixture.lookupElementStrings.containsAll("xs:anyAtomicType", "xs:untypedAtomic", "xs:anyURI")
   }

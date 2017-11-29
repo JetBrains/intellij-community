@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,7 +269,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (Exception e) {
           errorHappened = true;
-          LOG.error(e);
+          if (!"org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin".equals(adapter.getAssignableToClassName()) &&
+              !"org.jetbrains.uast.java.JavaUastLanguagePlugin".equals(adapter.getAssignableToClassName())) {
+            LOG.error(e);
+          }
         }
         myExtensionAdapters.remove(adapter);
       }

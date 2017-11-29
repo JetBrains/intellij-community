@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * Used to build and run a live template.
@@ -68,6 +72,14 @@ public abstract class Template {
 
   public abstract void setToIndent(boolean toIndent);
 
+  /**
+   * Inline templates do not insert text. They install editing segments (red rectangles) in existing text
+   * in document: from the `caret offset` to `caret offset + templateString length`.
+   * 
+   * E.g. they might be useful for inplace rename.
+   * 
+   * @see com.intellij.codeInsight.template.impl.TemplateState#start(TemplateImpl, PairProcessor, Map) 
+   */
   public abstract void setInline(boolean isInline);
 
   public abstract int getSegmentsCount();

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Jun 29, 2007
- * Time: 1:02:29 PM
- */
 package org.jetbrains.idea.maven.project;
 
 import java.util.ArrayList;

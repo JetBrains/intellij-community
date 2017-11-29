@@ -17,13 +17,13 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -31,7 +31,7 @@ class FilteringProgressView extends BorderLayoutPanel {
   private final static String LIMIT_REACHED_LABEL = "Limit has been reached";
   private final static String INTERRUPTED_LABEL = "Filtering has been interrupted";
 
-  private final JBProgressBar myProgressBar = new JBProgressBar();
+  private final JProgressBar myProgressBar = new JProgressBar();
   private final BorderLayoutPanel myProgressPanel = new BorderLayoutPanel();
   private final JBLabel myStopButton = new JBLabel(UIUtil.isUnderDarcula()
                                                    ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight);

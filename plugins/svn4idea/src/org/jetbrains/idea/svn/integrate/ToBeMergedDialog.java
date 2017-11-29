@@ -16,7 +16,10 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -30,7 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
@@ -57,8 +60,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
@@ -76,7 +81,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final ListTableModel<SvnChangeList> myRevisionsModel;
   private TableView<SvnChangeList> myRevisionsList;
-  private RepositoryChangesBrowser myRepositoryChangesBrowser;
+  private CommittedChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
@@ -231,20 +236,17 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   private void initUI() {
-    final ListSelectionListener selectionListener = new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        List<SvnChangeList> changeLists = myRevisionsList.getSelectedObjects();
+    final ListSelectionListener selectionListener = e -> {
+      List<SvnChangeList> changeLists = myRevisionsList.getSelectedObjects();
 
-        myAlreadyMerged.clear();
-        for (SvnChangeList changeList : changeLists) {
-          myAlreadyMerged.addAll(getAlreadyMergedPaths(changeList));
-        }
-        myRepositoryChangesBrowser.setChangesToDisplay(collectChanges(changeLists, false));
-
-        mySplitter.doLayout();
-        myRepositoryChangesBrowser.repaint();
+      myAlreadyMerged.clear();
+      for (SvnChangeList changeList : changeLists) {
+        myAlreadyMerged.addAll(getAlreadyMergedPaths(changeList));
       }
+      myRepositoryChangesBrowser.setChangesToDisplay(collectChanges(changeLists, false));
+
+      mySplitter.doLayout();
+      myRepositoryChangesBrowser.repaint();
     };
     final MyListCellRenderer listCellRenderer = new MyListCellRenderer();
     myRevisionsList = new TableView<SvnChangeList>() {
@@ -292,11 +294,9 @@ public class ToBeMergedDialog extends DialogWrapper {
     mySplitter = new Splitter(false, 0.7f);
     mySplitter.setFirstComponent(panel);
 
-    myRepositoryChangesBrowser =
-      new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<SvnChangeList>emptyList(), emptyList(), null);
-    myRepositoryChangesBrowser.getDiffAction()
-      .registerCustomShortcutSet(myRepositoryChangesBrowser.getDiffAction().getShortcutSet(), myRevisionsList);
-    setChangesDecorator();
+    myRepositoryChangesBrowser = new CommittedChangesBrowser(myMergeContext.getProject());
+    myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(myRevisionsList, null);
+    myRepositoryChangesBrowser.setChangeNodeDecorator(createChangesDecorator());
     mySplitter.setSecondComponent(myRepositoryChangesBrowser);
     mySplitter.setDividerWidth(2);
 
@@ -309,7 +309,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ActionToolbar createToolbar() {
     DefaultActionGroup actions = new DefaultActionGroup(new MySelectAll(), new MyUnselectAll(), myMore100Action, myMore500Action);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    return ActionManager.getInstance().createActionToolbar("SvnToBeMerged", actions, true);
   }
 
   @NotNull
@@ -322,8 +322,8 @@ public class ToBeMergedDialog extends DialogWrapper {
       .collect(Collectors.toList());
   }
 
-  private void setChangesDecorator() {
-    myRepositoryChangesBrowser.setDecorator(new ChangeNodeDecorator() {
+  private ChangeNodeDecorator createChangesDecorator() {
+    return new ChangeNodeDecorator() {
       @Override
       public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
       }
@@ -334,7 +334,7 @@ public class ToBeMergedDialog extends DialogWrapper {
           renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
-    });
+    };
   }
 
   private void addRevisionListListeners() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class JoinConcatenatedStringLiteralsIntention extends Intention {
@@ -35,7 +35,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
@@ -44,9 +44,9 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     }
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
-    StringBuilder newExpression = new StringBuilder();
+    final StringBuilder newExpression = new StringBuilder();
     final PsiElement[] children = polyadicExpression.getChildren();
-    final List<PsiElement> buffer = new ArrayList(3);
+    final List<PsiElement> buffer = new SmartList<>();
     for (PsiElement child : children) {
       if (child instanceof PsiJavaToken) {
         if (token.equals(child)) {

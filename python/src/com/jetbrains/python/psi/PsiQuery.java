@@ -133,7 +133,7 @@ public final class PsiQuery<T extends PsiElement> {
 
   @NotNull
   public <R extends PsiElement> PsiQuery<R> siblings(@NotNull final PsiFilter<R> filter) {
-    return getQueryWithProducer(o -> PsiTreeUtil.findChildrenOfType(o.getParent(), filter.myClass), filter);
+    return getQueryWithProducer(o -> PsiTreeUtil.getChildrenOfTypeAsList(o.getParent(), filter.myClass), filter);
   }
 
   @NotNull

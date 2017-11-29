@@ -19,11 +19,16 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
 public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
@@ -34,7 +39,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
     moduleBuilder.addLibrary("extensions", extensionsJar);
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
@@ -54,11 +59,17 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   private void assertSingleEPDeclaration(String filePath) {
-    myFixture.configureByFile("plugin.xml"); // index
+    PsiFile file = myFixture.configureByFile("plugin.xml");
+    String path = file.getVirtualFile().getPath();
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    assertNotNull(module);
+    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
+    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
+    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
+                             + ":" + expectedTagPosition + "\">myStringEP</a> EP declaration in plugin.xml " +
+                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Extension Point Declaration",
-                                                  AllIcons.Nodes.Plugin,
-                                                  "extensionPoint");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "extensionPoint");
   }
 }

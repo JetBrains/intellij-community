@@ -8,11 +8,11 @@ class T {
         }
         else if (s.startsWith("@")) {
             return s.substring(1); // return comment
-    /* inline 1 *//* inline 2 */
+            /* inline 1 *//* inline 2 */
         }
         else if (s.startsWith("#")) {
             return "#"; // return comment
-    /* inline */
+            /* inline */
         }
         return s; // return comment
     }

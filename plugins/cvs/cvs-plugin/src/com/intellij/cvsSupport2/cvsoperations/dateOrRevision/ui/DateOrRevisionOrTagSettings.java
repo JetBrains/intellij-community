@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.SyncDateFormat;
 import com.michaelbaranov.microba.calendar.DatePicker;
@@ -65,7 +66,9 @@ public class DateOrRevisionOrTagSettings {
         refreshEnabling();
         if (myUseBranch.isEnabled()){
           myBranch.getTextField().selectAll();
-          myBranch.getTextField().requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myBranch.getTextField(), true);
+          });
         }
       }
     });
@@ -85,7 +88,9 @@ public class DateOrRevisionOrTagSettings {
         }
         refreshEnabling();
         if (myUseDate.isEnabled()){
-          myDatePicker.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myDatePicker, true);
+          });
         }
 
       }

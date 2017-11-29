@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"deprecation", "UnusedDeclaration"})
 public class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
@@ -37,7 +36,7 @@ public class PlatformUtils {
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
-  public static final String GOIDE_PREFIX = "Gogland";
+  public static final String GOIDE_PREFIX = "GoLand";
   public static final String STUDIO_PREFIX = "AndroidStudio";
 
   public static String getPlatformPrefix() {

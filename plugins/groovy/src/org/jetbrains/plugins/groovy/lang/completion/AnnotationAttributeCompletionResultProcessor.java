@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotati
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 14/05/14
- */
 public class AnnotationAttributeCompletionResultProcessor {
   private final GrAnnotation myAnnotation;
 

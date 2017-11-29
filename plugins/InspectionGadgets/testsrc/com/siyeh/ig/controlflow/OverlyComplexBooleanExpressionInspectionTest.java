@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class OverlyComplexBooleanExpressionInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final OverlyComplexBooleanExpressionInspection tool = new OverlyComplexBooleanExpressionInspection();
     tool.m_limit = 3;
     tool.m_ignorePureConjunctionsDisjunctions = true;

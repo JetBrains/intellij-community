@@ -23,14 +23,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
-import java.util.Collection;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/24/12
- * Time: 9:46 AM
- */
 public interface StatusClient extends SvnClient {
 
   /**
@@ -43,8 +36,7 @@ public interface StatusClient extends SvnClient {
                 boolean reportAll,
                 boolean includeIgnored,
                 boolean collectParentExternals,
-                @NotNull StatusConsumer handler,
-                @Nullable Collection changeLists) throws SvnBindException;
+                @NotNull StatusConsumer handler) throws SvnBindException;
 
   @Nullable
   Status doStatus(@NotNull File path, boolean remote) throws SvnBindException;

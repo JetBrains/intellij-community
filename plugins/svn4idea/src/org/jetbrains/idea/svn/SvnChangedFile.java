@@ -20,18 +20,19 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.Status;
+import org.tmatesoft.svn.core.SVNURL;
 
 class SvnChangedFile {
 
   @NotNull private final FilePath myFilePath;
   @NotNull private final Status myStatus;
-  @Nullable private final String myCopyFromURL;
+  @Nullable private final SVNURL myCopyFromURL;
 
   public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
     this(filePath, status, null);
   }
 
-  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable String copyFromURL) {
+  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable SVNURL copyFromURL) {
     myFilePath = filePath;
     myStatus = status;
     myCopyFromURL = copyFromURL;
@@ -48,7 +49,7 @@ class SvnChangedFile {
   }
 
   @Nullable
-  public String getCopyFromURL() {
+  public SVNURL getCopyFromURL() {
     return ObjectUtils.chooseNotNull(myCopyFromURL, myStatus.getCopyFromURL());
   }
 

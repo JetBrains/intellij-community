@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.generation.CommenterDataHolder;
 import com.intellij.codeInsight.generation.SelfManagingCommenter;
-import com.intellij.lang.Commenter;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class PropertiesCommenter implements Commenter, SelfManagingCommenter<CommenterDataHolder> {
+public class PropertiesCommenter implements CodeDocumentationAwareCommenter, SelfManagingCommenter<CommenterDataHolder> {
   public static final String HASH_COMMENT_PREFIX = "#";
   public static final String EXCLAMATION_COMMENT_PREFIX = "!";
 
@@ -119,5 +122,46 @@ public class PropertiesCommenter implements Commenter, SelfManagingCommenter<Com
   @Override
   public TextRange insertBlockComment(int startOffset, int endOffset, Document document, CommenterDataHolder data) {
     throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public IElementType getLineCommentTokenType() {
+    return PropertiesTokenTypes.END_OF_LINE_COMMENT;
+  }
+
+  @Nullable
+  @Override
+  public IElementType getBlockCommentTokenType() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public IElementType getDocumentationCommentTokenType() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDocumentationCommentPrefix() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDocumentationCommentLinePrefix() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDocumentationCommentSuffix() {
+    return null;
+  }
+
+  @Override
+  public boolean isDocumentationComment(PsiComment element) {
+    return false;
   }
 }

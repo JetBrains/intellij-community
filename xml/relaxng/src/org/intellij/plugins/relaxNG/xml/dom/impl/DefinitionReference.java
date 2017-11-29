@@ -44,11 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue>
         implements LocalQuickFixProvider,
         EmptyResolveMessageProvider, Function<Define, ResolveResult> {

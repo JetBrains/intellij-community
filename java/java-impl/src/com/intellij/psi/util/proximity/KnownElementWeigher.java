@@ -15,14 +15,12 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +51,10 @@ public class KnownElementWeigher extends ProximityWeigher {
 
     Comparable tests = getTestFrameworkWeight(element, location, project);
     if (tests != null) return tests;
+
+    if (element instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)element, false)) {
+      return -1;
+    }
 
     if (!SdkOrLibraryWeigher.isJdkElement(element, project)) {
       return 0;

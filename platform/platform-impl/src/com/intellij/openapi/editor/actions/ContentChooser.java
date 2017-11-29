@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,8 +163,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     });
 
     mySplitter.setFirstComponent(ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(myList),
-      o -> o.getShortText(renderer.previewChars)));
+      myList, ScrollPaneFactory.createScrollPane(myList), o -> o.getShortText(renderer.previewChars), true));
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -263,12 +262,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void rebuildListContent() {
     ArrayList<Item> items = new ArrayList<>();
-    int i = 0;
+    int index = 0;
     List<Data> contents = new ArrayList<>(getContents());
     for (Data content : contents) {
       String longText = getStringRepresentationFor(content);
-      if (StringUtil.isEmpty(longText)) continue;
-      items.add(new Item(i++, longText));
+      if (!StringUtil.isEmpty(longText)) {
+        items.add(new Item(index, longText));
+      }
+      index++;
     }
     myAllContents = contents;
     FilteringListModel listModel = (FilteringListModel)myList.getModel();
@@ -383,4 +384,5 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       return shortText;
     }
   }
+
 }

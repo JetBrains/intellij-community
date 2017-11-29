@@ -19,10 +19,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
 
   @Override
@@ -31,31 +27,31 @@ public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
   }
 
 
-  public void testChildren() throws Exception {
+  public void testChildren() {
     doLaunchQuickfixTest("children");
   }
 
-  public void testEmptyChildren() throws Exception {
+  public void testEmptyChildren() {
     doLaunchQuickfixTest("children");
   }
 
-  public void testFxCollectionsHighlighting() throws Exception {
+  public void testFxCollectionsHighlighting() {
     doHighlightingTest();
   }
 
-  public void testEmptyListHighlighting() throws Exception {
+  public void testEmptyListHighlighting() {
     doHighlightingTest();
   }
 
-  public void testEmptyCollapsedListHighlighting() throws Exception {
+  public void testEmptyCollapsedListHighlighting() {
     doHighlightingTest();
   }
 
-  public void testStylesheets() throws Exception {
+  public void testStylesheets() {
     checkQuickFixNotAvailable("stylesheets");
   }
 
-  private void doHighlightingTest() throws Exception {
+  private void doHighlightingTest() {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myFixture.checkHighlighting();
   }

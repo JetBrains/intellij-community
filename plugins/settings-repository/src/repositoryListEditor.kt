@@ -99,7 +99,7 @@ private fun deleteRepository(icsManager: IcsManager) {
     val repositoryManager = icsManager.repositoryManager
 
     // attempt to fetch, merge and push to ensure that latest changes in the deleted user repository will be not lost
-    // yes, — delete repository doesn't mean "AAA, delete it, delete". It means just that user doesn't need it at this moment.
+    // yes, - delete repository doesn't mean "AAA, delete it, delete". It means just that user doesn't need it at this moment.
     // It is user responsibility later to delete git repository or do whatever user want. Our responsibility is to not loose user changes.
     if (!repositoryManager.canCommit()) {
       LOG.info("Commit on repository delete skipped: repository is not committable")

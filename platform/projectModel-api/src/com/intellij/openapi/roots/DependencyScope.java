@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * </table>
  * <br>
  * 
- * In order to check whether a dependency should be included in a classpath use one of <code>isFor</code>
+ * In order to check whether a dependency should be included in a classpath use one of {@code isFor}
  * methods instead of direct comparison with the enum constants
  *
  * @author yole

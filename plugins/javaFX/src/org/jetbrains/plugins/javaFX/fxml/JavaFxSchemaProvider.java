@@ -14,12 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxSchemaProvider extends XmlSchemaProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxSchemaProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxSchemaProvider.class);
 
   @Override
   public boolean isAvailable(final @NotNull XmlFile file) {

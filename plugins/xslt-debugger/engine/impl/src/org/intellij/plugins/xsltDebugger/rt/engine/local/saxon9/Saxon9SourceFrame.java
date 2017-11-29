@@ -20,11 +20,6 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.tree.util.Navigator;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 02.06.2007
- */
 class Saxon9SourceFrame<N extends NodeInfo> extends AbstractSaxon9Frame<Debugger.SourceFrame, N> implements Debugger.SourceFrame {
 
   protected Saxon9SourceFrame(Debugger.SourceFrame prev, N element) {

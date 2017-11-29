@@ -22,15 +22,13 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
@@ -118,12 +116,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
     if (!super.fileIsUnderProject(file)) {
       return false;
     }
-    final AbstractVcs vcs = ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
-      @Nullable
-      public AbstractVcs compute() {
-        return myVcsManager.getVcsFor(path);
-      }
-    });
+    final AbstractVcs vcs = ReadAction.compute(() -> myVcsManager.getVcsFor(path));
     return vcs == myVcs;
   }
 

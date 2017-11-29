@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -34,17 +33,18 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
@@ -74,9 +74,9 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
@@ -85,8 +85,6 @@ public class VcsLogManager implements Disposable {
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
     }
-
-    Disposer.register(project, this);
   }
 
   @CalledInAwt
@@ -105,12 +103,6 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogData getDataManager() {
     return myLogData;
-  }
-
-  @NotNull
-  public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    AbstractVcsLogUi ui = createLogUi(logId, contentTabName);
-    return new VcsLogPanel(this, ui);
   }
 
   @NotNull
@@ -175,38 +167,31 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  public void disposeLog() {
-    Disposer.dispose(myLogData);
-  }
+  /**
+   * Dispose VcsLogManager and execute some activity after it.
+   *
+   * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after dispose is not required.
+   */
+  @CalledInAwt
+  public void dispose(@Nullable Runnable callback) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
-  /*
-   * Use VcsLogProjectManager to get main log.
-   * Left here for upsource plugin.
-   * */
-  @Nullable
-  @Deprecated
-  public static VcsLogManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsProjectLog.class).getLogManager();
-  }
-
-  /*
-   * Use VcsLogProjectManager.getMainLogUi to get main log ui.
-   * Left here for upsource plugin.
-   * */
-  @Nullable
-  @Deprecated
-  public VcsLogUiImpl getMainLogUi() {
-    return ServiceManager.getService(myProject, VcsProjectLog.class).getMainLogUi();
+    myTabsLogRefresher.closeLogTabs();
+    Disposer.dispose(myTabsLogRefresher);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Disposer.dispose(this);
+      if (callback != null) {
+        callback.run();
+      }
+    });
   }
 
   @Override
   public void dispose() {
-    disposeLog();
-  }
-
-  @NotNull
-  public Set<String> getTabNames() {
-    return myTabsLogRefresher.getTabNames();
+    // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
+    // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
+    // the above method first disposes ui in EDT, than disposes everything else in background
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

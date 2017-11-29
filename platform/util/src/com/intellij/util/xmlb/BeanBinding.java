@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
@@ -34,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.beans.Introspector;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 
@@ -238,6 +233,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
+    for (Binding binding : myBindings) {
+      if (binding instanceof AccessorBindingWrapper && ((AccessorBindingWrapper)binding).isFlat()) {
+        ((AccessorBindingWrapper)binding).deserialize(result, element);
+      }
+    }
+
     if (data != null) {
       for (Binding binding : data.keySet()) {
         if (accessorNameTracker != null) {
@@ -360,6 +361,17 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return candidates;
   }
 
+  private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
+    return object.getAnnotation(OptionTag.class) != null ||
+           object.getAnnotation(Tag.class) != null ||
+           object.getAnnotation(Attribute.class) != null ||
+           object.getAnnotation(Property.class) != null ||
+           object.getAnnotation(Text.class) != null ||
+           object.getAnnotation(CollectionBean.class) != null ||
+           object.getAnnotation(MapAnnotation.class) != null ||
+           object.getAnnotation(AbstractCollection.class) != null;
+  }
+
   private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     Class<?> currentClass = aClass;
     do {
@@ -367,14 +379,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         int modifiers = field.getModifiers();
         //noinspection deprecation
         if (!Modifier.isStatic(modifiers) &&
-            (field.getAnnotation(OptionTag.class) != null ||
-             field.getAnnotation(Tag.class) != null ||
-             field.getAnnotation(Attribute.class) != null ||
-             field.getAnnotation(Property.class) != null ||
-             field.getAnnotation(Text.class) != null ||
-             field.getAnnotation(CollectionBean.class) != null ||
-             field.getAnnotation(MapAnnotation.class) != null ||
-             field.getAnnotation(AbstractCollection.class) != null ||
+            (hasStoreAnnotations(field) ||
              (Modifier.isPublic(modifiers) &&
               // we don't want to allow final fields of all types, but only supported
               (!Modifier.isFinal(modifiers) || Collection.class.isAssignableFrom(field.getType())) &&
@@ -441,20 +446,25 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding);
+      return new AccessorBindingWrapper(accessor, binding, false);
     }
 
     boolean surroundWithTag = true;
+    boolean inline = false;
     Property property = accessor.getAnnotation(Property.class);
     if (property != null) {
       surroundWithTag = property.surroundWithTag();
+      inline = property.flat();
     }
 
-    if (!surroundWithTag) {
+    if (!surroundWithTag || inline) {
+      if (inline && !(binding instanceof BeanBinding)) {
+        throw new XmlSerializationException("inline supported only for BeanBinding: " + accessor);
+      }
       if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
-      return new AccessorBindingWrapper(accessor, binding);
+      return new AccessorBindingWrapper(accessor, binding, inline);
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));

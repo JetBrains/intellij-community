@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ public class TemplateNode extends ZenCodingNode {
     String templateKey = templateToken.getKey();
     if (myGenerator != null && StringUtil.containsChar(templateKey, '$') && callback.findApplicableTemplate(templateKey) == null) {
       String newTemplateKey = ZenCodingUtil.replaceMarkers(templateKey, numberInIteration, totalIterations, surroundedText);
-      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttributes());
-      TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey);
+      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttributes(), templateToken.isForceSingleTag());
+      TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey, newTemplateToken.isForceSingleTag());
       if (template != null) {
         template.setDeactivated(true);
         newTemplateToken.setTemplate(template, callback);

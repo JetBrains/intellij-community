@@ -215,6 +215,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
+  @NotNull
   private static int[] getRoute(ASTNode node, TObjectIntHashMap<ASTNode> index){
     final List<ASTNode> parents = new ArrayList<>(20);
     while(node != null){

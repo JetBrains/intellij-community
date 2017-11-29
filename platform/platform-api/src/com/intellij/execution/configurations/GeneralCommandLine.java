@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
+  private File myInputFile;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
@@ -281,6 +282,12 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
+  @NotNull
+  public GeneralCommandLine withInput(@Nullable File file) {
+    myInputFile = file;
+    return this;
+  }
+
   /**
    * Returns string representation of this command line.<br/>
    * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
@@ -321,6 +328,17 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
+   * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list.
+   *
+   * @return command as a newline-separated list.
+   * @see #getPreparedCommandLine(Platform)
+   */
+  @NotNull
+  public String getPreparedCommandLine() {
+    return getPreparedCommandLine(Platform.current());
+  }
+
+  /**
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
    * (suitable e.g. for passing in an environment variable).
    *
@@ -330,7 +348,12 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   public String getPreparedCommandLine(@NotNull Platform platform) {
     String exePath = myExePath != null ? myExePath : "";
-    return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList(), platform), "\n");
+    return StringUtil.join(prepareCommandLine(exePath, myProgramParams.getList(), platform), "\n");
+  }
+
+  @NotNull
+  protected List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+    return CommandLineUtil.toCommandLine(command, parameters, platform);
   }
 
   @NotNull
@@ -341,20 +364,19 @@ public class GeneralCommandLine implements UserDataHolder {
       LOG.debug("  charset: " + myCharset);
     }
 
-    List<String> commands;
     try {
       checkWorkingDirectory();
 
       if (StringUtil.isEmptyOrSpaces(myExePath)) {
         throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
       }
-
-      commands = CommandLineUtil.toCommandLine(myExePath, myProgramParams.getList());
     }
     catch (ExecutionException e) {
       LOG.info(e);
       throw e;
     }
+
+    List<String> commands = prepareCommandLine(myExePath, myProgramParams.getList(), Platform.current());
 
     try {
       return startProcess(commands);
@@ -365,12 +387,31 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+
+  /**
+   * @implNote for subclasses:
+   *   On Windows the escapedCommands argument must never be modified or augmented in any way.
+   *   Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
+   *   depending on values of the preceding arguments.
+   *
+   *       [foo] [^]       -> [foo] [^^]
+   *
+   *   but:
+   *       [foo] ["] [^]   -> [foo] [\"] ["^"]
+   *
+   *   Notice how the last parameter escaping changes after prepending another argument.
+   *
+   *   If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.
+   */
   @NotNull
-  protected Process startProcess(@NotNull List<String> commands) throws IOException {
-    ProcessBuilder builder = new ProcessBuilder(commands);
+  protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
+    ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
     builder.redirectErrorStream(myRedirectErrorStream);
+    if (myInputFile != null) {
+      builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
+    }
     return builder.start();
   }
 

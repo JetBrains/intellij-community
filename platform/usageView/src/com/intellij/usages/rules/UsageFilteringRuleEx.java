@@ -20,7 +20,7 @@ import com.intellij.usages.UsageTarget;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @deprecated implement {@link UsageFilteringRule#isVisible(Usage, UsageTarget[])} instead
  */
 public interface UsageFilteringRuleEx extends UsageFilteringRule {
   boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget[] targets);

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -71,8 +70,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return name.equals("bash") || name.equals("sh") || name.equals("zsh");
   }
 
-  private static String getShellName(String path) {
-    return new File(path).getName();
+  private static String getShellName(@Nullable String path) {
+    if (path == null) {
+      return null;
+    }
+    else {
+      return new File(path).getName();
+    }
   }
 
   private static String findRCFile(String shellName) {
@@ -114,11 +118,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
+    Map<String, String> envs = new HashMap<>(System.getenv());
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+
+    if (SystemInfo.isMac) {
+      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
+    }
 
     String[] command = getCommand(envs);
 
@@ -182,9 +189,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
-      String shellCommand = command.get(0);
-      String shellName = command.size() > 0 ? getShellName(shellCommand) : null;
-
+      String shellCommand = command.size() > 0 ? command.get(0) : null;
+      String shellName = getShellName(shellCommand);
 
       if (shellName != null) {
         command.remove(0);
@@ -284,7 +290,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     public void startNotify() {
       addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           try {
             myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
           }

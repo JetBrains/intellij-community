@@ -23,9 +23,6 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.converters.values.ClassValueConverter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class ClassValueConverterImpl extends ClassValueConverter {
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 

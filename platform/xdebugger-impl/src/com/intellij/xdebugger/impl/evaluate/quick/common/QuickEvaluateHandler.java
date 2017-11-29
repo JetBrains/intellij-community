@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,10 @@ import java.awt.*;
 public abstract class QuickEvaluateHandler {
 
   public abstract boolean isEnabled(@NotNull Project project);
+
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    return isEnabled(project);
+  }
 
   @Nullable
   public abstract AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type);

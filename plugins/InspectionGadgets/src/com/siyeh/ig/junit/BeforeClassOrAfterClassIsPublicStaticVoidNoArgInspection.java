@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.InspectionGadgetsFix;
 
-public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
-  extends BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase {
+public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection extends BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
-    return new MakePublicStaticVoidFix(method, true);
+    String targetModifier = isJunit4Annotation((String)infos[1]) ? PsiModifier.PUBLIC : PsiModifier.PACKAGE_LOCAL;
+    return new MakePublicStaticVoidFix(method, true, targetModifier);
   }
 }

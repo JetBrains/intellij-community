@@ -15,7 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+
 class GrGenericsInferringTest extends GrHighlightingTestBase {
+
+  @Override
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GroovyLightProjectDescriptor.GROOVY_2_3
+  }
+
+  @Override
+  InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
+
+
   void testMapExplicit() {
     testHighlighting '''
       import groovy.transform.CompileStatic
@@ -276,6 +293,190 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
               <error>[11, 12]</error>
           }
       }
+  '''
+  }
+
+  void testEnumGenerics() {
+    testHighlighting '''\
+enum MyEnum { ONE, TWO }
+
+@groovy.transform.CompileStatic
+void compare() {
+    assert MyEnum.ONE < MyEnum.TWO
+}
+'''
+  }
+
+  void testInjectGenerics() {
+    testHighlighting '''\
+@groovy.transform.CompileStatic
+void printList() {
+  List<String> list = ['1', '2']
+  assert list.inject('0') { old, i -> old + i } == '012'
+}
+'''
+  }
+
+  void testBoundedGenericsCompileStatic() {
+    testHighlighting '''\
+@groovy.transform.CompileStatic
+class Foo {
+  static <T extends List<Integer>> void extInteger(T a) {}
+
+  static <T extends List<? extends CharSequence>> void extCS(T a) {}
+
+  static <T extends List<Object>> void extObj(T a) {
+    extCS<error descr="'extCS' in 'Foo' cannot be applied to '(T)'">(a)</error>
+  }
+
+  static void foo() {
+    extObj([new Object()])
+    extInteger<error descr="'extInteger' in 'Foo' cannot be applied to '([java.lang.String])'">([''])</error>
+  }
+}
+'''
+  }
+
+  void testClosureToSAM() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface SAM<In, Out> {
+    Out run(In argument)
+}
+
+@CompileStatic
+class SomeClass2 {
+    static <T> String join(T item, SAM<T, String> f) {
+        return ""
+    }
+
+    static void method() {
+        join(new SomeClass2(), { it.toString() })
+    }
+}
+
+'''
+  }
+
+  void testClosureToSAMWildcard() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface SAM<In, Out> {
+    Out run(In argument)
+}
+
+@CompileStatic
+class SomeClass2 {
+    static <T> String join(T item, SAM<? extends T, String> f) {
+        return ""
+    }
+
+    static void method() {
+        join(new SomeClass2(), { it.toString() })
+    }
+}
+'''
+  }
+
+  void testClosureToSAMGenericWildcard() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  interface SAM<In, Out> {
+      Out run(In argument)
+  }
+  
+  @CompileStatic
+  class SomeClass2 {
+      static <T> String join(List<? extends T> item, SAM<T, String> f) {
+          return ""
+      }
+  
+      static void method() {
+          def list = [new SomeClass2()] 
+          join(list, { it.toString() })
+      }
+  }
+  '''
+  }
+
+  void testListToArrayCoercion() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  @CompileStatic
+  class SomeClass2 {
+      static SomeClass2[] join() {
+          <error>return</error> []
+      }
+  }
+  '''
+  }
+
+  void testListToArrayCoercionWithHierarchy() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  @CompileStatic
+  class SomeClass2 {
+      static Number[] join() {
+          <error>return</error> [1]
+      }
+  }
+  '''
+  }
+
+  void testComponentCoercion() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    static List<Object> join() {
+        <error>return</error> new ArrayList<SomeClass>()
+
+    }
+}
+  '''
+  }
+
+  void testArrayListInitializerCoercion() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    def foo() {
+        String[] m  = ["str"]
+    }
+}
+  '''
+  }
+
+  void testArrayEmptyListInitializerCoercion() {
+    testHighlighting ''' 
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class SomeClass {
+    def foo() {
+        String[] m  = []
+    }
+}
+  '''
+  }
+
+  void testCollectMany() {
+    testHighlighting ''' 
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def nums = [1]
+    def res = nums.collectMany { [it] }
+}
   '''
   }
 }

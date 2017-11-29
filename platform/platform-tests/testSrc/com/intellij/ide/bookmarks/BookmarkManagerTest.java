@@ -51,7 +51,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     super.tearDown();
   }
 
-  public void testWholeTextReplace() throws IOException {
+  public void testWholeTextReplace() {
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
@@ -66,7 +66,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         myEditor.getDocument().setText(text);
       }
     }.execute().throwException();
@@ -79,11 +79,11 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     }
   }
   
-  public void testBookmarkLineRemove() throws IOException {
+  public void testBookmarkLineRemove() {
     List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
-    System.out.println(adapters.size() + " adapters:");
+    LOG.debug(adapters.size() + " adapters:");
     for (ComponentAdapter adapter : adapters) {
-      System.out.println(adapter);
+      LOG.debug(String.valueOf(adapter));
     }
 
     @NonNls String text =
@@ -101,7 +101,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     assertTrue(getManager().getValidBookmarks().isEmpty());
   }
 
-  public void testTwoBookmarksOnSameLine1() throws  IOException {
+  public void testTwoBookmarksOnSameLine1() {
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
@@ -126,7 +126,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       checkBookmarkNavigation(bookmark);
     }
   }
-  public void testTwoBookmarksOnSameLine2() throws  IOException {
+  public void testTwoBookmarksOnSameLine2() {
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
@@ -157,7 +157,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     delete();
   }
   
-  public void testBookmarkIsSavedAfterRemoteChange() throws IOException {
+  public void testBookmarkIsSavedAfterRemoteChange() {
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
@@ -169,7 +169,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         myEditor.getDocument().setText("111\n222" + text + "333");
       }
     }.execute().throwException();

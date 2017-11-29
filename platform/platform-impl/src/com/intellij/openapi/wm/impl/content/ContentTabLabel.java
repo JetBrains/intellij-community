@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,26 +31,27 @@ import java.awt.event.MouseEvent;
 
 class ContentTabLabel extends BaseLabel {
 
-  Content myContent;
-  private final BaseButtonBehavior myBehavior;
+  private final Content myContent;
   private final TabContentLayout myLayout;
 
-  public ContentTabLabel(final Content content, TabContentLayout layout) {
+  public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, true);
     myLayout = layout;
     myContent = content;
-    update();
-
-    myBehavior = new BaseButtonBehavior(this) {
+    BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
       protected void execute(final MouseEvent e) {
-        final ContentManager mgr = contentManager();
-        if (mgr.getIndexOfContent(myContent) >= 0) {
-          mgr.setSelectedContent(myContent, true);
-        }
+        selectContent();
       }
     };
-    myBehavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
-    myBehavior.setMouseDeadzone(TimedDeadzone.NULL);
+    behavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    behavior.setMouseDeadzone(TimedDeadzone.NULL);
+  }
+
+  protected void selectContent() {
+    final ContentManager mgr = contentManager();
+    if (mgr.getIndexOfContent(myContent) >= 0) {
+      mgr.setSelectedContent(myContent, true);
+    }
   }
 
   public void update() {
@@ -106,6 +108,7 @@ class ContentTabLabel extends BaseLabel {
     return myUi.myWindow.getContentManager();
   }
 
+  @NotNull
   @Override
   public Content getContent() {
     return myContent;

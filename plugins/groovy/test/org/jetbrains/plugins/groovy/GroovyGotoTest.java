@@ -48,27 +48,27 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
     assertTrue(verifier.value(target));
   }
 
-  public void testNewExpression() throws Throwable {
+  public void testNewExpression() {
     doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 0);
   }
 
-  public void testNewExpressionWithNamedArgs() throws Throwable {
+  public void testNewExpressionWithNamedArgs() {
     doTest(element -> element instanceof PsiClass);
   }
 
-  public void testNewExpressionWithMapParameter() throws Throwable {
+  public void testNewExpressionWithMapParameter() {
     doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 1);
   }
 
-  public void testNewExpressionWithAnonymousClass() throws Throwable {
+  public void testNewExpressionWithAnonymousClass() {
     doTest(element -> element instanceof GrMethod && ((GrMethod)element).isConstructor() && ((GrMethod)element).getParameters().length == 2);
   }
 
-  public void testGroovyDocParameter1() throws Throwable {
+  public void testGroovyDocParameter1() {
     doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 
-  public void testGroovyDocParameter2() throws Throwable {
+  public void testGroovyDocParameter2() {
     doTest(element -> element instanceof GrParameter && ((GrParameter)element).getName().equals("x"));
   }
 

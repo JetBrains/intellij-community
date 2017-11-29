@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 19:39:53
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.options.Configurable;
@@ -160,6 +154,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return "Ignored Files";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Ignored.Files";
   }

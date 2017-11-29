@@ -39,7 +39,8 @@ import java.util.Map;
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
-  ArrayFactory<PyClass> ARRAY_FACTORY = count -> new PyClass[count];
+  PyClass[] EMPTY_ARRAY = new PyClass[0];
+  ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
   @Nullable
   ASTNode getNameNode();
@@ -139,11 +140,24 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * Since __new__ only makes sense for new-style classes, an old-style class never finds it with this method.
    *
    * @param inherited true: search in superclasses, too.
-   * @param context   TODO: DOC
+   * @param context   context to be used to resolve ancestors and check if this class is a new-style class
    * @return a method that would be called first when an instance of this class is instantiated.
    */
   @Nullable
   PyFunction findInitOrNew(boolean inherited, @Nullable TypeEvalContext context);
+
+  /**
+   * Finds either __init__ or __new__, whichever is defined for given class, and all its overloads.
+   * If __init__ is defined, it is found first. This mimics the way initialization methods
+   * are searched for and called by Python when a constructor call is made.
+   * Since __new__ only makes sense for new-style classes, an old-style class never finds it with this method.
+   *
+   * @param inherited true: search in superclasses, too.
+   * @param context   context to be used to resolve ancestors and check if this class is a new-style class
+   * @return a method that would be called first when an instance of this class is instantiated and all its overloads.
+   */
+  @NotNull
+  List<PyFunction> multiFindInitOrNew(boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
@@ -267,6 +281,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   @Nullable
   List<String> getOwnSlots();
 
+  @Override
   @Nullable
   String getDocStringValue();
 

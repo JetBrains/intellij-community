@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.icons.AllIcons;
@@ -35,6 +36,8 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +63,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   @Nullable
-  public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {
+  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
     Icon nodeIcon = null;
     if (descriptor instanceof ThreadGroupDescriptorImpl) {
       nodeIcon = (((ThreadGroupDescriptorImpl)descriptor).isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup);
@@ -74,7 +77,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = stackDescriptor.getIcon();
     }
     else if (descriptor instanceof ValueDescriptorImpl) {
-      nodeIcon = getValueIcon((ValueDescriptorImpl)descriptor);
+      nodeIcon = getValueIcon((ValueDescriptorImpl)descriptor, null);
     }
     else if (descriptor instanceof MessageDescriptor) {
       MessageDescriptor messageDescriptor = (MessageDescriptor)descriptor;
@@ -95,11 +98,17 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
-  public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor) {
+  public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor, @Nullable ValueDescriptorImpl parentDescriptor) {
     Icon nodeIcon;
     if (valueDescriptor instanceof FieldDescriptorImpl) {
       FieldDescriptorImpl fieldDescriptor = (FieldDescriptorImpl)valueDescriptor;
       nodeIcon = PlatformIcons.FIELD_ICON;
+      if (parentDescriptor != null) {
+        Value value = valueDescriptor.getValue();
+        if (value instanceof ObjectReference && value.equals(parentDescriptor.getValue())) {
+          nodeIcon = AllIcons.Debugger.Selfreference;
+        }
+      }
       if (fieldDescriptor.getField().isFinal()) {
         nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.FinalMark);
       }

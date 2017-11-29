@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
@@ -26,12 +27,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.branch.GitNewBranchOptions;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
+import icons.DvcsImplIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +46,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
-import static com.intellij.dvcs.ui.BranchActionUtil.*;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static java.util.stream.Collectors.toList;
 
 class GitBranchPopupActions {
 
@@ -73,25 +79,34 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Local Branches" + repoInfo);
-    List<BranchActionGroup> localBranchActions =
-      myRepository.getBranches().getLocalBranches().stream()
-        .sorted()
-        .filter(branch -> !branch.equals(myRepository.getCurrentBranch()))
-        .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
-        .collect(toList());
+    GitLocalBranch currentBranch = myRepository.getCurrentBranch();
+    GitBranchesCollection branchesCollection = myRepository.getBranches();
+
+    List<LocalBranchActions> localBranchActions = StreamEx.of(branchesCollection.getLocalBranches())
+      .filter(branch -> !branch.equals(currentBranch))
+      .map(GitBranch::getName)
+      .sorted(StringUtil::naturalCompare)
+      .map(localName -> new LocalBranchActions(myProject, repositoryList, localName, myRepository))
+      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .toList();
+    int topShownBranches = getNumOfTopShownBranches(localBranchActions);
+    if (currentBranch != null) {
+      localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
+      topShownBranches++;
+    }
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions,
+                               topShownBranches, firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
                                firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
-    List<BranchActionGroup> remoteBranchActions =
-      myRepository.getBranches().getRemoteBranches().stream()
-        .sorted()
-        .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
-        .collect(toList());
+    List<RemoteBranchActions> remoteBranchActions = StreamEx.of(branchesCollection.getRemoteBranches())
+      .map(GitBranch::getName)
+      .sorted(StringUtil::naturalCompare)
+      .map(remoteName -> new RemoteBranchActions(myProject, repositoryList, remoteName, myRepository))
+      .toList();
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfFavorites(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
+                               getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
   }
 
@@ -103,7 +118,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
+      GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch", null);
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
@@ -159,9 +174,9 @@ class GitBranchPopupActions {
    */
   static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
-    private final Project myProject;
-    private final List<GitRepository> myRepositories;
-    private final String myBranchName;
+    protected final Project myProject;
+    protected final List<GitRepository> myRepositories;
+    protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
 
@@ -286,6 +301,14 @@ class GitBranchPopupActions {
           reportUsage("git.branch.rename");
         }
       }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (myRepositories.stream().anyMatch(Repository::isFresh)) {
+          e.getPresentation().setEnabled(false);
+          e.getPresentation().setDescription("Renaming branch is not possible before the first commit");
+        }
+      }
     }
 
     private static class DeleteAction extends DumbAwareAction {
@@ -306,6 +329,22 @@ class GitBranchPopupActions {
         brancher.deleteBranch(myBranchName, myRepositories);
         reportUsage("git.branch.delete.local");
       }
+    }
+  }
+
+  static class CurrentBranchActions extends LocalBranchActions {
+    CurrentBranchActions(@NotNull Project project,
+                         @NotNull List<GitRepository> repositories,
+                         @NotNull String branchName,
+                         @NotNull GitRepository selectedRepository) {
+      super(project, repositories, branchName, selectedRepository);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover, DvcsImplIcons.NotFavoriteOnHover);
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName)};
     }
   }
 

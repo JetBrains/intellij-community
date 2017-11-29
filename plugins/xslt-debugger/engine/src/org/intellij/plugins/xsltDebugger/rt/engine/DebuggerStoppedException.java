@@ -16,10 +16,5 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 24.05.2007
- */
 public class DebuggerStoppedException extends RuntimeException {
 }

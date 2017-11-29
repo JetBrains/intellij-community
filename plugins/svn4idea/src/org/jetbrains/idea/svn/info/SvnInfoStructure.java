@@ -28,12 +28,6 @@ import org.xml.sax.SAXException;
 import java.io.File;
 import java.util.Date;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/27/12
- * Time: 2:11 PM
- */
 public class SvnInfoStructure {
 
   @Nullable public File myFile;

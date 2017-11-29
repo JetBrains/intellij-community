@@ -15,25 +15,23 @@
  */
 package git4idea;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsStatusDescriptor;
+import git4idea.history.GitChangeType;
 import git4idea.history.GitChangesParser;
 import git4idea.history.GitLogStatusInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents a Git commit with its meta information (hash, author, message, etc.), its parents and the {@link Change changes}.
@@ -41,102 +39,94 @@ import java.util.Set;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
+  private static final Logger LOG = Logger.getInstance(GitCommit.class);
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
-                   long authorTime, @NotNull List<GitLogStatusInfo> reportedChanges) {
-    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
-          new MyChangesComputable(new Data(project, root, reportedChanges, hash, commitTime, parents)));
+                   long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges) {
+    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
+    myChanges.set(new UnparsedChanges(project, reportedChanges));
   }
 
-  @NotNull
-  @Override
-  public Collection<String> getModifiedPaths() {
-    Data data = ((MyChangesComputable)myChangesGetter).getData();
-    if (data != null) {
-      Set<String> changes = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : data.changesOutput) {
-        changes.add(absolutePath(status.getFirstPath()));
-        String secondPath = status.getSecondPath();
-        if (secondPath != null) {
-          changes.add(absolutePath(secondPath));
-        }
+  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<GitLogStatusInfo> {
+    private UnparsedChanges(@NotNull Project project,
+                            @NotNull List<List<GitLogStatusInfo>> changesOutput) {
+      super(project, changesOutput, new GitChangesDescriptor());
+    }
+
+    @NotNull
+    protected String absolutePath(@NotNull String path) {
+      try {
+        return getRoot().getPath() + "/" + GitUtil.unescapePath(path);
       }
-      return changes;
-    }
-    return super.getModifiedPaths();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Couple<String>> getRenamedPaths() {
-    Data data = ((MyChangesComputable)myChangesGetter).getData();
-    if (data != null) {
-      Set<Couple<String>> changes = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : data.changesOutput) {
-        if (status.getSecondPath() != null) {
-          changes.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
-        }
+      catch (VcsException e) {
+        return getRoot().getPath() + "/" + path;
       }
-      return changes;
-    }
-    return super.getRenamedPaths();
-  }
-
-  @NotNull
-  private String absolutePath(@NotNull String path) {
-    try {
-      return getRoot().getPath() + "/" + GitUtil.unescapePath(path);
-    }
-    catch (VcsException e) {
-      return getRoot().getPath() + "/" + path;
-    }
-  }
-
-  private static class MyChangesComputable implements ThrowableComputable<Collection<Change>, VcsException> {
-
-    private Data myData;
-    private Collection<Change> myChanges;
-
-    public MyChangesComputable(Data data) {
-      myData = data;
     }
 
+    @NotNull
     @Override
-    public Collection<Change> compute() throws VcsException {
-      if (myChanges == null) {
-        myChanges = GitChangesParser.parse(myData.project, myData.root, myData.changesOutput, myData.hash.asString(),
-                                           new Date(myData.time), ContainerUtil.map(myData.parents, new Function<Hash, String>() {
-            @Override
-            public String fun(Hash hash) {
-              return hash.asString();
-            }
-          }));
-        myData = null; // don't hold the not-yet-parsed string
+    protected List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes, int parentIndex) throws VcsException {
+      String parentHash = null;
+      if (parentIndex < getParents().size()) {
+        parentHash = getParents().get(parentIndex).asString();
       }
-      return myChanges;
-    }
-
-    public Data getData() {
-      return myData;
+      return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHash);
     }
   }
 
-  private static class Data {
-    private final Project project;
-    private final VirtualFile root;
-    private final List<GitLogStatusInfo> changesOutput;
-    private final Hash hash;
-    private final long time;
-    private final List<Hash> parents;
+  private static class GitChangesDescriptor extends VcsStatusDescriptor<GitLogStatusInfo> {
+    @NotNull
+    @Override
+    protected GitLogStatusInfo createStatus(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath) {
+      return new GitLogStatusInfo(getType(type), path, secondPath);
+    }
 
-    public Data(Project project, VirtualFile root, List<GitLogStatusInfo> changesOutput, Hash hash, long time, List<Hash> parents) {
-      this.project = project;
-      this.root = root;
-      this.changesOutput = changesOutput;
-      this.hash = hash;
-      this.time = time;
-      this.parents = parents;
+    @NotNull
+    private GitChangeType getType(@NotNull Change.Type type) {
+      switch (type) {
+        case MODIFICATION:
+          return GitChangeType.MODIFIED;
+        case NEW:
+          return GitChangeType.ADDED;
+        case DELETED:
+          return GitChangeType.DELETED;
+        case MOVED:
+          return GitChangeType.RENAMED;
+      }
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getFirstPath(@NotNull GitLogStatusInfo info) {
+      return info.getFirstPath();
+    }
+
+    @Nullable
+    @Override
+    public String getSecondPath(@NotNull GitLogStatusInfo info) {
+      return info.getSecondPath();
+    }
+
+    @NotNull
+    @Override
+    public Change.Type getType(@NotNull GitLogStatusInfo info) {
+      switch (info.getType()) {
+        case ADDED:
+          return Change.Type.NEW;
+        case MODIFIED:
+        case TYPE_CHANGED:
+          return Change.Type.MODIFICATION;
+        case DELETED:
+          return Change.Type.DELETED;
+        case COPIED:
+        case RENAMED:
+          return Change.Type.MOVED;
+        case UNRESOLVED:
+          LOG.error("Unsupported status info " + info);
+      }
+      return null;
     }
   }
 }

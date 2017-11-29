@@ -27,11 +27,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncParentRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.08.2007
- */
 public class RncParentRefImpl extends RncRefImpl implements RncParentRef {
   public RncParentRefImpl(ASTNode node) {
     super(node);

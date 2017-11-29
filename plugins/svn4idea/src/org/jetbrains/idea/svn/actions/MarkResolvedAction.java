@@ -35,9 +35,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
-import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -127,15 +125,12 @@ public class MarkResolvedAction extends BasicAction {
         File path = VfsUtilCore.virtualToIoFile(file);
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
-        client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, new StatusConsumer() {
-          @Override
-          public void consume(@NotNull Status status) {
-            if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
-                status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
-              result.add(status.getFile().getAbsolutePath());
-            }
+        client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
+          if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
+              status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
+            result.add(status.getFile().getAbsolutePath());
           }
-        }, null);
+        });
       }
       catch (SvnBindException e) {
         LOG.warn(e);

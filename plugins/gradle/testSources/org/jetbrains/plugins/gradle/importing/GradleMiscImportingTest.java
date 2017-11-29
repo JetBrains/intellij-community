@@ -16,16 +16,23 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Vladislav.Soroka
@@ -39,7 +46,7 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() throws Throwable {
+  public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
@@ -117,11 +124,49 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
 
   }
 
+  @Test
+  @TargetVersions("3.4+")
+  public void testJdkName() throws Exception {
+    Sdk myJdk = createJdk("MyJDK");
+    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
+    importProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    jdkName = 'MyJDK'\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project_main", "project_test");
+    assertTrue(getSdkForModule("project_main") == myJdk);
+    assertTrue(getSdkForModule("project_test") == myJdk);
+  }
+
+  @Test
+  public void testUnloadedModuleImport() throws Exception {
+    importProject(
+      "apply plugin: 'java'"
+    );
+    assertModules("project", "project_main", "project_test");
+
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(list("project_main")));
+    assertModules("project", "project_test");
+
+    importProject();
+    assertModules("project", "project_test");
+  }
+
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {
     return LanguageLevelModuleExtensionImpl.getInstance(getModule(moduleName)).getLanguageLevel();
   }
 
   private String getBytecodeTargetLevel(String moduleName) {
     return CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(moduleName));
+  }
+
+  private Sdk getSdkForModule(final String moduleName) {
+    return ModuleRootManager.getInstance(getModule(moduleName)).getSdk();
   }
 }

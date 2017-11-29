@@ -37,6 +37,7 @@ public interface PairedBraceMatcher {
    *
    * @return the array of brace pair definitions.
    */
+  @NotNull
   BracePair[] getPairs();
 
   /**

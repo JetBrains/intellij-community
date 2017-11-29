@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,18 @@ public abstract class ParserUtils {
     }
     else {
       marker.rollbackTo();
+      return false;
+    }
+  }
+
+  public static boolean getToken(PsiBuilder builder, IElementType element1, TokenSet tokenSet2) {
+    Marker rb = builder.mark();
+    if (getToken(builder, element1) && getToken(builder, tokenSet2)) {
+      rb.drop();
+      return true;
+    }
+    else {
+      rb.rollbackTo();
       return false;
     }
   }
@@ -166,6 +178,13 @@ public abstract class ParserUtils {
 
     rb.rollbackTo();
     return res;
+  }
+
+  public static boolean lookAhead(PsiBuilder builder, IElementType element1, TokenSet tokenSet) {
+    Marker rb = builder.mark();
+    boolean result = getToken(builder, element1) && getToken(builder, tokenSet);
+    rb.rollbackTo();
+    return result;
   }
 
   public static boolean lookAhead(PsiBuilder builder, IElementType element1, IElementType element2, IElementType element3, IElementType element4) {

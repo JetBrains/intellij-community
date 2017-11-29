@@ -4,7 +4,7 @@
       <implementation-class>RegisteredApplicationComponent</implementation-class>
     </component>
     <component>
-      <implementation-class>RegisteredApplicationComponent.InnerStaticClassApplicationContext</implementation-class>
+      <implementation-class>RegisteredApplicationComponent$InnerStaticClassApplicationContext</implementation-class>
     </component>
   </application-components>
 

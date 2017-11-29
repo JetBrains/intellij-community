@@ -15,8 +15,11 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,11 +27,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,12 +38,23 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class PyiTypeTest extends PyTestCase {
-  public static void addPyiStubsToContentRoot(CodeInsightTestFixture fixture) {
+
+  private Disposable myDisposable;
+
+  // return Disposable which undoes configuration
+  public static Disposable addPyiStubsToContentRoot(CodeInsightTestFixture fixture) {
     final String path = fixture.getTestDataPath() + "/pyi/pyiStubs";
     final VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(file);
     file.refresh(false, true);
     ModuleRootModificationUtil.addContentRoot(fixture.getModule(), path);
+    return ()->ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
+                            for (ContentEntry entry : model.getContentEntries()) {
+                              if (file.equals(entry.getFile())) {
+                                model.removeContentEntry(entry);
+                              }
+                            }
+                          });
   }
 
   @Nullable
@@ -59,6 +71,10 @@ public class PyiTypeTest extends PyTestCase {
 
   @Override
   public void tearDown() throws Exception {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
     setLanguageLevel(null);
     super.tearDown();
   }
@@ -70,19 +86,12 @@ public class PyiTypeTest extends PyTestCase {
     final String fileName = getTestName(false) + ".py";
     myFixture.configureByFile(fileName);
     final PsiElement element = myFixture.getElementAtCaret();
-    assertNotNull("Could not find element at caret in: " + myFixture.getFile());
     assertInstanceOf(element, PyTypedElement.class);
     final PyTypedElement typedElement = (PyTypedElement)element;
     final Project project = element.getProject();
     final PsiFile containingFile = element.getContainingFile();
     assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
     assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
-  }
-
-  private static void assertType(@NotNull String expectedType, @NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
-    final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("Failed in " + context + " context", expectedType, actualType);
   }
 
   public void testFunctionParameter() {
@@ -106,7 +115,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testPyiOnPythonPath() {
-    addPyiStubsToContentRoot(myFixture);
+    myDisposable = addPyiStubsToContentRoot(myFixture);
     doTest("int");
   }
 

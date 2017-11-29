@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -35,12 +37,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Lobas
  */
-public class DesignerToolWindowManager extends AbstractToolWindowManager {
+public class DesignerToolWindowManager extends AbstractToolWindowManager implements Disposable {
   private final DesignerToolWindow myToolWindowPanel;
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
     myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new DesignerToolWindow(project);
+    if (myToolWindowPanel != null) {
+      Disposer.register(this, () -> myToolWindowPanel.dispose());
+    }
   }
 
   public static DesignerToolWindow getInstance(GuiEditor designer) {
@@ -114,13 +119,6 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager {
                          toolWindowContent.getComponentTree(),
                          320,
                          null);
-  }
-
-  @Override
-  public void disposeComponent() {
-    if (myToolWindowPanel != null) {
-      myToolWindowPanel.dispose();
-    }
   }
 
   @NotNull

@@ -42,6 +42,7 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
   /**
    * To be invoked during batch run
    */
+  @NotNull
   default ProblemDescriptor[] checkFile(@NotNull PsiFile file,
                                         @NotNull GlobalInspectionContext context,
                                         @NotNull InspectionManager manager) {

@@ -177,11 +177,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     gbConstraints.gridy = 1;
     myNameField = new NameSuggestionsField(myProject);
     panel.add(myNameField.getComponent(), gbConstraints);
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        updateButtons();
-      }
-    });
+    myNameField.addDataChangedListener(() -> updateButtons());
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
     // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't 

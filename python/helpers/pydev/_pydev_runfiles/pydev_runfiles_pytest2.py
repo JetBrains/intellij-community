@@ -281,7 +281,7 @@ def pytest_runtest_logreport(report):
 
     # This will work if pytest is not capturing it, if it is, nothing will
     # come from here...
-    captured_output, error_contents = report.pydev_captured_output, report.pydev_error_contents
+    captured_output, error_contents = getattr(report, 'pydev_captured_output', ''), getattr(report, 'pydev_error_contents', '')
     for type_section, value in report.sections:
         if value:
             if type_section in ('err', 'stderr', 'Captured stderr call'):
@@ -289,7 +289,7 @@ def pytest_runtest_logreport(report):
             else:
                 captured_output = append_strings(error_contents, value)
 
-    filename = report.pydev_fspath_strpath
+    filename = getattr(report, 'pydev_fspath_strpath', '<unable to get>')
     test = report.location[2]
 
     if report_outcome != 'skipped':

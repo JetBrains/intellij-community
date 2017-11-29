@@ -8,5 +8,6 @@ class Ancestor(object):
 
 
 class Basic(Ancestor):
+
     def func2(self):
         return self.func1()

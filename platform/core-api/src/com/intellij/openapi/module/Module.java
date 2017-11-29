@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 /**
  * Represents a module in an IDEA project.
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleManager#getModules()
  * @see ModuleComponent
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * The empty array of modules which cab be reused to avoid unnecessary allocations.
@@ -51,6 +53,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * System-independent path to the .iml file.
    */
   @NotNull
+  @SystemIndependent
   String getModuleFilePath();
 
   /**
@@ -78,26 +81,23 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   boolean isLoaded();
 
   /**
-   * Removes a custom option from this module.
-   *
-   * @param key the name of the custom option.
+   * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
-  void clearOption(@NotNull String key);
+  @Deprecated
+  default void clearOption(@NotNull String key) {
+    setOption(key, null);
+  }
 
   /**
-   * Sets a custom option for this module.
-   *
-   * @param key the name of the custom option.
-   * @param value the value of the custom option.
+   * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
-  void setOption(@NotNull String key, @NotNull String value);
+  @Deprecated
+  void setOption(@NotNull String key, @Nullable String value);
 
   /**
-   * Gets the value of a custom option for this module.
-   *
-   * @param key the name of the custom option.
-   * @return the value of the custom option, or null if no value has been set.
+   * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
+  @Deprecated
   @Nullable
   String getOptionValue(@NotNull String key);
 
@@ -163,4 +163,15 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
+
+  @Nullable
+  default String getModuleTypeName() {
+    //noinspection deprecation
+    return getOptionValue(ELEMENT_TYPE);
+  }
+
+  default void setModuleType(@NotNull String name) {
+    //noinspection deprecation
+    setOption(ELEMENT_TYPE, name);
+  }
 }

@@ -15,17 +15,16 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,41 +34,45 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
   private final ChangeListWorker myChangeListWorker;
   private final FileHolderComposite myComposite;
-  // todo +-
   private final Getter<Boolean> myDisposedGetter;
-  private VcsDirtyScope myScope;
-  private FoldersCutDownWorker myFoldersCutDownWorker;
-  private final ChangeListManager myСhangeListManager;
+  private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManagerGate myGate;
+
+  private VcsDirtyScope myScope;
+  private FoldersCutDownWorker myFoldersCutDownWorker;
+
   private Factory<JComponent> myAdditionalInfo;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
-                            final ChangeListManager сhangeListManager, final ChangeListManagerGate gate) {
+                            final ChangeListManager changeListManager,
+                            final ChangeListManagerGate gate) {
     myChangeListWorker = changeListWorker;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myСhangeListManager = сhangeListManager;
-    myGate = gate;
+    myChangeListManager = changeListManager;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListWorker.getProject());
+    myGate = gate;
   }
 
   private void checkIfDisposed() {
-    if (myDisposedGetter.get()) throw new ChangeListManagerImpl.DisposedException();
+    if (myDisposedGetter.get()) throw new ProcessCanceledException();
   }
 
-  public void setCurrent(final VcsDirtyScope scope, final FoldersCutDownWorker foldersWorker) {
+  public void setCurrent(VcsDirtyScope scope) {
     myScope = scope;
-    myFoldersCutDownWorker = foldersWorker;
+    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
-  public void processChange(final Change change, VcsKey vcsKey) {
+  @Override
+  public void processChange(Change change, VcsKey vcsKey) {
     processChangeInList(change, (ChangeList)null, vcsKey);
   }
 
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
+  @Override
+  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
@@ -95,15 +98,13 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
   }
 
-  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
+  @Override
+  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
     checkIfDisposed();
 
     LocalChangeList list = null;
     if (changeListName != null) {
-      list = myChangeListWorker.getCopyByName(changeListName);
-      if (list == null) {
-        list = myGate.addChangeList(changeListName, null);
-      }
+      list = myGate.findOrCreateList(changeListName, null);
     }
     processChangeInList(change, list, vcsKey);
   }
@@ -113,25 +114,10 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myChangeListWorker.removeRegisteredChangeFor(path);
   }
 
-  private boolean isIgnoredByVcs(final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        checkIfDisposed();
-        return myVcsManager.isIgnored(file);
-      }
-    });
-  }
-
-  public void processUnversionedFile(final VirtualFile file) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("processUnversionedFile " + file);
-    }
-    if (file == null) return;
-    checkIfDisposed();
-    if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      if (myСhangeListManager.isIgnoredFile(file)) {
+  @Override
+  public void processUnversionedFile(VirtualFile file) {
+    if (acceptFile(file, false)) {
+      if (myChangeListManager.isIgnoredFile(file)) {
         myComposite.getIgnoredFileHolder().addFile(file);
       }
       else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
@@ -141,28 +127,30 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
         myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
       }
       // if a file was previously marked as switched through recursion, remove it from switched list
-      myChangeListWorker.removeSwitched(file);
+      myComposite.getSwitchedFileHolder().removeFile(file);
     }
   }
 
-  public void processLocallyDeletedFile(final FilePath file) {
+  @Override
+  public void processLocallyDeletedFile(FilePath file) {
     processLocallyDeletedFile(new LocallyDeletedChange(file));
   }
 
+  @Override
   public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
     checkIfDisposed();
+
     final FilePath file = locallyDeletedChange.getPath();
     if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+
     if (myScope.belongsTo(file)) {
-      myChangeListWorker.addLocallyDeleted(locallyDeletedChange);
+      myComposite.getDeletedFileHolder().addFile(locallyDeletedChange);
     }
   }
 
-  public void processModifiedWithoutCheckout(final VirtualFile file) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
+  @Override
+  public void processModifiedWithoutCheckout(VirtualFile file) {
+    if (acceptFile(file, false)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("processModifiedWithoutCheckout " + file);
       }
@@ -170,47 +158,40 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
   }
 
-  public void processIgnoredFile(final VirtualFile file) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      ObjectUtils.assertNotNull(myComposite.getIgnoredFileHolder().getActiveVcsHolder()).addFile(file);
+  @Override
+  public void processIgnoredFile(VirtualFile file) {
+    if (acceptFile(file, false)) {
+      myComposite.getIgnoredFileHolder().addFile(myScope.getVcs(), file);
     }
   }
 
-  public void processLockedFolder(final VirtualFile file) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
+  @Override
+  public void processLockedFolder(VirtualFile file) {
+    if (acceptFile(file, true)) {
       if (myFoldersCutDownWorker.addCurrent(file)) {
         myComposite.getVFHolder(FileHolder.HolderType.LOCKED).addFile(file);
       }
     }
   }
 
+  @Override
   public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
+    if (acceptFile(file, true)) {
+      myComposite.getLogicallyLockedFileHolder().add(file, logicalLock);
     }
   }
 
-  public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      myChangeListWorker.addSwitched(file, branch, recursive);
+  @Override
+  public void processSwitchedFile(VirtualFile file, String branch, boolean recursive) {
+    if (acceptFile(file, false)) {
+      myComposite.getSwitchedFileHolder().addFile(file, branch, recursive);
     }
   }
 
+  @Override
   public void processRootSwitch(VirtualFile file, String branch) {
-    if (file == null) return;
-    checkIfDisposed();
-    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
+    if (acceptFile(file, true)) {
+      myComposite.getRootSwitchFileHolder().addFile(file, branch, false);
     }
   }
 
@@ -232,5 +213,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   public Factory<JComponent> getAdditionalInfo() {
     return myAdditionalInfo;
+  }
+
+  private boolean acceptFile(@Nullable VirtualFile file, boolean allowIgnored) {
+    checkIfDisposed();
+    if (file == null) return false;
+    if (!allowIgnored && ReadAction.compute(() -> myVcsManager.isIgnored(file))) return false;
+    return myScope.belongsTo(VcsUtil.getFilePath(file));
   }
 }

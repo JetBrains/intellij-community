@@ -30,7 +30,7 @@ class AntTaskLogger implements BuildListener {
   BuildMessages defaultHandler
   private final Map<Thread, BuildMessages> threadHandlers = [:]
   private final Map<RuntimeConfigurable, BuildMessages> taskHandlers = [:]
-  private final Project antProject
+  final Project antProject
   private final ThreadLocal<Boolean> processMessages = ThreadLocal.withInitial { true }
 
   AntTaskLogger(Project antProject) {

@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.07.2006
- * Time: 21:07:50
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
-import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
@@ -44,7 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -54,10 +48,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author max
@@ -65,12 +58,11 @@ import java.util.Date;
 public class ChangeListViewerDialog extends DialogWrapper implements DataProvider {
   private Project myProject;
   private CommittedChangeList myChangeList;
-  private RepositoryChangesBrowser myChangesBrowser;
+  private CommittedChangesBrowser myChangesBrowser;
   private JEditorPane myCommitMessageArea;
   // do not related to local data/changes etc
   private final boolean myInAir;
   private Change[] myChanges;
-  private NotNullFunction<Change, Change> myConvertor;
   private JScrollPane commitMessageScroll;
   private VirtualFile myToSelect;
 
@@ -143,39 +135,31 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     return null;
   }
 
-  public void setConvertor(final NotNullFunction<Change, Change> convertor) {
-    myConvertor = convertor;
-  }
-
   public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
     final Splitter splitter = new Splitter(true, 0.8f);
-    myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
-                                                    new ArrayList<>(myChangeList.getChanges()),
-                                                    myChangeList, myToSelect) {
-
+    myChangesBrowser = new CommittedChangesBrowser(myProject) {
+      @NotNull
       @Override
-      protected void buildToolBar(DefaultActionGroup toolBarGroup) {
-        super.buildToolBar(toolBarGroup);
-        toolBarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
+      protected List<AnAction> createToolbarActions() {
+        return ContainerUtil.append(
+          super.createToolbarActions(),
+          ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
+        );
       }
 
       @Override
-      protected void showDiffForChanges(final Change[] changesArray, final int indexInSelection) {
-        if (myInAir && (myConvertor != null)) {
-          final Change[] convertedChanges = new Change[changesArray.length];
-          for (int i = 0; i < changesArray.length; i++) {
-            Change change = changesArray[i];
-            convertedChanges[i] = myConvertor.fun(change);
-          }
-          super.showDiffForChanges(convertedChanges, indexInSelection);
-        } else {
-          super.showDiffForChanges(changesArray, indexInSelection);
+      public Object getData(String dataId) {
+        if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+          return new ChangeList[]{myChangeList};
         }
+        return super.getData(dataId);
       }
     };
-    Disposer.register(getDisposable(), myChangesBrowser);
+    myChangesBrowser.setChangesToDisplay(myChangeList.getChanges());
+    if (myToSelect != null) myChangesBrowser.getViewer().selectFile(myToSelect);
+
     myChangesBrowser.setUseCase(myInAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
     splitter.setFirstComponent(myChangesBrowser);
 

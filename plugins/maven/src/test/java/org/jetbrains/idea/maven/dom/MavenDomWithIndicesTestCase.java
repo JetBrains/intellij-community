@@ -36,6 +36,7 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
     try {
       if (myIndicesFixture != null) {
         myIndicesFixture.tearDown();
+        myIndicesFixture = null;
       }
     }
     finally {

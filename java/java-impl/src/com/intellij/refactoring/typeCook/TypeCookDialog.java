@@ -31,13 +31,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 30.07.2003
- * Time: 21:36:29
- * To change this template use Options | File Templates.
- */
 public class TypeCookDialog extends RefactoringDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("generify.title");
 

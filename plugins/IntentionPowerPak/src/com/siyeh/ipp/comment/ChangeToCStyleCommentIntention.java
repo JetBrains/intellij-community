@@ -28,10 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeToCStyleCommentIntention extends Intention {
-
-  private static final Class<PsiWhiteSpace>[] WHITESPACE_CLASS =
-    new Class[]{PsiWhiteSpace.class};
-
   @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
@@ -39,32 +35,25 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiComment firstComment = (PsiComment)element;
     while (true) {
-      final PsiElement prevComment =
-        PsiTreeUtil.skipSiblingsBackward(firstComment,
-                                         WHITESPACE_CLASS);
+      final PsiElement prevComment = PsiTreeUtil.skipWhitespacesBackward(firstComment);
       if (!isEndOfLineComment(prevComment)) {
         break;
       }
-      assert prevComment != null;
       firstComment = (PsiComment)prevComment;
     }
-    final JavaPsiFacade psiFacade =
-      JavaPsiFacade.getInstance(element.getProject());
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(element.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final List<PsiComment> multiLineComments = new ArrayList<>();
     PsiElement nextComment = firstComment;
     String whiteSpace = null;
     while (true) {
-      nextComment = PsiTreeUtil.skipSiblingsForward(nextComment,
-                                                    WHITESPACE_CLASS);
+      nextComment = PsiTreeUtil.skipWhitespacesForward(nextComment);
       if (!isEndOfLineComment(nextComment)) {
         break;
       }
-      assert nextComment != null;
       if (whiteSpace == null) {
         final PsiElement prevSibling = nextComment.getPrevSibling();
         assert prevSibling != null;

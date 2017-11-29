@@ -24,28 +24,30 @@ import com.sun.jna.ptr.LongByReference;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("SpellCheckingInspection")
 public interface Win32RestartManager extends Library {
-
-  Win32RestartManager INSTANCE = (Win32RestartManager) Native.loadLibrary("Rstrtmgr", Win32RestartManager.class);
+  Win32RestartManager INSTANCE = Native.loadLibrary("Rstrtmgr", Win32RestartManager.class);
 
   int CCH_RM_SESSION_KEY = 32;
   int CCH_RM_MAX_APP_NAME = 255;
   int CCH_RM_MAX_SVC_NAME = 63;
 
+  @SuppressWarnings("unused")
   class RmUniqueProcess extends Structure {
-    private static final List __FIELDS = Arrays.asList("dwProcessId", "ProcessStartTime");
+    private static final List<String> __FIELDS = Arrays.asList("dwProcessId", "ProcessStartTime");
 
     public int dwProcessId;
     public WinBase.FILETIME ProcessStartTime;
 
     @Override
-    protected List getFieldOrder() {
+    protected List<String> getFieldOrder() {
       return __FIELDS;
     }
   }
 
+  @SuppressWarnings("unused")
   class RmProcessInfo extends Structure {
-    private static final List __FIELDS = Arrays.asList(
+    private static final List<String> __FIELDS = Arrays.asList(
       "Process", "strAppName", "strServiceShortName", "ApplicationType", "AppStatus", "TSSessionId", "bRestartable");
 
     public RmUniqueProcess Process;
@@ -57,7 +59,7 @@ public interface Win32RestartManager extends Library {
     public boolean bRestartable;
 
     @Override
-    protected List getFieldOrder() {
+    protected List<String> getFieldOrder() {
       return __FIELDS;
     }
   }
@@ -80,5 +82,6 @@ public interface Win32RestartManager extends Library {
                           int nServices,
                           StringArray rgsServiceNames);
 
+  @SuppressWarnings("UnusedReturnValue")
   int RmEndSession(int dwSessionHandle);
 }

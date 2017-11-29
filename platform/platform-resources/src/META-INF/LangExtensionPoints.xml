@@ -462,7 +462,7 @@
     <extensionPoint name="runDashboardContributor"
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
-                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
+                    interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -567,6 +567,7 @@
     </extensionPoint>
 
     <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
+    <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider"/>
 
     <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
     <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
@@ -779,7 +780,7 @@
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
 
     <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.FileTypeIdIndexer"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.IdIndexer"/>
     </extensionPoint>
 
     <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
@@ -825,8 +826,10 @@
     </extensionPoint>
 
     <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
-
     <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
@@ -867,6 +870,8 @@
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 
+    <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider"/>
+
     <extensionPoint name="projectStructure.sourceRootEditHandler"
                     interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
 
@@ -879,6 +884,7 @@
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
+    <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
@@ -903,8 +909,17 @@
     <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
+    <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
                     interface="org.jetbrains.uast.UastLanguagePlugin"/>
+
+    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
+    <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider"/>
+
+    <extensionPoint name="filetype.prebuiltStubsProvider"
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 

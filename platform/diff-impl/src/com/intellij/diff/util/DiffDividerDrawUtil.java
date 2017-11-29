@@ -64,20 +64,11 @@ public class DiffDividerDrawUtil {
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
-    paintPolygons(gg, width, true, true, editor1, editor2, paintable);
-  }
-
-  public static void paintSimplePolygons(@NotNull Graphics2D gg,
-                                         int width,
-                                         @NotNull Editor editor1,
-                                         @NotNull Editor editor2,
-                                         @NotNull DividerPaintable paintable) {
-    paintPolygons(gg, width, true, false, editor1, editor2, paintable);
+    paintPolygons(gg, width, true, editor1, editor2, paintable);
   }
 
   public static void paintPolygons(@NotNull Graphics2D gg,
                                    int width,
-                                   boolean paintBorder,
                                    boolean curved,
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
@@ -86,7 +77,7 @@ public class DiffDividerDrawUtil {
 
     GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
-      polygon.paint(gg, width, paintBorder, curved);
+      polygon.paint(gg, width, curved);
     }
     config.restore();
   }
@@ -164,14 +155,6 @@ public class DiffDividerDrawUtil {
   private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
-                                              @NotNull Color color) {
-    return createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, color, false);
-  }
-
-  @NotNull
-  private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
-                                              int startLine1, int endLine1,
-                                              int startLine2, int endLine2,
                                               @NotNull Color color, boolean resolved) {
     int start1 = transformations[0].transform(startLine1);
     int end1 = transformations[0].transform(endLine1);
@@ -228,10 +211,6 @@ public class DiffDividerDrawUtil {
     @NotNull private final Color myColor;
     private final boolean myResolved;
 
-    public DividerPolygon(int start1, int start2, int end1, int end2, @NotNull Color color) {
-      this(start1, start2, end1, end2, color, false);
-    }
-
     public DividerPolygon(int start1, int start2, int end1, int end2, @NotNull Color color, boolean resolved) {
       myStart1 = start1;
       myStart2 = start2;
@@ -241,7 +220,7 @@ public class DiffDividerDrawUtil {
       myResolved = resolved;
     }
 
-    public void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
+    public void paint(Graphics2D g, int width, boolean curve) {
       int startY1;
       int endY1;
       int startY2;
@@ -294,10 +273,6 @@ public class DiffDividerDrawUtil {
     private final int myEnd1;
     private final int myEnd2;
     @Nullable private final EditorColorsScheme myScheme;
-
-    public DividerSeparator(int start1, int start2, int end1, int end2) {
-      this(start1, start2, end1, end2, null);
-    }
 
     public DividerSeparator(int start1, int start2, int end1, int end2, @Nullable EditorColorsScheme scheme) {
       myStart1 = start1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +60,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       }
     };
     Border border = myField.getBorder();
-    Border emptyBorder = IdeBorderFactory.createEmptyBorder(3, 0, 2, 0);
+    Border emptyBorder = JBUI.Borders.empty(3, 0, 2, 0);
     if (border instanceof CompoundBorder) {
       if (!UIUtil.isUnderDarcula()) {
         myField.setBorder(new CompoundBorder(emptyBorder, ((CompoundBorder)border).getInsideBorder()));

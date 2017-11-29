@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
@@ -30,6 +29,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myInternalManager = null;
+    myLocation = null;
     FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
@@ -38,7 +39,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     LogEntry entry =
       new LogEntry.Builder().setRevision(revision).setAuthor(AUTHOR).setDate(new Date(System.currentTimeMillis())).setMessage("").build();
 
-    return new SvnChangeList(null, myLocation, entry, ROOT.toDecodedString());
+    return new SvnChangeList(null, myLocation, entry, ROOT);
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {
@@ -50,8 +51,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
     @Override
     public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
-                                                  final boolean includingYoungest, final boolean includeOldest)
-      throws VcsException {
+                                                  final boolean includingYoungest, final boolean includeOldest) {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;
       final long old = toIncluding.getNumber();
@@ -217,7 +217,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testJustLiveProvider() throws Exception {
-    performTest(11, 2, null, Collections.<Pair<Long, Long>>emptyList(), 121);
+    performTest(11, 2, null, Collections.emptyList(), 121);
   }
 
   public void testLiveAndSimpleInternalProvider() throws Exception {
@@ -228,7 +228,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   public void testLiveAndSimpleCommittedProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(19L, 117L), Collections.<Pair<Long, Long>>emptyList(), 121 + i);
+      performTest(11, 2, new Pair<>(19L, 117L), Collections.emptyList(), 121 + i);
     }
   }
 
@@ -257,7 +257,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testShortLive() throws Exception {
-    performTest(11, 2, null, Collections.<Pair<Long, Long>>emptyList(), 13);
+    performTest(11, 2, null, Collections.emptyList(), 13);
   }
 
   public void testShortInternal() throws Exception {
@@ -265,7 +265,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
   
   public void testShortCommitted() throws Exception {
-    performTest(11, 2, new Pair<>(11L, 15L), Collections.<Pair<Long, Long>>emptyList(), 15);
+    performTest(11, 2, new Pair<>(11L, 15L), Collections.emptyList(), 15);
   }
 
   public void testThreeByOne() throws Exception {

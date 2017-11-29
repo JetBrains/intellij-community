@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -332,7 +332,7 @@ public final class LanguageConsoleBuilder {
       super.scrollToEnd();
     }
 
-    private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
+    private final class GutterUpdateScheduler implements DocumentBulkUpdateListener, DocumentListener {
       private final ConsoleGutterComponent lineStartGutter;
       private final ConsoleGutterComponent lineEndGutter;
 

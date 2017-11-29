@@ -31,9 +31,13 @@ public class TreeExpandCollapse {
   }
 
   public static void expandAll(JTree tree) {
-    TreePath path = tree.getSelectionPath();
-    if (path == null) path = new TreePath(tree.getModel().getRoot());
-    new ExpandContext(300, 10).expand(tree, path);
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null) {
+      paths = new TreePath[] { new TreePath(tree.getModel().getRoot()) };
+    }
+    for (TreePath path : paths) {
+      new ExpandContext(300, 10).expand(tree, path);
+    }
   }
 
   private static class ExpandContext {

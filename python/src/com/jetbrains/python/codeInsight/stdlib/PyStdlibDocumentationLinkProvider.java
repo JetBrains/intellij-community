@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -29,7 +30,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 
@@ -544,6 +544,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Override
   public String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement) {
+    if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return null;
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();

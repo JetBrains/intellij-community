@@ -18,12 +18,10 @@ package org.jetbrains.plugins.groovy.lang.parameterInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +39,8 @@ import java.util.Set;
  */
 public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrTypeArgumentList, PsiTypeParameter, GrTypeElement> {
 
-  private static final Set<Class> ALLOWED_PARENT_CLASSES = ContainerUtil.<Class>newHashSet(GrCodeReferenceElement.class);
-  private static final Set<Class> STOP_SEARCHING_CLASSES = ContainerUtil.<Class>newHashSet(GroovyFile.class);
+  private static final Set<Class> ALLOWED_PARENT_CLASSES = ContainerUtil.newHashSet(GrCodeReferenceElement.class);
+  private static final Set<Class> STOP_SEARCHING_CLASSES = ContainerUtil.newHashSet(GroovyFile.class);
 
   @NotNull
   @Override

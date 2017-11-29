@@ -27,12 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/9/12
- * Time: 5:33 PM
- */
 public class FavoritesTreeUtil {
   @NotNull
   public static FavoritesTreeNodeDescriptor[] getSelectedNodeDescriptors(final DnDAwareTree tree) {

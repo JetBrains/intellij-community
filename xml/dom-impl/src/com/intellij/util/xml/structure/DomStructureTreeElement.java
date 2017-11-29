@@ -19,6 +19,7 @@ package com.intellij.util.xml.structure;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, true);
+    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, requestFocus);
   }
 
   @Override
@@ -107,9 +108,14 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   @Override
   public String getPresentableText() {
     if (!myElement.isValid()) return "<unknown>";
-    final ElementPresentation presentation = myElement.getPresentation();
-    final String name = presentation.getElementName();
-    return name != null? name : presentation.getTypeName();
+    try {
+      ElementPresentation presentation = myElement.getPresentation();
+      String name = presentation.getElementName();
+      return name != null? name : presentation.getTypeName();
+    }
+    catch (IndexNotReadyException e) {
+      return "Name not available during indexing";
+    }
   }
 
   @Override

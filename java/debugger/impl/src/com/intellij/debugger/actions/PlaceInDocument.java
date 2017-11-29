@@ -17,11 +17,6 @@ package com.intellij.debugger.actions;
 
 import com.intellij.openapi.editor.Document;
 
-/**
- * User: lex
- * Date: Oct 7, 2003
- * Time: 3:12:54 PM
- */
 class PlaceInDocument {
   private final Document myDocument;
   private final int myOffset;

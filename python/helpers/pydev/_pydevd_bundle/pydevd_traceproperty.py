@@ -1,7 +1,7 @@
 '''For debug purpose we are replacing actual builtin property by the debug property
 '''
 from _pydevd_bundle.pydevd_comm import get_global_debugger
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY3K
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY2
 from _pydevd_bundle import pydevd_tracing
 
 #=======================================================================================================================
@@ -11,7 +11,7 @@ def replace_builtin_property(new_property=None):
     if new_property is None:
         new_property = DebugProperty
     original = property
-    if not IS_PY3K:
+    if IS_PY2:
         try:
             import __builtin__
             __builtin__.__dict__['property'] = new_property

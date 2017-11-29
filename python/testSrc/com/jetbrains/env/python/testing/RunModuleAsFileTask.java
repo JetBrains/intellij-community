@@ -18,9 +18,7 @@ package com.jetbrains.env.python.testing;
 import com.jetbrains.env.PyAbstractTestProcessRunner;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
-import com.jetbrains.env.ut.PyUnitTestProcessRunner;
-import com.jetbrains.python.run.PythonProcessRunner;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 

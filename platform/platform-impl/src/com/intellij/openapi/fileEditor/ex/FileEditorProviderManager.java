@@ -32,10 +32,10 @@ public abstract class FileEditorProviderManager{
   }
 
   /**
-   * @param file cannot be <code>null</code>
+   * @param file cannot be {@code null}
    *
    * @return array of all editors providers that can create editor
-   * for the specified <code>file</code>. The method returns
+   * for the specified {@code file}. The method returns
    * an empty array if there are no such providers. Please note that returned array
    * is constructed with respect to editor policies.
    */

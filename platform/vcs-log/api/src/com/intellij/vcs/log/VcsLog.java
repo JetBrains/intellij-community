@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +37,11 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns those details of the selected commit which are visible in the table. <br/>
-   * The information for these commits are loaded fast (while scrolling),
-   * and - which is more important - user is not likely to select anything unless he sees what he selects,
-   * which means that the short details are already loaded. <br/>
+   * Returns short details of the selected commit which are visible in the table. <br/>
+   * Short details are loaded faster than full details and since it is done while scrolling,
+   * there is a better chance that details for a commit are loaded when user selects it.
    * This makes this method preferable to {@link #getSelectedDetails()}.
+   * Still, check for LoadingDetails instance has to be done when using details from this list.
    */
   @NotNull
   List<VcsShortCommitDetails> getSelectedShortDetails();
@@ -60,12 +59,11 @@ public interface VcsLog {
    * After all details are loaded they are provided to the consumer in the EDT.
    *
    * @param consumer  called in EDT after all details are loaded.
-   * @param indicator progress indicator to use in loading process, can be null.
    */
-  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
+  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer);
 
   /**
-   * Returns names of branches which contain the given commit, or null if this information is unavailable.
+   * Returns names of branches which contain the given commit, or null if this information is unavailable yet.
    */
   @Nullable
   Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.ui.tree.*;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
+import com.intellij.debugger.ui.tree.NodeManager;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.xdebugger.frame.XCompositeNode;
 
 import java.util.List;
 
-public interface ChildrenBuilder {
+public interface ChildrenBuilder extends XCompositeNode {
   NodeDescriptorFactory  getDescriptorManager();
 
   NodeManager getNodeManager();
@@ -28,7 +32,17 @@ public interface ChildrenBuilder {
 
   void setChildren(List<DebuggerTreeNode> children);
 
-  void setRemaining(int remaining);
+  default void addChildren(List<DebuggerTreeNode> children, boolean last) {
+    setChildren(children);
+  }
 
-  void initChildrenArrayRenderer(ArrayRenderer renderer);
+  /**
+   * @deprecated use {@link #tooManyChildren}
+   */
+  @Deprecated
+  default void setRemaining(int remaining) {
+    tooManyChildren(remaining);
+  }
+
+  void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength);
 }

@@ -19,7 +19,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
@@ -132,7 +131,7 @@ public class RW {
     }
   }
 
-  public static <X> Collection<X> read(final DataExternalizer<X> e, final Collection<X> acc, final DataInput in) {
+  public static <X,C extends Collection<X>> C read(final DataExternalizer<X> e, final C acc, final DataInput in) {
     try {
       final int size = DataInputOutputUtil.readINT(in);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 17, 2003
- * Time: 2:04:00 PM
- */
 public class ExpressionChildrenRenderer extends TypeRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<>("EXPRESSION_VALUE");
@@ -57,6 +52,8 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
 
   private CachedEvaluator myChildrenExpandable = createCachedEvaluator();
   private CachedEvaluator myChildrenExpression = createCachedEvaluator();
+
+  private NodeRenderer myPredictedRenderer;
 
   public String getUniqueId() {
     return UNIQUE_ID;
@@ -99,6 +96,10 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     descriptor.putUserData(LAST_CHILDREN_RENDERER, renderer);
   }
 
+  public static Value getLastChildrenValue(NodeDescriptor descriptor) {
+    return descriptor.getUserData(EXPRESSION_VALUE);
+  }
+
   private Value evaluateChildren(EvaluationContext context, NodeDescriptor descriptor) throws EvaluateException {
     final ExpressionEvaluator evaluator = myChildrenExpression.getEvaluator(context.getProject());
 
@@ -132,7 +133,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
   }
 
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    Value expressionValue = node.getParent().getDescriptor().getUserData(EXPRESSION_VALUE);
+    Value expressionValue = getLastChildrenValue(node.getParent().getDescriptor());
     if (expressionValue == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
@@ -205,4 +206,11 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     myChildrenExpandable.clear();
   }
 
+  public NodeRenderer getPredictedRenderer() {
+    return myPredictedRenderer;
+  }
+
+  public void setPredictedRenderer(NodeRenderer predictedRenderer) {
+    myPredictedRenderer = predictedRenderer;
+  }
 }

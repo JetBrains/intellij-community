@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/tests">
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="diff-api" exported="" />
@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="diff-impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="module" module-name="vcs-impl" scope="TEST" />
   </component>
 </module>

@@ -24,16 +24,11 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.lang.reflect.Field;
 
-/**
- * User: spLeaner
- */
 public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
@@ -115,79 +110,14 @@ public class MacUIUtil {
     g.fillRect(0, h1, width, height);
   }
 
-  public static class EditorTextFieldBorder implements Border {
-    private JComponent myEnabledComponent;
-
-    public EditorTextFieldBorder(final JComponent enabledComponent) {
-      myEnabledComponent = enabledComponent;
-    }
-
-    @Override
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      final int x1 = x + 3;
-      final int y1 = y + 3;
-      final int width1 = width - 8;
-      final int height1 = height - 6;
-
-      if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
-        g.setColor(UIUtil.getPanelBackground());
-        g.fillRect(x, y, width, height);
-      }
-
-      g.setColor(c.getBackground());
-      g.fillRect(x1, y1, width1, height1);
-
-      if (!myEnabledComponent.isEnabled()) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-      }
-
-      g.setColor(new Color(100, 100, 100, 200));
-      g.drawRect(x1, y1, width1 - 1, height1 - 1);
-
-      g.setColor(Gray._225);
-      g.drawRect(x1 + 1, y1 + 1, width1 - 3, height1 - 3);
-
-      if (myEnabledComponent.isEnabled() && myEnabledComponent.isVisible() && hasFocus(myEnabledComponent)) {
-        paintTextFieldFocusRing((Graphics2D) g, new Rectangle(x1, y1, width1, height1));
-      }
-    }
-
-    private static boolean hasFocus(@NotNull final Component toCheck) {
-      if (toCheck.hasFocus()) return true;
-      if (toCheck instanceof JComponent) {
-        final JComponent c = (JComponent)toCheck;
-        for (int i = 0; i < c.getComponentCount(); i++) {
-          final boolean b = hasFocus(c.getComponent(i));
-          if (b) return true;
-        }
-      }
-
-      return false;
-    }
-
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return new Insets(6, 7, 6, 7);
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
-    }
-  }
-
   public static Color getFocusRingColor() {
     final Object o = UIManager.get("Focus.color");
     if (o instanceof Color) {
       return (Color)o;
     }
 
+    //noinspection UseJBColor
     return new Color(64, 113, 167);
-  }
-
-  public static void paintTextFieldFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
-    paintFocusRing(g2d, getFocusRingColor(), bounds);
   }
 
   public static void paintComboboxFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {

@@ -103,7 +103,7 @@ public class GraphTableController {
       triggerElementClick(printElement);
     }
 
-    VcsLogGraphTable.Selection previousSelection = myTable.getSelection();
+    Selection previousSelection = myTable.getSelection();
     GraphAnswer<Integer> answer =
       myTable.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
     handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
@@ -111,7 +111,7 @@ public class GraphTableController {
 
   public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer,
                                 boolean dataCouldChange,
-                                @Nullable VcsLogGraphTable.Selection previousSelection,
+                                @Nullable Selection previousSelection,
                                 @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();

@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
@@ -189,9 +188,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
-    ProgressIndicatorProvider.checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
+      ProgressManager.checkCanceled();
       boolean isDir = vFile.isDirectory();
       if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;
@@ -213,12 +212,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     VirtualFile[] files = myFile.getChildren();
     final ArrayList<PsiElement> children = new ArrayList<>(files.length);
-    processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-      @Override
-      public boolean execute(@NotNull final PsiFileSystemItem element) {
-        children.add(element);
-        return true;
-      }
+    processChildren(element -> {
+      children.add(element);
+      return true;
     });
 
     return PsiUtilCore.toPsiElementArray(children);
@@ -368,7 +364,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-      if (copyVFile == null) throw new IncorrectOperationException("File was not copied: " + vFile);
 
       DumbService.getInstance(getProject()).completeJustSubmittedTasks();
 
@@ -552,5 +547,25 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("fileName", getName());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PsiDirectoryImpl directory = (PsiDirectoryImpl)o;
+
+    if (!myManager.equals(directory.myManager)) return false;
+    if (!myFile.equals(directory.myFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myManager.hashCode();
+    result = 31 * result + myFile.hashCode();
+    return result;
   }
 }

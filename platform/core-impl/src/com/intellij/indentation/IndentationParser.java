@@ -113,6 +113,10 @@ public abstract class IndentationParser implements PsiParser {
             // sometimes we do not have EOL between indents
             eolSeen = true;
           }
+          if (isCustomTagDelimiter(type)) {
+            builder.advanceLexer();
+            stack.push(new BlockInfo(currentIndent, builder.mark(), type));
+          }
           if (eolSeen) {
             if (startLineMarker != null) {
               startLineMarker.rollbackTo();
@@ -163,6 +167,10 @@ public abstract class IndentationParser implements PsiParser {
 
     fileMarker.done(root);
     return builder.getTreeBuilt();
+  }
+
+  protected boolean isCustomTagDelimiter(IElementType type) {
+    return false;
   }
 
   protected void closeBlock(final @NotNull PsiBuilder builder,

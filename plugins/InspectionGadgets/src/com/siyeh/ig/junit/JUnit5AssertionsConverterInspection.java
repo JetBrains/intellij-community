@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.testFrameworks.AssertHint;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +84,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      AssertHint hint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint hint = AssertHint.create(expression, methodName ->
+        AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false);
       if (hint == null) {
         return;
       }
@@ -162,7 +162,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      AssertHint assertHint = AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint assertHint = AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT
+        .get(methodName), false);
       if (assertHint == null) {
         return;
       }
@@ -188,11 +189,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
 
       PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null || !ImportUtils.addStaticImport(qualifiedName, methodName, methodExpression)) {
-        methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
-      }
+      methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
     }
 
     @Nls

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration {
   GrVariableDeclaration[] EMPTY_ARRAY = new GrVariableDeclaration[0];
-  ArrayFactory<GrVariableDeclaration> ARRAY_FACTORY = count -> new GrVariableDeclaration[count];
+  ArrayFactory<GrVariableDeclaration> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrVariableDeclaration[count];
 
   @Nullable
   GrTypeElement getTypeElementGroovy();

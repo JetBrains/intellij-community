@@ -256,8 +256,8 @@ public final class StringEditorDialog extends DialogWrapper{
   }
 
   /**
-   * @return edited descriptor. If initial descriptor was <code>null</code>
-   * and user didn't change anything then this method returns <code>null</code>.
+   * @return edited descriptor. If initial descriptor was {@code null}
+   * and user didn't change anything then this method returns {@code null}.
    */
   @Nullable
   StringDescriptor getDescriptor(){

@@ -162,7 +162,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
       final Project project = methodCallExpression.getProject();
       final CodeStyleSettings codeStyleSettings =
         CodeStyleSettingsManager.getSettings(project);
-      if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+      if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
         newStatementText.append("final ");
       }
       newStatementText.append(CommonClassNames.JAVA_UTIL_ITERATOR);
@@ -241,7 +241,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
       final PsiElementFactory factory = facade.getElementFactory();
       final Query<PsiReference> query = ReferencesSearch.search(
         enumerationVariable);
-      final List<PsiElement> referenceElements = new ArrayList();
+      final List<PsiElement> referenceElements = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElements.add(referenceElement);

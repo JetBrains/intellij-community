@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.SingleAlarm;
@@ -90,6 +91,14 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   protected abstract DebuggerTree createTreeView();
 
   @Override
+  protected void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    super.changeEvent(newContext, event);
+    if (event == DebuggerSession.Event.DISPOSE) {
+      getTree().getNodeFactory().dispose();
+    }
+  }
+
+  @Override
   protected void rebuild(DebuggerSession.Event event) {
     myRebuildAlarm.cancelAndRequest();
   }
@@ -131,6 +140,8 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
 
   @Override
   public void requestFocus() {
-    getTree().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getTree(), true);
+    });
   }
 }

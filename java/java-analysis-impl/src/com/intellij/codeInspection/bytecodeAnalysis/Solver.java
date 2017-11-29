@@ -15,10 +15,9 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -51,179 +50,77 @@ final class ELattice<T extends Enum<T>> {
 
 
 class ResultUtil {
+  private static final EKey[] EMPTY_PRODUCT = new EKey[0];
   private final ELattice<Value> lattice;
   final Value top;
+  final Value bottom;
+
   ResultUtil(ELattice<Value> lattice) {
     this.lattice = lattice;
     top = lattice.top;
+    bottom = lattice.bot;
   }
 
-  Result join(Result r1, Result r2) throws AnalyzerException {
-    if (r1 instanceof Final && ((Final) r1).value == top) {
-      return r1;
-    }
-    if (r2 instanceof Final && ((Final) r2).value == top) {
-      return r2;
-    }
+  Result join(Result r1, Result r2) {
+    Result result = checkFinal(r1, r2);
+    if (result != null) return result;
+    result = checkFinal(r1, r2);
+    if (result != null) return result;
     if (r1 instanceof Final && r2 instanceof Final) {
       return new Final(lattice.join(((Final) r1).value, ((Final) r2).value));
     }
     if (r1 instanceof Final && r2 instanceof Pending) {
-      Final f1 = (Final)r1;
-      Pending pending = (Pending) r2;
-      Set<Product> sum1 = new HashSet<>(pending.sum);
-      sum1.add(new Product(f1.value, Collections.emptySet()));
-      return new Pending(sum1);
+      return addSingle((Pending)r2, ((Final)r1).value);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
-      Final f2 = (Final)r2;
-      Pending pending = (Pending) r1;
-      Set<Product> sum1 = new HashSet<>(pending.sum);
-      sum1.add(new Product(f2.value, Collections.emptySet()));
-      return new Pending(sum1);
+      return addSingle((Pending)r1, ((Final)r2).value);
     }
+    assert r1 instanceof Pending && r2 instanceof Pending;
     Pending pending1 = (Pending) r1;
     Pending pending2 = (Pending) r2;
-    Set<Product> sum = new HashSet<>();
-    sum.addAll(pending1.sum);
-    sum.addAll(pending2.sum);
-    checkLimit(sum);
+    Set<Component> sum = new HashSet<>();
+    sum.addAll(Arrays.asList(pending1.delta));
+    sum.addAll(Arrays.asList(pending2.delta));
     return new Pending(sum);
   }
 
-  private static void checkLimit(Set<Product> sum) throws AnalyzerException {
-    int size = sum.stream().mapToInt(prod -> prod.ids.size()).sum();
-    if (size > Analysis.EQUATION_SIZE_LIMIT) {
-      throw new AnalyzerException(null, "Equation size is too big");
+  @Nullable
+  private Result checkFinal(Result r1, Result r2) {
+    if (!(r1 instanceof Final)) return null;
+    Final f1 = (Final)r1;
+    if (f1.value == top) return r1;
+    if (f1.value == bottom) return r2;
+    return null;
+  }
+
+  @NotNull
+  private Result addSingle(Pending pending, Value value) {
+    for (int i = 0; i < pending.delta.length; i++) {
+      Component component = pending.delta[i];
+      if(component.ids.length == 0) {
+        Value join = lattice.join(component.value, value);
+        if(join == top) {
+          return new Final(top);
+        } else if(join == component.value) {
+          return pending;
+        } else {
+          Component[] components = pending.delta.clone();
+          components[i] = new Component(join, EMPTY_PRODUCT);
+          return new Pending(components);
+        }
+      }
     }
-  }
-}
-
-class HResultUtil {
-  private static final HKey[] EMPTY_PRODUCT = new HKey[0];
-  private static final ArrayFactory<HComponent> HCOMPONENT_ARRAY_FACTORY = count -> new HComponent[count];
-  private final ELattice<Value> lattice;
-  final Value top;
-
-  HResultUtil(ELattice<Value> lattice) {
-    this.lattice = lattice;
-    top = lattice.top;
-  }
-
-  HResult join(HResult r1, HResult r2) {
-    if (r1 instanceof HFinal && ((HFinal) r1).value == top) {
-      return r1;
-    }
-    if (r2 instanceof HFinal && ((HFinal) r2).value == top) {
-      return r2;
-    }
-    if (r1 instanceof HFinal && r2 instanceof HFinal) {
-      return new HFinal(lattice.join(((HFinal) r1).value, ((HFinal) r2).value));
-    }
-    if (r1 instanceof HFinal && r2 instanceof HPending) {
-      HFinal f1 = (HFinal)r1;
-      HPending pending = (HPending) r2;
-      HComponent[] delta = new HComponent[pending.delta.length + 1];
-      delta[0] = new HComponent(f1.value, EMPTY_PRODUCT);
-      System.arraycopy(pending.delta, 0, delta, 1, pending.delta.length);
-      return new HPending(delta);
-    }
-    if (r1 instanceof HPending && r2 instanceof HFinal) {
-      HFinal f2 = (HFinal)r2;
-      HPending pending = (HPending) r1;
-      HComponent[] delta = new HComponent[pending.delta.length + 1];
-      delta[0] = new HComponent(f2.value, EMPTY_PRODUCT);
-      System.arraycopy(pending.delta, 0, delta, 1, pending.delta.length);
-      return new HPending(delta);
-    }
-    HPending pending1 = (HPending) r1;
-    HPending pending2 = (HPending) r2;
-    return new HPending(ArrayUtil.mergeArrays(pending1.delta, pending2.delta, HCOMPONENT_ARRAY_FACTORY));
-  }
-}
-
-final class Product {
-  @NotNull final Value value;
-  @NotNull final Set<Key> ids;
-
-  Product(@NotNull Value value, @NotNull Set<Key> ids) {
-    this.value = value;
-    this.ids = ids;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Product product = (Product)o;
-
-    if (!ids.equals(product.ids)) return false;
-    if (!value.equals(product.value)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = value.hashCode();
-    result = 31 * result + ids.hashCode();
-    return result;
-  }
-}
-
-interface Result {}
-final class Final implements Result {
-  final Value value;
-  Final(Value value) {
-    this.value = value;
-  }
-
-  @Override
-  public String toString() {
-    return "Final{" + "value=" + value + '}';
-  }
-}
-
-final class Pending implements Result {
-  final Set<Product> sum;
-
-  Pending(Set<Product> sum) {
-    this.sum = sum;
-  }
-
-}
-
-final class Effects implements Result {
-  final Set<EffectQuantum> effects;
-
-  Effects(Set<EffectQuantum> effects) {
-    this.effects = effects;
-  }
-}
-
-final class Equation {
-  final Key id;
-  final Result rhs;
-
-  Equation(Key id, Result rhs) {
-    this.id = id;
-    this.rhs = rhs;
-  }
-
-  @Override
-  public String toString() {
-    return "Equation{" + "id=" + id + ", rhs=" + rhs + '}';
+    return new Pending(ArrayUtil.append(pending.delta, new Component(value, EMPTY_PRODUCT)));
   }
 }
 
 final class CoreHKey {
   @NotNull
-  final byte[] key;
+  final MethodDescriptor myMethod;
   final int dirKey;
 
-  CoreHKey(@NotNull byte[] key, int dirKey) {
-    this.key = key;
+  CoreHKey(@NotNull MethodDescriptor method, int dirKey) {
+    this.myMethod = method;
     this.dirKey = dirKey;
   }
 
@@ -233,78 +130,82 @@ final class CoreHKey {
     if (o == null || getClass() != o.getClass()) return false;
 
     CoreHKey coreHKey = (CoreHKey)o;
-
-    if (dirKey != coreHKey.dirKey) return false;
-    if (!Arrays.equals(key, coreHKey.key)) return false;
-    return true;
+    return dirKey == coreHKey.dirKey && myMethod.equals(coreHKey.myMethod);
   }
 
   @Override
   public int hashCode() {
-    int result = Arrays.hashCode(key);
-    result = 31 * result + dirKey;
-    return result;
+    return 31 * myMethod.hashCode() + dirKey;
+  }
+
+  @Override
+  public String toString() {
+    return "CoreHKey [" + myMethod + "|" + Direction.fromInt(dirKey) + "]";
   }
 }
 
 final class Solver {
 
   private final ELattice<Value> lattice;
-  private final HashMap<HKey, HashSet<HKey>> dependencies = new HashMap<>();
-  private final HashMap<HKey, HPending> pending = new HashMap<>();
-  private final HashMap<HKey, Value> solved = new HashMap<>();
-  private final Stack<HKey> moving = new Stack<>();
+  private final HashMap<EKey, HashSet<EKey>> dependencies = new HashMap<>();
+  private final HashMap<EKey, Pending> pending = new HashMap<>();
+  private final HashMap<EKey, Value> solved = new HashMap<>();
+  private final Stack<EKey> moving = new Stack<>();
 
-  private final HResultUtil resultUtil;
-  private final HashMap<CoreHKey, HEquation> equations = new HashMap<>();
+  private final ResultUtil resultUtil;
+  private final HashMap<CoreHKey, Equation> equations = new HashMap<>();
   private final Value unstableValue;
 
   Solver(ELattice<Value> lattice, Value unstableValue) {
     this.lattice = lattice;
     this.unstableValue = unstableValue;
-    resultUtil = new HResultUtil(lattice);
+    resultUtil = new ResultUtil(lattice);
   }
 
-  void addEquation(HEquation equation) {
-    HKey key = equation.key;
-    CoreHKey coreKey = new CoreHKey(key.key, key.dirKey);
+  Result getUnknownResult() {
+    return new Final(unstableValue);
+  }
 
-    HEquation previousEquation = equations.get(coreKey);
+  void addEquation(Equation equation) {
+    EKey key = equation.key;
+    CoreHKey coreKey = new CoreHKey(key.method, key.dirKey);
+
+    Equation previousEquation = equations.get(coreKey);
     if (previousEquation == null) {
       equations.put(coreKey, equation);
     } else {
-      HKey joinKey = new HKey(coreKey.key, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, true);
-      HResult joinResult = resultUtil.join(equation.result, previousEquation.result);
-      HEquation joinEquation = new HEquation(joinKey, joinResult);
+      EKey joinKey = new EKey(coreKey.myMethod, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, false);
+      Result joinResult = resultUtil.join(equation.result, previousEquation.result);
+      Equation joinEquation = new Equation(joinKey, joinResult);
       equations.put(coreKey, joinEquation);
     }
   }
 
-  void queueEquation(HEquation equation) {
-    HResult rhs = equation.result;
-    if (rhs instanceof HFinal) {
-      solved.put(equation.key, ((HFinal) rhs).value);
+  void queueEquation(Equation equation) {
+    Result rhs = equation.result;
+    if (rhs instanceof Final) {
+      solved.put(equation.key, ((Final) rhs).value);
       moving.push(equation.key);
-    } else if (rhs instanceof HPending) {
-      HPending pendResult = ((HPending)rhs).copy();
-      HResult norm = normalize(pendResult.delta);
-      if (norm instanceof HFinal) {
-        solved.put(equation.key, ((HFinal) norm).value);
+    } else if (rhs instanceof Pending) {
+      Pending pendResult = ((Pending)rhs).copy();
+      Result norm = normalize(pendResult.delta);
+      if (norm instanceof Final) {
+        solved.put(equation.key, ((Final) norm).value);
         moving.push(equation.key);
       }
       else {
-        HPending pendResult1 = ((HPending)rhs).copy();
-        for (HComponent component : pendResult1.delta) {
-          for (HKey trigger : component.ids) {
-            HashSet<HKey> set = dependencies.get(trigger);
+        Pending pendResult1 = ((Pending)rhs).copy();
+        for (Component component : pendResult1.delta) {
+          for (EKey trigger : component.ids) {
+            HashSet<EKey> set = dependencies.get(trigger);
             if (set == null) {
               set = new HashSet<>();
               dependencies.put(trigger, set);
             }
             set.add(equation.key);
           }
-          pending.put(equation.key, pendResult1);
         }
+        pending.put(equation.key, pendResult1);
       }
     }
   }
@@ -320,38 +221,38 @@ final class Solver {
     }
   }
 
-  Map<HKey, Value> solve() {
-    for (HEquation hEquation : equations.values()) {
-      queueEquation(hEquation);
+  Map<EKey, Value> solve() {
+    for (Equation equation : equations.values()) {
+      queueEquation(equation);
     }
     while (!moving.empty()) {
-      HKey id = moving.pop();
+      EKey id = moving.pop();
       Value value = solved.get(id);
 
-      HKey[] initialPIds  = id.stable ? new HKey[]{id, id.invertStability()} : new HKey[]{id.invertStability(), id};
+      EKey[] initialPIds  = id.stable ? new EKey[]{id, id.invertStability()} : new EKey[]{id.invertStability(), id};
       Value[] initialPVals = id.stable ? new Value[]{value, value} : new Value[]{value, unstableValue};
 
-      HKey[] pIds = new HKey[]{initialPIds[0], initialPIds[1], initialPIds[0].negate(), initialPIds[1].negate()};
+      EKey[] pIds = new EKey[]{initialPIds[0], initialPIds[1], initialPIds[0].negate(), initialPIds[1].negate()};
       Value[] pVals = new Value[]{initialPVals[0], initialPVals[1], negate(initialPVals[0]), negate(initialPVals[1])};
 
       for (int i = 0; i < pIds.length; i++) {
-        HKey pId = pIds[i];
+        EKey pId = pIds[i];
         Value pVal = pVals[i];
-        HashSet<HKey> dIds = dependencies.get(pId);
+        HashSet<EKey> dIds = dependencies.get(pId);
         if (dIds == null) {
           continue;
         }
-        for (HKey dId : dIds) {
-          HPending pend = pending.remove(dId);
+        for (EKey dId : dIds) {
+          Pending pend = pending.remove(dId);
           if (pend != null) {
-            HResult pend1 = substitute(pend, pId, pVal);
-            if (pend1 instanceof HFinal) {
-              HFinal fi = (HFinal)pend1;
+            Result pend1 = substitute(pend, pId, pVal);
+            if (pend1 instanceof Final) {
+              Final fi = (Final)pend1;
               solved.put(dId, fi.value);
               moving.push(dId);
             }
             else {
-              pending.put(dId, (HPending)pend1);
+              pending.put(dId, (Pending)pend1);
             }
           }
         }
@@ -362,9 +263,9 @@ final class Solver {
   }
 
   // substitute id -> value into pending
-  HResult substitute(@NotNull HPending pending, @NotNull HKey id, @NotNull Value value) {
-    HComponent[] sum = pending.delta;
-    for (HComponent intIdComponent : sum) {
+  Result substitute(@NotNull Pending pending, @NotNull EKey id, @NotNull Value value) {
+    Component[] sum = pending.delta;
+    for (Component intIdComponent : sum) {
       if (intIdComponent.remove(id)) {
         intIdComponent.value = lattice.meet(intIdComponent.value, value);
       }
@@ -372,17 +273,17 @@ final class Solver {
     return normalize(sum);
   }
 
-  @NotNull HResult normalize(@NotNull HComponent[] sum) {
+  @NotNull Result normalize(@NotNull Component[] sum) {
     Value acc = lattice.bot;
     boolean computableNow = true;
-    for (HComponent prod : sum) {
+    for (Component prod : sum) {
       if (prod.isEmpty() || prod.value == lattice.bot) {
         acc = lattice.join(acc, prod.value);
       } else {
         computableNow = false;
       }
     }
-    return (acc == lattice.top || computableNow) ? new HFinal(acc) : new HPending(sum);
+    return (acc == lattice.top || computableNow) ? new Final(acc) : new Pending(sum);
   }
 
 }

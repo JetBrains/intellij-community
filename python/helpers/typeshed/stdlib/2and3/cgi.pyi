@@ -38,6 +38,7 @@ class MiniFieldStorage:
 
 
 class FieldStorage(object):
+    FieldStorageClass = ...  # type: Optional[type]
     keep_blank_values = ...  # type: int
     strict_parsing = ...  # type: int
     qs_on_post = ...  # type: Optional[str]

@@ -4,14 +4,14 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
 import com.intellij.testFramework.ApplicationRule
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
+import org.jetbrains.settingsRepository.git.buildBareRepository
 import org.junit.ClassRule
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
 internal class IcsCredentialTest {
   companion object {
@@ -21,7 +21,7 @@ internal class IcsCredentialTest {
   }
 
   private fun createProvider(credentialsStore: IcsCredentialsStore): JGitCredentialsProvider {
-    return JGitCredentialsProvider(lazyOf(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
+    return JGitCredentialsProvider(lazyOf(credentialsStore), buildBareRepository(Paths.get("/tmp/fake")))
   }
 
   private fun createStore() = IcsCredentialsStore()

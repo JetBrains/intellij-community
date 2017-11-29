@@ -82,7 +82,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
     mySeverity = type;
     myMessage = message;
-    myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.<LocalQuickFix>id(), LocalQuickFix.EMPTY_ARRAY) : fixes;
+    myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), LocalQuickFix.EMPTY_ARRAY) : fixes;
 
     if (textRange != null) {
       final PsiElement psiElement = getPsiElement();

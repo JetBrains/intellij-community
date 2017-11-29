@@ -31,22 +31,22 @@ public class GitPushTargetTest extends GitSingleRepoTest {
     addRemote("origin");
   }
 
-  public void test_no_push_spec() throws Exception {
+  public void test_no_push_spec() {
     GitPushTarget target = GitPushTarget.getFromPushSpec(myRepo, ObjectUtils.assertNotNull(myRepo.getCurrentBranch()));
     assertNull(target);
   }
 
-  public void test_refs_for_master() throws Exception {
+  public void test_refs_for_master() {
     setPushSpec("origin", "HEAD:refs/for/master");
     assertSpecialTargetRef("refs/for/master", "origin");
   }
 
-  public void test_wildcard_special_ref() throws Exception {
+  public void test_wildcard_special_ref() {
     setPushSpec("origin", "refs/heads/*:refs/for/*");
     assertSpecialTargetRef("refs/for/master", "origin");
   }
 
-  public void test_complex_remote_name() throws Exception {
+  public void test_complex_remote_name() {
     addRemote("my/remote");
     setPushSpec("my/remote", "HEAD:refs/for/master");
     setTracking("master", "my/remote", "refs/heads/master");
@@ -54,13 +54,13 @@ public class GitPushTargetTest extends GitSingleRepoTest {
     assertSpecialTargetRef("refs/for/master", "my/remote");
   }
 
-  public void test_standard_fetch_refspec() throws Exception {
+  public void test_standard_fetch_refspec() {
     setPushSpec("origin", "refs/heads/*:refs/remotes/origin/*");
     assertStandardRemoteBranch("master",
                                ObjectUtils.assertNotNull(myRepo.getBranches().findBranchByName("origin/master")));
   }
 
-  public void test_tracked_remote_is_preferable_over_origin() throws Exception {
+  public void test_tracked_remote_is_preferable_over_origin() {
     addRemote("github");
     setPushSpec("origin", "HEAD:refs/for/origin");
     setPushSpec("github", "HEAD:refs/for/github");

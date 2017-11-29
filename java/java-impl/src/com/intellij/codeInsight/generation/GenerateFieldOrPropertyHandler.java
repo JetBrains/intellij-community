@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +72,8 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
           for (GenerationInfo info : infos) {
             PsiMember member = info.getPsiMember();
             if (!(member instanceof PsiMethod)) continue;
-            if (myMemberType == PropertyMemberType.GETTER && PropertyUtil.isSimplePropertyGetter((PsiMethod)member) ||
-                myMemberType == PropertyMemberType.SETTER && PropertyUtil.isSimplePropertySetter((PsiMethod)member)) {
+            if (myMemberType == PropertyMemberType.GETTER && PropertyUtilBase.isSimplePropertyGetter((PsiMethod)member) ||
+                myMemberType == PropertyMemberType.SETTER && PropertyUtilBase.isSimplePropertySetter((PsiMethod)member)) {
               targetMember = member;
               break;
             }

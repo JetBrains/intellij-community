@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class PathUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PathUtil");
+
   private PathUtil() { }
 
   @Nullable
@@ -48,20 +52,6 @@ public class PathUtil {
   @NotNull
   public static String getLocalPath(@NotNull String path) {
     return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
-  }
-
-  @NotNull
-  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
-    if (!file.isValid()) {
-      return file;
-    }
-    if (file.getFileSystem() instanceof LocalFileProvider) {
-      final VirtualFile localFile = ((LocalFileProvider)file.getFileSystem()).getLocalVirtualFileFor(file);
-      if (localFile != null) {
-        return localFile;
-      }
-    }
-    return file;
   }
 
   @NotNull
@@ -125,6 +115,36 @@ public class PathUtil {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
   }
 
+  /**
+   * Ensures that the given argument doesn't contain {@code \} separators.
+   * <p>
+   * The violations are reported via the {@code LOG.error}.
+   * <p>
+   * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
+   *
+   * @param className     Class name
+   * @param methodName    Method name
+   * @param parameterName Parameter name
+   * @param argument      Path
+   * @see org.jetbrains.annotations.SystemDependent
+   * @see org.jetbrains.annotations.SystemIndependent
+   */
+  @Deprecated
+  public static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {
+    if (argument != null && argument.contains("\\")) {
+      String message = String.format("Argument for @SystemIndependent parameter '%s' of %s.%s must be system-independent: %s",
+                                     parameterName, className, methodName, argument);
+
+      IllegalArgumentException exception = new IllegalArgumentException(message);
+
+      StackTraceElement[] stackTrace = new StackTraceElement[exception.getStackTrace().length - 1];
+      System.arraycopy(exception.getStackTrace(), 1, stackTrace, 0, stackTrace.length);
+      exception.setStackTrace(stackTrace);
+
+      LOG.error(exception);
+    }
+  }
+
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
     if (SystemInfo.isWindows && path.length() >= 2 && Character.isUpperCase(path.charAt(0)) && path.charAt(1) == ':') {
@@ -140,4 +160,22 @@ public class PathUtil {
   public static String makeFileName(@NotNull String name, @Nullable String extension) {
     return StringUtil.isEmpty(extension) ? name : name + '.' + extension;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@code VfsUtil.getLocalFile(file)} instead (to be removed in IDEA 2019) */
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
+    if (file.isValid()) {
+      VirtualFileSystem fileSystem = file.getFileSystem();
+      if (fileSystem instanceof LocalFileProvider) {
+        VirtualFile localFile = ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(file);
+        if (localFile != null) {
+          return localFile;
+        }
+      }
+    }
+
+    return file;
+  }
+  //</editor-fold>
 }

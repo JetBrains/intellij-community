@@ -17,7 +17,6 @@ package com.intellij.usagesStatistics;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -43,7 +42,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertUsagesWithPriority() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
+        final Map<GroupDescriptor, Set<UsageDescriptor>> patchedUsages = new HashMap<>();
 
         createPatchDescriptor(patchedUsages, "low", GroupDescriptor.LOWER_PRIORITY, "l1", 1);
         createPatchDescriptor(patchedUsages, "low", GroupDescriptor.LOWER_PRIORITY, "l2", 1);
@@ -59,7 +58,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertUsagesWithEqualPriority() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
+        final Map<GroupDescriptor, Set<UsageDescriptor>> patchedUsages = new HashMap<>();
 
   createPatchDescriptor(patchedUsages, "g4", GroupDescriptor.HIGHER_PRIORITY, "1", 1);
         createPatchDescriptor(patchedUsages, "g2", GroupDescriptor.HIGHER_PRIORITY, "2", 1);
@@ -71,7 +70,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertString() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
+        final Map<GroupDescriptor, Set<UsageDescriptor>> patchedUsages = new HashMap<>();
 
         createPatchDescriptor(patchedUsages, "g4", GroupDescriptor.HIGHER_PRIORITY, "1", 1);
         createPatchDescriptor(patchedUsages, "g2", GroupDescriptor.HIGHER_PRIORITY, "2", 1);
@@ -124,13 +123,13 @@ public class StatisticsUploadAssistantTest extends TestCase {
         return usage.getKey() + "=" + usage.getValue();
     }
 
-    private static void createPatchDescriptor(Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages, String groupId, double priority, String key, int i) {
+    private static void createPatchDescriptor(Map<GroupDescriptor, Set<UsageDescriptor>> patchedUsages, String groupId, double priority, String key, int i) {
         final GroupDescriptor groupDescriptor = GroupDescriptor.create(groupId, priority);
 
         if (!patchedUsages.containsKey(groupDescriptor)){
             patchedUsages.put(groupDescriptor, new LinkedHashSet<>());
         }
-        patchedUsages.get(groupDescriptor).add(new PatchedUsage(key, i));
+        patchedUsages.get(groupDescriptor).add(new UsageDescriptor(key, i));
     }
 
 

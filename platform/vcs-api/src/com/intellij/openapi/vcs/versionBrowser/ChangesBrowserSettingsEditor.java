@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.12.2006
- * Time: 20:54:32
- */
 package com.intellij.openapi.vcs.versionBrowser;
 
 import org.jetbrains.annotations.Nullable;

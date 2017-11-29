@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Dec-2008
- */
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -45,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiLiteralExpression> {
-  private static final Logger LOG = Logger.getInstance("#" + HighlightSuppressedWarningsHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(HighlightSuppressedWarningsHandler.class);
 
   private final PsiAnnotation myTarget;
   private final PsiLiteralExpression mySuppressedExpression;

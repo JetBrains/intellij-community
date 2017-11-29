@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +127,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
       boolean first = true;
       @NonNls final String TYPE_NAME_VAR = "TYPE_NAME_VAR";
       for (GenerationInfo prototype : prototypes) {
-        final PsiTypeElement typeElement = PropertyUtil.getPropertyTypeElement(prototype.getPsiMember());
+        final PsiTypeElement typeElement = PropertyUtilBase.getPropertyTypeElement(prototype.getPsiMember());
         if (first) {
           first = false;
           builder.replaceElement(typeElement, TYPE_NAME_VAR, expression, true);

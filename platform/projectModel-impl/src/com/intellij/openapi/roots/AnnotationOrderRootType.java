@@ -49,19 +49,19 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     List<VirtualFile> result = new ArrayList<>();
     RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
       @Override
-      public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
+      public List<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
       @Override
-      public List<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
+      public List<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
       @Override
-      public List<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
+      public List<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry orderEntry,
                                                            final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
         return value;
@@ -76,20 +76,20 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override
-      public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
+      public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
       @Override
-      public List<String> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<String> value) {
+      public List<String> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
       @Override
-      public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
-                                                           final List<String> value) {
+      public List<String> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry orderEntry,
+                                                      final List<String> value) {
         Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsUrls());
         return value;
       }

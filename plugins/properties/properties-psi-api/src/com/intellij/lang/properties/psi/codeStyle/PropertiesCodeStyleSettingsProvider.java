@@ -33,7 +33,6 @@ public class PropertiesCodeStyleSettingsProvider extends CodeStyleSettingsProvid
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, "Properties Files") {
-      @Nullable
       @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.codestyle.properties";

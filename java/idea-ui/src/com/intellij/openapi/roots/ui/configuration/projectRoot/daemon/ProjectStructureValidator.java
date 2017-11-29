@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: ksafonov
- */
 public abstract class ProjectStructureValidator {
 
   private static final ExtensionPointName<ProjectStructureValidator> EP_NAME =

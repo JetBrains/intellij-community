@@ -26,6 +26,7 @@ import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -48,6 +49,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.DebugAwareConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +79,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
+  public static final String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
   public static boolean isModule = false;
 
   @Override
@@ -232,34 +235,22 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   public CommandLinePatcher[] createCommandLinePatchers(final Project project, final PythonCommandLineState state,
-                                                               RunProfile profile,
-                                                               final int serverLocalPort) {
+                                                        RunProfile profile,
+                                                        final int serverLocalPort) {
     return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
   private CommandLinePatcher createDebugServerPatcher(final Project project,
-                                                             final PythonCommandLineState pyState,
-                                                             final int serverLocalPort) {
+                                                      final PythonCommandLineState pyState,
+                                                      final int serverLocalPort) {
     return new CommandLinePatcher() {
 
       private void patchExeParams(ParametersList parametersList) {
         // we should remove '-m' parameter, but notify debugger of it
         // but we can't remove one parameter from group, so we create new parameters group
-        ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-        int exeParamsIndex = parametersList.getParamsGroups().indexOf(
-          parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
-        ParamsGroup exeParamsOld = parametersList.removeParamsGroup(exeParamsIndex);
         isModule = false;
-        for (String param : exeParamsOld.getParameters()) {
-          if (!param.equals("-m")) {
-            newExeParams.addParameter(param);
-          }
-          else {
-            isModule = true;
-          }
-        }
 
-        parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
+        handleModuleMode(parametersList, PythonCommandLineState.GROUP_SCRIPT);
       }
 
 
@@ -290,6 +281,24 @@ public class PyDebugRunner extends GenericProgramRunner {
     };
   }
 
+  private void handleModuleMode(ParametersList parametersList, String groupId) {
+    ParamsGroup newExeParams = new ParamsGroup(groupId);
+    int exeParamsIndex = parametersList.getParamsGroups().indexOf(
+      parametersList.getParamsGroup(groupId));
+    ParamsGroup exeParamsOld = parametersList.removeParamsGroup(exeParamsIndex);
+
+    for (String param : exeParamsOld.getParameters()) {
+      if (!param.equals("-m")) {
+        newExeParams.addParameter(param);
+      }
+      else {
+        isModule = true;
+      }
+    }
+
+    parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
+  }
+
   private void fillDebugParameters(@NotNull Project project,
                                    @NotNull ParamsGroup debugParams,
                                    int serverLocalPort,
@@ -298,7 +307,6 @@ public class PyDebugRunner extends GenericProgramRunner {
     PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
 
     configureDebugParameters(project, debugParams, pyState, cmd);
-
 
     configureDebugEnvironment(project, cmd.getEnvironment());
 
@@ -317,8 +325,13 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environment.put(PYDEVD_FILTER_LIBRARIES, "True");
     }
+    if (debuggerSettings.isLoadValuesAsync()) {
+      environment.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
+    }
 
     PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environment);
+
+    PythonEnvUtil.addToPythonPath(environment, CYTHON_EXTENSIONS_DIR);
 
     addProjectRootsToEnv(project, environment);
     addSdkRootsToEnv(project, environment);
@@ -351,7 +364,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportQtDebugging()) {
-      debugParams.addParameter("--qt-support");
+      String pyQtBackend = PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend().toLowerCase();
+      debugParams.addParameter(String.format("--qt-support=%s", pyQtBackend));
     }
   }
 
@@ -386,7 +400,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         final Sdk sdk = runConfiguration.getSdk();
         if (sdk != null) {
           List<String> roots = Lists.newArrayList();
-          for (VirtualFile contentRoot : sdk.getSdkModificator().getRoots(OrderRootType.CLASSES)) {
+          for (VirtualFile contentRoot : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
             roots.add(contentRoot.getPath());
           }
           environment.put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));

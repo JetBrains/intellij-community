@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package com.intellij.debugger.memory.filtering;
 
-import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
+@FunctionalInterface
 public interface ConditionChecker {
-  CheckingResult check(@NotNull ObjectReference ref);
+  CheckingResult check(@NotNull Value ref);
 
-  ConditionChecker ALL_MATCHED_CHECKER = new ConditionChecker() {
-    @Override
-    public CheckingResult check(@NotNull ObjectReference ref) {
-      return CheckingResultImpl.SUCCESS;
-    }
-  };
+  ConditionChecker ALL_MATCHED_CHECKER = ref -> CheckingResultImpl.SUCCESS;
 }

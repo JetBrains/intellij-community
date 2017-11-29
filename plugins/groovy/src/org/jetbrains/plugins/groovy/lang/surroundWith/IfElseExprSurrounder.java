@@ -24,10 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class IfElseExprSurrounder extends GroovyConditionSurrounder {
   @Override
   protected TextRange surroundExpression(@NotNull GrExpression expression, PsiElement context) {

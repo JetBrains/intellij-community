@@ -32,11 +32,15 @@ import org.apache.xerces.impl.XMLEntityManager;
 import org.apache.xerces.impl.XercesAccessor;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
+import org.apache.xerces.util.SecurityManager;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.apache.xerces.xni.grammars.XMLGrammarPool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.XMLConstants;
@@ -46,6 +50,8 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
+
+import static com.sun.org.apache.xerces.internal.impl.Constants.SECURITY_MANAGER;
 
 /**
  * @author Mike
@@ -62,6 +68,7 @@ public class ValidateXmlActionHandler {
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
   private static final Key<String[]> KNOWN_NAMESPACES_KEY = Key.create("KnownNamespacesKey");
   private static final Key<Map<String, XMLEntityManager.Entity>> ENTITIES_KEY = Key.create("EntityManagerKey");
+  public static final String JDK_XML_MAX_OCCUR_LIMIT = "jdk.xml.maxOccurLimit";
 
   private Project myProject;
   private XmlFile myFile;
@@ -238,6 +245,12 @@ public class ValidateXmlActionHandler {
       try {
         parser.getXMLReader().setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       } catch (Exception ignore) {
+      }
+
+      String property = System.getProperty(JDK_XML_MAX_OCCUR_LIMIT);
+      if (property != null) {
+        SecurityManager securityManager = (SecurityManager)parser.getProperty(SECURITY_MANAGER);
+        securityManager.setMaxOccurNodeLimit(Integer.parseInt(property));
       }
 
       if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2

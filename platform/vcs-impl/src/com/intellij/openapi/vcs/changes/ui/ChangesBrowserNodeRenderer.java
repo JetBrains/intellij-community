@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +71,18 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
+  @Override
+  public void clear() {
+    setToolTipText(null);
+    super.clear();
+  }
+
   public void appendTextWithIssueLinks(@NotNull String text, @NotNull SimpleTextAttributes baseStyle) {
     myIssueLinkRenderer.appendTextWithLinks(text, baseStyle);
+  }
+
+  public void setIcon(@NotNull FileType fileType, boolean isDirectory) {
+    Icon icon = isDirectory ? PlatformIcons.DIRECTORY_CLOSED_ICON : fileType.getIcon();
+    setIcon(icon);
   }
 }

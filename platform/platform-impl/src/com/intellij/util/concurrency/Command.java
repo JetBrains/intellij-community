@@ -67,6 +67,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      * @return amount of tasks, which are executing or waiting for execution
      */
     public int getTaskCount() {
+      if (foreground == background) return background.getTaskCount();
       return foreground.getTaskCount() + background.getTaskCount();
     }
   }

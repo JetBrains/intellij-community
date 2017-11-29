@@ -30,17 +30,14 @@ import java.util.Map;
  */
 public class CharsetUtil {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final Map<LanguageFileType, Boolean> ourSupportsCharsetDetection = new ConcurrentFactoryMap<LanguageFileType, Boolean>() {
-    @Nullable
-    @Override
-    protected Boolean create(LanguageFileType fileType) {
+  private static final Map<LanguageFileType, Boolean> ourSupportsCharsetDetection = ConcurrentFactoryMap.createMap(fileType-> {
       Class<?> ftClass = fileType.getClass();
       String methodName = "extractCharsetFromFileContent";
       Class declaring1 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, String.class);
       Class declaring2 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, CharSequence.class);
       return !LanguageFileType.class.equals(declaring1) || !LanguageFileType.class.equals(declaring2);
     }
-  };
+  );
 
   public static Charset extractCharsetFromFileContent(@Nullable Project project,
                                                       @Nullable VirtualFile virtualFile,

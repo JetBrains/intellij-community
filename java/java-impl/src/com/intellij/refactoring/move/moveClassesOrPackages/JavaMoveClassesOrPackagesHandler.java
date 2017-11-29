@@ -54,7 +54,7 @@ import java.awt.*;
 import java.util.Arrays;
 
 public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#" + JavaMoveClassesOrPackagesHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaMoveClassesOrPackagesHandler.class);
   private static final JavaVetoRenameCondition VETO_RENAME_CONDITION = new JavaVetoRenameCondition();
 
   public static boolean isPackageOrDirectory(final PsiElement element) {
@@ -75,7 +75,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     for (PsiElement element : elements) {
       if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
   public static boolean invalid4Move(PsiElement element) {

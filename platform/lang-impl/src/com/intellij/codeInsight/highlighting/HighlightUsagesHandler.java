@@ -309,7 +309,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
-      return injectedManager.injectedToHost(identifier, identifier.getTextRange());
+      TextRange range = identifier.getTextRange();
+      return range == null ? null : injectedManager.injectedToHost(identifier, range);
     }
     return null;
   }
@@ -411,6 +412,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     for (TextRange relativeRange : ReferenceRange.getRanges(ref)) {
       PsiElement element = ref.getElement();
       TextRange range = safeCut(element.getTextRange(), relativeRange);
+      if (range.isEmpty()) continue;
       // injection occurs
       result.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
     }

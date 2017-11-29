@@ -32,7 +32,6 @@ import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +63,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
 
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+      myLogProvider.readFirstBlock(myProjectRoot, new RequirementsImpl(1000, false, Collections.emptySet()));
     assertOrderedEquals(block.getCommits(), expectedLogWithoutTaggedBranch);
   }
 
@@ -112,7 +111,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertOrderedEquals(expectedLog, collector);
   }
 
-  public void test_get_current_user() throws Exception {
+  public void test_get_current_user() {
     VcsUser user = myLogProvider.getCurrentUser(myProjectRoot);
     assertNotNull("User is not defined", user);
     VcsUser expected = getDefaultUser();
@@ -125,7 +124,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("update-ref refs/remotes/origin/HEAD master");
 
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                        new RequirementsImpl(1000, false, Collections.<VcsRef>emptySet()));
+                                                                        new RequirementsImpl(1000, false, Collections.emptySet()));
     assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), ref -> ref.getName().equals("origin/HEAD")));
   }
 
@@ -135,7 +134,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("tag build");
 
     VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                       new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
+                                                                       new RequirementsImpl(1000, true, Collections.emptySet()));
     List<VcsCommitMetadata> expectedLog = log();
     assertOrderedEquals(data.getCommits(), expectedLog);
     assertTrue(ContainerUtil.exists(data.getRefs(), ref -> ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH));
@@ -284,7 +283,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     tac("b.txt");
   }
 
-  private static void prepareLongHistory(int size) throws IOException {
+  private static void prepareLongHistory(int size) {
     for (int i = 0; i < size; i++) {
       String file = "a" + (i % 10) + ".txt";
       if (i < 10) {

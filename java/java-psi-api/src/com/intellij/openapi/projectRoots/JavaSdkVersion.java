@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,47 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.util.Version;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Represents version of Java SDK. Use {@link JavaSdk#getVersion(Sdk)} method to obtain version of an {@link Sdk}
+ * Represents version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain version of an {@code Sdk}.
  *
  * @author nik
+ * @see LanguageLevel
  */
 public enum JavaSdkVersion {
-  JDK_1_0(LanguageLevel.JDK_1_3, "1.0"),
-  JDK_1_1(LanguageLevel.JDK_1_3, "1.1"),
-  JDK_1_2(LanguageLevel.JDK_1_3, "1.2"),
-  JDK_1_3(LanguageLevel.JDK_1_3, "1.3"),
-  JDK_1_4(LanguageLevel.JDK_1_4, "1.4"),
-  JDK_1_5(LanguageLevel.JDK_1_5, "1.5"),
-  JDK_1_6(LanguageLevel.JDK_1_6, "1.6"),
-  JDK_1_7(LanguageLevel.JDK_1_7, "1.7"),
-  JDK_1_8(LanguageLevel.JDK_1_8, "1.8"),
-  JDK_1_9(LanguageLevel.JDK_1_9, "1.9");
+  JDK_1_0(LanguageLevel.JDK_1_3, 0, new String[]{"1.0"}),
+  JDK_1_1(LanguageLevel.JDK_1_3, 1, new String[]{"1.1"}),
+  JDK_1_2(LanguageLevel.JDK_1_3, 2, new String[]{"1.2"}),
+  JDK_1_3(LanguageLevel.JDK_1_3, 3, new String[]{"1.3"}),
+  JDK_1_4(LanguageLevel.JDK_1_4, 4, new String[]{"1.4"}),
+  JDK_1_5(LanguageLevel.JDK_1_5, 5, new String[]{"1.5", "5.0"}),
+  JDK_1_6(LanguageLevel.JDK_1_6, 6, new String[]{"1.6", "6.0"}),
+  JDK_1_7(LanguageLevel.JDK_1_7, 7, new String[]{"1.7", "7.0"}),
+  JDK_1_8(LanguageLevel.JDK_1_8, 8, new String[]{"1.8", "8.0"}),
+  JDK_1_9(LanguageLevel.JDK_1_9, 9, new String[]{"1.9", "9.0", "9-ea"}),
+  JDK_10(LanguageLevel.JDK_1_9, 10, new String[]{"10.0", "10-ea"});
 
   private static final JavaSdkVersion MAX_JDK = JDK_1_9;
 
-  private final LanguageLevel myMaxLanguageLevel;
-  private final String myDescription;
+  private static final Pattern JAVA_VERSION = Pattern.compile("java version \"(\\d.*)\"");
 
-  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel, @NotNull String description) {
+  private final LanguageLevel myMaxLanguageLevel;
+  private final int myRelease;
+  private final String[] myVersionStrings;
+
+  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel, int release, @NotNull String[] description) {
     myMaxLanguageLevel = maxLanguageLevel;
-    myDescription = description;
+    myRelease = release;
+    myVersionStrings = description;
   }
 
   @NotNull
@@ -54,7 +65,7 @@ public enum JavaSdkVersion {
 
   @NotNull
   public String getDescription() {
-    return myDescription;
+    return myVersionStrings[0];
   }
 
   public boolean isAtLeast(@NotNull JavaSdkVersion version) {
@@ -63,19 +74,7 @@ public enum JavaSdkVersion {
 
   @Override
   public String toString() {
-    return super.toString() + ", description: " + myDescription;
-  }
-
-  @NotNull
-  public static JavaSdkVersion byDescription(@NotNull String description) throws IllegalArgumentException {
-    for (JavaSdkVersion version : values()) {
-      if (version.getDescription().equals(description)) {
-        return version;
-      }
-    }
-    throw new IllegalArgumentException(
-      String.format("Can't map Java SDK by description (%s). Available values: %s", description, Arrays.toString(values()))
-    );
+    return super.toString() + ", description: " + getDescription();
   }
 
   @NotNull
@@ -91,8 +90,34 @@ public enum JavaSdkVersion {
         return version;
       }
     }
-    throw new IllegalArgumentException(
-      "Can't map Java SDK by language level " + languageLevel + ". Available values: " + Arrays.toString(values())
-    );
+    throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values()));
+  }
+
+  /**
+   * Version string could be an actual version (like {@code "1.8.0_131"}),
+   * or a string returned by "java -version" command (like {@code "java version \"9-ea\""}).
+   */
+  @Nullable
+  public static JavaSdkVersion fromVersionString(@NotNull String versionString) {
+    Matcher matcher = JAVA_VERSION.matcher(versionString.trim());
+    if (matcher.matches()) {
+      versionString = matcher.group(1);
+    }
+
+    Version parsed = Version.parseVersion(versionString);
+    if (parsed != null && parsed.major > 0) {
+      int release = parsed.major == 1 ? parsed.minor : parsed.major;
+      return ContainerUtil.find(values(), v -> v.myRelease == release);
+    }
+
+    for (JavaSdkVersion version : values()) {
+      for (String pattern : version.myVersionStrings) {
+        if (versionString.contains(pattern)) {
+          return version;
+        }
+      }
+    }
+
+    return null;
   }
 }

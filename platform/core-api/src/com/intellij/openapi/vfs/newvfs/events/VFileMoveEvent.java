@@ -60,6 +60,12 @@ public class VFileMoveEvent extends VFileEvent {
   @NotNull
   @Override
   public String getPath() {
+    return computePath();
+  }
+
+  @NotNull
+  @Override
+  protected String computePath() {
     return myFile.getPath();
   }
 

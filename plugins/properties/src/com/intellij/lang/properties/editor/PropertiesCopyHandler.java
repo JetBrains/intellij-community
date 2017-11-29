@@ -325,7 +325,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Nullable
     @Override
     public PsiFileSystemItem getParent() {
-      return PsiManager.getInstance(getProject()).findDirectory(myResourceBundle.getBaseDirectory());
+      VirtualFile dir = myResourceBundle.getBaseDirectory();
+      return dir == null ? null : PsiManager.getInstance(getProject()).findDirectory(dir);
     }
 
     @Override

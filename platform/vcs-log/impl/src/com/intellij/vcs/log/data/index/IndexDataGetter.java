@@ -15,63 +15,60 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.UnorderedPair;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class IndexDataGetter {
+  private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
+
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
+  @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Set<VirtualFile> roots,
-                         @NotNull VcsLogPersistentIndex.IndexStorage storage,
+                         @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
+                         @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myRoots = roots;
-    myIndexStorage = storage;
+    myIndexStorage = indexStorage;
+    myLogStorage = logStorage;
     myFatalErrorsConsumer = fatalErrorsConsumer;
   }
 
   @Nullable
   public String getFullMessage(int index) {
-    try {
-      return myIndexStorage.messages.get(index);
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    return null;
+    return executeAndCatch(() -> myIndexStorage.messages.get(index));
   }
 
   @NotNull
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
-      try {
-        return myIndexStorage.paths.getFileNames(path, commit);
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
+      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
+      if (result != null) return result;
     }
 
     return Collections.emptySet();
@@ -83,124 +80,183 @@ public class IndexDataGetter {
 
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
-      try {
-        myIndexStorage.paths.iterateCommits(Collections.singleton(path), (paths, commit) -> result.add(commit, paths));
-        result.pack();
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
+      executeAndCatch(() -> {
+        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
+          List<Integer> parents = myIndexStorage.parents.get(commit);
+          result.add(commit, changes.first, changes.second, parents);
+          return null;
+        }));
+        return null;
+      });
     }
 
     return result;
   }
 
-  public static class FileNamesData {
-    @NotNull private final Interner<Set<FilePath>> myPathsInterner = new Interner<>();
-    @NotNull private final TIntObjectHashMap<Set<FilePath>> myCommitsToPaths;
-    @NotNull private final TIntObjectHashMap<Set<UnorderedPair<FilePath>>> myCommitsToRenames;
-
-    public FileNamesData() {
-      myCommitsToPaths = new TIntObjectHashMap<>();
-      myCommitsToRenames = new TIntObjectHashMap<>();
+  @Nullable
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+    try {
+      return computable.compute();
     }
+    catch (IOException | StorageException e) {
+      myIndexStorage.markCorrupted();
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
+        myIndexStorage.markCorrupted();
+        myFatalErrorsConsumer.consume(this, e);
+      }
+      else {
+        throw e;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public List<Hash> getParents(int index) {
+    try {
+      List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
+      if (parentsIndexes == null) return Collections.emptyList();
+      List<Hash> result = ContainerUtil.newArrayList();
+      for (int parentIndex : parentsIndexes) {
+        CommitId id = myLogStorage.getCommitId(parentIndex);
+        if (id == null) return Collections.emptyList();
+        result.add(id.getHash());
+      }
+      return result;
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    return Collections.emptyList();
+  }
+
+  public class FileNamesData {
+    @NotNull private final TIntObjectHashMap<Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>>> myCommitToPathAndChanges =
+      new TIntObjectHashMap<>();
+    private boolean myHasRenames = false;
 
     public boolean hasRenames() {
-      return !myCommitsToRenames.isEmpty();
+      return myHasRenames;
     }
 
-    private void addPath(int commit, @NotNull FilePath path) {
-      Set<FilePath> paths = myCommitsToPaths.get(commit);
-      if (paths == null) {
-        paths = new SmartHashSet<>();
-        myCommitsToPaths.put(commit, paths);
+    public void add(int commit,
+                    @NotNull FilePath path,
+                    @NotNull List<VcsLogPathsIndex.ChangeData> changes,
+                    @NotNull List<Integer> parents) {
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> pathToChanges = myCommitToPathAndChanges.get(commit);
+      if (pathToChanges == null) {
+        pathToChanges = ContainerUtil.newHashMap();
+        myCommitToPathAndChanges.put(commit, pathToChanges);
       }
-      paths.add(path);
-    }
 
-    private void addRename(int commit, @NotNull Couple<FilePath> path) {
-      Set<UnorderedPair<FilePath>> paths = myCommitsToRenames.get(commit);
-      if (paths == null) {
-        paths = ContainerUtil.newHashSet();
-        myCommitsToRenames.put(commit, paths);
+      if (!myHasRenames) {
+        for (VcsLogPathsIndex.ChangeData data : changes) {
+          if (data == null) continue;
+          if (data.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM) || data.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) {
+            myHasRenames = true;
+            break;
+          }
+        }
       }
-      paths.add(new UnorderedPair<>(path.first, path.second));
-    }
 
-    private void add(int commit, @NotNull Couple<FilePath> paths) {
-      if (paths.second == null) {
-        addPath(commit, paths.first);
+      Map<Integer, VcsLogPathsIndex.ChangeData> parentToChangesMap = ContainerUtil.newHashMap();
+      if (!parents.isEmpty()) {
+        LOG.assertTrue(parents.size() == changes.size());
+        for (int i = 0; i < changes.size(); i++) {
+          parentToChangesMap.put(parents.get(i), changes.get(i));
+        }
       }
       else {
-        addRename(commit, paths);
+        // initial commit
+        LOG.assertTrue(changes.size() == 1);
+        parentToChangesMap.put(-1, changes.get(0));
       }
-    }
-
-    public boolean affects(int commit, @NotNull FilePath path) {
-      Set<FilePath> paths = myCommitsToPaths.get(commit);
-      if (paths != null && paths.contains(path)) return true;
-      return getRenamedPath(commit, path) != null;
+      pathToChanges.put(path, parentToChangesMap);
     }
 
     @Nullable
-    public FilePath getRenamedPath(int commit, @Nullable FilePath newName) {
-      Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
-      if (renames == null) return null;
+    public FilePath getPathInParentRevision(int commit, int parent, @NotNull FilePath childPath) {
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
+      LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
+      Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(childPath);
+      if (changes == null) return childPath;
 
-      for (UnorderedPair<FilePath> rename : renames) {
-        if (rename.first.equals(newName)) return rename.second;
-        if (rename.second.equals(newName)) return rename.first;
+      VcsLogPathsIndex.ChangeData change = changes.get(parent);
+      if (change == null) {
+        LOG.assertTrue(changes.size() > 1);
+        return childPath;
       }
-      return null;
+      if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) return null;
+      if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) {
+        return VcsUtil.getFilePath(myIndexStorage.paths.getPath(change.otherPath));
+      }
+      return childPath;
     }
 
     @Nullable
-    public FilePath getPreviousPath(int commit, @Nullable FilePath path) {
-      Set<FilePath> paths = myCommitsToPaths.get(commit);
-      if (paths != null && paths.contains(path)) return path;
-      return getRenamedPath(commit, path);
+    public FilePath getPathInChildRevision(int commit, int parentIndex, @NotNull FilePath parentPath) {
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
+      LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
+      Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(parentPath);
+      if (changes == null) return parentPath;
+
+      VcsLogPathsIndex.ChangeData change = changes.get(parentIndex);
+      if (change == null) return parentPath;
+      if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) return null;
+      if (change.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM)) {
+        return VcsUtil.getFilePath(myIndexStorage.paths.getPath(change.otherPath));
+      }
+      return parentPath;
     }
 
-    public void remove(int commit) {
-      myCommitsToPaths.remove(commit);
-      myCommitsToRenames.remove(commit);
-    }
-
-    public void retain(int commit, @NotNull FilePath path, @NotNull FilePath previousPath) {
-      if (path.equals(previousPath)) {
-        myCommitsToPaths.put(commit, myPathsInterner.intern(ContainerUtil.set(path)));
-        myCommitsToRenames.remove(commit);
-      }
-      else {
-        myCommitsToPaths.remove(commit);
-        myCommitsToRenames.put(commit, ContainerUtil.set(new UnorderedPair<>(path, previousPath)));
-      }
+    public boolean affects(int id, @NotNull FilePath path) {
+      return myCommitToPathAndChanges.containsKey(id) && myCommitToPathAndChanges.get(id).containsKey(path);
     }
 
     @NotNull
-    public Set<FilePath> getAffectedPaths(int commit) {
-      Set<FilePath> result = new SmartHashSet<>();
+    public Set<Integer> getCommits() {
+      Set<Integer> result = ContainerUtil.newHashSet();
+      myCommitToPathAndChanges.forEach(result::add);
+      return result;
+    }
 
-      Set<FilePath> paths = myCommitsToPaths.get(commit);
-      if (paths != null) result.addAll(paths);
+    @NotNull
+    public Map<Integer, FilePath> buildPathsMap() {
+      Map<Integer, FilePath> result = ContainerUtil.newHashMap();
 
-      Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
-      if (renames != null) {
-        for (UnorderedPair<FilePath> rename : renames) {
-          result.add(rename.first);
-          result.add(rename.second);
+      myCommitToPathAndChanges.forEachEntry((commit, filesToChanges) -> {
+        if (filesToChanges.size() == 1) {
+          result.put(commit, ContainerUtil.getFirstItem(filesToChanges.keySet()));
         }
-      }
+        else {
+          for (Map.Entry<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> fileToChange : filesToChanges.entrySet()) {
+            VcsLogPathsIndex.ChangeData changeData = ContainerUtil.find(fileToChange.getValue().values(),
+                                                                        ch -> ch != null &&
+                                                                              !ch.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM));
+            if (changeData != null) {
+              result.put(commit, fileToChange.getKey());
+              break;
+            }
+          }
+        }
+
+        return true;
+      });
 
       return result;
     }
 
-    void pack() {
-      TIntObjectIterator<Set<FilePath>> iterator = myCommitsToPaths.iterator();
-      while (iterator.hasNext()) {
-        iterator.advance();
-        iterator.setValue(myPathsInterner.intern(iterator.value()));
-      }
+    public boolean isTrivialMerge(int commit, @NotNull FilePath path) {
+      if (!myCommitToPathAndChanges.containsKey(commit)) return false;
+      Map<Integer, VcsLogPathsIndex.ChangeData> data = myCommitToPathAndChanges.get(commit).get(path);
+      // strictly speaking, the criteria for merge triviality is a little bit more tricky than this:
+      // some merges have just reverted changes in one of the branches
+      // they need to be displayed
+      // but we skip them instead
+      return data != null && data.size() > 1 && data.containsValue(null);
     }
   }
 }

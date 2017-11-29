@@ -117,7 +117,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         if (contents.isEmpty()) return;
 
         String gistUrl =
-          createGist(project, authHolder, indicator, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+          createGist(project, authHolder, indicator, contents, dialog.isSecret(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
@@ -193,7 +193,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                            @NotNull GithubAuthDataHolder auth,
                            @NotNull ProgressIndicator indicator,
                            @NotNull List<FileContent> contents,
-                           final boolean isPrivate,
+                           final boolean isSecret,
                            @NotNull final String description,
                            @Nullable String filename) {
     if (contents.isEmpty()) {
@@ -207,7 +207,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     try {
       final List<FileContent> finalContents = contents;
       return GithubUtil.runTask(project, auth, indicator, AuthLevel.ANY, connection ->
-        GithubApiUtil.createGist(connection, finalContents, description, isPrivate)).getHtmlUrl();
+        GithubApiUtil.createGist(connection, finalContents, description, !isSecret)).getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);

@@ -35,11 +35,11 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
  */
 public class CheckoutAdminReader implements IAdminReader{
   private final IAdminReader myStandardAdminReader = new AdminReader(CvsApplicationLevelConfiguration.getCharset());
-  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }
 
-  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return new ArrayList();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,9 @@ public class ReplaceTernaryWithIfElseIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         GrConditionalExpression ternary = findTernary(element);
-        if (ternary == null || element == null || ternary.getThenBranch() == null || ternary.getElseBranch() == null) {
+        if (ternary == null || ternary.getThenBranch() == null || ternary.getElseBranch() == null) {
           return false;
         }
         if (!(ternary.getParent() instanceof GrReturnStatement)) {

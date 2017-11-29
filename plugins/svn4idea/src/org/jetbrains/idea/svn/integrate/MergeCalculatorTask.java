@@ -156,7 +156,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     List<T> result = newArrayList();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
-      .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),
+      .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl().toString()),
                                              size > 0 ? size + (revisionToExclude > 0 ? 2 : 1) : 0,
                                              (changeList, tree) -> {
                                                if (revisionToExclude != changeList.getNumber()) {

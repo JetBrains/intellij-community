@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexey.Ivanov
  */
 public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+
+  @Override
   public boolean isValidFor(Editor editor, PsiFile file) {
     return (file instanceof PyFile) && (PyOverrideImplementUtil.getContextClass(editor, file) != null);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, file);
+    final PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, file);
     if (aClass != null) {
-      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
+      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass, TypeEvalContext.userInitiated(project, file));
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

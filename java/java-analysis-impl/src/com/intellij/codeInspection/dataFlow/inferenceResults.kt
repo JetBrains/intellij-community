@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import java.util.*
 
 /**
  * @author peter
@@ -120,6 +121,7 @@ data class MethodData(
     val nullity: NullityInferenceResult?,
     val purity: PurityInferenceResult?,
     val contracts: List<PreContract>,
+    val notNullParameters: BitSet,
     internal val bodyStart: Int,
     internal val bodyEnd: Int
 ) {

@@ -26,25 +26,23 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 3/3/12
- */
+import static com.intellij.util.JdomKt.loadElement;
+
 public class TaskSettingsTest extends TaskManagerTestCase {
 
   public void testCarriageReturnInFormat() throws Exception {
     TaskRepository repository = new YouTrackRepository();
     String format = "foo \n bar";
     repository.setCommitMessageFormat(format);
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.singletonList(repository));
-    TaskManagerImpl.Config config = ((TaskManagerImpl)myTaskManager).getState();
+    myTaskManager.setRepositories(Collections.singletonList(repository));
+    TaskManagerImpl.Config config = myTaskManager.getState();
     Element element = XmlSerializer.serialize(config);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     JDOMUtil.writeDocument(new Document(element), stream, "\n");
 
-    Element element1 = JDOMUtil.load(new ByteArrayInputStream(stream.toByteArray()));
+    Element element1 = loadElement(new ByteArrayInputStream(stream.toByteArray()));
     TaskManagerImpl.Config deserialize = XmlSerializer.deserialize(element1, TaskManagerImpl.Config.class);
-    ((TaskManagerImpl)myTaskManager).loadState(deserialize);
+    myTaskManager.loadState(deserialize);
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(format, repositories[0].getCommitMessageFormat());

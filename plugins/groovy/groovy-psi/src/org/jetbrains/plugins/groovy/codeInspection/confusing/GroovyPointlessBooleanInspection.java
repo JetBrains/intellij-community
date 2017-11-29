@@ -49,12 +49,6 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONFUSING_CODE_CONSTRUCTS;
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

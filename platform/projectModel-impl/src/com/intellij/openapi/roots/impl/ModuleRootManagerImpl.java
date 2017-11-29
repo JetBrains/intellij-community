@@ -34,11 +34,11 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -50,21 +50,21 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
   protected RootModelImpl myRootModel;
-  private boolean myIsDisposed = false;
-  private boolean myLoaded = false;
+  private boolean myIsDisposed;
+  private boolean myLoaded;
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
   protected volatile long myModificationCount;
 
-  public ModuleRootManagerImpl(Module module,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public ModuleRootManagerImpl(@NotNull Module module,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     myModule = module;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
 
-    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
+    myRootModel = new RootModelImpl(this, projectRootManager, filePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
   }
 
@@ -108,23 +108,16 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @NotNull
-  public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
+  public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, myFilePointerManager, myProjectRootManager) {
       @Override
       public void dispose() {
         super.dispose();
-        Throwable created = null;
         if (Disposer.isDebugMode()) {
           synchronized (myModelCreations) {
-            created = myModelCreations.remove(this);
+            myModelCreations.remove(this);
           }
-        }
-
-        for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed() :
-            entry + "(" + entry.getClass() + ") in " + myRootModel + " is already disposed."
-            + (created == null ? "" : "\nThis modifiable model was created at:\n" + ExceptionUtil.getThrowableText(created));
         }
       }
     };
@@ -184,11 +177,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   static void doCommit(RootModelImpl rootModel) {
+    ModuleRootManagerImpl rootManager = (ModuleRootManagerImpl)getInstance(rootModel.getModule());
+    LOG.assertTrue(!rootManager.myIsDisposed);
     rootModel.docommit();
     rootModel.dispose();
 
     try {
-      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).stateChanged();
+      rootManager.stateChanged();
     }
     catch (Exception e) {
       LOG.error(e);
@@ -221,7 +216,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
 
   @Override
   public boolean isDependsOn(Module module) {
-    return myRootModel.isDependsOn(module);
+    return myRootModel.findModuleOrderEntry(module) != null;
   }
 
   @Override
@@ -231,7 +226,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public <T> T getModuleExtension(final Class<T> klass) {
+  public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     return myRootModel.getModuleExtension(klass);
   }
 
@@ -247,12 +242,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     return new ModuleOrderEnumerator(myRootModel, myOrderRootsCache);
   }
 
-  public static OrderRootsEnumerator getCachingEnumeratorForType(OrderRootType type, Module module) {
+  public static OrderRootsEnumerator getCachingEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     return getEnumeratorForType(type, module).usingCache();
   }
 
   @NotNull
-  private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module) {
+  private static OrderRootsEnumerator getEnumeratorForType(@NotNull OrderRootType type, @NotNull Module module) {
     OrderEnumerator base = OrderEnumerator.orderEntries(module);
     if (type == OrderRootType.CLASSES) {
       return base.exportedOnly().withoutModuleSourceEntries().recursively().classes();
@@ -373,6 +368,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
       LOG.error("ModelRootManager state changed");
     }
     myModificationCount++;
+  }
+
+  @Override
+  @Nullable
+  public ProjectModelExternalSource getExternalSource() {
+    return ExternalProjectSystemRegistry.getInstance().getExternalSource(myModule);
   }
 
   public static class ModuleRootManagerState implements JDOMExternalizable {

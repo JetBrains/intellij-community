@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
@@ -383,7 +384,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private static class MyQueryable implements Queryable {
-
     private final TabInfo myTab;
 
     MyQueryable(TabInfo tab) {
@@ -396,8 +396,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  public static String calcTabTitle(final Project project, final VirtualFile file) {
-    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+  @NotNull
+  public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
+    List<EditorTabTitleProvider> providers =
+      DumbService.getInstance(project).filterByDumbAwareness(Extensions.getExtensions(EditorTabTitleProvider.EP_NAME));
+    for (EditorTabTitleProvider provider : providers) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
         return result;
@@ -406,13 +409,16 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     return file.getPresentableName();
   }
-  public static String calcFileName(final Project project,final  VirtualFile file) {
+
+  @NotNull
+  public static String calcFileName(@NotNull Project project, @NotNull VirtualFile file) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
         return result;
       }
     }
+
     return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
   }
 
@@ -707,7 +713,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return myPinned;
     }
   }
-  
+
   private final class MyTransferHandler extends TransferHandler {
     private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
 

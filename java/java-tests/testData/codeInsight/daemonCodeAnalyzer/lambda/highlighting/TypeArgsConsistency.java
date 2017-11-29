@@ -57,7 +57,7 @@ lower bounds: String">x-> ""</error>);
 
     static <K> K fooo(){return null;}
     static int foooI(){return 0;}
-   
+
     interface I<X> {
         X foo(X x);
     }
@@ -72,12 +72,11 @@ lower bounds: String">x-> ""</error>);
 }
 
 class TypeArgsConsistency3 {
-    public static void main(String[] args) { 
+    public static void main(String[] args) {
         doIt1(1, x -> doIt1(x, y -> x * y));
         doIt1(1, x -> x);
         doIt1(1, x -> x * x);
     }
-    interface F1<ResultType, P1> { ResultType _(P1 p); }
-    static <T> T doIt1(T i, F1<T,T> f) { return f._(i);}
+    interface F1<ResultType, P1> { ResultType f(P1 p); }
+    static <T> T doIt1(T i, F1<T,T> f) { return f.f(i);}
 }
-

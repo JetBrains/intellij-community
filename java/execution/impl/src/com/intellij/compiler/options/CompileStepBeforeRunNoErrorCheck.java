@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class CompileStepBeforeRunNoErrorCheck
   extends BeforeRunTaskProvider<CompileStepBeforeRunNoErrorCheck.MakeBeforeRunTaskNoErrorCheck> {
   public static final Key<MakeBeforeRunTaskNoErrorCheck> ID = Key.create("MakeNoErrorCheck");
@@ -60,18 +57,8 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public MakeBeforeRunTaskNoErrorCheck createTask(RunConfiguration runConfiguration) {
+  public MakeBeforeRunTaskNoErrorCheck createTask(@NotNull RunConfiguration runConfiguration) {
     return CompileStepBeforeRun.shouldCreateTask(runConfiguration) ? new MakeBeforeRunTaskNoErrorCheck() : null;
-  }
-
-  @Override
-  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTaskNoErrorCheck task) {
-    return false;
-  }
-
-  @Override
-  public boolean isConfigurable() {
-    return false;
   }
 
   @Override
@@ -80,15 +67,10 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTaskNoErrorCheck task) {
-    return true;
-  }
-
-  @Override
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             MakeBeforeRunTaskNoErrorCheck task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull MakeBeforeRunTaskNoErrorCheck task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, true);
   }
 

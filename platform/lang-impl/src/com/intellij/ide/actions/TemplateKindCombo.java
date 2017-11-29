@@ -16,7 +16,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Trinity;
@@ -86,15 +85,12 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   public void registerUpDownHint(JComponent component) {
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          scrollBy(code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0);
-        }
+    DumbAwareAction.create(e -> {
+      if (e.getInputEvent() instanceof KeyEvent) {
+        int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+        scrollBy(code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), component);
+    }).registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), component);
   }
 
   private void scrollBy(int delta) {

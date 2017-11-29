@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-Jun-2010
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.*;

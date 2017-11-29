@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -130,20 +129,16 @@ public class DefaultBranchConfigInitializer implements Runnable {
 
   @NotNull
   private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final SVNURL rootPath) {
-    return new DirectoryEntryConsumer() {
+    return entry -> {
+      if (entry.isDirectory()) {
+        SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
 
-      @Override
-      public void consume(final DirectoryEntry entry) throws SVNException {
-        if (entry.isDirectory()) {
-          SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
-
-          if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
-            result.setTrunkUrl(childUrl.toString());
-          }
-          else {
-            result.addBranches(childUrl.toString(),
-                               new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
-          }
+        if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
+          result.setTrunkUrl(childUrl.toString());
+        }
+        else {
+          result.addBranches(childUrl.toString(),
+                             new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
         }
       }
     };

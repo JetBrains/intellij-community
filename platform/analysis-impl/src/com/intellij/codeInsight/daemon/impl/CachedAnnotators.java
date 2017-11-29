@@ -34,7 +34,7 @@ public class CachedAnnotators {
     @Override
     public Collection<Annotator> initialValue(@NotNull String languageId) {
       Language language = Language.findLanguageByID(languageId);
-      return language == null ? ContainerUtil.<Annotator>emptyList() : LanguageAnnotators.INSTANCE.allForLanguage(language);
+      return language == null ? ContainerUtil.emptyList() : LanguageAnnotators.INSTANCE.allForLanguage(language);
     }
   };
 

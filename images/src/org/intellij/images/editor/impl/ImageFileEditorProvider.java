@@ -15,9 +15,8 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorPolicy;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +46,11 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new ImageFileEditorImpl(project, file);
+    ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
+    if ("svg".equalsIgnoreCase(file.getExtension())) {
+      return new TextEditorWithPreview((TextEditor)TextEditorProvider.getInstance().createEditor(project, file), viewer);
+    }
+    return viewer;
   }
 
   @Override

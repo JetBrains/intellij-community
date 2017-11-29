@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,7 +41,7 @@ public class ToolProcessAdapter extends ProcessAdapter {
   }
 
   @Override
-  public void processTerminated(ProcessEvent event) {
+  public void processTerminated(@NotNull ProcessEvent event) {
     final String message = ToolsBundle.message("tools.completed.message", myName, event.getExitCode());
 
     if (mySynchronizeAfterExecution) {

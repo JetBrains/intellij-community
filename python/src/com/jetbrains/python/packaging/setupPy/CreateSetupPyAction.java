@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
@@ -28,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
@@ -38,10 +38,17 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -50,16 +57,15 @@ import java.util.Properties;
 public class CreateSetupPyAction extends CreateFromTemplateAction {
   private static final String AUTHOR_PROPERTY = "python.packaging.author";
   private static final String EMAIL_PROPERTY = "python.packaging.author.email";
+  static final String SETUP_SCRIPT_TEMPLATE_NAME = "Setup Script";
 
   public CreateSetupPyAction() {
-    super(FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script"));
+    super(
+      SETUP_SCRIPT_TEMPLATE_NAME, 
+      PythonFileType.INSTANCE.getIcon(), 
+      () -> FileTemplateManager.getDefaultInstance().getInternalTemplate(SETUP_SCRIPT_TEMPLATE_NAME)
+    );
     getTemplatePresentation().setText("Create setup.py");
-  }
-
-  @Override
-  public FileTemplate getTemplate() {
-    // to ensure changes are picked up, reload the template on every call (PY-6681)
-    return FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script");
   }
 
   @Override
@@ -70,17 +76,32 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final AttributesDefaults defaults = new AttributesDefaults("setup.py").withFixedName(true);
     if (project != null) {
+      defaults.addPredefined("Import", getSetupImport(dataContext));
       defaults.add("Package_name", project.getName());
       final PropertiesComponent properties = PropertiesComponent.getInstance();
-      defaults.add("Author", properties.getOrInit(AUTHOR_PROPERTY, SystemProperties.getUserName()));
-      defaults.add("Author_email", properties.getOrInit(EMAIL_PROPERTY, ""));
+      defaults.add("Author", properties.getValue(AUTHOR_PROPERTY, SystemProperties.getUserName()));
+      defaults.add("Author_email", properties.getValue(EMAIL_PROPERTY, ""));
       defaults.addPredefined("PackageList", getPackageList(dataContext));
       defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
     return defaults;
+  }
+
+  @NotNull
+  private static String getSetupImport(@NotNull DataContext dataContext) {
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    return hasSetuptoolsPackage(module) ? "from setuptools import setup" : "from distutils.core import setup";
+  }
+
+  private static boolean hasSetuptoolsPackage(@Nullable Module module) {
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    if (sdk == null) return false;
+
+    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    return packages != null && PyPackageUtil.findPackage(packages, "setuptools") != null;
   }
 
   private static String getPackageList(DataContext dataContext) {

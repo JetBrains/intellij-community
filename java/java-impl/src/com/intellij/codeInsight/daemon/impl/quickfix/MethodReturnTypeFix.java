@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -34,10 +22,7 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -48,7 +33,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
@@ -93,7 +81,26 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {
       final PsiType returnType = myMethod.getReturnType();
-      if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) return true;
+      if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
+        return allTypeParametersResolved(myMethod, myReturnType);
+      }
+    }
+    return false;
+  }
+
+  private static boolean allTypeParametersResolved(PsiMethod myMethod, PsiType myReturnType) {
+    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
+    myReturnType.accept(searcher);
+    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
+    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, myMethod));
+  }
+
+  private static boolean isAccessibleAt(PsiTypeParameter parameter, PsiMethod method) {
+    PsiTypeParameterListOwner owner = parameter.getOwner();
+    if(owner == method) return true;
+    if(owner instanceof PsiClass) {
+      return PsiTreeUtil.isAncestor(owner, method, true) &&
+             InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)owner, method, false, false);
     }
     return false;
   }
@@ -200,7 +207,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return editor;
   }
 
-  @Nullable
+  @NotNull
   private PsiMethod[] getChangeRoots(final PsiMethod method, @NotNull PsiType returnType) {
     if (!myFixWholeHierarchy) return new PsiMethod[]{method};
 
@@ -221,10 +228,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @NotNull
   private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull final PsiType returnType) {
     final PsiMethod[] methods = getChangeRoots(method, returnType);
-    if (methods == null) {
-      // canceled
-      return Collections.emptyList();
-    }
 
     final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
     for (PsiMethod targetMethod : methods) {
@@ -351,7 +354,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                        new PsiType[]{returnType},
                                        PsiUtil.getLanguageLevel(superClass));
 
-    final TypeMigrationRules rules = new TypeMigrationRules();
+    final TypeMigrationRules rules = new TypeMigrationRules(project);
     final PsiSubstitutor compoundSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
     rules.setBoundScope(new LocalSearchScope(derivedClass));

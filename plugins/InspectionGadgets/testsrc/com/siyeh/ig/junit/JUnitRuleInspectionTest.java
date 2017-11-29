@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jun-2009
- */
 package com.siyeh.ig.junit;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -25,7 +21,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitRuleInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testWrongsignature() throws Exception {
+  public void testWrongsignature() {
     myFixture.addClass("package org.junit.rules;\n" +
                        "public interface TestRule {}");
     myFixture.addClass("package org.junit.rules;\n" +

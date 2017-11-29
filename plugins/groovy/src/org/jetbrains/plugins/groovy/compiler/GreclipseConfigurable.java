@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
@@ -47,15 +46,8 @@ public class GreclipseConfigurable implements Configurable {
     myJarPath.addBrowseFolderListener(null, "Select path to groovy-eclipse-batch-*.jar with version matching your Groovy distribution", null, descriptor);
   }
 
-  @Nls
   @Override
   public String getDisplayName() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public String getHelpTopic() {
     return null;
   }
 

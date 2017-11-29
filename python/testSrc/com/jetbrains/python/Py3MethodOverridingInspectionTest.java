@@ -16,14 +16,14 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Py3MethodOverridingInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyMethodOverridingInspection/";
-
+public class Py3MethodOverridingInspectionTest extends PyInspectionTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -35,9 +35,14 @@ public class Py3MethodOverridingInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyMethodOverridingInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyMethodOverridingInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

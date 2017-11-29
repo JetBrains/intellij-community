@@ -56,10 +56,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 11-Jan-2006
- */
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
@@ -145,9 +141,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
           for (InspectionToolWrapper wrapper : toolWrappers) {
             InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-            final ExcludedInspectionTreeNodesManager excludedManager = myView.getExcludedManager();
-            if (!toolNode.isExcluded(excludedManager)) {
-              presentation.exportResults(problems, e -> excludedManager.containsRefEntity(e, toolWrapper), excludedManager::containsProblemDescriptor);
+            if (!toolNode.isExcluded()) {
+              presentation.exportResults(problems, presentation::isExcluded, presentation::isExcluded);
             }
           }
           PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);

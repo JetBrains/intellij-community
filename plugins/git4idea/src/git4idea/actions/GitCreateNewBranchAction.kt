@@ -23,6 +23,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsRef
+import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.branch.GitBranchUtil.getNewBranchNameFromUser
@@ -35,7 +37,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val data = collectData(e)
     when (data) {
-      is Data.WithCommit -> createBranchStartingFrom(data.repository, data.hash)
+      is Data.WithCommit -> createBranchStartingFrom(data.repository, data.hash, data.name)
       is Data.NoCommit -> createBranch(data.project, data.repositories)
     }
   }
@@ -56,7 +58,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
   private sealed class Data {
     class Invisible : Data()
     class Disabled : Data()
-    class WithCommit(val repository: GitRepository, val hash: Hash) : Data()
+    class WithCommit(val repository: GitRepository, val hash: Hash, val name: String?) : Data()
     class NoCommit(val project: Project, val repositories: List<GitRepository>) : Data()
   }
 
@@ -73,7 +75,8 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       val commit = commits.first()
       val repository = manager.getRepositoryForRootQuick(commit.root)
       if (repository != null) {
-        return Data.WithCommit(repository, commit.hash)
+        val initialName = suggestBranchName(repository, e.getData(VcsLogDataKeys.VCS_LOG_BRANCHES))
+        return Data.WithCommit(repository, commit.hash, initialName)
       }
     }
 
@@ -91,8 +94,22 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     return Data.NoCommit(project, repositories)
   }
 
+  private fun suggestBranchName(repository: GitRepository, branches: List<VcsRef>?): String? {
+    val existingBranches = branches.orEmpty().filter { it.type.isBranch }
+    val suggestedNames = existingBranches.map {
+      val branch = repository.branches.findBranchByName(it.name) ?: return@map null
+      if (branch.isRemote) {
+        return@map (branch as GitRemoteBranch).nameForRemoteOperations
+      }
+      else {
+        return@map branch.name
+      }
+    }
+    return suggestedNames.distinct().singleOrNull()
+  }
+
   fun createBranch(project: Project, repositories: List<GitRepository>) {
-    val options = getNewBranchNameFromUser(project, repositories, "Create New Branch")
+    val options = getNewBranchNameFromUser(project, repositories, "Create New Branch", null)
     if (options != null) {
       val brancher = GitBrancher.getInstance(project)
       if (options.checkout) {
@@ -104,9 +121,9 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     }
   }
 
-  fun createBranchStartingFrom(repository: GitRepository, commit: Hash) {
+  fun createBranchStartingFrom(repository: GitRepository, commit: Hash, initialName: String?) {
     val project = repository.project
-    val options = getNewBranchNameFromUser(project, setOf(repository), "Create New Branch From ${commit.toShortString()}")
+    val options = getNewBranchNameFromUser(project, setOf(repository), "Create New Branch From ${commit.toShortString()}", initialName)
     if (options != null) {
       val brancher = GitBrancher.getInstance(project)
       if (options.checkout) {

@@ -70,7 +70,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @Override
   public boolean shouldReintegrate(@NotNull String targetUrl) {
     return prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" +
-                  myMergeContext.getSourceUrl() +
+                  myMergeContext.getSourceUrl().toDecodedString() +
                   "' <b>no longer usable for further work</b>." +
                   "<br>It will not be able to correctly absorb new trunk (" + targetUrl +
                   ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>");

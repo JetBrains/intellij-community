@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
@@ -63,7 +64,7 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
       if (!(resolved instanceof PsiClass)) {
         return false;
       }
-      if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
+      if (!codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
         return false;
       }
     }

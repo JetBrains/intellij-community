@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.NotNullProducer;
@@ -53,7 +52,7 @@ final class ScrollColorProducer implements NotNullProducer<Color> {
   @Override
   public Color produce() {
     Container parent = myComponent.getParent();
-    if (isBackground && parent instanceof JScrollPane && Registry.is("ide.scroll.background.auto")) {
+    if (isBackground && parent instanceof JScrollPane && ScrollSettings.isBackgroundFromView()) {
       Color background = JBScrollPane.getViewBackground((JScrollPane)parent);
       if (background != null) {
         if (!background.equals(myOriginal)) {

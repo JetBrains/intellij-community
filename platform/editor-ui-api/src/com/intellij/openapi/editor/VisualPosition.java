@@ -36,11 +36,11 @@ public class VisualPosition {
   public final int line;
   public final int column;
   /**
-   * If <code>true</code>, this position is associated with succeeding character (in visual order), otherwise it's associated with 
+   * If {@code true}, this position is associated with succeeding character (in visual order), otherwise it's associated with
    * preceding character. This can make difference in bidirectional text, where visual positions which differ only in this flag's value
    * can correspond to a different logical positions.
    * <p>
-   * This field has no impact on equality and comparison relationships between <code>VisualPosition</code> instances.
+   * This field has no impact on equality and comparison relationships between {@code VisualPosition} instances.
    */
   public final boolean leansRight;
 
@@ -68,7 +68,7 @@ public class VisualPosition {
    * </pre>
    *
    * @param other   visual position to compare with the current one
-   * @return        <code>true</code> if current position is 'after' the given one; <code>false</code> otherwise
+   * @return        {@code true} if current position is 'after' the given one; {@code false} otherwise
    */
   public boolean after(@NotNull VisualPosition other) {
     if (line == other.line) {
@@ -78,7 +78,7 @@ public class VisualPosition {
   }
 
   /**
-   * Constructs a new <code>VisualPosition</code> instance with a given value of {@link #leansRight} flag.
+   * Constructs a new {@code VisualPosition} instance with a given value of {@link #leansRight} flag.
    */
   public VisualPosition leanRight(boolean value) {
     return new VisualPosition(line, column, value);

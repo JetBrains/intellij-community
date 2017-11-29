@@ -20,23 +20,25 @@ import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -51,20 +53,43 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-// TODO: remove duplication with ChangeDiffRequestPresentable
+// TODO: remove duplication with ChangeDiffRequestProducer
 public abstract class DiffActionExecutor {
   protected final DiffProvider myDiffProvider;
   protected final VirtualFile mySelectedFile;
   protected final Project myProject;
+  private final Integer mySelectedLine;
   private final BackgroundableActionEnabledHandler myHandler;
 
-  protected DiffActionExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project,
-                               final VcsBackgroundableActions actionKey) {
+  protected DiffActionExecutor(@NotNull DiffProvider diffProvider,
+                               @NotNull VirtualFile selectedFile,
+                               @NotNull Project project,
+                               @Nullable Editor editor,
+                               @NotNull VcsBackgroundableActions actionKey) {
     final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
     myHandler = vcsManager.getBackgroundableActionHandler(actionKey);
     myDiffProvider = diffProvider;
     mySelectedFile = selectedFile;
     myProject = project;
+
+    mySelectedLine = getSelectedLine(project, mySelectedFile, editor);
+  }
+
+  @Nullable
+  private Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+    Editor editor = null;
+    if (contextEditor != null) {
+      VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
+      if (Comparing.equal(contextFile, mySelectedFile)) editor = contextEditor;
+    }
+
+    if (editor == null) {
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(mySelectedFile);
+      if (fileEditor instanceof TextEditor) editor = ((TextEditor)fileEditor).getEditor();
+    }
+
+    if (editor == null) return null;
+    return editor.getCaretModel().getLogicalPosition().line;
   }
 
   @Nullable
@@ -74,14 +99,7 @@ public abstract class DiffActionExecutor {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
-    if (fileRevision instanceof BinaryContentRevision) {
-      FilePath filePath = fileRevision.getFile();
-      final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
-      if (content == null) return null;
-
-      diffContent = contentFactory.createBinary(myProject, content, filePath.getFileType(), filePath.getName());
-    }
-    else if (fileRevision instanceof ByteBackedContentRevision) {
+    if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
       if (content == null) throw new VcsException("Failed to load content");
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
@@ -134,21 +152,15 @@ public abstract class DiffActionExecutor {
             title2 = VcsBundle.message("diff.title.local");
           }
 
-          Integer line = null;
-          if (content2 instanceof DocumentContent) {
-            Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)content2).getDocument(), myProject);
-            if (editors.length != 0) line = editors[0].getCaretModel().getLogicalPosition().line;
-          }
-
           if (inverted) {
             SimpleDiffRequest request = new SimpleDiffRequest(title, content2, content1, title2, title1);
-            if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, line));
+            if (mySelectedLine != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, mySelectedLine));
             request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
             requestRef.set(request);
           }
           else {
             SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
-            if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, line));
+            if (mySelectedLine != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, mySelectedLine));
             request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
             requestRef.set(request);
           }
@@ -189,7 +201,7 @@ public abstract class DiffActionExecutor {
 
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
                               final Project project, final VcsBackgroundableActions actionKey) {
-    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, revisionNumber, actionKey);
+    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, null, revisionNumber, actionKey);
     executor.showDiff();
   }
 
@@ -199,10 +211,13 @@ public abstract class DiffActionExecutor {
   public static class CompareToFixedExecutor extends DiffActionExecutor {
     private final VcsRevisionNumber myNumber;
 
-    public CompareToFixedExecutor(final DiffProvider diffProvider,
-                                  final VirtualFile selectedFile, final Project project, final VcsRevisionNumber number,
-                                  final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public CompareToFixedExecutor(@NotNull DiffProvider diffProvider,
+                                  @NotNull VirtualFile selectedFile,
+                                  @NotNull Project project,
+                                  @Nullable Editor editor,
+                                  @NotNull VcsRevisionNumber number,
+                                  @NotNull VcsBackgroundableActions actionKey) {
+      super(diffProvider, selectedFile, project, editor, actionKey);
       myNumber = number;
     }
 
@@ -212,9 +227,12 @@ public abstract class DiffActionExecutor {
   }
 
   public static class CompareToCurrentExecutor extends DiffActionExecutor {
-    public CompareToCurrentExecutor(final DiffProvider diffProvider, final VirtualFile selectedFile, final Project project,
-                                    final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public CompareToCurrentExecutor(@NotNull DiffProvider diffProvider,
+                                    @NotNull VirtualFile selectedFile,
+                                    @NotNull Project project,
+                                    @Nullable Editor editor,
+                                    @NotNull VcsBackgroundableActions actionKey) {
+      super(diffProvider, selectedFile, project, editor, actionKey);
     }
 
     @Nullable
@@ -226,9 +244,12 @@ public abstract class DiffActionExecutor {
   public static class DeletionAwareExecutor extends DiffActionExecutor {
     private boolean myFileStillExists;
 
-    public DeletionAwareExecutor(final DiffProvider diffProvider,
-                                 final VirtualFile selectedFile, final Project project, final VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, actionKey);
+    public DeletionAwareExecutor(@NotNull DiffProvider diffProvider,
+                                 @NotNull VirtualFile selectedFile,
+                                 @NotNull Project project,
+                                 @Nullable Editor editor,
+                                 @NotNull VcsBackgroundableActions actionKey) {
+      super(diffProvider, selectedFile, project, editor, actionKey);
     }
 
     protected VcsRevisionNumber getRevisionNumber() {

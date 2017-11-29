@@ -23,23 +23,23 @@ import org.jetbrains.jps.model.module.JpsModule;
  * Date: 23.09.11
  */
 public class FieldPropertyTest extends IncrementalTestCase {
-  public FieldPropertyTest() throws Exception {
+  public FieldPropertyTest() {
     super("fieldProperties");
   }
 
-  public void testConstantChain() throws Exception {
+  public void testConstantChain() {
     doTest();
   }
 
-  public void testConstantChain1() throws Exception {
+  public void testConstantChain1() {
     doTest();
   }
 
-  public void testConstantChain2() throws Exception {
+  public void testConstantChain2() {
     doTest();
   }
 
-  public void testConstantChainMultiModule() throws Exception {
+  public void testConstantChainMultiModule() {
     JpsModule moduleA = addModule("moduleA", "moduleA/src");
     JpsModule moduleB = addModule("moduleB", "moduleB/src");
     JpsModule moduleC = addModule("moduleC", "moduleC/src");
@@ -48,78 +48,78 @@ public class FieldPropertyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
-  public void testConstantRemove() throws Exception {
+  public void testConstantRemove() {
     doTest();
   }
 
-  public void testConstantRemove1() throws Exception {
+  public void testConstantRemove1() {
     doTest();
   }
 
-  public void testDoubleConstantChange() throws Exception {
+  public void testDoubleConstantChange() {
     doTest();
   }
 
-  public void testFloatConstantChange() throws Exception {
+  public void testFloatConstantChange() {
     doTest();
   }
 
-  public void testInnerConstantChange() throws Exception {
+  public void testInnerConstantChange() {
     doTest();
   }
 
-  public void testIntConstantChange() throws Exception {
+  public void testIntConstantChange() {
     doTest();
   }
 
-  public void testIntNonStaticConstantChange() throws Exception {
+  public void testIntNonStaticConstantChange() {
     doTest();
   }
 
-  public void testLongConstantChange() throws Exception {
+  public void testLongConstantChange() {
     doTest();
   }
 
-  public void testNonCompileTimeConstant() throws Exception {
+  public void testNonCompileTimeConstant() {
     doTest();
   }
 
-  public void testStringConstantChange() throws Exception {
+  public void testStringConstantChange() {
     doTest();
   }
 
-  public void testStringConstantLessAccessible() throws Exception {
+  public void testStringConstantLessAccessible() {
     doTest();
   }
 
-  public void testTypeChange() throws Exception {
+  public void testTypeChange() {
     doTest();
   }
 
-  public void testTypeChange1() throws Exception {
+  public void testTypeChange1() {
     doTest();
   }
 
-  public void testTypeChange2() throws Exception {
+  public void testTypeChange2() {
     doTest();
   }
 
-  public void testNonIncremental1() throws Exception {
+  public void testNonIncremental1() {
     doTest();
   }
 
-  public void testNonIncremental2() throws Exception {
+  public void testNonIncremental2() {
     doTest();
   }
   //public void testNonIncremental3() throws Exception {
   //    doTest();
   //  }
 
-  public void testNonIncremental4() throws Exception {
+  public void testNonIncremental4() {
     doTest();
   }
 
-  public void testMutualConstants() throws Exception {
+  public void testMutualConstants() {
     doTest();
   }
 }

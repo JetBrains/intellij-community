@@ -37,11 +37,12 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
       Disposer.dispose(myContent);
     }
     finally {
+      myContent = null;
       super.tearDown();
     }
   }
 
-  public void testStacktrace() throws Exception {
+  public void testStacktrace() {
     showText("");
     Icon icon = myContent.getIcon();
     String name = myContent.getDisplayName();
@@ -49,7 +50,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("<Stacktrace>", name);
   }
 
-  public void testException() throws Exception {
+  public void testException() {
     showText("java.lang.NullPointerException\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
              "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
@@ -77,7 +78,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private void showText(String unscramble) {
     RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", null, getProject(), unscramble);
     assertNotNull(descriptor);
-    Disposer.register(getTestRootDisposable(), descriptor);
+    Disposer.register(myFixture.getTestRootDisposable(), descriptor);
     myContent = descriptor;
   }
 

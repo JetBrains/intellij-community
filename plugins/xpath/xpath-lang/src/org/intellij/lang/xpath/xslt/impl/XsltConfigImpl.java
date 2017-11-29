@@ -20,7 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -44,7 +44,7 @@ import java.awt.*;
   storages = {
     @Storage("other.xml")}
 )
-class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl>, ApplicationComponentAdapter {
+class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl>, ApplicationComponent {
   public boolean SHOW_LINKED_FILES = true;
 
   @Nullable

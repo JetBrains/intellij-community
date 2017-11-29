@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
+    LOG.assertTrue(file.isValid(), "Invalid Psi file, name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
     return new FutureTask<>(() -> {
       FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
       try {
@@ -129,7 +130,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
         }
 
-        caretPositionKeeper.restoreOriginalLocation();
+        caretPositionKeeper.restoreOriginalLocation(true);
 
         if (before != null) {
           prepareUserNotificationMessage(document, before);

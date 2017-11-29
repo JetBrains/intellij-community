@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 // TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
 public class SvnMergeInfoTest extends Svn17TestCase {
 
@@ -90,7 +92,8 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myBranchUrl), SVNURL.parseURIEncoded(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, Depth.INFINITY);
-    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), myTrunkUrl, myWCInfo, SVNPathUtil.tail(myTrunkUrl), vcsRoot);
+    myMergeContext =
+      new MergeContext(SvnVcs.getInstance(myProject), parseUrl(myTrunkUrl, false), myWCInfo, SVNPathUtil.tail(myTrunkUrl), vcsRoot);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
     myVcs = SvnVcs.getInstance(myProject);
@@ -100,7 +103,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot,
+    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot,
                                                   new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
     myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
   }

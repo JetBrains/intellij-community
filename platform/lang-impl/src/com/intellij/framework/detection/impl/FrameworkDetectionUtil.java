@@ -50,7 +50,7 @@ public class FrameworkDetectionUtil {
   }
 
   public static List<? extends DetectedFrameworkDescription> removeDisabled(List<DetectedFrameworkDescription> descriptions) {
-    return removeDisabled(descriptions, Collections.<DetectedFrameworkDescription>emptyList());
+    return removeDisabled(descriptions, Collections.emptyList());
   }
 
   public static List<DetectedFrameworkDescription> getDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> currentDescriptions,

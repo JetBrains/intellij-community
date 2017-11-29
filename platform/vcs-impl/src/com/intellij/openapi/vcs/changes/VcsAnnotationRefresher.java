@@ -19,12 +19,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/19/12
- * Time: 4:30 PM
- */
 public interface VcsAnnotationRefresher {
   Topic<VcsAnnotationRefresher> LOCAL_CHANGES_CHANGED = Topic.create("LOCAL_CHANGES_CHANGED", VcsAnnotationRefresher.class);
 

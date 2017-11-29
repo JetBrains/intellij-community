@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
@@ -52,7 +53,8 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
         break;
       }
     }
-    items.add(new BreakpointNoneItem());
+    Collections.sort(items);
+    items.add(0, new BreakpointNoneItem());
     return items;
   }
 

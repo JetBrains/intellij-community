@@ -25,16 +25,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.06.2010
-*/
 public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
     public boolean isImplicitUsage(PsiElement element) {
         if (!(element instanceof XmlAttribute)) {

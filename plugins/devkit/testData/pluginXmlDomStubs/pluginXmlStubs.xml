@@ -2,7 +2,7 @@
   <id>com.intellij.myPlugin</id>
   <name>pluginName</name>
 
-  <depends>anotherPlugin</depends>
+  <depends config-file="anotherPlugin.xml">anotherPlugin</depends>
   <module value="myModule"/>
 
   <extensionPoints>
@@ -17,12 +17,30 @@
 
   <actions>
     <action id="actionId" text="actionText" class="actionClass"/>
-    <group id="groupId">
+    <group id="groupId" class="groupClass">
       <action id="groupAction" text="groupActionText" class="actionClass"/>
       <group id="nestedGroup">
         <action id="nestedGroupActionId" text="nestedGroupActionText" class="actionClass"/>
       </group>
     </group>
   </actions>
+
+  <application-components>
+    <component>
+      <implementation-class>applicationComponentClass</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>projectComponentClass</implementation-class>
+    </component>
+  </project-components>
+
+  <module-components>
+    <component>
+      <implementation-class>moduleComponentClass</implementation-class>
+    </component>
+  </module-components>
 
 </idea-plugin>

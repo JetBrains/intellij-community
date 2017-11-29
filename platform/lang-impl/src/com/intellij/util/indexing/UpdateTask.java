@@ -17,7 +17,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -59,9 +58,6 @@ abstract class UpdateTask<Type> {
         }
 
         while (!myUpdateSemaphore.waitFor(500)) { // may need to wait until another threads are done with indexing
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
-          }
         }
         ProgressManager.checkCanceled();
         if (DEBUG) if (hasMoreToProcess) trace("reiterating");

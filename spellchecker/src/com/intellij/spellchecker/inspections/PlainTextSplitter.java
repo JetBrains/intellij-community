@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.io.URLUtil.URL_PATTERN;
+
 public class PlainTextSplitter extends BaseSplitter {
   private static final PlainTextSplitter INSTANCE = new PlainTextSplitter();
 
@@ -41,20 +43,15 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @NonNls
   private static final Pattern MAIL =
-    Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))");
-
-  @NonNls
-  private static final Pattern URL =
-    Pattern.compile("((ftp|http|file|https)://([^/]+)(/\\w*)?(/\\w*))");
-
-
+    Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
+  
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
-    if (text == null || StringUtil.isEmpty(text)) {
+    if (StringUtil.isEmpty(text)) {
       return;
     }
 
-    final String substring = StringUtil.replaceChar(StringUtil.replaceChar(range.substring(text), '\b', '\n'), '\f', '\n');
+    final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
     if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(substring).replaceAll("")) != null) {
       return;
     }
@@ -86,7 +83,7 @@ public class PlainTextSplitter extends BaseSplitter {
       }
       else
       if (word.contains("://")) {
-        toCheck = excludeByPattern(text, wRange, URL, 0);
+        toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
       }
       else {
         toCheck = Collections.singletonList(wRange);

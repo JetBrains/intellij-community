@@ -17,10 +17,13 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
+import java.util.function.Consumer;
 
 /**
  * @author max
@@ -33,11 +36,20 @@ public class CopyPasteUtil {
     return elts != null ? elts : PsiElement.EMPTY_ARRAY;
   }
 
-  public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    private final AbstractTreeUpdater myUpdater;
+  public static void addDefaultListener(@NotNull Disposable parent, @NotNull Consumer<PsiElement> consumer) {
+    CopyPasteManager.getInstance().addContentChangedListener(new DefaultCopyPasteListener(consumer), parent);
+  }
 
-    public DefaultCopyPasteListener(final AbstractTreeUpdater updater) {
-      myUpdater = updater;
+  public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
+    private final Consumer<PsiElement> consumer;
+
+    @Deprecated
+    public DefaultCopyPasteListener(AbstractTreeUpdater updater) {
+      this(element -> updater.addSubtreeToUpdateByElement(element));
+    }
+
+    public DefaultCopyPasteListener(@NotNull Consumer<PsiElement> consumer) {
+      this.consumer = consumer;
     }
 
     @Override
@@ -47,10 +59,10 @@ public class CopyPasteUtil {
     }
 
     private void updateByTransferable(final Transferable t) {
-      final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
+      PsiElement[] psiElements = getElementsInTransferable(t);
       for (PsiElement psiElement : psiElements) {
         if (!psiElement.getProject().isDisposed()) {
-          myUpdater.addSubtreeToUpdateByElement(psiElement);
+          consumer.accept(psiElement);
         }
       }
     }

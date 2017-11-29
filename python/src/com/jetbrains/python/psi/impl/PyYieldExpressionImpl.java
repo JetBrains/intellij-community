@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -37,6 +36,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
     super(astNode);
   }
 
+  @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyYieldExpression(this);
   }
@@ -55,19 +55,10 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression e = getExpression();
-    PyType type = e != null ? context.getType(e) : null;
+    final PyType type = e != null ? context.getType(e) : null;
     if (isDelegating()) {
-      final PyClassLikeType classType = as(type, PyClassLikeType.class);
-      final PyCollectionType collectionType = as(type, PyCollectionType.class);
-      if (classType != null && collectionType != null) {
-        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          final List<PyType> elementTypes = collectionType.getElementTypes(context);
-          if (elementTypes.size() == 3) {
-            return elementTypes.get(2);
-          }
-        }
-      }
-      return PyNoneType.INSTANCE;
+      final Ref<PyType> generatorElementType = PyTypingTypeProvider.coroutineOrGeneratorElementType(type, context);
+      return generatorElementType == null ? PyNoneType.INSTANCE : generatorElementType.get();
     }
     return type;
   }

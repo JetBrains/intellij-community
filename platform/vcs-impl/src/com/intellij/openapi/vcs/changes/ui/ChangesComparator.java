@@ -19,34 +19,26 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class ChangesComparator implements Comparator<Change> {
-  private static final ChangesComparator ourFlattenedInstance = new ChangesComparator(false);
-  private static final ChangesComparator ourTreeInstance = new ChangesComparator(true);
-  @NotNull private final HierarchicalFilePathComparator myFilePathComparator;
-  private final boolean myTreeCompare;
-
-  public static ChangesComparator getInstance(boolean flattened) {
-    if (flattened) {
-      return ourFlattenedInstance;
-    } else {
-      return ourTreeInstance;
-    }
+public class ChangesComparator {
+  @NotNull
+  public static Comparator<Change> getInstance(boolean flattened) {
+    return (o1, o2) -> comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), flattened);
   }
 
-  private ChangesComparator(boolean treeCompare) {
-    myTreeCompare = treeCompare;
-    myFilePathComparator = HierarchicalFilePathComparator.IGNORE_CASE;
+  @NotNull
+  public static Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
+    return (o1, o2) -> comparePaths(VcsUtil.getFilePath(o1), VcsUtil.getFilePath(o2), flattened);
   }
 
-  public int compare(final Change o1, final Change o2) {
-    final FilePath filePath1 = ChangesUtil.getFilePath(o1);
-    final FilePath filePath2 = ChangesUtil.getFilePath(o2);
-    if (myTreeCompare) {
-      return myFilePathComparator.compare(filePath1, filePath2);
+  private static int comparePaths(@NotNull FilePath filePath1, @NotNull FilePath filePath2, boolean flattened) {
+    if (!flattened) {
+      return HierarchicalFilePathComparator.IGNORE_CASE.compare(filePath1, filePath2);
     }
     else {
       return filePath1.getName().compareToIgnoreCase(filePath2.getName());

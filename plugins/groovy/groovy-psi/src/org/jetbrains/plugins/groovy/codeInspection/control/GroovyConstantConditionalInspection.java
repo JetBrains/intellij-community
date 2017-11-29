@@ -31,12 +31,6 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getGroupDisplayName() {
-        return CONTROL_FLOW;
-    }
-
-    @Override
-    @NotNull
     public String getDisplayName() {
         return "Constant conditional expression";
     }

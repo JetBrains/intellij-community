@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,17 @@ public abstract class JavaProjectModelModificationService {
     return addDependency(from, to, DependencyScope.COMPILE);
   }
 
-  public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope);
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
+    return addDependency(from, to, scope, false);
+  }
+
+  public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported);
+
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+    return addDependency(from, library, scope, false);
+  }
+
+  public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported);
 
   public Promise<Void> addDependency(@NotNull Module from, @NotNull ExternalLibraryDescriptor libraryDescriptor) {
     return addDependency(from, libraryDescriptor, DependencyScope.COMPILE);
@@ -55,10 +65,9 @@ public abstract class JavaProjectModelModificationService {
     return addDependency(Collections.singletonList(from), descriptor, scope);
   }
 
-  public abstract Promise<Void> addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor,
+  public abstract Promise<Void> addDependency(@NotNull Collection<Module> from,
+                                              @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                               @NotNull DependencyScope scope);
-
-  public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope);
 
   public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel);
 }

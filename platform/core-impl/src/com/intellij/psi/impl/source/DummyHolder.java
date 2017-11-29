@@ -68,7 +68,7 @@ public class DummyHolder extends PsiFileImpl {
     myLanguage = language;
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
-    myTable = table != null ? table : IdentityCharTable.INSTANCE;
+    myTable = table != null ? table : new CharTableImpl();
     if (contentElement instanceof FileElement) {
       ((FileElement)contentElement).setPsi(this);
       ((FileElement)contentElement).setCharTable(myTable);

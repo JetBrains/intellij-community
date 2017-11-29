@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -173,23 +174,26 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     public void actionPerformed(ActionEvent e) {
       KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       Container container = kfm.getCurrentFocusCycleRoot();
-      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-      if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
-      Component next =
-        moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
-      if (null != next && next instanceof PaletteComponentList) {
-        final PaletteComponentList list = (PaletteComponentList)next;
-        if (list.getModel().getSize() != 0) {
-          list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
-          return;
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+        if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
+        Component next =
+          moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
+        if (null != next && next instanceof PaletteComponentList) {
+          final PaletteComponentList list = (PaletteComponentList)next;
+          if (list.getModel().getSize() != 0) {
+            list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
+            return;
+          }
+          else {
+            next = moveDown ? policy.getComponentAfter(container, next) : policy.getComponentBefore(container, next);
+          }
         }
-        else {
-          next = moveDown ? policy.getComponentAfter(container, next) : policy.getComponentBefore(container, next);
+        if (null != next && next instanceof PaletteGroupHeader) {
+
+          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
         }
-      }
-      if (null != next && next instanceof PaletteGroupHeader) {
-        next.requestFocus();
-      }
+      });
     }
   }
 

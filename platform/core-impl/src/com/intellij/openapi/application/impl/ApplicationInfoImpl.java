@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,7 +102,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
+  @Nullable
   private String myHelpFileName = "ideahelp.jar";
+  @Nullable
   private String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
@@ -237,7 +238,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromString(myBuildNumber, getProductPrefix());
+    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
   }
 
   private static String getProductPrefix() {
@@ -253,10 +254,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getApiVersion() {
+    BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      return BuildNumber.fromString(myApiVersion, getBuild().getProductCode()).asString();
+      BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
+      if (api != null) {
+        return api.asString();
+      }
     }
-    return getBuild().asString();
+    return build.asString();
   }
 
   @Override
@@ -281,28 +286,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullVersion() {
-    String result = doGetFullVersion();
+    String result;
+    if (myFullVersionFormat != null) {
+      result = MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+    }
+    else {
+      result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
+    }
     // In Android Studio we don't want the EAP suffix in version names
     //if (isEAP()) result += " EAP";
     return result;
-  }
-
-  private String doGetFullVersion() {
-    if (myFullVersionFormat == null) {
-      if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
-        if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
-          return myMajorVersion + "." + myMinorVersion;
-        }
-        else {
-          return myMajorVersion + ".0";
-        }
-      }
-      else {
-        return getVersionName();
-      }
-    } else {
-      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
-    }
   }
 
   @Override
@@ -312,16 +305,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getVersionName() {
-    final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) {
-      return fullName + " (" + myCodeName + ")";
-    }
+    String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
+    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) fullName += " (" + myCodeName + ")";
     return fullName;
   }
 
+  @Nullable
   @Override
   public String getHelpURL() {
-    return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+    String jarPath = getHelpJarPath();
+    return jarPath == null || myHelpRootName == null ? null: "jar:file:///" + jarPath + "!/" + myHelpRootName;
   }
 
   @Override
@@ -339,8 +332,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCompanyUrl;
   }
 
+  @Nullable
   private String getHelpJarPath() {
-    return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
+    return myHelpFileName == null ? null: PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
   @Override
@@ -851,7 +845,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
 
       if (!getBuild().isSnapshot()) {
-        myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+        myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
     else {
@@ -987,6 +981,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
+  }
+
+  public List<String> getEssentialPluginsIds() {
+    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

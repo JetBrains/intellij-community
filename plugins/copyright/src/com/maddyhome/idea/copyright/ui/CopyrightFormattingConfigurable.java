@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Dec-2008
- */
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -50,6 +46,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     return "Formatting";
   }
 
+  @Override
   public String getHelpTopic() {
     return getId();
   }

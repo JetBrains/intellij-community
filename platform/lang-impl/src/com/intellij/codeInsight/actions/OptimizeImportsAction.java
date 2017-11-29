@@ -42,6 +42,9 @@ public class OptimizeImportsAction extends AnAction {
   private static final String NO_IMPORTS_OPTIMIZED = "Unused imports not found";
   private static boolean myProcessVcsChangedFilesInTests;
 
+  public OptimizeImportsAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent event) {

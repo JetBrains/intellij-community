@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
@@ -85,12 +88,14 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myChangeListener = changeListener;
 
     myTestButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         afterTestConnection(TaskManager.getManager(project).testConnection(repository));
       }
     });
 
     myProxySettingsButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         HttpConfigurable.editConfigurable(myPanel);
         enableButtons();
@@ -121,7 +126,8 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
-    myComment.setText("Available placeholders: " + repository.getComment());
+
+    setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();
     if (advertiser != null) {
       Messages.installHyperlinkSupport(myAdvertiser);
@@ -153,6 +159,23 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     setAnchor(myUseProxy);
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
+  }
+
+  private void setupPlaceholdersComment() {
+    StringBuilder comment = new StringBuilder(myRepository.getComment());
+
+    CommitPlaceholderProvider[] extensions = Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME);
+    for (CommitPlaceholderProvider extension : extensions) {
+      String[] placeholders = extension.getPlaceholders(myRepository);
+      for (String placeholder : placeholders) {
+        comment.append(", {").append(placeholder).append("}");
+        String description = extension.getPlaceholderDescription(placeholder);
+        if (description != null) {
+          comment.append(" (").append(description).append(")");
+        }
+      }
+    }
+    myComment.setText("Available placeholders: " + comment);
   }
 
 
@@ -190,6 +213,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
   protected void installListener(JCheckBox checkBox) {
     checkBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doApply();
       }
@@ -217,7 +241,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   protected void installListener(final Document document) {
-    document.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    document.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         doApply();
@@ -248,6 +272,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     ((EditorEx)myEditor).setRendererMode(!selected);
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }

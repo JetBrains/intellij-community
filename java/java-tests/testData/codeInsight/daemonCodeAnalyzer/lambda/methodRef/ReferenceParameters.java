@@ -1,6 +1,6 @@
 class MyTest {
     interface I<X> {
-      X _();
+      X m();
     }
     static <T> T bar() {return null;}
     static {

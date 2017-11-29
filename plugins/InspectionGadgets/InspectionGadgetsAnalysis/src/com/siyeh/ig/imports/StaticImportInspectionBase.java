@@ -175,6 +175,9 @@ public class StaticImportInspectionBase extends BaseInspection {
           return;
         }
         final PsiMember member = (PsiMember)target;
+        if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
         for (JavaResolveResult importTarget : importTargets) {
           final PsiElement targetElement = importTarget.getElement();
           if (targetElement instanceof PsiMethod || targetElement instanceof PsiField) {

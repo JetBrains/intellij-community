@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -67,6 +68,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
   }
 
 
+  @NotNull
   @Override
   protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
                                                          RangeMarker bounds,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.HardcodedMethodConstants;
@@ -173,16 +174,8 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
       if (qualifierExpression == null) {
         return null;
       }
-      final PsiType type = qualifierExpression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return null;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return null;
-      }
-      if (PsiTreeUtil.isAncestor(aClass, callExpression, true)) {
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType());
+      if (aClass == null || PsiTreeUtil.isAncestor(aClass, callExpression, true)) {
         return null;
       }
       for (String ignoredType : ignoredTypes) {

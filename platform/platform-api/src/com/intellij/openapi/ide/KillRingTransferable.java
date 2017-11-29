@@ -53,7 +53,7 @@ public class KillRingTransferable implements Transferable {
   private volatile boolean myReadyToCombine = true;
 
   /**
-   * Creates new <code>KillRingTransferable</code> object.
+   * Creates new {@code KillRingTransferable} object.
    * 
    * @param data                target text to transfer
    * @param document            document that contained given text
@@ -111,8 +111,8 @@ public class KillRingTransferable implements Transferable {
   }
 
   /**
-   * @return    <code>true</code> if current object can be combined with adjacent text; <code>false</code> otherwise.
-   *            Default value is <code>true</code>
+   * @return    {@code true} if current object can be combined with adjacent text; {@code false} otherwise.
+   *            Default value is {@code true}
    */
   public boolean isReadyToCombine() {
     return myReadyToCombine;
@@ -121,7 +121,7 @@ public class KillRingTransferable implements Transferable {
   /**
    * Allows to define if current object can be combined with adjacent text. 
    * 
-   * @param readyToCombine    <code>true</code> if current object can be combined with adjacent text; <code>false</code> otherwise
+   * @param readyToCombine    {@code true} if current object can be combined with adjacent text; {@code false} otherwise
    */
   public void setReadyToCombine(boolean readyToCombine) {
     myReadyToCombine = readyToCombine;

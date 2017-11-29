@@ -22,6 +22,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,7 +32,6 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.ProgressManagerQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,22 +62,15 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     // TODO: for DefaultConfigLoader it would be better to run modal cancellable task - so branches structure could be detected and
     // TODO: shown in dialog. Currently when "Configure Branches" is invoked for the first time - no branches are shown.
     // TODO: If "Cancel" is pressed and "Configure Branches" invoked once again - already detected (in background) branches are shown.
-    ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            myBranchesLoader.start();
-          }
-        });
-      }
-    });
+    ((ProjectLevelVcsManagerImpl)vcsManager)
+      .addInitializationRequest(VcsInitObject.BRANCHES, () -> ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) return;
+        myBranchesLoader.start();
+      }));
     myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
-  public static SvnBranchConfigurationManager getInstance(final Project project) {
+  public static SvnBranchConfigurationManager getInstance(@NotNull Project project) {
     SvnBranchConfigurationManager result = PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
 
     if (result != null) {
@@ -118,8 +111,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
-    final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);
+    BackgroundTaskUtil.syncPublisher(myProject, VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);
   }
 
   public ConfigurationBean getState() {
@@ -189,22 +181,17 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   private void preloadBranches(@NotNull final Collection<Pair<VirtualFile, SvnBranchConfigurationNew>> branchPoints) {
-    ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            try {
-              for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
-                myBunch.reloadBranches(pair.getFirst(), null, pair.getSecond());
-              }
-            }
-            catch (ProcessCanceledException e) {
-              //
-            }
+    ((ProjectLevelVcsManagerImpl)myVcsManager)
+      .addInitializationRequest(VcsInitObject.BRANCHES, () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
+            myBunch.reloadBranches(pair.getFirst(), null, pair.getSecond());
           }
-        });
-      }
-    });
+        }
+        catch (ProcessCanceledException e) {
+          //
+        }
+      }));
   }
 
   private List<SvnBranchItem> getStored(String branchUrl) {

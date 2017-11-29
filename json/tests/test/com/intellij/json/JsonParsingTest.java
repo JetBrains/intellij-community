@@ -22,7 +22,7 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
-  public void testKeywords() throws Exception {
+  public void testKeywords() {
     doTest();
   }
 

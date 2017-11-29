@@ -111,7 +111,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.LINE_MARKERS,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
-      @Nullable
       @Override
       public GutterIconRenderer createGutterRenderer() {
         return new LineMarkerGutterIconRenderer<PsiElement>(this) {
@@ -125,7 +124,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
             return true;
           }
 
-          @Nullable
           @Override
           public ActionGroup getPopupMenuActions() {
             return actionGroup;

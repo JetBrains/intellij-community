@@ -35,7 +35,7 @@ import java.util.List;
  * @author yole
  */
 public class PyFromImportSourceReference extends PyImportReference {
-  private PyFromImportStatement myStatement;
+  private final PyFromImportStatement myStatement;
   
   public PyFromImportSourceReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);

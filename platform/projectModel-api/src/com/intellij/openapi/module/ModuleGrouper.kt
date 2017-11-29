@@ -35,6 +35,11 @@ abstract class ModuleGrouper {
   abstract fun getGroupPath(module: Module): List<String>
 
   /**
+   * Returns names of parent groups for a module
+   */
+  abstract fun getGroupPath(description: ModuleDescription): List<String>
+
+  /**
    * Returns name which should be used for a module when it's shown under its group
    */
   abstract fun getShortenedName(module: Module): String
@@ -48,6 +53,11 @@ abstract class ModuleGrouper {
    */
   abstract fun getModuleAsGroupPath(module: Module): List<String>?
 
+  /**
+   * If [description] itself can be considered as a group, returns its groups. Otherwise returns null.
+   */
+  abstract fun getModuleAsGroupPath(description: ModuleDescription): List<String>?
+
   abstract fun getAllModules(): Array<Module>
 
   companion object {
@@ -55,7 +65,7 @@ abstract class ModuleGrouper {
     @JvmOverloads
     fun instanceFor(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
       val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()
-      if (!isQualifiedModuleNamesEnabled() || hasGroups) {
+      if (!isQualifiedModuleNamesEnabled(project) || hasGroups) {
         return ExplicitModuleGrouper(project, moduleModel)
       }
       return QualifiedNameGrouper(project, moduleModel)
@@ -63,7 +73,8 @@ abstract class ModuleGrouper {
   }
 }
 
-fun isQualifiedModuleNamesEnabled() = Registry.`is`("project.qualified.module.names")
+fun isQualifiedModuleNamesEnabled(project: Project) = Registry.`is`("project.qualified.module.names") &&
+                                                      !ModuleManager.getInstance(project).hasModuleGroups()
 
 private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
   override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules
@@ -78,11 +89,15 @@ private class QualifiedNameGrouper(project: Project, model: ModifiableModuleMode
     return getGroupPathByModuleName(getModuleName(module))
   }
 
+  override fun getGroupPath(description: ModuleDescription) = getGroupPathByModuleName(description.name)
+
   override fun getShortenedNameByFullModuleName(name: String) = StringUtil.getShortName(name)
 
   override fun getGroupPathByModuleName(name: String) = name.split('.').dropLast(1)
 
   override fun getModuleAsGroupPath(module: Module) = getModuleName(module).split('.')
+
+  override fun getModuleAsGroupPath(description: ModuleDescription) = description.name.split('.')
 }
 
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
@@ -91,9 +106,17 @@ private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleMod
     return if (path != null) Arrays.asList(*path) else emptyList()
   }
 
+  override fun getGroupPath(description: ModuleDescription) = when (description) {
+    is LoadedModuleDescription -> getGroupPath(description.module)
+    is UnloadedModuleDescription -> description.groupPath
+    else -> throw IllegalArgumentException(description.javaClass.name)
+  }
+
   override fun getShortenedNameByFullModuleName(name: String) = name
 
   override fun getGroupPathByModuleName(name: String): List<String> = emptyList()
 
   override fun getModuleAsGroupPath(module: Module) = null
+  
+  override fun getModuleAsGroupPath(description: ModuleDescription) = null
 }

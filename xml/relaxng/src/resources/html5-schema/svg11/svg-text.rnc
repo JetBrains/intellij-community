@@ -164,6 +164,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        (common.attrs.aria.implicit.group | common.attrs.aria)?,
         attribute x { Coordinates.datatype }?,
         attribute y { Coordinates.datatype }?,
         attribute dx { Lengths.datatype }?,

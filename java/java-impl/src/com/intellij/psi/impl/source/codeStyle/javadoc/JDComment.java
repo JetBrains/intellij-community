@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.formatting.IndentInfo;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,7 +34,7 @@ public class JDComment {
   private String myDescription;
   private List<String> myUnknownList;
   private List<String> mySeeAlsoList;
-  private String mySince;
+  private List<String> mySinceList;
   private String myDeprecated;
   private boolean myMultiLineComment;
   private String myFirstLine = "/**";
@@ -52,6 +56,19 @@ public class JDComment {
     myMultiLineComment = value;
   }
 
+  @NotNull
+  protected String javadocContinuationIndent() {
+    if (!myFormatter.getSettings().JD_INDENT_ON_CONTINUATION) return "";
+    return continuationIndent();
+  }
+
+  @NotNull
+  protected String continuationIndent() {
+    CodeStyleSettings settings = myFormatter.getSettings().getContainer();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    return new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
+  }
+
   @Nullable
   public String generate(@NotNull String indent) {
     final String prefix;
@@ -66,8 +83,7 @@ public class JDComment {
     int start = sb.length();
 
     if (!isNull(myDescription)) {
-      sb.append(prefix);
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, false));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);
@@ -77,39 +93,36 @@ public class JDComment {
 
     generateSpecial(prefix, sb);
 
+    final String continuationPrefix = prefix + javadocContinuationIndent();
+
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
-        sb.append(prefix);
-        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix));
+        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix));
       }
     }
 
     if (!isNull(mySeeAlsoList)) {
       JDTag tag = JDTag.SEE;
       for (String aSeeAlsoList : mySeeAlsoList) {
-        sb.append(prefix);
-        sb.append(tag.getWithEndWhitespace());
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(aSeeAlsoList, prefix, true, tag.getDescriptionPrefix(prefix).length());
+          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix);
         sb.append(tagDescription);
       }
     }
 
-    if (!isNull(mySince)) {
+    if (!isNull(mySinceList)) {
       JDTag tag = JDTag.SINCE;
-      sb.append(prefix);
-      sb.append(tag.getWithEndWhitespace());
-      StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(mySince, prefix, true, tag.getDescriptionPrefix(prefix).length());
-      sb.append(tagDescription);
+      for (String since : mySinceList) {
+        StringBuilder tagDescription = myFormatter.getParser()
+          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+        sb.append(tagDescription);
+      }
     }
 
     if (myDeprecated != null) {
       JDTag tag = JDTag.DEPRECATED;
-      sb.append(prefix);
-      sb.append(tag.getWithEndWhitespace());
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(myDeprecated, prefix, true, tag.getDescriptionPrefix(prefix).length());
+        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix);
       sb.append(tagDescription);
     }
 
@@ -149,21 +162,18 @@ public class JDComment {
   }
 
   public void addSeeAlso(@NotNull String seeAlso) {
-    if (mySeeAlsoList == null) {
-      mySeeAlsoList = ContainerUtilRt.newArrayList();
-    }
+    if (mySeeAlsoList == null) mySeeAlsoList = new ArrayList<>();
     mySeeAlsoList.add(seeAlso);
   }
 
   public void addUnknownTag(@NotNull String unknownTag) {
-    if (myUnknownList == null) {
-      myUnknownList = ContainerUtilRt.newArrayList();
-    }
+    if (myUnknownList == null) myUnknownList = new ArrayList<>();
     myUnknownList.add(unknownTag);
   }
 
-  public void setSince(@Nullable String since) {
-    this.mySince = since;
+  public void addSince(@NotNull String since) {
+    if (mySinceList == null) mySinceList = new ArrayList<>();
+    mySinceList.add(since);
   }
 
   public void setDeprecated(@Nullable String deprecated) {

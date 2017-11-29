@@ -14,8 +14,12 @@ def do_list_available_packages():
         from conda.cli.main_search import common
         index = common.get_index_trap()
     except ImportError:
-        from conda.cli.main_search import get_index
-        index = get_index()
+        try:
+            from conda.cli.main_search import get_index
+            index = get_index()
+        except ImportError:    # conda.__version__ = 4.3.23
+            from conda.api import get_index
+            index = get_index()
 
     for pkg in index.values():
         sys.stdout.write("\t".join([pkg["name"], pkg["version"], ":".join(pkg["depends"])])+chr(10))

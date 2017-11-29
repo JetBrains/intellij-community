@@ -33,7 +33,7 @@ import com.intellij.psi.PsiPackage;
 import javax.swing.*;
 
 public class FileStructureDialogTest extends BaseProjectViewTestCase {
-  public void testFileStructureForClass() throws Exception {
+  public void testFileStructureForClass() {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(getPackageDirectory());
     assertNotNull(aPackage);
     final PsiClass psiClass = aPackage.getClasses()[0];

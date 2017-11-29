@@ -37,9 +37,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,12 +139,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myWasTreeInitialized = true;
 
     super.initTree();
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
-      }
-    }, true);
+    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }

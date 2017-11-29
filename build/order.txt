@@ -1335,7 +1335,7 @@ messages/VcsBundle.properties:/lib/resources_en.jar
 com/intellij/openapi/vcs/changes/VetoSavingCommittingDocumentsAdapter.class:/lib/idea.jar
 com/intellij/openapi/fileEditor/FileDocumentSynchronizationVetoListener.class:/lib/openapi.jar
 com/intellij/openapi/vcs/changes/VcsDirtyScopeVfsListener.class:/lib/idea.jar
-com/intellij/openapi/vfs/VirtualFileAdapter.class:/lib/openapi.jar
+com/intellij/openapi/vfs/VirtualFileListener.class:/lib/openapi.jar
 com/intellij/openapi/vfs/VirtualFilePropertyEvent.class:/lib/openapi.jar
 com/intellij/openapi/vfs/VirtualFileMoveEvent.class:/lib/openapi.jar
 com/intellij/openapi/vcs/FilePath.class:/lib/openapi.jar

@@ -21,15 +21,9 @@ import org.junit.Test;
 
 import javax.net.ssl.SSLProtocolException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/25/13
- * Time: 6:09 PM
- */
 public class SSLExceptionParserTest {
   @Test
-  public void testRealLifeCase() throws Exception {
+  public void testRealLifeCase() {
     final String original = "handshake alert:  unrecognized_name";
     final SSLProtocolException exception = new SSLProtocolException(original);
     final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(exception.getMessage());

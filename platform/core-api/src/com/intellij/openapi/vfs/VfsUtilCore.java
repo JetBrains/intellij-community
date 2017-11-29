@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,8 +221,8 @@ public class VfsUtilCore {
    */
   @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String newName) throws IOException {
-    final VirtualFile newChild = toDir.createChildData(requestor, newName);
-    newChild.setBinaryContent(file.contentsToByteArray());
+    VirtualFile newChild = toDir.createChildData(requestor, newName);
+    newChild.setBinaryContent(file.contentsToByteArray(), -1, -1, requestor);
     return newChild;
   }
 
@@ -467,7 +467,7 @@ public class VfsUtilCore {
         throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
       }
     }
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+    if (SystemInfo.isWindows) {
       while (!path.isEmpty() && path.charAt(0) == '/') {
         path = path.substring(1, path.length());
       }

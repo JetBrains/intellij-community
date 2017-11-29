@@ -16,6 +16,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
+import org.jetbrains.intellij.build.ResourcesGenerator
+
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  *
@@ -24,6 +27,8 @@ import com.intellij.openapi.util.MultiValuesMap
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
+  /** artifact name to relative output path */
+  final Map<String, String> includedArtifacts = [:]
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
@@ -33,6 +38,7 @@ abstract class BaseLayout {
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
   protected final Set<String> modulesWithLocalizableResourcesInCommonJar = new LinkedHashSet<>()
   final List<String> modulesWithExcludedModuleLibraries = []
+  final List<Pair<ResourcesGenerator, String>> resourceGenerators = []
 
   boolean packLocalizableResourcesInCommonJar(String moduleName) {
     return modulesWithLocalizableResourcesInCommonJar.contains(moduleName)

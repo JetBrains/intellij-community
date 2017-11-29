@@ -59,6 +59,7 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.ContainerUtil;
@@ -299,9 +300,10 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NotNull
   private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     return () -> new UsageInfoSearcherAdapter() {
+      @NotNull
       @Override
       protected UsageInfo[] findUsages() {
-        return InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount());
+        return ObjectUtils.notNull(InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount()), UsageInfo.EMPTY_ARRAY);
       }
 
       @Override

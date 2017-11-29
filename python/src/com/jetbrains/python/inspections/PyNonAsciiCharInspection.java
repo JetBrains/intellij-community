@@ -66,30 +66,32 @@ public class PyNonAsciiCharInspection extends PyInspection {
     public void visitComment(PsiComment node) {
       checkString(node, node.getText());
     }
-    
+
     private void checkString(PsiElement node, String value) {
-      if (LanguageLevel.forElement(node).isPy3K()) return;
-      PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
-      if (file == null) return;
-      final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file);
+      if (LanguageLevel.forElement(node).isPython2()) {
+        PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
+        if (file == null) return;
+        final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file);
 
-      boolean hasNonAscii = false;
+        boolean hasNonAscii = false;
 
-      CharsetEncoder asciiEncoder = Charset.forName("US-ASCII").newEncoder();
-      int length = value.length();
-      char c = 0;
-      for (int i = 0; i < length; ++i) {
-        c = value.charAt(i);
-        if (!asciiEncoder.canEncode(c)) {
-          hasNonAscii = true;
-          break;
+        CharsetEncoder asciiEncoder = Charset.forName("US-ASCII").newEncoder();
+        int length = value.length();
+        char c = 0;
+        for (int i = 0; i < length; ++i) {
+          c = value.charAt(i);
+          if (!asciiEncoder.canEncode(c)) {
+            hasNonAscii = true;
+            break;
+          }
         }
-      }
 
-      if (hasNonAscii) {
-        if (charsetString == null)
-          registerProblem(node, "Non-ASCII character " + c + " in file, but no encoding declared",
-                          new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
+        if (hasNonAscii) {
+          if (charsetString == null) {
+            registerProblem(node, "Non-ASCII character " + c + " in file, but no encoding declared",
+                            new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
+          }
+        }
       }
     }
 
@@ -111,6 +113,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
   public String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
+
   @Override
   public JComponent createOptionsPanel() {
     final JComboBox defaultEncoding = new JComboBox(PyEncodingUtil.POSSIBLE_ENCODINGS);

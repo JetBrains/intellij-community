@@ -49,35 +49,35 @@ public class AdminWriterStoringRepositoryPath implements IAdminWriter, Repositor
     CvsUtil.skip(inputStream, fileLength);
   }
 
-  public void editFile(FileObject fileObject, Entry entry, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
+  public void editFile(FileObject fileObject, Entry entry, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
   }
 
-  public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) {
   }
 
-  public void removeEntryForFile(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void removeEntryForFile(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
   }
 
-  public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) {
   }
 
-  public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem) {
     if (myRepositoryPath == null) {
       myRepositoryPath = repositoryPath;
       myModulePath = cvsFileSystem.getRelativeRepositoryPath(repositoryPath);
     }
   }
 
-  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) {
   }
 
-  public void uneditFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
+  public void uneditFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
   }
 
   public void pruneDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
   }
 
-  public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void directoryAdded(DirectoryObject directory, ICvsFileSystem cvsFileSystem) {
   }
 
   public String getRepositoryPath(String repository) {

@@ -72,10 +72,11 @@ public class IndentCalculator {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file != null) {
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(myProject);
+      CommonCodeStyleSettings.IndentOptions fileOptions = codeStyleSettings.getIndentOptionsByFile(file);
       CommonCodeStyleSettings.IndentOptions options =
-        language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
+        !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
         codeStyleSettings.getCommonSettings(language).getIndentOptions() :
-        codeStyleSettings.getIndentOptionsByFile(file);
+        fileOptions;
       return
         baseIndent + new IndentInfo(0, indentTypeToSize(myIndentType, options), 0, false).generateNewWhiteSpace(options);
     }

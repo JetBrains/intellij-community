@@ -10,10 +10,6 @@ import com.intellij.tasks.mantis.MantisRepositoryType;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 
-/**
- * User: evgeny.zakrevsky
- * Date: 10/12/12
- */
 public class MantisIntegrationTest extends TaskManagerTestCase {
   public static final String MANTIS_1_2_11_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8142/";
 

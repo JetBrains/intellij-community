@@ -20,11 +20,6 @@ import com.intellij.openapi.util.Condition;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * User: lex
- * Date: Sep 25, 2003
- * Time: 12:16:58 AM
- */
 public interface InternalIterator<T>{
   /**
    * @param element

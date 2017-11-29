@@ -1,0 +1,1 @@
+print(<warning descr="Key 'foo' has no corresponding argument">"{foo}"</warning>.format(**{}))

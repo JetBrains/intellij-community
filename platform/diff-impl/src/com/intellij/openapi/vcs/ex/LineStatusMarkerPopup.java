@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.comparison.ByWord;
@@ -25,27 +26,34 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,10 +106,8 @@ public abstract class LineStatusMarkerPopup {
   }
 
   public void showAfterScroll() {
-    myEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      public void run() {
-        showHintAt(null);
-      }
+    myEditor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      showHintAt(null);
     });
   }
 
@@ -147,8 +153,19 @@ public abstract class LineStatusMarkerPopup {
     }
     point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
 
-    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, point, flags, -1, false, new HintHint(myEditor, point));
+
+    ApplicationManager.getApplication().getMessageBus().connect(disposable)
+      .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
+        // Ex: if popup re-shown by ToggleByWordDiffAction
+        if (newHint.getComponent() instanceof PopupPanel) {
+          PopupPanel newPopupPanel = (PopupPanel)newHint.getComponent();
+          if (newPopupPanel.getEditor().equals(myEditor)) {
+            hint.hide();
+          }
+        }
+      });
 
     if (!hint.isVisible()) {
       closeListener.hintHidden(null);
@@ -163,11 +180,8 @@ public abstract class LineStatusMarkerPopup {
     final CharSequence vcsContent = myTracker.getVcsContent(myRange);
     final CharSequence currentContent = myTracker.getCurrentContent(myRange);
 
-    return BackgroundTaskUtil.tryComputeFast(new Function<ProgressIndicator, List<DiffFragment>>() {
-      @Override
-      public List<DiffFragment> fun(ProgressIndicator indicator) {
-        return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
-      }
+    return BackgroundTaskUtil.tryComputeFast(indicator -> {
+      return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
     }, 200);
   }
 
@@ -195,35 +209,59 @@ public abstract class LineStatusMarkerPopup {
   }
 
   @Nullable
-  private EditorFragmentComponent createEditorComponent(@Nullable FileType fileType, @Nullable List<DiffFragment> wordDiff) {
+  private JComponent createEditorComponent(@Nullable FileType fileType, @Nullable List<DiffFragment> wordDiff) {
     if (myRange.getType() == Range.INSERTED) return null;
 
-    EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(myTracker.getVcsDocument(), myTracker.getProject());
-    uEditor.setColorsScheme(myEditor.getColorsScheme());
-
-    DiffUtil.setEditorCodeStyle(myTracker.getProject(), uEditor, fileType);
+    Document vcsDocument = myTracker.getVcsDocument();
+    TextRange vcsTextRange = myTracker.getVcsTextRange(myRange);
+    String content = vcsTextRange.subSequence(vcsDocument.getImmutableCharSequence()).toString();
 
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
-    uEditor.setHighlighter(highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument())));
+    EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
+    highlighter.setText(myTracker.getVcsDocument().getImmutableCharSequence());
+    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
 
-    if (wordDiff != null) {
-      int vcsStartShift = myTracker.getVcsTextRange(myRange).getStartOffset();
-      for (DiffFragment fragment : wordDiff) {
-        int vcsStart = vcsStartShift + fragment.getStartOffset1();
-        int vcsEnd = vcsStartShift + fragment.getEndOffset1();
-        TextDiffType type = getDiffType(fragment);
+    Color backgroundColor = EditorFragmentComponent.getBackgroundColor(myEditor, true);
 
-        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
+    EditorTextField field = new EditorTextField(content);
+    field.setBorder(null);
+    field.setOneLineMode(false);
+    field.ensureWillComputePreferredSize();
+
+    field.addSettingsProvider(uEditor -> {
+      uEditor.setRendererMode(true);
+      uEditor.setBorder(null);
+
+      uEditor.setColorsScheme(myEditor.getColorsScheme());
+      uEditor.setBackgroundColor(backgroundColor);
+
+      DiffUtil.setEditorCodeStyle(myTracker.getProject(), uEditor, fileType);
+
+      uEditor.setHighlighter(fragmentedHighlighter);
+
+      if (wordDiff != null) {
+        for (DiffFragment fragment : wordDiff) {
+          int vcsStart = fragment.getStartOffset1();
+          int vcsEnd = fragment.getEndOffset1();
+          TextDiffType type = getDiffType(fragment);
+
+          DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
+        }
       }
-    }
+    });
 
-    EditorFragmentComponent fragmentComponent =
-      EditorFragmentComponent.createEditorFragmentComponent(myEditor.getContentComponent(), uEditor,
-                                                            myRange.getVcsLine1(), myRange.getVcsLine2(), false, false);
+    JPanel panel = JBUI.Panels.simplePanel(field);
+    panel.setBorder(EditorFragmentComponent.createEditorFragmentBorder(myEditor));
+    panel.setBackground(backgroundColor);
 
-    EditorFactory.getInstance().releaseEditor(uEditor);
+    DataManager.registerDataProvider(panel, data -> {
+      if (CommonDataKeys.HOST_EDITOR.is(data)) {
+        return field.getEditor();
+      }
+      return null;
+    });
 
-    return fragmentComponent;
+    return panel;
   }
 
   private static String getFileName(@NotNull Document document) {
@@ -248,18 +286,20 @@ public abstract class LineStatusMarkerPopup {
       }
     });
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), true);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
   }
 
   private static class PopupPanel extends JPanel {
     @Nullable private final JComponent myEditorComponent;
+    @NotNull private final Editor myEditor;
 
-    public PopupPanel(@NotNull final Editor editor,
+    public PopupPanel(@NotNull Editor editor,
                       @NotNull ActionToolbar toolbar,
                       @Nullable JComponent editorComponent) {
       super(new BorderLayout());
       setOpaque(false);
 
+      myEditor = editor;
       myEditorComponent = editorComponent;
       boolean isEditorVisible = myEditorComponent != null;
 
@@ -315,12 +355,17 @@ public abstract class LineStatusMarkerPopup {
       emptyPanel.addMouseListener(listener);
     }
 
+    @NotNull
+    public Editor getEditor() {
+      return myEditor;
+    }
+
     private static void transferEvent(MouseEvent e, Editor editor) {
       editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
     }
 
     public int getEditorTextOffset() {
-      return 3; // myEditorComponent.getInsets().left
+      return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
     }
   }
 

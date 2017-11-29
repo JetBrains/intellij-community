@@ -40,12 +40,12 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   protected static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
 
   private final Project myProject;
-  protected ProgressIndicator myCurrentProgress;
+  ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
   private UsageView myCurrentUsageView;
   protected final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public UsagesPanel(Project project) {
+  public UsagesPanel(@NotNull Project project) {
     super(new BorderLayout());
     myProject = project;
   }
@@ -59,7 +59,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   public abstract String getCodeUsagesString();
 
 
-  protected void cancelCurrentFindRequest() {
+  void cancelCurrentFindRequest() {
     if (myCurrentProgress != null) {
       myCurrentProgress.cancel();
     }
@@ -85,11 +85,13 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     setToComponent(createLabel(AnalysisScopeBundle.message("usage.view.canceled")));
   }
 
-  protected void setToComponent(final JComponent cmp) {
+  void setToComponent(final JComponent cmp) {
     SwingUtilities.invokeLater(() -> {
+      if (myProject.isDisposed()) return;
       if (myCurrentComponent != null) {
         if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
           Disposer.dispose(myCurrentUsageView);
+          myCurrentUsageView = null;
         }
         remove(myCurrentComponent);
       }
@@ -103,6 +105,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   public void dispose(){
     if (myCurrentUsageView != null){
       Disposer.dispose(myCurrentUsageView);
+      myCurrentUsageView = null;
     }
   }
 

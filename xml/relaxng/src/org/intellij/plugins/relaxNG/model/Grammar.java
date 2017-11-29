@@ -18,11 +18,6 @@ package org.intellij.plugins.relaxNG.model;
 
 import com.intellij.psi.PsiElement;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public interface Grammar<P extends Pattern, E extends PsiElement> extends Pattern<E> {
   P getStart();
 }

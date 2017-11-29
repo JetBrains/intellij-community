@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalLiteralInspection extends BaseInspection {
@@ -41,8 +41,7 @@ public class OctalLiteralInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "octal.literal.problem.descriptor");
+    return InspectionGadgetsBundle.message("octal.literal.problem.descriptor");
   }
 
   @Override
@@ -67,29 +66,9 @@ public class OctalLiteralInspection extends BaseInspection {
   private static class OctalLiteralVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression literal) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
       super.visitLiteralExpression(literal);
-      final PsiType type = literal.getType();
-      if (type == null) {
-        return;
-      }
-      if (!(type.equals(PsiType.INT)
-            || type.equals(PsiType.LONG))) {
-        return;
-      }
-      @NonNls final String text = literal.getText();
-      if (text.length() == 1) {
-        return;
-      }
-      if (text.charAt(0) != '0') {
-        return;
-      }
-      final char c1 = text.charAt(1);
-      if (c1 != '_' && (c1 < '0' || c1 > '7')) {
-        return;
-      }
-      if (literal.getValue() == null) {
+      if (!ExpressionUtils.isOctalLiteral(literal)) {
         return;
       }
       registerError(literal);

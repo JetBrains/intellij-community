@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name="javax.swing.AbstractAction AbstractAction(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
   <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -26,6 +23,9 @@
   </item>
   <item name="javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.JComboBox java.lang.Object getSelectedItem()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="javax.swing.JComponent boolean processKeyBinding(javax.swing.KeyStroke, java.awt.event.KeyEvent, int, boolean) 2">
     <annotation name="org.intellij.lang.annotations.MagicConstant">

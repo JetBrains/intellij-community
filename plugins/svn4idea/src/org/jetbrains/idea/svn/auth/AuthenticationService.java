@@ -61,12 +61,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 1:27 PM
- */
 public class AuthenticationService {
 
   @NotNull private final SvnVcs myVcs;
@@ -105,13 +99,8 @@ public class AuthenticationService {
     if (repositoryUrl != null) {
       final String realm = repositoryUrl.toDecodedString();
 
-      authentication = requestCredentials(realm, type, new Getter<SVNAuthentication>() {
-        @Override
-        public SVNAuthentication get() {
-          return myConfiguration.getInteractiveManager(myVcs).getInnerProvider()
-            .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
-        }
-      });
+      authentication = requestCredentials(realm, type, () -> myConfiguration.getInteractiveManager(myVcs).getInnerProvider()
+        .requestClientAuthentication(type, repositoryUrl, realm, null, null, true));
     }
 
     if (authentication == null) {
@@ -154,30 +143,25 @@ public class AuthenticationService {
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
                                       @NotNull final String key) {
-    return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), new Getter<String>() {
-      @Override
-      public String get() {
-        final Ref<String> answer = new Ref<>();
+    return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), () -> {
+      final Ref<String> answer = new Ref<>();
 
-        Runnable command = new Runnable() {
-          public void run() {
-            SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
+      Runnable command = () -> {
+        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
 
-            dialog.setup(mode, realm, key, true);
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-            dialog.setSaveEnabled(false);
-            if (dialog.showAndGet()) {
-              answer.set(dialog.getPassword());
-            }
-          }
-        };
+        dialog.setup(mode, realm, key, true);
+        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+        dialog.setSaveEnabled(false);
+        if (dialog.showAndGet()) {
+          answer.set(dialog.getPassword());
+        }
+      };
 
-        // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
-        // the thread that started progress
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
+      // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
+      // the thread that started progress
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
-        return answer.get();
-      }
+      return answer.get();
     });
   }
 

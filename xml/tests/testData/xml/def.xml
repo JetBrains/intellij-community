@@ -1,0 +1,1 @@
+<root xmlns="test.required" required="foo" fixed=<warning descr="Redundant default attribute value assignment">"foo"</warning>/>

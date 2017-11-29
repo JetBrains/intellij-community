@@ -19,10 +19,6 @@ import com.intellij.openapi.application.ModalityState;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jan 26, 2005
- */
 public interface ChooseByNamePopupComponent {
   void invoke(Callback callback, ModalityState modalityState, boolean allowMultipleSelection);
 

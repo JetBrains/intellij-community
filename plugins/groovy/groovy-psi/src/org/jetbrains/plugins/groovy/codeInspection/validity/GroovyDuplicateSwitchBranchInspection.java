@@ -39,13 +39,6 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return VALIDITY_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Duplicate switch case";
   }

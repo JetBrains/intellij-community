@@ -49,6 +49,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
       Disposer.dispose(myDisposable);
     }
     finally {
+      myDisposable = null;
       //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }

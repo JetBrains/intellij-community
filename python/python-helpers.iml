@@ -3,7 +3,6 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/helpers">
-      <sourceFolder url="file://$MODULE_DIR$/helpers/py2only" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/helpers" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />

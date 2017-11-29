@@ -38,6 +38,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private Project myProject;
   private final int myPid;
   private String mySdkPath;
+  private static final int CONNECTION_TIMEOUT = 20000;
 
 
   public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, String sdkPath) {
@@ -77,6 +78,16 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
                                      result.getProcessHandler(), "") {
               @Override
               protected void printConsoleInfo() {
+              }
+
+              @Override
+              public int getConnectTimeout() {
+                return CONNECTION_TIMEOUT;
+              }
+
+              @Override
+              protected void detachDebuggedProcess() {
+                handleStop();
               }
 
               @Override

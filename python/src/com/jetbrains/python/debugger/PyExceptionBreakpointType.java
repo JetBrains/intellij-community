@@ -19,9 +19,9 @@ import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.AbstractTreeClassChooserDialog;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,9 +33,12 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.python.PyClassTreeChooserDialog;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,13 +93,8 @@ public class PyExceptionBreakpointType
     if (pyClass != null) {
       final String qualifiedName = pyClass.getQualifiedName();
       assert qualifiedName != null : "Qualified name of the class shouldn't be null";
-      return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<PyExceptionBreakpointProperties>>() {
-        @Override
-        public XBreakpoint<PyExceptionBreakpointProperties> compute() {
-          return XDebuggerManager.getInstance(project).getBreakpointManager()
-            .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
-        }
-      });
+      return WriteAction.compute(() -> XDebuggerManager.getInstance(project).getBreakpointManager()
+        .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName)));
     }
     return null;
   }
@@ -115,12 +113,7 @@ public class PyExceptionBreakpointType
       final Pair<WeakReference<PyClass>, Boolean> pair = processedElements.get(key);
       boolean isException;
       if (pair == null || pair.first.get() != pyClass) {
-        isException = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return PyUtil.isExceptionClass(pyClass);
-          }
-        });
+        isException = ReadAction.compute(() -> PyUtil.isExceptionClass(pyClass));
         processedElements.put(key, Pair.create(new WeakReference<>(pyClass), isException));
       }
       else {
@@ -146,6 +139,13 @@ public class PyExceptionBreakpointType
       return exception;
     }
     return "";
+  }
+
+  @Nullable
+  @Override
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint,
+                                                     @NotNull Project project) {
+    return new PyDebuggerEditorsProvider();
   }
 
   @Override

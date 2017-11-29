@@ -48,7 +48,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Component parent, Configurable configurable, @NotNull Runnable advancedInitialization);
+  public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);
 
   public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
 

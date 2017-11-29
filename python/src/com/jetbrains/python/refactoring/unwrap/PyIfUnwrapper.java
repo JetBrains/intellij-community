@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class PyIfUnwrapper extends PyUnwrapper {
     super(PyBundle.message("unwrap.if"));
   }
 
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof PyIfPartIfImpl) {
       final PyStatementList statementList = ((PyIfPartIfImpl)e).getStatementList();
       if (statementList != null) {
@@ -44,7 +45,7 @@ public class PyIfUnwrapper extends PyUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return PsiTreeUtil.getParentOfType(e, PyIfStatement.class);
   }

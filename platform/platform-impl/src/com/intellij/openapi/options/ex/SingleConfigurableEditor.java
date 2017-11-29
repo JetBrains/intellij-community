@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SingleConfigurableEditor extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.SingleConfigurableEditor");
+  private static final Logger LOG = Logger.getInstance(SingleConfigurableEditor.class);
   private Project myProject;
   private Configurable myConfigurable;
   private JComponent myCenterPanel;
@@ -217,7 +217,10 @@ public class SingleConfigurableEditor extends DialogWrapper {
       };
 
       // invokeLater necessary to make sure dialog is already shown so we calculate modality state correctly.
-      SwingUtilities.invokeLater(() -> addUpdateRequest(updateRequest));
+      SwingUtilities.invokeLater(() -> {
+        // schedule if not already disposed
+        if (myConfigurable != null) addUpdateRequest(updateRequest);
+      });
     }
 
     private void addUpdateRequest(final Runnable updateRequest) {

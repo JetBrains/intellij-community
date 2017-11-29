@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/19/12
- * Time: 6:50 PM
- */
 public interface PlusMinusModify<T> extends PlusMinus<T> {
   void modify(T was, T become);
 }

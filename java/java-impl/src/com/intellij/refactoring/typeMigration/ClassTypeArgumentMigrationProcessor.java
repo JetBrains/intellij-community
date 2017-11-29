@@ -18,10 +18,12 @@ package com.intellij.refactoring.typeMigration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,21 +95,21 @@ public class ClassTypeArgumentMigrationProcessor {
     superClasses.add(resolvedClass);
     InheritanceUtil.getSuperClasses(resolvedClass, superClasses, true);
     for (PsiClass superSuperClass : superClasses) {
-      final TypeParameterSearcher parameterSearcher = new TypeParameterSearcher(superSuperClass.getTypeParameters());
+      final Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(PsiUtil.typeParametersIterable(superSuperClass));
       superSuperClass.accept(new JavaRecursiveElementVisitor(){
         @Override
         public void visitMethod(final PsiMethod method) {
           super.visitMethod(method);
-          processMemberType(method, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
+          processMemberType(method, typeParameters, psiClass, fullHierarchySubstitutor[0], roots);
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            processMemberType(parameter, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
+            processMemberType(parameter, typeParameters, psiClass, fullHierarchySubstitutor[0], roots);
           }
         }
 
         @Override
         public void visitField(final PsiField field) {
           super.visitField(field);
-          processMemberType(field, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
+          processMemberType(field, typeParameters, psiClass, fullHierarchySubstitutor[0], roots);
         }
       });
     }
@@ -115,12 +117,12 @@ public class ClassTypeArgumentMigrationProcessor {
   }
 
   private void processMemberType(final PsiElement element,
-                                 final TypeParameterSearcher parameterSearcher,
+                                 final Set<PsiTypeParameter> typeParameters,
                                  final PsiClass psiClass,
                                  final PsiSubstitutor substitutor,
                                  final Map<PsiElement, Pair<PsiReference[], PsiType>> roots) {
     final PsiType elementType = TypeMigrationLabeler.getElementType(element);
-    if (elementType != null && elementType.accept(parameterSearcher).booleanValue()) {
+    if (elementType != null && PsiPolyExpressionUtil.mentionsTypeParameters(elementType, typeParameters)) {
       final PsiType memberType = substitutor.substitute(elementType);
 
       prepareMethodsChangeSignature(psiClass, element, memberType);
@@ -152,37 +154,4 @@ public class ClassTypeArgumentMigrationProcessor {
       }
     }
   }
-
-  private static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
-    private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
-
-    private TypeParameterSearcher(final PsiTypeParameter[] set) {
-      ContainerUtil.addAll(myTypeParams, set);
-    }
-
-    public Boolean visitType(final PsiType type) {
-      return false;
-    }
-
-    public Boolean visitArrayType(final PsiArrayType arrayType) {
-      return arrayType.getComponentType().accept(this);
-    }
-
-    public Boolean visitClassType(final PsiClassType classType) {
-      final PsiClass aClass = classType.resolve();
-      if (aClass instanceof PsiTypeParameter && myTypeParams.contains((PsiTypeParameter)aClass)) return true;
-
-      final PsiType[] types = classType.getParameters();
-      for (final PsiType psiType : types) {
-        if (psiType.accept(this).booleanValue()) return true;
-      }
-      return false;
-    }
-
-    public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
-      final PsiType bound = wildcardType.getBound();
-      return bound != null && bound.accept(this).booleanValue();
-    }
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,20 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.PropertiesList;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.lang.properties.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -153,12 +156,22 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {
-    getPropertiesList().addChild(ASTFactory.whitespace("\n"), anchorBefore);
+    ASTNode propertiesList = getPropertiesList();
+    if (anchorBefore == null && propertiesList.getFirstChildNode() == null) {
+      getNode().addChild(ASTFactory.whitespace("\n"), propertiesList);
+    } else {
+      propertiesList.addChild(ASTFactory.whitespace("\n"), anchorBefore);
+    }
   }
 
   private boolean haveToAddNewLine() {
-    ASTNode lastChild = getPropertiesList().getLastChildNode();
-    return lastChild != null && !lastChild.getText().endsWith("\n");
+    ASTNode propertiesList = getPropertiesList();
+    ASTNode lastChild = propertiesList.getLastChildNode();
+    if (lastChild != null) {
+      return !lastChild.getText().endsWith("\n");
+    }
+    ASTNode prev = propertiesList.getTreePrev();
+    return prev == null || !PropertiesTokenTypes.WHITESPACES.contains(prev.getElementType());
   }
 
   @Override
@@ -191,7 +204,20 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ContainerUtil.getLastItem(properties);
   }
 
-  private Stream<IProperty> propertiesByKey(@NotNull String key) {
-    return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
+  private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
+    if (shouldReadIndex()) {
+      return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
+    }
+    else {
+      // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
+      return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
+    }
+  }
+
+  private boolean shouldReadIndex() {
+    Project project = getProject();
+    if (DumbService.getInstance(project).isDumb()) return false;
+    VirtualFile file = getVirtualFile();
+    return file != null && ProjectFileIndex.getInstance(project).isInContent(file);
   }
 }

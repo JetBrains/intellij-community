@@ -70,3 +70,35 @@ class TestOuter {
 @interface TestAnnotation {
   String value();
 }
+
+class HiearchyWithDefaults {
+
+    public interface UnmodifiableCollection<E> extends Iterable<E> {
+        boolean contains(E element);
+        interface Defaults<E> {}
+
+    }
+
+    public interface UnmodifiableList<E> extends UnmodifiableCollection<E> {
+
+        interface Decorator<E> extends Defaults<E> {
+            @SuppressWarnings("RedundantMethodOverride")
+            //IntellijIdea blooper: "method is identical to its super method" (and "redundant suppression")
+            @Override
+            default boolean contains(E element) {
+                //IntellijIdea blooper: "Unnecessarily Qualified Inner Class Access"
+                return UnmodifiableList.Defaults.super.contains(element);
+            }
+
+        }
+
+        interface Defaults<E> extends UnmodifiableList<E>, UnmodifiableCollection.Defaults<E> {
+            @Override
+            default boolean contains(E element) {
+                return false;
+            }
+
+        }
+    }
+
+}

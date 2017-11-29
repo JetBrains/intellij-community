@@ -31,11 +31,6 @@ import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxIncludeIndex {
   public static boolean processForwardDependencies(XmlFile file, final PsiElementProcessor<XmlFile> processor) {
     VirtualFile virtualFile = file.getVirtualFile();

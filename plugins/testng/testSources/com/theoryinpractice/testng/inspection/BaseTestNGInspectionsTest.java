@@ -34,7 +34,7 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
   @NonNls private static final String AFTER = "after";
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
     moduleBuilder.addLibrary("junit", PathUtil.getJarPathForClass(TestCase.class));
     moduleBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));

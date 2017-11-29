@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -79,7 +80,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private final JTextField myCurrentScript = new JTextField();
 
-  private VirtualFileAdapter myVfsListener;
+  private VirtualFileListener myVfsListener;
 
   private boolean myChanged;
 
@@ -102,7 +103,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     controlGroup.add(new StopAction());
 
     JPanel north = new JPanel(new BorderLayout());
-    north.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, controlGroup, true).getComponent(), BorderLayout.WEST);
+    north.add(ActionManager.getInstance().createActionToolbar("PlaybackDbg", controlGroup, true).getComponent(), BorderLayout.WEST);
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myCurrentScript, BorderLayout.CENTER);
@@ -120,7 +121,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     newScriptAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("control N")), myComponent);
     fsGroup.add(newScriptAction);
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fsGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("PlaybackDbgExtra", fsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
@@ -155,7 +156,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myComponent.add(script2Log, BorderLayout.CENTER);
 
-    myVfsListener = new VirtualFileAdapter() {
+    myVfsListener = new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         final VirtualFile file = pathToFile();
@@ -340,9 +341,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
 
     if (c != null) {
-      c.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     } else {
-      frame.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
     }
 
     //noinspection SSBasedInspection
@@ -350,7 +351,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   }
 
-  private IdeFrameImpl getFrame() {
+  private static IdeFrameImpl getFrame() {
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
       if (each instanceof IdeFrame) {

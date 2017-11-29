@@ -238,7 +238,7 @@ public class HgStatusCommand {
   }
 
   @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) throws VcsException {
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
     Collection<VirtualFile> resultFiles = new HashSet<>();
     Set<HgChange> change = executeInCurrentThread(repo, files != null ? ObjectsConvertor.vf2fp(files) : null);
     for (HgChange hgChange : change) {

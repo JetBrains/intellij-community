@@ -20,11 +20,11 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,16 +32,13 @@ import java.util.Set;
  */
 public class ProjectCategoryUsagesCollector extends UsagesCollector {
 
-  private final FactoryMap<String, UsageDescriptor> myUsageDescriptors = new FactoryMap<String, UsageDescriptor>() {
-    @Nullable
-    @Override
-    protected UsageDescriptor create(String key) {
-      return new UsageDescriptor(key, 0);
-    }
-  };
+  private final Map<String, UsageDescriptor> myUsageDescriptors = ContainerUtil.newHashMap();
 
   public static void projectTypeUsed(@NotNull String projectTypeId) {
-    getUsageDescriptors().get("project.category." + projectTypeId).advance();
+    String key = "project.category." + projectTypeId;
+    UsageDescriptor descriptor = getUsageDescriptors().get(key);
+
+    getUsageDescriptors().put(key, new UsageDescriptor(key, descriptor == null? 1: descriptor.getValue()+1));
   }
 
   @NotNull
@@ -59,7 +56,7 @@ public class ProjectCategoryUsagesCollector extends UsagesCollector {
     return GroupDescriptor.create("Project Category");
   }
 
-  private static FactoryMap<String, UsageDescriptor> getUsageDescriptors() {
+  private static Map<String, UsageDescriptor> getUsageDescriptors() {
     return ServiceManager.getService(ProjectCategoryUsagesCollector.class).myUsageDescriptors;
   }
 }

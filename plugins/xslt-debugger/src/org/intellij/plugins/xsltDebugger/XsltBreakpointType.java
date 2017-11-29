@@ -22,11 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 03.03.11
-*/
 public class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
 
   private final XsltDebuggerEditorsProvider myMyEditorsProvider1 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V1);

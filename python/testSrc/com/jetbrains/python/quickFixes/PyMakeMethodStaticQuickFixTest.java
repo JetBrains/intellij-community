@@ -19,9 +19,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMethodMayBeStaticInspection;
 
-/**
- * User: ktisha
- */
 public class PyMakeMethodStaticQuickFixTest extends PyQuickFixTestCase {
 
   public void testOneParam() {

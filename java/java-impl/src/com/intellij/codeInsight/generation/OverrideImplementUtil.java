@@ -51,10 +51,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
@@ -71,6 +68,7 @@ import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }
 
@@ -95,11 +93,12 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
                                  : PsiSubstitutor.EMPTY;
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc,
-                                     CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION);
+                                     CodeStyleSettingsManager.getSettings(aClass.getProject())
+                                       .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
-    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION) {
+    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION) {
       return false;
     }
     return canInsertOverride(superMethod, targetClass);
@@ -198,7 +197,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
 
-    if (CodeStyleSettingsManager.getSettings(aClass.getProject()).REPEAT_SYNCHRONIZED && method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+    if (CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).REPEAT_SYNCHRONIZED &&
+        method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
       result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
     }
 
@@ -234,7 +234,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden) {
     annotateOnOverrideImplement(method, targetClass, overridden,
-                                CodeStyleSettingsManager.getSettings(method.getProject()).INSERT_OVERRIDE_ANNOTATION);
+                                CodeStyleSettingsManager.getSettings(method.getProject())
+                                  .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
@@ -300,8 +301,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
+    return callSuper(superMethod, overriding, true);
+  }
+
+  @NotNull
+  private static String callSuper(PsiMethod superMethod, PsiMethod overriding, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");
@@ -347,8 +353,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
+    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
@@ -385,7 +392,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return false;
     }
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-    return commandName != null && StringUtil.containsIgnoreCase(commandName, "implement");
+    return commandName != null && StringUtil.containsIgnoreCase(commandName, IMPLEMENT_COMMAND_MARKER);
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){
@@ -407,7 +414,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
-                                          ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
+                                          ContainerUtil.newArrayList() : getMethodsToOverrideImplement(aClass, true);
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
@@ -611,13 +618,15 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static void overrideOrImplementMethodsInRightPlace(Editor editor1, PsiClass aClass, Collection<PsiMethodMember> members, boolean copyJavadoc) {
-    boolean insert = CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION;
+    boolean insert =
+      CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION;
     overrideOrImplementMethodsInRightPlace(editor1, aClass, members, copyJavadoc, insert);
   }
 
   public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass, Collection<CandidateInfo> candidatesToImplement,
                                                                     boolean copyJavadoc) throws IncorrectOperationException {
-    boolean insert = CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION;
+    boolean insert =
+      CodeStyleSettingsManager.getSettings(aClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION;
     return overrideOrImplementMethodCandidates(aClass, candidatesToImplement, copyJavadoc, insert);
   }
 }

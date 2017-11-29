@@ -15,10 +15,11 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
 
-public class ProcessInfoTest extends UsefulTestCase {
-  public void testExecutableName() throws Exception {
+public class ProcessInfoTest extends TestCase {
+
+  public void testExecutableName() {
     assertEquals("foo", new ProcessInfo(1, "", "foo", "").getExecutableDisplayName());
     assertEquals("foo", new ProcessInfo(1, "", "foo.exe", "").getExecutableDisplayName());
     assertEquals("foo", new ProcessInfo(1, "", "foo.EXE", "").getExecutableDisplayName());

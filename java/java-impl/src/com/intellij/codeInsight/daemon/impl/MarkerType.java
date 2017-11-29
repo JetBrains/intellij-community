@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = getParentMethod(element);
     if (!(parent instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)parent;
@@ -109,8 +109,8 @@ public class MarkerType {
       navigateToOverridingMethod(e, method, method != element.getParent());
     }
   });
-  static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD",
-                                                                     (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD",
+                                                                            (NullableFunction<PsiElement, String>)element -> {
                                                                        PsiElement parent = getParentMethod(element);
                                                                        if (!(parent instanceof PsiMethod)) return null;
                                                                        PsiMethod method = (PsiMethod)parent;
@@ -207,7 +207,7 @@ public class MarkerType {
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
-  static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)parent;
@@ -224,6 +224,11 @@ public class MarkerType {
   });
 
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+      return DaemonBundle.message("method.is.implemented.too.many");
+    }
+
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
     GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
     OverridingMethodsSearch.search(method, scope, true).forEach(new PsiElementProcessorAdapter<>(processor));
@@ -236,7 +241,6 @@ public class MarkerType {
 
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
     if (overridings.length == 0) {
-      final PsiClass aClass = method.getContainingClass();
       if (aClass != null && isAbstract && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
         return "Has functional implementations";
       }
@@ -287,7 +291,7 @@ public class MarkerType {
   }
 
   private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
-  static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) return null;
     PsiClass aClass = (PsiClass)parent;
@@ -333,7 +337,15 @@ public class MarkerType {
   }
 
   // Used in Kotlin, please don't make private
-  public static void navigateToSubclassedClass(MouseEvent e, @NotNull final PsiClass aClass) {
+  public static void navigateToSubclassedClass(MouseEvent e,
+                                               @NotNull final PsiClass aClass) {
+    navigateToSubclassedClass(e, aClass, new PsiClassOrFunctionalExpressionListCellRenderer());
+  }
+
+  // Used in Kotlin, please don't make private
+  public static void navigateToSubclassedClass(MouseEvent e,
+                                               @NotNull final PsiClass aClass,
+                                               PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
       DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
       return;
@@ -354,7 +366,6 @@ public class MarkerType {
     ContainerUtil.addIfNotNull(inheritors, collectProcessor.getFoundElement());
     ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
-    final PsiClassOrFunctionalExpressionListCellRenderer renderer = new PsiClassOrFunctionalExpressionListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     Collections.sort(inheritors, renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors.toArray(new NavigatablePsiElement[inheritors.size()]), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
@@ -362,12 +373,10 @@ public class MarkerType {
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {
     private final PsiClass myClass;
-    private final PsiClassOrFunctionalExpressionListCellRenderer myRenderer;
 
-    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiClassOrFunctionalExpressionListCellRenderer renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS);
+    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
       myClass = aClass;
-      myRenderer = renderer;
     }
 
     @Override
@@ -399,10 +408,10 @@ public class MarkerType {
       }), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
         @Override
         public boolean process(final PsiClass o) {
-          if (!updateComponent(o, myRenderer.getComparator())) {
+          if (!updateComponent(o)) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(o);
         }
       });
@@ -410,10 +419,10 @@ public class MarkerType {
       FunctionalExpressionSearch.search(myClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
         @Override
         public boolean process(final PsiFunctionalExpression expr) {
-          if (!updateComponent(expr, myRenderer.getComparator())) {
+          if (!updateComponent(expr)) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(expr);
         }
       });
@@ -422,12 +431,10 @@ public class MarkerType {
 
   private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
     private final PsiMethod myMethod;
-    private final PsiElementListCellRenderer myRenderer;
 
     private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS);
+      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
-      myRenderer = renderer;
     }
 
     @Override
@@ -455,10 +462,10 @@ public class MarkerType {
         new CommonProcessors.CollectProcessor<PsiMethod>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
-            if (!updateComponent(psiMethod, myRenderer.getComparator())) {
+            if (!updateComponent(psiMethod)) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(psiMethod);
           }
         });
@@ -467,10 +474,10 @@ public class MarkerType {
         FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
           @Override
           public boolean process(final PsiFunctionalExpression expr) {
-            if (!updateComponent(expr, myRenderer.getComparator())) {
+            if (!updateComponent(expr)) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(expr);
           }
         });

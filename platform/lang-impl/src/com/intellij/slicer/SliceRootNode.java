@@ -16,15 +16,12 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author cdr
@@ -57,17 +54,11 @@ public class SliceRootNode extends SliceNode {
 
   @Override
   @NotNull
-  public Collection<? extends AbstractTreeNode> getChildren() {
+  public Collection<SliceNode> getChildren() {
     if (myCachedChildren == null) {
       switchToAllLeavesTogether(myRootUsage);
     }
     return myCachedChildren;
-  }
-
-  @NotNull
-  @Override
-  public List<? extends AbstractTreeNode> getChildrenUnderProgress(@NotNull ProgressIndicator progress) {
-    return (List<? extends AbstractTreeNode>)getChildren();
   }
 
   @Override

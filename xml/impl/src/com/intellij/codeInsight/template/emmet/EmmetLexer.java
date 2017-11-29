@@ -23,10 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/25/13
- */
 public class EmmetLexer {
   private static final String DELIMS = ">^+*|()[]{}.#,='\" \0";
 

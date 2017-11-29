@@ -25,6 +25,7 @@ import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +77,17 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   }
 
   @Override
+  @NotNull
   public <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name) {
     return new RemoteServerImpl<>(name, type, type.createDefaultConfiguration());
+  }
+
+  @Override
+  @NotNull
+  public <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type) {
+    String name = UniqueNameGenerator.generateUniqueName(
+      type.getPresentableName(), s -> getServers(type).stream().map(RemoteServer::getName).noneMatch(s::equals));
+    return createServer(type, name);
   }
 
   @Override
@@ -118,7 +128,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
       }
       else {
         myServers.add(createConfiguration(type, server));
-      } 
+      }
     }
   }
 

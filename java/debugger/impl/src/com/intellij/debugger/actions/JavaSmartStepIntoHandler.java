@@ -28,12 +28,11 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,10 +55,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * User: Alexander Podkhalyuzin
- * Date: 22.11.11
- */
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
 
@@ -74,8 +69,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        List<SmartStepTarget> targets = ApplicationManager.getApplication().runReadAction(
-          (Computable<List<SmartStepTarget>>)() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
+        List<SmartStepTarget> targets =
+          ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
         DebuggerUIUtil.invokeLater(() -> {
           if (targets.isEmpty()) {
             doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
@@ -296,7 +291,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               expression instanceof PsiMethodCallExpression?
                 ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
                 : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
-              myInsideLambda,
+              myInsideLambda || (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null),
               null
             ));
           }

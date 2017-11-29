@@ -14,10 +14,6 @@ import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/3/12
- */
 class CoverageTableModel extends AbstractTableModel implements AbstractListBuilder.Model, SortableColumnModel {
   private final ColumnInfo[] COLUMN_INFOS;
 

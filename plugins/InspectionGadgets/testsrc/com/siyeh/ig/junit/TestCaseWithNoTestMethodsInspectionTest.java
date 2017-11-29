@@ -29,7 +29,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new TestCaseWithNoTestMethodsInspection();
+    TestCaseWithNoTestMethodsInspection inspection = new TestCaseWithNoTestMethodsInspection();
+    inspection.ignoreSupers = true;
+    return inspection;
   }
 
   @Override

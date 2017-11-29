@@ -24,7 +24,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -53,11 +55,14 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
 
-public class IdeTooltipManager implements ApplicationComponentAdapter, Disposable, AWTEventListener {
+public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
+
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
-  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
@@ -188,14 +193,21 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
     int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    Rectangle rowBounds = null;
     if (c instanceof JTree) {
       TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
       if (path != null) {
-        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
-        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
-          shift += me.getY() - pathBounds.y - 4;
-        }
+        rowBounds = ((JTree)c).getPathBounds(path);
       }
+    }
+    else if (c instanceof JList) {
+      int row = ((JList)c).locationToIndex(me.getPoint());
+      if (row > -1) {
+        rowBounds = ((JList)c).getCellBounds(row, row);
+      }
+    }
+    if (rowBounds != null && rowBounds.y + 4 < me.getY()) {
+      shift += me.getY() - rowBounds.y - 4;
     }
 
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
@@ -387,7 +399,8 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
-    return UIUtil.getToolTipBackground();
+    Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
+    return color != null ? color : UIUtil.getToolTipBackground();
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
@@ -598,23 +611,32 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
       }
     };
 
-    final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {
-      @Override
-      public View create(Element elem) {
-        AttributeSet attrs = elem.getAttributes();
-        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-        Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-        if (o instanceof HTML.Tag) {
-          HTML.Tag kind = (HTML.Tag)o;
-          if (kind == HTML.Tag.HR) {
-            return new CustomHrView(elem, hintHint.getTextForeground());
+    HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit() {
+      final HTMLFactory factory = new HTMLFactory() {
+        @Override
+        public View create(Element elem) {
+          AttributeSet attrs = elem.getAttributes();
+          Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+          Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+          if (o instanceof HTML.Tag) {
+            HTML.Tag kind = (HTML.Tag)o;
+            if (kind == HTML.Tag.HR) {
+              View view = super.create(elem);
+              try {
+                Field field = view.getClass().getDeclaredField("size");
+                field.setAccessible(true);
+                field.set(view, JBUI.scale(1));
+                return view;
+              }
+              catch (Exception ignored) {
+                //ignore
+              }
+            }
           }
+          return super.create(elem);
         }
-        return super.create(elem);
-      }
-    };
+      };
 
-    HTMLEditorKit kit = new HTMLEditorKit() {
       @Override
       public ViewFactory getViewFactory() {
         return factory;

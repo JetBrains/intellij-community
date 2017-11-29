@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ import java.util.Set;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Logger LOG = Logger.getInstance("#" + ImplementationViewComponent.class.getName());
+  private static final Logger LOG = Logger.getInstance(ImplementationViewComponent.class);
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -165,8 +165,7 @@ public class ImplementationViewComponent extends JPanel {
     myCountLabel = new JLabel();
 
     final JPanel header = new JPanel(new BorderLayout(2, 0));
-    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
-                                                        IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.emptyRight(5)));
     final JPanel toolbarPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0);
     toolbarPanel.add(myToolbar.getComponent(), gc);
@@ -220,7 +219,7 @@ public class ImplementationViewComponent extends JPanel {
           myLabel.setIcon(getIconForFile(psiFile));
           myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
           myLabel.setText(file.getPresentableName());
-          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
         }
         toolbarPanel.add(myLabel, gc);
       }
@@ -303,7 +302,7 @@ public class ImplementationViewComponent extends JPanel {
           myLabel.setIcon(getIconForFile(psiFile));
           myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
           myLabel.setText(file.getPresentableName());
-          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
           myLabel.setVisible(true);
         }
       }
@@ -491,7 +490,7 @@ public class ImplementationViewComponent extends JPanel {
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getViewSource(), CommonShortcuts.CTRL_ENTER), this);
     group.add(edit);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
   }
 
   private void goBack() {

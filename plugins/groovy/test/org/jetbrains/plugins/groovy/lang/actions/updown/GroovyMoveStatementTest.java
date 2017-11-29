@@ -32,13 +32,13 @@ public class GroovyMoveStatementTest extends GroovyEditorActionTestBase {
     return TestUtils.getTestDataPath() + "groovy/actions/moveStatement/";
   }
 
-  public void testClazz2() throws Throwable { bothTest(); }
+  public void testClazz2() { bothTest(); }
 
-  public void testClos2() throws Throwable { bothTest(); }
+  public void testClos2() { bothTest(); }
 
-  public void testMeth1() throws Throwable { bothTest(); }
+  public void testMeth1() { bothTest(); }
 
-  public void testMeth2() throws Throwable {
+  public void testMeth2() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
@@ -46,63 +46,63 @@ public class GroovyMoveStatementTest extends GroovyEditorActionTestBase {
     myFixture.checkResult(data.get(1));
   }
 
-  public void testMeth3() throws Throwable { bothTest(); }
-  public void testMeth4() throws Throwable { bothTest(); }
+  public void testMeth3() { bothTest(); }
+  public void testMeth4() { bothTest(); }
 
-  public void testIfst() throws Throwable { bothTest(); }
-  public void testIfst2() throws Throwable { bothTest(); }
+  public void testIfst() { bothTest(); }
+  public void testIfst2() { bothTest(); }
 
-  public void testSimple1() throws Throwable { bothTest(); }
-  public void testSimple2() throws Throwable { bothTest(); }
+  public void testSimple1() { bothTest(); }
+  public void testSimple2() { bothTest(); }
 
-  public void testTryst1() throws Throwable { bothTest(); }
-  public void testTryst2() throws Throwable { bothTest(); }
+  public void testTryst1() { bothTest(); }
+  public void testTryst2() { bothTest(); }
 
-  public void testStatementOutsideClosure() throws Throwable { bothTest(); }
-  public void testVariableOutsideClosure() throws Throwable { bothTest(); }
-  public void testVariableOutsideClosureDown() throws Throwable { bothTest(); }
-  public void testStatementInsideClosure() throws Throwable { bothTest(); }
+  public void testStatementOutsideClosure() { bothTest(); }
+  public void testVariableOutsideClosure() { bothTest(); }
+  public void testVariableOutsideClosureDown() { bothTest(); }
+  public void testStatementInsideClosure() { bothTest(); }
 
-  public void testMoveGroovydocWithMethod() throws Throwable { bothTest(); }
-  public void testLeaveGroovydocWithMethod() throws Throwable { bothTest(); }
-  public void testMoveMethodWithGroovydoc() throws Throwable { bothTest(); }
-  public void testMoveGroovyDocWithField() throws Throwable { bothTest(); }
+  public void testMoveGroovydocWithMethod() { bothTest(); }
+  public void testLeaveGroovydocWithMethod() { bothTest(); }
+  public void testMoveMethodWithGroovydoc() { bothTest(); }
+  public void testMoveGroovyDocWithField() { bothTest(); }
   
-  public void testMoveSecondFieldUp() throws Throwable { bothTest(); }
-  public void testMoveFirstFieldDown() throws Throwable { bothTest(); }
+  public void testMoveSecondFieldUp() { bothTest(); }
+  public void testMoveFirstFieldDown() { bothTest(); }
 
-  public void testVariableOverMethodInScript() throws Throwable { bothTest(); }
-  public void testVariableOverClassInScript() throws Throwable { bothTest(); }
+  public void testVariableOverMethodInScript() { bothTest(); }
+  public void testVariableOverClassInScript() { bothTest(); }
 
-  public void testUpFromLastOffset() throws Throwable { bothTest(); }
+  public void testUpFromLastOffset() { bothTest(); }
   
-  public void testClosureWithPrequel() throws Throwable { bothTest(); }
+  public void testClosureWithPrequel() { bothTest(); }
 
-  public void testMultiLineVariable() throws Throwable { bothTest(); }
-  public void testClosureVariableByRBrace() throws Throwable { bothTest(); }
+  public void testMultiLineVariable() { bothTest(); }
+  public void testClosureVariableByRBrace() { bothTest(); }
 
-  public void testInsideMultilineString() throws Throwable { bothTest(); }
-  public void testAroundMultilineString() throws Throwable { bothTest(); }
-  public void testAroundMultilineString2() throws Throwable { bothTest(); }
+  public void testInsideMultilineString() { bothTest(); }
+  public void testAroundMultilineString() { bothTest(); }
+  public void testAroundMultilineString2() { bothTest(); }
 
-  public void testInSwitchCaseUp1() throws Throwable { bothTest(); }
-  public void testInSwitchCaseUp2() throws Throwable { bothTest(); }
-  public void testInSwitchCaseUp3() throws Throwable { bothTest(); }
-  public void testInSwitchCaseUp4() throws Throwable { bothTest(); }
-  public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp1() { bothTest(); }
+  public void testInSwitchCaseUp2() { bothTest(); }
+  public void testInSwitchCaseUp3() { bothTest(); }
+  public void testInSwitchCaseUp4() { bothTest(); }
+  public void testInSwitchCaseUp5() { bothTest(); }
 
-  public void testTwoStatements() throws Throwable { bothTest(); }
+  public void testTwoStatements() { bothTest(); }
 
-  public void testStatementToEmptySpace() throws Throwable { bothTest(); }
-  public void testStatementToEmptySpace2() throws Throwable { bothTest(); }
-  public void testStatementToEmptySpace3() throws Throwable { bothTest(); }
+  public void testStatementToEmptySpace() { bothTest(); }
+  public void testStatementToEmptySpace2() { bothTest(); }
+  public void testStatementToEmptySpace3() { bothTest(); }
 
-  public void testStatementsWithSemicolons() throws Throwable { bothTest(); }
-  public void testStatementsWithComments() throws Throwable { bothTest(); }
-  public void testMoveIntoEmptyLine() throws Throwable { bothTest(); }
-  public void testMoveIntoEmptyLine2() throws Throwable { bothTest(); }
+  public void testStatementsWithSemicolons() { bothTest(); }
+  public void testStatementsWithComments() { bothTest(); }
+  public void testMoveIntoEmptyLine() { bothTest(); }
+  public void testMoveIntoEmptyLine2() { bothTest(); }
 
-  public void testClassesWithFields() throws Throwable { bothTest(); }
+  public void testClassesWithFields() { bothTest(); }
 
   private void bothTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");

@@ -21,11 +21,12 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringTokenizer;
+import java.util.*;
 
 public final class TestProxyPrinterProvider {
 
@@ -41,7 +42,7 @@ public final class TestProxyPrinterProvider {
   @Nullable
   public Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments) {
     Filter filter = myFilterProvider.getFilter(nodeType, nodeName, nodeArguments);
-    if (filter != null) {
+    if (filter != null && !Disposer.isDisposed(myTestOutputConsoleView)) {
       return new HyperlinkPrinter(myTestOutputConsoleView, HyperlinkPrinter.ERROR_CONTENT_TYPE, filter);
     }
     return null;
@@ -96,18 +97,30 @@ public final class TestProxyPrinterProvider {
         throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
       }
       if (result != null) {
-        for (Filter.ResultItem item : result.getResultItems()) {
-          defaultPrint(line.substring(0, item.getHighlightStartOffset()), contentType);
+        List<Filter.ResultItem> items = sort(result.getResultItems());
+        int lastOffset = 0;
+        for (Filter.ResultItem item : items) {
+          defaultPrint(line.substring(lastOffset, item.getHighlightStartOffset()), contentType);
           String linkText = line.substring(item.getHighlightStartOffset(), item.getHighlightEndOffset());
           printHyperlink(linkText, item.getHyperlinkInfo());
-          defaultPrint(line.substring(item.getHighlightEndOffset()), contentType);
+          lastOffset = item.getHighlightEndOffset();
         }
+        defaultPrint(line.substring(lastOffset), contentType);
       }
       else {
         defaultPrint(line, contentType);
       }
     }
 
+    @NotNull
+    private static List<Filter.ResultItem> sort(@NotNull List<Filter.ResultItem> items) {
+      if (items.size() <= 1) {
+        return items;
+      }
+      List<Filter.ResultItem> copy = new ArrayList<>(items);
+      Collections.sort(copy, Comparator.comparingInt(Filter.ResultItem::getHighlightStartOffset));
+      return copy;
+    }
   }
 
 }

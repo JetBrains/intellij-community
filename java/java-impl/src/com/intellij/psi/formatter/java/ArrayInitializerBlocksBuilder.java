@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class ArrayInitializerBlocksBuilder {
       .setNoAlignment(JavaTokenType.COMMA)
       .setNoAlignment(JavaTokenType.LBRACE)
       .setNoAlignmentIf(JavaTokenType.RBRACE, node -> {
-        PsiElement prev = PsiTreeUtil.skipSiblingsBackward(node.getPsi(), PsiWhiteSpace.class);
+        PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(node.getPsi());
         if (prev == null) return false;
         return prev.getNode().getElementType() != JavaTokenType.COMMA;
       });

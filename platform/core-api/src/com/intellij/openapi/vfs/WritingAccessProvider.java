@@ -38,6 +38,7 @@ public abstract class WritingAccessProvider {
 
   public abstract boolean isPotentiallyWritable(@NotNull VirtualFile file);
 
+  @NotNull
   public static WritingAccessProvider[] getProvidersForProject(Project project) {
     return project == null || project.isDefault() ? new WritingAccessProvider[0] : Extensions.getExtensions(EP_NAME, project);
   }

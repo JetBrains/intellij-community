@@ -35,18 +35,16 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   private final String myBuilderId;
   private final String myPresentableName;
   private final String myDescription;
-  private final Icon myBigIcon;
 
   @SuppressWarnings("UnusedDeclaration")
   public GroovyAwareModuleBuilder() {
-    this("groovy", "Groovy", "Simple module with attached Groovy library", JetgroovyIcons.Groovy.GroovyModule);
+    this("groovy", "Groovy", "Simple module with attached Groovy library");
   }
 
-  protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description, Icon bigIcon) {
+  protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description) {
     myBuilderId = builderId;
     myPresentableName = presentableName;
     myDescription = description;
-    myBigIcon = bigIcon;
   }
 
   @Nullable
@@ -63,11 +61,6 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   @Override
   public String getBuilderId() {
     return myBuilderId;
-  }
-
-  @Override
-  public Icon getBigIcon() {
-    return myBigIcon;
   }
 
   @Override

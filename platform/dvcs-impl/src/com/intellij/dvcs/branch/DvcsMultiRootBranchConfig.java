@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 public abstract class DvcsMultiRootBranchConfig<Repo extends Repository> {
   @NotNull protected final Collection<Repo> myRepositories;
@@ -34,9 +35,14 @@ public abstract class DvcsMultiRootBranchConfig<Repo extends Repository> {
 
   @Nullable
   public String getCurrentBranch() {
+    return getCommonName(Repository::getCurrentBranchName);
+  }
+
+  @Nullable
+  public String getCommonName(@NotNull Function<Repo, String> nameSupplier) {
     String commonBranch = null;
     for (Repo repository : myRepositories) {
-      String branchName = repository.getCurrentBranchName();
+      String branchName = nameSupplier.apply(repository);
       if (branchName == null) {
         return null;
       }

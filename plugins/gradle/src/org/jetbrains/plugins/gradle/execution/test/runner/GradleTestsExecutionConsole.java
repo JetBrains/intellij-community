@@ -15,23 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.execution.console.DuplexConsoleView;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.attachTaskExecutionView;
 
 /**
  * @author Vladislav.Soroka
@@ -40,20 +31,9 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.attachTask
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
   private Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
   private StringBuilder myBuffer = new StringBuilder();
-  private DuplexConsoleView myConsoleView;
 
   public GradleTestsExecutionConsole(TestConsoleProperties consoleProperties, @Nullable String splitterProperty) {
     super(consoleProperties, splitterProperty);
-  }
-
-  public void initTaskExecutionView(Project project, ProcessHandler processHandler, ExternalSystemTaskId taskId) {
-    myConsoleView = attachTaskExecutionView(project, super.getConsole(), false, "gradle.test.runner.text.console", processHandler, taskId);
-  }
-
-  @NotNull
-  @Override
-  public ConsoleView getConsole() {
-    return myConsoleView != null ? myConsoleView : super.getConsole();
   }
 
   public Map<String, SMTestProxy> getTestsMap() {
@@ -66,8 +46,8 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
 
   @Override
   public void dispose() {
+    testsMap.clear();
     super.dispose();
-    Disposer.dispose(myConsoleView);
   }
 
   public SMTestLocator getUrlProvider() {

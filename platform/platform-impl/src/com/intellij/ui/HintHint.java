@@ -257,7 +257,7 @@ public class HintHint {
   }
 
   /**
-   * Make sense if and only if isAwtTooltip set to <code>true</code>
+   * Make sense if and only if isAwtTooltip set to {@code true}
    *
    * @param showImmediately true or false
    * @return current instance of HintHint
@@ -273,7 +273,7 @@ public class HintHint {
 
   /**
    *
-   * @param enabled is <code>true</code> by default and balloon appears with transparency animation. <code>false</code> means instant opaque showing.
+   * @param enabled is {@code true} by default and balloon appears with transparency animation. {@code false} means instant opaque showing.
    * @return current instance of HintHint
    */
   public HintHint setAnimationEnabled(boolean enabled){

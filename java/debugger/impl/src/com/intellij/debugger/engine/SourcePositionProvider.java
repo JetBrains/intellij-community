@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,15 @@ public abstract class SourcePositionProvider {
                                                  @NotNull DebuggerContextImpl context,
                                                  boolean nearest
   ) {
-    return StreamEx.of(EP_NAME.getExtensions())
-      .map(provider -> provider.computeSourcePosition(descriptor, project, context, nearest))
-      .nonNull()
-      .findFirst().orElse(null);
+    try {
+      return StreamEx.of(EP_NAME.getExtensions())
+        .map(provider -> provider.computeSourcePosition(descriptor, project, context, nearest))
+        .nonNull()
+        .findFirst().orElse(null);
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   @Nullable

@@ -47,10 +47,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 21-Feb-2006
- */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final static Logger LOG = Logger.getInstance(RunInspectionIntention.class);
 
@@ -101,7 +97,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
       customScope,
-      module != null ? module.getName() : null,
+      module,
       true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;

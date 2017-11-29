@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleRootManager#getModifiableModel()
  */
 public interface ModifiableRootModel extends ModuleRootModel {
-
+  @NotNull
   Project getProject();
 
   /**
@@ -78,10 +78,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Adds an entry for invalid library.
-   *
-   * @param name
-   * @param level
-   * @return
    */
   @NotNull
   LibraryOrderEntry addInvalidLibrary(@NotNull @NonNls String name, @NotNull String level);
@@ -93,18 +89,16 @@ public interface ModifiableRootModel extends ModuleRootModel {
   ModuleOrderEntry addInvalidModuleEntry(@NotNull String name);
 
   @Nullable
+  ModuleOrderEntry findModuleOrderEntry(@NotNull Module module);
+
+  @Nullable
   LibraryOrderEntry findLibraryOrderEntry(@NotNull Library library);
 
   /**
    * Removes order entry from an order.
-   *
-   * @param orderEntry
    */
   void removeOrderEntry(@NotNull OrderEntry orderEntry);
 
-  /**
-   * @param newOrder
-   */
   void rearrangeOrderEntries(@NotNull OrderEntry[] newOrder);
 
   void clear();
@@ -137,8 +131,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Sets JDK for this module to a specific value
-   *
-   * @param jdk
    */
   void setSdk(@Nullable Sdk jdk);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
@@ -91,7 +92,9 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         final TreePath createdPath = model.addNode(new TreePath(parent.getPath()));
         if (path != null) {
           TreeUtil.selectPath(myTree, createdPath);
-          myTree.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
+          });
         }
       }
     };

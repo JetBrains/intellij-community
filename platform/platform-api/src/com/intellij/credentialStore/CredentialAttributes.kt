@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
@@ -27,6 +28,8 @@ import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicReference
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
+
+fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
  * requestor is deprecated. Never use it in new code.
@@ -65,7 +68,23 @@ fun Credentials?.hasOnlyUserName() = this != null && userName != null && passwor
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
 
-// input will be cleared
+/**
+ * Tries to get credentials both by `newAttributes` and `oldAttributes`, and if they are available by `oldAttributes` migrates old to new,
+ * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
+ */
+fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
+  val safe = PasswordSafe.getInstance()
+  var credentials = safe.get(newAttributes)
+  if (credentials == null) {
+    credentials = safe.get(oldAttributes)
+    if (credentials != null) {
+      safe.set(oldAttributes, null)
+      safe.set(newAttributes, credentials)
+    }
+  }
+  return credentials
+}
+
 @JvmOverloads
 fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
   if (length == 0) {
@@ -93,12 +112,12 @@ fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - 
 /**
  * clearable only if specified explicitly.
  *
- * Case —
+ * Case
  * 1) you create OneTimeString manually on user input.
  * 2) you store it in CredentialStore
- * 3) you consume it... BUT native credentials store do not store credentials immediately — write is postponed, so, will be an critical error.
+ * 3) you consume it... BUT native credentials store do not store credentials immediately - write is postponed, so, will be an critical error.
  *
- * so, currently — only credentials store implementations should set this flag on get.
+ * so, currently - only credentials store implementations should set this flag on get.
  */
 @Suppress("EqualsOrHashCode")
 class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size, private var clearable: Boolean = false) : CharArrayCharSequence(value, offset, offset + length) {

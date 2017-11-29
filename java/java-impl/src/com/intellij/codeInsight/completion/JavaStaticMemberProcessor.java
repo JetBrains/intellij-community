@@ -21,7 +21,9 @@ import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -46,13 +48,18 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
-    String exprText = member.getName() + (member instanceof PsiMethod ? "()" : "");
-    PsiReference ref = JavaPsiFacade.getElementFactory(member.getProject()).createExpressionFromText(exprText, myOriginalPosition).findReferenceAt(0);
+    if (!PsiNameHelper.getInstance(member.getProject()).isIdentifier(member.getName(), PsiUtil.getLanguageLevel(getPosition()))) {
+      return null;
+    }
+
+    PsiReference ref = createReferenceToMemberName(member);
+    if (ref == null) return null;
+
     if (ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).multiResolve(true).length > 0) {
       shouldImport = false;
     }
@@ -68,6 +75,11 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
         super.handleInsert(context);
       }
     });
+  }
+
+  private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {
+    String exprText = member.getName() + (member instanceof PsiMethod ? "()" : "");
+    return JavaPsiFacade.getElementFactory(member.getProject()).createExpressionFromText(exprText, myOriginalPosition).findReferenceAt(0);
   }
 
   @Override

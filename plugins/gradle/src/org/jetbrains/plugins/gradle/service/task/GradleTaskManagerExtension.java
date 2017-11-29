@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,14 +35,30 @@ public interface GradleTaskManagerExtension {
 
   ExtensionPointName<GradleTaskManagerExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.taskManager");
 
-  boolean executeTasks(@NotNull final ExternalSystemTaskId id,
-                       @NotNull final List<String> taskNames,
-                       @NotNull String projectPath,
-                       @Nullable final GradleExecutionSettings settings,
-                       @NotNull final List<String> vmOptions,
-                       @NotNull final List<String> scriptParameters,
-                       @Nullable final String debuggerSetup,
-                       @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException;
+  /**
+   * @deprecated use {@link #executeTasks(ExternalSystemTaskId, List, String, GradleExecutionSettings, String, ExternalSystemTaskNotificationListener)}
+   */
+  default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
+                               @NotNull final List<String> taskNames,
+                               @NotNull String projectPath,
+                               @Nullable final GradleExecutionSettings settings,
+                               @NotNull final List<String> vmOptions,
+                               @NotNull final List<String> scriptParameters,
+                               @Nullable final String jvmAgentSetup,
+                               @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    return false;
+  }
+
+  default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
+                               @NotNull final List<String> taskNames,
+                               @NotNull String projectPath,
+                               @Nullable final GradleExecutionSettings settings,
+                               @Nullable final String jvmAgentSetup,
+                               @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    List<String> vmOptions = settings != null ? new ArrayList<>(settings.getVmOptions()) : Collections.emptyList();
+    List<String> arguments = settings != null ? settings.getArguments() : Collections.emptyList();
+    return executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
+  }
 
   boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException;

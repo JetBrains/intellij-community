@@ -688,6 +688,36 @@ def foooo(
 ''')
   }
 
+  void testEnumAnnotations() {
+    checkFormatting('''\
+enum GroovyEnum {
+  FOO,
+  @Deprecated
+          BAR(""),
+  DAR
+}
+''', '''\
+enum GroovyEnum {
+  FOO,
+  @Deprecated
+  BAR(""),
+  DAR
+}
+''')
+  }
+
+  void testEnumAnnotationsSingleLine() {
+    checkFormatting('''\
+enum GroovyEnum {
+  @Deprecated    BAR("")
+}
+''', '''\
+enum GroovyEnum {
+  @Deprecated BAR("")
+}
+''')
+  }
+
   void testAlignFor() {
     groovySettings.ALIGN_MULTILINE_FOR = true
     checkFormatting('''\

@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 7:40:40 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -36,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -53,7 +46,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     }
 
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assert caret != null;
       Document document = editor.getDocument();
 
@@ -108,7 +101,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     }
 
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assert caret != null;
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       if (guide != null && !caret.hasSelection() && isWhitespaceAtCaret(caret)) {

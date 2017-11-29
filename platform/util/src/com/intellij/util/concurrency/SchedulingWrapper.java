@@ -68,6 +68,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @NotNull
   List<Runnable> doShutdownNow() {
     doShutdown(); // shutdown me first to avoid further delayQueue offers
+    return cancelAndRemoveTasksFromQueue();
+  }
+
+  @NotNull
+  List<Runnable> cancelAndRemoveTasksFromQueue() {
     List<MyScheduledFutureTask> result = ContainerUtil.filter(delayQueue, new Condition<MyScheduledFutureTask>() {
       @Override
       public boolean value(MyScheduledFutureTask task) {

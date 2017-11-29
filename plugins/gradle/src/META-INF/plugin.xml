@@ -39,8 +39,8 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
-  <depends>JUnit</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 
@@ -57,10 +57,13 @@
     <extensionPoint name="settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
     <extensionPoint name="importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
     <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
+    <extensionPoint name="kotlinDslFrameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider"/>
     <extensionPoint name="pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"/>
     <extensionPoint name="artifactBuildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleArtifactBuildTasksProvider"/>
     <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider"/>
+    <extensionPoint name="orderEnumerationHandlerFactory"
+                    interface="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -75,16 +78,18 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleJavaContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMiscContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleIdeaSettingsContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <pluginDescriptions implementation="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptions"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-
-    <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner"/>
+    <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <!-- In Android Studio, we decided to disable Maven central indexing because:
          - it is unreasonably large (it's 1.2 G out of 1.5 G in the entire user data)
          - it's also not kept up to date (or at least wasn't at some point)
@@ -95,6 +100,9 @@
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <compileServer.plugin classpath="gradle-jps-plugin.jar"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
+    <stacktrace.fold substring="at org.gradle."/>
+    <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
+    <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
 
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
@@ -110,8 +118,14 @@
                               order="last"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.gradle.execution.ProgramRunConfigurationExtension"/>
 
-    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager" order="last"/>
-    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
+    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
+                                           id="gradle"/>
+    <externalSystemExecutionConsoleManager
+        implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
+
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+                                        id="gradle"/>
+    <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
@@ -181,6 +195,7 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
+    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -206,6 +221,9 @@
             icon="GradleIcons.OfflineMode"/>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"
             text="Composite Build Configuration"/>
+
+    <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"
+            text="Refresh dependencies" description="Refresh dependencies in the Gradle cache using --refresh-dependencies argument"/>
     
     <group id="Gradle.GenerateGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
@@ -227,6 +245,13 @@
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
     </group>
+
+    <group>
+      <reference id="Gradle.RefreshDependencies"/>
+      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" relative-to-action="ExternalSystem.RefreshProject" anchor="after"/>
+    </group>
+
+    <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 
   </actions>
 </idea-plugin>

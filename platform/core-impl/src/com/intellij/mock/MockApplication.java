@@ -17,6 +17,7 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.AnyModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -235,7 +236,7 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public ModalityState getAnyModalityState() {
-    return getNoneModalityState();
+    return AnyModalityState.ANY;
   }
 
   @NotNull

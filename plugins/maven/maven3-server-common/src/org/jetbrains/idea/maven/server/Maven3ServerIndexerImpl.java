@@ -162,7 +162,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         final Maven3ServerEmbedder embedder = createEmbedder(settings);
 
         MavenExecutionRequest r =
-          embedder.createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+          embedder.createRequest(null, null, null, null);
 
         final IndexUpdateRequest request = new IndexUpdateRequest(index);
 
@@ -272,7 +272,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
       addArtifact(myIndexer, index, artifactContext);
 
-      org.sonatype.nexus.index.ArtifactInfo a = artifactContext.getArtifactInfo();
+      ArtifactInfo a = artifactContext.getArtifactInfo();
       return new MavenId(a.groupId, a.artifactId, a.version);
     }
     catch (Exception e) {

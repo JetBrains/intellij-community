@@ -36,7 +36,7 @@ import java.io.File;
 @SuppressWarnings("ConstantConditions")
 public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testXmlDoc() throws Exception {
+  public void testXmlDoc() {
     doOneTest("1.xml", "display-name", false, "web-app_2_3.dtd");
     doOneTest("2.xml", null, false, "web-app_2_4.xsd");
     doOneTest("3.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
@@ -69,12 +69,12 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     doQuickDocGenerationTestWithCheckExpectedResult(testName + ".xml", testName + ".xsd");
   }
 
-  public void testSchemaPrefix() throws Exception {
+  public void testSchemaPrefix() {
     DocumentationTestContext context = new DocumentationTestContext("SchemaPrefix.xml");
     assertEquals("XML Namespace Prefix \"xs\" (http://www.w3.org/2001/XMLSchema)", context.getQuickNavigateInfo());
   }
 
-  public void testEntityValue() throws Exception {
+  public void testEntityValue() {
     DocumentationTestContext context = new DocumentationTestContext("9.xml");
     assertEquals("\"&#171;\"", context.getQuickNavigateInfo());
   }
@@ -116,12 +116,12 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     return text.substring(text.indexOf('\n'));
   }
 
-  public void testDtdDoc() throws Exception {
+  public void testDtdDoc() {
     doOneTest("dtd.dtd", "foo", false, true, "web-app_2_4.xsd");
     doOneTest("dtd.xml", "foo", false, true, "web-app_2_4.xsd");
   }
 
-  private void doOneTest(String fileName, String lookupObject, boolean testExternal, String... additional) throws Exception {
+  private void doOneTest(String fileName, String lookupObject, boolean testExternal, String... additional) {
     copyAdditionalFiles(additional);
     doOneTest(fileName, lookupObject, testExternal, true, "web-app_2_4.xsd");
   }
@@ -170,7 +170,7 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  private void doOneTest(String fileName, String lookupObject, boolean testExternal, boolean testForElementUnderCaret, String... additional) throws Exception {
+  private void doOneTest(String fileName, String lookupObject, boolean testExternal, boolean testForElementUnderCaret, String... additional) {
     copyAdditionalFiles(additional);
     final DocumentationTestContext context = new DocumentationTestContext(fileName);
 

@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
@@ -40,7 +40,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable private final String myGradleHome;
 
   @Nullable private final String myServiceDirectory;
-  @Nullable private final String myDaemonVmOptions;
   private final boolean myIsOfflineWork;
 
   @NotNull private final DistributionType myDistributionType;
@@ -50,17 +49,30 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   private String myIdeProjectPath;
   private boolean resolveModulePerSourceSet = true;
+  private boolean useQualifiedModuleNames = false;
+
+  public GradleExecutionSettings(@Nullable String gradleHome,
+                                 @Nullable String serviceDirectory,
+                                 @NotNull DistributionType distributionType,
+                                 boolean isOfflineWork) {
+    myGradleHome = gradleHome;
+    myServiceDirectory = serviceDirectory;
+    myDistributionType = distributionType;
+    myIsOfflineWork = isOfflineWork;
+    setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
+  }
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
                                  @Nullable String daemonVmOptions,
-                                 boolean isOfflineWork)
-  {
+                                 boolean isOfflineWork) {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myDistributionType = distributionType;
-    myDaemonVmOptions = daemonVmOptions;
+    if (daemonVmOptions != null) {
+      withVmOptions(ParametersListUtil.parse(daemonVmOptions));
+    }
     myIsOfflineWork = isOfflineWork;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
@@ -105,6 +117,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.resolveModulePerSourceSet = resolveModulePerSourceSet;
   }
 
+  public boolean isUseQualifiedModuleNames() {
+    return useQualifiedModuleNames;
+  }
+
+  public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
+    this.useQualifiedModuleNames = useQualifiedModuleNames;
+  }
+
   @NotNull
   public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
@@ -115,11 +135,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   }
 
   /**
-   * @return  VM options to use for the gradle daemon process (if any)
+   * @return VM options to use for the gradle daemon process (if any)
+   * @deprecated use {@link #getVmOptions()}
    */
   @Nullable
   public String getDaemonVmOptions() {
-    return myDaemonVmOptions;
+    return ParametersListUtil.join(ContainerUtilRt.newArrayList(getVmOptions()));
   }
 
   @Nullable
@@ -148,7 +169,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     result = 31 * result + (myServiceDirectory != null ? myServiceDirectory.hashCode() : 0);
     result = 31 * result + myDistributionType.hashCode();
     result = 31 * result + (myJavaHome != null ? myJavaHome.hashCode() : 0);
-    result = 31 * result + (myDaemonVmOptions == null ? 0 : myDaemonVmOptions.hashCode());
     return result;
   }
 
@@ -159,7 +179,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     GradleExecutionSettings that = (GradleExecutionSettings)o;
 
     if (myDistributionType != that.myDistributionType) return false;
-    if (!Comparing.equal(myDaemonVmOptions, that.myDaemonVmOptions)) return false;
     if (myGradleHome != null ? !myGradleHome.equals(that.myGradleHome) : that.myGradleHome != null) return false;
     if (myJavaHome != null ? !myJavaHome.equals(that.myJavaHome) : that.myJavaHome != null) return false;
     if (myServiceDirectory != null ? !myServiceDirectory.equals(that.myServiceDirectory) : that.myServiceDirectory != null) {

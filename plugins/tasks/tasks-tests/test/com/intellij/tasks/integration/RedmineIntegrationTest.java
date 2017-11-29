@@ -1,6 +1,5 @@
 package com.intellij.tasks.integration;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;
@@ -77,7 +76,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
   // IDEA-122845
   // Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials (and anonymous access is allowed),
   // so current user information is fetched instead.
-  public void testCredentialsCheck() throws Exception {
+  public void testCredentialsCheck() {
     myRepository.setPassword("wrong-password");
     try {
       //noinspection ConstantConditions
@@ -90,7 +89,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
   }
 
   // IDEA-138740
-  public void testProjectSpecificUrlCheck() throws Exception {
+  public void testProjectSpecificUrlCheck() {
     myRepository.setUrl(REDMINE_2_0_TEST_SERVER_URL + "/projects/prj-1");
     try {
       //noinspection ConstantConditions

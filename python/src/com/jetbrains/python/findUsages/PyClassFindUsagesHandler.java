@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
@@ -28,7 +27,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class PyClassFindUsagesHandler extends FindUsagesHandler {
+public class PyClassFindUsagesHandler extends PyFindUsagesHandler {
   private final PyClass myClass;
 
   public PyClassFindUsagesHandler(@NotNull PyClass psiElement) {

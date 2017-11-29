@@ -26,10 +26,7 @@ import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitPlatformTest
-import git4idea.test.cd
-import git4idea.test.git
-import git4idea.test.mv
+import git4idea.test.*
 import git4idea.util.GitFileUtils
 import java.io.File
 import java.io.FileNotFoundException
@@ -96,12 +93,12 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
   //
 
   private fun doRebaseInteractive(onto: String) {
-    myGit.setInteractiveRebaseEditor {
+    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
       it.lines().mapIndexed { i, s ->
         if (i != 0) s
         else s.replace("pick", "reword")
       }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
-    }
+    }, null))
     val rebaseParams = GitRebaseParams(null, null, "branch-$onto", true, false)
     myGit.rebase(repository, rebaseParams)
   }

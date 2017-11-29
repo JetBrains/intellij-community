@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,9 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
-  private final String myPropertyName;
-  private final SmartTypePointer myPropertyType;
+  @NotNull private final String myPropertyName;
+  @NotNull private final String myTypeText;
 
   private SmartPsiElementPointer myFieldPointer;
   private SmartPsiElementPointer myGetterPointer;
@@ -56,9 +55,9 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   private final Project myProject;
   private final Collection<TreeElement> myChildren = new ArrayList<>();
 
-  private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, @NotNull Project project) {
+  private PropertyGroup(@NotNull String propertyName, @NotNull PsiType propertyType, boolean isStatic, @NotNull Project project) {
     myPropertyName = propertyName;
-    myPropertyType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(propertyType);
+    myTypeText = propertyType.getPresentableText();
     myIsStatic = isStatic;
     myProject = project;
   }
@@ -66,7 +65,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   public static PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
     if (object instanceof PsiField) {
       PsiField field = (PsiField)object;
-      PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field), field.getType(),
+      PropertyGroup group = new PropertyGroup(PropertyUtilBase.suggestPropertyName(field), field.getType(),
                                               field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
       group.setField(field);
       group.myChildren.add(treeElement);
@@ -74,16 +73,16 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     }
     else if (object instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)object;
-      if (PropertyUtil.isSimplePropertyGetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameByGetter(method), method.getReturnType(),
+      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
+        PropertyGroup group = new PropertyGroup(PropertyUtilBase.getPropertyNameByGetter(method), method.getReturnType(),
                                                 method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setGetter(method);
         group.myChildren.add(treeElement);
         return group;
       }
-      else if (PropertyUtil.isSimplePropertySetter(method)) {
+      else if (PropertyUtilBase.isSimplePropertySetter(method)) {
         PropertyGroup group =
-          new PropertyGroup(PropertyUtil.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
+          new PropertyGroup(PropertyUtilBase.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
                             method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setSetter(method);
         group.myChildren.add(treeElement);
@@ -143,8 +142,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
 
   @Override
   public String getPresentableText() {
-    final PsiType type = getPropertyType();
-    return myPropertyName + (type != null ? ": " + type.getPresentableText() : "");
+    return myPropertyName + ": " + myTypeText;
   }
 
   public String toString() {
@@ -156,32 +154,11 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     if (this == o) return true;
     if (!(o instanceof PropertyGroup)) return false;
 
-    final PropertyGroup propertyGroup = (PropertyGroup)o;
-
-    if (myPropertyName != null ? !myPropertyName.equals(propertyGroup.myPropertyName) : propertyGroup.myPropertyName != null) return false;
-
-    final PsiType propertyType = getPropertyType();
-    final PsiType otherPropertyType = propertyGroup.getPropertyType();
-
-    if (!Comparing.equal(propertyType, otherPropertyType)) {
-      return false;
-    }
-    return true;
+    return myPropertyName.equals(((PropertyGroup)o).myPropertyName) && myTypeText.equals(((PropertyGroup)o).myTypeText);
   }
 
   public int hashCode() {
-    return myPropertyName != null ? myPropertyName.hashCode() : 0;
-  }
-
-  public String getGetterName() {
-    return PropertyUtil.suggestGetterName(myPropertyName, getPropertyType());
-  }
-
-  private PsiType getPropertyType() {
-    if (myPropertyType == null) {
-      return null;
-    }
-    return myPropertyType.getType();
+    return myPropertyName.hashCode() * 31 + myTypeText.hashCode();
   }
 
   @Override

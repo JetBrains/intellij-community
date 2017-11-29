@@ -21,11 +21,11 @@ import com.intellij.openapi.components.Storage;
 import org.jdom.Element;
 
 /**
- * Supports old code style settings (before version 11.x). The settings are returned as is without any
+ * Supports old code style settings (before version 2017.3). The settings are returned as is without any
  * changes.
  * @author Rustam Vishnyakov
  */
-@State(name = "CodeStyleSettingsManager", storages = @Storage("projectCodeStyle.xml"))
+@State(name = "ProjectCodeStyleSettingsManager", storages = @Storage("codeStyleSettings.xml"))
 public class LegacyCodeStyleSettingsManager implements PersistentStateComponent<Element> {
   private Element myState;
   

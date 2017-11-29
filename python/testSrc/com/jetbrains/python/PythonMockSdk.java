@@ -17,13 +17,13 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -52,53 +52,44 @@ public class PythonMockSdk {
         return sdk;
       }
     }
-    return create(version, additionalRoots);
-  }
-
-  public static Sdk create(final String version, @NotNull final VirtualFile ... additionalRoots) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python"+version).getPath();
     SdkType sdkType = PythonSdkType.getInstance();
 
-
-    final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME + " " + version, sdkType) {
-      @Override
-      public String getVersionString() {
-        return "Python " + version + " Mock SDK";
-      }
-    };
-    final SdkModificator sdkModificator = sdk.getSdkModificator();
-    sdkModificator.setHomePath(sdkHome);
+    MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
 
     File libPath = new File(mock_path, "Lib");
     if (libPath.exists()) {
-      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libPath), OrderRootType.CLASSES);
+      roots.putValue(OrderRootType.CLASSES, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libPath));
     }
 
-    sdkModificator.addRoot(PyUserSkeletonsUtil.getUserSkeletonsDirectory(), OrderRootType.CLASSES);
+    roots.putValue(OrderRootType.CLASSES, PyUserSkeletonsUtil.getUserSkeletonsDirectory());
+
     final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
     final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
     PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
       final VirtualFile file = typeShedDir.findFileByRelativePath(path);
       if (file != null) {
-        sdkModificator.addRoot(file, OrderRootType.CLASSES);
+        roots.putValue(OrderRootType.CLASSES, file);
       }
     });
 
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
-    sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
+    roots.putValue(PythonSdkType.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
 
     for (final VirtualFile root : additionalRoots) {
-      sdkModificator.addRoot(root, OrderRootType.CLASSES);
+      roots.putValue(OrderRootType.CLASSES, root);
     }
 
-    sdkModificator.commitChanges();
+
+    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, sdkType);
 
     final FileBasedIndex index = FileBasedIndex.getInstance();
     index.requestRebuild(StubUpdatingIndex.INDEX_ID);
     index.requestRebuild(PyModuleNameIndex.NAME);
 
-    return sdk;
+    // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
+    return sdk.clone();
   }
 }

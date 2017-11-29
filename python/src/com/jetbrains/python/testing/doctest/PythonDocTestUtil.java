@@ -21,9 +21,6 @@ import com.jetbrains.python.psi.*;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * User: catherine
- */
 public class PythonDocTestUtil {
 
   private PythonDocTestUtil() {

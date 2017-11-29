@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
@@ -96,7 +99,7 @@ public class FindSuperElementsHelper {
 
   private static boolean canHaveSiblingSuper(PsiMethod method, PsiClass containingClass) {
     return containingClass != null &&
-           PsiUtil.canBeOverriden(method) &&
+           PsiUtil.canBeOverridden(method) &&
            !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
            !method.hasModifierProperty(PsiModifier.NATIVE) &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&

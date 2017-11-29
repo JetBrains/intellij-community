@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -67,11 +66,8 @@ public final class HgConflictResolver {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
     final List<VirtualFile> conflicts = sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(conflictFiles));
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider()));
   }
 
   private void updateUpdatedFiles(@NotNull File file, boolean unresolved) {
@@ -85,11 +81,6 @@ public final class HgConflictResolver {
 
   public static boolean hasConflicts(final Project project, VirtualFile repo) {
     Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
-    return ContainerUtil.exists(resolves.values(), new Condition<HgResolveStatusEnum>() {
-      @Override
-      public boolean value(HgResolveStatusEnum resolveStatus) {
-        return resolveStatus == HgResolveStatusEnum.UNRESOLVED;
-      }
-    });
+    return ContainerUtil.exists(resolves.values(), resolveStatus -> resolveStatus == HgResolveStatusEnum.UNRESOLVED);
   }
 }

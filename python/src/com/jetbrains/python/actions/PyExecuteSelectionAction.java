@@ -58,12 +58,12 @@ public class PyExecuteSelectionAction extends AnAction {
     if (editor != null) {
       final String selectionText = getSelectionText(editor);
       if (selectionText != null) {
-        execute(e, selectionText);
+        showConsoleAndExecuteCode(e, selectionText);
       }
       else {
         String line = getLineUnderCaret(editor);
         if (line != null) {
-          execute(e, line.trim());
+          showConsoleAndExecuteCode(e, line.trim());
           moveCaretDown(editor);
         }
       }
@@ -97,7 +97,13 @@ public class PyExecuteSelectionAction extends AnAction {
     }
   }
 
-  private static void execute(final AnActionEvent e, final String selectionText) {
+  /**
+   * Finds existing or creates a new console and then executes provided code there.
+   *
+   * @param e
+   * @param selectionText null means that there is no code to execute, only open a console
+   */
+  public static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @Nullable final String selectionText) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     Project project = e.getProject();
     Module module = e.getData(LangDataKeys.MODULE);
@@ -172,7 +178,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static void selectConsole(@NotNull DataContext dataContext, @NotNull Project project,
-                                    final Consumer<PyCodeExecutor> consumer, Editor editor) {
+                                    @NotNull final Consumer<PyCodeExecutor> consumer, @Nullable Editor editor) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper
@@ -187,7 +193,9 @@ public class PyExecuteSelectionAction extends AnAction {
               ContentManager contentManager = currentSession.getUI().getContentManager();
               Content content = contentManager.findContent("Console");
               contentManager.setSelectedContent(content);
-              IdeFocusManager.findInstance().requestFocus(editor.getContentComponent(), true);
+              if (editor != null) {
+                IdeFocusManager.findInstance().requestFocus(editor.getContentComponent(), true);
+              }
             }
           }
           else {
@@ -230,8 +238,12 @@ public class PyExecuteSelectionAction extends AnAction {
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer, Editor editor, Project project, Module module) {
-    if (project != null && editor != null) {
+  private static void findCodeExecutor(@NotNull AnActionEvent e,
+                                       @NotNull Consumer<PyCodeExecutor> consumer,
+                                       @Nullable Editor editor,
+                                       @Nullable Project project,
+                                       @Nullable Module module) {
+    if (project != null) {
       if (canFindConsole(e)) {
         selectConsole(e.getDataContext(), project, consumer, editor);
       }
@@ -285,7 +297,7 @@ public class PyExecuteSelectionAction extends AnAction {
     }
   }
 
-  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, Editor editor) {
+  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @Nullable String text, Editor editor) {
     codeExecutor.executeCode(text, editor);
   }
 }

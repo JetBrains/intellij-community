@@ -22,6 +22,7 @@ public class ConfigurationException extends Exception {
   public static final String DEFAULT_TITLE = OptionsBundle.message("cannot.save.settings.default.dialog.title");
   private String myTitle = DEFAULT_TITLE;
   private Runnable myQuickFix;
+  private Configurable myOriginator;
 
   /**
    * @param message the detail message describing the problem
@@ -60,4 +61,11 @@ public class ConfigurationException extends Exception {
     return myQuickFix;
   }
 
+  public Configurable getOriginator() {
+    return myOriginator;
+  }
+
+  public void setOriginator(Configurable originator) {
+    myOriginator = originator;
+  }
 }

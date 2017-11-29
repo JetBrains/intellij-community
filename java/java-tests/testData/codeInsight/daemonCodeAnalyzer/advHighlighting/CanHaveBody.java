@@ -12,5 +12,5 @@ abstract public class a1 {
 }
 
 interface ii {
-  <error descr="Interface methods cannot have body">int iif(int i) throws Exception</error> { return 2; }
+  <error descr="Interface abstract methods cannot have body">int iif(int i) throws Exception</error> { return 2; }
 }

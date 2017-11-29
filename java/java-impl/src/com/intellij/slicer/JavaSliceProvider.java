@@ -16,17 +16,48 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaSliceProvider implements SliceLanguageSupportProvider {
+import java.util.Collection;
+import java.util.Collections;
+
+public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsageTransformer {
+  public static JavaSliceProvider getInstance() {
+    return (JavaSliceProvider)LanguageSlicing.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+  }
+
   @NotNull
   @Override
   public SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     return JavaSliceUsage.createRootUsage(element, params);
+  }
+
+  @Nullable
+  @Override
+  public Collection<SliceUsage> transform(@NotNull SliceUsage usage) {
+    if (usage instanceof JavaSliceUsage) return null;
+
+    PsiElement element = usage.getElement();
+    SliceUsage parent = usage.getParent();
+
+    if (usage.params.dataFlowToThis && element instanceof PsiMethod) {
+      return SliceUtil.collectMethodReturnValues(
+        parent,
+        parent instanceof JavaSliceUsage ? ((JavaSliceUsage)parent).getSubstitutor() : PsiSubstitutor.EMPTY,
+        (PsiMethod) element
+      );
+    }
+
+    if (!(element instanceof PsiExpression || element instanceof PsiVariable)) return null;
+    SliceUsage newUsage = parent != null
+                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY, 0, "")
+                        : createRootUsage(element, usage.params);
+    return Collections.singletonList(newUsage);
   }
 
   @Nullable
@@ -57,12 +88,12 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider {
 
   @Override
   public void startAnalyzeLeafValues(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
-    SliceLeafAnalyzer.startAnalyzeValues(structure, finalRunnable);
+    JavaSlicerAnalysisUtil.createLeafAnalyzer().startAnalyzeValues(structure, finalRunnable);
   }
 
   @Override
   public void startAnalyzeNullness(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
-    SliceNullnessAnalyzer.startAnalyzeNullness(structure, finalRunnable);
+    new JavaSliceNullnessAnalyzer().startAnalyzeNullness(structure, finalRunnable);
   }
 
   @Override

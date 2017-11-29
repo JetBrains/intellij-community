@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 04.03.2008
- */
 public interface DTypedElement {
   String getType();
 

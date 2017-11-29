@@ -23,25 +23,30 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,25 +54,25 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element> {
+public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
   public static final String ELEMENT_MODULES = "modules";
@@ -79,15 +84,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
-  private static final String MODULE_GROUP_SEPARATOR = "/";
+  public static final String MODULE_GROUP_SEPARATOR = "/";
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
-  protected final MessageBusConnection myMessageBusConnection;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
+  private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -96,29 +101,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public ModuleManagerImpl(@NotNull Project project) {
     myProject = project;
     myMessageBus = project.getMessageBus();
+  }
 
-    myMessageBusConnection = myMessageBus.connect();
-    myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(Project project) {
-        if (project == myProject) {
-          fireModulesAdded();
+  @Override
+  public void projectOpened() {
+    fireModulesAdded();
 
-          for (Module module : myModuleModel.getModules()) {
-            ((ModuleEx)module).projectOpened();
-          }
-        }
-      }
+    for (Module module : myModuleModel.getModules()) {
+      ((ModuleEx)module).projectOpened();
+    }
+  }
 
-      @Override
-      public void projectClosed(Project project) {
-        if (project == myProject) {
-          for (Module module : myModuleModel.getModules()) {
-            ((ModuleEx)module).projectClosed();
-          }
-        }
-      }
-    });
+  @Override
+  public void projectClosed() {
+    for (Module module : myModuleModel.getModules()) {
+      ((ModuleEx)module).projectClosed();
+    }
   }
 
   protected void cleanCachedStuff() {
@@ -168,8 +166,36 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   @Override
   public void loadState(Element state) {
+    loadState(getPathsToModuleFiles(state));
+  }
+
+  @TestOnly
+  public void loadStateFromModulePaths(LinkedHashSet<ModulePath> modulePaths) {
+    loadState(modulePaths);
+  }
+
+  private void loadState(LinkedHashSet<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
-    myModulePathsToLoad = getPathsToModuleFiles(state);
+    myModulePathsToLoad = modulePaths;
+    Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
+    Iterator<ModulePath> iterator = myModulePathsToLoad.iterator();
+    List<ModulePath> unloadedModulePaths = new ArrayList<>();
+    while (iterator.hasNext()) {
+      ModulePath modulePath = iterator.next();
+      if (unloadedModuleNames.contains(modulePath.getModuleName())) {
+        unloadedModulePaths.add(modulePath);
+        iterator.remove();
+      }
+    }
+    List<UnloadedModuleDescriptionImpl> unloaded = new ArrayList<>(UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, this));
+    if (!unloaded.isEmpty()) {
+      unloadNewlyAddedModulesIfPossible(myModulePathsToLoad, unloaded);
+    }
+    myUnloadedModules.clear();
+    for (UnloadedModuleDescriptionImpl description : unloaded) {
+      myUnloadedModules.put(description.getName(), description);
+    }
+
     if (isFirstLoadState) {
       // someone else must call loadModules in a appropriate time (e.g. on projectComponentsInitialized)
       return;
@@ -201,9 +227,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     loadModules((ModuleModelImpl)model);
-    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+    ApplicationManager.getApplication().runWriteAction(model::commit);
     // clear only if successfully loaded
     myModulePathsToLoad.clear();
+  }
+
+  protected void unloadNewlyAddedModulesIfPossible(Set<ModulePath> modulesToLoad, List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 
   @NotNull
@@ -222,7 +251,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         else {
           filepath = VirtualFileManager.extractPath(fileUrlValue);
         }
-        paths.add(new ModulePath(filepath.replace('/', File.separatorChar), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
+        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(filepath), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
       }
     }
     return paths;
@@ -242,30 +271,28 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     progressIndicator.setText("Loading modules...");
     progressIndicator.setText2("");
 
-    List<Module> modulesWithUnknownTypes = new SmartList<>();
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
     ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
-    boolean parallel = Registry.is("parallel.modules.loading");
+    boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
         break;
       }
-      try {
-        String path = modulePath.getPath();
-        if (!paths.add(path)) continue;
-        if (!parallel) {
-          tasks.add(Pair.create(null, modulePath));
-          continue;
-        }
-        ThrowableComputable<Module, IOException> computable = moduleModel.loadModuleInternal(path);
-        Future<Module> future = service.submit(() -> {
-          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+      String path = modulePath.getPath();
+      if (!paths.add(path)) continue;
+      if (!parallel) {
+        tasks.add(Pair.create(null, modulePath));
+        continue;
+      }
+      tasks.add(Pair.create(service.submit(() -> {
+        progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+        return ProgressManager.getInstance().runProcess(() -> {
           try {
-            return computable.compute();
+            return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
@@ -274,14 +301,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
             LOG.error(e);
           }
           return null;
-        });
-        tasks.add(Pair.create(future, modulePath));
-      }
-      catch (IOException e) {
-        reportError(errors, modulePath, e);
-      }
+        }, ProgressWrapper.wrap(progressIndicator));
+      }), modulePath));
     }
 
+    List<Module> modulesWithUnknownTypes = new SmartList<>();
     for (Pair<Future<Module>, ModulePath> task : tasks) {
       if (progressIndicator.isCanceled()) {
         break;
@@ -292,7 +316,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           module = task.first.get();
         }
         else {
-          module = moduleModel.loadModuleInternal(task.second.getPath()).compute();
+          module = moduleModel.loadModuleInternal(task.second.getPath());
           progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         }
         if (module == null) continue;
@@ -327,7 +351,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           if (oldModule != null) {
             //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
             //VirtualFilePointer pointer = track1.get(url);
-            LOG.error("duplicated content url: " + url);
+            LOG.error("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
           }
         }
       }
@@ -369,7 +393,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   protected void fireModulesRenamed(@NotNull List<Module> modules, @NotNull final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, module -> oldNames.get(module));
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, oldNames::get);
     }
   }
 
@@ -411,7 +435,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   private class ModuleSaveItem extends SaveItem {
     private final Module myModule;
 
-    public ModuleSaveItem(@NotNull Module module) {
+    ModuleSaveItem(@NotNull Module module) {
       myModule = module;
     }
 
@@ -437,12 +461,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public void writeExternal(@NotNull Element element) {
     final Module[] collection = getModules();
 
-    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size());
+    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size() + myUnloadedModules.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
     for (ModulePath modulePath : myFailedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
+    }
+    for (UnloadedModuleDescriptionImpl description : myUnloadedModules.values()) {
+      sorted.add(new ModulePathSaveItem(description.getModulePath()));
     }
 
     if (!sorted.isEmpty()) {
@@ -586,7 +613,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
   @NotNull
-  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) throws IOException;
+  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -687,18 +714,23 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
 
       ModuleEx module = getModuleByFilePath(filePath);
-      if (module == null) {
-        module = myManager.createModule(filePath);
-        final ModuleEx newModule = module;
-        initModule(module, filePath, null, () -> {
-          newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
-          if (options != null) {
-            for (Map.Entry<String, String> option : options.entrySet()) {
-              newModule.setOption(option.getKey(), option.getValue());
-            }
-          }
-        });
+      if (module != null) {
+        return module;
       }
+
+      module = myManager.createModule(filePath);
+      final ModuleEx newModule = module;
+      String finalFilePath = filePath;
+      initModule(module, () -> {
+        ((ModuleStore)ServiceKt.getStateStore(newModule)).setPath(finalFilePath, true);
+
+        newModule.setModuleType(moduleTypeId);
+        if (options != null) {
+          for (Map.Entry<String, String> option : options.entrySet()) {
+            newModule.setOption(option.getKey(), option.getValue());
+          }
+        }
+      });
       return module;
     }
 
@@ -724,43 +756,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
+    public Module loadModule(@NotNull String filePath) throws IOException {
       assertWritable();
+      String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
-        Module module = getModuleByFilePath(filePath);
-        if (module != null) return module;
-        return loadModuleInternal(filePath).compute();
+        Module module = getModuleByFilePath(resolvedPath);
+        return module == null ? loadModuleInternal(resolvedPath) : module;
       }
       catch (FileNotFoundException e) {
         throw e;
       }
       catch (IOException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()), e);
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
     }
 
     @NotNull
-    private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
-      String resolvedPath = resolveShortWindowsName(filePath);
-      Ref<VirtualFile> ref = Ref.create();
-      ApplicationManager.getApplication().invokeAndWait(() -> ref.set(StandardFileSystems.local().refreshAndFindFileByPath(resolvedPath)));
-      VirtualFile moduleFile = ref.get();
-      if (moduleFile == null || !moduleFile.exists()) {
-        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", resolvedPath));
-      }
-
-      String path = moduleFile.getPath();
-      ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
-      return () -> ReadAction.compute(() -> {
-        if (myManager.myProject.isDisposed()) return null;
-        ModuleEx result = myManager.createAndLoadModule(path, moduleFile);
-        initModule(result, path, moduleFile, null);
-        return result;
+    private Module loadModuleInternal(@NotNull String filePath) throws IOException {
+      // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
+      StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+      return ReadAction.compute(() -> {
+        ModuleEx module = myManager.createAndLoadModule(filePath);
+        initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
+        return module;
       });
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
-      module.init(path, file, beforeComponentCreation);
+    private void initModule(@NotNull ModuleEx module, @Nullable Runnable beforeComponentCreation) {
+      module.init(beforeComponentCreation);
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }
@@ -850,10 +873,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     private void disposeModel() {
       Module[] modules = getModules();
       myModulesCache = null;
+      myModules.clear(); // clear module list before disposing to avoid getModules() returning already disposed modules
       for (Module module : modules) {
         Disposer.dispose(module);
       }
-      myModules.clear();
       myModuleGroupPath = null;
     }
 
@@ -933,6 +956,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         modules.add(module);
         ((ModuleEx)module).rename(modulesToNewNamesMap.get(module), true);
         moduleModel.myModules.put(module.getName(), module);
+        myUnloadedModules.remove(module.getName());
       }
 
       moduleModel.myIsWritable = false;
@@ -946,6 +970,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }
 
       for (Module addedModule : addedModules) {
+        myUnloadedModules.remove(addedModule.getName());
         ((ModuleEx)addedModule).moduleAdded();
         cleanCachedStuff();
         fireModuleAdded(addedModule);
@@ -954,6 +979,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       cleanCachedStuff();
       fireModulesRenamed(modules, oldNames);
       cleanCachedStuff();
+      UnloadedModulesListStorage unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(myProject);
+      setUnloadedModuleNames(ContainerUtil.filter(unloadedModulesListStorage.getUnloadedModuleNames(), myUnloadedModules::containsKey));
     }, false, true);
   }
 
@@ -975,6 +1002,71 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public boolean hasModuleGroups() {
     return myModuleModel.hasModuleGroups();
+  }
+
+  @Override
+  public Collection<ModuleDescription> getAllModuleDescriptions() {
+    Module[] modules = getModules();
+    List<ModuleDescription> descriptions = new ArrayList<>(modules.length + myUnloadedModules.size());
+    for (Module module : modules) {
+      descriptions.add(new LoadedModuleDescriptionImpl(module));
+    }
+    descriptions.addAll(myUnloadedModules.values());
+    return descriptions;
+  }
+
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+    return Collections.unmodifiableCollection(myUnloadedModules.values());
+  }
+
+  @Nullable
+  @Override
+  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName) {
+    return myUnloadedModules.get(moduleName);
+  }
+
+  @Override
+  public void setUnloadedModules(@NotNull List<String> unloadedModuleNames) {
+    if (myUnloadedModules.keySet().equals(unloadedModuleNames)) {
+      return;
+    }
+
+    setUnloadedModuleNames(unloadedModuleNames);
+
+    final ModifiableModuleModel model = getModifiableModel();
+    Map<String, UnloadedModuleDescriptionImpl> toLoad = new LinkedHashMap<>(myUnloadedModules);
+    myUnloadedModules.clear();
+    for (String name : unloadedModuleNames) {
+      if (toLoad.containsKey(name)) {
+        myUnloadedModules.put(name, toLoad.remove(name));
+      }
+      else {
+        Module module = findModuleByName(name);
+        if (module != null) {
+          LoadedModuleDescriptionImpl description = new LoadedModuleDescriptionImpl(module);
+          ModuleSaveItem saveItem = new ModuleSaveItem(module);
+          ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
+          VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+          List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));
+          UnloadedModuleDescriptionImpl unloadedModuleDescription = new UnloadedModuleDescriptionImpl(modulePath, description.getDependencyModuleNames(), contentRoots);
+          ServiceKt.getStateStore(module).save(new ArrayList<>());//we need to save module configuration before unloading, otherwise its settings will be lost
+          model.disposeModule(module);
+          myUnloadedModules.put(name, unloadedModuleDescription);
+        }
+      }
+    }
+    List<ModulePath> oldFailedPaths = new ArrayList<>(myFailedModulePaths);
+    myModulePathsToLoad = toLoad.values().stream().map(
+      UnloadedModuleDescriptionImpl::getModulePath).collect(Collectors.toCollection(LinkedHashSet::new));
+    loadModules((ModuleModelImpl)model);
+    ApplicationManager.getApplication().runWriteAction(model::commit);
+    myFailedModulePaths.addAll(oldFailedPaths);
+    myModulePathsToLoad.clear();
+  }
+
+  protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {
+    UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
 
   public void setModuleGroupPath(Module module, String[] groupPath) {

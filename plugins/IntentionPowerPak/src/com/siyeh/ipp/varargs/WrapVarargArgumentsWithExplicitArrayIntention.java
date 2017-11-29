@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.siyeh.ipp.varargs;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -32,53 +33,50 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiMethodCallExpression methodCallExpression =
-      PsiTreeUtil.getParentOfType(element,
-                                  PsiMethodCallExpression.class);
-    if (methodCallExpression == null) {
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiCall call = PsiTreeUtil.getParentOfType(element, PsiCall.class);
+    if (call == null) {
       return;
     }
-    final PsiMethod method = methodCallExpression.resolveMethod();
+    final PsiMethod method = call.resolveMethod();
     if (method == null) {
       return;
     }
     final PsiParameterList parameterList = method.getParameterList();
     final int parametersCount = parameterList.getParametersCount();
-    final PsiReferenceExpression methodExpression =
-      methodCallExpression.getMethodExpression();
-    final String methodExpressionText = methodExpression.getText();
-    final StringBuilder newExpression =
-      new StringBuilder(methodExpressionText);
-    final PsiExpressionList argumentList =
-      methodCallExpression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    newExpression.append('(');
-    final int varargParameterIndex = parametersCount - 1;
-    for (int i = 0; i < varargParameterIndex; i++) {
-      newExpression.append(arguments[i].getText());
-      newExpression.append(", ");
+    final PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) {
+      return;
     }
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    final StringBuilder newExpressionText = new StringBuilder("new ");
     final PsiParameter[] parameters = parameterList.getParameters();
-    final PsiParameter varargParameter = parameters[varargParameterIndex];
-    final PsiArrayType type = (PsiArrayType)varargParameter.getType();
-    newExpression.append("new ");
-    final PsiType componentType = type.getComponentType();
-    final JavaResolveResult resolveResult =
-      methodCallExpression.resolveMethodGenerics();
+    final int varargParameterIndex = parametersCount - 1;
+    final PsiType componentType = PsiTypesUtil.getParameterType(parameters, varargParameterIndex, true);
+    final JavaResolveResult resolveResult = call.resolveMethodGenerics();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiType substitutedType = substitutor.substitute(componentType);
-    newExpression.append(substitutedType.getCanonicalText());
-    newExpression.append("[]{");
+    if (substitutedType instanceof PsiCapturedWildcardType) {
+      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
+      newExpressionText.append(capturedWildcardType.getLowerBound().getCanonicalText());
+    } else {
+      newExpressionText.append(substitutedType.getCanonicalText());
+    }
+    newExpressionText.append("[]{");
     if (arguments.length > varargParameterIndex) {
-      newExpression.append(arguments[varargParameterIndex].getText());
+      final PsiExpression argument1 = arguments[varargParameterIndex];
+      argument1.delete();
+      newExpressionText.append(argument1.getText());
       for (int i = parametersCount; i < arguments.length; i++) {
-        newExpression.append(", ");
-        newExpression.append(arguments[i].getText());
+        final PsiExpression argument = arguments[i];
+        newExpressionText.append(',').append(argument.getText());
+        argument.delete();
       }
     }
-    newExpression.append("})");
-    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+    newExpressionText.append("}");
+    final Project project = element.getProject();
+    final PsiExpression newExpression =
+      JavaPsiFacade.getElementFactory(project).createExpressionFromText(newExpressionText.toString(), element);
+    CodeStyleManager.getInstance(project).reformat(argumentList.add(newExpression));
   }
 }

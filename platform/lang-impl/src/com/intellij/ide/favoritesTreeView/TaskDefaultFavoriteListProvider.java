@@ -37,12 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 4:33 PM
- */
 public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvider {
   public static final String CURRENT_TASK = "Current task";
 

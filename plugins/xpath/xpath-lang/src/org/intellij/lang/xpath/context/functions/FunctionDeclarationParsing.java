@@ -33,11 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 14.01.11
-*/
 public class FunctionDeclarationParsing {
   public static final String FUNCTION_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
 

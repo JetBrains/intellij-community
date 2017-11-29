@@ -43,12 +43,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 12:58 PM
- */
 public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
@@ -509,12 +503,12 @@ public class CommandExecutor {
   private class ProcessTracker extends ProcessAdapter {
 
     @Override
-    public void processTerminated(ProcessEvent event) {
+    public void processTerminated(@NotNull ProcessEvent event) {
       setExitCodeReference(event.getExitCode());
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }

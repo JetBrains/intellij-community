@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +90,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (CloneUtils.isCloneable(containingClass) || CloneUtils.onlyThrowsException(method)) {
+      if (CloneUtils.isCloneable(containingClass) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
       }
       registerMethodError(method, containingClass);

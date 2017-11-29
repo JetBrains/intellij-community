@@ -91,12 +91,12 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     }
   }
   
-  public void testEmptyXml() throws Exception {
+  public void testEmptyXml() {
     doTest("<root/>", "TAG: name='root' namespace=''\n" +
                       "ENDTAG: name='root' namespace=''\n", XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testRealJspx() throws Exception {
+  public void testRealJspx() {
     doTest(
       /* Test: */
       "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
@@ -136,7 +136,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testRealJspxNoAttributes() throws Exception {
+  public void testRealJspxNoAttributes() {
     doTest(
       /* Test: */
       "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
@@ -167,7 +167,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
   }
 
 
-  public void testNamespaceOverride() throws Exception {
+  public void testNamespaceOverride() {
     doTest(
       "<c:x xmlns:c=\"ns1\">\n" +
       "  <c:y/>\n" +
@@ -192,7 +192,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
-  public void testSimpleEntityResolution() throws Exception {
+  public void testSimpleEntityResolution() {
     doTest(
       "<root>&lt;</root>",
       "TAG: name='root' namespace=''\n" +
@@ -201,7 +201,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS);
   }
 
-  public void testCDATA() throws Exception {
+  public void testCDATA() {
     doTest(
       "<root><![CDATA[<asis/>]]></root>",
       "TAG: name='root' namespace=''\n" +
@@ -211,7 +211,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     );
   }
 
-  public void testErrors() throws Exception {
+  public void testErrors() {
     doTest(
       "<root>" +
       "<foo>" +
@@ -233,7 +233,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     );
   }
 
-  public void testComments() throws Exception {
+  public void testComments() {
     doTest(
       "<root>" +
       "<foo>" +

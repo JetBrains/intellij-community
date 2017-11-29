@@ -158,4 +158,9 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setShowBorder(boolean show);
+
+  @NotNull
+  default ComponentPopupBuilder setBorderColor(Color color) {
+    return this;
+  }
 }

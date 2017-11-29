@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.NotNullFunction;
@@ -40,8 +39,6 @@ public class CodeEditUtil {
   private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = ThreadLocal.withInitial(() -> Boolean.TRUE);
   private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<>();
 
-  public static final Key<Boolean> OUTER_OK = new Key<>("OUTER_OK");
-
   private CodeEditUtil() { }
 
   public static void addChild(ASTNode parent, ASTNode child, ASTNode anchorBefore) {
@@ -57,7 +54,6 @@ public class CodeEditUtil {
     ASTNode current = first;
     while (current != lastChild) {
       saveWhitespacesInfo(current);
-      checkForOuters(current);
       current = current.getTreeNext();
     }
 
@@ -110,18 +106,6 @@ public class CodeEditUtil {
       }
     }
     return false;
-  }
-
-  public static void checkForOuters(ASTNode element) {
-    if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) {
-      throw new IllegalArgumentException("Outer element " + element + " is not allowed here");
-    }
-
-    ASTNode child = element.getFirstChildNode();
-    while (child != null) {
-      checkForOuters(child);
-      child = child.getTreeNext();
-    }
   }
 
   public static void saveWhitespacesInfo(ASTNode first) {
@@ -186,8 +170,6 @@ public class CodeEditUtil {
   public static void replaceChild(ASTNode parent, @NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     saveWhitespacesInfo(oldChild);
     saveWhitespacesInfo(newChild);
-    checkForOuters(oldChild);
-    checkForOuters(newChild);
 
     LeafElement oldFirst = TreeUtil.findFirstLeaf(oldChild);
 

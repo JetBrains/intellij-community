@@ -37,12 +37,17 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
-  private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
+  private final File myFile;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
   private AbstractStringEnumerator myNameStorage;
   private StubSerializationHelper myStubSerializationHelper;
 
   public SerializationManagerImpl() {
+    this(new File(PathManager.getIndexRoot(), "rep.names"));
+  }
+
+  public SerializationManagerImpl(@NotNull File nameStorageFile) {
+    myFile = nameStorageFile;
     myFile.getParentFile().mkdirs();
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)

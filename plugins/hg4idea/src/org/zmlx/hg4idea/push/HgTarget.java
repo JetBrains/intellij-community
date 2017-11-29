@@ -64,4 +64,9 @@ public class HgTarget implements PushTarget {
   public String getBranchName() {
     return myBranchName;
   }
+
+  @Override
+  public String toString() {
+    return getPresentation();
+  }
 }

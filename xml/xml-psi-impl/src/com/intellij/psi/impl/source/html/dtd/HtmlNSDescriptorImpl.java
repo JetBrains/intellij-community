@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -70,16 +71,34 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myCaseSensitive = caseSensitive;
   }
 
+  @Nullable
+  public static XmlAttributeDescriptor getCommonAttributeDescriptor(@NotNull final String attributeName, @Nullable final XmlTag context) {
+    final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
+    if (descriptor != null) {
+      return descriptor.getAttributeDescriptor(attributeName, context);
+    }
+    return null;
+  }
+
+  @NotNull
   public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
-    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor(context.getNamespace(), false) : null;
+    final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
+    if (descriptor != null) {
+      return descriptor.getAttributesDescriptors(context);
+    }
+    return XmlAttributeDescriptor.EMPTY;
+  }
+
+  @Nullable
+  private static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
+    if (context == null) return null;
+    final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(context.getNamespace(), false);
     if (nsDescriptor instanceof HtmlNSDescriptorImpl) {
       XmlElementDescriptor descriptor = ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("div");
       descriptor = descriptor == null ? ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("span") : descriptor;
-      if (descriptor != null) {
-        return descriptor.getAttributesDescriptors(context);
-      }
+      return descriptor;
     }
-    return XmlAttributeDescriptor.EMPTY;
+    return null;
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
@@ -147,9 +166,10 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myDelegate.init(element);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
-    return myDelegate == null ? null : myDelegate.getDependences();
+    return myDelegate == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : myDelegate.getDependences();
   }
 
   @Override

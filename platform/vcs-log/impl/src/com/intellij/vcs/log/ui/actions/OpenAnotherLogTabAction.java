@@ -21,8 +21,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 
@@ -46,7 +47,9 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VcsLogContentProvider
+    VcsLogUtil.triggerUsage(e);
+
+    VcsLogContentUtil
       .openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER), e.getRequiredData(CommonDataKeys.PROJECT));
   }
 }

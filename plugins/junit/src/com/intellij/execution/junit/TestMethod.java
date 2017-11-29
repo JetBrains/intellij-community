@@ -20,14 +20,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
@@ -39,29 +36,12 @@ class TestMethod extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    addJUnit3Parameter(javaParameters, data, module.getProject());
     javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodNameWithSignature());
     return javaParameters;
   }
 
   protected JavaParameters createDefaultJavaParameters() throws ExecutionException {
     return super.createJavaParameters();
-  }
-
-  protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {
-    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
-    if (psiClass == null || JUnitUtil.isJUnit4TestClass(psiClass) || JUnitUtil.isJUnit5(psiClass)) {
-      return;
-    }
-    final String methodName = data.getMethodName();
-    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-    for (PsiMethod method : methods) {
-      if (JUnitUtil.isTestAnnotated(method)) {
-        return;
-      }
-    }
-    javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
   }
 
   @Override
@@ -130,6 +110,7 @@ class TestMethod extends TestObject {
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, ExecutionBundle.message("no.test.class.specified.error.text"));
 
     final String methodName = data.getMethodName();
+    String methodNameWithSignature = data.getMethodNameWithSignature();
     if (methodName == null || methodName.trim().length() == 0) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("method.name.not.specified.error.message"));
     }
@@ -137,7 +118,9 @@ class TestMethod extends TestObject {
     boolean found = false;
     boolean testAnnotated = false;
     for (final PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
-      if (filter.value(method)) found = true;
+      if (filter.value(method) && Comparing.equal(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
+        found = true;
+      }
       if (JUnitUtil.isTestAnnotated(method)) testAnnotated = true;
     }
     if (!found) {

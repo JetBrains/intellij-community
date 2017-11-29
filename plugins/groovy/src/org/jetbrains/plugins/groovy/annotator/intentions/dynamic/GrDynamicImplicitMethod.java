@@ -15,9 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -47,10 +46,6 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 21.02.2008
- */
 public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrDynamicImplicitElement {
   private static final Logger LOG = Logger.getInstance(GrDynamicImplicitMethod.class);
 
@@ -121,22 +116,19 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   @Override
   @Nullable
   public PsiClass getContainingClass() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Override
-      public PsiClass compute() {
-        try {
-          final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
-          if (typeElement == null) return null;
+    return ReadAction.compute(() -> {
+      try {
+        final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
+        if (typeElement == null) return null;
 
-          final PsiType type = typeElement.getType();
-          if (!(type instanceof PsiClassType)) return null;
+        final PsiType type = typeElement.getType();
+        if (!(type instanceof PsiClassType)) return null;
 
-          return ((PsiClassType)type).resolve();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return null;
-        }
+        return ((PsiClassType)type).resolve();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
       }
     });
   }

@@ -37,19 +37,20 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     myListeners = listeners;
     myListener = new JUnit5TestExecutionListener();
     myLauncher = LauncherFactory.create();
-    myLauncher.registerTestExecutionListeners(myListener);
   }
 
   @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
-      myListener.initialize();
+      myListener.initialize(!sendTree);
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
       myTestPlan = myLauncher.discover(discoveryRequest);
+      List<TestExecutionListener> listeners = new ArrayList<>();
+      listeners.add(myListener);
       for (Object listenerClassName : myListeners) {
         final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
-        myLauncher.registerTestExecutionListeners(new MyCustomListenerWrapper(junitListener));
+        listeners.add(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {
         do {
@@ -57,8 +58,11 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
         }
         while (--count > 0);
       }
+      else {
+        myListener.setTestPlan(myTestPlan);
+      }
 
-      myLauncher.execute(discoveryRequest);
+      myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
 
       return myListener.wasSuccessful() ? 0 : -1;
     }
@@ -75,8 +79,11 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     Launcher launcher = LauncherFactory.create();
     myTestPlan = launcher.discover(discoveryRequest);
     final Set<TestIdentifier> roots = myTestPlan.getRoots();
-    
-    return roots.isEmpty() ? null : roots.iterator().next();
+    if (roots.isEmpty()) return null;
+    return roots.stream()
+      .filter(identifier -> !myTestPlan.getChildren(identifier).isEmpty())
+      .findFirst()
+      .orElse(null);
   }
 
   @Override
@@ -88,9 +95,9 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   public String getStartDescription(Object child) {
     final TestIdentifier testIdentifier = (TestIdentifier)child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
-    final String methodName = JUnit5TestExecutionListener.getMethodName(testIdentifier);
-    if (methodName != null) {
-      return className + "#" + methodName;
+    final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
+    if (methodSignature != null) {
+      return className + "," + methodSignature;
     }
     return className != null ? className : (testIdentifier).getDisplayName();
   }

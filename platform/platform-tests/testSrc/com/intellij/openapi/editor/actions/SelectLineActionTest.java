@@ -18,10 +18,8 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import java.io.IOException;
-
 public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
-  public void test() throws Exception {
+  public void test() {
     prepare("first line\n" +
             "second<caret> line\n" +
             "third line");
@@ -32,7 +30,7 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testWithSoftWraps() throws Exception {
+  public void testWithSoftWraps() {
     prepare("first line\n" +
             "second line<caret>\n" + // this line will be wrapped and caret is positioned after the wrap
             "third line");
@@ -44,7 +42,7 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  private void prepare(String documentContents) throws IOException {
+  private void prepare(String documentContents) {
     configureFromFileText(getTestName(false) + ".txt", documentContents);
   }
 }

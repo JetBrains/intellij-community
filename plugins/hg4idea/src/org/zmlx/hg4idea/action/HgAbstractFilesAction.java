@@ -35,7 +35,7 @@ abstract class HgAbstractFilesAction extends AnAction {
   protected abstract boolean isEnabled(Project project, HgVcs vcs, VirtualFile file);
 
   protected abstract void batchPerform(Project project, final HgVcs activeVcs,
-    List<VirtualFile> files, DataContext context) throws VcsException;
+    List<VirtualFile> files, DataContext context);
 
   public final void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
@@ -120,11 +120,9 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     batchPerform(project, activeVcs, enabledFiles, context);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          file.refresh(false, true);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (VirtualFile file : files) {
+        file.refresh(false, true);
       }
     });
 

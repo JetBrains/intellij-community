@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * For virtual files containing meta information in the path. Like,
- * <code>x=3746374;y=738495;size=45\id=6729304\id=34343\id=656543</code>
+ * {@code x=3746374;y=738495;size=45\id=6729304\id=34343\id=656543}
  * To wrap such a path into compact form implement getPresentablePath and it
- * will be used instead of <code>VirtualFile.getPath()</code>
+ * will be used instead of {@code VirtualFile.getPath()}
  *
  * @author Konstantin Bulenkov
  * @see VirtualFile#getPath() 

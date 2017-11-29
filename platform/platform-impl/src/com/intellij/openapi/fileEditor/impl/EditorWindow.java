@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -62,6 +64,8 @@ import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * Author: msk
@@ -284,6 +288,8 @@ public class EditorWindow {
       finally {
         editorManager.removeSelectionRecord(file, this);
 
+        ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+
         editorManager.notifyPublisher(() -> {
           final Project project = editorManager.getProject();
           if (!project.isDisposed()) {
@@ -357,7 +363,7 @@ public class EditorWindow {
         }
       }
     } else
-    if (uiSettings.getActiveRigtEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
+    if (uiSettings.getActiveRightEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
       return fileIndex + 1;
     }
 
@@ -496,7 +502,8 @@ public class EditorWindow {
     else {
       EditorWithProviderComposite editor = getSelectedEditor();
       JComponent preferred = editor == null ? null : editor.getPreferredFocusedComponent();
-      IdeFocusManager.findInstanceByComponent(preferred == null ? myPanel : preferred).requestFocus(myPanel, forced);
+      if (preferred == null) preferred = myPanel;
+      IdeFocusManager.findInstanceByComponent(preferred).requestFocus(preferred, forced);
     }
   }
 
@@ -753,7 +760,9 @@ public class EditorWindow {
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
             res.setSelectedEditor(selectedEditor, true);
-            selectedEditor.getComponent().requestFocus();
+            getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              getGlobalInstance().requestFocus(selectedEditor.getComponent(), true);
+            });
           }
           panel.revalidate();
         }
@@ -1069,10 +1078,9 @@ public class EditorWindow {
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(() -> {
       if (myTabbedPane == null) return;
-      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().getCloseNonModifiedFilesFirst();
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
-        doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
+        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getCloseNonModifiedFilesFirst(), transferFocus);
       }
       finally {
         setSelectedEditor(selectedComposite, false);
@@ -1083,7 +1091,7 @@ public class EditorWindow {
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
-    if (shouldCloseSelected()) {
+    if (shouldCloseSelected(fileToIgnore)) {
       defaultCloseFile(selectedFile, transferFocus);
       closingOrder.remove(selectedFile);
     }
@@ -1096,7 +1104,6 @@ public class EditorWindow {
         defaultCloseFile(file, transferFocus);
       }
     }
-
   }
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
@@ -1147,7 +1154,7 @@ public class EditorWindow {
     return closingOrder;
   }
 
-  private boolean shouldCloseSelected() {
+  private boolean shouldCloseSelected(VirtualFile fileToIgnore) {
     if (!UISettings.getInstance().getReuseNotModifiedTabs() || !myOwner.getManager().getProject().isInitialized()) {
       return false;
     }
@@ -1156,10 +1163,16 @@ public class EditorWindow {
     if (file == null || !isFileOpen(file) || isFilePinned(file)) {
       return false;
     }
+
+    if (file.equals(fileToIgnore)) return false;
+
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return false;
-    Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
-    if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    //Don't check focus in unit test mode
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    }
     return !myOwner.getManager().isChanged(composite);
   }
 
@@ -1185,16 +1198,18 @@ public class EditorWindow {
   }
 
   public void clear() {
-    Project project = getManager().getProject();
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    
+    FileEditorManagerImpl manager = getManager();
+    FileEditorManagerListener.Before beforePublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
+    FileEditorManagerListener afterPublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
     for (EditorWithProviderComposite composite : getEditors()) {
-      // Fix for b/37138939: The history update here has a side effect of switching tabs since the current tab might already be removed.
-      //
-      if (!project.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
-        EditorHistoryManager.getInstance(project).updateHistoryEntry(composite.getFile(), false);
-      }
-      // End of fix for b/37138939
-
-      Disposer.dispose(composite);
+      VirtualFile file = composite.getFile();
+      beforePublisher.beforeFileClosed(manager, file);
+      manager.disposeComposite(composite);
+      afterPublisher.fileClosed(manager, file);
     }
     if (myTabbedPane == null) {
       myPanel.removeAll();

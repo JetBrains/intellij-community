@@ -105,8 +105,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
     VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (data.length == 1) {
       VirtualFile otherFile = getOtherFile(project, data[0]);
-      if (otherFile == null) return null;
-      if (!hasContent(data[0])) return null;
+      if (otherFile == null || !hasContent(otherFile)) return null;
+      if (!data[0].isValid()) return null; // getOtherFile() shows dialog that can invalidate this file
       return DiffRequestFactory.getInstance().createFromFiles(project, data[0], otherFile);
     }
     else {
