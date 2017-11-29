@@ -181,13 +181,13 @@ fun GrCodeReferenceElement.processClasses(processor: PsiScopeProcessor, state: R
 }
 
 private fun GrCodeReferenceElement.processUnqualified(processor: PsiScopeProcessor, state: ResolveState): Boolean {
-  if (!processInnerClasses(processor, state)) return false
-  // When all inner classes are processed, it's time to process file level declarations (i.e. imports).
-  // There is no point in processing imports in dummy files.
-  val file = containingFile.skipDummies() ?: return true
-  return file.treeWalkUp(processor, state, this)
+  return processInnerClasses(processor, state) &&
+         processFileLevelDeclarations(processor, state)
 }
 
+/**
+ * @see org.codehaus.groovy.control.ResolveVisitor.resolveNestedClass
+ */
 private fun GrCodeReferenceElement.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   val currentClass = contextOfType<GrTypeDefinition>() ?: return true
 
@@ -196,6 +196,16 @@ private fun GrCodeReferenceElement.processInnerClasses(processor: PsiScopeProces
   }
 
   return currentClass.processInnersInOuters(processor, state, this)
+}
+
+/**
+ * @see org.codehaus.groovy.control.ResolveVisitor.resolveFromModule
+ * @see org.codehaus.groovy.control.ResolveVisitor.resolveFromDefaultImports
+ */
+private fun GrCodeReferenceElement.processFileLevelDeclarations(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+  // There is no point in processing imports in dummy files.
+  val file = containingFile.skipDummies() ?: return true
+  return file.treeWalkUp(processor, state, this)
 }
 
 private fun GrCodeReferenceElement.processQualifier(qualifier: GrCodeReferenceElement,
