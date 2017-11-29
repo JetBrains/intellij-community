@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -231,14 +232,18 @@ public abstract class CompletionContributor {
   public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
     return ReadAction.compute(() -> {
       PsiElement position = parameters.getPosition();
-      List<CompletionContributor> all = forLanguage(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()));
-      return DumbService.getInstance(position.getProject()).filterByDumbAwareness(all);
+      return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()), position.getProject());
     });
   }
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
     return INSTANCE.forKey(language);
+  }
+
+  @NotNull
+  public static List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
+    return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtension<CompletionContributor>("com.intellij.completion.contributor") {
