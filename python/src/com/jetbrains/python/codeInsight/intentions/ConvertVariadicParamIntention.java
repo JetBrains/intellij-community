@@ -167,10 +167,12 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .ifPresent(
           indexValue -> {
             final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
-            final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
+            if (parameter != null) {
+              final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-            insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
-            call.replace(parameterUsage);
+              insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
+              call.replace(parameterUsage);
+            }
           }
         );
     }
@@ -241,13 +243,14 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
-  @NotNull
+  @Nullable
   private static PyNamedParameter createParameter(@NotNull PyElementGenerator elementGenerator,
                                                   @NotNull PyCallExpression call,
                                                   @NotNull String parameterName) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
-      return elementGenerator.createParameter(parameterName + "=" + arguments[1].getText());
+      final PyExpression argument = PyUtil.peelArgument(arguments[1]);
+      return argument == null ? null : elementGenerator.createParameter(parameterName + "=" + argument.getText());
     }
 
     final PyQualifiedExpression callee = PyUtil.as(call.getCallee(), PyQualifiedExpression.class);
