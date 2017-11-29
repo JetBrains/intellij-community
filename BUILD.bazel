@@ -1349,6 +1349,7 @@ iml_module(
         "//tools/idea:images",
     ],
     test_srcs = ["platform/configuration-store-impl/testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -2086,6 +2087,7 @@ iml_module(
     tags = ["managed"],
     test_resources = ["plugins/stats-collector/log-events/testResources"],
     test_srcs = ["plugins/stats-collector/log-events/test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -2301,6 +2303,7 @@ iml_module(
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["jps/jps-builders/testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -2393,6 +2396,7 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     test_srcs = ["plugins/stats-collector/test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -2433,6 +2437,7 @@ iml_module(
         "//tools/idea:external-system-impl",
     ],
     test_srcs = ["java/idea-ui/testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -2456,6 +2461,7 @@ iml_module(
     tags = ["managed"],
     test_resources = ["plugins/stream-debugger/testData"],
     test_srcs = ["plugins/stream-debugger/test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -2489,6 +2495,7 @@ iml_module(
     iml_files = ["java/compiler/compiler-tests.iml"],
     tags = ["managed"],
     test_srcs = ["java/compiler/tests"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
