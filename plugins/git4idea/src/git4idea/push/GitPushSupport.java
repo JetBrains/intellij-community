@@ -163,7 +163,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
 
   @Override
   public boolean isForcePushEnabled() {
-    return mySettings.isForcePushAllowed();
+    return true;
   }
 
   @Nullable

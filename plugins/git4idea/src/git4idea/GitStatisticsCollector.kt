@@ -51,7 +51,6 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     usages.add(getBooleanUsage("config.cherry-pick.autocommit", settings.isAutoCommitOnCherryPick))
     usages.add(getBooleanUsage("config.warn.about.crlf", settings.warnAboutCrlf()))
     usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
-    usages.add(getBooleanUsage("config.force.push", settings.isForcePushAllowed))
 
     usages.add(versionUsage(GitVcs.getInstance(project).version))
 
