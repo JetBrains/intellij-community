@@ -325,6 +325,13 @@ public class EditorFixture {
     });
   }
 
+  /**
+   * Returns content of the current editor's document with a given range.
+   *
+   * @param startOffset the content which starting right after this offset
+   * @param endOffset the end of content, symbol on the endOffset will be not included
+   * @return
+   */
   public String getCurrentFileContents(int startOffset, int endOffset) {
     return execute(new GuiQuery<String>() {
       @Override
@@ -620,21 +627,26 @@ public class EditorFixture {
     });
   }
 
-  public int findOffsetByRegex(@NotNull String regex, boolean startIndex) {
+  /**
+   * Finds the start position (if {@code returnStartIndex} is true or end position if {@code returnStartIndex} is false) in current editor's
+   * document by regex.
+   *
+   * @param regex
+   * @param returnStartIndex a flag that determines which index of found region should be returned: start index if it is true and end index if
+   *                         it is false
+   * @return the 0-based offset in the document, or -1 if not found.
+   */
+  public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
     return execute(new GuiQuery<Integer>() {
       @Override
       protected Integer executeInEDT() throws Throwable {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
-          CaretModel caretModel = editor.getCaretModel();
-          Caret primaryCaret = caretModel.getPrimaryCaret();
-          Document document = editor.getDocument();
-          String contents = document.getCharsSequence().toString();
-          Pattern pattern = Pattern.compile(regex);
-          Matcher matcher = pattern.matcher(contents);
+          String contents = editor.getDocument().getCharsSequence().toString();
+          Matcher matcher = Pattern.compile(regex).matcher(contents);
           if (matcher.find()) {
-            if (startIndex)
+            if (returnStartIndex)
               return matcher.start();
             else
               return matcher.end();
