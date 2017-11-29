@@ -368,8 +368,7 @@ public class CodeInsightUtil {
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
       if (superSubstitutor == null) return true;
 
-      List<PsiType> typeArgs = getRawSubtypes ? null : GenericsUtil
-        .getExpectedTypeArguments(context, inheritor, Arrays.asList(inheritor.getTypeParameters()), baseType);
+      List<PsiType> typeArgs = getRawSubtypes ? null : getExpectedTypeArgs(context, inheritor, Arrays.asList(inheritor.getTypeParameters()), baseType);
       PsiClassType inheritorType = typeArgs == null || typeArgs.contains(null)
                                    ? factory.createType(inheritor, factory.createRawSubstitutor(inheritor))
                                    : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
