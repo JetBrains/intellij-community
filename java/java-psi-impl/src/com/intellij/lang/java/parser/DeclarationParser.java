@@ -266,7 +266,7 @@ public class DeclarationParser {
     }
 
     PsiBuilder.Marker typeParams = null;
-    if (builder.getTokenType() == JavaTokenType.LT) {
+    if (builder.getTokenType() == JavaTokenType.LT && context != Context.CODE_BLOCK) {
       typeParams = myParser.getReferenceParser().parseTypeParameters(builder);
     }
 
