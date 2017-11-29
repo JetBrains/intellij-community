@@ -47,7 +47,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
             if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
 
             val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
-                    .associate { it.id to it.compute() }
+                    .associate { it.id to it.compute(lookup.project) }
             lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactors)
             val shownTimesTracker = PositionTrackingListener(lookup)
             lookup.setPrefixChangeListener(shownTimesTracker)

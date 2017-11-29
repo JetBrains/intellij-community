@@ -124,7 +124,9 @@ class MLSorter : CompletionFinalSorter() {
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
         val prefixLength = lookup.prefixLength()
-        val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors().associate { it.id to it.compute() }
+        val userFactors = UserFactorsManager.getInstance(lookup.project)
+                .getAllFactors()
+                .associate { it.id to it.compute(lookup.project) }
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
@@ -147,7 +149,7 @@ class MLSorter : CompletionFinalSorter() {
     private fun calculateElementRank(element: LookupElement,
                                      position: Int,
                                      relevance: List<Pair<String, Any?>>,
-                                     userFactors: Map<String, Any>,
+                                     userFactors: Map<String, Any?>,
                                      prefixLength: Int): Double? 
     {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)

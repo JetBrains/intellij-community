@@ -31,7 +31,7 @@ class CompletionStartedEvent(
         @JvmField var performExperiment: Boolean,
         @JvmField var experimentVersion: Int,
         completionList: List<LookupEntryInfo>,
-        @JvmField var userFactors: Map<String, String>,
+        @JvmField var userFactors: Map<String, String?>,
         selectedPosition: Int)
 
     : LookupStateLogData(

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Key
  */
 interface UserFactorsManager {
   companion object {
-    val USER_FACTORS_KEY = Key.create<Map<String, String>>("com.intellij.stats.personalization.userFactors")
+    val USER_FACTORS_KEY = Key.create<Map<String, String?>>("com.intellij.stats.personalization.userFactors")
     fun getInstance(project: Project): UserFactorsManager = project.getComponent(UserFactorsManager::class.java)
   }
 

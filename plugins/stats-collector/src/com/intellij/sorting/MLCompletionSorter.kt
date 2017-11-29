@@ -36,7 +36,7 @@ interface Ranker {
      * @param state
      * @param relevance map from LookupArranger.getRelevanceObjects
      */
-    fun rank(state: LookupElementInfo, relevance: Map<String, Any?>, userFactors: Map<String, Any>): Double?
+    fun rank(state: LookupElementInfo, relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double?
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -76,7 +76,7 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
     
-    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>, userFactors: Map<String, Any>): Double? {
+    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double? {
         val featureArray = featureTransformer.featureArray(state, relevance, userFactors)
         if (featureArray != null) {
             return ranker.rank(featureArray)
