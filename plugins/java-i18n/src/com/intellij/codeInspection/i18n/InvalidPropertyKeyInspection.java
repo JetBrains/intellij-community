@@ -138,6 +138,9 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
+      if (isComputedPropertyExpression(expression)) {
+        return;
+      }
       final PsiElement resolvedExpression = expression.resolve();
       if (!(resolvedExpression instanceof PsiField)) {
         return;
@@ -159,7 +162,6 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     }
 
     private void visitPropertyKeyAnnotationParameter(PsiExpression expression, String key) {
-      if (!(expression.getParent() instanceof PsiExpressionList)) return;
       Ref<String> resourceBundleName = new Ref<>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         String bundleName = resourceBundleName.get();
@@ -224,7 +226,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String key = (String)value;
-      if (isComputablePropertyExpression(expression)) return;
+      if (isComputedPropertyExpression(expression)) return;
       visitPropertyKeyAnnotationParameter(expression, key);
     }
 
@@ -267,9 +269,21 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
              && methodCall.getArgumentList().getExpressionTypes()[i] instanceof PsiArrayType;
     }
 
-    private static boolean isComputablePropertyExpression(PsiExpression expression) {
-      while (expression != null && expression.getParent() instanceof PsiParenthesizedExpression) expression = (PsiExpression)expression.getParent();
-      return expression != null && expression.getParent() instanceof PsiExpression;
+    private static boolean isComputedPropertyExpression(PsiExpression expression) {
+      PsiElement parent = expression.getParent();
+      while (true) {
+        if (parent instanceof PsiParenthesizedExpression ||
+            (parent instanceof PsiConditionalExpression &&
+             (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
+              expression == ((PsiConditionalExpression)parent).getElseExpression()))) {
+          expression = (PsiExpression)parent;
+          parent = expression.getParent();
+        }
+        else {
+          break;
+        }
+      }
+      return parent instanceof PsiExpression;
     }
 
     public List<ProblemDescriptor> getProblems() {
