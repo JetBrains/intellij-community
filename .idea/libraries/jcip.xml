@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
