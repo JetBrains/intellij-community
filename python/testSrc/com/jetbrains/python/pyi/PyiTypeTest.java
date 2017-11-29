@@ -142,4 +142,8 @@ public class PyiTypeTest extends PyTestCase {
   public void testGenericClassDefinitionInSameFile() {
     doTest("int");
   }
+
+  public void testComparisonOperatorOverloads() {
+    doTest("int");
+  }
 }
