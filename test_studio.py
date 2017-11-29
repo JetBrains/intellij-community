@@ -27,10 +27,13 @@ class TestStringMethods(unittest.TestCase):
         self.assertEquals(m.group(1), "Info.plist", "Only Info.plist should be present in Contents (Found " + m.group(1) + ")")
 
   def test_no_build_files(self):
-    for root, dirnames, filenames in os.walk(out_dir):
-      for filename in filenames:
-        self.assertFalse(filename == "BUILD" or filename == "BUILD.bazel",
-              "Unexpected BUILD file in output dir: " + root + "/" + filename)
+    name = "android-studio-" + build
+    for suffix in [ ".mac.zip", ".win.zip", ".win32.zip"]:
+      file_name = os.path.join(dist_dir, name + suffix)
+      with zipfile.ZipFile(file_name) as file:
+        for f in file.infolist():
+          self.assertFalse(f.filename.endswith("/BUILD") or f.filename.endswith("/BUILD.bazel"),
+              "Unexpected BUILD file in zip " + file_name + ": " + f.filename)
 
   def test_profiler_artifacts_are_present(self):
     required = [
@@ -52,20 +55,20 @@ class TestStringMethods(unittest.TestCase):
 
   def test_mac_attributes(self):
     name = os.path.join(dist_dir, "android-studio-" + build + ".mac.zip")
-    file = zipfile.ZipFile(name)
-    found = False
-    for f in file.infolist():
-      is_symlink = (f.external_attr & 0x20000000) > 0
-      if f.filename.endswith("Contents/jre/jdk/Contents/MacOS/libjli.dylib"):
-        found = True
-        self.assertTrue(is_symlink, "Contents/jre/jdk/Contents/MacOS/libjli.dylib is not a symlink")
-      elif f.filename.endswith("Contents/MacOS/studio"):
-        self.assertFalse(f.external_attr == 0x1ED0000, "studio should be \"-rwxr-xr-x\"")
-        self.assertFalse(is_symlink, f.filename + " should not be a symlink")
-      else:
-        self.assertFalse(f.external_attr == 0, "Unix attributes are missing from the entry")
-        self.assertFalse(is_symlink, f.filename + " should not be a symlink")
-    self.assertTrue(found, "Android Studio.*\.app/Contents/jre/jdk/Contents/MacOS/libjli.dylib not found")
+    with zipfile.ZipFile(name) as file:
+      found = False
+      for f in file.infolist():
+        is_symlink = (f.external_attr & 0x20000000) > 0
+        if f.filename.endswith("Contents/jre/jdk/Contents/MacOS/libjli.dylib"):
+          found = True
+          self.assertTrue(is_symlink, "Contents/jre/jdk/Contents/MacOS/libjli.dylib is not a symlink")
+        elif f.filename.endswith("Contents/MacOS/studio"):
+          self.assertFalse(f.external_attr == 0x1ED0000, "studio should be \"-rwxr-xr-x\"")
+          self.assertFalse(is_symlink, f.filename + " should not be a symlink")
+        else:
+          self.assertFalse(f.external_attr == 0, "Unix attributes are missing from the entry")
+          self.assertFalse(is_symlink, f.filename + " should not be a symlink")
+      self.assertTrue(found, "Android Studio.*\.app/Contents/jre/jdk/Contents/MacOS/libjli.dylib not found")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
