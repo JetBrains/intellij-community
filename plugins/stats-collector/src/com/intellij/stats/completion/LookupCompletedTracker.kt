@@ -20,6 +20,8 @@ import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.stats.personalization.UserFactorDescriptions
+import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 
 /**
@@ -28,8 +30,9 @@ import com.intellij.stats.personalization.UserFactorsManager
 class LookupCompletedTracker : LookupAdapter() {
     override fun lookupCanceled(event: LookupEvent?) {
         val lookup = event?.lookup as? LookupImpl ?: return
-        val element = event.item ?: return
+        val element = lookup.currentItem ?: return
         if (isSelectedByTyping(lookup, element)) {
+            processTypedSelect(lookup)
             processElementSelected(lookup, element)
         }
     }
@@ -37,6 +40,7 @@ class LookupCompletedTracker : LookupAdapter() {
     override fun itemSelected(event: LookupEvent?) {
         val lookup = event?.lookup as? LookupImpl ?: return
         val element = event.item ?: return
+        processExplicitSelect(lookup)
         processElementSelected(lookup, element)
     }
 
@@ -49,5 +53,17 @@ class LookupCompletedTracker : LookupAdapter() {
         val relevanceMap = relevanceObjects[element]!!.associate { it.first to it.second }
         val userFactorsManager = UserFactorsManager.getInstance(lookup.project)
         relevanceMap.forEach { name, value -> userFactorsManager.getFeatureFactor(name)?.update(value) }
+    }
+
+    private fun processExplicitSelect(lookup: LookupImpl) {
+        UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
+            updater.fireExplicitCompletionPerformed()
+        }
+    }
+
+    private fun processTypedSelect(lookup: LookupImpl) {
+        UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
+            updater.fireTypedSelectPerformed()
+        }
     }
 }

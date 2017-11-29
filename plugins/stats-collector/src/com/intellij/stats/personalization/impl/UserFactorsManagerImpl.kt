@@ -19,6 +19,9 @@ class UserFactorsManagerImpl(project: Project) : UserFactorsManager, ProjectComp
     init {
         // TODO: register all factors here
         FeatureManager.getInstance() // TODO: register feature-derived factors
+
+        // user factors
+        register(ExplicitCompletionRatio())
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()
