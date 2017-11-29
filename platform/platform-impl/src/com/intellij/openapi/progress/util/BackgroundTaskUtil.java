@@ -205,65 +205,61 @@ public class BackgroundTaskUtil {
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
-    ModalityState modalityState = ModalityState.defaultModalityState();
-    return runUnderDisposeAwareIndicator(runnable, parent, modalityState, true);
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    indicator.start();
+
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
+      ProgressManager.getInstance().runProcess(runnable, indicator);
+    }, AppExecutorUtil.getAppExecutorService());
+
+    Disposable disposable = () -> {
+      if (indicator.isRunning()) indicator.cancel();
+      try {
+        future.get(1, TimeUnit.SECONDS);
+      }
+      catch (ExecutionException e) {
+        if (e.getCause() instanceof ProcessCanceledException) {
+          // ignore: expected cancellation
+        }
+        else {
+          LOG.error(e);
+        }
+      }
+      catch (InterruptedException | TimeoutException e) {
+        LOG.error(e);
+      }
+    };
+
+    if (!registerIfParentNotDisposed(parent, disposable)) {
+      indicator.cancel();
+      return indicator;
+    }
+
+    future.whenComplete((o, e) -> Disposer.dispose(disposable));
+
+    return indicator;
   }
 
   @CalledInAny
-  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Runnable task,
-                                                                 @NotNull Disposable parent,
-                                                                 @NotNull ModalityState modalityState,
-                                                                 boolean onPooledThread) {
-    ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+    ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
     indicator.start();
 
-    if (onPooledThread) {
-      CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
-        ProgressManager.getInstance().runProcess(task, indicator);
-      }, AppExecutorUtil.getAppExecutorService());
+    Disposable disposable = () -> {
+      if (indicator.isRunning()) indicator.cancel();
+    };
 
-      Disposable disposable = () -> {
-        if (indicator.isRunning()) indicator.cancel();
-        try {
-          future.get(1, TimeUnit.SECONDS);
-        }
-        catch (ExecutionException e) {
-          if (e.getCause() instanceof ProcessCanceledException) {
-            // ignore: expected cancellation
-          }
-          else {
-            LOG.error(e);
-          }
-        }
-        catch (InterruptedException | TimeoutException e) {
-          LOG.error(e);
-        }
-      };
-
-      if (!registerIfParentNotDisposed(parent, disposable)) {
-        indicator.cancel();
-        return indicator;
-      }
-      future.whenComplete((o, e) -> Disposer.dispose(disposable));
+    if (!registerIfParentNotDisposed(parent, disposable)) {
+      indicator.cancel();
+      return;
     }
-    else {
-      Disposable disposable = () -> {
-        if (indicator.isRunning()) indicator.cancel();
-      };
 
-      if (!registerIfParentNotDisposed(parent, disposable)) {
-        indicator.cancel();
-        return indicator;
-      }
-
-      try {
-        ProgressManager.getInstance().runProcess(task, indicator);
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
+    try {
+      ProgressManager.getInstance().runProcess(task, indicator);
     }
-    return indicator;
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
@@ -278,11 +274,6 @@ public class BackgroundTaskUtil {
         return false;
       }
     });
-  }
-
-  @CalledInAny
-  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    runUnderDisposeAwareIndicator(task, parent, ModalityState.defaultModalityState(), false);
   }
 
   /**
