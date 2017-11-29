@@ -721,7 +721,7 @@ iml_module(
     name = "java-tests",
     exclude = [
         "java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala",
-        "java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/data/TestConflict.java",
+        "java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/classConflict/TestConflict.java",
     ],
     iml_files = ["java/java-tests/java-tests.iml"],
     tags = ["managed"],
