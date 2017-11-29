@@ -127,8 +127,9 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     try {
       waitUntil("node by path $pathTo will appear", 30) {
         try {
-          nodeFixtureRef.set(getNodeFixtureByPath(pathTo as Array<String>))
-          true
+          val nodeFixtureByPath = getNodeFixtureByPath(pathTo as Array<String>)
+          nodeFixtureRef.set(nodeFixtureByPath)
+          nodeFixtureByPath != null
         }
         catch (e: java.lang.Exception) {
           false
@@ -136,18 +137,13 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       }
     }
     catch (timedOutError: WaitTimedOutError) {
-
-      val projectViewStructure = PlatformTestUtil.print(projectPaneFixture.getPane().tree, false)
-      LOG.error("Unable to find path: " +
-                Arrays.toString(pathTo) +
-                " for current project structure.\nActual project structure" +
-                projectViewStructure, timedOutError)
+      LOG.error("Unable to find path: ${Arrays.toString(pathTo)} for current project structure.", timedOutError)
     }
     //expand path to the node and rebuild NodeFixture if it left tree
     return nodeFixtureRef.get()
   }
 
-  private fun getNodeFixtureByPath(pathTo: Array<String>): NodeFixture {
+  private fun getNodeFixtureByPath(pathTo: Array<String>): NodeFixture? {
     if (pathTo.size == 1) {
       if (pathTo[0].contains("/")) {
         val newPath = pathTo[0].split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -172,7 +168,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
     fun getPane() = myPane
 
-    fun getNode(path: Array<String>): NodeFixture {
+    fun getNode(path: Array<String>): NodeFixture? {
       val tree = myPane.tree
       val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception("Unfortunately the root for a tree model in ProjectView is null")
       var pivotRoot: Any = root
@@ -188,15 +184,18 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
             childCount > 1 || (childCount == 1 && children[0] !is LoadingNode)
           }
         }
+        var childIsFound = false
         for (child in children) {
           child ?: throw Exception("Path element ($pathItem) is null")
           val nodeText = getNodeText(child.userObject)
           nodeText ?: throw AssertionError("Unable to get text of project view node for pathItem: " + pathItem)
           if (nodeText == pathItem) {
             pivotRoot = child
+            childIsFound = true
             break
           }
         }
+        if (!childIsFound) return null
       }
       return NodeFixture(pivotRoot as DefaultMutableTreeNode, TreeUtil.getPathFromRoot(pivotRoot), myPane)
     }
