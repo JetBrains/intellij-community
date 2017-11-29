@@ -275,9 +275,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   public void testChainedComparisonsGenericMatching() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
-      doTest();
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 }
