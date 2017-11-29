@@ -18,6 +18,7 @@ package com.intellij.internal.statistic.utils
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
+import java.util.*
 
 /**
  * Constructs a proper UsageDescriptor for a boolean value,
@@ -28,7 +29,7 @@ fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
 }
 
 fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
-  return UsageDescriptor(key + "." + value?.name?.toLowerCase(), 1)
+  return UsageDescriptor(key + "." + value?.name?.toLowerCase(Locale.ENGLISH), 1)
 }
 
 /**
