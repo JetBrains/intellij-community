@@ -181,6 +181,7 @@ class GuiTestRule : TestRule {
         emptyList()
       }
       catch (e: Throwable) {
+        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromRunning")
         listOf(e)
       }
 
@@ -195,6 +196,8 @@ class GuiTestRule : TestRule {
         errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
         modalDialog = getActiveModalDialog()
       }
+      if (!errors.isEmpty())
+        ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
       return errors
     }
 
