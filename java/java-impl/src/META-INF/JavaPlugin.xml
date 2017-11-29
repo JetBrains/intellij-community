@@ -626,7 +626,8 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CleanerCapturingThisInspection"
-                     displayName="Cleanable captures 'this' reference"/>
+                     bundle="messages.InspectionsBundle"
+                     key="inspection.cleaner.capturing.this"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"

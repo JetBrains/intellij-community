@@ -54,7 +54,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
             if(aClass.hasModifier(JvmModifier.STATIC)) return;
           }
         }
-        holder.registerProblem(runnableExpr, "Cleanable captures 'this' reference");
+        holder.registerProblem(runnableExpr, InspectionsBundle.message("inspection.cleaner.capturing.this"));
       }
     };
   }
