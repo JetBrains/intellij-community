@@ -116,12 +116,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     }
 
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      ReferenceInjector injector = ReferenceInjector.findById(language.getID());
-      if (injector == null) {
-        throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
-      }
-      myLanguage = null;
-      myReferenceInjector = injector;
+      throw new UnsupportedOperationException("Cannot inject language '" + language + "' because it has no ParserDefinition");
     }
     myLanguage = language;
     return this;
@@ -292,6 +287,35 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     finally {
       clear();
     }
+  }
+
+  public void injectReference(@NotNull Language language,
+                              @NotNull String prefix,
+                              @NotNull String suffix,
+                              @NotNull PsiLanguageInjectionHost host,
+                              @NotNull TextRange rangeInsideHost) {
+    ParserDefinition parser = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    if (parser != null) {
+      throw new IllegalArgumentException("Language "+language+" being injected as reference must not have ParserDefinition and yet - "+parser);
+    }
+    ReferenceInjector injector = ReferenceInjector.findById(language.getID());
+    if (injector == null) {
+      throw new IllegalArgumentException("Language "+language+" being injected as reference must register reference injector");
+    }
+    escapers = new SmartList<>();
+    shreds = new SmartList<>();
+    outChars = new StringBuilder();
+
+    if (!cleared) {
+      clear();
+      throw new IllegalStateException("Seems you haven't called doneInjecting()");
+    }
+
+    myReferenceInjector = injector;
+    myLanguage = language;
+
+    addPlace(prefix, suffix, host, rangeInsideHost);
+    doneInjecting();
   }
 
   private static void createDocument(@NotNull LightVirtualFile virtualFile) {

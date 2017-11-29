@@ -681,4 +681,20 @@ public class InjectedLanguageUtil {
       .findFirst()
       .orElse(null);
   }
+
+  /**
+   * Start injecting the reference in {@code language} in this place.
+   * Unlike {@link MultiHostRegistrar#startInjecting(Language)} this method doesn't inject the full blown file in the other language.
+   * Instead, it just marks some range as a reference in some language.
+   * For example, you can inject file reference into string literal.
+   * After that, it won't be highlighted as an injected fragment but still can be subject to e.g. "Goto declaraion" action.
+   */
+  public static void injectReference(@NotNull MultiHostRegistrar registrar,
+                                     @NotNull Language language,
+                                     @NotNull String prefix,
+                                     @NotNull String suffix,
+                                     @NotNull PsiLanguageInjectionHost host,
+                                     @NotNull TextRange rangeInsideHost) {
+    ((InjectionRegistrarImpl)registrar).injectReference(language, prefix, suffix, host, rangeInsideHost);
+  }
 }

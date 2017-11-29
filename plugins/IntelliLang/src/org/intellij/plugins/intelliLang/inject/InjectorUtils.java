@@ -18,6 +18,8 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -115,6 +117,16 @@ public class InjectorUtils {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
     // Maybe IDEA core is caching a bit too aggressively here?
     if (language == null/* && (pair.second.getLength() > 0*/) {
+      return;
+    }
+    ParserDefinition parser = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    ReferenceInjector injector = ReferenceInjector.findById(language.getID());
+    if (parser == null && injector != null && list.size() == 1) {
+      String prefix = list.get(0).second.getPrefix();
+      String suffix = list.get(0).second.getSuffix();
+      PsiLanguageInjectionHost host = list.get(0).first;
+      TextRange textRange = list.get(0).third;
+      InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
       return;
     }
     boolean injectionStarted = false;

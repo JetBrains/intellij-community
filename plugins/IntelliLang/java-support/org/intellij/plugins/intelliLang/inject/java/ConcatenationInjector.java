@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -404,9 +406,21 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
       }
       else {
-        ContainerUtil.addIfNotNull(res, processInjection(language, result, settingsAvailable, unparsableRef.get()));
+        if (isReferenceInject(language)) {
+          // OMG in case of reference inject they confused shreds (several places in the host file to form a single injection) with several injections
+          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+            ContainerUtil.addIfNotNull(res, processInjection(language, Collections.singletonList(trinity), settingsAvailable, unparsableRef.get()));
+          }
+        }
+        else {
+          ContainerUtil.addIfNotNull(res, processInjection(language, result, settingsAvailable, unparsableRef.get()));
+        }
       }
       return res;
+    }
+
+    private static boolean isReferenceInject(Language language) {
+      return LanguageParserDefinitions.INSTANCE.forLanguage(language) == null && ReferenceInjector.findById(language.getID()) != null;
     }
 
     protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
