@@ -90,7 +90,8 @@ class StructureNode extends StructureElement {
       int lastSuccessfulRemove = -1;
       while (start < limit && start < node.children.size()) {
         // remove last items from the end first to decrease the number of variants in CombinatorialIntCustomizer
-        if (context.tryReplacement(node.id, node.removeRange(node.children, node.children.size() - start - length + 1, length))) {
+        StructureNode withRemovedRange = node.removeRange(node.children, node.children.size() - start - length + 1, length);
+        if (withRemovedRange != null && context.tryReplacement(node.id, withRemovedRange)) {
           node = (StructureNode)Objects.requireNonNull(context.getCurrentMinimalRoot().findChildById(node.id));
           length = Math.min(length * 2, node.children.size() - start);
           lastSuccessfulRemove = start;
@@ -107,11 +108,14 @@ class StructureNode extends StructureElement {
     return node;
   }
 
-  @NotNull
+  @Nullable
   private StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
     int newSize = listChildren.size() - length - 1;
+    IntDistribution lengthDistribution = ((IntData)children.get(0)).distribution;
+    if (!lengthDistribution.isValidValue(newSize)) return null;
+
     List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
-    lessItems.add(new IntData(id, newSize, IntDistribution.uniform(0, newSize)));
+    lessItems.add(new IntData(children.get(0).id, newSize, lengthDistribution));
     lessItems.addAll(listChildren.subList(1, start));
     lessItems.addAll(listChildren.subList(start + length, listChildren.size()));
     return new StructureNode(id, lessItems);
