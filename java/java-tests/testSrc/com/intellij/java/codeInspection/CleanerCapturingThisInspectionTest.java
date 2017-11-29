@@ -14,11 +14,19 @@ public class CleanerCapturingThisInspectionTest extends LightCodeInsightFixtureT
     doTest();
   }
 
+  public void testLambdaInstanceSuperField() {
+    doTest();
+  }
+
   public void testLambdaInstanceMethod() {
     doTest();
   }
 
   public void testLambdaThis() {
+    doTest();
+  }
+
+  public void testLambdaExprBodyInstanceMethod() {
     doTest();
   }
 

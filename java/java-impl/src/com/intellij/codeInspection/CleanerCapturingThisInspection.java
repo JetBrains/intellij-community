@@ -68,7 +68,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
         else if (element instanceof PsiMethodCallExpression) {
           PsiMethod method = tryCast(((PsiMethodCallExpression)element).getMethodExpression().resolve(), PsiMethod.class);
           if (method == null) return false;
-          return method.hasModifierProperty(PsiModifier.STATIC);
+          return !method.hasModifierProperty(PsiModifier.STATIC);
         }
         else if (element instanceof PsiReferenceExpression) {
           PsiField field = tryCast(((PsiReferenceExpression)element).resolve(), PsiField.class);
