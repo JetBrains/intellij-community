@@ -657,6 +657,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest("pkg/__init__.py");
   }
 
+  // PY-27146
+  public void testPrivateMemberOwnerResolvedToStub() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
