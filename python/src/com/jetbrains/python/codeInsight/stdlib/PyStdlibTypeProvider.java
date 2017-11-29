@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -407,7 +407,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
 
           cls.processClassLevelDeclarations(
-            new BaseScopeProcessor() {
+            new PsiScopeProcessor() {
               @Override
               public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
                 if (element instanceof PyTargetExpression) {

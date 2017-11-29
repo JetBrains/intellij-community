@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.util.containers.MostlySingularMultiMap
@@ -15,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 private data class ElementWithState(val element: PsiElement, val state: ResolveState)
 
-class FileCacheBuilderProcessor(private val annotationResolve: Boolean) : BaseScopeProcessor(), ElementClassHint, AnnotationHint {
+class FileCacheBuilderProcessor(private val annotationResolve: Boolean) : PsiScopeProcessor, ElementClassHint, AnnotationHint {
 
   private val declarations = MostlySingularMultiMap<String, ElementWithState>()
 
