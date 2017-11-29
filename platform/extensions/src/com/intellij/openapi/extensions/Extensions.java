@@ -46,11 +46,19 @@ public class Extensions {
     return rootArea;
   }
 
+  /**
+   * @return instance containing application-level extensions
+   */
   @NotNull
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
 
+  /**
+   * If {@code areaInstance} is a project returns instance containing project-level extensions for that project
+   * if {@code areaInstance} is a module returns instance containing module-level extensions for that module,
+   * if {@code areaInstance} is {@code null} returns instance containing application-level extensions.
+   */
   @NotNull
   public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     if (areaInstance == null) {
