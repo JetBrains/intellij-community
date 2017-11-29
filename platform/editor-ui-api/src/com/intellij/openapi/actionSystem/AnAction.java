@@ -225,7 +225,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
   }
 
   /**
