@@ -410,11 +410,27 @@ public class GuessManagerImpl extends GuessManager {
     if (fromDfa != null) {
       Collection<PsiType> conjuncts = fromDfa.get(expr);
       if (!conjuncts.isEmpty()) {
-        return ContainerUtil.newArrayList(PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>()));
+        Set<PsiType> flatTypes = PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>());
+        return ContainerUtil.mapNotNull(flatTypes, type -> tryGenerify(expr, type));
       }
     }
 
     return Collections.emptyList();
+  }
+
+  private static PsiType tryGenerify(PsiExpression expression, PsiType type) {
+    if (!(type instanceof PsiClassType)) {
+      return type;
+    }
+    PsiClassType classType = (PsiClassType)type;
+    if (!classType.isRaw()) {
+      return classType;
+    }
+    PsiClass psiClass = classType.resolve();
+    if (psiClass == null) return classType;
+    PsiType expressionType = expression.getType();
+    if (!(expressionType instanceof PsiClassType)) return classType;
+    return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
   }
 
   private static class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
