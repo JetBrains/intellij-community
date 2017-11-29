@@ -1395,6 +1395,8 @@ public class FSRecords {
         r.unlock();
       }
       return doReadContentById(page);
+    } catch (OutOfMemoryError outOfMemoryError) {
+      throw outOfMemoryError;
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
