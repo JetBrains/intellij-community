@@ -62,66 +62,31 @@ public interface TreeVisitor {
   }
 
 
-  abstract class Base<T> implements TreeVisitor {
+  abstract class ByComponent<C, T> implements TreeVisitor {
     private final Function<TreePath, T> converter;
+    private final C component;
 
-    public Base(@NotNull Function<TreePath, T> converter) {
-      this.converter = converter;
+    public ByComponent(@NotNull C component, @NotNull Function<Object, T> converter) {
+      this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
+      this.component = component;
     }
 
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
-      return visit(path, converter.fun(path));
+      return visit(converter.fun(path));
     }
 
     /**
-     * @param path      a currently visited path
-     * @param component a corresponding component
+     * @param component a last component of the current path
      * @return an action that controls visiting a tree
      */
     @NotNull
-    @SuppressWarnings("unused")
-    protected Action visit(@NotNull TreePath path, T component) {
+    protected Action visit(T component) {
       if (component == null) return Action.SKIP_CHILDREN;
-      if (matches(component)) return Action.INTERRUPT;
-      if (contains(component)) return Action.CONTINUE;
+      if (matches(component, this.component)) return Action.INTERRUPT;
+      if (contains(component, this.component)) return Action.CONTINUE;
       return Action.SKIP_CHILDREN;
-    }
-
-    /**
-     * @param component a last component of the current path
-     * @return {@code true} if the given component matches to a searching object
-     */
-    @SuppressWarnings("unused")
-    protected boolean matches(@NotNull T component) {
-      return false;
-    }
-
-    /**
-     * @param component a last component of the current path
-     * @return {@code true} if the given component contains a searching object
-     */
-    protected abstract boolean contains(@NotNull T component);
-  }
-
-
-  abstract class ByComponent<T> extends Base<T> {
-    private final T component;
-
-    public ByComponent(@NotNull T component, @NotNull Function<Object, T> converter) {
-      super(currentPath -> converter.fun(currentPath.getLastPathComponent()));
-      this.component = component;
-    }
-
-    @Override
-    protected final boolean matches(@NotNull T component) {
-      return matches(component, this.component);
-    }
-
-    @Override
-    protected final boolean contains(@NotNull T component) {
-      return contains(component, this.component);
     }
 
     /**
@@ -129,7 +94,7 @@ public interface TreeVisitor {
      * @param thisComponent a seeking component
      * @return {@code true} if both components match each other
      */
-    protected boolean matches(@NotNull T pathComponent, @NotNull T thisComponent) {
+    protected boolean matches(@NotNull T pathComponent, @NotNull C thisComponent) {
       return pathComponent.equals(thisComponent);
     }
 
@@ -138,7 +103,7 @@ public interface TreeVisitor {
      * @param thisComponent a seeking component
      * @return {@code true} if the first component may contain the second one
      */
-    protected abstract boolean contains(@NotNull T pathComponent, @NotNull T thisComponent);
+    protected abstract boolean contains(@NotNull T pathComponent, @NotNull C thisComponent);
   }
 
 
