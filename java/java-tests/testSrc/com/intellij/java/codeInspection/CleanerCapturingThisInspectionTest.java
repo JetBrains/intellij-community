@@ -30,6 +30,14 @@ public class CleanerCapturingThisInspectionTest extends LightCodeInsightFixtureT
     doTest();
   }
 
+  public void testStaticMethodReference() {
+    doTest();
+  }
+
+  public void testInstanceMethodReference() {
+    doTest();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
