@@ -36,7 +36,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -162,7 +162,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
-  private static class MyResolver extends BaseScopeProcessor {
+  private static class MyResolver implements PsiScopeProcessor {
     private final String myPrefix;
     private final Kind myKind;
     private PsiElement myResult;

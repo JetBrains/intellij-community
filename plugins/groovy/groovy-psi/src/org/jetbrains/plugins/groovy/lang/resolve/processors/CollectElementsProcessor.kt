@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.BaseScopeProcessor
+import com.intellij.psi.scope.PsiScopeProcessor
 
-class CollectElementsProcessor : BaseScopeProcessor() {
+class CollectElementsProcessor : PsiScopeProcessor {
 
   private val myResults = mutableListOf<PsiElement>()
   val results: List<PsiElement> get() = myResults

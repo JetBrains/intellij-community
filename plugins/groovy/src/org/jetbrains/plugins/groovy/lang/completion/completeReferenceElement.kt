@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.PACKAGE
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -93,7 +92,7 @@ private class CompleteReferenceProcessor(
   private val matcher: PrefixMatcher,
   private val consumer: LookupConsumer,
   private val afterNew: Boolean
-) : BaseScopeProcessor() {
+) : PsiScopeProcessor {
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
     element as? PsiNamedElement ?: return true
