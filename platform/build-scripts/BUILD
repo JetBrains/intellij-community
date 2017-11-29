@@ -14,7 +14,8 @@ iml_module(
         "//tools/idea:tasks-platform-impl",
         "//tools/idea:credential-store",
     ],
-    test_srcs = ["testSrc"],
+    ## Android studio only, bazel fails when it tries to execute these tests since no test classes exist in this directory.
+    #test_srcs = ["testSrc"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
