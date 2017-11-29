@@ -164,6 +164,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public synchronized void dispose() {
+    clearReferences();
+  }
+
+  private synchronized void clearReferences() {
     myUpdateProgress = new DaemonProgressIndicator(); // leak of highlight session via user data
     myUpdateRunnableFuture.cancel(true);
   }
@@ -442,6 +446,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public void prepareForTest() {
     setUpdateByTimerEnabled(false);
     waitForTermination();
+    clearReferences();
   }
 
   @TestOnly
