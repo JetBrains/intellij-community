@@ -3,7 +3,6 @@ import java.io.*;
 
 class T {
     private static String getString() throws IOException {
-        String s;
         try (BufferedReader r = open()) {
             return r.readLine();
         }
