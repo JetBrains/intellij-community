@@ -2222,6 +2222,7 @@ iml_module(
         "//tools/idea:built-in-server",
     ],
     test_srcs = ["aether-dependency-resolver/testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -2528,6 +2529,7 @@ iml_module(
     iml_files = ["community-guitests/community-guitests.iml"],
     tags = ["managed"],
     test_srcs = ["community-guitests/testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [

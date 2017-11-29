@@ -6,6 +6,7 @@ iml_module(
     iml_files = ["uast-tests.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [

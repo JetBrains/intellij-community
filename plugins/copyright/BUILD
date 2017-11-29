@@ -11,6 +11,7 @@ iml_module(
         "//tools/idea:images",
     ],
     test_srcs = ["testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [

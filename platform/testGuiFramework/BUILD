@@ -7,6 +7,7 @@ iml_module(
     resources = ["res"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
