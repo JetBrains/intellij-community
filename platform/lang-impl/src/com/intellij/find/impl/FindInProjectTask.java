@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -78,7 +79,6 @@ class FindInProjectTask {
       .thenComparing(VirtualFile::getPath);
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
-  private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
   private final FindModel myFindModel;
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -197,7 +197,7 @@ class FindInProjectTask {
       final boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
       if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
-      if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
+      if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
         myLargeFiles.add(virtualFile);
         return true;
       }
