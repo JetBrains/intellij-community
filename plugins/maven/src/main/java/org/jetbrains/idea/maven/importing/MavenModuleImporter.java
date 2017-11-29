@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -372,7 +373,13 @@ public class MavenModuleImporter {
     }
 
     if (level == null) {
-      level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+      String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+      level = LanguageLevel.parse(mavenProjectSourceLevel);
+      if(level == null && StringUtil.isNotEmpty(mavenProjectSourceLevel)) {
+        if(Registry.is(LanguageLevel.EXPERIMENTAL_KEY, false)) {
+          level = LanguageLevel.JDK_X;
+        }
+      }
     }
 
     // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
