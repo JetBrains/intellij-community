@@ -15,11 +15,11 @@
  */
 package com.intellij.ui.tree;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.TreePath;
-import java.util.function.Function;
 
 public interface TreeVisitor {
   /**
@@ -72,7 +72,7 @@ public interface TreeVisitor {
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
-      return visit(path, converter.apply(path));
+      return visit(path, converter.fun(path));
     }
 
     /**
@@ -110,7 +110,7 @@ public interface TreeVisitor {
     private final T component;
 
     public ByComponent(@NotNull T component, @NotNull Function<Object, T> converter) {
-      super(converter.compose(TreePath::getLastPathComponent));
+      super(currentPath -> converter.fun(currentPath.getLastPathComponent()));
       this.component = component;
     }
 
@@ -153,7 +153,7 @@ public interface TreeVisitor {
     }
 
     public ByTreePath(boolean ignoreRoot, @NotNull TreePath path, @NotNull Function<Object, T> converter) {
-      this.converter = converter.compose(TreePath::getLastPathComponent);
+      this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
       this.ignoreRoot = ignoreRoot;
       this.path = path;
       this.count = ignoreRoot
@@ -164,7 +164,7 @@ public interface TreeVisitor {
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
-      return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : visit(path, converter.apply(path));
+      return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : visit(path, converter.fun(path));
     }
 
     /**
