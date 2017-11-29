@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Android Studio" type="Application" factoryName="Application">
-    <log_file path="$PROJECT_DIR$/system/AndroidStudio/log/idea.log" checked="true" skipped="true" show_all="false" alias="C:\Work\IDEA\system\AndroidStudio\log\idea.log" />
+  <configuration default="false" name="Android Studio" type="Application" factoryName="Application" singleton="true">
+    <log_file path="$PROJECT_DIR$/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <option name="VM_PARAMETERS" value="-ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Xbootclasspath/p:../out/classes/production/boot -Xmx380m -Didea.platform.prefix=AndroidStudio -Dsun.awt.disablegrab=true -Didea.is.internal=true -Didea.system.path=../system/AndroidStudio -Didea.config.path=../config/AndroidStudio -Didea.fix.mac.env=true -XX:SoftRefLRUPolicyMSPerMB=50 -Dplugin.path=../../../prebuilts/tools/common/kotlin-plugin/Kotlin" />
+    <option name="VM_PARAMETERS" value="-ea -Xbootclasspath/a:../out/classes/production/boot -Xms512m -Xmx1024m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -Didea.is.internal=true -Didea.platform.prefix=AndroidStudio -Dandroid.extra_templates.path=../../../sdk/templates -Dapple.laf.useScreenMenuBar=true -Dcom.apple.mrj.application.apple.menu.about.name=AndroidStudio -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Didea.jre.check=true -Didea.debug.mode=true -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -Dplugin.path=../../../prebuilts/tools/common/kotlin-plugin/Kotlin" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
@@ -12,15 +12,17 @@
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="community-main" />
-    <envs>
-      <env name="IDEA_RUNNERW" value="../community/bin/win/runnerw.exe" />
-    </envs>
+    <envs />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="" />
       <option name="TRANSPORT" value="0" />
       <option name="LOCAL" value="true" />
     </RunnerSettings>
+    <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Debug" />
-    <method />
+    <ConfigurationWrapper RunnerId="Run" />
+    <method>
+      <option name="BuildArtifacts" enabled="true" />
+    </method>
   </configuration>
 </component>
