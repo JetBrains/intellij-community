@@ -171,7 +171,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
+    return myNameField.getFocusableComponent();
   }
 
   @Override
