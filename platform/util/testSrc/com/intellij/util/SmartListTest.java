@@ -22,6 +22,10 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -365,4 +369,99 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
     assertThat(list).isNotEqualTo(Arrays.asList(new Integer(1), new Integer(2), new Integer(3)));
   }
+
+  @Test
+  public void testContainsAllInEmptyList() {
+    List<Integer> emptyList = new SmartList<>();
+
+    boolean contains = emptyList.containsAll(singleton(1));
+    assertThat(contains).isFalse();
+
+    contains = emptyList.containsAll(emptyList());
+    assertThat(contains).isTrue();
+
+    contains = emptyList.containsAll(emptySet());
+    assertThat(contains).isTrue();
+
+    contains = emptyList.containsAll(new SmartList<>());
+    assertThat(contains).isTrue();
+
+    contains = emptyList.containsAll(new ArrayList<>());
+    assertThat(contains).isTrue();
+
+    contains = emptyList.containsAll(new LinkedList<>());
+    assertThat(contains).isTrue();
+  }
+
+  @Test
+  public void testContainsAllInNonEmptyList() {
+    List<Integer> list = new SmartList<>(1,2);
+
+    boolean contains = list.containsAll(Arrays.asList(1,2));
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(Arrays.asList(2,1));
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(emptyList());
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(emptySet());
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(new SmartList<>());
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(new ArrayList<>());
+    assertThat(contains).isTrue();
+
+    contains = list.containsAll(new LinkedList<>());
+    assertThat(contains).isTrue();
+  }
+
+  @Test
+  public void testContainsAll_ensureBehaviouralCompatibilityWithEmptyArrayList() {
+    List<Integer> emptySmartList = new SmartList<>();
+    List<Integer> emptyArrayList = new ArrayList<>();
+
+    boolean containsInSmartList = emptySmartList.containsAll(singletonList(1));
+    boolean containsInArrayList = emptyArrayList.containsAll(singletonList(1));
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+    containsInSmartList = emptySmartList.containsAll(emptyList());
+    containsInArrayList = emptyArrayList.containsAll(emptyList());
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+    containsInSmartList = emptySmartList.containsAll(emptySet());
+    containsInArrayList = emptyArrayList.containsAll(emptySet());
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+  }
+
+  @Test
+  public void testContainsAll_ensureBehaviouralCompatibilityWithNonEmptyArrayList() {
+    List<Integer> emptySmartList = new SmartList<>(Arrays.asList(1,2));
+    List<Integer> emptyArrayList = new ArrayList<>(Arrays.asList(1,2));
+
+    boolean containsInSmartList = emptySmartList.containsAll(singletonList(1));
+    boolean containsInArrayList = emptyArrayList.containsAll(singletonList(1));
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+    containsInSmartList = emptySmartList.containsAll(Arrays.asList(1,2));
+    containsInArrayList = emptyArrayList.containsAll(Arrays.asList(1,2));
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+    containsInSmartList = emptySmartList.containsAll(Arrays.asList(2,1));
+    containsInArrayList = emptyArrayList.containsAll(Arrays.asList(2,1));
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+
+    containsInSmartList = emptySmartList.containsAll(emptyList());
+    containsInArrayList = emptyArrayList.containsAll(emptyList());
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+
+    containsInSmartList = emptySmartList.containsAll(emptySet());
+    containsInArrayList = emptyArrayList.containsAll(emptySet());
+    assertThat(containsInSmartList).isEqualTo(containsInArrayList);
+  }
+
 }

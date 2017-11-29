@@ -380,4 +380,10 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
     return true;
   }
+
+  @Override
+  public boolean containsAll(Collection<?> c) {
+    if (mySize == 0) return c.isEmpty();
+    return super.containsAll(c);
+  }
 }
