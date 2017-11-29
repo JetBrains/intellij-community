@@ -43,8 +43,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
           if (lambda.getParameterList().getParametersCount() != 0) return;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return;
-          if (!capturesThis(lambdaBody, containingClass)) {
-          }
+          if (!capturesThis(lambdaBody, containingClass)) return;
         } else if (runnableExpr instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)runnableExpr;
           if (newExpression.getAnonymousClass() == null) {
@@ -61,14 +60,15 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static boolean capturesThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
-    return StreamEx.ofTree(lambdaBody, el -> StreamEx.of(lambdaBody.getChildren()))
-      .noneMatch(element -> {
+    return StreamEx.ofTree(lambdaBody, el -> StreamEx.of(el.getChildren()))
+      .anyMatch(element -> {
         if (element instanceof PsiThisExpression) {
           return true;
         }
         else if (element instanceof PsiMethodCallExpression) {
           PsiMethod method = tryCast(((PsiMethodCallExpression)element).getMethodExpression().resolve(), PsiMethod.class);
-          return method == null || method.hasModifierProperty(PsiModifier.STATIC);
+          if (method == null) return false;
+          return method.hasModifierProperty(PsiModifier.STATIC);
         }
         else if (element instanceof PsiReferenceExpression) {
           PsiField field = tryCast(((PsiReferenceExpression)element).resolve(), PsiField.class);
