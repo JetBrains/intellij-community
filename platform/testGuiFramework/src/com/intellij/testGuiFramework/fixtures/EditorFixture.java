@@ -52,6 +52,8 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
 import static org.fest.assertions.Assertions.assertThat;
@@ -318,6 +320,22 @@ public class EditorFixture {
           return sb.toString();
         }
 
+        return null;
+      }
+    });
+  }
+
+  public String getCurrentFileContents(int startOffset, int endOffset) {
+    return execute(new GuiQuery<String>() {
+      @Override
+      @Nullable
+      protected String executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          Document document = editor.getDocument();
+          return document.getText(new TextRange(startOffset, endOffset));
+        }
         return null;
       }
     });
@@ -596,6 +614,31 @@ public class EditorFixture {
           String target = (prefix != null ? prefix : "") + (suffix != null ? suffix : "");
           int targetIndex = contents.indexOf(target, searchFromTop ? 0 : primaryCaret.getOffset());
           return targetIndex != -1 ? targetIndex + (prefix != null ? prefix.length() : 0) : -1;
+        }
+        return -1;
+      }
+    });
+  }
+
+  public int findOffsetByRegex(@NotNull String regex, boolean startIndex) {
+    return execute(new GuiQuery<Integer>() {
+      @Override
+      protected Integer executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          CaretModel caretModel = editor.getCaretModel();
+          Caret primaryCaret = caretModel.getPrimaryCaret();
+          Document document = editor.getDocument();
+          String contents = document.getCharsSequence().toString();
+          Pattern pattern = Pattern.compile(regex);
+          Matcher matcher = pattern.matcher(contents);
+          if (matcher.find()) {
+            if (startIndex)
+              return matcher.start();
+            else
+              return matcher.end();
+          }
         }
         return -1;
       }
