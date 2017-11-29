@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
+import org.jetbrains.plugins.gradle.tooling.util.ArtifactsCollectionResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
@@ -40,6 +41,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 12/20/13
  */
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
+
+  private static final boolean is40OrBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
@@ -86,7 +89,8 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
     if (classpathConfiguration == null) return null;
 
     Collection<ExternalDependency> dependencies =
-      new DependencyResolverImpl(project, false, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration);
+      is40OrBetter ? new ArtifactsCollectionResolver(project, false, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration)
+                   : new DependencyResolverImpl(project, false, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration);
 
     for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
       if (dependency instanceof ExternalProjectDependency) {

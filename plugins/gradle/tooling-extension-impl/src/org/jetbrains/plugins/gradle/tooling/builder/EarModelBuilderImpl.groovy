@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
+import org.jetbrains.plugins.gradle.tooling.util.ArtifactsCollectionResolver
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
@@ -65,7 +66,9 @@ class EarModelBuilderImpl implements ModelBuilderService {
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
 
-    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, false, mySourceSetFinder)
+    DependencyResolver dependencyResolver = is4OrBetter ? new ArtifactsCollectionResolver(project, false, false, false, mySourceSetFinder)
+      : new DependencyResolverImpl(project, false, false, false, mySourceSetFinder)
+
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)
     def buildDirPath = project.getBuildDir().absolutePath

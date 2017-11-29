@@ -125,13 +125,13 @@ public class DependencyResolverImpl implements DependencyResolver {
     return resolveDependencies(configuration, null).getExternalDeps();
   }
 
-  private static class ExternalDepsResolutionResult {
+  protected static class ExternalDepsResolutionResult {
     public static ExternalDepsResolutionResult
       EMPTY = new ExternalDepsResolutionResult(Collections.<ExternalDependency>emptySet(), Collections.<File>emptySet());
     private final Collection<ExternalDependency> externalDeps;
     private final Collection<File> resolvedFiles;
 
-    private ExternalDepsResolutionResult(Collection<ExternalDependency> deps, Collection<File> files) {
+    public ExternalDepsResolutionResult(Collection<ExternalDependency> deps, Collection<File> files) {
       externalDeps = deps;
       resolvedFiles = files;
     }
