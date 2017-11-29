@@ -60,8 +60,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -73,7 +71,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -91,7 +88,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class SystemHealthMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
@@ -354,27 +350,50 @@ public class SystemHealthMonitor implements ApplicationComponent {
       return;
     }
 
-    List<StudioExceptionDetails> allDetails = stackTraces.stream()
-      .map(t -> StudioExceptionDetails.newBuilder()
-        .setHash(t.md5string())
-        .setCount(t.count())
-        .setSummary(t.summarize(20))
-        .build())
-      .collect(Collectors.toList());
-    final AndroidStudioEvent.Builder eventBuilder = AndroidStudioEvent.newBuilder()
-      .setCategory(EventCategory.PING)
-      .setKind(EventKind.STUDIO_CRASH)
-      .setStudioCrash(StudioCrash.newBuilder()
-                        .setActions(activityCount)
-                        .setExceptions(exceptionCount)
-                        .setBundledPluginExceptions(bundledPluginExceptionCount)
-                        .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
-                        .setCrashes(fatalExceptionCount)
-                        .addAllDetails(allDetails));
+    // Log statistics (action/exception counts)
+    final AndroidStudioEvent.Builder eventBuilder =
+      AndroidStudioEvent.newBuilder()
+        .setCategory(EventCategory.PING)
+        .setKind(EventKind.STUDIO_CRASH)
+        .setStudioCrash(StudioCrash.newBuilder()
+          .setActions(activityCount)
+          .setExceptions(exceptionCount)
+          .setBundledPluginExceptions(bundledPluginExceptionCount)
+          .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
+          .setCrashes(fatalExceptionCount));
+    logUsageOnlyIfNotInternalApplication(eventBuilder);
+
+    // Log each stacktrace as a separate log event with the timestamp of when it was first hit
+    for (StackTrace stackTrace : stackTraces) {
+      final AndroidStudioEvent.Builder crashEventBuilder =
+        AndroidStudioEvent.newBuilder()
+          .setCategory(EventCategory.PING)
+          .setKind(EventKind.STUDIO_CRASH)
+          .setStudioCrash(StudioCrash.newBuilder()
+            .addDetails(StudioExceptionDetails.newBuilder()
+              .setHash(stackTrace.md5string())
+              .setCount(stackTrace.count())
+              .setSummary(stackTrace.summarize(20))
+              .build()));
+      logUsageOnlyIfNotInternalApplication(stackTrace.timeOfFirstHitMs(), crashEventBuilder);
+    }
+  }
+
+  // Use this method to log crash events, so crashes on internal builds don't get logged.
+  private static void logUsageOnlyIfNotInternalApplication(AndroidStudioEvent.Builder eventBuilder) {
     if (!ApplicationManager.getApplication().isInternal()) {
       UsageTracker.getInstance().log(eventBuilder);
     } else {
       LOG.debug("SystemHealthMonitor would send following analytics event in the release build: " + eventBuilder.build());
+    }
+  }
+
+  // Use this method to log crash events, so crashes on internal builds don't get logged.
+  private static void logUsageOnlyIfNotInternalApplication(long eventTimeMs, AndroidStudioEvent.Builder eventBuilder) {
+    if (!ApplicationManager.getApplication().isInternal()) {
+      UsageTracker.getInstance().log(eventTimeMs, eventBuilder);
+    } else {
+      logUsageOnlyIfNotInternalApplication(eventBuilder);
     }
   }
 

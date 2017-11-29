@@ -16,6 +16,8 @@
 package com.intellij.ide
 
 
+import com.android.annotations.VisibleForTesting
+import com.android.utils.DateProvider
 import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
 import com.google.common.io.BaseEncoding
@@ -47,6 +49,9 @@ interface StackTrace : Comparable<StackTrace> {
 
   /** Summarizes the stack trace */
   fun summarize(maxWidth: Int): String
+
+  /** Timestamp of the first time when the stack trace was encountered */
+  fun timeOfFirstHitMs(): Long
 }
 
 /**
@@ -103,6 +108,8 @@ object ExceptionRegistry {
   var count = 0
   private val root: StackFrame = StackFrame(StackTraceElement("ROOT", "", "", 0), null)
   private val leafFrames = mutableListOf<LeafFrame>()
+  @VisibleForTesting
+  var dateProvider = DateProvider.SYSTEM!!
 
   /** Registers an exception with the registry */
   fun register(throwable: Throwable): StackTrace {
@@ -220,8 +227,9 @@ object ExceptionRegistry {
 
     /** Like [addChild] but adds in a [LeafFrame] instead */
     fun addLeaf(frame: StackTraceElement, cls: Class<Any>): LeafFrame {
+      val currentTimestampMs = dateProvider.now().time
       if (firstChild == null) {
-        val child = LeafFrame(cls, frame, this)
+        val child = LeafFrame(cls, frame, this, currentTimestampMs)
         firstChild = child
         return child
       }
@@ -231,14 +239,15 @@ object ExceptionRegistry {
         var curr: StackFrame? = firstChild
         while (curr != null) {
           if (curr.matches(frame)) {
-            curr.count++
-            return curr as LeafFrame
+            val leaf = curr as LeafFrame
+            leaf.count++
+            return leaf
           }
           prev = curr
           curr = curr.nextSibling
         }
 
-        val child = LeafFrame(cls, frame, this)
+        val child = LeafFrame(cls, frame, this, currentTimestampMs)
         prev!!.nextSibling = child
         return child
       }
@@ -252,8 +261,14 @@ object ExceptionRegistry {
    * Class used for the leaf frames in a stack tree. This carries extra data, such as the name of the
    * class, and has methods for operating on the stack trace as a whole (e.g. summarizing it, hashing it, etc.)
    */
-  private class LeafFrame(val cls: Class<Any>, frame: StackTraceElement, parent: StackFrame?) : StackFrame(frame, parent), StackTrace {
+  private class LeafFrame(
+      val cls: Class<Any>,
+      frame: StackTraceElement,
+      parent: StackFrame?,
+      val timeOfFirstHitMs : Long) : StackFrame(frame, parent), StackTrace {
+
     override fun count(): Int = count
+    override fun timeOfFirstHitMs(): Long = timeOfFirstHitMs
 
     /** Summarizes the stack trace */
     override fun summarize(maxWidth: Int): String {

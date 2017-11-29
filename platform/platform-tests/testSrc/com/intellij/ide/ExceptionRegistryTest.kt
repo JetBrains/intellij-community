@@ -15,11 +15,25 @@
  */
 package com.intellij.ide
 
+import com.android.testutils.VirtualTimeDateProvider
+import com.android.testutils.VirtualTimeScheduler
 import junit.framework.TestCase
 import java.io.IOException
 import com.intellij.ide.ExceptionTestUtils.createExceptionFromDesc
+import java.util.concurrent.TimeUnit
 
 class ExceptionRegistryTest : TestCase() {
+
+  override fun setUp() {
+    ExceptionRegistry.clear()
+    super.setUp()
+  }
+
+  override fun tearDown() {
+    ExceptionRegistry.clear()
+    super.tearDown()
+  }
+
   /**
    * Generates a report of the registered exceptions, in descending frequency order
    * and optionally with summarizes of the stack traces
@@ -52,6 +66,39 @@ class ExceptionRegistryTest : TestCase() {
       }
     }
     return sb.toString()
+  }
+
+  fun testStacktraceTimestamps() {
+    val previousProvider = ExceptionRegistry.dateProvider
+    try {
+      val vs = VirtualTimeScheduler()
+      vs.advanceTo(System.nanoTime())
+      ExceptionRegistry.dateProvider = VirtualTimeDateProvider(vs)
+
+      val intervalNs = TimeUnit.NANOSECONDS.convert(10, TimeUnit.MINUTES)
+
+      val exceptions = createTestExceptions()
+      val resultsMap : MutableMap<StackTrace, Long> = HashMap()
+
+      for (exception in exceptions) {
+        val stackTrace = ExceptionRegistry.register(exception)
+
+        if (stackTrace.count() == 1) {
+          resultsMap[stackTrace] = ExceptionRegistry.dateProvider.now().time
+        }
+
+        vs.advanceBy(intervalNs)
+      }
+
+      val stackTraces = ExceptionRegistry.getStackTraces(0)
+      stackTraces.forEach {
+        assertEquals(resultsMap[it], it.timeOfFirstHitMs())
+      }
+      assertEquals(resultsMap.count(), stackTraces.count())
+
+    } finally {
+      ExceptionRegistry.dateProvider = previousProvider
+    }
   }
 
   fun test() {

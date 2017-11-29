@@ -34,5 +34,7 @@
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="common" scope="TEST" />
+    <orderEntry type="module" module-name="testutils" scope="TEST" />
   </component>
 </module>
