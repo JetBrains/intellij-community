@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.branch.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import icons.DvcsImplIcons;
@@ -237,14 +238,16 @@ class GitBranchPopupActions {
 
     @Override
     public boolean hasSmthToPull() {
-      GitLocalBranch localBranch = new GitLocalBranch(myBranchName);
-      return GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPull(chooseRepo()).contains(localBranch);
+      return GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
+             GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPull(chooseRepo())
+               .contains(new GitLocalBranch(myBranchName));
     }
 
     @Override
     public boolean hasSmthToPush() {
-      GitLocalBranch localBranch = new GitLocalBranch(myBranchName);
-      return GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPush(chooseRepo()).contains(localBranch);
+      return GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
+             GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPush(chooseRepo())
+               .contains(new GitLocalBranch(myBranchName));
     }
 
     static class CheckoutAction extends DumbAwareAction {
