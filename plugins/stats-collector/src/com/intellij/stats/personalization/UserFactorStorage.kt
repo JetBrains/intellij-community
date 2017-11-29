@@ -14,11 +14,18 @@ interface UserFactorStorage {
         ApplicationManager.getApplication().getComponent(ApplicationUserFactorStorage::class.java)
 
     fun getInstance(project: Project): UserFactorStorage = project.getComponent(ProjectUserFactorStorage::class.java)
+
+    fun <U : FactorUpdater> applyOnBoth(project: Project, description: UserFactorDescription<U, *>, updater: (U) -> Unit) {
+      updater(getInstance().getFactorUpdater(description))
+      updater(getInstance(project).getFactorUpdater(description))
+    }
   }
 
   fun getBoolean(factorId: String): Boolean?
   fun getDouble(factorId: String): Double?
   fun getString(factorId: String): String?
+  fun <U : FactorUpdater> getFactorUpdater(description: UserFactorDescription<U, *>): U
+  fun <R : FactorReader> getFactorReader(description: UserFactorDescription<*, R>): R
 
   fun setBoolean(factorId: String, value: Boolean)
   fun setDouble(factorId: String, value: Double)
