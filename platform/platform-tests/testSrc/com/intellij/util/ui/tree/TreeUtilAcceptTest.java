@@ -602,21 +602,22 @@ public final class TreeUtilAcceptTest {
                           node("333", "3331", "3332", "3333"))));
   }
 
-  static class Visitor extends TreeVisitor.Base<TreePath> {
+  static class Visitor implements TreeVisitor {
     final AtomicLong counter = new AtomicLong();
-
-    Visitor() {
-      super(path -> path);
-    }
 
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
       counter.incrementAndGet();
-      return super.visit(path);
+      if (matches(path)) return Action.INTERRUPT;
+      if (contains(path)) return Action.CONTINUE;
+      return Action.SKIP_CHILDREN;
     }
 
-    @Override
+    protected boolean matches(@NotNull TreePath path) {
+      return false;
+    }
+
     protected boolean contains(@NotNull TreePath path) {
       return true;
     }
