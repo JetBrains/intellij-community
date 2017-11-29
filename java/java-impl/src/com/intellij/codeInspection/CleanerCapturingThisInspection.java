@@ -51,7 +51,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
             if(classReference == null) return;
             PsiClass aClass = tryCast(classReference.resolve(), PsiClass.class);
             if(aClass == null) return;
-            if(!aClass.hasModifier(JvmModifier.STATIC)) return;
+            if(aClass.hasModifier(JvmModifier.STATIC)) return;
           }
         }
         holder.registerProblem(runnableExpr, "Cleanable captures 'this' reference");

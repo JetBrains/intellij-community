@@ -22,6 +22,14 @@ public class CleanerCapturingThisInspectionTest extends LightCodeInsightFixtureT
     doTest();
   }
 
+  public void testAnonymous() {
+    doTest();
+  }
+
+  public void testInner() {
+    doTest();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
