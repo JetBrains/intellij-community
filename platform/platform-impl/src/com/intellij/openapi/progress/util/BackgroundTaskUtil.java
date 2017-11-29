@@ -216,23 +216,26 @@ public class BackgroundTaskUtil {
                                                                  boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
     indicator.start();
-    Runnable toRun = () -> {
-      try {
-        ProgressManager.getInstance().runProcess(task, indicator);
-      }
-      catch (ProcessCanceledException pce) {
-        // ignore: expected cancellation
-      }
-    };
 
     if (onPooledThread) {
-      CompletableFuture<?> future = CompletableFuture.runAsync(toRun, AppExecutorUtil.getAppExecutorService());
+      CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
+        ProgressManager.getInstance().runProcess(task, indicator);
+      }, AppExecutorUtil.getAppExecutorService());
+
       Disposable disposable = () -> {
         if (indicator.isRunning()) indicator.cancel();
         try {
           future.get(1, TimeUnit.SECONDS);
         }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
+        catch (ExecutionException e) {
+          if (e.getCause() instanceof ProcessCanceledException) {
+            // ignore: expected cancellation
+          }
+          else {
+            LOG.error(e);
+          }
+        }
+        catch (InterruptedException | TimeoutException e) {
           LOG.error(e);
         }
       };
@@ -254,7 +257,7 @@ public class BackgroundTaskUtil {
       }
 
       try {
-        toRun.run();
+        ProgressManager.getInstance().runProcess(task, indicator);
       }
       finally {
         Disposer.dispose(disposable);
