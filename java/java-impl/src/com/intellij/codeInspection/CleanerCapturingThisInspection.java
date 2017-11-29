@@ -31,8 +31,8 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
         PsiExpression[] expressions = call.getArgumentList().getExpressions();
         if (!(expressions[0] instanceof PsiThisExpression)) return;
         PsiExpression runnableExpr = expressions[1];
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
-        if (containingClass == null) return;
+        PsiClass callContainingClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
+        if (callContainingClass == null) return;
         PsiElement referenceNameElement = call.getMethodExpression().getReferenceNameElement();
         if (referenceNameElement == null) return;
         if (runnableExpr instanceof PsiMethodReferenceExpression) {
@@ -43,7 +43,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
           if (lambda.getParameterList().getParametersCount() != 0) return;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return;
-          if (!capturesThis(lambdaBody, containingClass)) return;
+          if (!capturesThis(lambdaBody, callContainingClass)) return;
         } else if (runnableExpr instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)runnableExpr;
           if (newExpression.getAnonymousClass() == null) {
@@ -51,6 +51,7 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
             if(classReference == null) return;
             PsiClass aClass = tryCast(classReference.resolve(), PsiClass.class);
             if(aClass == null) return;
+            if(aClass.getContainingClass() != callContainingClass) return;
             if(aClass.hasModifier(JvmModifier.STATIC)) return;
           }
         }
@@ -61,24 +62,25 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
 
   private static boolean capturesThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
     return StreamEx.ofTree(lambdaBody, el -> StreamEx.of(el.getChildren()))
-      .anyMatch(element -> {
-        if (element instanceof PsiThisExpression) {
-          return true;
-        }
-        else if (element instanceof PsiMethodCallExpression) {
-          PsiMethod method = tryCast(((PsiMethodCallExpression)element).getMethodExpression().resolve(), PsiMethod.class);
-          if (method == null) return false;
-          return !method.hasModifierProperty(PsiModifier.STATIC);
-        }
-        else if (element instanceof PsiReferenceExpression) {
-          PsiField field = tryCast(((PsiReferenceExpression)element).resolve(), PsiField.class);
-          if (field == null) return false;
-          PsiClass fieldContainingClass = field.getContainingClass();
-          if (fieldContainingClass == null) return false;
-          return InheritanceUtil.isInheritorOrSelf(containingClass, fieldContainingClass, true);
-        }
-        return false;
-      });
+      .anyMatch(element -> isThisCapturingElement(containingClass, element));
   }
 
+  private static boolean isThisCapturingElement(@NotNull PsiClass containingClass, PsiElement element) {
+    if (element instanceof PsiThisExpression) {
+      return true;
+    }
+    else if (element instanceof PsiMethodCallExpression) {
+      PsiMethod method = tryCast(((PsiMethodCallExpression)element).getMethodExpression().resolve(), PsiMethod.class);
+      if (method == null) return false;
+      return !method.hasModifierProperty(PsiModifier.STATIC);
+    }
+    else if (element instanceof PsiReferenceExpression) {
+      PsiField field = tryCast(((PsiReferenceExpression)element).resolve(), PsiField.class);
+      if (field == null) return false;
+      PsiClass fieldContainingClass = field.getContainingClass();
+      if (fieldContainingClass == null) return false;
+      return InheritanceUtil.isInheritorOrSelf(containingClass, fieldContainingClass, true);
+    }
+    return false;
+  }
 }
