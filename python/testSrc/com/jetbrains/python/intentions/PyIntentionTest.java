@@ -244,6 +244,16 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
+  // PY-26285
+  public void testConvertVariadicParamOverriddenInNested() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26285
+  public void testConvertVariadicParamNotOverriddenInNested() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
   public void testConvertTripleQuotedString() { //PY-2697
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
