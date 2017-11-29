@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -375,10 +374,8 @@ public class MavenModuleImporter {
     if (level == null) {
       String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
       level = LanguageLevel.parse(mavenProjectSourceLevel);
-      if(level == null && StringUtil.isNotEmpty(mavenProjectSourceLevel)) {
-        if(Registry.is(LanguageLevel.EXPERIMENTAL_KEY, false)) {
-          level = LanguageLevel.JDK_X;
-        }
+      if (level == null && StringUtil.isNotEmpty(mavenProjectSourceLevel)) {
+        level = LanguageLevel.JDK_X;
       }
     }
 
