@@ -22,7 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -44,21 +46,16 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   @Override
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final List<String> callTexts = new ArrayList<>();
-    PsiExpression root = (PsiExpression)element;
-    while (root instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) root;
-      final PsiExpressionList arguments = methodCallExpression.getArgumentList();
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      callTexts.add(methodExpression.getReferenceName() + arguments.getText());
-      root = methodExpression.getQualifierExpression();
-      if (root == null) {
-        return;
-      }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
+    PsiExpression root = MethodCallChainPredicate.getCallChainRoot(call);
+    if (root == null) return;
+    CommentTracker tracker = new CommentTracker();
+    while (call != null && call != root) {
+      callTexts.add(call.getMethodExpression().getReferenceName() + tracker.text(call.getArgumentList()));
+      call = MethodCallUtils.getQualifierMethodCall(call);
     }
     final PsiType rootType = root.getType();
-    if (rootType == null) {
-      return;
-    }
+    if (rootType == null) return;
     final String targetText;
     final PsiStatement appendStatement;
     @NonNls final String firstStatement;
@@ -158,7 +155,6 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     final PsiElement appendStatementParent = appendStatement.getParent();
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     final PsiCodeBlock codeBlock = factory.createCodeBlockFromText(builder.toString(), appendStatement);
-    CommentTracker tracker = new CommentTracker();
     if (appendStatementParent instanceof PsiLoopStatement || appendStatementParent instanceof PsiIfStatement) {
       final PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
       final PsiCodeBlock reformattedCodeBlock = (PsiCodeBlock)codeStyleManager.reformat(insertedCodeBlock);
