@@ -32,6 +32,7 @@ public abstract class ActionManagerEx extends ActionManager {
     return (ActionManagerEx)getInstance();
   }
 
+  @NotNull
   public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
