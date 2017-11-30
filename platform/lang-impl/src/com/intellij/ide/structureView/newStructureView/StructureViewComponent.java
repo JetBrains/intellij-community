@@ -151,8 +151,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Disposer.register(this, () -> myTreeModelWrapper.dispose());
       Disposer.register(this, myAsyncTreeModel);
 
-      myAsyncTreeModel.addTreeModelListener(new MyExpandListener(
-        myTree, ObjectUtils.tryCast(myTreeModel, StructureViewModel.ExpandInfoProvider.class)));
+      registerAutoExpandListener(myTree, myTreeModel);
 
       myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
       myTreeBuilder = null;
@@ -193,6 +192,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     setToolbar(createToolbar());
     setupTree();
+  }
+
+  public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
+    tree.getModel().addTreeModelListener(new MyExpandListener(
+      tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
   }
 
   @NotNull
