@@ -1,9 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java
 
+import com.intellij.psi.PsiDeclarationStatement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
-import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiExpressionListStatement
 import com.intellij.psi.util.PsiTreeUtil
 import junit.framework.TestCase
 import org.jetbrains.uast.UFile
@@ -12,7 +13,10 @@ import org.junit.Test
 
 class DetachedJavaUastTest : AbstractJavaUastTest() {
 
-  private val detachers = mapOf(PsiStatement::class.java through PsiElementFactory::createStatementFromText)
+  private val detachers = mapOf(
+    PsiDeclarationStatement::class.java through PsiElementFactory::createStatementFromText,
+    PsiExpressionListStatement::class.java through PsiElementFactory::createStatementFromText
+  )
 
   override fun check(testName: String, file: UFile) {
     val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.psi, *detachers.keys.toTypedArray())
