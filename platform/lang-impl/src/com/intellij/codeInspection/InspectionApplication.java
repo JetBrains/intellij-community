@@ -55,22 +55,22 @@ import java.util.*;
 /**
  * @author max
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
 
-  public InspectionToolCmdlineOptionHelpProvider myHelpProvider = null;
-  public String myProjectPath = null;
-  public String myOutPath = null;
-  public String mySourceDirectory = null;
-  public String myStubProfile = null;
-  public String myProfileName = null;
-  public String myProfilePath = null;
-  public boolean myRunWithEditorSettings = false;
-  public boolean myRunGlobalToolsOnly = false;
+  public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
+  public String myProjectPath;
+  public String myOutPath;
+  public String mySourceDirectory;
+  public String myStubProfile;
+  public String myProfileName;
+  public String myProfilePath;
+  public boolean myRunWithEditorSettings;
+  public boolean myRunGlobalToolsOnly;
   private Project myProject;
-  private int myVerboseLevel = 0;
-  public String myOutputFormat = null;
+  private int myVerboseLevel;
+  public String myOutputFormat;
 
   public boolean myErrorCodeRequired = true;
 
@@ -99,7 +99,7 @@ public class InspectionApplication {
         application.doNotSave();
         logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-        this.run();
+        run();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -451,25 +451,21 @@ public class InspectionApplication {
     final Map<String, Set<InspectionToolWrapper>> map = new HashMap<>();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       final String groupName = toolWrapper.getGroupDisplayName();
-      Set<InspectionToolWrapper> groupInspections = map.get(groupName);
-      if (groupInspections == null) {
-        groupInspections = new HashSet<>();
-        map.put(groupName, groupInspections);
-      }
+      Set<InspectionToolWrapper> groupInspections = map.computeIfAbsent(groupName, __ -> new HashSet<>());
       groupInspections.add(toolWrapper);
     }
 
-    FileWriter fw = new FileWriter(myOutputPath);
-    try {
+    try (FileWriter fw = new FileWriter(myOutputPath)) {
       @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode(INSPECTIONS_NODE);
       if (name != null) {
         xmlWriter.addAttribute(PROFILE, name);
       }
-      for (String groupName : map.keySet()) {
+      for (Map.Entry<String, Set<InspectionToolWrapper>> entry : map.entrySet()) {
         xmlWriter.startNode("group");
+        String groupName = entry.getKey();
         xmlWriter.addAttribute("name", groupName);
-        final Set<InspectionToolWrapper> entries = map.get(groupName);
+        final Set<InspectionToolWrapper> entries = entry.getValue();
         for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
           final String shortName = toolWrapper.getShortName();
@@ -489,9 +485,6 @@ public class InspectionApplication {
         xmlWriter.endNode();
       }
       xmlWriter.endNode();
-    }
-    finally {
-      fw.close();
     }
   }
 }

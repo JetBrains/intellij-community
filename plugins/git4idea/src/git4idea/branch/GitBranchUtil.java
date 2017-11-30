@@ -27,8 +27,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitBranchTrackInfo;
@@ -124,11 +125,11 @@ public class GitBranchUtil {
 
   @Nullable
   private static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REV_PARSE);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REV_PARSE);
     handler.addParameters("--abbrev-ref", "HEAD");
     handler.setSilent(true);
     try {
-      String name = handler.run();
+      String name = Git.getInstance().runCommand(handler).getOutputOrThrow();
       if (!name.equals("HEAD")) {
         return new GitLocalBranch(name);
       }
@@ -352,7 +353,7 @@ public class GitBranchUtil {
   public static Collection<String> getBranches(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted,
                                                boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
-    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
+    final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.BRANCH);
     handler.setSilent(true);
     handler.addParameters("--no-color");
     boolean remoteOnly = false;
@@ -366,7 +367,7 @@ public class GitBranchUtil {
     if (containingCommit != null) {
       handler.addParameters("--contains", containingCommit);
     }
-    final String output = handler.run();
+    final String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     if (output.trim().length() == 0) {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master

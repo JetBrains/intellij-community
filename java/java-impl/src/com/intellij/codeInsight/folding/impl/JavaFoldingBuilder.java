@@ -18,16 +18,13 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
@@ -55,8 +52,7 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
 
   @NotNull
   public static String getRightArrow() {
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    return FontUtil.rightArrow(font);
+    return EditorUtil.displayCharInEditor('\u2192', EditorColors.FOLDED_TEXT_ATTRIBUTES, "->");
   }
 }
 

@@ -5,14 +5,20 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.Query;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +34,9 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!(holder.getFile() instanceof PsiJavaFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement returnStatement) {
@@ -177,9 +186,88 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
           applyChanges(mover, context, removeReturn);
+
+          deleteRedundantVariable(context);
         }
       }
     }
+  }
+
+  private static void deleteRedundantVariable(@NotNull ReturnContext context) {
+    PsiExpression value = PsiUtil.skipParenthesizedExprDown(context.returnedVariable.getInitializer());
+    if (value != null && SideEffectChecker.mayHaveSideEffects(value)) {
+      return;
+    }
+    boolean isConstant = value instanceof PsiLiteralExpression || value instanceof PsiThisExpression || PsiUtil.isConstantExpression(value);
+    boolean isSimple = isSimpleExpression(value);
+
+    if (value != null && !isConstant) {
+      List<PsiReferenceExpression> references = findAnyReferences(value);
+      for (PsiReferenceExpression reference : references) {
+        if (isModifiedInScope(reference, context.variableScope)) {
+          return;
+        }
+      }
+    }
+    Query<PsiReference> query = ReferencesSearch.search(context.returnedVariable, new LocalSearchScope(context.variableScope));
+    Collection<PsiReference> usages = query.findAll();
+    for (PsiReference usage : usages) {
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(usage.getElement(),
+                                                        PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
+      if (!(parent instanceof PsiReturnStatement)) {
+        return;
+      }
+    }
+    boolean isSingleUsage = value != null && usages.size() == 1;
+    if (isSimple || isSingleUsage) {
+      for (PsiReference usage : usages) {
+        usage.getElement().replace(value);
+      }
+    }
+    if (isSimple || isSingleUsage || usages.isEmpty()) {
+      context.returnedVariable.delete();
+    }
+  }
+
+  @Contract("null -> false")
+  private static boolean isSimpleExpression(PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression) {
+      return ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable;
+    }
+    if (expression instanceof PsiUnaryExpression) {
+      return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"
+    }
+    return expression instanceof PsiLiteralExpression ||
+           expression instanceof PsiThisExpression ||
+           expression instanceof PsiClassObjectAccessExpression;
+  }
+
+  @NotNull
+  private static List<PsiReferenceExpression> findAnyReferences(@NotNull PsiElement element) {
+    List<PsiReferenceExpression> references = new ArrayList<>();
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        references.add(expression);
+        super.visitReferenceExpression(expression);
+      }
+    });
+    return references;
+  }
+
+  private static boolean isModifiedInScope(@NotNull PsiReferenceExpression reference, @NotNull PsiElement scope) {
+    PsiElement resolved = reference.resolve();
+    if (resolved instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)resolved;
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
+      if (!(variable instanceof PsiLocalVariable) && !(variable instanceof PsiParameter)) {
+        return true;
+      }
+      return RefactoringUtil.isModifiedInScope(variable, scope);
+    }
+    return false;
   }
 
   private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn) {
@@ -218,49 +306,11 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   }
 
   private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
-    List<PsiComment> keptComments = getComments(replacedStatement);
-    if (!keptComments.isEmpty()) {
-      returnStatement = (PsiReturnStatement)returnStatement.copy();
-      PsiElement lastReturnChild = returnStatement.getLastChild();
-      Project project = returnStatement.getProject();
-      for (PsiComment comment : keptComments) {
-        lastReturnChild = returnStatement.addAfter(comment, lastReturnChild);
-      }
-      CodeStyleManager.getInstance(project).reformat(returnStatement, true);
-    }
-    replacedStatement.replace(returnStatement);
+    new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement);
   }
 
   private static void removeElementKeepComments(PsiElement removedElement) {
-    List<PsiComment> keptComments = getComments(removedElement);
-    if (!keptComments.isEmpty()) {
-      PsiComment firstComment = keptComments.get(0);
-      PsiElement lastComment = removedElement.replace(firstComment);
-      PsiElement parent = lastComment.getParent();
-      Project project = parent.getProject();
-      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-      styleManager.reformat(lastComment, true);
-      if (keptComments.size() > 1) {
-        for (PsiComment comment : keptComments.subList(1, keptComments.size())) {
-          lastComment = parent.addAfter(comment, lastComment);
-          styleManager.reformat(lastComment, true);
-        }
-      }
-    }
-    else {
-      removedElement.delete();
-    }
-  }
-
-  private static List<PsiComment> getComments(PsiElement commentedElement) {
-    final List<PsiComment> comments = new ArrayList<>();
-    commentedElement.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitComment(PsiComment comment) {
-        comments.add(comment);
-      }
-    });
-    return comments;
+    new CommentTracker().deleteAndRestoreComments(removedElement);
   }
 
   private static class Mover {
@@ -555,7 +605,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiReturnStatement) {
-        doApply(((PsiReturnStatement)element));
+        doApply((PsiReturnStatement)element);
       }
     }
   }

@@ -41,9 +41,7 @@ public class ComponentSerializationUtil {
     if (element != null) {
       Class<S> stateClass = getStateClass(configuration.getClass());
       @SuppressWarnings("unchecked") S state = stateClass.equals(Element.class) ? (S)element : XmlSerializer.deserialize(element, stateClass);
-      if (state != null) {
-        configuration.loadState(state);
-      }
+      configuration.loadState(state);
     }
   }
 }

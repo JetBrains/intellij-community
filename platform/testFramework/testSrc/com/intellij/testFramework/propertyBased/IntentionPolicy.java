@@ -53,4 +53,8 @@ public class IntentionPolicy {
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
     return "Flip ','".equals(action.getText()); // just does text operations, doesn't care about correctness
   }
+
+  public boolean checkComments(IntentionAction intention) {
+    return false;
+  }
 }

@@ -18,6 +18,7 @@ class _SpecialForm(object):
 
 Tuple: _SpecialForm = ...
 Generic: _SpecialForm = ...
+Protocol: _SpecialForm = ...
 Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
 ClassVar: _SpecialForm = ...
@@ -61,47 +62,60 @@ _V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
 _KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
 _VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
 _T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
+_TC = TypeVar('_TC', bound=Type[object])
 
-class SupportsInt(metaclass=ABCMeta):
+def runtime(cls: _TC) -> _TC: ...
+
+@runtime
+class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __int__(self) -> int: ...
 
-class SupportsFloat(metaclass=ABCMeta):
+@runtime
+class SupportsFloat(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __float__(self) -> float: ...
 
-class SupportsComplex(metaclass=ABCMeta):
+@runtime
+class SupportsComplex(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __complex__(self) -> complex: ...
 
-class SupportsAbs(Generic[_T]):
+@runtime
+class SupportsAbs(Protocol[_T_co]):
     @abstractmethod
-    def __abs__(self) -> _T: ...
+    def __abs__(self) -> _T_co: ...
 
-class SupportsRound(Generic[_T]):
+@runtime
+class SupportsRound(Protocol[_T_co]):
     @abstractmethod
-    def __round__(self, ndigits: int = ...) -> _T: ...
+    def __round__(self, ndigits: int = ...) -> _T_co: ...
 
-class Reversible(Generic[_T_co]):
+@runtime
+class Reversible(Protocol[_T_co]):
     @abstractmethod
     def __reversed__(self) -> Iterator[_T_co]: ...
 
-class Sized(metaclass=ABCMeta):
+@runtime
+class Sized(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __len__(self) -> int: ...
 
-class Hashable(metaclass=ABCMeta):
+@runtime
+class Hashable(Protocol, metaclass=ABCMeta):
     # TODO: This is special, in that a subclass of a hashable class may not be hashable
     #   (for example, list vs. object). It's not obvious how to represent this. This class
     #   is currently mostly useless for static checking.
     @abstractmethod
     def __hash__(self) -> int: ...
 
-class Iterable(Generic[_T_co]):
+@runtime
+class Iterable(Protocol[_T_co]):
     @abstractmethod
     def __iter__(self) -> Iterator[_T_co]: ...
 
-class Iterator(Iterable[_T_co], Generic[_T_co]):
+@runtime
+class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def next(self) -> _T_co: ...
 
@@ -113,9 +127,9 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     def send(self, value: _T_contra) -> _T_co: ...
 
     @abstractmethod
-    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = None,
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
               # TODO: tb should be TracebackType but that's defined in types
-              tb: Any = None) -> None: ...
+              tb: Any = ...) -> _T_co: ...
 
     @abstractmethod
     def close(self) -> None: ...
@@ -124,7 +138,8 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     gi_frame = ...  # type: FrameType
     gi_running = ...  # type: bool
 
-class Container(Generic[_T_co]):
+@runtime
+class Container(Protocol[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
 
@@ -209,7 +224,8 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
-class ContextManager(Generic[_T_co]):
+@runtime
+class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
     def __exit__(self, exc_type: Optional[Type[BaseException]],
                  exc_value: Optional[BaseException],

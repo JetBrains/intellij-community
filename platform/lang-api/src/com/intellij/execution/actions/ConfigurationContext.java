@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -189,7 +190,12 @@ public class ConfigurationContext {
    */
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
-    if (myExistingConfiguration != null) return myExistingConfiguration.get();
+    if (myExistingConfiguration != null) {
+      RunnerAndConfigurationSettings configuration = myExistingConfiguration.get();
+      if (configuration == null || !Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
+        return configuration;
+      }
+    }
     myExistingConfiguration = new Ref<>();
     if (myLocation == null) {
       return null;
@@ -228,7 +234,9 @@ public class ConfigurationContext {
     for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(getProject())) {
       RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
-        myExistingConfiguration.set(configuration);
+        if (!Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
+          myExistingConfiguration.set(configuration);
+        }
       }
     }
     return myExistingConfiguration.get();

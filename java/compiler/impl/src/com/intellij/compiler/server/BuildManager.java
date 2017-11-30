@@ -195,26 +195,19 @@ public class BuildManager implements Disposable {
     if (unusedThresholdDays <= 0) {
       return;
     }
-    final Path buildSystemDir = getBuildSystemDirectory();
-    final List<Path> dirs;
-    try {
-      dirs = Files.list(buildSystemDir).filter(pathname -> Files.isDirectory(pathname) && !TEMP_DIR_NAME.equals(pathname.getFileName().toString())).collect(Collectors.toList());
-    }
-    catch (IOException e) {
-      return;
-    }
-
+    File buildSystemDir = getBuildSystemDirectory().toFile();
+    File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
     if (dirs != null) {
       final Date now = new Date();
-      for (Path buildDataProjectDir : dirs) {
-        final Path usageFile = getUsageFile(buildDataProjectDir);
-        if (Files.exists(usageFile)) {
+      for (File buildDataProjectDir : dirs) {
+        File usageFile = getUsageFile(buildDataProjectDir);
+        if (usageFile.exists()) {
           final Pair<Date, File> usageData = readUsageFile(usageFile);
           if (usageData != null) {
             final File projectFile = usageData.second;
             if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
               LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir);
-              PathKt.delete(buildDataProjectDir);
+              FileUtil.delete(buildDataProjectDir);
             }
           }
         }
@@ -249,8 +242,12 @@ public class BuildManager implements Disposable {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
-          scheduleAutoMake();
+        if (!IS_UNIT_TEST_MODE) {
+          application.executeOnPooledThread(() -> {
+            if (!application.isDisposed()) {
+              ReadAction.run(()->{ if (shouldTriggerMake(events)) scheduleAutoMake(); });
+            }
+          });
         }
       }
 
@@ -1317,13 +1314,12 @@ public class BuildManager implements Disposable {
     return projectPath != null ? Utils.getDataStorageRoot(getBuildSystemDirectory().toFile(), projectPath) : null;
   }
 
-  @NotNull
-  private static Path getUsageFile(@NotNull Path projectSystemDir) {
-    return projectSystemDir.resolve("ustamp");
+  private static File getUsageFile(@NotNull File projectSystemDir) {
+    return new File(projectSystemDir, "ustamp");
   }
 
-  private static void updateUsageFile(@Nullable Project project, @NotNull Path projectSystemDir) {
-    final Path usageFile = getUsageFile(projectSystemDir);
+  private static void updateUsageFile(@Nullable Project project, @NotNull File projectSystemDir) {
+    File usageFile = getUsageFile(projectSystemDir);
     StringBuilder content = new StringBuilder();
     try {
       synchronized (USAGE_STAMP_DATE_FORMAT) {
@@ -1335,7 +1331,7 @@ public class BuildManager implements Disposable {
           content.append("\n").append(FileUtil.toCanonicalPath(projectFilePath));
         }
       }
-      PathKt.write(usageFile, content.toString());
+      FileUtil.writeToFile(usageFile, content.toString());
     }
     catch (Throwable e) {
       LOG.info(e);
@@ -1343,9 +1339,9 @@ public class BuildManager implements Disposable {
   }
 
   @Nullable
-  private static Pair<Date, File> readUsageFile(@NotNull Path usageFile) {
+  private static Pair<Date, File> readUsageFile(File usageFile) {
     try {
-      final List<String> lines = Files.readAllLines(usageFile);
+      List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
       if (!lines.isEmpty()) {
         final String dateString = lines.get(0);
         final Date date;
@@ -1685,7 +1681,7 @@ public class BuildManager implements Disposable {
         runCommand(() -> {
           final File projectSystemDir = getProjectSystemDirectory(project);
           if (projectSystemDir != null) {
-            updateUsageFile(project, projectSystemDir.toPath());
+            updateUsageFile(project, projectSystemDir);
           }
         });
         scheduleAutoMake(); // run automake after project opened

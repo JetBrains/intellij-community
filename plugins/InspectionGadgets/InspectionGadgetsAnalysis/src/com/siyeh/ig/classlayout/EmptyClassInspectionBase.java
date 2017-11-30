@@ -47,7 +47,9 @@ public class EmptyClassInspectionBase extends BaseInspection {
       return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
     }
     else if (element instanceof PsiClass) {
-      return InspectionGadgetsBundle.message("empty.class.problem.descriptor");
+      return ((PsiClass)element).isEnum() ?
+             InspectionGadgetsBundle.message("empty.enum.problem.descriptor"):
+             InspectionGadgetsBundle.message("empty.class.problem.descriptor");
     }
     else {
       return InspectionGadgetsBundle.message("empty.class.file.without.class.problem.descriptor");
@@ -94,10 +96,10 @@ public class EmptyClassInspectionBase extends BaseInspection {
       if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
         return;
       }
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
         for (PsiClass superClass : aClass.getSupers()) {
           if (superClass.isInterface() || superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             return;

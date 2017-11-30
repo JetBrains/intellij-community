@@ -26,9 +26,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface DocumentWindow extends Document {
-  @NotNull Document getDelegate();
+  @NotNull
+  Document getDelegate();
+
+  int hostToInjectedUnescaped(int hostOffset);
+
   int injectedToHost(int injectedOffset);
-  @NotNull TextRange injectedToHost(@NotNull TextRange injectedOffset);
+
+  @NotNull
+  TextRange injectedToHost(@NotNull TextRange injectedOffset);
+
   int hostToInjected(int hostOffset);
 
   /**
@@ -51,5 +58,7 @@ public interface DocumentWindow extends Document {
 
   boolean isValid();
 
-  boolean containsRange(int start, int end);
+  boolean containsRange(int hostStart, int hostEnd);
+
+  boolean isOneLine();
 }

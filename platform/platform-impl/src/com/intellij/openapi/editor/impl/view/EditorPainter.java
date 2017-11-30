@@ -312,9 +312,7 @@ class EditorPainter implements TextDrawingCallback {
         color.equals(myEditor.getColorsScheme().getDefaultBackground()) ||
         color.equals(myEditor.getBackgroundColor())) return;
     g.setColor(color);
-    int xStartRounded = (int)x;
-    int xEndRounded = (int)(x + width);
-    g.fillRect(xStartRounded, y, xEndRounded - xStartRounded, myView.getLineHeight());
+    g.fill(new Rectangle2D.Float(x, y, width, myView.getLineHeight()));
   }
 
   private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset) {
@@ -903,21 +901,18 @@ class EditorPainter implements TextDrawingCallback {
         float startX = Math.max(minX, isRtl ? x - width : x);
         g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight - 1));
         if (myDocument.getTextLength() > 0 && caret != null) {
-          int charCount = DocumentUtil.isSurrogatePair(myDocument, caret.getOffset()) ? 2 : 1;
-          int targetVisualColumn = caret.getVisualPosition().column;
+          int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
                                                                                                   false)) {
             if (fragment.getCurrentInlay() != null) continue;
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
-            if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||
-                startVisualColumn == targetVisualColumn && !isRtl ||
-                endVisualColumn == targetVisualColumn && isRtl) {
+            if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
               g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
               fragment.draw(g, startX, y + topOverhang + myView.getAscent(),
-                            targetVisualColumn - startVisualColumn - (isRtl ? charCount : 0),
-                            targetVisualColumn - startVisualColumn + (isRtl ? 0 : charCount));
+                            fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
+                            fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn));
               break;
             }
           }
@@ -1015,8 +1010,7 @@ class EditorPainter implements TextDrawingCallback {
       else {
         float xNew = fragment.getEndX();
         if (xNew >= clip.getMinX()) {
-          painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), 
-                        getFoldRegionAttributes(foldRegion), x, xNew, y);
+          painter.paint(g, fragment, 0, fragment.getVisualLength(), getFoldRegionAttributes(foldRegion), x, xNew, y);
         }
         x = xNew;
         prevEndOffset = -1;

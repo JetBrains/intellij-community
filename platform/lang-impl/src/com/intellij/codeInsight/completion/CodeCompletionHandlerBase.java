@@ -218,10 +218,8 @@ public class CodeCompletionHandlerBase {
         dummyIdentifierChanger = current.get();
       }
     };
-    List<CompletionContributor> contributors = CompletionContributor.forLanguage(context.getPositionLanguage());
     Project project = psiFile.getProject();
-    List<CompletionContributor> filteredContributors = DumbService.getInstance(project).filterByDumbAwareness(contributors);
-    for (final CompletionContributor contributor : filteredContributors) {
+    for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
       current.set(contributor);
       contributor.beforeCompletion(context);
       CompletionAssertions.checkEditorValid(editor);

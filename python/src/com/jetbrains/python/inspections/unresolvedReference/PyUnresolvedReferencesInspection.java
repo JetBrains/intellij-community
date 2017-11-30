@@ -86,6 +86,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     return (PyUnresolvedReferencesInspection)inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -805,7 +806,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (type instanceof PyFunctionTypeImpl) {
         final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
-        if (callable instanceof PyFunction && PyKnownDecoratorUtil.hasNonBuiltinDecorator((PyFunction)callable, myTypeEvalContext)) {
+        if (callable instanceof PyFunction && PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)callable, myTypeEvalContext)) {
           return true;
         }
       }
@@ -844,7 +845,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else {
-        if (cls.getDecoratorList() != null) {
+        if (PyKnownDecoratorUtil.hasUnknownDecorator(cls, myTypeEvalContext)) {
           return true;
         }
         final String docString = cls.getDocStringValue();

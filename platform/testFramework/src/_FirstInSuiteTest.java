@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.prefs.Preferences;
 
 /**
@@ -62,6 +63,8 @@ public class _FirstInSuiteTest extends TestCase {
 
     // some tests do not initialize Application but want to use parallel streams
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+    System.out.println("ForkJoinPool.commonPool: " + ForkJoinPool.commonPool()+"; factory: "+ForkJoinPool.commonPool().getFactory());
+    System.out.println("cpu cores: " + Runtime.getRuntime().availableProcessors());
 
     suiteStarted = System.nanoTime();
 

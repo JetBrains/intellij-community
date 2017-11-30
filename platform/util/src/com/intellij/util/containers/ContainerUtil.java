@@ -2695,8 +2695,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> set) {
-    return set == null ? Collections.<K, V>emptyMap() : set;
+  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> map) {
+    return map == null ? Collections.<K, V>emptyMap() : map;
   }
 
   @Contract(pure = true)
@@ -2854,6 +2854,15 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T> Set<T> createWeakSet() {
     return new WeakHashSet<T>();
+  }
+
+  @NotNull
+  public static <T> IntObjectMap<T> createIntKeyWeakValueMap() {
+    return new IntKeyWeakValueHashMap<T>();
+  }
+  @NotNull
+  public static <T> ObjectIntMap<T> createWeakKeyIntValueMap() {
+    return new WeakKeyIntValueHashMap<T>();
   }
 }
 

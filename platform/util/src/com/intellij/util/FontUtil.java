@@ -31,6 +31,13 @@ public class FontUtil {
     return canDisplay(font, '\u2191', defaultValue);
   }
 
+  /**
+   * The method checks whether the font can display the character.
+   *
+   * If the character should be shown in editor, the method might return incorrect result,
+   * since the editor will try to use fallback fonts if the base one cannot display the character.
+   * In this case use {@link com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor()} instead.
+   */
   @NotNull
   public static String canDisplay(@NotNull Font font, char value, @NotNull String defaultValue) {
     return font.canDisplay(value) ? String.valueOf(value) : defaultValue;

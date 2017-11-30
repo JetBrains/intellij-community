@@ -25,6 +25,7 @@ import gnu.trove.THashMap
 import org.iq80.snappy.SnappyFramedInputStream
 import org.iq80.snappy.SnappyFramedOutputStream
 import org.jdom.Element
+import org.jdom.JDOMInterner
 import java.io.ByteArrayInputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -130,16 +131,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   fun hasState(key: String) = get(key) is Element
 
   fun hasStates(): Boolean {
-    if (isEmpty()) {
-      return false
-    }
-
-    for (i in names.indices) {
-      if (states.get(i) is Element) {
-        return true
-      }
-    }
-    return false
+    return !isEmpty() && names.indices.any { states.get(it) is Element }
   }
 
   fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
@@ -166,11 +158,8 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val state = states.get(index) as? Element ?: return null
-    if (!archive) {
-      return state
-    }
-    return if (states.compareAndSet(index, state, archiveState(state).toByteArray())) state else getState(key, true)
+    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state });
+    return prev as? Element
   }
 
   fun archive(key: String, state: Element?) {
@@ -208,7 +197,7 @@ fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap,
   }
 
   val newStates = oldStates.toMutableMap()
-  newStates.put(key, newBytes ?: newState)
+  newStates.put(key, newBytes ?: JDOMUtil.internElement(newState))
   return newStates
 }
 
@@ -218,8 +207,8 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     states.remove(key)
     return true
   }
-
-  newLiveStates?.put(key, newState)
+  var newStateInterned = JDOMUtil.internElement(newState)
+  newLiveStates?.put(key, newStateInterned)
 
   val oldState = states.get(key)
 
@@ -233,7 +222,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     newBytes = getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
   }
 
-  states.put(key, newBytes ?: newState)
+  states.put(key, newBytes ?: newStateInterned)
   return true
 }
 
@@ -241,16 +230,5 @@ private fun arrayEquals(a: ByteArray, a2: ByteArray, size: Int = a.size): Boolea
   if (a === a2) {
     return true
   }
-
-  if (a2.size != size) {
-    return false
-  }
-
-  for (i in 0 until size) {
-    if (a[i] != a2[i]) {
-      return false
-    }
-  }
-
-  return true
+  return a2.size == size && (0 until size).none { a[it] != a2[it] }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +66,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   private State myState = new State();
 
   public boolean isPlatformUpdateEnabled() {
-    return myPackageManager == null;
+    return myPackageManager == null && !PathManager.isSnap();
   }
 
   @NotNull

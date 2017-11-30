@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,9 @@ public abstract class InspectionRVContentProvider {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return false;
     for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+      if (!TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent())
+        .traverse(TreeTraversal.PRE_ORDER_DFS)
+        .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
         if (node instanceof ProblemDescriptionNode) {
           ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
@@ -302,12 +305,15 @@ public abstract class InspectionRVContentProvider {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
-      TreeUtil.traverseDepth(parentNode, node -> {
+      TreeUtil.treeNodeTraverser(parentNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final RefEntity userObject = finalContainer.getRefEntity();
           final RefEntity object = refElementNode.getElement();
-          if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+          if (userObject != null &&
+              object != null &&
+              (userObject.getClass().equals(object.getClass())) &&
+              finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
               return false;

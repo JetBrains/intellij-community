@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,10 +94,12 @@ public class NegatedConditionalInspection extends BaseInspection {
       final PsiExpression elseBranch = conditionalExpression.getElseExpression();
       final PsiExpression thenBranch = conditionalExpression.getThenExpression();
       final PsiExpression condition = conditionalExpression.getCondition();
-      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
+      CommentTracker tracker = new CommentTracker();
+      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
       assert elseBranch != null;
       assert thenBranch != null;
-      final String newStatement = negatedCondition + '?' + elseBranch.getText() + ':' + thenBranch.getText();
+      final String newStatement = negatedCondition + '?' + tracker.markUnchanged(elseBranch).getText() +
+                                  ':' + tracker.markUnchanged(thenBranch).getText();
       PsiReplacementUtil.replaceExpression(conditionalExpression, newStatement);
     }
   }

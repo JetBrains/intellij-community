@@ -75,8 +75,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myMethod.isValid() &&
-        myMethod.getManager().isInProject(myMethod) &&
+    if (myMethod.getManager().isInProject(myMethod) &&
         myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {

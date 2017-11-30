@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -16,12 +15,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind.ON_DEMAND;
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
 public class GroovyImportUtil {
   public static void processFile(@Nullable final PsiFile file,
@@ -70,7 +68,7 @@ public class GroovyImportUtil {
           if (context instanceof GrImportStatement) {
             final GrImportStatement importStatement = (GrImportStatement)context;
 
-            if (usedImports != null && isImportUsed(refElement, resolved)) {
+            if (usedImports != null) {
               usedImports.add(importStatement);
             }
             if (GroovyImportHelper.isImplicitlyImported(resolved, refName, (GroovyFile)file)) {
@@ -151,21 +149,6 @@ public class GroovyImportUtil {
           }
         }
       }
-
-      /**
-       * checks if import for implicitly imported class is needed
-       */
-      private boolean isImportUsed(GrReferenceElement refElement, PsiElement resolved) {
-        if (GroovyImportHelper.isImplicitlyImported(resolved, refElement.getReferenceName(), (GroovyFile)file)) {
-          final ClassResolverProcessor processor = new ClassResolverProcessor(refElement.getReferenceName(), refElement);
-          GroovyImportHelper
-            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), ON_DEMAND, null);
-          if (!processor.hasCandidates()) {
-            return false;
-          }
-        }
-        return true;
-      }
     });
 
     final Set<GrImportStatement> importsToCheck = ContainerUtil.newLinkedHashSet(PsiUtil.getValidImportStatements((GroovyFile)file));
@@ -227,6 +210,9 @@ public class GroovyImportUtil {
         }
       });
     }
+    if (usedImports != null) {
+      usedImports.removeAll(unusedImports((GroovyFile)file));
+    }
   }
 
   @Nullable
@@ -251,11 +237,5 @@ public class GroovyImportUtil {
       return importReference.getClassNameText();
     }
     return null;
-  }
-
-  public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
-    Set<GrImportStatement> usedImports = new HashSet<>();
-    processFile(file, null, null, usedImports, null, null, null, null, null);
-    return usedImports;
   }
 }

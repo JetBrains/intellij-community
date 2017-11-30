@@ -30,16 +30,13 @@ import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
 import java.io.File
 
-private var myVersionPrinted = false
-
 fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 
-@JvmOverloads fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
-  printVersionTheFirstTime(project)
-  return doCallGit(project, command, ignoreNonZeroExitCode)
-}
-
-private fun doCallGit(project: Project, command: String, ignoreNonZeroExitCode: Boolean): String {
+@JvmOverloads
+fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
+fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
+@JvmOverloads
+fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -51,10 +48,6 @@ private fun doCallGit(project: Project, command: String, ignoreNonZeroExitCode: 
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }
-
-@JvmOverloads
-fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
-fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
 
 fun cd(repository: GitRepository) = cd(repository.root.path)
 
@@ -80,7 +73,6 @@ fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
-fun GitPlatformTest.checkoutNew(branchName: String, startPoint: String = "") = checkoutNew(project, branchName, startPoint)
 private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
   git(project, "checkout -b $branchName $startPoint")
 
@@ -109,7 +101,6 @@ private fun tacp(project: Project, file: String): String {
 }
 
 fun GitRepository.appendAndCommit(file: String, additionalContent: String) = cd { appendAndCommit(project, file, additionalContent) }
-fun GitPlatformTest.appendAndCommit(file: String, additionalContent: String) = appendAndCommit(project, file, additionalContent)
 private fun appendAndCommit(project: Project, file: String, additionalContent: String): String {
   append(file, additionalContent)
   add(project, file)
@@ -129,7 +120,11 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
-private fun lastMessage(project: Project) = git(project, "log -1 --pretty=%B")
+private fun lastMessage(project: Project) = message(project, "HEAD")
+
+fun GitRepository.message(revision: String) = cd { message(project, revision)}
+private fun message(project: Project, revision: String) =
+  git(project, "log $revision --no-walk --pretty=${getPrettyFormatTagForFullCommitMessage(project)}")
 
 fun GitRepository.log(vararg params: String) = cd { log(project, *params) }
 fun GitPlatformTest.log(vararg params: String) = log(project, *params)
@@ -154,13 +149,6 @@ fun GitRepository.prepareConflict(initialBranch: String = "master",
   checkout(featureBranch)
   file.append("feature\n").addCommit("on_feature")
   return commit
-}
-
-private fun printVersionTheFirstTime(project: Project) {
-  if (!myVersionPrinted) {
-    myVersionPrinted = true
-    doCallGit(project, "version", false)
-  }
 }
 
 private fun GitRepository.cd(command: () -> String): String {

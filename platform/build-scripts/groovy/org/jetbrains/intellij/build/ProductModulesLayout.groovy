@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -28,21 +29,37 @@ import java.util.function.Consumer
 @CompileStatic
 class ProductModulesLayout {
   /**
-   * Name of the main product JAR file. Outputs of {@link #platformImplementationModules} will be packed into it.
+   * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
   String mainJarName
+
+  List<String> platformApiJarModules = []
+  List<String> platformImplJarModules = []
 
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
+   * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.
    */
   List<String> platformApiModules = []
 
   /**
    * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
-   */
+   * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.   */
   List<String> platformImplementationModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   */
+  List<String> productApiModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   */
+  List<String> productImplementationModules = []
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
@@ -143,7 +160,10 @@ class ProductModulesLayout {
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 
+  /**
+   * @deprecated this method isn't supposed to be used in product build scripts
+   */
   List<String> getIncludedPlatformModules() {
-    platformApiModules + platformImplementationModules + additionalPlatformJars.values()
+    DistributionJARsBuilder.getIncludedPlatformModules(this)
   }
 }

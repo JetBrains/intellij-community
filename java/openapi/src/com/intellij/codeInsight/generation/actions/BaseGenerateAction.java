@@ -49,6 +49,7 @@ public class BaseGenerateAction extends CodeInsightAction implements GenerateAct
     }
   }
 
+  @Override
   @Nullable
   public AnAction createEditTemplateAction(DataContext dataContext) {
     return null;

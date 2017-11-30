@@ -28,6 +28,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlExtension;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,11 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     Language language = tag.getLanguage();
     return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
            (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
-           language.isKindOf(HTMLLanguage.INSTANCE) && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
+
+           (language.isKindOf(HTMLLanguage.INSTANCE) &&
+           !HtmlUtil.isSingleHtmlTagL(tagName) &&
+           tagName.indexOf(':') == -1
+           && !XmlExtension.isCollapsible(tag));
   }
 
   @Override

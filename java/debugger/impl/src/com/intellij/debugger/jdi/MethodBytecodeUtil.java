@@ -227,7 +227,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByName classesByName) {
+  public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
@@ -250,7 +250,7 @@ public class MethodBytecodeUtil {
   }
 
   @Nullable
-  public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByName classesByName) {
+  public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
     if (method.isBridge()) {
       visit(method, new MethodVisitor(Opcodes.API_VERSION) {

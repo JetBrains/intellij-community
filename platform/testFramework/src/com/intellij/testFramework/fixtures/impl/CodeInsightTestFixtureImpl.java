@@ -1225,6 +1225,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         try {
           DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
           closeOpenFiles();
+          DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+          daemonCodeAnalyzer.cleanupAfterTest();
           // clear order entry roots cache
           WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
         }

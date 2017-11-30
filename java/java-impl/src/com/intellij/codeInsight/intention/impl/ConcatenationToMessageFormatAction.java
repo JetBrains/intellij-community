@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     }
     call = (PsiMethodCallExpression) JavaCodeStyleManager.getInstance(project).shortenClassReferences(call);
     call = (PsiMethodCallExpression) CodeStyleManager.getInstance(project).reformat(call);
-    concatenation.replace(call);
+    new CommentTracker().replaceAndRestoreComments(concatenation, call);
   }
 
   @Override

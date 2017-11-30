@@ -77,8 +77,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
-    return myVariable.isValid()
-        && myVariable.getTypeElement() != null
+    return myVariable.getTypeElement() != null
         && myVariable.getManager().isInProject(myVariable)
         && getReturnType() != null
         && !LambdaUtil.notInferredType(getReturnType())

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -45,7 +31,6 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -206,7 +191,7 @@ public class JavaCompletionUtil {
   @Nullable
   public static PsiType getQualifiedMemberReferenceType(@Nullable PsiType qualifierType, @NotNull final PsiMember member) {
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
-    class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+    class MyProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element == member) {
@@ -404,7 +389,7 @@ public class JavaCompletionUtil {
         }
       }
       
-      return containsMember(castType, o) && !containsMember(plainQualifier, o);
+      return containsMember(castType, o, true) && !containsMember(plainQualifier, o, true);
     }
     return false;
   }
@@ -469,7 +454,7 @@ public class JavaCompletionUtil {
         }
       }), -1);
     }
-    if (containsMember(qualifierType, object) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+    if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
@@ -495,9 +480,11 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  @Contract("null, _ -> false")
-  public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
-    if (qualifierType instanceof PsiArrayType && object instanceof PsiMember) { //length and clone()
+  @Contract("null, _, _ -> false")
+  private static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object, boolean checkBases) {
+    if (!(object instanceof PsiMember)) return false;
+
+    if (qualifierType instanceof PsiArrayType) { //length and clone()
       PsiFile file = ((PsiMember)object).getContainingFile();
       if (file == null || file.getVirtualFile() == null) { //yes, they're a bit dummy
         return true;
@@ -506,12 +493,11 @@ public class JavaCompletionUtil {
     else if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
       if (qualifierClass == null) return false;
-      if (object instanceof PsiMethod && qualifierClass.findMethodBySignature((PsiMethod)object, false) != null) {
+      if (object instanceof PsiMethod && qualifierClass.findMethodBySignature((PsiMethod)object, checkBases) != null) {
         return true;
       }
-      if (object instanceof PsiMember) {
-        return qualifierClass.equals(((PsiMember)object).getContainingClass());
-      }
+      PsiClass memberClass = ((PsiMember)object).getContainingClass();
+      return checkBases ? InheritanceUtil.isInheritorOrSelf(qualifierClass, memberClass, true) : qualifierClass.equals(memberClass);
     }
     return false;
   }

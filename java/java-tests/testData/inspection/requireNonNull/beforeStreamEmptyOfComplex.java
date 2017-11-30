@@ -9,7 +9,7 @@ class Util {
 
 class Test {
   public Stream test(Object val) {
-    if <caret>(val == null) {
+    if<caret> (val == null) {
       return Util.method(Stream.empty());
     } else {
       return Util.method(Stream.of(val));

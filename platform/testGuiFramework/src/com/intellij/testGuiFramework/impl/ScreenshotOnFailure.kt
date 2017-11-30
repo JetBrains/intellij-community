@@ -42,18 +42,33 @@ class ScreenshotOnFailure: TestWatcher() {
     fun takeScreenshotOnFailure(t: Throwable, screenshotName: String) {
 
       try {
-        var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
-        if (file.exists())
-          file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
-        file.delete()
-        if (t is ComponentLookupException)
-          LOG.error("${getHierarchy()} \n caused by:", t)
+        val file = getOrCreateScreenshotFile(screenshotName)
+        if (t is ComponentLookupException) LOG.error("${getHierarchy()} \n caused by:", t)
         myScreenshotTaker.saveDesktopAsPng(file.path)
         LOG.info("Screenshot: $file")
       }
       catch (e: Exception) {
         LOG.error("Screenshot failed. ${e.message}")
       }
+    }
+
+    fun takeScreenshot(screenshotName: String) {
+      try {
+        val file = getOrCreateScreenshotFile(screenshotName)
+        myScreenshotTaker.saveDesktopAsPng(file.path)
+        LOG.info("Screenshot: $file")
+      }
+      catch (e: Exception) {
+        LOG.error("Screenshot failed. ${e.message}")
+      }
+    }
+
+    private fun getOrCreateScreenshotFile(screenshotName: String): File {
+      var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
+      if (file.exists())
+        file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
+      file.delete()
+      return file
     }
 
     fun getHierarchy(): String {

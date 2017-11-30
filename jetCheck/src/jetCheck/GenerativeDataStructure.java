@@ -20,7 +20,7 @@ class GenerativeDataStructure extends AbstractDataStructure {
   @Override
   public int drawInt(@NotNull IntDistribution distribution) {
     int i = distribution.generateInt(random);
-    node.addChild(new IntData(i, distribution));
+    node.addChild(new IntData(node.id.childId(), i, distribution));
     return i;
   }
 

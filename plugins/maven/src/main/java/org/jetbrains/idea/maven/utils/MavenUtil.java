@@ -1020,7 +1020,8 @@ public class MavenUtil {
     });
   }
 
-  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {
+  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
+    if (root == null) return Stream.empty();
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 }

@@ -162,15 +162,27 @@ public class KeymapUtil {
       acceleratorText = getModifiersText(modifiers);
     }
 
-    final int code = accelerator.getKeyCode();
-    String keyText = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092
-    if(CANCEL_KEY_TEXT.equals(keyText)){
-      keyText = BREAK_KEY_TEXT;
+    acceleratorText += getKeyText(accelerator.getKeyCode());
+    return acceleratorText.trim();
+  }
+
+  public static String getKeyText(int code) {
+    switch (code) {
+      case KeyEvent.VK_BACK_QUOTE:     return "`";
+      case KeyEvent.VK_SEPARATOR:      return ",";
+      case KeyEvent.VK_DECIMAL:        return ".";
+      case KeyEvent.VK_SLASH:          return "/";
+      case KeyEvent.VK_BACK_SLASH:     return "\\";
+      case KeyEvent.VK_PERIOD:         return ".";
+      case KeyEvent.VK_SEMICOLON:      return ";";
+      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
+      case KeyEvent.VK_OPEN_BRACKET:   return "[";
+      case KeyEvent.VK_EQUALS:         return "=";
     }
 
-    acceleratorText += keyText;
-    return acceleratorText.trim();
+    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+    // [vova] this is dirty fix for bug #35092
+    return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
   }
 
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {

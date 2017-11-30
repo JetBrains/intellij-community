@@ -92,7 +92,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static boolean isNumericType(@NotNull PsiType type) {
     return type.equals(PsiType.INT) ||
-           type.equals(PsiType.CHAR) ||
            type.equals(PsiType.LONG) ||
            type.equals(PsiType.SHORT) ||
            type.equals(PsiType.BYTE);

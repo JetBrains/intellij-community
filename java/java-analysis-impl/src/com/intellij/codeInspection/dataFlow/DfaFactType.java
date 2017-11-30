@@ -40,7 +40,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<Boolean> CAN_BE_NULL = new DfaFactType<Boolean>("Can be null") {
     @Override
-    String toString(Boolean fact) {
+    String toString(@NotNull Boolean fact) {
       return fact ? "Nullable" : "NotNull";
     }
 
@@ -74,6 +74,20 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
+  public static final DfaFactType<Boolean> MUTABLE = new DfaFactType<Boolean>("Mutable") {
+    @Override
+    String toString(@NotNull Boolean fact) {
+      return fact ? "Mutable" : "ReadOnly";
+    }
+
+    @Nullable
+    @Override
+    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+      PsiModifierListOwner variable = value.getPsiVariable();
+      return MutationSignature.getMutabilityFact(variable);
+    }
+  };
+
   /**
    * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
    * When its value is true, then optional is known to be present.
@@ -86,7 +100,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
 
     @Override
-    String toString(Boolean fact) {
+    String toString(@NotNull Boolean fact) {
       return fact ? "present Optional" : "absent Optional";
     }
   };
@@ -144,7 +158,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
 
     @Override
-    String toString(LongRangeSet fact) {
+    String toString(@NotNull LongRangeSet fact) {
       return fact.toString();
     }
   };
@@ -237,7 +251,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     return left.equals(right) ? left : null;
   }
 
-  String toString(T fact) {
+  String toString(@NotNull T fact) {
     return fact.toString();
   }
 

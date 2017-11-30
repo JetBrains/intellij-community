@@ -56,6 +56,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  companion object {
+    @JvmStatic
+    fun getUniqueIdFor(configuration: RunConfiguration) =
+      "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+  }
+
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -118,7 +124,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
-      result = getUniqueIDFor(configuration)
+      result = getUniqueIdFor(configuration)
       uniqueId = result
     }
     return result
@@ -480,7 +486,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         if (unloadedSettings == null) {
           unloadedSettings = SmartList<Element>()
         }
-        unloadedSettings!!.add(state)
+        unloadedSettings!!.add(JDOMUtil.internElement(state))
         return
       }
 
@@ -502,11 +508,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         return null
       }
     }
-  }
-  companion object {
-    @JvmStatic
-    fun getUniqueIDFor(configuration: RunConfiguration) =
-      "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 }
 

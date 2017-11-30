@@ -16,6 +16,14 @@ public class BoundedIntDistribution implements IntDistribution {
     this.producer = producer;
   }
 
+  int getMin() {
+    return min;
+  }
+
+  int getMax() {
+    return max;
+  }
+
   @Override
   public int generateInt(Random random) {
     int i = producer.applyAsInt(random);

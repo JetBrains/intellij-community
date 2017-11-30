@@ -23,6 +23,7 @@ import git4idea.config.GitVersion
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import git4idea.test.registerRepo
+import git4idea.test.setupDefaultUsername
 import org.junit.Assume.assumeTrue
 import java.io.File
 
@@ -31,10 +32,12 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
   protected lateinit var myMainRoot: String
   protected lateinit var myRepo : GitRepository
 
+  private fun supportsWorktrees(version: GitVersion) = version.isLaterOrEqual(GitVersion(2, 5, 0, 0))
+
   override fun setUp() {
     super.setUp()
     cd(testRoot)
-    assumeTrue(GitVersion.parse(git("version")).isLaterOrEqual(GitVersion(2, 5, 0, 0)))
+    assumeTrue("Worktrees are not supported in " + vcs.version, supportsWorktrees(vcs.version))
 
     myMainRoot = initMainRepo()
     cd(myMainRoot)
@@ -42,6 +45,7 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath, GitUtil.DOT_GIT))
     assertNotNull(gitDir)
     myRepo = registerRepo(project, projectPath)
+    setupDefaultUsername()
     assertEquals(1, repositoryManager.repositories.size)
     assertNotNull(repositoryManager.getRepositoryForRoot(projectRoot))
   }

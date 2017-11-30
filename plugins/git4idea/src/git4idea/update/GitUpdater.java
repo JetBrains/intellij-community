@@ -22,13 +22,11 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import git4idea.*;
 import git4idea.branch.GitBranchPair;
-import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.MergeChangeCollector;
@@ -61,19 +59,22 @@ public abstract class GitUpdater {
 
   protected GitRevisionNumber myBefore; // The revision that was before update
 
-  protected GitUpdater(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
-                       @NotNull GitBranchPair branchAndTracked, @NotNull ProgressIndicator progressIndicator,
+  protected GitUpdater(@NotNull Project project,
+                       @NotNull Git git,
+                       @NotNull GitRepository repository,
+                       @NotNull GitBranchPair branchAndTracked,
+                       @NotNull ProgressIndicator progressIndicator,
                        @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myGit = git;
-    myRoot = root;
+    myRoot = repository.getRoot();
+    myRepository = repository;
     myBranchPair = branchAndTracked;
     myProgressIndicator = progressIndicator;
     myUpdatedFiles = updatedFiles;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
     myVcs = GitVcs.getInstance(project);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myRepository = ObjectUtils.assertNotNull(myRepositoryManager.getRepositoryForRoot(myRoot));
   }
 
   /**
@@ -84,25 +85,26 @@ public abstract class GitUpdater {
   public static GitUpdater getUpdater(@NotNull Project project,
                                       @NotNull Git git,
                                       @NotNull GitBranchPair trackedBranches,
-                                      @NotNull VirtualFile root,
+                                      @NotNull GitRepository repository,
                                       @NotNull ProgressIndicator progressIndicator,
                                       @NotNull UpdatedFiles updatedFiles,
                                       @NotNull UpdateMethod updateMethod) {
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
-      updateMethod = resolveUpdateMethod(project, root);
+      updateMethod = resolveUpdateMethod(repository);
     }
     return updateMethod == UpdateMethod.REBASE ?
-           new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles):
-           new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+           new GitRebaseUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles):
+           new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
   }
 
   @NotNull
-  public static UpdateMethod resolveUpdateMethod(@NotNull Project project, @NotNull VirtualFile root) {
-    GitLocalBranch branch = GitBranchUtil.getCurrentBranch(project, root);
+  public static UpdateMethod resolveUpdateMethod(@NotNull GitRepository repository) {
+    GitLocalBranch branch = repository.getCurrentBranch();
     boolean rebase = false;
     if (branch != null) {
       try {
-        String rebaseValue = GitConfigUtil.getValue(project, root, "branch." + branch.getName() + ".rebase");
+        String rebaseValue = GitConfigUtil.getValue(repository.getProject(), repository.getRoot(),
+                                                    "branch." + branch.getName() + ".rebase");
         rebase = rebaseValue != null && rebaseValue.equalsIgnoreCase("true");
       }
       catch (VcsException e) {
@@ -172,11 +174,11 @@ public abstract class GitUpdater {
   }
 
   protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.REV_LIST);
+    GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.REV_LIST);
     handler.setSilent(true);
     handler.addParameters("-1");
     handler.addParameters(HEAD + ".." + remoteBranch);
-    String output = handler.run();
+    String output = myGit.runCommand(handler).getOutputOrThrow();
     return output != null && !output.isEmpty();
   }
 }

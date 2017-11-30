@@ -6,7 +6,8 @@ public class GenericType {
   final void addCl<caret>asses(Class<? extends Number>... classes) {
   }
 
-  void test() {
+  void test(Class<? extends Number>... classes) {
     addClasses(Number.class, Byte.class);
+    addClasses(classes);
   }
 }

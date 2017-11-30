@@ -1,8 +1,5 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
@@ -45,7 +42,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   @Override
   public ResourceBundle getValue() {
-    return myResourceBundle;
+    return myResourceBundle.isValid() ? null : myResourceBundle;
   }
 
   @NotNull
@@ -76,6 +73,10 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
+    if (!resourceBundle.isValid()) {
+      //noinspection unchecked
+      return MultiMap.EMPTY;
+    }
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     final MultiMap<String, IProperty> propertyNames;
     if (onlyIncomplete) {
@@ -129,7 +130,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
-        return myResourceBundle.getBaseName();
+        return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : null;
       }
 
       public String getLocationString() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -135,6 +136,14 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
+      final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
+      for (PsiReference reference : refsToInline) {
+        PsiElement referenceElement = reference.getElement();
+        if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+          conflicts.putValue(referenceElement, "Parameter has write usages. Inline is not supported");
+          break;
+        }
+      }
       if (!conflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
@@ -145,8 +154,6 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
           return;
         }
       }
-
-      final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         try {

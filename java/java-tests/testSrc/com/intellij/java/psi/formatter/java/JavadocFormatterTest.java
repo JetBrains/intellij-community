@@ -179,7 +179,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testOneLineCommentWrappedByRightMarginIntoMultiLine() {
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
     getSettings().RIGHT_MARGIN = 35;
@@ -199,7 +199,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_PRESERVE_LINE_FEEDS = true;
     getSettings().RIGHT_MARGIN = 48;
 
@@ -223,7 +223,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   public void testSCR11296() {
     CommonCodeStyleSettings settings = getSettings();
     settings.RIGHT_MARGIN = 50;
-    settings.getRootSettings().WRAP_COMMENTS = true;
+    settings.WRAP_COMMENTS = true;
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_P_AT_EMPTY_LINES = false;
     getJavaSettings().JD_KEEP_EMPTY_LINES = false;
@@ -232,7 +232,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testSCR2632() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getSettings().RIGHT_MARGIN = 20;
 
     doTextTest(
@@ -338,7 +338,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   public void testWrappedParameterDescription() {
     // Inspired by IDEA-13072
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true;
 
     doClassTest(
@@ -488,8 +488,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_LONG_LINES = true;
 
     doClassTest(
       "    /**\n" +
@@ -516,8 +516,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_LONG_LINES = true;
 
     doClassTest(
       "    /**\n" +
@@ -541,7 +541,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   public void testDoNotMergeCommentLines() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getJavaSettings().JD_PRESERVE_LINE_FEEDS = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
 
     doClassTest(
       "/**\n" +
@@ -566,8 +566,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_LONG_LINES = true;
 
     doClassTest(
       "    /**\n" +
@@ -594,8 +594,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_LONG_LINES = true;
 
     doClassTest(
       "    /**\n" +
@@ -622,8 +622,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().RIGHT_MARGIN = 80;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getSettings().getRootSettings().WRAP_COMMENTS = true;
-    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_LONG_LINES = true;
 
     doClassTest(
       "    /**\n" +
@@ -649,7 +649,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   public void testJavadocFormattingIndependentOfMethodIndentation() {
     getCurrentCodeStyleSettings().setRightMargin(JavaLanguage.INSTANCE, 50);
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
     getJavaSettings().JD_P_AT_EMPTY_LINES = false;
     getJavaSettings().JD_KEEP_EMPTY_LINES = false;
@@ -688,7 +688,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   public void testJavadocAlignmentForInnerClasses() {
     getCurrentCodeStyleSettings().setRightMargin(JavaLanguage.INSTANCE, 40);
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
 
     doTextTest(
@@ -737,9 +737,9 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testAlignmentWithNoTopClassMembersIndentation() {
     getCurrentCodeStyleSettings().setRightMargin(JavaLanguage.INSTANCE, 40);
-    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-    getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
+    getSettings().DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
 
     doTextTest(
       "public class Outer {\n" +
@@ -942,7 +942,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().JD_INDENT_ON_CONTINUATION = true;
     getJavaSettings().JD_ALIGN_PARAM_COMMENTS = false;
     getJavaSettings().JD_ALIGN_EXCEPTION_COMMENTS = false;
-    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getSettings().WRAP_COMMENTS = true;
 
     doClassTest(
       "/**\n" +

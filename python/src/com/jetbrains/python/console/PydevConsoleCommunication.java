@@ -19,11 +19,13 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +58,6 @@ import java.util.concurrent.Future;
  */
 public class PydevConsoleCommunication extends AbstractConsoleCommunication implements XmlRpcHandler,
                                                                                        PyFrameAccessor {
-
   private static final String EXEC_LINE = "execLine";
   private static final String EXEC_MULTILINE = "execMultipleLines";
   private static final String GET_COMPLETIONS = "getCompletions";
@@ -80,7 +81,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
-  private MyWebServer myWebServer;
+  @Nullable private MyWebServer myWebServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
 
@@ -129,8 +130,16 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
-
     this.myClient = new PydevXmlRpcClient(process, host, port);
+
+    PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
+    executionService.sessionStarted(this);
+    addFrameListener(new PyFrameListener() {
+      @Override
+      public void frameChanged() {
+        executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
+      }
+    });
   }
 
   public boolean handshake() throws XmlRpcException {
@@ -169,6 +178,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public synchronized void close() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       myWebServer.shutdown();
@@ -185,6 +195,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @NotNull
   public synchronized Future<Void> closeAsync() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       Future<Void> shutdownFuture = myWebServer.shutdownAsync();
@@ -369,7 +380,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+
+    ThrowableComputable<String, Exception> doGetDesc = () -> myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, "Getting Description", true, myProject);
+    }
+    else {
+      return doGetDesc.compute();
+    }
   }
 
   /**
@@ -447,6 +465,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
             boolean more = executed.second;
 
             nextResponse = new InterpreterResponse(more, needInput);
+          }
+          catch (ProcessCanceledException e) {
+            //ignore
           }
           catch (Exception e) {
             nextResponse = new InterpreterResponse(false, needInput);
@@ -550,7 +571,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Override
   public void loadAsyncVariablesValues(@NotNull List<PyAsyncValue<String>> pyAsyncValues) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    PyDebugValueExecutionService.getInstance(myProject).submitTask(this, () -> {
       if (myClient != null) {
         try {
           List<String> evaluationExpressions = new ArrayList<>();
@@ -715,6 +736,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
     throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", exception);
   }
+
 
   @Override
   public void notifyCommandExecuted(boolean more) {

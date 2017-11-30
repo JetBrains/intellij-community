@@ -440,16 +440,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return new ActionPopupMenuImpl(place, group, this, presentationFactory);
   }
 
+  @NotNull
   @Override
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
     return new ActionPopupMenuImpl(place, group, this, null);
   }
 
+  @NotNull
   @Override
   public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
+  @NotNull
   @Override
   public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
@@ -537,6 +540,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return getActionImpl(actionId, true) instanceof ActionGroup;
   }
 
+  @NotNull
   @Override
   public JComponent createButtonToolbar(final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,10 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -414,6 +399,22 @@ public class MethodUtils {
       return false;
     }
     return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
+  }
+
+  public static PsiMethodCallExpression findSuperOrThisCall(PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return null;
+    }
+    final PsiStatement firstStatement = PsiTreeUtil.getChildOfType(constructor.getBody(), PsiStatement.class);
+    if (!(firstStatement instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)firstStatement;
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) {
+      return null;
+    }
+    return (PsiMethodCallExpression)expression;
   }
 
   /**

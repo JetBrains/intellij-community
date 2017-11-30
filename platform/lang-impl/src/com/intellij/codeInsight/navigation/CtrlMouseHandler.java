@@ -1045,7 +1045,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       for (AbstractDocumentationTooltipAction action : ourTooltipActions) {
         Icon icon = action.getTemplatePresentation().getIcon();
         Dimension minSize = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-        myButtons.add(new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize));
+        ActionButton actionButton =
+          new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize) {
+            @Override
+            protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+              return e.getButton() != MouseEvent.BUTTON1;
+            }
+          };
+        myButtons.add(actionButton);
         action.setDocInfo(documentationAnchor, elementUnderMouse);
       }
       Collections.reverse(myButtons);

@@ -449,7 +449,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return false;
     }
     */
-    if (getSettings().KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
+    if (getSettings().getCommonSettings(file.getLanguage()).KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
       if (IndentHelper.getInstance().getIndent(myProject, file.getFileType(), element, true) == 0) {
         return false;
       }

@@ -38,7 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectLongHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,14 +51,12 @@ import java.util.Set;
 */
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   private final Set<PsiFile> mySkipWholeInspectionsCache = ContainerUtil.createWeakSet(); // guarded by mySkipWholeInspectionsCache
-  private final ProjectInspectionProfileManager myProfileManager;
-  private final TObjectLongHashMap<PsiFile> myPsiModificationCount = new TObjectLongHashMap<>(); // guarded by myPsiModificationCount
+  private final ObjectIntMap<PsiFile> myPsiModificationCount = ContainerUtil.createWeakKeyIntValueMap(); // guarded by myPsiModificationCount
 
-  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar, ProjectInspectionProfileManager profileManager) {
+  public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     // can run in the same time with LIP, but should start after it, since I believe whole-file inspections would run longer
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
-    myProfileManager = profileManager;
   }
 
   @Override
@@ -70,7 +68,8 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
 
   @Override
   public void projectOpened() {
-    myProfileManager.addProfileChangeListener(new ProfileChangeAdapter() {
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(myProject);
+    profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(InspectionProfile profile) {
         clearSkipCache();
@@ -95,7 +94,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     long actualCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     synchronized (myPsiModificationCount) {
-      if (myPsiModificationCount.get(file) == actualCount) {
+      if (myPsiModificationCount.get(file) == (int)actualCount) {
         return null; //optimization
       }
     }
@@ -145,7 +144,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         super.applyInformationWithProgress();
         long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
         synchronized (myPsiModificationCount) {
-          myPsiModificationCount.put(file, modificationCount);
+          myPsiModificationCount.put(file, (int)modificationCount);
         }
       }
     };

@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
         return;
       }
       if (BoolUtils.isFalse(thenExpression) && BoolUtils.isTrue(elseExpression)) {
-        registerError(expression, BoolUtils.getNegatedExpressionText(condition));
+        registerError(expression, BoolUtils.getNegatedExpressionText(condition, new CommentTracker()));
       }
       else if (BoolUtils.isTrue(thenExpression) && BoolUtils.isFalse(elseExpression)) {
         registerError(expression, condition.getText());

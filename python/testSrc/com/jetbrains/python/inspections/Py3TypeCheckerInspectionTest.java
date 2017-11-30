@@ -184,7 +184,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-20073
-  public void testMapArgumentsInOppositeOrder() {
+  public void testMapArgumentsInOppositeOrderPy3() {
     doTest();
   }
 
@@ -268,5 +268,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-25994
   public void testUnresolvedReceiverGeneric() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  public void testMatchingOpenFunctionCallTypesPy3() {
+    doMultiFileTest();
+  }
+
+  public void testChainedComparisonsGenericMatching() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
+      doTest();
+    });
   }
 }

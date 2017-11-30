@@ -109,6 +109,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
+  @Override
   @Nullable
   protected PsiFile getPsiInner(@NotNull Language target) {
     if (target != getBaseLanguage()) {
@@ -141,16 +142,19 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;
   }
 
+  @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
     PsiFile file = myPsiFile.get();
     return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
+  @Override
   public final List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
+  @Override
   @NotNull
   public final List<FileElement> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
@@ -263,6 +267,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
+  @Override
   public final void markInvalidated() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (psiFile instanceof PsiFileEx) {

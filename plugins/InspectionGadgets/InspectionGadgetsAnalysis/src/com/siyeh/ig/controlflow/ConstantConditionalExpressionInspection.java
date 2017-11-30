@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantConditionalExpressionInspection
@@ -50,21 +51,20 @@ public class ConstantConditionalExpressionInspection
       (PsiConditionalExpression)infos[0];
     return InspectionGadgetsBundle.message(
       "constant.conditional.expression.problem.descriptor",
-      calculateReplacementExpression(expression));
+      calculateReplacementExpression(expression, new CommentTracker()));
   }
 
-  static String calculateReplacementExpression(
-    PsiConditionalExpression exp) {
+  static String calculateReplacementExpression(PsiConditionalExpression exp, CommentTracker commentTracker) {
     final PsiExpression thenExpression = exp.getThenExpression();
     final PsiExpression elseExpression = exp.getElseExpression();
     final PsiExpression condition = exp.getCondition();
     assert thenExpression != null;
     assert elseExpression != null;
     if (BoolUtils.isTrue(condition)) {
-      return thenExpression.getText();
+      return commentTracker.markUnchanged(thenExpression).getText();
     }
     else {
-      return elseExpression.getText();
+      return commentTracker.markUnchanged(elseExpression).getText();
     }
   }
 
@@ -85,11 +85,10 @@ public class ConstantConditionalExpressionInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiConditionalExpression expression =
-        (PsiConditionalExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+      final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
+      CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }
 

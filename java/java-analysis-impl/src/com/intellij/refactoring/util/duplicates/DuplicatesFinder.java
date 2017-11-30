@@ -267,6 +267,11 @@ public class DuplicatesFinder {
           if (returnValue == null) {
             returnValue = myReturnValue;
           }
+          if (returnValue instanceof GotoReturnValue ||
+              returnValue instanceof ConditionalReturnStatementValue &&
+              ((ConditionalReturnStatementValue)returnValue).isEmptyOrConstantExpression()) {
+            return false;
+          }
           if (returnValue instanceof VariableReturnValue) {
             final ReturnValue value = match.getOutputVariableValue(((VariableReturnValue)returnValue).getVariable());
             if (value != null) {
@@ -284,7 +289,7 @@ public class DuplicatesFinder {
         return true;
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException ignored) {
     }
     return false;
   }
@@ -337,9 +342,6 @@ public class DuplicatesFinder {
         return match.putParameter(parameter, candidate);
       }
     }
-
-    Boolean matchedExtractablePart = matchExtractableExpression(pattern, candidate, candidates, match, false);
-    if (matchedExtractablePart != null) return matchedExtractablePart;
 
     if (!canBeEquivalent(pattern, candidate)) return false; // Q : is it correct to check implementation classes?
 
@@ -557,9 +559,9 @@ public class DuplicatesFinder {
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!matchPattern(child1, child2, candidates, match)) {
-        matchedExtractablePart = matchExtractableExpression(child1, child2, candidates, match, true);
-        return matchedExtractablePart != null && matchedExtractablePart;
+      if (!matchPattern(child1, child2, candidates, match) &&
+          !matchExtractableExpression(child1, child2, candidates, match)) {
+        return false;
       }
     }
 
@@ -573,49 +575,35 @@ public class DuplicatesFinder {
     return true;
   }
 
-  @Nullable
-  private Boolean matchExtractableExpression(PsiElement pattern, PsiElement candidate,
-                                             List<PsiElement> candidates, Match match,
-                                             boolean withFolding) {
-    if (!(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression) || withFolding && !myWithExtractedParameters) {
-      return null;
-    }
-    if (myPattern.length == 1 && myPattern[0] == pattern || candidates.size() == 1 && candidates.get(0) == candidate) {
-      return null;
+  private boolean matchExtractableExpression(PsiElement pattern, PsiElement candidate,
+                                             List<PsiElement> candidates, Match match) {
+    if (!myWithExtractedParameters || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
+      return false;
     }
 
-    ComplexityHolder patternComplexity = null;
-    if (withFolding) {
-      if (myPatternComplexityHolder == null) {
-        myPatternComplexityHolder = new ComplexityHolder(myPatternAsList);
-      }
-      patternComplexity = myPatternComplexityHolder;
+    if (myPatternComplexityHolder == null) {
+      myPatternComplexityHolder = new ComplexityHolder(myPatternAsList);
     }
-    ExtractableExpressionPart patternPart = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList, patternComplexity);
+    ExtractableExpressionPart patternPart = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList, myPatternComplexityHolder);
     if (patternPart == null) {
-      return null;
+      return false;
     }
 
-    ComplexityHolder candidatesComplexity = null;
-    if (withFolding) {
-      if (myCandidateComplexityHolder == null || myCandidateComplexityHolder.getScope() != candidates) {
-        myCandidateComplexityHolder = new ComplexityHolder(candidates);
-      }
-      candidatesComplexity = myCandidateComplexityHolder;
+    if (myCandidateComplexityHolder == null || myCandidateComplexityHolder.getScope() != candidates) {
+      myCandidateComplexityHolder = new ComplexityHolder(candidates);
     }
-    ExtractableExpressionPart candidatePart = ExtractableExpressionPart.match((PsiExpression)candidate, candidates, candidatesComplexity);
+    ExtractableExpressionPart candidatePart = ExtractableExpressionPart.match((PsiExpression)candidate, candidates, myCandidateComplexityHolder);
     if (candidatePart == null) {
-      return null;
+      return false;
     }
 
     if (patternPart.myValue != null && patternPart.myValue.equals(candidatePart.myValue)) {
       return true;
     }
     if (patternPart.myVariable == null || candidatePart.myVariable == null) {
-      return myWithExtractedParameters &&
-             match.putExtractedParameter(patternPart, candidatePart);
+      return match.putExtractedParameter(patternPart, candidatePart);
     }
-    return null;
+    return false;
   }
 
   private boolean matchExtractableVariable(PsiElement pattern, PsiElement candidate, Match match) {

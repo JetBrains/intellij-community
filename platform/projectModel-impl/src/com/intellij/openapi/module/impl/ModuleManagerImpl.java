@@ -276,7 +276,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
+    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.getCPUCoresCount());
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
@@ -1066,6 +1066,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     ApplicationManager.getApplication().runWriteAction(model::commit);
     myFailedModulePaths.addAll(oldFailedPaths);
     myModulePathsToLoad.clear();
+  }
+
+  @Override
+  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    for (UnloadedModuleDescription module : unloadedModules) {
+      myUnloadedModules.remove(module.getName());
+    }
+    setUnloadedModuleNames(new ArrayList<>(myUnloadedModules.keySet()));
   }
 
   protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {

@@ -58,7 +58,6 @@ import java.util.List;
 /**
  *  Class to show the user the request for search
  */
-@SuppressWarnings({"RefusedBequest", "AssignmentToStaticFieldFromInstanceMethod"})
 public class SearchDialog extends DialogWrapper {
   protected SearchContext searchContext;
 
@@ -389,7 +388,7 @@ public class SearchDialog extends DialogWrapper {
     if (file == null) return;
 
     new WriteCommandAction(project, file) {
-      @Override protected void run(@NotNull Result result) throws Throwable {
+      @Override protected void run(@NotNull Result result) {
         CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
       }
     }.execute();
@@ -706,9 +705,8 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected boolean isValid() {
-    setValuesToConfig(myConfiguration);
     try {
-      Matcher.validate(searchContext.getProject(), myConfiguration.getMatchOptions());
+      Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
       reportMessage(SSRBundle.message("this.pattern.is.malformed.message",

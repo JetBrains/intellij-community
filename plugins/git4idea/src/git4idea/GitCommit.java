@@ -62,13 +62,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         return false; // need to know the value from git.config to give correct answer
       case REGISTRY:
         Changes changes = myChanges.get();
-        int estimate;
-        if (changes instanceof UnparsedChanges) {
-          estimate = ((UnparsedChanges)changes).getRenameLimitEstimate();
-        }
-        else {
-          estimate = getRenameLimitEstimate();
-        }
+        int estimate =
+          changes instanceof UnparsedChanges ? ((UnparsedChanges)changes).getRenameLimitEstimate() : getRenameLimitEstimate();
         return estimate <= Registry.intValue("git.diff.renameLimit");
     }
     return true;
@@ -101,6 +96,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       super(project, changesOutput, new GitChangesDescriptor());
     }
 
+    @Override
     @NotNull
     protected String absolutePath(@NotNull String path) {
       try {
@@ -121,7 +117,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHash);
     }
 
-    public int getRenameLimitEstimate() {
+    int getRenameLimitEstimate() {
       int size = 0;
       for (List<GitLogStatusInfo> changesWithParent : myChangesOutput) {
         int sources = 0;
@@ -149,7 +145,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     }
 
     @NotNull
-    private GitChangeType getType(@NotNull Change.Type type) {
+    private static GitChangeType getType(@NotNull Change.Type type) {
       switch (type) {
         case MODIFICATION:
           return GitChangeType.MODIFIED;
@@ -189,10 +185,11 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         case COPIED:
         case RENAMED:
           return Change.Type.MOVED;
+        default:
         case UNRESOLVED:
           LOG.error("Unsupported status info " + info);
+          throw new RuntimeException(info.toString());
       }
-      return null;
     }
   }
 }

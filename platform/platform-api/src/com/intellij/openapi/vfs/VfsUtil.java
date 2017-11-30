@@ -218,30 +218,6 @@ public class VfsUtil extends VfsUtilCore {
    * @return correct URL, must be used only for external communication
    */
   @NotNull
-  public static URI toUri(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    try {
-      String protocol = file.getFileSystem().getProtocol();
-      if (file.isInLocalFileSystem()) {
-        if (SystemInfo.isWindows && path.charAt(0) != '/') {
-          path = '/' + path;
-        }
-        return new URI(protocol, "", path, null, null);
-      }
-      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
-        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
-      }
-      return new URI(protocol, path, null);
-    }
-    catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  /**
-   * @return correct URL, must be used only for external communication
-   */
-  @NotNull
   public static URI toUri(@NotNull File file) {
     String path = file.toURI().getPath();
     try {
@@ -626,6 +602,28 @@ public class VfsUtil extends VfsUtilCore {
     }
 
     return null;
+  }
+
+  /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @NotNull
+  public static URI toUri(@NotNull VirtualFile file) {
+    String path = file.getPath();
+    try {
+      String protocol = file.getFileSystem().getProtocol();
+      if (file.isInLocalFileSystem()) {
+        if (SystemInfo.isWindows && path.charAt(0) != '/') {
+          path = '/' + path;
+        }
+        return new URI(protocol, "", path, null, null);
+      }
+      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
+        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
+      }
+      return new URI(protocol, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
   //</editor-fold>
 }

@@ -25,8 +25,10 @@ import com.intellij.util.LineSeparator
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
+import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
 import git4idea.test.*
+import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
@@ -218,8 +220,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        <a>Retry.</a><br/>
-        Note that some local changes were <a>stashed</a> before rebase.
+        Local changes were stashed before rebase.
         """)
     assertNoRebaseInProgress(repo)
     repo.assertNoLocalChanges()
@@ -419,7 +420,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseInteractively()
 
-    assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
+    assertSuccessfulNotification("Rebase Stopped for Editing", "")
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)
@@ -453,6 +454,9 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   // IDEA-176455
   fun `test reword during interactive rebase writes commit message correctly`() {
+    Assume.assumeTrue("Not testing: not possible to fix in Git prior to 1.8.2: ${vcs.version}",
+                      GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(vcs.version)) // IDEA-182044
+
     makeCommit("initial.txt")
     repo.update()
     val initialMessage = "Wrong message"

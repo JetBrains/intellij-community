@@ -1968,8 +1968,7 @@ def abc(String s) { print 'hjk' }
   }
 
 
-  //IDEA-125331
-  void _testScriptMethodVSStaticImportInsideClosure() {
+  void testScriptMethodVSStaticImportInsideClosure() {
     def method = resolveByText '''
 import static C.abc
 

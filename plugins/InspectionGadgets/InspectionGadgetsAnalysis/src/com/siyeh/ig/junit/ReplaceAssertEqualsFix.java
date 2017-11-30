@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,10 +67,10 @@ class ReplaceAssertEqualsFix extends InspectionGadgetsFix {
     }
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null && ImportUtils.addStaticImport(className, myMethodName, methodExpression)) {
-      PsiReplacementUtil.replaceExpression(methodExpression, myMethodName);
+      PsiReplacementUtil.replaceExpression(methodExpression, myMethodName, new CommentTracker());
     }
     else {
-      PsiReplacementUtil.replaceExpression(methodExpression, StringUtil.getQualifiedName(className, myMethodName));
+      PsiReplacementUtil.replaceExpression(methodExpression, StringUtil.getQualifiedName(className, myMethodName), new CommentTracker());
     }
   }
 }

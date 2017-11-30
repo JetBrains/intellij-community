@@ -168,7 +168,6 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     return myType != null &&
            myWrapper != null &&
            myType.isValid() &&
-           startElement.isValid() &&
            startElement.getManager().isInProject(startElement);
   }
 

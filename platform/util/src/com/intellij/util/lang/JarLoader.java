@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -50,8 +48,9 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
   private final Map<Resource.Attribute, String> myAttributes;
+  private volatile SoftReference<Attributes> myCachedManifestAttributes;
 
-  JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
+  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents, ClassPath classPath) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
@@ -59,7 +58,17 @@ class JarLoader extends Loader {
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
-      myAttributes = getAttributes(zipFile);
+      Attributes manifestAttributes = classPath.getManifestData(url);
+      if (manifestAttributes == null) {
+        ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+        manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+        if (manifestAttributes == null) manifestAttributes = new Attributes(0);
+        classPath.cacheManifestData(url, manifestAttributes);
+      }
+
+      myAttributes = getAttributes(manifestAttributes);
+      myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
+
       if (preloadJarContents) {
         JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
         if (loader != null) {
@@ -72,38 +81,47 @@ class JarLoader extends Loader {
     }
   }
 
+  Attributes getManifestAttributes() {
+    return myCachedManifestAttributes.get();
+  }
+
   private static String urlToFilePath(URL url) {
     try {
-      return url.toURI().getPath();
-    } catch (URISyntaxException ex) {
+      return new File(url.toURI()).getPath();
+    } catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
       return url.getPath();
     }
   }
 
   @Nullable
-  private static Map<Resource.Attribute, String> getAttributes(ZipFile zipFile) {
-    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-    if (entry == null) return null;
-
+  private static Map<Resource.Attribute, String> getAttributes(@Nullable Attributes attributes) {
+    if (attributes == null) return null;
     Map<Resource.Attribute, String> map = null;
+
+    for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+      String value = attributes.getValue(p.second);
+      if (value != null) {
+        if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+        map.put(p.first, value);
+      }
+    }
+
+    return map;
+  }
+
+  @Nullable
+  private static Attributes loadManifestAttributes(@Nullable InputStream stream) {
+    if (stream == null) return null;
     try {
-      InputStream stream = zipFile.getInputStream(entry);
       try {
-        Attributes attributes = new Manifest(stream).getMainAttributes();
-        for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
-          String value = attributes.getValue(p.second);
-          if (value != null) {
-            if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
-            map.put(p.first, value);
-          }
-        }
+        return new Manifest(stream).getMainAttributes();
       }
       finally {
         stream.close();
       }
     }
     catch (Exception ignored) { }
-    return map;
+    return null;
   }
 
   @NotNull
@@ -153,7 +171,7 @@ class JarLoader extends Loader {
 
     return null;
   }
-  
+
   private class MyResource extends Resource {
     private final URL myUrl;
     private final ZipEntry myEntry;

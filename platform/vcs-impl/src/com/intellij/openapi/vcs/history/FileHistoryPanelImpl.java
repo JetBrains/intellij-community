@@ -171,6 +171,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
+      @Override
       public void finished() {
         if (treeHistoryProvider != null) {
           // scroll tree view to most recent change
@@ -187,6 +188,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         mySplitter.repaint();
       }
 
+      @Override
       public void consume(@NotNull VcsHistorySession vcsHistorySession) {
         FileHistoryPanelImpl.this.refresh(vcsHistorySession);
       }

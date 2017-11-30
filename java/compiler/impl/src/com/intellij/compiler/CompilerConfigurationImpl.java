@@ -60,8 +60,9 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
+import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
-import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.optimize;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
@@ -207,28 +208,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       state.addContent(annotationProcessingSettings);
     }
 
-    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+    List<String> moduleNames = getFilteredModuleNameList(myProject, myModuleBytecodeTarget, false);
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !moduleNames.isEmpty()) {
+      final Element bytecodeTarget = element(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
-      if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
-        for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
-          final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null ? value : "");
-        }
-      }
+      writeBytecodeTarget(moduleNames, myModuleBytecodeTarget, bytecodeTarget);
     }
     return state;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    readExternal(state);
   }
 
   @Override
@@ -620,7 +608,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      ResourcePatterns.handleDirPattern(dirPattern);
+      dirPattern = ResourcePatterns.optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -629,6 +617,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
     final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
+  }
+
+  private static String optimize(String wildcardPattern) {
+    return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {
@@ -702,8 +694,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return true;
   }
 
-
-  public void readExternal(@NotNull Element parentNode)  {
+  @Override
+  public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
@@ -785,20 +777,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     myBytecodeTargetLevel = null;
     myModuleBytecodeTarget.clear();
-    final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+
+    Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      for (Element elem : bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
-        final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
-        if (name == null) {
-          continue;
-        }
-        final String target = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-        if (target == null) {
-          continue;
-        }
-        myModuleBytecodeTarget.put(name, target);
-      }
+      readByteTargetLevel(parentNode);
+    }
+
+    Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();
+    if (externalState != null) {
+      myModuleBytecodeTarget.putAll(externalState);
     }
   }
 

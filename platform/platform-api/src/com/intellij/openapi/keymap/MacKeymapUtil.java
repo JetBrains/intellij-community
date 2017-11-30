@@ -88,13 +88,12 @@ public class MacKeymapUtil {
       case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
       case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
       case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
-      case KeyEvent.VK_BACK_QUOTE:     return "`";
       case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
       case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
-      case KeyEvent.VK_ADD:            return "+";
-      case KeyEvent.VK_SEPARATOR:      return ",";
       case KeyEvent.VK_SUBTRACT:       return "-";
-      case KeyEvent.VK_DECIMAL:        return ".";
+      case KeyEvent.VK_ADD:            return "+";
+      case KeyEvent.VK_MINUS:          return "-";
+      case KeyEvent.VK_PLUS:           return "+";
       case KeyEvent.VK_DIVIDE:         return "NumPad /";
       case KeyEvent.VK_NUMPAD0:        return "0";
       case KeyEvent.VK_NUMPAD1:        return "1";
@@ -106,15 +105,6 @@ public class MacKeymapUtil {
       case KeyEvent.VK_NUMPAD7:        return "7";
       case KeyEvent.VK_NUMPAD8:        return "8";
       case KeyEvent.VK_NUMPAD9:        return "9";
-      case KeyEvent.VK_SLASH:          return "/";
-      case KeyEvent.VK_BACK_SLASH:     return "\\";
-      case KeyEvent.VK_PERIOD:         return ".";
-      case KeyEvent.VK_SEMICOLON:      return ";";
-      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
-      case KeyEvent.VK_OPEN_BRACKET:   return "[";
-      case KeyEvent.VK_EQUALS:         return "=";
-      case KeyEvent.VK_MINUS:          return "-";
-      case KeyEvent.VK_PLUS:           return "+";
       case 0:                          return "fn";
     }
     return KeyEvent.getKeyText(code);
@@ -122,7 +112,7 @@ public class MacKeymapUtil {
 
   public static String getKeyStrokeText(KeyStroke keyStroke) {
     final String modifiers = getModifiersText(keyStroke.getModifiers());
-    final String key = getKeyText(keyStroke.getKeyCode());
+    final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
     return modifiers + key;
   }
 

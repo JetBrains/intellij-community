@@ -15,5 +15,6 @@
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="groovy-jps-plugin" />
   </component>
 </module>

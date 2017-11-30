@@ -22,13 +22,17 @@ package com.intellij.util;
  import com.intellij.util.ui.UIUtil;
  import org.jetbrains.annotations.NotNull;
 
- import java.util.*;
+ import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
  import java.util.concurrent.ExecutionException;
  import java.util.concurrent.Future;
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.TimeoutException;
  import java.util.concurrent.atomic.AtomicInteger;
  import java.util.stream.Collectors;
+ import java.util.stream.Stream;
 
 public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
@@ -103,7 +107,7 @@ public class AlarmTest extends PlatformTestCase {
     Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    List<Alarm> alarms = Collections.nCopies(N, "").stream().map(__ -> new Alarm(getTestRootDisposable())).collect(Collectors.toList());
+    List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());
     alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
 
     while (executed.get() != N) {

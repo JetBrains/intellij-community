@@ -23,7 +23,7 @@ public interface DataStructure {
   int getSizeHint();
   
   default int suggestCollectionSize() {
-    return drawInt(IntDistribution.geometric(getSizeHint()));
+    return drawInt(IntDistribution.uniform(0, getSizeHint()));
   }
 
   @NotNull

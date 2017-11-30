@@ -144,6 +144,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
+      public void visitResourceVariable(PsiResourceVariable variable) {
+        result.add(variable);
+      }
+
+      @Override
       public void visitCatchSection(PsiCatchSection section) {
         super.visitCatchSection(section);
         if (!REPORT_CATCH_PARAMETERS) return;
@@ -273,8 +278,8 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
     PsiModifierList modifierList = psiVariable.getModifierList();
     if (modifierList == null) return true;
-    if (REPORT_IMPLICIT_FINALS && modifierList.hasModifierProperty(PsiModifier.FINAL)) return true;
     if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;
+    if (!REPORT_IMPLICIT_FINALS && modifierList.hasModifierProperty(PsiModifier.FINAL)) return true;
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }

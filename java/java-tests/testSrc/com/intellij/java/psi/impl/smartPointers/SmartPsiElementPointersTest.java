@@ -1052,4 +1052,33 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(pointer.getElement());
   }
 
+  // if the assertion is to be removed, please ensure that the test in IDEA-182567 passes
+  public void testCreatingPointerInsidePsiListenerProhibited() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    PsiFile file = createFile("a.java", "class Foo { { int a; } }");
+
+    try {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        PsiLocalVariable var = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("int"), PsiLocalVariable.class, false);
+        PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
+          @Override
+          public void childAdded(@NotNull PsiTreeChangeEvent event) {
+            createPointer(var);
+          }
+        };
+        PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
+        try {
+          var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        }
+        finally {
+          PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
+        }
+      });
+      fail();
+    }
+    catch (AssertionError e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("shouldn't be created"));
+    }
+  }
+
 }

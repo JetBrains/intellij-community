@@ -25,15 +25,24 @@ public class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWor
   // must be called in the earliest possible moment on startup
   public static void setupForkJoinCommonPool() {
     System.setProperty("java.util.concurrent.ForkJoinPool.common.threadFactory", IdeaForkJoinWorkerThreadFactory.class.getName());
+    String explicitParallelism = System.getProperty("java.util.concurrent.ForkJoinPool.common.parallelism");
+    if (explicitParallelism == null && Runtime.getRuntime().availableProcessors() == 2) {
+      // By default FJP initialized with the parallelism=N_CPU - 1
+      // so in case of two processors it becomes parallelism=1 which is too unexpected.
+      // In this case force parallelism=2
+      System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "2");
+    }
   }
 
   private static final AtomicLong bits = new AtomicLong();
   @Override
   public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
     final int n = setNextBit();
+    //System.out.println("New  FJP thread "+n);
     ForkJoinWorkerThread thread = new ForkJoinWorkerThread(pool) {
       @Override
       protected void onTermination(Throwable exception) {
+        //System.out.println("Exit FJP thread "+n);
         clearBit(n);
         super.onTermination(exception);
       }

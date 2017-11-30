@@ -43,7 +43,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreExpressionsContainingConstants = false;
+  public boolean m_ignoreExpressionsContainingConstants = true;
 
   static final Set<IElementType> bitwiseTokens =
     new HashSet<>(6);

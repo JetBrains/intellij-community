@@ -20,6 +20,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -29,7 +30,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -169,7 +169,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                                   boolean checkCaret) {
     return new WriteCommandAction<Document>(null) {
       @Override
-      protected void run(@NotNull Result<Document> result) throws Throwable {
+      protected void run(@NotNull Result<Document> result) {
         final Document fakeDocument = new DocumentImpl(fileText);
 
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
@@ -196,7 +196,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
     return new WriteCommandAction<Editor>(getProject()) {
       @Override
-      protected void run(@NotNull Result<Editor> result) throws Throwable {
+      protected void run(@NotNull Result<Editor> result) {
         final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
@@ -266,12 +266,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  private static void setupEditorForInjectedLanguage() {
+  protected static void setupEditorForInjectedLanguage() {
     if (myEditor != null) {
+      Editor hostEditor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+      PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
       final Ref<EditorWindow> editorWindowRef = new Ref<>();
-      myEditor.getCaretModel().runForEachCaret(caret -> {
-        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-        if (caret == myEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile);
+        if (caret == hostEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
           editorWindowRef.set((EditorWindow)editor);
         }
       });

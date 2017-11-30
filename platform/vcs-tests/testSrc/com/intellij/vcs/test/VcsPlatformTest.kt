@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.TestVcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier
@@ -62,7 +63,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    testRoot = File(FileUtil.getTempDirectory(), "testRoot")
+    testRoot = File(FileUtil.getTempDirectory(), "root-${Integer.toHexString(Random().nextInt())}")
     PlatformTestCase.myFilesToDelete.add(testRoot)
     checkTestRootIsEmpty(testRoot)
 
@@ -80,6 +81,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
     vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
     vcsNotifier = project.service<VcsNotifier>() as TestVcsNotifier
+    cd(testRoot)
   }
 
   @Throws(Exception::class)

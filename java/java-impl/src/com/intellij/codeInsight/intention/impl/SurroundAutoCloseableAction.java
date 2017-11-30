@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,9 +145,9 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + initializer.getText() + ") {}";
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiTryStatement armStatement = (PsiTryStatement)declaration.replace(factory.createStatementFromText(text, codeBlock));
+    CommentTracker tracker = new CommentTracker();
+    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.markUnchanged(initializer).getText() + ") {}";
+    PsiTryStatement armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, text);
 
     List<PsiElement> toFormat = null;
     if (last != null) {
@@ -228,11 +229,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   private static void processExpression(Project project, Editor editor, PsiExpression expression) {
     PsiType type = ObjectUtils.assertNotNull(expression.getType());
     PsiElement statement = expression.getParent();
-    PsiElement codeBlock = statement.getParent();
 
-    String text = "try (" + type.getCanonicalText(true) + " r = " + expression.getText() + ") {}";
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiTryStatement tryStatement = (PsiTryStatement)statement.replace(factory.createStatementFromText(text, codeBlock));
+    CommentTracker commentTracker = new CommentTracker();
+    String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.markUnchanged(expression).getText() + ") {}";
+    PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 

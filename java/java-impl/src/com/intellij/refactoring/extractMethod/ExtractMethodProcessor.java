@@ -200,6 +200,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in atomic action
    */
   public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
@@ -915,12 +916,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
         }
         else if (myGenerateConditionalExit) {
-          if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          }
-          else {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
-          }
+          ifStatement = generateConditionalExitStatement(varName);
         }
         else {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return;", null);
@@ -931,7 +927,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       else if (myNotNullConditionalCheck) {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
-        addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        addToMethodCallLocation(generateNotNullConditionalStatement(varName));
         declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
@@ -1039,6 +1035,19 @@ public class ExtractMethodProcessor implements MatchProvider {
         RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  @NotNull
+  private PsiIfStatement generateConditionalExitStatement(String varName) {
+    if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+      return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+    }
+    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+  }
+
+  @NotNull
+  private PsiStatement generateNotNullConditionalStatement(String varName) {
+    return myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
   }
 
   protected PsiExpression expressionToReplace(PsiExpression expression) {
@@ -1299,16 +1308,16 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
-    if (myNotNullConditionalCheck && myOutputVariable != null) {
+    if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
       ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
       if (returnValue instanceof VariableReturnValue) {
         String varName = ((VariableReturnValue)returnValue).getVariable().getName();
         LOG.assertTrue(varName != null, "returned variable name is null");
         PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
         if (statement != null) {
-          PsiStatement conditionalReturn =
-            myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
-          statement.getParent().addAfter(conditionalReturn, statement);
+          PsiStatement conditionalExit = myNotNullConditionalCheck ?
+                                         generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
+          statement.getParent().addAfter(conditionalExit, statement);
         }
       }
     }

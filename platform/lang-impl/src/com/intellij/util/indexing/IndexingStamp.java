@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
@@ -148,11 +148,11 @@ public class IndexingStamp {
     return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
-  private static final int ANY_VERSION = 1;
+  private static final int ANY_CURRENT_INDEX_VERSION = Integer.MIN_VALUE;
   private static final long NO_VERSION = 0;
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    IndexVersion version = getIndexVersion(indexName, ANY_CURRENT_INDEX_VERSION);
     return version != null ? version.myModificationCount : NO_VERSION;
   }
 
@@ -169,7 +169,7 @@ public class IndexingStamp {
         final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
         try {
 
-          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
+          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
               DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
             version = new IndexVersion(in);
@@ -340,7 +340,7 @@ public class IndexingStamp {
     }
   }
 
-  private static final ConcurrentIntObjectMap<Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<IndexingStamp.Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {

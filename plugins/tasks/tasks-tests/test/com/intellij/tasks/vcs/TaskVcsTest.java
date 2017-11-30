@@ -459,72 +459,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
     ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
     myRepository = new TestRepository();
-    myRepository.setTasks(new Task() {
-      @NotNull
-      @Override
-      public String getId() {
-        return "TEST-001";
-      }
-
-      @NotNull
-      @Override
-      public String getSummary() {
-        return "Summary";
-      }
-
-      @Override
-      public String getDescription() {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public Comment[] getComments() {
-        return Comment.EMPTY_ARRAY;
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return TasksIcons.Unknown;
-      }
-
-      @NotNull
-      @Override
-      public TaskType getType() {
-        return TaskType.BUG;
-      }
-
-      @Override
-      public Date getUpdated() {
-        return null;
-      }
-
-      @Override
-      public Date getCreated() {
-        return null;
-      }
-
-      @Override
-      public boolean isClosed() {
-        return false;
-      }
-
-      @Override
-      public boolean isIssue() {
-        return true;
-      }
-
-      @Override
-      public String getIssueUrl() {
-        return null;
-      }
-
-      @Override
-      public TaskRepository getRepository() {
-        return myRepository;
-      }
-    });
+    myRepository.setTasks(new MyTask());
     myTaskManager.setRepositories(Collections.singletonList(myRepository));
   }
 
@@ -567,6 +502,73 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     @Override
     public void doCleanup(List<VirtualFile> files) {
+    }
+  }
+
+  private class MyTask extends Task {
+    @NotNull
+    @Override
+    public String getId() {
+      return "TEST-001";
+    }
+
+    @NotNull
+    @Override
+    public String getSummary() {
+      return "Summary";
+    }
+
+    @Override
+    public String getDescription() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public Comment[] getComments() {
+      return Comment.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public Icon getIcon() {
+      return TasksIcons.Unknown;
+    }
+
+    @NotNull
+    @Override
+    public TaskType getType() {
+      return TaskType.BUG;
+    }
+
+    @Override
+    public Date getUpdated() {
+      return null;
+    }
+
+    @Override
+    public Date getCreated() {
+      return null;
+    }
+
+    @Override
+    public boolean isClosed() {
+      return false;
+    }
+
+    @Override
+    public boolean isIssue() {
+      return true;
+    }
+
+    @Override
+    public String getIssueUrl() {
+      return null;
+    }
+
+    @Override
+    public TaskRepository getRepository() {
+      return myRepository;
     }
   }
 }

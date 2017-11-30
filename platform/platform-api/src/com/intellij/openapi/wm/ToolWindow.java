@@ -180,7 +180,7 @@ public interface ToolWindow extends BusyObject {
   void setShowStripeButton(boolean show);
 
   boolean isShowStripeButton();
-  
+
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);

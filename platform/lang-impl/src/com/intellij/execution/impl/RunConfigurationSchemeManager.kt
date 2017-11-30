@@ -23,6 +23,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   }
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
     return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
   }
 

@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
@@ -82,7 +83,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         final PsiCodeBlock block = section.getCatchBlock();
         if (block == null) return;
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
-        if (isEmpty(block)) {
+        if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
                                  new EmptyCatchBlockFix(), fix);
         }
@@ -135,38 +136,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             .applyCondition(factory.createCondition(exceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullness.NOT_NULL)));
           };
         return runner.analyzeCodeBlock(block, visitor, stateAdjuster) == RunnerResult.OK;
-      }
-
-      private boolean isEmpty(PsiElement element) {
-        if (!m_ignoreCatchBlocksWithComments && element instanceof PsiComment) {
-          return true;
-        }
-        else if (element instanceof PsiEmptyStatement) {
-          return !m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(element, PsiComment.class) == null;
-        }
-        else if (element instanceof PsiWhiteSpace) {
-          return true;
-        }
-        else if (element instanceof PsiBlockStatement) {
-          final PsiBlockStatement block = (PsiBlockStatement)element;
-          return isEmpty(block.getCodeBlock());
-        }
-        else if (element instanceof PsiCodeBlock) {
-          final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
-          PsiElement bodyElement = codeBlock.getFirstBodyElement();
-          final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
-          while (bodyElement != null) {
-            if (!isEmpty(bodyElement)) {
-              return false;
-            }
-            if (bodyElement == lastBodyElement) {
-              break;
-            }
-            bodyElement = bodyElement.getNextSibling();
-          }
-          return true;
-        }
-        return false;
       }
     };
   }

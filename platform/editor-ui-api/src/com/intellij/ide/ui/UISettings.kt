@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui
 
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -84,7 +83,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR") var scrollTabLayoutInEditor by storedProperty(true)
   @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by storedProperty(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by storedProperty(true)
-  @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(1)
+  @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(SwingConstants.TOP)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hideKnownExtensionInTabs by storedProperty(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by storedProperty(true)
 
@@ -126,12 +125,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("PIN_FIND_IN_PATH_POPUP") var pinFindInPath by storedProperty(false)
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
-
-  init {
-    WelcomeWizardUtil.getAutoScrollToSource()?.let {
-      defaultAutoScrollToSource = it
-    }
-  }
 
   private fun withDefFont(): UISettings {
     initDefFont()

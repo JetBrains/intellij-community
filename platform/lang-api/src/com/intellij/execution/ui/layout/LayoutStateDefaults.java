@@ -16,18 +16,69 @@
 
 package com.intellij.execution.ui.layout;
 
+import com.intellij.execution.ui.RunnerLayoutUi;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * Allows to configure layout default appearance.
+ */
 public interface LayoutStateDefaults {
-  @NotNull //this
+  /**
+   * Sets default tab text and icon for a tab with given {@code tabId}.
+   * Default tab text will be used if it wasn't set explicitly for a tab, e.g. using
+   * {@link com.intellij.ui.content.Content#setDisplayName(String)} for content associated with the tab.
+   */
+  @NotNull
   LayoutStateDefaults initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
 
-  @NotNull // this
-  LayoutStateDefaults initFocusContent(@NotNull String id, @NotNull String condition);
+  @NotNull
+  default LayoutStateDefaults initContentAttraction(@NotNull String contentId, @NotNull String condition) {
+    return initContentAttraction(contentId, condition, new LayoutAttractionPolicy.FocusOnce());
+  }
 
-  @NotNull  //this
-  LayoutStateDefaults initFocusContent(@NotNull String id, @NotNull String condition, @NotNull final LayoutAttractionPolicy policy);
+  /**
+   * Schedules an attraction specified by {@code policy} for a content with {@code contentId}. The attraction will be
+   * performed when {@code condition} happens.
+   * This method also cancels all previously scheduled attractions associated with {@code condition}.
+   * @param contentId String identifying a content
+   *                 <ul>
+   *                  <li>{@link RunnerLayoutUi#createContent(String, JComponent, String, Icon, JComponent)}</li>
+   *                  <li>{@link com.intellij.execution.ui.ExecutionConsole#CONSOLE_CONTENT_ID}</li>
+   *                 </ul>
+   * @param condition String identifying a moment of time to perform the content attraction, e.g.
+   *                  {@link LayoutViewOptions#STARTUP} on content UI showing
+   * @param policy    LayoutAttractionPolicy instance
+   * @return this
+   */
+  @NotNull
+  LayoutStateDefaults initContentAttraction(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy);
+
+  /**
+   * Cancels attractions previously scheduled by {@link #initContentAttraction} to be performed
+   * when {@code condition} happens.
+   * @param condition String identifying a moment of time, e.g.
+   *                  {@link LayoutViewOptions#STARTUP} on content UI showing
+   * @return this
+   */
+  @NotNull
+  LayoutStateDefaults cancelContentAttraction(@NotNull String condition);
+
+  /**
+   * @deprecated use {@link #initContentAttraction(String, String)} instead
+   */
+  @NotNull
+  default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition) {
+    return initContentAttraction(contentId, condition);
+  }
+
+  /**
+   * @deprecated use {@link #initContentAttraction(String, String, LayoutAttractionPolicy)} instead
+   */
+  @NotNull
+  default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy) {
+    return initContentAttraction(contentId, condition, policy);
+  }
 }

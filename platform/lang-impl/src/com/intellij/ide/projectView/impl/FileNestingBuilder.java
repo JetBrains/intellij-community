@@ -34,7 +34,7 @@ public class FileNestingBuilder {
    * Returns all possible nesting rules, including transitive rules
    */
   @NotNull
-  public Collection<ProjectViewFileNestingService.NestingRule> getNestingRules() {
+  public synchronized Collection<ProjectViewFileNestingService.NestingRule> getNestingRules() {
     final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
     final List<ProjectViewFileNestingService.NestingRule> baseRules = fileNestingService.getRules();
     final long modCount = fileNestingService.getModificationCount();

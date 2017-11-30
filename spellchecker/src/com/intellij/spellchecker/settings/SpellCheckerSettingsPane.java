@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -48,11 +47,11 @@ import java.util.List;
 public class SpellCheckerSettingsPane implements Disposable {
   private JPanel root;
   private JPanel linkContainer;
-  private JPanel panelForDictionaryChooser;
+  private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
-  private JPanel panelForFolderChooser;
-  private OptionalChooserComponent<String> optionalChooserComponent;
-  private PathsChooserComponent pathsChooserComponent;
+  private JPanel myPanelForCustomDictionaries;
+  private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
+  private PathsChooserComponent myCustomDictionariesChooserComponent;
   private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<>();
   private final List<String> dictionariesFolders = new ArrayList<>();
   private final List<String> removedDictionaries = new ArrayList<>();
@@ -64,16 +63,14 @@ public class SpellCheckerSettingsPane implements Disposable {
     this.settings = settings;
     manager = SpellCheckerManager.getInstance(project);
     HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
-    link.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
-          if (allSettings != null) {
-            final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
-            if (errorsConfigurable != null) {
-              allSettings.select(errorsConfigurable).doWhenDone(
-                () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
-            }
+    link.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+        if (allSettings != null) {
+          final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
+          if (errorsConfigurable != null) {
+            allSettings.select(errorsConfigurable).doWhenDone(
+              () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
           }
         }
       }
@@ -84,47 +81,11 @@ public class SpellCheckerSettingsPane implements Disposable {
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
     fillAllDictionaries();
 
+    myCustomDictionariesChooserComponent = new CustomDictionariesChooserComponent(project);
+    myPanelForCustomDictionaries.setLayout(new BorderLayout());
+    myPanelForCustomDictionaries.add(myCustomDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
 
-    pathsChooserComponent = new PathsChooserComponent(dictionariesFolders, new PathsChooserComponent.PathProcessor() {
-      public boolean addPath(List<String> paths, String path) {
-        if (paths.contains(path)) {
-          final String title = SpellCheckerBundle.message("add.directory.title");
-          final String msg = SpellCheckerBundle.message("directory.is.already.included");
-          Messages.showErrorDialog(root, msg, title);
-          return false;
-        }
-        paths.add(path);
-
-        final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-        SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
-        optionalChooserComponent.refresh();
-        return true;
-      }
-
-      public boolean removePath(List<String> paths, String path) {
-        if (paths.remove(path)) {
-          final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
-          final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-          for (Pair<String, Boolean> pair : currentDictionaries) {
-            if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
-              result.add(pair);
-            } else {
-              removedDictionaries.add(pair.first);
-            }
-          }
-          currentDictionaries.clear();
-          currentDictionaries.addAll(result);
-          optionalChooserComponent.refresh();
-          return true;
-        }
-        return false;
-      }
-    }, project);
-    panelForFolderChooser.setLayout(new BorderLayout());
-    panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
-    pathsChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
-
-    optionalChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
+    myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
         if (isUserDictionary(path)) {
@@ -139,9 +100,9 @@ public class SpellCheckerSettingsPane implements Disposable {
       }
     };
 
-    panelForDictionaryChooser.setLayout(new BorderLayout());
-    panelForDictionaryChooser.add(optionalChooserComponent.getContentPane(), BorderLayout.CENTER);
-    optionalChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
+    myPanelForBundledDictionaries.setLayout(new BorderLayout());
+    myPanelForBundledDictionaries.add(myBundledDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
+    myBundledDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
 
 
     wordsPanel = new WordsPanel(manager);
@@ -155,20 +116,19 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public boolean isModified() {
-    return wordsPanel.isModified() || optionalChooserComponent.isModified() || pathsChooserComponent.isModified();
+    return wordsPanel.isModified() || myBundledDictionariesChooserComponent.isModified() || myCustomDictionariesChooserComponent.isModified();
   }
 
   public void apply() throws ConfigurationException {
     if (wordsPanel.isModified()){
      manager.updateUserDictionary(wordsPanel.getWords());
     }
-    if (!optionalChooserComponent.isModified() && !pathsChooserComponent.isModified()){
+    if (!myBundledDictionariesChooserComponent.isModified() && !myCustomDictionariesChooserComponent.isModified()){
       return;
     }
 
-    optionalChooserComponent.apply();
-    pathsChooserComponent.apply();
-    settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
+    myBundledDictionariesChooserComponent.apply();
+    myCustomDictionariesChooserComponent.apply();
 
     final HashSet<String> disabledDictionaries = new HashSet<>();
     final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
@@ -192,7 +152,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   private boolean isUserDictionary(final String dictionary) {
     boolean isUserDictionary = false;
-    for (String dictionaryFolder : pathsChooserComponent.getValues()) {
+    for (String dictionaryFolder : myCustomDictionariesChooserComponent.getValues()) {
       if (FileUtil.toSystemIndependentName(dictionary).startsWith(dictionaryFolder)) {
         isUserDictionary = true;
         break;
@@ -203,16 +163,15 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public void reset() {
-    pathsChooserComponent.reset();
-    fillAllDictionaries();
-    optionalChooserComponent.reset();
+    myCustomDictionariesChooserComponent.reset();
+    myBundledDictionariesChooserComponent.reset();
     removedDictionaries.clear();
   }
 
 
   private void fillAllDictionaries() {
     dictionariesFolders.clear();
-    dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
+    dictionariesFolders.addAll(settings.getCustomDictionariesPaths());
     allDictionaries.clear();
     for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
       allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
@@ -246,8 +205,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         return new ArrayList<>();
       }
       Set<String> words = this.dictionary.getEditableWords();
-      List<String> result = new ArrayList<>();
-      result.addAll(words);
+      List<String> result = new ArrayList<>(words);
       Collections.sort(result);
       return result;
     }
@@ -317,5 +275,59 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
   }
 
+
+  private class CustomDictionariesChooserComponent extends PathsChooserComponent {
+    public CustomDictionariesChooserComponent(Project project) {
+      super(dictionariesFolders, new PathProcessor() {
+        public boolean addPath(List<String> paths, String path) {
+          if (paths.contains(path)) {
+            final String title = SpellCheckerBundle.message("add.directory.title");
+            final String msg = SpellCheckerBundle.message("directory.is.already.included");
+            Messages.showErrorDialog(root, msg, title);
+            return false;
+          }
+          paths.add(path);
+
+          final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
+          SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
+          myBundledDictionariesChooserComponent.refresh();
+          return true;
+        }
+
+        public boolean removePath(List<String> paths, String path) {
+          if (paths.remove(path)) {
+            final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
+            final ArrayList<Pair<String, Boolean>> currentDictionaries = myBundledDictionariesChooserComponent.getCurrentModel();
+            for (Pair<String, Boolean> pair : currentDictionaries) {
+              if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
+                result.add(pair);
+              }
+              else {
+                removedDictionaries.add(pair.first);
+              }
+            }
+            currentDictionaries.clear();
+            currentDictionaries.addAll(result);
+            myBundledDictionariesChooserComponent.refresh();
+            return true;
+          }
+          return false;
+        }
+      }, project);
+      this.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
+    }
+
+    @Override
+    public void apply() {
+      super.apply();
+      settings.setCustomDictionariesPaths(myCustomDictionariesChooserComponent.getValues());
+    }
+
+    @Override
+    public void reset() {
+      super.reset();
+      fillAllDictionaries();
+    }
+  }
 
 }

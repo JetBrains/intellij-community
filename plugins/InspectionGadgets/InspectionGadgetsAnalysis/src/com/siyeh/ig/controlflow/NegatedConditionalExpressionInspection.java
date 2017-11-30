@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -76,17 +77,18 @@ public class NegatedConditionalExpressionInspection extends BaseInspection imple
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)operand;
       final StringBuilder newExpression = new StringBuilder();
       final PsiExpression condition = conditionalExpression.getCondition();
-      newExpression.append(condition.getText()).append('?');
+      CommentTracker tracker = new CommentTracker();
+      newExpression.append(tracker.markUnchanged(condition).getText()).append('?');
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (thenExpression != null) {
-        newExpression.append(BoolUtils.getNegatedExpressionText(thenExpression));
+        newExpression.append(BoolUtils.getNegatedExpressionText(thenExpression, tracker));
       }
       newExpression.append(':');
       final PsiExpression elseExpression = conditionalExpression.getElseExpression();
       if (elseExpression != null) {
-        newExpression.append(BoolUtils.getNegatedExpressionText(elseExpression));
+        newExpression.append(BoolUtils.getNegatedExpressionText(elseExpression, tracker));
       }
-      PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString(), tracker);
     }
   }
 

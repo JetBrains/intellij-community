@@ -52,6 +52,8 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
 import static org.fest.assertions.Assertions.assertThat;
@@ -318,6 +320,29 @@ public class EditorFixture {
           return sb.toString();
         }
 
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Returns content of the current editor's document with a given range.
+   *
+   * @param startOffset the content which starting right after this offset
+   * @param endOffset the end of content, symbol on the endOffset will be not included
+   * @return
+   */
+  public String getCurrentFileContents(int startOffset, int endOffset) {
+    return execute(new GuiQuery<String>() {
+      @Override
+      @Nullable
+      protected String executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          Document document = editor.getDocument();
+          return document.getText(new TextRange(startOffset, endOffset));
+        }
         return null;
       }
     });
@@ -596,6 +621,36 @@ public class EditorFixture {
           String target = (prefix != null ? prefix : "") + (suffix != null ? suffix : "");
           int targetIndex = contents.indexOf(target, searchFromTop ? 0 : primaryCaret.getOffset());
           return targetIndex != -1 ? targetIndex + (prefix != null ? prefix.length() : 0) : -1;
+        }
+        return -1;
+      }
+    });
+  }
+
+  /**
+   * Finds the start position (if {@code returnStartIndex} is true or end position if {@code returnStartIndex} is false) in current editor's
+   * document by regex.
+   *
+   * @param regex
+   * @param returnStartIndex a flag that determines which index of found region should be returned: start index if it is true and end index if
+   *                         it is false
+   * @return the 0-based offset in the document, or -1 if not found.
+   */
+  public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
+    return execute(new GuiQuery<Integer>() {
+      @Override
+      protected Integer executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          String contents = editor.getDocument().getCharsSequence().toString();
+          Matcher matcher = Pattern.compile(regex).matcher(contents);
+          if (matcher.find()) {
+            if (returnStartIndex)
+              return matcher.start();
+            else
+              return matcher.end();
+          }
         }
         return -1;
       }

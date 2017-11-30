@@ -86,7 +86,7 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.constructors.of.the.class"),
-        "class 'Class {\n  'Class('_ParameterType '_Parameter*) {\n    '_Statement*;\n  }\n}",
+        "'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(

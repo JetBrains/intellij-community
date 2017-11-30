@@ -45,6 +45,7 @@ public class CheckoutEventHandler implements ProgressTracker {
     myCnt = 0;
   }
 
+  @Override
   public void consume(ProgressEvent event) {
     if (event.getPath() == null) {
       return;

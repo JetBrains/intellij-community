@@ -162,7 +162,7 @@ public final class TypeConstraint {
   }
 
   @Nullable
-  TypeConstraint union(@NotNull TypeConstraint other) {
+  public TypeConstraint union(@NotNull TypeConstraint other) {
     if(isSuperStateOf(other)) return this;
     if(other.isSuperStateOf(this)) return other;
     Set<DfaPsiType> leftTypes = new HashSet<>(this.myInstanceofValues);

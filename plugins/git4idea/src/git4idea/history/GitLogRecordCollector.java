@@ -24,8 +24,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +134,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
       ContainerUtil.addAll(hashes, r.getParentsHashes());
     }
 
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+    GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
     GitVcs vcs = GitVcs.getInstance(myProject);
     handler.setStdoutSuppressed(true);
@@ -143,7 +144,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
     handler.endOptions();
 
     GitLogUtil.sendHashesToStdin(vcs, hashes, handler);
-    String output = handler.run();
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     if (!handler.errors().isEmpty()) {
       throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));

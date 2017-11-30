@@ -32,10 +32,9 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
-                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
-                                                  ["jps-model-impl", "jps-model-serialization"]
+    productLayout.productApiModules = JAVA_API_MODULES
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
+                                                 ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"]
     productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.mainModules = ["community-main"]

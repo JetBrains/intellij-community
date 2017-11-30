@@ -798,6 +798,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
               setOrientation(!uiSettings.getRightHorizontalSplit());
             }
           }
+
+          @Override
+          public String toString() {
+            return "["+String.valueOf(getFirstComponent()) + "|" + String.valueOf(getSecondComponent())+"]";
+          }
         }
         Splitter splitter = new MySplitter();
         splitter.setOrientation(anchor.isSplitVertically());

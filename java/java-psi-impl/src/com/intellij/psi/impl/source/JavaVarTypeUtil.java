@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -50,6 +52,7 @@ public class JavaVarTypeUtil {
   }
 
   private static class UpwardProjectionTypeVisitor extends PsiTypeVisitorEx<PsiType> {
+    private static RecursionGuard upwardGuard = RecursionManager.createGuard("upwardProjectionGuard");
     @Override
     public PsiType visitType(PsiType type) {
       return type;
@@ -110,8 +113,11 @@ public class JavaVarTypeUtil {
 
             }
             else {
-              PsiType U = ai.accept(this);
-              if (!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U)) {
+              PsiType U = upwardGuard.doPreventingRecursion(ai, true, () -> ai.accept(this));
+              if (U == null) {
+                targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createUnbounded(manager));
+              }
+              else if (!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U)) {
                 targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(manager, U));
               }
               else {

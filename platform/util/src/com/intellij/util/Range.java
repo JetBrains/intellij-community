@@ -30,7 +30,14 @@ public class Range<T extends Comparable<T>> {
   }
 
   public boolean isWithin(@NotNull T object) {
-    return object.compareTo(myFrom) >= 0 && object.compareTo(myTo) <= 0;
+    return isWithin(object, true);
+  }
+
+  public boolean isWithin(@NotNull T object, boolean includingEndpoints) {
+    if (includingEndpoints) {
+      return object.compareTo(myFrom) >= 0 && object.compareTo(myTo) <= 0;
+    }
+    return object.compareTo(myFrom) > 0 && object.compareTo(myTo) < 0;
   }
 
   @NotNull

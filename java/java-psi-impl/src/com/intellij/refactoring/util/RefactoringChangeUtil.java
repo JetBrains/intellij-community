@@ -134,7 +134,7 @@ public class RefactoringChangeUtil {
                                                                         @NotNull String qName) throws IncorrectOperationException {
      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
      if (qualifierClass != null) {
-       T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, null);
+       T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, qualifierClass);
        qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
        PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
        LOG.assertTrue(thisQualifier != null);

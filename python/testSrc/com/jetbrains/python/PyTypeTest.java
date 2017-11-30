@@ -764,34 +764,34 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo')\n");
   }
 
   public void testIoOpenText() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo', 'r')\n");
   }
 
   public void testIoOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("BinaryIO",
            "import io\n" +
            "expr = io.open('foo', 'rb')\n");
   }
@@ -2198,6 +2198,63 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-4351
+  public void testCollectionsNTInheritorField() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetField() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "User = namedtuple(\"User\", \"name age\")\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
+  // PY-4351
+  public void testTypingNTInheritorUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "class User(NamedTuple(\"User\", [(\"name\", str), (\"age\", int)])):\n" +
+           "    pass\n" +
+           "y2, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testTypingNTTargetUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "Point2 = NamedTuple('Point', [('x', int), ('y', str)])\n" +
+           "p2 = Point2(1, \"1\")\n" +
+           "expr, y2 = p2");
+  }
+
+  // PY-4351
+  public void testCollectionsNTInheritorUnpacking() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name ags\")):\n" +
+           "    pass\n" +
+           "y1, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetUnpacking() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "Point = namedtuple('Point', ['x', 'y'])\n" +
+           "p1 = Point(1, '1')\n" +
+           "expr, y1 = p1");
+  }
+
   // PY-18791
   public void testCallOnProperty() {
     runWithLanguageLevel(
@@ -2382,10 +2439,11 @@ public class PyTypeTest extends PyTestCase {
     checkTypes(expectedType, parseExpr(text));
   }
 
-  private static void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
+  private void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
     assertNotNull(expr);
     for (TypeEvalContext context : getTypeEvalContexts(expr)) {
       assertType(expectedType, expr, context);
+      assertProjectFilesNotParsed(context);
     }
   }
 

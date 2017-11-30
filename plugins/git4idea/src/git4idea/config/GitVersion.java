@@ -248,10 +248,10 @@ public final class GitVersion implements Comparable<GitVersion> {
   }
 
   @NotNull
-  public String getMachineFriendlyPresentation() {
+  public String getSemanticPresentation() {
     String presentation = myMajor + "." + myMinor + "." + myRevision;
     if (myPatchLevel > 0) presentation += "." + myPatchLevel;
-    return presentation += "-" + myType;
+    return presentation + "-" + myType;
   }
 
   /**

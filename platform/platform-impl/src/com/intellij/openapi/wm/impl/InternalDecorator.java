@@ -37,12 +37,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -133,6 +131,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     init(dumbAware);
 
     apply(info);
+  }
+
+  @Override
+  public String toString() {
+    return myToolWindow.getId();
   }
 
   public boolean isFocused() {

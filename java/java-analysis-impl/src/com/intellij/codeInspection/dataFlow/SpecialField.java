@@ -50,6 +50,11 @@ public enum SpecialField {
         .getArrayClass(PsiUtil.getLanguageLevel(qualifier));
       return arrayClass.findFieldByName("length", false);
     }
+
+    @Override
+    public String toString() {
+      return "Array.length";
+    }
   },
   STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
     @Override

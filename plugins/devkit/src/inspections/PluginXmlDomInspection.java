@@ -41,6 +41,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
@@ -102,8 +103,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (element instanceof Group) {
       annotateGroup((Group)element, holder);
     }
-    else if (element instanceof Component.Project) {
-      annotateProjectComponent((Component.Project)element, holder);
+    else if (element instanceof Component) {
+      annotateComponent((Component) element, holder);
+      if (element instanceof Component.Project) {
+        annotateProjectComponent((Component.Project)element, holder);
+      }
     }
 
     if (element instanceof GenericDomValue) {
@@ -167,20 +171,27 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     GenericAttributeValue<String> name = extensionPoint.getName();
     if (!isValidEpName(name)) {
-      holder.createProblem(name, DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()));
+      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()), null);
     }
     GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
     if (!isValidEpName(qualifiedName)) {
-      holder.createProblem(
-        qualifiedName, DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()));
+      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()), null);
     }
+
+    Module module = extensionPoint.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
+    }
+
   }
 
   private static boolean isValidEpName(GenericAttributeValue<String> nameAttrValue) {
     if (!nameAttrValue.exists()) {
       return true;
     }
-    String name = nameAttrValue.getValue();
+    @NonNls String name = nameAttrValue.getValue();
     return StringUtil.isNotEmpty(name) &&
            Character.isLowerCase(name.charAt(0)) && // also checks that name doesn't start with dot
            !name.toUpperCase().equals(name) && // not all uppercase
@@ -307,7 +318,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         }
       }
     }
+
+    Module module = extension.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder);
+    }
   }
+
+  private static void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+    Module module = component.getModule();
+    if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(component, holder, component.getImplementationClass().getValue());
+    }
+  }
+
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
     //noinspection deprecation

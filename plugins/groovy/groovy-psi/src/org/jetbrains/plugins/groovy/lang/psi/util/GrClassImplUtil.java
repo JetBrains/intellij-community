@@ -2,15 +2,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
@@ -27,18 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
@@ -47,6 +40,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.isAnnotationResolve;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
 /**
  * @author Maxim.Medvedev
@@ -166,10 +162,14 @@ public class GrClassImplUtil {
     return list.getReferencedTypes();
   }
 
-
   @NotNull
   public static PsiClass[] getInterfaces(GrTypeDefinition grType) {
-    final PsiClassType[] implementsListTypes = grType.getImplementsListTypes();
+    return getInterfaces(grType, true);
+  }
+
+  @NotNull
+  public static PsiClass[] getInterfaces(GrTypeDefinition grType, boolean includeSynthetic) {
+    final PsiClassType[] implementsListTypes = grType.getImplementsListTypes(includeSynthetic);
     List<PsiClass> result = new ArrayList<>(implementsListTypes.length);
     for (PsiClassType type : implementsListTypes) {
       final PsiClass psiClass = type.resolve();
@@ -197,15 +197,12 @@ public class GrClassImplUtil {
                                             @NotNull ResolveState state,
                                             @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
-    if (place instanceof GrCodeReferenceElement) {
-      final PsiElement possibleAnnotation = PsiTreeUtil.skipParentsOfType(place, GrCodeReferenceElement.class);
-      if (possibleAnnotation instanceof GrAnnotation) {
-        return true; //don't process class members while resolving annotation
-      }
-    }
+    if (isAnnotationResolve(processor)) return true; //don't process class members while resolving annotation
 
-    for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+    if (shouldProcessTypeParameters(processor)) {
+      for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
+        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+      }
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
@@ -280,16 +277,20 @@ public class GrClassImplUtil {
       }
     }
 
-    final GrTypeDefinitionBody body = grType.getBody();
-    if (body != null) {
-      if (ResolveUtil.shouldProcessClasses(classHint)) {
-        for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
-          if (name != null && !name.equals(innerClass.getName())) continue;
-          if (!processor.execute(innerClass, state)) return false;
+    if (ResolveUtil.shouldProcessClasses(classHint)) {
+      Map<String, CandidateInfo> classes = CollectClassMembersUtil.getAllInnerClasses(grType, true);
+      if (name == null) {
+        for (CandidateInfo info : classes.values()) {
+          if (!processor.execute(info.getElement(), state)) return false;
+        }
+      }
+      else {
+        CandidateInfo info = classes.get(name);
+        if (info != null) {
+          if (!processor.execute(info.getElement(), state)) return false;
         }
       }
     }
-
 
     return true;
   }
@@ -365,44 +366,6 @@ public class GrClassImplUtil {
     else {
       return member.hasModifierProperty(PsiModifier.STATIC);
     }
-  }
-
-  @NotNull
-  private static List<PsiClass> getInnerClassesForResolve(@NotNull final GrTypeDefinition grType,
-                                                          @Nullable final PsiElement lastParent,
-                                                          @NotNull final PsiElement place) {
-    if (lastParent instanceof GrReferenceList || PsiTreeUtil.getParentOfType(place, GrReferenceList.class) != null) {
-      return Arrays.asList(grType.getCodeInnerClasses());
-    }
-
-    boolean includeSynthetic = !PsiTreeUtil.isContextAncestor(grType, place, true);
-    Object key = Trinity.create(grType, lastParent, place);
-    List<PsiClass> classes = RecursionManager.doPreventingRecursion(key, false, () -> {
-      List<PsiClass> result = new ArrayList<>();
-      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, includeSynthetic).values()) {
-        final PsiClass inner = (PsiClass)info.getElement();
-        final PsiClass containingClass = inner.getContainingClass();
-        if (containingClass == null) {
-          PsiFile file = grType.getContainingFile();
-          LOG.error(
-            "Contating class must not be null. Name: " + inner.getName() + ", class: :" + inner.getClass(),
-            new Attachment(file.getVirtualFile().getPresentableUrl(), DebugUtil.psiToString(file, false))
-          );
-          continue;
-        }
-
-        if (lastParent == null || !containingClass.isInterface() || PsiTreeUtil.isAncestor(containingClass, place, false)) {
-          ContainerUtil.addIfNotNull(result, inner);
-        }
-      }
-      return result;
-    });
-
-    if (classes == null) {
-      return Arrays.asList(grType.getCodeInnerClasses());
-    }
-
-    return classes;
   }
 
   public static boolean isSameDeclaration(PsiElement place, PsiElement element) {

@@ -1,15 +1,15 @@
 <component name="libraryTable">
-  <library name="Trove4j">
+  <library name="Trove4j" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:trove4j:1.0.20160824" />
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/trove4j" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/trove4j.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20160824/trove4j-1.0.20160824.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/trove4j_src.jar!/generated/src" />
-      <root url="jar://$PROJECT_DIR$/lib/src/trove4j_src.jar!/core/src" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20160824/trove4j-1.0.20160824-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

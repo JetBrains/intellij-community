@@ -16,6 +16,7 @@
 
 package com.intellij;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,7 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr", "TestOnlyProblems", "BusyWait"})
 public class TestAll implements Test {
   static {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
     Logger.setFactory(TestLoggerFactory.class);
   }
 

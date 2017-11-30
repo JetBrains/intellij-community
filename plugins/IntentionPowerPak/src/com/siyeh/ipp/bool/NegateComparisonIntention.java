@@ -21,6 +21,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -65,7 +66,9 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
     final String lhsText = lhs.getText();
     assert rhs != null;
     final String rhsText = rhs.getText();
-    replaceExpressionWithNegatedExpressionString(lhsText +
-                                                 negatedOperator + rhsText, expression);
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(lhs);
+    tracker.markUnchanged(rhs);
+    replaceExpressionWithNegatedExpressionString(lhsText + negatedOperator + rhsText, expression, tracker);
   }
 }

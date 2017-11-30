@@ -1,6 +1,9 @@
 import _curses
 from _curses import *  # noqa: F403
 
+LINES: int
+COLS: int
+
 def initscr() -> _curses._CursesWindow: ...
 def start_color(): ...
 def wrapper(func, *args, **kwds): ...

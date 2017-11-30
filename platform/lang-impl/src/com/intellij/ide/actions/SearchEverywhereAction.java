@@ -31,6 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -221,6 +222,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
         label.setToolTipText(null);
         IdeTooltipManager.getInstance().hideCurrentNow(false);
+        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
+        if (toolbar != null) {
+          ToolbarClicksCollector.record(SearchEverywhereAction.this, toolbar.getPlace());
+        }
         actionPerformed(null, e);
       }
 

@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +94,7 @@ public class RandomDoubleForRandomIntegerInspection
       if (cast == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       final PsiExpression multiplierExpression;
       final PsiExpression lhs = multiplication.getLOperand();
       final PsiExpression strippedLhs =
@@ -104,10 +106,11 @@ public class RandomDoubleForRandomIntegerInspection
         multiplierExpression = lhs;
       }
       assert multiplierExpression != null;
-      final String multiplierText = multiplierExpression.getText();
+      final String multiplierText = commentTracker.markUnchanged(multiplierExpression).getText();
       @NonNls final String nextInt = ".nextInt((int) ";
+      commentTracker.markUnchanged(qualifier);
       PsiReplacementUtil.replaceExpression(cast, qualifierText + nextInt + multiplierText +
-                                                 ')');
+                                                 ')', commentTracker);
     }
   }
 

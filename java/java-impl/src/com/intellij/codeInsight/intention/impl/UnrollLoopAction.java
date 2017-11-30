@@ -190,7 +190,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           PsiIfStatement ifStatement = (PsiIfStatement)added;
           PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
           PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
-          String negated = BoolUtils.getNegatedExpressionText(condition);
+          String negated = BoolUtils.getNegatedExpressionText(condition, ct);
           condition.replace(factory.createExpressionFromText(negated, condition));
           PsiBlockStatement block = (PsiBlockStatement)thenBranch.replace(factory.createStatementFromText("{}", added));
           anchor = block.getCodeBlock().getLastChild();

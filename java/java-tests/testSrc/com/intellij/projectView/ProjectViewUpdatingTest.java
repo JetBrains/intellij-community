@@ -269,6 +269,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
     final JTree tree = pane.getTree();
+    pane.getTreeBuilder().setPassthroughMode(false);
 
     myStructure.setShowMembers(true);
 

@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -62,6 +50,7 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -700,12 +689,12 @@ public class UIUtil {
     if (x == x1) {
       int minY = Math.min(y, y1);
       int maxY = Math.max(y, y1);
-      graphics.drawLine(x, minY + 1, x1, maxY - 1);
+      drawLine(graphics, x, minY + 1, x1, maxY - 1);
     }
     else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      graphics.drawLine(minX + 1, y, maxX - 1, y1);
+      drawLine(graphics, minX + 1, y, maxX - 1, y1);
     }
     else {
       drawLine(graphics, x, y, x1, y1);
@@ -808,6 +797,19 @@ public class UIUtil {
   }
 
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    Stroke stroke = ((Graphics2D)g).getStroke();
+    if (stroke instanceof BasicStroke) {
+      if (x1 == x2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(x1, Math.min(y1, y2), lineWidth, Math.abs(y1 - y2) + lineWidth));
+        return;
+      }
+      if (y1 == y2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(Math.min(x1, x2), y1, Math.abs(x1 - x2) + lineWidth, lineWidth));
+        return;
+      }
+    }
     g.drawLine(x1, y1, x2, y2);
   }
 
@@ -1799,25 +1801,25 @@ public class UIUtil {
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
-      g.drawLine(startX, 3, endX - 1, 3);
-      g.drawLine(startX, height - 3, endX - 1, height - 3);
+      drawLine(g ,startX, 3, endX - 1, 3);
+      drawLine(g ,startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
-    g.drawLine(x + 1, y, x + w - 1, y);
-    g.drawLine(x + w, y + 1, x + w, y + h - 1);
-    g.drawLine(x + w - 1, y + h, x + 1, y + h);
-    g.drawLine(x, y + 1, x, y + h - 1);
+    drawLine(g ,x + 1, y, x + w - 1, y);
+    drawLine(g ,x + w, y + 1, x + w, y + h - 1);
+    drawLine(g ,x + w - 1, y + h, x + 1, y + h);
+    drawLine(g ,x, y + 1, x, y + h - 1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1850,8 +1852,8 @@ public class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
-      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      drawLine(g ,dotXi, lineY, dotXi + 1, lineY);
+      drawLine(g ,dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1876,16 +1878,11 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    height++;
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
-      if (jmHiDPI) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
-      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1894,8 +1891,8 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
+      if (drawTopLine) drawLine(g ,x, 0, width, 0);
+      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
@@ -1903,7 +1900,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? CONTRAST_BORDER_COLOR : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, 0, width, 0);
+      drawLine(g ,x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1919,10 +1916,10 @@ public class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        g.drawLine(dot, xOrY, dot, xOrY);
+        drawLine(g ,dot, xOrY, dot, xOrY);
       }
       else {
-        g.drawLine(xOrY, dot, xOrY, dot);
+        drawLine(g ,xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -3498,7 +3495,7 @@ public class UIUtil {
                 g.setColor(info.underlineColor);
               }
 
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
               if (c != null) {
                 g.setColor(c);
               }
@@ -3506,7 +3503,7 @@ public class UIUtil {
               if (myDrawShadow) {
                 c = g.getColor();
                 g.setColor(myShadowColor);
-                g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
                            yOffset[0] + fm.getDescent() + 1);
                 g.setColor(c);
               }

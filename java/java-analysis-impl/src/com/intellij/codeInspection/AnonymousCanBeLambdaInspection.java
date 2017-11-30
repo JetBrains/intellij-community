@@ -271,7 +271,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
 
-    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass, body);
+    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass.getParent(), body);
     final Project project = anonymousClass.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
@@ -326,7 +326,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   }
 
   @NotNull
-  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiAnonymousClass anonymousClass, PsiCodeBlock body) {
+  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
     psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());

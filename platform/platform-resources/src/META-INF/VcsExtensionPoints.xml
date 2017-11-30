@@ -86,5 +86,6 @@
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="vcsRepositoryInitializer" interface="com.intellij.vcs.VcsRepositoryInitializer"/>
   </extensionPoints>
 </idea-plugin>

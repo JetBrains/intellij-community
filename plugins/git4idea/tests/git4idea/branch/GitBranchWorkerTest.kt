@@ -15,9 +15,9 @@
  */
 package git4idea.branch
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -621,7 +621,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       repository.git("branch todelete")
     }
     git.onBranchDelete {
-      if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf(), null)
+      if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf())
       else null
     }
   }
@@ -947,9 +947,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   open class TestUiHandler : GitBranchUiHandler {
-    override fun getProgressIndicator(): ProgressIndicator {
-      return EmptyProgressIndicator()
-    }
+    override fun getProgressIndicator() = EmptyProgressIndicator()
 
     override fun showSmartOperationDialog(project: Project,
                                           changes: List<Change>,
@@ -965,32 +963,32 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
 
     override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$title\n$message\n$rollbackProposal")
     }
 
     override fun showUnmergedFilesNotification(operationName: String, repositories: Collection<GitRepository>) {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$operationName\n$repositories")
     }
 
     override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$operationName\n$rollbackProposal")
     }
 
     override fun showUntrackedFilesNotification(operationName: String, root: VirtualFile, relativePaths: Collection<String>) {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$operationName $root\n$relativePaths")
     }
 
     override fun showUntrackedFilesDialogWithRollback(operationName: String,
                                                       rollbackProposal: String,
                                                       root: VirtualFile,
                                                       relativePaths: Collection<String>): Boolean {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$operationName\n$rollbackProposal\n$root\n$relativePaths")
     }
 
     override fun confirmRemoteBranchDeletion(branchName: String,
                                              trackingBranches: MutableCollection<String>,
                                              repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
-      throw UnsupportedOperationException()
+      throw UnsupportedOperationException("$branchName\n$trackingBranches\n$repositories")
     }
   }
 
@@ -1009,19 +1007,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun assertDetachedState(repository: GitRepository, reference: String) {
     assertCurrentRevision(repository, reference)
-
-    val curBranch = getCurrentBranch(repository)
-    val isDetached = curBranch.contains("detached")
-    assertTrue("Current branch is not detached in ${repository} - $curBranch", isDetached)
+    assertEquals("Repository should be in the detached HEAD state", Repository.State.DETACHED, repository.state)
   }
 
   private fun assertCurrentBranch(repository: GitRepository, name: String) {
-    val curBranch = getCurrentBranch(repository)
-    assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
-  }
-
-  private fun getCurrentBranch(repository: GitRepository): String {
-    return repository.git("branch").lines().find { it.contains("*") }!!.replace('*', ' ').trim()
+    assertEquals("Current branch is incorrect in ${repository}", name, repository.currentBranchName)
   }
 
   private fun assertCurrentRevision(repository: GitRepository, reference: String) {

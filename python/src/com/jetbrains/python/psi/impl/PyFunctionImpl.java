@@ -216,10 +216,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
-    if (isAsync() && isAsyncAllowed()) {
-      return createAsyncType(inferredType);
-    }
-    return inferredType;
+    return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
   @Nullable
@@ -395,20 +392,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return null;
     }
     return visitor.result();
-  }
-
-  @Nullable
-  private PyType createAsyncType(@Nullable PyType returnType) {
-    if (returnType instanceof PyCollectionType) {
-      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
-      if (classType != null) {
-        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          return PyTypingTypeProvider.wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), this);
-        }
-      }
-    }
-
-    return PyTypingTypeProvider.wrapInCoroutineType(returnType, this);
   }
 
   @Override
@@ -686,6 +669,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isGenerator();
+    }
+
     Boolean result = myIsGenerator;
     if (result == null) {
       Ref<Boolean> containsYield = Ref.create(false);

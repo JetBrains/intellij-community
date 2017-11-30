@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -37,6 +38,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExpressionUtils {
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
@@ -1127,5 +1130,47 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
+  }
+
+  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
+    PsiExpression qualifier = refExpression.getQualifierExpression();
+    if (qualifier == null) {
+      return true;
+    }
+    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
+      if (thisQualifier == null) return true;
+      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
+      return innerMostClass == thisQualifier.resolve();
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether diff-expression represents a difference between from-expression and to-expression
+   *
+   * @param from from-expression
+   * @param to   to-expression
+   * @param diff diff-expression
+   * @return true if diff = to - from
+   */
+  public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
+    diff = PsiUtil.skipParenthesizedExprDown(diff);
+    if (diff == null) return false;
+    if (isZero(from) && PsiEquivalenceUtil.areElementsEquivalent(to, diff)) return true;
+    if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
+      if (right != null && PsiEquivalenceUtil.areElementsEquivalent(to, left) && PsiEquivalenceUtil.areElementsEquivalent(from, right)) {
+        return true;
+      }
+    }
+    Integer fromConstant = tryCast(computeConstantExpression(from), Integer.class);
+    if (fromConstant == null) return false;
+    Integer toConstant = tryCast(computeConstantExpression(to), Integer.class);
+    if (toConstant == null) return false;
+    Integer diffConstant = tryCast(computeConstantExpression(diff), Integer.class);
+    if (diffConstant == null) return false;
+    return diffConstant == toConstant - fromConstant;
   }
 }

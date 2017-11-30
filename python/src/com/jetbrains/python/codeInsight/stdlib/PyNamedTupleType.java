@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -24,6 +10,7 @@ import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +19,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
+public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   private final PsiElement myDeclaration;
@@ -51,7 +38,11 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
                           @NotNull String name,
                           @NotNull Map<String, FieldTypeAndDefaultValue> fields,
                           @NotNull DefinitionLevel definitionLevel) {
-    super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
+    super(tupleClass,
+          Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
+          false,
+          definitionLevel != DefinitionLevel.INSTANCE);
+
     myDeclaration = declaration;
     myFields = Collections.unmodifiableMap(fields);
     myName = name;
@@ -86,7 +77,8 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE);
+      final Map<String, FieldTypeAndDefaultValue> fields = takeFieldsTypesFromCallSiteIfNeeded(context, callSite);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, fields, DefinitionLevel.INSTANCE);
     }
 
     return null;
@@ -139,10 +131,6 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return result;
   }
 
-  public int getElementCount() {
-    return myFields.size();
-  }
-
   @NotNull
   public Map<String, FieldTypeAndDefaultValue> getFields() {
     return myFields;
@@ -159,6 +147,30 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return isCallable()
            ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
            : null;
+  }
+
+  @NotNull
+  private Map<String, FieldTypeAndDefaultValue> takeFieldsTypesFromCallSiteIfNeeded(@NotNull TypeEvalContext context,
+                                                                                    @NotNull PyCallSiteExpression callSite) {
+    if (StreamEx.of(getElementTypes()).allMatch(Objects::isNull)) {
+      final List<PyExpression> arguments = callSite.getArguments(null);
+
+      if (arguments.size() == myFields.size()) {
+        final Map<String, FieldTypeAndDefaultValue> result = new HashMap<>();
+
+        for (Map.Entry<String, PyExpression> entry : StreamEx.ofKeys(myFields).zipWith(StreamEx.of(arguments))) {
+          final String name = entry.getKey();
+          final PyType type = context.getType(entry.getValue());
+          final PyExpression value = myFields.get(name).getDefaultValue();
+
+          result.put(name, new FieldTypeAndDefaultValue(type, value));
+        }
+
+        return result;
+      }
+    }
+
+    return myFields;
   }
 
   @NotNull

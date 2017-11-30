@@ -30,7 +30,6 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -90,8 +89,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
-    Experiments.isFeatureEnabled("structure.view.async.tree.model");
+  private final boolean myUseATM = true; //todo inline & remove
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;

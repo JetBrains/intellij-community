@@ -414,6 +414,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     try {
       myAccessValidator.startedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
+      FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -426,6 +427,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       }
       throw e;
     } finally {
+      FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
     return true;

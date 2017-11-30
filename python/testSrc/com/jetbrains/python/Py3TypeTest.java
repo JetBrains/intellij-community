@@ -227,18 +227,36 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIOWrapper[str]",
+    doTest("TextIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[bytes]",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
+  }
+
+  public void testIoOpenDefault() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo')\n");
+  }
+
+  public void testIoOpenText() {
+    doTest("TextIO",
+           "import io\n" +
+           "expr = io.open('foo', 'r')\n");
+  }
+
+  public void testIoOpenBinary() {
+    doTest("BinaryIO",
+           "import io\n" +
+           "expr = io.open('foo', 'rb')\n");
   }
 
   // PY-1427
@@ -607,6 +625,20 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-24067
+  public void testAsyncFunctionReturnTypeInDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Coroutine[Any, Any, int]",
+                   "async def f():\n" +
+                   "    \"\"\"\n" +
+                   "    :rtype: int\n" +
+                   "    \"\"\"\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
   // PY-26847
   public void testAwaitOnImportedCoroutine() {
     runWithLanguageLevel(
@@ -625,6 +657,7 @@ public class Py3TypeTest extends PyTestCase {
     final Project project = expr.getProject();
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertProjectFilesNotParsed(containingFile);
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
   }
 

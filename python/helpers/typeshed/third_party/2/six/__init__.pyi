@@ -15,6 +15,7 @@ from mypy_extensions import NoReturn
 from __builtin__ import unichr as unichr
 from StringIO import StringIO as StringIO, StringIO as BytesIO
 from functools import wraps as wraps
+from . import moves
 
 
 _T = TypeVar('_T')

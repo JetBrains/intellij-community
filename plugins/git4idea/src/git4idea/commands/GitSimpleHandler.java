@@ -33,7 +33,10 @@ import java.io.File;
  * <p/>
  * The class also includes a number of static utility methods that represent some
  * simple commands.
+ *
+ * @deprecated use {@link Git} and {@link GitLineHandler}
  */
+@Deprecated
 public class GitSimpleHandler extends GitTextHandler {
 
   public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";

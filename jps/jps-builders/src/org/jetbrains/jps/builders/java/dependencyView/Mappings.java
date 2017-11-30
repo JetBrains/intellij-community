@@ -710,7 +710,10 @@ public class Mappings {
     }
 
     void affectModule(ModuleRepr m, final Collection<File> affectedFiles) {
-      final Collection<File> depFiles = myClassToSourceFile.get(m.name);
+      Collection<File> depFiles = myMappings != null? myMappings.myClassToSourceFile.get(m.name) : null;
+      if (depFiles == null) {
+        depFiles = myClassToSourceFile.get(m.name);
+      }
       if (depFiles != null) {
         debug("Affecting module ", m.name);
         affectedFiles.addAll(depFiles);
@@ -2350,6 +2353,9 @@ public class Mappings {
 
       for (ModuleRepr moduleRepr : modulesDiff.added()) {
         myDelta.addChangedClass(moduleRepr.name); // need this for integrate
+        // after module has been added, the whole target should be rebuilt
+        // because necessary 'require' directives may be missing from the newly added module-info file
+        myFuture.affectModule(moduleRepr, myAffectedFiles);
       }
       
       for (ModuleRepr removedModule : modulesDiff.removed()) {

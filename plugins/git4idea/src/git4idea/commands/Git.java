@@ -41,6 +41,7 @@ public interface Git {
   /**
    * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
    * are not sufficient.
+   *
    * @param handlerConstructor this is needed, since the operation may need to repeat (e.g. in case of authentication failure).
    *                           make sure to supply a stateless constructor.
    */
@@ -54,6 +55,16 @@ public interface Git {
    */
   @NotNull
   GitCommandResult runCommand(@NotNull GitLineHandler handler);
+
+  /**
+   * A generic method to run a Git command without collecting result, when existing methods are not sufficient. <br/>
+   * <p>
+   * Prefer this method to the standard {@link #runCommand(GitLineHandler)} if a large amount of output is expected,
+   * e.g. when reading a large block of the {@code git log} output: collecting results would lead to huge memory allocation,
+   * so it's better to add a separate {@link GitLineHandlerListener} and process the output line by line instead. <br/>
+   */
+  @NotNull
+  GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler);
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
@@ -210,5 +221,4 @@ public interface Git {
                           @NotNull String commit,
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
-
 }

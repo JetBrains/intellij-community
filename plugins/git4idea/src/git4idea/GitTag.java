@@ -18,8 +18,9 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,14 +42,14 @@ public class GitTag extends GitReference {
   @Deprecated
   public static void listAsStrings(final Project project, final VirtualFile root, final Collection<String> tags,
                                    @Nullable final String containingCommit) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.TAG);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.TAG);
     handler.setSilent(true);
     handler.addParameters("-l");
     if (containingCommit != null) {
       handler.addParameters("--contains");
       handler.addParameters(containingCommit);
     }
-    for (String line : handler.run().split("\n")) {
+    for (String line : Git.getInstance().runCommand(handler).getOutputOrThrow().split("\n")) {
       if (line.length() == 0) {
         continue;
       }

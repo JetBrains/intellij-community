@@ -68,6 +68,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     }
     myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
 
+      @Override
       public void finished() {
         SwingUtilities.invokeLater(() -> {
           if (ChangesBrowserDialog.this.isShowing()) {
@@ -76,6 +77,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
         });
       }
 
+      @Override
       public void consume(final List<CommittedChangeList> committedChangeLists) {
         SwingUtilities.invokeLater(() -> {
           if (ChangesBrowserDialog.this.isShowing()) {

@@ -133,6 +133,24 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
     }
 
+
+    fileAnnotation.setCloser(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (project.isDisposed()) return;
+        editor.getGutter().closeAllAnnotations();
+      });
+    });
+
+    fileAnnotation.setReloader(newFileAnnotation -> {
+      if (editor.getGutter().isAnnotationsShown()) {
+        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
+        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
+      }
+    });
+
+    if (fileAnnotation.isClosed()) return;
+
+
     Disposable disposable = new Disposable() {
       @Override
       public void dispose() {
@@ -153,20 +171,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     }
 
     editor.getGutter().closeAllAnnotations();
-
-    fileAnnotation.setCloser(() -> {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
-      });
-    });
-
-    fileAnnotation.setReloader(newFileAnnotation -> {
-      if (editor.getGutter().isAnnotationsShown()) {
-        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
-      }
-    });
 
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();

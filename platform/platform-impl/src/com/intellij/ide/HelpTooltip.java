@@ -47,7 +47,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
@@ -56,7 +55,57 @@ import java.util.Map;
 
 /**
  * Standard implementation of help context tooltip.
- * Detailed description can be found here: https://jetpeople.jetbrains.com/article/21-52724
+ *
+ * <h2>Overview</h2>
+ * <p>UI design requires to have tooltips that contain detailed information about UI actions and controls.
+ * Embedded context help tooltip functionality is incorporated this class.</p>
+ *
+ * <p>A simple example of the tooltip usage is the following:<br/>
+ * <code>new HelpTooltip().<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;setTitle("Title").<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;setShortcut("Shortcut").<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;setDescription("Description").<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;installOn(component);</code>
+ * </p>
+ *
+ * <h2>Restrictions and field formats</h2>
+ * <p>If you’re creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
+ * You can optionally set the tooltip relative location using {@link HelpTooltip#setLocation(Alignment)}.
+ * The <code>Alignment</code> enum defines fixed relative locations according to the design document (see the link below).
+ * More types of relative location will be added as needed but there won’t be a way to choose the location on pixel basis.</p>
+ *
+ * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
+ * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
+ * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/ or &lt;p&gt; tags between paragraphs.
+ * Paragraphs will be rendered with the standard (10px) offset from the title, from one another and from the link.
+ * To force the line break in a paragraph use &lt;br/&gt;. Standard font coloring and styling is also available.</p>
+ *
+ * <h2>Timeouts</h2>
+ *
+ * <p>Single line tooltips autoclose in 10 seconds, multiline in 30 seconds. You can optionally disable autoclosing by
+ * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to <code>true</code>. By default tooltips don’t close after a timeout on help buttons
+ * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
+ *
+ * <p>System wide tooltip timeouts are set through the registry:
+ * <ul>
+ * <li>&nbsp;ide.helptooltip.full.dismissDelay - multiline tooltip timeout (default 30 seconds)</li>
+ * <li>&nbsp;ide.helptooltip.regular.dismissDelay - single line tooltip timeout (default 10 seconds)</li>
+ * </ul></p>
+ *
+ * <h2>Avoiding multiple popups</h2>
+ * <p>Some actions may open a popup menu. Current design is that the action's popup menu should take over the help tooltip.
+ * This is partly implemented in <code>AbstractPopup</code> class to track such cases. But this doesn’t always work.
+ * If help tooltip shows up over the component’s popup menu you should make sure you set the master popup for the help tooltip.
+ * This will prevent help tooltip from showing when the popup menu is opened. The best way to do it is to take source component
+ * from an <code>InputEvent</code> and pass the source component along with the popup menu reference to
+ * {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
+ *
+ * <p>If you’re handling <code>DumbAware.actionPerformed(AnActionEvent e)</code>, it has <code>InputEvent</code>in <code>AnActionEvent</code> which you can use to get the source.</p>
+ *
+ * <h2>ContextHelpLabel</h2>
+ * <p>ContextHelpLabel is a convenient <code>JLabel</code> which contains a help icon and has a HelpTooltip installed on it.
+ * You can create it using one of its static methods and pass title/description/link. This label can also be used in forms.
+ * The UI designer will offer to create <code>private void createUIComponents()</code> method where you can create the label with a static method.</p>
  */
 
 public class HelpTooltip implements Disposable {
@@ -99,8 +148,10 @@ public class HelpTooltip implements Disposable {
   private int myDismissDelay;
 
   private MouseAdapter myMouseListener;
-  private PropertyChangeListener myPropertyChangeListener;
 
+  /**
+   * Location of the HelpTooltip relatively to the owner component.
+   */
   public enum Alignment {
     RIGHT {
       @Override public Point getPointFor(JComponent owner) {
@@ -129,25 +180,47 @@ public class HelpTooltip implements Disposable {
     public abstract Point getPointFor(JComponent owner);
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Sets tooltip title. If it's longer than 2 lines (fitting in 250 pixels each) then
+   * the text is automatically stripped to the word boundary and dots are added to the end.
+   *
+   * @param title text for title.
+   * @return <code>this</code>
+   */
   public HelpTooltip setTitle(String title) {
     this.title = title;
     return this;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Sets text for the shortcut placeholder.
+   *
+   * @param shortcut text for shortcut.
+   * @return <code>this</code>
+   */
   public HelpTooltip setShortcut(String shortcut) {
     this.shortcut = shortcut;
     return this;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Sets description text.
+   *
+   * @param description text for description.
+   * @return <code>this</code>
+   */
   public HelpTooltip setDescription(String description) {
     this.description = description;
     return this;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Enables link in the tooltip below description and sets action for it.
+   *
+   * @param linkText text to show in the link.
+   * @param linkAction action to execute when link is clicked.
+   * @return <code>this</code>
+   */
   public HelpTooltip setLink(String linkText, Runnable linkAction) {
     this.link = LinkLabel.create(linkText, () -> {
       hidePopup(true);
@@ -156,18 +229,33 @@ public class HelpTooltip implements Disposable {
     return this;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
+   *
+   * @param neverHide <code>true</code> don't hide, <code>false</code> otherwise.
+   * @return <code>this</code>
+   */
   public HelpTooltip setNeverHideOnTimeout(boolean neverHide) {
     this.neverHide = neverHide;
     return this;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * Sets location of the tooltip relatively to the owner component.
+   *
+   * @param alignment is relative location
+   * @return <code>this</code>
+   */
   public HelpTooltip setLocation(Alignment alignment) {
     this.alignment = alignment;
     return this;
   }
 
+  /**
+   * Installs the tooltip after the configuration has been completed on the specified owner component.
+   *
+   * @param component is the owner component for the tooltip.
+   */
   public void installOn(JComponent component) {
     JPanel tipPanel = new JPanel();
     tipPanel.addMouseListener(new MouseAdapter() {
@@ -210,9 +298,6 @@ public class HelpTooltip implements Disposable {
     myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
     neverHide = neverHide || DarculaButtonUI.isHelpButton(component);
 
-    owner = component;
-    owner.putClientProperty(TOOLTIP_PROPERTY, this);
-
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setBorderColor(BORDER_COLOR).setShowShadow(false);
@@ -236,16 +321,23 @@ public class HelpTooltip implements Disposable {
       }
     };
 
-    myPropertyChangeListener = evt -> {
-      if (evt.getNewValue() == null) { // owner is removed from the component tree
+    component.addPropertyChangeListener("ancestor", evt -> {
+      if (evt.getNewValue() == null) {
         hidePopup(true);
         Disposer.dispose(this);
+      } else {
+        registerOn((JComponent)evt.getSource());
       }
-    };
+    });
 
+    registerOn(component);
+  }
+
+  private void registerOn(JComponent component) {
+    owner = component;
+    owner.putClientProperty(TOOLTIP_PROPERTY, this);
     owner.addMouseListener(myMouseListener);
     owner.addMouseMotionListener(myMouseListener);
-    owner.addPropertyChangeListener("ancestor", myPropertyChangeListener);
   }
 
   @Override
@@ -253,13 +345,19 @@ public class HelpTooltip implements Disposable {
     if (owner != null) {
       owner.removeMouseListener(myMouseListener);
       owner.removeMouseMotionListener(myMouseListener);
-      owner.removePropertyChangeListener(myPropertyChangeListener);
       owner.putClientProperty(TOOLTIP_PROPERTY, null);
       owner = null;
       masterPopup = null;
     }
   }
 
+  /**
+   * Hides and disposes the tooltip possibly installed on the mentioned component.Disposing means
+   * unregistering all <code>HelpTooltip</code> specific listeners installed on the component.
+   * If there is no tooltip installed on the component nothing happens.
+   *
+   * @param owner a possible <code>HelpTooltip</code> owner.
+   */
   public static void dispose(@NotNull Component owner) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
@@ -270,6 +368,13 @@ public class HelpTooltip implements Disposable {
     }
   }
 
+  /**
+   * Hides the tooltip possibly installed on the mentioned component without disposing.
+   * Listeners are not removed.
+   * If there is no tooltip installed on the component nothing happens.
+   *
+   * @param owner a possible <code>HelpTooltip</code> owner.
+   */
   public static void hide(@NotNull Component owner) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
@@ -279,6 +384,13 @@ public class HelpTooltip implements Disposable {
     }
   }
 
+  /**
+   * Sets master popup for the current <code>HelpTooltip</code>. Master popup takes over the help tooltip,
+   * so when the master popup is about to be shown help tooltip hides.
+   *
+   * @param owner possible owner
+   * @param master master popup
+   */
   public static void setMasterPopup(@NotNull Component owner, JBPopup master) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);

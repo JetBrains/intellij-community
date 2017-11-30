@@ -7,9 +7,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
-import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
+import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -99,7 +99,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         if (quick) return ERR
         val fixes = when {
           packageName.isEmpty() -> emptyList()
-          module != null && targetModule is PsiCompiledElement -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
+          targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
+          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName))
           else -> emptyList()
         }
         return when (useModule) {
@@ -120,7 +121,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       if (!(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
         return if (quick) ERR else ErrorWithFixes(
           JavaErrorMessages.message("module.access.does.not.read", packageName, targetName, useName),
-          listOf(AddRequiredModuleFix(useModule, targetName)))
+          listOf(AddRequiresDirectiveFix(useModule, targetName)))
       }
     }
     else if (useModule != null) {
@@ -131,7 +132,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
     return optionValues(options, "--add-exports")
@@ -142,7 +143,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     return optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" }
@@ -172,10 +173,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
       if (isAvailable(project, editor, file)) {
-        val configuration = CompilerConfiguration.getInstance(project)
-        val options = configuration.getAdditionalOptions(module).toMutableList()
+        val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module).toMutableList()
         update(options)
-        configuration.setAdditionalOptions(module, options)
+        JavaCompilerConfigurationProxy.setAdditionalOptions(module.project, module, options)
         PsiManager.getInstance(project).dropPsiCaches()
         DaemonCodeAnalyzer.getInstance(project).restart()
       }

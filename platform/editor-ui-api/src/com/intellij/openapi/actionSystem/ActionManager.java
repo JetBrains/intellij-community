@@ -54,6 +54,7 @@ public abstract class ActionManager {
    *
    * @return An instance of {@code ActionPopupMenu}
    */
+  @NotNull
   public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, @NotNull ActionGroup group);
 
   /**
@@ -70,6 +71,7 @@ public abstract class ActionManager {
    *
    * @return An instance of {@code ActionToolbar}
    */
+  @NotNull
   public abstract ActionToolbar createActionToolbar(@NonNls String place, @NotNull ActionGroup group, boolean horizontal);
 
   /**
@@ -149,6 +151,7 @@ public abstract class ActionManager {
    * @return the created panel.
    * @since 5.1
    */
+  @NotNull
   public abstract JComponent createButtonToolbar(final String actionPlace, @NotNull ActionGroup messageActionGroup);
 
   @Nullable

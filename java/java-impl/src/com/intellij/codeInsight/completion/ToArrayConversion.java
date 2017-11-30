@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtil;
@@ -46,7 +47,8 @@ public class ToArrayConversion {
       return;
     }
 
-    final String bracketSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
+    final String bracketSpace =
+      getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_BRACKETS);
     boolean hasEmptyArrayField = false;
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass != null) {
@@ -81,7 +83,8 @@ public class ToArrayConversion {
   }
 
   private static void addToArrayConversion(final PsiElement element, final String prefix, @NonNls final String expressionString, @NonNls String presentableString, final Consumer<LookupElement> result, PsiElement qualifier) {
-    final boolean callSpace = CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+    final boolean callSpace = CodeStyleSettingsManager.getSettings(element.getProject())
+      .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES;
     final PsiExpression conversion;
     try {
       conversion = createExpression(

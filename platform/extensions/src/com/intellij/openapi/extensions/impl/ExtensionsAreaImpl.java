@@ -130,8 +130,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String ns) {
-    String epName = extractEPName(extensionElement, ns);
+  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
+    String epName = extractEPName(extensionElement, extensionNs);
     registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 

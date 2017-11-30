@@ -693,6 +693,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       final Application application = ApplicationManager.getApplication();
       try {
         myProvider.loadCommittedChanges(mySettings, myLocation, 0, new AsynchConsumer<CommittedChangeList>() {
+          @Override
           public void consume(CommittedChangeList committedChangeList) {
             myRevisionsReturned = true;
             bufferedListConsumer.consumeOne(committedChangeList);
@@ -701,6 +702,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             }
           }
 
+          @Override
           public void finished() {
             bufferedListConsumer.flush();
             appender.finished();

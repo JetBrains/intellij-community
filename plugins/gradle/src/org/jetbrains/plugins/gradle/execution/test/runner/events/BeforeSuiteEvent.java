@@ -15,12 +15,16 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
+
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * @author Vladislav.Soroka
@@ -55,6 +59,13 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
         registerTestProxy(testId, testProxy);
       }
     }
+  }
+
+  @NotNull
+  protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
+    return name == null
+           ? JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + fqClassName
+           : JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, name);
   }
 
   private boolean isHiddenTestNode(String name, SMTestProxy parentTest) {

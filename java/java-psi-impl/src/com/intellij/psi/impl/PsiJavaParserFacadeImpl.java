@@ -396,12 +396,10 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiStatement createModuleStatementFromText(@NotNull String text) {
+  public PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException {
     String template = "module M { " + text + "; }";
-    DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(template, MODULE, LanguageLevel.JDK_1_9), null);
-    PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-    if (!(element instanceof PsiJavaModule)) throw new IncorrectOperationException("Incorrect module statement '" + text + "'");
-    PsiStatement statement = PsiTreeUtil.getChildOfType(element, PsiStatement.class);
+    PsiJavaModule module = createModuleFromText(template);
+    PsiStatement statement = PsiTreeUtil.getChildOfType(module, PsiStatement.class);
     if (statement == null) throw new IncorrectOperationException("Incorrect module statement '" + text + "'");
     return statement;
   }

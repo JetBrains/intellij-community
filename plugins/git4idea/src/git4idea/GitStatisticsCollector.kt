@@ -51,7 +51,6 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     usages.add(getBooleanUsage("config.cherry-pick.autocommit", settings.isAutoCommitOnCherryPick))
     usages.add(getBooleanUsage("config.warn.about.crlf", settings.warnAboutCrlf()))
     usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
-    usages.add(getBooleanUsage("config.force.push", settings.warnAboutDetachedHead()))
 
     usages.add(versionUsage(GitVcs.getInstance(project).version))
 
@@ -70,7 +69,7 @@ class GitStatisticsCollector : AbstractProjectsUsagesCollector() {
     return usages
   }
 
-  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.machineFriendlyPresentation}")
+  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.semanticPresentation}")
 
   override fun getGroupId(): GroupDescriptor {
     return ID

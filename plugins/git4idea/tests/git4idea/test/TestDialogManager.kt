@@ -40,7 +40,7 @@ import kotlin.test.assertNull
  */
 class TestDialogManager : DialogManager() {
 
-  private val DEFAULT_MESSAGE_HANDLER : (String) -> Int = { throw IllegalStateException("Message is not expected") }
+  private val DEFAULT_MESSAGE_HANDLER : (String) -> Int = { throw IllegalStateException("Message is not expected: $it") }
 
   private val myHandlers = hashMapOf<Class<out DialogWrapper>, (DialogWrapper) -> Int>()
   private var myOnMessage: (String) -> Int = DEFAULT_MESSAGE_HANDLER

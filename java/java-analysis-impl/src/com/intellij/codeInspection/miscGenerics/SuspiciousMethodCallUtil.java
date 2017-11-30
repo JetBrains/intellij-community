@@ -213,6 +213,9 @@ public class SuspiciousMethodCallUtil {
                 // removeAll(Collections.singleton(null)) is a valid way to remove all nulls from collection
                 return null;
               }
+              if (qualifierItemType.isConvertibleFrom(itemType) && !reportConvertibleMethodCalls) {
+                return null;
+              }
               return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));

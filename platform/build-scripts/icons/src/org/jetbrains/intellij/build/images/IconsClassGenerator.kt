@@ -26,9 +26,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.*
 
-class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
+class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
+  private var modifiedClasses = ArrayList<Pair<JpsModule, File>>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -80,9 +81,13 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
       processedClasses++
 
       if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
-        outFile.parentFile.mkdirs()
-        outFile.writeText(text)
-        println("Updated icons class: ${outFile.name}")
+        modifiedClasses.add(Pair(module, outFile))
+
+        if (writeChangesToDisk) {
+          outFile.parentFile.mkdirs()
+          outFile.writeText(text)
+          println("Updated icons class: ${outFile.name}")
+        }
       }
     }
   }
@@ -91,6 +96,8 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     println()
     println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
+
+  fun getModifiedClasses() = modifiedClasses
 
   private fun findIconClass(dir: File): String? {
     var className: String? = null
@@ -159,7 +166,6 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     sortedKeys.forEach { key ->
       val group = nodeMap[key]
       val image = leafMap[key]
-      assert(group == null || image == null)
 
       if (group != null) {
         val inners = StringBuilder()

@@ -17,7 +17,9 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.IntentionPowerPackBundle;import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +79,11 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    final PsiExpression expression = (PsiExpression)element;
-    PsiReplacementUtil.replaceExpression(expression, getReplacementText(element));
+    final PsiUnaryExpression expression = (PsiUnaryExpression)element;
+    CommentTracker commentTracker = new CommentTracker();
+    PsiExpression operand = expression.getOperand();
+    assert operand != null;
+    commentTracker.markUnchanged(operand);
+    PsiReplacementUtil.replaceExpression(expression, getReplacementText(element), commentTracker);
   }
 }

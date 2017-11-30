@@ -40,7 +40,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-Project '" + getProject().getProjectFilePath() + "' light_temp\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity issues\n" +
                                                      "   -MarkedForRemoval\n" +
@@ -56,7 +56,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-Project '" + getProject().getProjectFilePath() + "' light_temp\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity issues\n" +
                                                      "   -MarkedForRemoval\n" +

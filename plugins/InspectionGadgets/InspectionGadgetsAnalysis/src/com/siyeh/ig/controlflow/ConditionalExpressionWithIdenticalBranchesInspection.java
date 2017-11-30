@@ -18,12 +18,14 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +65,8 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       }
       final PsiExpression elseExpression = conditionalExpression.getElseExpression();
       if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenExpression, elseExpression)) {
-        PsiReplacementUtil.replaceExpression(conditionalExpression, thenExpression.getText());
+        CommentTracker commentTracker = new CommentTracker();
+        PsiReplacementUtil.replaceExpression(conditionalExpression, commentTracker.markUnchanged(thenExpression).getText(), commentTracker);
       }
     }
   }

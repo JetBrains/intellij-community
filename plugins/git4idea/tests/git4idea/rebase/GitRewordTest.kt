@@ -16,7 +16,9 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.config.GitVersionSpecialty
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 
 class GitRewordTest : GitSingleRepoTest() {
 
@@ -53,7 +55,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    assertMessage(newMessage, git("log HEAD^ --no-walk --pretty=%B"), "Message reworded incorrectly")
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
   }
 
   fun `test undo reword`() {
@@ -112,13 +114,14 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
     GitRewordOperation(repo, commit, newMessage).execute()
 
-    val actualMessage = git("log HEAD --no-walk --pretty=%B")
-    assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
-               StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
+    assertLastMessage(newMessage)
   }
 
   // IDEA-175443
   fun `test reword with hash symbol`() {
+    assumeTrue("Not testing: not possible to fix in Git prior to 1.8.2: ${vcs.version}",
+               GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(vcs.version)) // IDEA-182044
+
     val commit = file("a").create("initial").addCommit("Wrong message").details()
 
     val newMessage = """

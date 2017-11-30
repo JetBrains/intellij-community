@@ -208,6 +208,14 @@ abstract class FirstStart(val ideType: IdeType) {
       return JDialogFixture(this, jDialog)
     }
 
+    fun Robot.dialog(timeoutSeconds: Long = DEFAULT_TIMEOUT, titleMatcher: (String) -> Boolean): JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+        titleMatcher(dialog.title)
+      }
+      return JDialogFixture(this, jDialog)
+    }
+
+
     fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JRadioButtonFixture {
       val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
         radioButton.text == text && radioButton.isShowing && radioButton.isEnabled

@@ -79,7 +79,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    */
   @NotNull
   protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
-    if (found(node, element)) {
+    if (matches(node, element)) {
       LOG.debug("found ", path);
       if (predicate == null) return Action.INTERRUPT;
       if (predicate.test(path)) return Action.CONTINUE;
@@ -96,7 +96,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node represents the given element
    */
-  protected boolean found(@NotNull AbstractTreeNode node, @NotNull T element) {
+  protected boolean matches(@NotNull AbstractTreeNode node, @NotNull T element) {
     return node.canRepresent(element);
   }
 

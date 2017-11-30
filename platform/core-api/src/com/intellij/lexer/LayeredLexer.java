@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -68,7 +69,7 @@ public class LayeredLexer extends DelegateLexer {
 
   private void activateLayerIfNecessary() {
     final IElementType baseTokenType = super.getTokenType();
-    myCurrentLayerLexer = myStartTokenToLayerLexer.get(baseTokenType);
+    myCurrentLayerLexer = findLayerLexer(baseTokenType);
     if (myCurrentLayerLexer != null) {
       myCurrentBaseTokenType = baseTokenType;
       myBaseTokenEnd = super.getTokenEnd();
@@ -77,6 +78,11 @@ public class LayeredLexer extends DelegateLexer {
         super.advance();
       }
     }
+  }
+
+  @Nullable
+  protected Lexer findLayerLexer(IElementType baseTokenType) {
+    return myStartTokenToLayerLexer.get(baseTokenType);
   }
 
   @Override

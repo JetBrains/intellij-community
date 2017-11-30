@@ -297,6 +297,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
+  public final Object myFractionalMetricsHintValue = Registry.is("editor.text.fractional.metrics")
+                                                     ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                                                     : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
   final EditorView myView;
 
   private boolean myCharKeyPressed;
@@ -2185,6 +2188,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);
+      if (myEditorComponent.isCursorSet()) {
+        Cursor cursor = myEditorComponent.getCursor();
+        if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) && 
+            cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
+            cursor != EMPTY_CURSOR &&
+            (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          // someone else has set cursor, don't touch it
+          return;
+        }
+      }
       if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {

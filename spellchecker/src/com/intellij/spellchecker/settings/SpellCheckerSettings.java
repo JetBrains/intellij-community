@@ -36,7 +36,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
 
   // Paths
-  private List<String> myDictionaryFoldersPaths = new ArrayList<>();
+  private List<String> myCustomDictionariesPaths = new ArrayList<>();
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
@@ -45,12 +45,12 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
   }
 
-  public List<String> getDictionaryFoldersPaths() {
-    return myDictionaryFoldersPaths;
+  public List<String> getCustomDictionariesPaths() {
+    return myCustomDictionariesPaths;
   }
 
-  public void setDictionaryFoldersPaths(List<String> dictionaryFoldersPaths) {
-    myDictionaryFoldersPaths = dictionaryFoldersPaths;
+  public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
+    myCustomDictionariesPaths = customDictionariesPaths;
   }
 
   public Set<String> getDisabledDictionariesPaths() {
@@ -75,7 +75,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
-        myDictionaryFoldersPaths.isEmpty() &&
+        myCustomDictionariesPaths.isEmpty() &&
         myDisabledDictionariesPaths.isEmpty()) {
       return null;
     }
@@ -90,9 +90,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       i++;
     }
     // user
-    element.setAttribute(FOLDERS_ATTR_NAME, String.valueOf(myDictionaryFoldersPaths.size()));
-    for (int j = 0; j < myDictionaryFoldersPaths.size(); j++) {
-      element.setAttribute(FOLDER_ATTR_NAME + j, myDictionaryFoldersPaths.get(j));
+    element.setAttribute(FOLDERS_ATTR_NAME, String.valueOf(myCustomDictionariesPaths.size()));
+    for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
+      element.setAttribute(FOLDER_ATTR_NAME + j, myCustomDictionariesPaths.get(j));
     }
     element.setAttribute(DICTIONARIES_ATTR_NAME, String.valueOf(myDisabledDictionariesPaths.size()));
     iterator = myDisabledDictionariesPaths.iterator();
@@ -109,7 +109,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @Override
   public void loadState(@NotNull final Element element) {
     myBundledDisabledDictionariesPaths.clear();
-    myDictionaryFoldersPaths.clear();
+    myCustomDictionariesPaths.clear();
     myDisabledDictionariesPaths.clear();
     try {
       // bundled
@@ -120,7 +120,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       // user
       final int foldersSize = Integer.valueOf(element.getAttributeValue(FOLDERS_ATTR_NAME));
       for (int i = 0; i < foldersSize; i++) {
-        myDictionaryFoldersPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
+        myCustomDictionariesPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
       }
       final int scriptsSize = Integer.valueOf(element.getAttributeValue(DICTIONARIES_ATTR_NAME));
       for (int i = 0; i < scriptsSize; i++) {

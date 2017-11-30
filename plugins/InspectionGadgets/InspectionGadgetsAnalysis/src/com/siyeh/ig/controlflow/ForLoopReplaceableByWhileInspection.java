@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,6 +86,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       final PsiForStatement forStatement =
         (PsiForStatement)forKeywordElement.getParent();
       assert forStatement != null;
+      CommentTracker commentTracker = new CommentTracker();
       final PsiExpression condition = forStatement.getCondition();
       final PsiStatement body = forStatement.getBody();
       final String bodyText;
@@ -92,17 +94,18 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
         bodyText = "";
       }
       else {
-        bodyText = body.getText();
+        bodyText = commentTracker.markUnchanged(body).getText();
       }
       @NonNls final String whileStatement;
       if (condition == null) {
         whileStatement = "while(true)" + bodyText;
       }
       else {
-        whileStatement = "while(" + condition.getText() + ')' +
+        whileStatement = "while(" + commentTracker.markUnchanged(condition).getText() + ')' +
                          bodyText;
       }
-      PsiReplacementUtil.replaceStatement(forStatement, whileStatement);
+
+      PsiReplacementUtil.replaceStatement(forStatement, whileStatement, commentTracker);
     }
   }
 
