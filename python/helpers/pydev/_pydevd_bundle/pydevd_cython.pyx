@@ -4,12 +4,14 @@
 # DO NOT edit manually!
 import sys
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
+from _pydev_bundle import pydev_log
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+pydev_log.debug("Using Cython speedups")
 # ELSE
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 9
+version = 10
 
 if not hasattr(sys, '_current_frames'):
 

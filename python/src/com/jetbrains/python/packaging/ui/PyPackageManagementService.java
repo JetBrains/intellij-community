@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
@@ -30,7 +16,6 @@ import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -402,11 +387,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public int compareVersions(@NotNull String version1, @NotNull String version2) {
-    if (PyRequirement.calculateVersionSpec(version2, PyRequirementRelation.EQ).matches(version1)) {
-      // Here we're catching the case described in PY-20939.
-      // The order of 'version1' and 'version2' is important: version2 is an available version which version1 tries to match
-      return 0;
-    }
-    return super.compareVersions(version1, version2);
+    return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }
 }

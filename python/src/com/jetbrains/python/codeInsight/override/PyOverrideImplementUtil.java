@@ -334,7 +334,7 @@ public class PyOverrideImplementUtil {
         if (ancestor.findClassAttribute(methodName, false, context) != null) return false;
       }
     }
-    return method.onlyRaisesNotImplementedError() || PyUtil.isDecoratedAsAbstract(method);
+    return method.onlyRaisesNotImplementedError() || PyKnownDecoratorUtil.hasAbstractDecorator(method, context);
   }
 
   /**

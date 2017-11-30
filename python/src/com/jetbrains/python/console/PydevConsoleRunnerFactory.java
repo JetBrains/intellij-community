@@ -43,10 +43,10 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @Override
   @NotNull
   public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                    @Nullable Module contextModule) {
+                                                @Nullable Module contextModule) {
     Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
 
-    Module module = sdkAndModule.second;
+    @Nullable Module module = sdkAndModule.second;
     Sdk sdk = sdkAndModule.first;
 
     assert sdk != null;
@@ -78,9 +78,10 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
-  public static String getWorkingDir(Project project,
-                                     Module module,
-                                     PathMapper pathMapper,
+  @Nullable
+  public static String getWorkingDir(@NotNull Project project,
+                                     @Nullable Module module,
+                                     @Nullable PathMapper pathMapper,
                                      PyConsoleOptions.PyConsoleSettings settingsProvider) {
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
@@ -104,9 +105,9 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     return workingDir;
   }
 
-  public static String[] createSetupFragment(Module module,
-                                             String workingDir,
-                                             PathMapper pathMapper,
+  public static String[] createSetupFragment(@Nullable Module module,
+                                             @Nullable String workingDir,
+                                             @Nullable PathMapper pathMapper,
                                              PyConsoleOptions.PyConsoleSettings settingsProvider) {
     String customStartScript = settingsProvider.getCustomStartScript();
     if (customStartScript.trim().length() > 0) {
@@ -140,13 +141,14 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   }
 
   @NotNull
-  protected PydevConsoleRunner createConsoleRunner(Project project,
-                                                       Sdk sdk,
-                                                       String workingDir,
-                                                       Map<String, String> envs,
-                                                       PyConsoleType consoleType,
-                                                       PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                       Consumer<String> rerunAction, String... setupFragment) {
+  protected PydevConsoleRunner createConsoleRunner(@NotNull Project project,
+                                                   @NotNull Sdk sdk,
+                                                   @Nullable String workingDir,
+                                                   @NotNull Map<String, String> envs,
+                                                   @NotNull PyConsoleType consoleType,
+                                                   @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                                   @NotNull Consumer<String> rerunAction,
+                                                   @NotNull String... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 }

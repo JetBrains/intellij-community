@@ -81,7 +81,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   @Suppress("PropertyName")
   class State {
     @JvmField
-    var USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT: Boolean = false
+    var USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT: Boolean = true
     @JvmField
     var PREFERRED_ENVIRONMENT_TYPE: String? = null
     @JvmField

@@ -119,6 +119,22 @@ public class XmlStringUtil {
     return HTML_START + result + HTML_END;
   }
 
+  /**
+   *
+   * @param lines Text to be used for example in multi-line labels
+   * @return HTML where specified lines separated by &lt;br&gt; and each line wrapped in &lt;nobr&gt; to prevent breaking text inside
+   */
+  @NotNull
+  public static String wrapInHtmlLines(@NotNull CharSequence...lines) {
+    StringBuilder sb = new StringBuilder(HTML_START);
+    for (int i = 0; i < lines.length; i++) {
+      CharSequence sequence = lines[i];
+      if (i > 0) sb.append("<br>");
+      sb.append("<nobr>").append(sequence).append("</nobr>");
+    }
+    return sb.append(HTML_END).toString();
+  }
+
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
     return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
            StringUtil.endsWithIgnoreCase(tooltip, HTML_END);

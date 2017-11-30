@@ -269,4 +269,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testUnresolvedReceiverGeneric() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  public void testMatchingOpenFunctionCallTypesPy3() {
+    doMultiFileTest();
+  }
 }

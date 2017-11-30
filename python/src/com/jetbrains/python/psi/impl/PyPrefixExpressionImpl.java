@@ -76,7 +76,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       final PyExpression operand = getOperand();
       if (operand != null) {
         final PyType operandType = context.getType(operand);
-        final Ref<PyType> type = getGeneratorReturnType(operandType, context);
+        final Ref<PyType> type = getGeneratorReturnType(operandType);
         if (type != null) {
           return type.get();
         }
@@ -87,7 +87,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (resolved instanceof PyCallable) {
       // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
       final PyType returnType = ((PyCallable)resolved).getReturnType(context, key);
-      return isAwait ? Ref.deref(getGeneratorReturnType(returnType, context)) : returnType;
+      return isAwait ? Ref.deref(getGeneratorReturnType(returnType)) : returnType;
     }
     return null;
   }
@@ -127,20 +127,20 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   @Nullable
-  private static Ref<PyType> getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
     if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
       if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
         return Ref.create(((PyCollectionType)type).getIteratedItemType());
       }
       else {
-        return PyTypingTypeProvider.coroutineOrGeneratorElementType(type, context);
+        return PyTypingTypeProvider.coroutineOrGeneratorElementType(type);
       }
     }
     else if (type instanceof PyUnionType) {
       final List<PyType> memberReturnTypes = new ArrayList<>();
       final PyUnionType unionType = (PyUnionType)type;
       for (PyType member : unionType.getMembers()) {
-        memberReturnTypes.add(Ref.deref(getGeneratorReturnType(member, context)));
+        memberReturnTypes.add(Ref.deref(getGeneratorReturnType(member)));
       }
       return Ref.create(PyUnionType.union(memberReturnTypes));
     }

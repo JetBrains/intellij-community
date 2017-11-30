@@ -26,6 +26,7 @@ public class PyDebugValue extends XNamedValue {
   private static final String SERIES = "Series";
   private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of("ndarray", "Array", DATA_FRAME, DATA_FRAME, SERIES, SERIES);
   public static final int MAX_VALUE = 256;
+  public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
   public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_dict";
   public static final String DEFAULT_VALUE_ASYNC = "__pydevd_value_async";
@@ -308,8 +309,7 @@ public class PyDebugValue extends XNamedValue {
 
   public static void getAsyncValues(@NotNull PyFrameAccessor frameAccessor, @NotNull XValueChildrenList childrenList) {
     List<PyFrameAccessor.PyAsyncValue<String>> variables = getAsyncValuesFromChildren(childrenList);
-    int cores = Runtime.getRuntime().availableProcessors();
-    int chunkSize = Math.max(1, variables.size() / cores);
+    int chunkSize = Math.max(1, variables.size() / AVAILABLE_PROCESSORS);
     int left = 0;
     int right = Math.min(chunkSize, variables.size());
     while (left < variables.size()) {

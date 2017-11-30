@@ -20,7 +20,6 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
-  private static final String TEST_PATH = "/highlighting/";
 
   public void testBuiltins() {
     EditorColorsScheme scheme = createTemporaryColorScheme();
@@ -360,6 +359,16 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-22729
   public void testParametersWithAnnotationsAndDefaults() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-26491
+  public void testMultiplePositionalContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-26491
+  public void testMultipleKeywordContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
   }
 
   // PY-26510

@@ -55,7 +55,7 @@ class PyAddSdkDialog(private val project: Project?,
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
     return createCardSplitter(listOf(createVirtualEnvPanel(project, sdks, newProjectPath),
-                                     createAnacondaPanel(),
+                                     createAnacondaPanel(project),
                                      PyAddSystemWideInterpreterPanel(existingSdks)))
   }
 
@@ -101,10 +101,10 @@ class PyAddSdkDialog(private val project: Project?,
   private fun createVirtualEnvPanel(project: Project?,
                                     existingSdks: List<Sdk>,
                                     newProjectPath: String?): PyAddSdkPanel {
-    val newVirtualEnvPanel = if (project != null || PlatformUtils.isPyCharmEducational())
-      PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
-    else
-      null
+    val newVirtualEnvPanel = when {
+      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
+      else -> null
+    }
     val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, existingSdks, newProjectPath)
     val panels = listOf(newVirtualEnvPanel,
                         existingVirtualEnvPanel)
@@ -117,14 +117,19 @@ class PyAddSdkDialog(private val project: Project?,
     return PyAddSdkGroupPanel("Virtualenv environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
-  private fun createAnacondaPanel(): PyAddSdkPanel {
+  private fun createAnacondaPanel(project: Project?): PyAddSdkPanel {
     val newCondaEnvPanel = when {
-      project != null || PlatformUtils.isPyCharmEducational() -> PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath)
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath)
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
       .filterNotNull()
     return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
+  }
+
+  companion object {
+    private fun allowCreatingNewEnvironments(project: Project?) =
+      project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
   }
 }

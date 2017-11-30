@@ -170,12 +170,12 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     assert exeOptions != null;
     exeOptions.addParametersString(myConfig.getInterpreterOptions());
 
+    if (myConfig.isModuleMode()) {
+      exeOptions.addParameter("-m");
+    }
+
     ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
     assert scriptParameters != null;
-
-    if (myConfig.isModuleMode()) {
-      scriptParameters.addParameter("-m");
-    }
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
       scriptParameters.addParameter(myConfig.getScriptName());
@@ -225,7 +225,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     @Override
     protected GeneralCommandLine createCommandLine(@NotNull Sdk sdk,
                                                    @NotNull Map<String, String> environmentVariables,
-                                                   String workingDir, int[] ports) {
+                                                   @Nullable String workingDir,
+                                                   @NotNull int[] ports) {
       GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.RUN_IN_CONSOLE);
 
       final GeneralCommandLine cmd = generateCommandLine(myPatchers);

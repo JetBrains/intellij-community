@@ -80,7 +80,6 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
   public static final String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
-  public static boolean isModule = false;
 
   @Override
   @NotNull
@@ -245,14 +244,27 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                       final int serverLocalPort) {
     return new CommandLinePatcher() {
 
-      private void patchExeParams(ParametersList parametersList) {
+      private boolean patchExeParams(ParametersList parametersList) {
         // we should remove '-m' parameter, but notify debugger of it
         // but we can't remove one parameter from group, so we create new parameters group
-        isModule = false;
+        int exeParamsIndex =
+          parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
+        ParamsGroup oldExeParams = parametersList.removeParamsGroup(exeParamsIndex);
+        boolean isModule = false;
 
-        handleModuleMode(parametersList, PythonCommandLineState.GROUP_SCRIPT);
+        ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
+        for (String param : oldExeParams.getParameters()) {
+          if (!param.equals("-m")) {
+            newExeParams.addParameter(param);
+          }
+          else {
+            isModule = true;
+          }
+        }
+
+        parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
+        return isModule;
       }
-
 
       @Override
       public void patchCommandLine(GeneralCommandLine commandLine) {
@@ -261,8 +273,10 @@ public class PyDebugRunner extends GenericProgramRunner {
 
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup debugParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
+        assert debugParams != null;
 
-        patchExeParams(parametersList);
+        boolean isModule = patchExeParams(parametersList);
+        fillDebugParameters(project, debugParams, serverLocalPort, pyState, commandLine, isModule);
 
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
@@ -274,37 +288,22 @@ public class PyDebugRunner extends GenericProgramRunner {
             exeParams.addParameter(option);
           }
         }
-
-        assert debugParams != null;
-        fillDebugParameters(project, debugParams, serverLocalPort, pyState, commandLine);
       }
     };
-  }
-
-  private void handleModuleMode(ParametersList parametersList, String groupId) {
-    ParamsGroup newExeParams = new ParamsGroup(groupId);
-    int exeParamsIndex = parametersList.getParamsGroups().indexOf(
-      parametersList.getParamsGroup(groupId));
-    ParamsGroup exeParamsOld = parametersList.removeParamsGroup(exeParamsIndex);
-
-    for (String param : exeParamsOld.getParameters()) {
-      if (!param.equals("-m")) {
-        newExeParams.addParameter(param);
-      }
-      else {
-        isModule = true;
-      }
-    }
-
-    parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
   }
 
   private void fillDebugParameters(@NotNull Project project,
                                    @NotNull ParamsGroup debugParams,
                                    int serverLocalPort,
                                    @NotNull PythonCommandLineState pyState,
-                                   @NotNull GeneralCommandLine cmd) {
+                                   @NotNull GeneralCommandLine cmd,
+                                   boolean isModule) {
     PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
+
+    if (isModule) {
+      // add module flag only after command line parameters
+      debugParams.addParameter(MODULE_PARAM);
+    }
 
     configureDebugParameters(project, debugParams, pyState, cmd);
 
@@ -351,10 +350,6 @@ public class PyDebugRunner extends GenericProgramRunner {
 
   public static void configureCommonDebugParameters(@NotNull Project project,
                                                     @NotNull ParamsGroup debugParams) {
-    if (isModule) {
-      debugParams.addParameter(MODULE_PARAM);
-    }
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       debugParams.addParameter("--DEBUG");
     }

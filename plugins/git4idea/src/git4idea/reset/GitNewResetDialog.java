@@ -75,16 +75,17 @@ public class GitNewResetDialog extends DialogWrapper {
     String description = prepareDescription(myProject, myCommits);
     panel.add(new JBLabel(XmlStringUtil.wrapInHtml(description)), gb.nextLine().next().coverLine());
 
-    String explanation = "This will reset the current branch head to the selected commit, <br/>" +
-                         "and update the working tree and the index according to the selected mode:";
-    panel.add(new JBLabel(XmlStringUtil.wrapInHtml(explanation), UIUtil.ComponentStyle.SMALL), gb.nextLine().next().coverLine());
+    panel.add(new JBLabel(XmlStringUtil.wrapInHtmlLines(
+      "This will reset the current branch head to the selected commit,",
+      "and update the working tree and the index according to the selected mode:"
+      ), UIUtil.ComponentStyle.SMALL), gb.nextLine().next().coverLine());
 
     for (GitResetMode mode : GitResetMode.values()) {
       JBRadioButton button = new JBRadioButton(mode.getName());
       button.setMnemonic(mode.getName().charAt(0));
       myButtonGroup.add(button);
       panel.add(button, gb.nextLine().next());
-      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(mode.getDescription()), UIUtil.ComponentStyle.SMALL), gb.next());
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtmlLines(mode.getDescription()), UIUtil.ComponentStyle.SMALL), gb.next());
     }
 
     myEnumModel = RadioButtonEnumModel.bindEnum(GitResetMode.class, myButtonGroup);

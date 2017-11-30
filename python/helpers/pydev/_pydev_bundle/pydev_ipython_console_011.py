@@ -253,6 +253,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         else:
             self.Completer = self._new_completer_011()
 
+        if hasattr(self.Completer, 'use_jedi'):
+            self.Completer.use_jedi = False
+
         self.add_completer_hooks()
 
         if IPythonRelease._version_major <= 3:

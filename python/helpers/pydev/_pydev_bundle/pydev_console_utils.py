@@ -183,7 +183,7 @@ class BaseInterpreterInterface:
         self.default_banner = ''
 
     def build_banner(self):
-        return 'print({})\n'.format(repr(self.get_greeting_msg()))
+        return 'print({0})\n'.format(repr(self.get_greeting_msg()))
 
     def get_greeting_msg(self):
         return 'PyDev console: starting.\n'

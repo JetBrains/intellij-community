@@ -196,7 +196,7 @@ class TeamcityTestResult(TestResult):
             error = err[1]
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
-        except:
+        except Exception:
             pass
 
         if is_string(err):
@@ -298,7 +298,7 @@ class TeamcityTestRunner(TextTestRunner):
         try:
             total_tests = test.countTestCases()
             TeamcityServiceMessages(_real_stdout).testCount(total_tests)
-        except:
+        except Exception:
             pass
 
         return super(TeamcityTestRunner, self).run(test)

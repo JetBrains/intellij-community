@@ -57,11 +57,11 @@ else:
     if python_implementation == 'CPython' and not IS_PYTHON_STACKLESS:
         # Only available for CPython!
         if (
-            (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
+            (sys.version_info[0] == 2 and sys.version_info[1] >= 6)
             or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
             or (sys.version_info[0] > 3)
             ):
-            # Supported in 2.7 or 3.3 onwards (32 or 64)
+            # Supported in 2.6,2.7 or 3.3 onwards (32 or 64)
             CYTHON_SUPPORTED = True
 
 
@@ -106,8 +106,17 @@ IS_PYCHARM = True
 
 LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
 DEFAULT_VALUE = "__pydevd_value_async"
+ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
+SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True'
+
+
+if SHOW_DEBUG_INFO_ENV:
+    # show debug info before the debugger start
+    DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = True
+    DebugInfoHolder.DEBUG_TRACE_LEVEL = 3
+    DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = 1
 
 
 def protect_libraries_from_patching():

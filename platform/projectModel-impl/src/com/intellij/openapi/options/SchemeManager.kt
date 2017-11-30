@@ -27,6 +27,8 @@ abstract class SchemeManager<T> {
 
   abstract val currentScheme: T?
 
+  open fun getCurrentScheme(): Scheme = currentScheme as Scheme
+
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
    */

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
- * @author vlan
+ * @apiNote This class will be converted to interface in 2018.2.
  */
 public class PyRequirement {
 
@@ -210,25 +211,56 @@ public class PyRequirement {
   @NotNull
   private final String myExtras;
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name) {
     this(name, Collections.emptyList());
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull PyRequirementRelation relation, @NotNull String version) {
     this(name, Collections.singletonList(calculateVersionSpec(version, relation)));
   }
+
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull String version) {
     this(name, PyRequirementRelation.EQ, version);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions) {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions, @NotNull String extras) {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions, extras);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
     myName = name;
     myVersionSpecs = versionSpecs;
@@ -236,6 +268,11 @@ public class PyRequirement {
     myInstallOptions = Collections.singletonList(toString());
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs, @NotNull List<String> installOptions) {
     myName = name;
     myVersionSpecs = versionSpecs;
@@ -243,6 +280,11 @@ public class PyRequirement {
     myExtras = "";
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name,
                        @NotNull List<PyRequirementVersionSpec> versionSpecs,
                        @NotNull List<String> installOptions,
@@ -253,14 +295,38 @@ public class PyRequirement {
     myExtras = extras;
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  public PyRequirement withVersionComparator(@NotNull Comparator<String> comparator) {
+    return new PyRequirement(myName,
+                             ContainerUtil.map(myVersionSpecs, spec -> spec.withVersionComparator(comparator)), myInstallOptions, myExtras);
+  }
+
   @NotNull
   public String getName() {
     return myName;
   }
 
+  /**
+   * @deprecated Use {@link PyRequirement#getName()} and {@link PyRequirement#getExtras()} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public String getFullName() {
     return myName + myExtras;
+  }
+
+  @NotNull
+  public String getExtras() {
+    return myExtras;
+  }
+
+  @NotNull
+  public List<PyRequirementVersionSpec> getVersionSpecs() {
+    return myVersionSpecs;
   }
 
   @NotNull
@@ -309,7 +375,12 @@ public class PyRequirement {
       .orElse(null);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @Nullable
+  @Deprecated
   public static PyRequirement fromLine(@NotNull String line) {
     final PyRequirement githubArchiveUrl = parseGitArchiveUrl(GITHUB_ARCHIVE_URL, line);
     if (githubArchiveUrl != null) {
@@ -334,17 +405,32 @@ public class PyRequirement {
     return parseRequirement(line);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static List<PyRequirement> fromText(@NotNull String text) {
     return fromText(text, null, new HashSet<>());
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static List<PyRequirement> fromFile(@NotNull VirtualFile file) {
     return fromText(loadText(file), file, new HashSet<>());
   }
 
+  /**
+   * @deprecated Use {@link PyRequirement} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
     if (expectedRelation == PyRequirementRelation.STR_EQ) return new PyRequirementVersionSpec(version);
 

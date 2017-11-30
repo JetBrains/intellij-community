@@ -33,7 +33,7 @@ public class LoadFullValueCommand extends AbstractFrameCommand {
     super.processResponse(response);
     try {
       List<PyDebugValue> debugValues = ProtocolParser.parseValues(response.getPayload(), myDebugProcess);
-      for (int i = 0; i < myVars.size(); ++i) {
+      for (int i = 0; i < debugValues.size(); ++i) {
         PyDebugValue resultValue = debugValues.get(i);
         myVars.get(i).getCallback().ok(resultValue.getValue());
       }
