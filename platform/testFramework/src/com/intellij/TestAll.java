@@ -16,7 +16,6 @@
 
 package com.intellij;
 
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +25,9 @@ import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.Description;
@@ -48,7 +47,6 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr", "TestOnlyProblems", "BusyWait"})
 public class TestAll implements Test {
   static {
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
     Logger.setFactory(TestLoggerFactory.class);
   }
 
@@ -130,7 +128,7 @@ public class TestAll implements Test {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
-      return StreamEx.of(testRoots.split(";")).map(File::new).toList();
+      return ContainerUtil.map(testRoots.split(";"), File::new);
     }
     List<File> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
@@ -158,12 +156,12 @@ public class TestAll implements Test {
         }
         catch (Throwable ignore) {}
       }
-      return StreamEx.of(System.getProperty("java.class.path").split(File.pathSeparator)).map(File::new).toList();
+      return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), File::new);
     }
   }
 
   private static List<File> getClassRoots(URL[] urls) {
-    final List<File> classLoaderRoots = StreamEx.of(urls).map(url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url)))).toList();
+    final List<File> classLoaderRoots = ContainerUtil.map(urls, url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
   }
