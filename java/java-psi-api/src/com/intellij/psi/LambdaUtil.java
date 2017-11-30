@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author anna
@@ -845,5 +846,46 @@ public class LambdaUtil {
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(extractSingleExpressionFromBody(lambda.getBody()));
     return expression instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else.
+   *
+   * <p>
+   * True will be returned for lambdas in non-invocation context as well as for lambdas in invocation context,
+   * when invoked method is not overloaded or all overloads are 'lambda friendly'
+   *
+   * <p>
+   *   Value-compatible lambda like {@code () -> foo() == true} can be converted to value-compatible AND void-compatible
+   *   {@code () -> foo()} during simplification. This could lead to ambiguity during containing method call resolution and thus
+   *   to the errors after applying the suggestion.
+   * </p>
+   *
+   * @param lambda          a lambda whose body is going to be replaced
+   * @param newBodySupplier replacement for lambda's body to check,
+   *                        lazy computed for lambdas in invocation context only
+   */
+  public static boolean isSameOverloadAfterReplacement(PsiLambdaExpression lambda, Supplier<PsiElement> newBodySupplier) {
+    PsiElement body = lambda.getBody();
+    if (body == null) return false;
+    final PsiCall call = treeWalkUp(body);
+    PsiMethod oldTarget;
+    if (call != null && (oldTarget = call.resolveMethod()) != null) {
+      Object marker = new Object();
+      PsiTreeUtil.mark(body, marker);
+      PsiCall copyCall = copyTopLevelCall(call);
+      if (copyCall == null) return false;
+      final PsiElement bodyCopy = PsiTreeUtil.releaseMark(copyCall, marker);
+      if (bodyCopy != null) {
+        final PsiElement parent = bodyCopy.getParent();
+        if (parent instanceof PsiLambdaExpression) {
+          bodyCopy.replace(newBodySupplier.get());
+          if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 }

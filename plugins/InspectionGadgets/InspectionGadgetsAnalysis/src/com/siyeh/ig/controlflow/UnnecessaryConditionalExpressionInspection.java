@@ -18,10 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -110,11 +107,16 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
       if (condition == null) {
         return;
       }
+
+      PsiElement parent = expression.getParent();
       if (BoolUtils.isFalse(thenExpression) && BoolUtils.isTrue(elseExpression)) {
         registerError(expression, BoolUtils.getNegatedExpressionText(condition, new CommentTracker()));
       }
       else if (BoolUtils.isTrue(thenExpression) && BoolUtils.isFalse(elseExpression)) {
-        registerError(expression, condition.getText());
+        if (!(parent instanceof PsiLambdaExpression) ||
+            LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent, () -> condition)) {
+          registerError(expression, condition.getText());
+        }
       }
       else if (isUnnecessary(condition, thenExpression, elseExpression, JavaTokenType.EQEQ)) {
         registerError(expression, elseExpression.getText());

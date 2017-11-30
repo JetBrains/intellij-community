@@ -372,6 +372,16 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       if (parent instanceof PsiExpression && getExpressionKind((PsiExpression)parent) != BooleanExpressionKind.UNKNOWN) {
         return;
       }
+
+      if (parent instanceof PsiLambdaExpression &&
+          !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent,
+                                                    () -> {
+                                            String simplifiedReturnExpression = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
+                                            return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedReturnExpression, expression);
+                                          })) {
+        return;
+      }
+
       registerError(expression, expression, kind == BooleanExpressionKind.USELESS_WITH_SIDE_EFFECTS);
     }
 
