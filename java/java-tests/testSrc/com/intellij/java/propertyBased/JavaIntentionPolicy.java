@@ -80,7 +80,9 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove redundant method") ||
                                      intentionText.startsWith("Replace unicode escape with character") ||
                                      intentionText.startsWith("Remove 'serialVersionUID' field") ||
-                                     intentionText.matches("Simplify '.*' to .*")
+                                     intentionText.startsWith("Remove unnecessary") ||
+                                     intentionText.matches("Simplify '.*' to .*") ||
+                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag")
       ;
     return !commentChangingActions;
   }
