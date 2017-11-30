@@ -837,7 +837,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
               .rejected(ignore2 -> result.setError("rejected"))
               .done(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
-                  TreeUtil.expand(getTree(), 2);
+                  TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);
                   TreeUtil.ensureSelection(myTree);
                   mySpeedSearch.refreshSelection();
                   result.setResult(p);
