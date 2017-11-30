@@ -30,6 +30,8 @@ class TestingOptions {
    */
   String testGroups = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
 
+  String uiTestGroups = System.getProperty("ui.test.groups", "")
+
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported.
    */

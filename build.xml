@@ -23,7 +23,8 @@
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
       <propertyref prefix="intellij.build."/>
-      <propertyref prefix="custom.project.*"/>
+      <propertyref prefix="custom.project."/>
+      <propertyref name="ui.test.groups"/>
     </propertyset>
   </target>
 
@@ -55,6 +56,10 @@
 
   <target name="test" depends="init">
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
+  </target>
+
+  <target name="uitest" depends="init">
+    <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->

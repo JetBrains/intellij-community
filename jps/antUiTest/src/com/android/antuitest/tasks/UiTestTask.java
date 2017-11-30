@@ -111,7 +111,6 @@ public class UiTestTask extends Task {
         task.setShowOutput(true);
         task.setPrintsummary((JUnitTask.SummaryAttribute) EnumeratedAttribute.getInstance(JUnitTask.SummaryAttribute.class, "true"));
 
-        task.createJvmarg().setValue("-Dclasspath.file=" + classpathFile);
         if (testTaskMapping.get(testSpec)) {
           // Single test execution
           task.createJvmarg().setValue("-Dbootstrap.testcase=" + testSpec);
