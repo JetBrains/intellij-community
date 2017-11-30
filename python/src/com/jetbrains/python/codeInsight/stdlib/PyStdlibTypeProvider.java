@@ -252,6 +252,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClassLikeType classLikeType = as(firstArgument != null ? context.getType(firstArgument) : null, PyClassLikeType.class);
         return classLikeType != null ? Ref.create(classLikeType.toInstance()) : null;
       }
+      else if (callSite != null &&
+               ArrayUtil.contains(qname, PyTypingTypeProvider.NAMEDTUPLE + "._make", PyTypingTypeProvider.NAMEDTUPLE + "._replace")) {
+        final PyExpression receiver = callSite.getReceiver(function);
+        if (receiver != null) {
+          final PyType receiverType = context.getType(receiver);
+          if (receiverType instanceof PyInstantiableType && isNamedTuple(receiverType, context)) {
+            return Ref.create(((PyInstantiableType)receiverType).toInstance());
+          }
+        }
+      }
     }
 
     return null;
@@ -334,6 +344,17 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
+  }
+
+  public static boolean isNamedTuple(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyNamedTupleType) {
+      return true;
+    }
+
+    final Condition<PyClassLikeType> isNT =
+      t -> t instanceof PyNamedTupleType || t != null && PyTypingTypeProvider.NAMEDTUPLE.equals(t.getClassQName());
+
+    return type instanceof PyClassLikeType && ContainerUtil.exists(((PyClassLikeType)type).getAncestorTypes(context), isNT);
   }
 
   @Nullable

@@ -2594,6 +2594,105 @@ public class PyTypeTest extends PyTestCase {
                     "expr = compile(\"str\")");
   }
 
+  // PY-27148
+  public void testCollectionsNTMake() {
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "Cat = namedtuple(\"Cat\", \"name age\")\n" +
+           "expr = Cat(\"name\", 5)._make([\"newname\", 6])");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "Cat = namedtuple(\"Cat\", \"name age\")\n" +
+           "expr = Cat._make([\"newname\", 6])");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat(\"name\", 5)._make([\"newname\", 6])");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat._make([\"newname\", 6])");
+  }
+
+  // PY-27148
+  public void testTypingNTMake() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat(\"name\", 5)._make([\"newname\", 6])")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat._make([\"newname\", 6])")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
+                   "expr = Cat(\"name\", 5)._make([\"newname\", 6])")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
+                   "expr = Cat._make([\"newname\", 6])")
+    );
+  }
+
+  // PY-27148
+  public void testCollectionsNTReplace() {
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "Cat = namedtuple(\"Cat\", \"name age\")\n" +
+           "expr = Cat(\"name\", 5)._replace(name=\"newname\")");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat(\"name\", 5)._replace(name=\"newname\")");
+  }
+
+  // PY-27148
+  public void testTypingNTReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat(\"name\", 5)._replace(name=\"newname\")")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
+                   "expr = Cat(\"name\", 5)._replace(name=\"newname\")")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

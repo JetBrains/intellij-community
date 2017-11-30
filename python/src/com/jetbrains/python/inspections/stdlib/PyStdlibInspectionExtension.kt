@@ -5,7 +5,7 @@ import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
@@ -47,22 +47,8 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreProtectedSymbol(expression: PyReferenceExpression, context: TypeEvalContext): Boolean {
     val qualifier = expression.qualifier
-
-    if (qualifier != null && expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES) {
-      val qualifierType = context.getType(qualifier)
-
-      if (qualifierType is PyNamedTupleType) {
-        return true
-      }
-
-      val isTypingNT: (PyClassLikeType?) -> Boolean =
-        { it is PyNamedTupleType || it != null && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
-
-      if (qualifierType is PyClassLikeType && qualifierType.getAncestorTypes(context).find(isTypingNT) != null) {
-        return true
-      }
-    }
-
-    return false
+    return qualifier != null &&
+           expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES &&
+           PyStdlibTypeProvider.isNamedTuple(context.getType(qualifier), context)
   }
 }
