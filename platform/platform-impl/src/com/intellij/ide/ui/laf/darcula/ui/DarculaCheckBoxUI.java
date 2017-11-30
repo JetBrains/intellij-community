@@ -19,10 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -268,6 +265,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected boolean isIndeterminate(AbstractButton checkBox) {
-    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState")) ||
+      checkBox instanceof ThreeStateCheckBox && ((ThreeStateCheckBox)checkBox).getState() == ThreeStateCheckBox.State.DONT_CARE;
   }
 }
