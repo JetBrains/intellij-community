@@ -32,7 +32,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
+public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
 
   private static final int MAX_PATH_LENGTH = 50;
 
@@ -60,21 +60,20 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
-    setRenderer(new ColoredListCellRendererWrapper() {
+    setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
 
       @Override
-      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        JdkComboBoxItem item = (JdkComboBoxItem)value;
+      protected void customizeCellRenderer(@NotNull JList list, JdkComboBoxItem value, int index, boolean selected, boolean hasFocus) {
         CompositeAppearance appearance = new CompositeAppearance();
         SdkType sdkType = JavaSdk.getInstance();
         appearance.setIcon(sdkType.getIcon());
-        SimpleTextAttributes attributes = getTextAttributes(item.valid, selected);
+        SimpleTextAttributes attributes = getTextAttributes(value.valid, selected);
         CompositeAppearance.DequeEnd ending = appearance.getEnding();
 
-        ending.addText(item.label, attributes);
-        if (item.comment != null && !item.comment.equals(item.jdkName)) {
+        ending.addText(value.label, attributes);
+        if (value.comment != null && !value.comment.equals(value.jdkName)) {
           final SimpleTextAttributes textAttributes;
-          if (!item.valid) {
+          if (!value.valid) {
             textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
           }
           else {
@@ -83,7 +82,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
                              : SimpleTextAttributes.GRAY_ATTRIBUTES;
           }
 
-          ending.addComment(item.comment, textAttributes);
+          ending.addComment(value.comment, textAttributes);
         }
 
         final CompositeAppearance compositeAppearance = ending.getAppearance();
@@ -271,7 +270,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     }
   }
 
-  private static class JdkComboBoxItem {
+  static class JdkComboBoxItem {
     private String jdkName;
     private String label;
     private String comment;
