@@ -107,8 +107,6 @@
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
 
-    <compiler.task execute="BEFORE" implementation="com.intellij.compiler.impl.JavaModuleIndexBuildTask"/>
-
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
@@ -387,7 +385,7 @@
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
 
-    <editorActionHandler action="EditorChooseLookupItemReplace" 
+    <editorActionHandler action="EditorChooseLookupItemReplace"
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
