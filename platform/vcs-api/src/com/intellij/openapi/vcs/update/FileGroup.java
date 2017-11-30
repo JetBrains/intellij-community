@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.util.*;
@@ -252,29 +238,10 @@ public class FileGroup implements JDOMExternalizable {
     return null;
   }
 
-  /**
-   * @deprecated: remove after IDEA 14
-   */
-  public void setRevisions(final String path, final AbstractVcs vcs, final VcsRevisionNumber revision) {
-    for (UpdatedFile file : myFiles) {
-      if (file.getPath().startsWith(path)) {
-        file.setVcsKey(vcs.getKeyInstanceMethod());
-        file.setRevision(revision.asString());
-      }
-    }
-    for (FileGroup group : myChildren) {
-      group.setRevisions(path, vcs, revision);
-    }
-  }
-
   static class UpdatedFile {
     private final String myPath;
-    private String myVcsName;
-    private String myRevision;
-
-    public UpdatedFile(final String path) {
-      myPath = path;
-    }
+    private final String myVcsName;
+    private final String myRevision;
 
     public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
       myPath = path;
@@ -296,16 +263,8 @@ public class FileGroup implements JDOMExternalizable {
       return myVcsName;
     }
 
-    public void setVcsKey(final VcsKey vcsKey) {
-      myVcsName = vcsKey.getName();
-    }
-
     public String getRevision() {
       return myRevision;
-    }
-
-    public void setRevision(final String revision) {
-      myRevision = revision;
     }
   }
 }
