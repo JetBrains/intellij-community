@@ -47,6 +47,39 @@ class StatisticsUtilTest {
   }
 
   @Test
+  fun test_infinite_counting_usage() {
+    assertInfiniteCountingUsage("test.value.count.<0", -1000)
+    assertInfiniteCountingUsage("test.value.count.<0", -1)
+    assertInfiniteCountingUsage("test.value.count.0", 0)
+    assertInfiniteCountingUsage("test.value.count.1", 1)
+    assertInfiniteCountingUsage("test.value.count.2", 2)
+    assertInfiniteCountingUsage("test.value.count.3+", 3)
+    assertInfiniteCountingUsage("test.value.count.3+", 4)
+    assertInfiniteCountingUsage("test.value.count.5+", 5)
+    assertInfiniteCountingUsage("test.value.count.5+", 6)
+    assertInfiniteCountingUsage("test.value.count.5+", 7)
+    assertInfiniteCountingUsage("test.value.count.5+", 9)
+    assertInfiniteCountingUsage("test.value.count.10+", 10)
+    assertInfiniteCountingUsage("test.value.count.10+", 14)
+    assertInfiniteCountingUsage("test.value.count.15+", 15)
+    assertInfiniteCountingUsage("test.value.count.15+", 29)
+    assertInfiniteCountingUsage("test.value.count.30+", 30)
+    assertInfiniteCountingUsage("test.value.count.30+", 49)
+    assertInfiniteCountingUsage("test.value.count.50+", 50)
+    assertInfiniteCountingUsage("test.value.count.50+", 99)
+    assertInfiniteCountingUsage("test.value.count.100+", 100)
+    assertInfiniteCountingUsage("test.value.count.100+", 341)
+    assertInfiniteCountingUsage("test.value.count.1K+", 1000)
+    assertInfiniteCountingUsage("test.value.count.100K+", 200 * 1000)
+    assertInfiniteCountingUsage("test.value.count.500K+", 999999)
+    assertInfiniteCountingUsage("test.value.count.1M+", 1000 * 1000)
+    assertInfiniteCountingUsage("test.value.count.1M+", 2000 * 1000)
+    assertInfiniteCountingUsage("test.value.count.5M+", 6000 * 1000)
+    assertInfiniteCountingUsage("test.value.count.100M+", 2000 * 1000 * 100)
+    assertInfiniteCountingUsage("test.value.count.MANY", 2000 * 1000 * 1000)
+  }
+
+  @Test
   fun `test counting usage on empty list`() {
     val emptySteps = listOf<Int>()
     assertCountingUsage("test.value.count.1", 1, emptySteps)
@@ -60,6 +93,10 @@ class StatisticsUtilTest {
 
   private fun assertCountingUsage(expectedKey: String, actualValue: Int, steps: List<Int>) {
     assertUsage(expectedKey, 1, getCountingUsage("test.value.count", actualValue, steps), "Incorrect key for value '$actualValue'")
+  }
+
+  private fun assertInfiniteCountingUsage(expectedKey: String, actualValue: Int) {
+    assertUsage(expectedKey, 1, getCountingUsage("test.value.count", actualValue), "Incorrect key for value '$actualValue'")
   }
 
   private fun assertUsage(key: String, value: Int, actualUsage: UsageDescriptor, message: String? = null) {
