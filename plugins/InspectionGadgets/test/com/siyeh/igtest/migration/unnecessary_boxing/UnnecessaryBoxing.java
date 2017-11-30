@@ -101,3 +101,32 @@ class test {
     new_times.put(1l, new Long(2l));
   }
 }
+
+class WithLambdaUnfriendlyOverloads {
+  interface GetInt { int get(); }
+  interface GetInteger { Integer get(); }
+
+  private void m(GetInt getter) {
+    System.out.println(getter);
+  }
+
+  private void m(GetInteger getter) {
+    System.out.println(getter);
+  }
+
+  void test(boolean cond) {
+    m(() -> {
+      if (cond)
+        return (new Integer(42));
+      else
+        return foo();
+    });
+    m(() -> cond ? new Integer(42) : foo());
+    m(() -> new Integer(42));
+    m(() -> 42);
+  }
+
+  private <T> T foo() {
+    return null;
+  }
+}

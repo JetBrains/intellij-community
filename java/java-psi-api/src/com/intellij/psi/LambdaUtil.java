@@ -863,7 +863,8 @@ public class LambdaUtil {
    *
    * @param lambda          a lambda whose body is going to be replaced
    * @param newBodySupplier replacement for lambda's body to check,
-   *                        lazy computed for lambdas in invocation context only
+   *                        lazy computed for lambdas in invocation context only.
+   *                        Replacement evaluated to {@code null} is treated as invalid overload
    */
   public static boolean isSameOverloadAfterReplacement(PsiLambdaExpression lambda, Supplier<PsiElement> newBodySupplier) {
     PsiElement body = lambda.getBody();
@@ -879,7 +880,11 @@ public class LambdaUtil {
       if (bodyCopy != null) {
         final PsiElement parent = bodyCopy.getParent();
         if (parent instanceof PsiLambdaExpression) {
-          bodyCopy.replace(newBodySupplier.get());
+          PsiElement replacement = newBodySupplier.get();
+          if (replacement == null) {
+            return false;
+          }
+          bodyCopy.replace(replacement);
           if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
             return false;
           }
