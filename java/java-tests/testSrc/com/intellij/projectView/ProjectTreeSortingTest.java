@@ -30,7 +30,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -248,7 +248,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   }
 
   private void assertTree(String expected) {
-    DefaultMutableTreeNode element = myPane.getTreeBuilder().getNodeForElement(getContentDirectory());
+    TreePath path = PlatformTestUtil.waitForPromise(myPane.promisePathToElement(getContentDirectory()));
+    PlatformTestUtil.waitUntilBusy(myPane.getTree());
+    Object element = path.getLastPathComponent();
     assertNotNull("Element for " + getContentDirectory() + " not found", element);
     assertEquals(expected, PlatformTestUtil.print(myPane.getTree(), element, new Queryable.PrintInfo(), false));
   }

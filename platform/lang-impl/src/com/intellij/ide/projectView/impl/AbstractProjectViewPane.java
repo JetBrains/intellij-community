@@ -38,6 +38,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -49,6 +50,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -493,6 +497,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     installComparator(treeBuilder, createComparator());
   }
 
+  @TestOnly
+  public void installComparator(Comparator<NodeDescriptor> comparator) {
+    installComparator(getTreeBuilder(), comparator);
+  }
+
   protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
     if (builder != null) builder.setNodeDescriptorComparator(comparator);
   }
@@ -746,6 +755,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (myTreeBuilder == null) return ActionCallback.DONE;
     if (myTreeBuilder.isDisposed()) return ActionCallback.REJECTED;
     return myTreeBuilder.getUi().getReady(requestor);
+  }
+
+  @TestOnly
+  @Deprecated
+  public Promise<TreePath> promisePathToElement(Object element) {
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (builder != null) {
+      DefaultMutableTreeNode node = builder.getNodeForElement(element);
+      if (node == null) return Promises.rejectedPromise();
+      return Promises.resolvedPromise(new TreePath(node.getPath()));
+    }
+    TreeVisitor visitor = AsyncProjectViewSupport.createVisitor(element);
+    if (visitor == null || myTree == null) return Promises.rejectedPromise();
+    return TreeUtil.promiseAccept(myTree, visitor);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {

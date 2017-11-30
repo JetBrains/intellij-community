@@ -110,11 +110,12 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
   private AbstractProjectViewPSIPane setupPane(final boolean sortByType) {
     myStructure.setProviders(new ResourceBundleGrouper(getProject()));
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
-    pane.getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(sortByType));
+    pane.installComparator(new GroupByTypeComparator(sortByType));
     // there should be xxx.properties in all test data
     PsiFile psiFile = getPsiManager().findFile(myFixture.findFileInTempDir(getTestName(true) + "/xxx.properties"));
     assert psiFile != null;
     pane.select(psiFile, psiFile.getVirtualFile(), sortByType);
+    PlatformTestUtil.waitUntilBusy(pane.getTree());
     return pane;
   }
 }
