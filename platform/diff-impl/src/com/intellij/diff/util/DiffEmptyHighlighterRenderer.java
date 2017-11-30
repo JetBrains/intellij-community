@@ -4,6 +4,7 @@ package com.intellij.diff.util;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -19,6 +20,6 @@ public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
   public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
     g.setColor(myDiffType.getColor(editor));
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
-    g.fillRect(point.x - 1, point.y, 2, editor.getLineHeight());
+    g.fillRect(point.x - JBUI.scale(1), point.y, JBUI.scale(2), editor.getLineHeight());
   }
 }
