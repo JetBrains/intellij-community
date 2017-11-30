@@ -149,11 +149,12 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
     if (call != null && call.resolveMethod() != null) {
-      final int offsetInTopCall = aClass.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+      Object marker = new Object();
+      PsiTreeUtil.mark(aClass, marker);
       PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
       if (copyCall == null) return null;
-      final PsiAnonymousClass classArg = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiAnonymousClass.class);
-      if (classArg != null) {
+      final PsiElement classArg = PsiTreeUtil.releaseMark(copyCall, marker);
+      if (classArg instanceof PsiAnonymousClass) {
         PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
           .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
         lambda = (PsiExpression)classArg.getParent().replace(lambda);
