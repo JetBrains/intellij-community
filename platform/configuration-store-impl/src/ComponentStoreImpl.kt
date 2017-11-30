@@ -62,7 +62,6 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   w1 - w2
 }
 
-@State(name = "ExternalCompilerConfiguration", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 private class PersistenceStateAdapter(val component: Any) : PersistentStateComponent<Any> {
   override fun getState() = component
 
