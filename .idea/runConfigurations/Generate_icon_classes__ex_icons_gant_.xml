@@ -8,7 +8,7 @@
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="platform-build-scripts" />
+    <module name="images-build-scripts" />
     <envs />
     <method />
   </configuration>
