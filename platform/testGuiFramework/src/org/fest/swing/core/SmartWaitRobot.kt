@@ -15,6 +15,7 @@
  */
 package org.fest.swing.core
 
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
@@ -89,7 +90,10 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
+    println("*** SmartWaitRobot.click()");
     moveMouse(c, where.x, where.y)
+    println("*** where.X=" + where.getX() + "; where.Y=" + where.getY())
+    println("*** Component=" + c + "\n class:" + c.javaClass)
     myEdtAwareClick(button, times)
   }
 
@@ -102,12 +106,27 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
     if (attempts == 0) return
+    println("*** SmartWaitRobot.moveMouseWithAttempts()")
+    println("*** x=" + x + "; y=" + y)
     waitFor { c.isShowing }
+    println("*** c.isShowing=" + c.isShowing)
     val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
+    println("*** p.x=" + p.getX() + "; p.y=" + p.getY())
     moveMouse(p.x, p.y)
+    println("*** mouse moved")
     val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    val mouseLocation = MouseInfo.getPointerInfo().location
-    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
+    println("*** p1.x=" + p1.getX() + "; p1.y=" + p1.getY())
+    println("thread -" + Thread.currentThread().name)
+    try {
+      val pointerInfo = MouseInfo.getPointerInfo()
+      println("*** pointerInfo =" + pointerInfo)
+      val mouseLocation = MouseInfo.getPointerInfo().location
+      println("*** mouseLocation.x=" + mouseLocation.getX() + "; mouseLocation.y=" + mouseLocation.getY())
+      if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
+    } catch (th:Throwable) {
+      th.printStackTrace()
+      throw th
+    }
   }
 
   private fun myInnerClick(button: MouseButton, times: Int) {
@@ -144,7 +163,9 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
         myInnerClick(button, times)
       }
     }
+    println("*** waitForIdle")
     waitForIdle()
+    println("*** completing waitForIdle")
   }
 
   private fun performOnEdt(body: () -> Unit) {

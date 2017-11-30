@@ -329,7 +329,7 @@ object GuiTestUtilKt {
     return Collections.unmodifiableList(errors)
   }
 
-  fun waitForBackgroundTasks(robot: Robot, timeoutInSeconds: Int = 120) {
+  fun waitForBackgroundTasks(robot: Robot, timeoutInSeconds: Int = 120000) {
     Wait.seconds(timeoutInSeconds.toLong()).expecting("background tasks to finish")
       .until {
         robot.waitForIdle()

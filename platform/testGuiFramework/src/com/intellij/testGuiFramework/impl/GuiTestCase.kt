@@ -646,7 +646,7 @@ open class GuiTestCase {
     }
     else {
       try {
-        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(120000) {
           val allMatchedDialogs = guiTestRule.robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
           }).filter { it.isShowing && it.isEnabled && it.isVisible }

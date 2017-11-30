@@ -491,7 +491,10 @@ public class EditorFixture {
         assert editor != null;
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         Point point = editor.visualPositionToXY(visualPosition);
+        System.out.println("*** point.X=" + point.getX() + "; point.Y=" + point.getY());
         Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
+        System.out.println("*** editorComponent=" + editorComponent + "\n class:" + editorComponent.getClass());
+        System.out.println("*** robot=" + robot + "\n class:" + robot.getClass());
         robot.click(editorComponent, point, button, 1);
       }
     });

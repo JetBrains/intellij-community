@@ -80,7 +80,7 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
-    .around(Timeout(10, TimeUnit.MINUTES))!!
+    .around(Timeout(10, TimeUnit.DAYS))!!
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"

@@ -30,10 +30,10 @@ import java.util.*
 
 class ScreenshotOnFailure: TestWatcher() {
 
-  override fun failed(throwable: Throwable?, description: Description?) {
-    val screenshotName = "${description!!.testClass.simpleName}.${description.methodName}"
-    takeScreenshotOnFailure(throwable!!, screenshotName)
-  }
+  //override fun failed(throwable: Throwable?, description: Description?) {
+    //val screenshotName = "${description!!.testClass.simpleName}.${description.methodName}"
+    //takeScreenshotOnFailure(throwable!!, screenshotName)
+  //}
 
   companion object {
     private val LOG = Logger.getInstance(ScreenshotOnFailure::class.java)
