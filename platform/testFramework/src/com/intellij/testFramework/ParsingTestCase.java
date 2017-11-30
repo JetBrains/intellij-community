@@ -272,7 +272,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                    boolean checkAllPsiRoots,
                                    String targetDataName,
                                    boolean skipSpaces,
-                                   boolean printRanges) throws IOException {
+                                   boolean printRanges) {
     doCheckResult(testDataDir, file, checkAllPsiRoots, targetDataName, skipSpaces, printRanges, false);
   }
 
@@ -282,7 +282,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                    String targetDataName,
                                    boolean skipSpaces,
                                    boolean printRanges,
-                                   boolean allTreesInSingleFile) throws IOException {
+                                   boolean allTreesInSingleFile) {
     FileViewProvider provider = file.getViewProvider();
     Set<Language> languages = provider.getLanguages();
 
@@ -312,16 +312,16 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     }
   }
 
-  protected void checkResult(String actual) throws IOException {
+  protected void checkResult(String actual) {
     String name = getTestName();
     doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 
-  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) throws IOException {
+  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) {
     doCheckResult(myFullDataPath, targetDataName, actual);
   }
 
-  public static void doCheckResult(String fullPath, String targetDataName, String actual) throws IOException {
+  public static void doCheckResult(String fullPath, String targetDataName, String actual) {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
     UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
   }
