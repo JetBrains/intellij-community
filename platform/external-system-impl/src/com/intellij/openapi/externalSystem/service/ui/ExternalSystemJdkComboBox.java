@@ -15,15 +15,23 @@
  */
 package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -90,6 +99,55 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
   public void setProject(@Nullable Project project) {
     myProject = project;
+  }
+
+  public void setSetupButton(@NotNull JButton setUpButton,
+                             @NotNull ProjectSdksModel jdksModel,
+                             @Nullable String actionGroupTitle,
+                             @Nullable Condition<SdkTypeId> creationFilter) {
+    Arrays.stream(setUpButton.getActionListeners()).forEach(setUpButton::removeActionListener);
+
+    setUpButton.addActionListener(e -> {
+      DefaultActionGroup group = new DefaultActionGroup();
+      jdksModel.createAddActions(group, this, getSelectedJdk(), jdk -> {
+        Sdk existingJdk = Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+          .filter(sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()))
+          .findFirst().orElse(null);
+
+        String jdkName;
+        if (existingJdk == null) {
+          SdkConfigurationUtil.addSdk(jdk);
+          jdkName = jdk.getName();
+        }
+        else {
+          jdkName = existingJdk.getName();
+        }
+        refreshData(jdkName);
+      }, creationFilter);
+      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      if (group.getChildrenCount() > 1) {
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(actionGroupTitle, group, dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+          .showUnderneathOf(setUpButton);
+      }
+      else {
+        final AnActionEvent event =
+          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
+        group.getChildren(event)[0].actionPerformed(event);
+      }
+    });
+  }
+
+  @Nullable
+  public Sdk getSelectedJdk() {
+    String jdkName = getSelectedValue();
+    Sdk jdk = null;
+    try {
+      jdk = ExternalSystemJdkUtil.getJdk(myProject, jdkName);
+    }
+    catch (ExternalSystemJdkException ignore) {
+    }
+    return jdk;
   }
 
   @NotNull
