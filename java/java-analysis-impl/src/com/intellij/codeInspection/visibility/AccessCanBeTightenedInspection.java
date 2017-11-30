@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -22,6 +23,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -153,6 +155,21 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       if (memberClass != null && (memberClass.isInterface() || memberClass.isEnum() || memberClass.isAnnotationType() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
         return currentLevel;
       }
+
+      if (memberClass != null && member instanceof PsiMethod) {
+        // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
+        // so we just skip it here (IDEA-182709, IDEA-160602)
+        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+          if (!subclassProvider.isApplicableTo(memberClass)) continue;
+          ImplicitSubclassProvider.SubclassingInfo info = subclassProvider.getSubclassingInfo(memberClass);
+          if (info == null) continue;
+          Map<PsiMethod, ImplicitSubclassProvider.OverridingInfo> methodsInfo = info.getMethodsInfo();
+          if (methodsInfo == null || methodsInfo.containsKey(member)) {
+            return currentLevel;
+          }
+        }
+      }
+
       final PsiFile memberFile = member.getContainingFile();
       Project project = memberFile.getProject();
 
