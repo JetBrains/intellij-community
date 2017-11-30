@@ -45,7 +45,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
     if (view != null) {
       PsiDirectory target = getTargetDirectory(ctx, view);
-      if (target != null && PsiUtil.isLanguageLevel5OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null) {
+      if (target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null) {
         available = true;
       }
     }
