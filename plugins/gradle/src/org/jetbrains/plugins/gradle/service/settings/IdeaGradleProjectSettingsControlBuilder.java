@@ -546,7 +546,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleJdkComboBox.refreshData(sdkItem);
     if (myGradleJdkSetUpButton != null) {
       ProjectSdksModel sdksModel = ProjectStructureConfigurable.getInstance(
-        project == null ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
+        project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
       myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id instanceof JavaSdk);
     }
   }
