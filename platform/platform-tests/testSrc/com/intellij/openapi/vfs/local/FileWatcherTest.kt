@@ -178,8 +178,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top, false)
     watch(sub, true)
     assertEvents(
-        { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
-        mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
+      { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
+      mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
   }
 
   @Test fun testIncorrectPath() {
@@ -205,26 +205,26 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(sub)
     watch(side)
     assertEvents(
-        { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     val requestForTopDir = watch(top)
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
-        mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
+      mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
     unwatch(requestForTopDir)
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
-        mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
+      mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
@@ -346,8 +346,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
-        mapOf(file1 to 'U', file2 to 'U'))
+      { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchRootRecreation() {
@@ -358,12 +358,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        {
-          root.deleteRecursively(); root.mkdir()
-          if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
-          arrayOf(file1, file2).forEach { it.writeText("text") }
-        },
-        mapOf(file1 to 'U', file2 to 'U'))
+      {
+        root.deleteRecursively(); root.mkdir()
+        if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
+        arrayOf(file1, file2).forEach { it.writeText("text") }
+      },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchNonExistingRoot() {
