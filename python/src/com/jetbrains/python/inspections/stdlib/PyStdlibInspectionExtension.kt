@@ -5,6 +5,7 @@ import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
@@ -14,6 +15,10 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyStdlibInspectionExtension : PyInspectionExtension() {
+
+  companion object {
+    private val NAMEDTUPLE_SPECIAL_ATTRIBUTES = setOf("_make", "_asdict", "_replace", "_source", "_fields")
+  }
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     return PyNames.TYPE_ENUM == complementary.containingClass?.qualifiedName
@@ -34,6 +39,27 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
       if (qualifier is PyReferenceExpression) {
         return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, context) &&
                PyStdlibClassMembersProvider.MOCK_PATCH_MEMBERS.find { it.name == node.name } != null
+      }
+    }
+
+    return false
+  }
+
+  override fun ignoreProtectedSymbol(expression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+    val qualifier = expression.qualifier
+
+    if (qualifier != null && expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES) {
+      val qualifierType = context.getType(qualifier)
+
+      if (qualifierType is PyNamedTupleType) {
+        return true
+      }
+
+      val isTypingNT: (PyClassLikeType?) -> Boolean =
+        { it is PyNamedTupleType || it != null && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
+
+      if (qualifierType is PyClassLikeType && qualifierType.getAncestorTypes(context).find(isTypingNT) != null) {
+        return true
       }
     }
 
