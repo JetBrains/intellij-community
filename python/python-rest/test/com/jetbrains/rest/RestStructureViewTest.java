@@ -15,6 +15,7 @@
  */
 package com.jetbrains.rest;
 
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.rest.fixtures.RestFixtureTestCase;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
@@ -58,6 +59,9 @@ public class RestStructureViewTest extends RestFixtureTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile("/structureView/" + getTestName(true) + ".rst");
-    myFixture.testStructureView(svc -> assertTreeEqual(svc.getTree(), expected));
+    myFixture.testStructureView(svc -> {
+      TreeUtil.expandAll(svc.getTree());
+      assertTreeEqual(svc.getTree(), expected);
+    });
   }
 }
