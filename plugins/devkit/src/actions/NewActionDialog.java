@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -49,6 +50,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class NewActionDialog extends DialogWrapper implements ActionData {
@@ -57,7 +59,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private JList<AnAction> myActionList;
   private JTextField myActionClassNameEdit;
   private JTextField myActionIdEdit;
-  private JTextField myActionTextEdit;
+  private JTextField myActionNameEdit;
   private JTextField myActionDescriptionEdit;
   private JRadioButton myAnchorFirstRadio;
   private JRadioButton myAnchorLastRadio;
@@ -138,7 +140,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     MyDocumentListener listener = new MyDocumentListener();
     myActionIdEdit.getDocument().addDocumentListener(listener);
     myActionClassNameEdit.getDocument().addDocumentListener(listener);
-    myActionTextEdit.getDocument().addDocumentListener(listener);
+    myActionNameEdit.getDocument().addDocumentListener(listener);
 
     myAnchorButtonGroup.setSelected(myAnchorFirstRadio.getModel(), true);
 
@@ -198,7 +200,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   @Override
   @NotNull
   public String getActionText() {
-    return myActionTextEdit.getText();
+    return myActionNameEdit.getText();
   }
 
   @Override
@@ -259,12 +261,6 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
 
 
   private void updateControls() {
-    setOKActionEnabled(myActionIdEdit.getText().length() > 0 &&
-                       myActionClassNameEdit.getText().length() > 0 &&
-                       myActionTextEdit.getText().length() > 0 &&
-                       (!myActionClassNameEdit.isEditable() ||
-                        PsiNameHelper.getInstance(myProject).isQualifiedName(myActionClassNameEdit.getText())));
-
     myAnchorBeforeRadio.setEnabled(myActionList.getSelectedValue() != null);
     myAnchorAfterRadio.setEnabled(myActionList.getSelectedValue() != null);
 
@@ -277,6 +273,41 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     myClearSecondKeystroke.setEnabled(enabled);
   }
 
+  private boolean isActionIdValid() {
+    return myActionIdEdit.getText().length() > 0;
+  }
+
+  private boolean isActionNameValid() {
+    return myActionNameEdit.getText().length() > 0;
+  }
+
+  private boolean isActionClassNameValid() {
+    return myActionClassNameEdit.getText().length() > 0 &&
+           (!myActionClassNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isQualifiedName(myActionClassNameEdit.getText()));
+  }
+
+  @NotNull
+  @Override
+  protected List<ValidationInfo> doValidateAll() {
+    boolean actionIdValid = isActionIdValid();
+    boolean actionNameValid = isActionNameValid();
+    boolean actionClassNameValid = isActionClassNameValid();
+    if (actionIdValid && actionNameValid && actionClassNameValid) {
+      return Collections.emptyList();
+    }
+
+    List<ValidationInfo> result = new ArrayList<>();
+    if (!actionIdValid) {
+      result.add(new ValidationInfo(DevKitBundle.message("new.action.invalid.id"), myActionIdEdit));
+    }
+    if (!actionClassNameValid) {
+      result.add(new ValidationInfo(DevKitBundle.message("new.action.invalid.class.name"), myActionClassNameEdit));
+    }
+    if (!actionNameValid) {
+      result.add(new ValidationInfo(DevKitBundle.message("new.action.invalid.name"), myActionNameEdit));
+    }
+    return result;
+  }
 
   private class MyDocumentListener implements DocumentListener {
     @Override
