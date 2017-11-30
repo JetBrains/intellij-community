@@ -92,6 +92,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("snakeyaml")
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
+        removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
 
