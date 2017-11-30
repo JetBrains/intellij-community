@@ -244,7 +244,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     setOKActionEnabled(myActionIdEdit.getText().length() > 0 &&
                        myActionNameEdit.getText().length() > 0 &&
                        myActionTextEdit.getText().length() > 0 &&
-                       (!myActionNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isIdentifier(myActionNameEdit.getText())));
+                       (!myActionNameEdit.isEditable() ||
+                        PsiNameHelper.getInstance(myProject).isQualifiedName(myActionNameEdit.getText())));
 
     myAnchorBeforeRadio.setEnabled(myActionList.getSelectedValue() != null);
     myAnchorAfterRadio.setEnabled(myActionList.getSelectedValue() != null);
