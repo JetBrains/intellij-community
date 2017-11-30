@@ -30,17 +30,20 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     AbstractVcs vcs = notNull(getVcsForFile(file, project));
     CommittedChangesProvider provider = notNull(vcs.getCommittedChangesProvider());
-    ChangeBrowserSettings settings =
-      vcs.getConfiguration().CHANGE_BROWSER_SETTINGS.computeIfAbsent(vcs.getName(), key -> {
-        ChangeBrowserSettings result = provider.createDefaultSettings();
-        ServiceKt.getStateStore(project).initPersistencePlainComponent(result, "VcsManager.ChangeBrowser." + key);
-        return result;
-      });
+    ChangeBrowserSettings settings = getChangeBrowserSettings(project, vcs, provider);
     CommittedChangesFilterDialog dialog = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
 
     if (dialog.showAndGet()) {
       showChanges(vcs, file, settings);
     }
+  }
+
+  private static ChangeBrowserSettings getChangeBrowserSettings(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull CommittedChangesProvider provider) {
+    return vcs.getConfiguration().changeBrowserSettings.computeIfAbsent(vcs.getName(), key -> {
+      ChangeBrowserSettings result = provider.createDefaultSettings();
+      ServiceKt.getStateStore(project).initPersistencePlainComponent(result, "VcsManager.ChangeBrowser." + key);
+      return result;
+    });
   }
 
   public void update(@NotNull AnActionEvent e) {

@@ -121,7 +121,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
   @Transient
-  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new THashMap<>();
+  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new THashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;

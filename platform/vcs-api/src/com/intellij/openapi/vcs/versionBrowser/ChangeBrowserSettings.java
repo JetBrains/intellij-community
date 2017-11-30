@@ -91,7 +91,6 @@ public class ChangeBrowserSettings {
   }
 
   @Nullable
-  @Transient
   public Date getDateBeforeFilter() {
     return USE_DATE_BEFORE_FILTER ? parseDate(DATE_BEFORE) : null;
   }
