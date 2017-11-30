@@ -48,7 +48,7 @@ class CircletConnectionComponent(val project: Project) :
                         }
                         else {
                             try {
-                                KCircletClient.start(loginModel, endpoint, true)
+                                KCircletClient.start(loginModel, endpoint, enabledLt, true)
                                 KCircletClient.connection.status.view(enabledLt) { stateLt, state ->
                                     when (state) {
                                         ConnectionStatus.CONNECTED -> {
