@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -788,7 +789,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
     }
-    boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
+    final boolean withinOurClass = containingClass == PyiUtil.stubToOriginal(getPyClass(), PyClass.class) || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
       expressionHook, new FilterNotInstance(myClass), null, false, suppressParentheses
@@ -808,7 +809,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     for (LookupElement le : processor.getResultList()) {
       String name = le.getLookupString();
       if (namesAlready.contains(name)) continue;
-      if (!withinOurClass && isClassPrivate(name)) continue;
+      if (!withinOurClass && PyUtil.isClassPrivateName(name)) continue;
       if (!withinOurClass && isClassProtected(name) && prefix == null) continue;
       namesAlready.add(name);
       ret.add(le);
@@ -849,17 +850,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
         String inheritedName = ob.toString();
-        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+        if (!namesAlready.contains(inheritedName) && !PyUtil.isClassPrivateName(inheritedName)) {
           ret.add(ob);
           namesAlready.add(inheritedName);
         }
       }
       ContainerUtil.addAll(ret, ancestry);
     }
-  }
-
-  private static boolean isClassPrivate(String lookup_string) {
-    return lookup_string.startsWith("__") && !lookup_string.endsWith("__");
   }
 
   private static boolean isClassProtected(@NotNull final String lookupString) {

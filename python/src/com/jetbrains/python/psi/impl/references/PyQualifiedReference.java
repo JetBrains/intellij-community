@@ -128,10 +128,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     if (match.size() > 1) {
-      final PyClass ourClass = qualifierType.getPyClass();
-      final PsiElement originalOurClass = PyiUtil.getOriginalElement(ourClass);
+      final PyClass ourClass = PyiUtil.stubToOriginal(qualifierType.getPyClass(), PyClass.class);
       final PsiElement theirClass = CompletionUtil.getOriginalOrSelf(match.get(match.size() - 1));
-      if (originalOurClass != null && originalOurClass != theirClass || originalOurClass == null && ourClass != theirClass) return true;
+      if (ourClass != theirClass) return true;
     }
     return false;
   }
