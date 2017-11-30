@@ -86,6 +86,10 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu128.png"
+        snapName = "pycharm-educational"
+        snapDescription =
+          "PyCharm Edu combines interactive learning with a powerful real-world professional development tool to provide " +
+          "a platform for the most effective learning and teaching experience."
       }
 
       @Override
