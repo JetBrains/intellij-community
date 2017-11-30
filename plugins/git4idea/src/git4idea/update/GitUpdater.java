@@ -28,6 +28,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 import static git4idea.GitUtil.HEAD;
+import static git4idea.config.UpdateMethod.MERGE;
+import static git4idea.config.UpdateMethod.REBASE;
 
 /**
  * Updates a single repository via merge or rebase.
@@ -99,19 +102,46 @@ public abstract class GitUpdater {
 
   @NotNull
   public static UpdateMethod resolveUpdateMethod(@NotNull GitRepository repository) {
+    Project project = repository.getProject();
     GitLocalBranch branch = repository.getCurrentBranch();
-    boolean rebase = false;
     if (branch != null) {
+      String branchName = branch.getName();
       try {
-        String rebaseValue = GitConfigUtil.getValue(repository.getProject(), repository.getRoot(),
-                                                    "branch." + branch.getName() + ".rebase");
-        rebase = rebaseValue != null && rebaseValue.equalsIgnoreCase("true");
+        String rebaseValue = GitConfigUtil.getValue(project, repository.getRoot(), "branch." + branchName + ".rebase");
+        if (rebaseValue != null) {
+          if (isRebaseValue(rebaseValue)) {
+            return REBASE;
+          }
+          if (rebaseValue.equalsIgnoreCase("false") || rebaseValue.equalsIgnoreCase("no")) {
+            // explicit override of a more generic pull.rebase config value
+            return MERGE;
+          }
+          LOG.warn("Unknown value for branch." + branchName + ".rebase: " + rebaseValue);
+        }
       }
       catch (VcsException e) {
-        LOG.warn("Couldn't get git config branch." + branch.getName() + ".rebase", e);
+        LOG.warn("Couldn't get git config branch." + branchName + ".rebase");
       }
     }
-    return rebase ? UpdateMethod.REBASE : UpdateMethod.MERGE;
+
+    if (GitVersionSpecialty.KNOWS_PULL_REBASE.existsIn(GitVcs.getInstance(project).getVersion())) {
+      try {
+        String pullRebaseValue = GitConfigUtil.getValue(project, repository.getRoot(), "pull.rebase");
+        if (pullRebaseValue != null && isRebaseValue(pullRebaseValue)) return REBASE;
+      }
+      catch (VcsException e) {
+        LOG.warn("Couldn't get git config pull.rebase");
+      }
+    }
+
+    return MERGE;
+  }
+
+  private static boolean isRebaseValue(@NotNull String configValue) {
+    return configValue.equalsIgnoreCase("true") ||
+           configValue.equalsIgnoreCase("interactive") ||
+           configValue.equalsIgnoreCase("preserve") ||
+           configValue.equalsIgnoreCase("yes"); // 'yes' is not specified in the man, but actually works
   }
 
   @NotNull
