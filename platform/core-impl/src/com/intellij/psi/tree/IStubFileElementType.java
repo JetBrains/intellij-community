@@ -79,9 +79,6 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   private static int calcStubVersion() {
     IElementType[] dataElementTypes = IElementType.enumerate(
       (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
-    return Arrays.stream(dataElementTypes).mapToInt((e) -> {
-      System.err.println(e.getLanguage());
-      return ((IStubFileElementType)e).getStubVersion();
-    }).sum();
+    return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType)e).getStubVersion()).sum();
   }
 }
