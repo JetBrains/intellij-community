@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -68,7 +69,12 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   @Override
   protected void resetExtraSettings(boolean isDefaultModuleCreation) {
-    myBuilder.reset(getProject(), getInitialSettings(), isDefaultModuleCreation);
+    resetExtraSettings(isDefaultModuleCreation, null);
+  }
+
+  @Override
+  protected void resetExtraSettings(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
+    myBuilder.reset(getProject(), getInitialSettings(), isDefaultModuleCreation, wizardContext);
   }
 
   public void update(@Nullable String linkedProjectPath, boolean isDefaultModuleCreation) {
@@ -86,7 +92,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
    */
   public void setCurrentProject(@Nullable Project project) {
     super.setCurrentProject(project);
-    myBuilder.reset(getProject(), getInitialSettings(), false);
   }
 
   @Override

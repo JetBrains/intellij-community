@@ -53,7 +53,7 @@ public class ExternalSystemJdkUtil {
         }
       }
 
-      if (project == null) {
+      if (project == null || project.isDefault()) {
         Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
         return recent != null ? recent : JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       }
@@ -93,16 +93,16 @@ public class ExternalSystemJdkUtil {
       }
     }
 
+    Sdk mostRecentSdk = ProjectJdkTable.getInstance().findMostRecentSdk(
+      sdk -> sdk.getSdkType() == JavaSdk.getInstance() && isValidJdk(sdk.getHomePath()));
+    if (mostRecentSdk != null) {
+      return Pair.create(mostRecentSdk.getName(), mostRecentSdk);
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String javaHome = System.getenv("JAVA_HOME");
       if (isValidJdk(javaHome)) {
         return Pair.create(USE_JAVA_HOME, JavaSdk.getInstance().createJdk("", javaHome));
-      }
-    }
-
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (isValidJdk(projectJdk.getHomePath())) {
-        return Pair.create(projectJdk.getName(), projectJdk);
       }
     }
 
