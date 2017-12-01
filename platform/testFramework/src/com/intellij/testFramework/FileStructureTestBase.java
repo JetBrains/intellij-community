@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.util.ui.tree.TreeUtil;
 
 /**
  * @author Konstantin Bulenkov
@@ -67,8 +68,15 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected void checkTree() {
+    checkTree(true);
+  }
+
+  protected void checkTree(boolean expandAll) {
     configureDefault();
     myPopupFixture.update();
+    if (expandAll) {
+      TreeUtil.expandAll(myPopupFixture.getTree());
+    }
     checkResult();
   }
 
