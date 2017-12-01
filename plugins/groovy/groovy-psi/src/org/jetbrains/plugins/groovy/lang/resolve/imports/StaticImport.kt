@@ -6,10 +6,9 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.NonFqnImport
 import org.jetbrains.plugins.groovy.lang.resolve.isAnnotationResolve
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.StaticMembersFilteringProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMembers
 
@@ -43,13 +42,11 @@ data class StaticImport constructor(
     if (!processor.shouldProcessMembers()) return true
     val clazz = resolveImport(file) ?: return true
     val namesMapping = namesMapping()
-    for (each in GroovyResolverProcessor.allProcessors(processor)) {
-      val hintName = ResolveUtil.getNameHint(each)
-      for ((memberName, alias) in namesMapping) {
-        if (hintName != null && hintName != alias) continue
-        val delegate = StaticMembersFilteringProcessor(each, memberName)
-        if (!clazz.processDeclarations(delegate, state.put(importedNameKey, alias), null, place)) return false
-      }
+    val hintName = processor.getName(state)
+    for ((memberName, alias) in namesMapping) {
+      if (hintName != null && hintName != alias) continue
+      val delegate = StaticMembersFilteringProcessor(processor, memberName)
+      if (!clazz.processDeclarations(delegate, state.put(importedNameKey, alias), null, place)) return false
     }
     return true
   }

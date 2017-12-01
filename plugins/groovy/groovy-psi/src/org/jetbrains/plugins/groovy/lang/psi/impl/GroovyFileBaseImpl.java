@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
@@ -223,7 +224,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return !shouldProcessMembers(processor) || getAppropriateHolder(processor).processDeclarations(processor, state, place);
+    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+      if (!shouldProcessMembers(each)) continue;
+      if (!getAppropriateHolder(processor).processDeclarations(each, state, place)) return false;
+    }
+    return true;
   }
 
   @NotNull
