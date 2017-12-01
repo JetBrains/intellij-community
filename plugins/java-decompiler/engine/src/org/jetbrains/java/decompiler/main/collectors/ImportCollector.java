@@ -72,7 +72,7 @@ public class ImportCollector {
 
     StringBuilder result = null;
     if (node != null && node.classStruct.isOwn()) {
-      result = new StringBuilder(node.simpleName);
+      result = new StringBuilder(String.valueOf(node.simpleName));
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
         result.insert(0, node.parent.simpleName + '.');
