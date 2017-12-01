@@ -289,8 +289,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
-    final PsiExpression[] result = createSimplifiedReplacement(expression);
-    PsiExpression newExpression = (PsiExpression)expression.replace(result[0]);
+    final PsiExpression result = createSimplifiedReplacement(expression);
+    PsiExpression newExpression = (PsiExpression)expression.replace(result);
     if (newExpression instanceof PsiLiteralExpression) {
       final PsiElement parent = newExpression.getParent();
       if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {
@@ -303,7 +303,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
   }
 
-  private static PsiExpression[] createSimplifiedReplacement(PsiExpression expression) {
+  private static PsiExpression createSimplifiedReplacement(PsiExpression expression) {
     final PsiExpression[] result = {(PsiExpression)expression.copy()};
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = {null};
@@ -341,14 +341,14 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (exception[0] != null) {
       throw exception[0];
     }
-    return result;
+    return result[0];
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
     if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression &&
-        !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression)[0])) {
+        !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {
       return false;
     }
 
