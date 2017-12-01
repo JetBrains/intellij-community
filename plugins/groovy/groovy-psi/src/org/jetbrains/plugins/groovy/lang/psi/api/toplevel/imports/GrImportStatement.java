@@ -3,10 +3,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -39,7 +39,7 @@ public interface GrImportStatement extends GrTopStatement {
   PsiClass resolveTargetClass();
 
   @Nullable
-  PsiElement getAliasNameElement();
+  GrImportAlias getAlias();
 
   @Nullable
   GroovyImport getImport();
