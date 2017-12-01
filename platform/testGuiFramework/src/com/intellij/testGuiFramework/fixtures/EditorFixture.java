@@ -140,7 +140,7 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
+      protected Integer executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -197,7 +197,7 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -287,7 +287,7 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -336,7 +336,7 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -373,7 +373,7 @@ public class EditorFixture {
     if (component != null && !text.isEmpty()) {
       execute(new GuiTask() {
         @Override
-        protected void executeInEDT() throws Throwable {
+        protected void executeInEDT() {
           // Simulate editing by sending the same IME events that we observe arriving from a real input method
           int characterCount = text.length();
           TextHitInfo caret = TextHitInfo.afterOffset(characterCount - 1);
@@ -449,7 +449,7 @@ public class EditorFixture {
     Editor editor = execute(new GuiQuery<Editor>() {
       @Override
       @Nullable
-      protected Editor executeInEDT() throws Throwable {
+      protected Editor executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         return manager.getSelectedTextEditor(); // Must be called from the EDT
       }
@@ -510,7 +510,7 @@ public class EditorFixture {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         assert editor != null;
@@ -546,7 +546,7 @@ public class EditorFixture {
   public EditorFixture select(final int firstOffset, final int secondOffset) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         // TODO: Do this via mouse drags!
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
@@ -610,7 +610,7 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
+      protected Integer executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -639,7 +639,7 @@ public class EditorFixture {
   public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
     return execute(new GuiQuery<Integer>() {
       @Override
-      protected Integer executeInEDT() throws Throwable {
+      protected Integer executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -690,7 +690,7 @@ public class EditorFixture {
   public EditorFixture close() {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         if (currentFile != null) {
           FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
@@ -754,7 +754,7 @@ public class EditorFixture {
   public EditorFixture selectEditorView(@Nullable final String tabName) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         assertNotNull("Can't switch to tab " + tabName + " when no file is open in the editor", currentFile);
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
@@ -772,7 +772,7 @@ public class EditorFixture {
           method("setSelectedEditor").withParameterTypes(FileEditor.class).in(manager).invoke(target);
           return;
         }
-        List<String> tabNames = new ArrayList<String>();
+        List<String> tabNames = new ArrayList<>();
         for (FileEditor editor : editors) {
           tabNames.add(editor.getName());
         }
@@ -792,7 +792,7 @@ public class EditorFixture {
   public EditorFixture open(@NotNull final VirtualFile file, @NotNull final Tab tab) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         // TODO: Use UI to navigate to the file instead
         Project project = myFrame.getProject();
         FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -811,7 +811,7 @@ public class EditorFixture {
         //noinspection ConstantConditions
         return execute(new GuiQuery<Boolean>() {
           @Override
-          protected Boolean executeInEDT() throws Throwable {
+          protected Boolean executeInEDT() {
             FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
             if (editors.length == 0) return false;
             return editors[0].getComponent().isShowing();
@@ -1063,7 +1063,7 @@ public class EditorFixture {
       public boolean test() {
         virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
           @Override
-          protected VirtualFile executeInEDT() throws Throwable {
+          protected VirtualFile executeInEDT() {
             return getCurrentFile();
           }
         }));
