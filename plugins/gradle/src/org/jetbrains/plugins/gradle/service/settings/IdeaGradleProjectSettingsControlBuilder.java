@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ServiceManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -458,7 +460,15 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   @Override
-  public void reset(Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+  public void reset(@Nullable Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+    reset(project, settings, isDefaultModuleCreation, null);
+  }
+
+  @Override
+  public void reset(@Nullable Project project,
+                    GradleProjectSettings settings,
+                    boolean isDefaultModuleCreation,
+                    @Nullable WizardContext wizardContext) {
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
@@ -471,7 +481,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myStoreExternallyCheckBox.setSelected(settings.isStoreProjectFilesExternally());
     }
 
-    resetGradleJdkComboBox(project, settings);
+    resetGradleJdkComboBox(project, settings, wizardContext);
     resetWrapperControls(settings.getExternalProjectPath(), settings, isDefaultModuleCreation);
 
     if (myUseLocalDistributionButton != null && !myUseLocalDistributionButton.isSelected()) {
@@ -535,15 +545,19 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  private void resetGradleJdkComboBox(@Nullable final Project project, GradleProjectSettings settings) {
+  private void resetGradleJdkComboBox(@Nullable final Project project,
+                                      GradleProjectSettings settings,
+                                      @Nullable WizardContext wizardContext) {
     if (myGradleJdkComboBox == null) return;
 
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
 
-    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s -> (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
+    Sdk projectJdk = wizardContext != null ? wizardContext.getProjectJdk() : null;
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s ->
+      (projectJdk == null && project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
 
-    myGradleJdkComboBox.refreshData(sdkItem);
+    myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
     if (myGradleJdkSetUpButton != null) {
       ProjectSdksModel sdksModel = ProjectStructureConfigurable.getInstance(
         project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
