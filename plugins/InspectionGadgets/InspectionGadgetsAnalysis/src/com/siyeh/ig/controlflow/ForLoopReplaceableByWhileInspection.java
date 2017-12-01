@@ -16,20 +16,22 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.NonNls;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 
 public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
@@ -37,6 +39,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreLoopsWithoutConditions = false;
+  public boolean m_ignoreLoopsWithBody = false;
 
   @Override
   @NotNull
@@ -60,9 +63,17 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "for.loop.replaceable.by.while.ignore.option"),
-                                          this, "m_ignoreLoopsWithoutConditions");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "for.loop.replaceable.by.while.ignore.option"), "m_ignoreLoopsWithoutConditions");
+    panel.addCheckbox("Ignore non-empty for loops", "m_ignoreLoopsWithBody");
+    return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node,"m_ignoreLoopsWithBody");
+    writeBooleanOption(node, "m_ignoreLoopsWithBody", false);
   }
 
   @Override
@@ -80,32 +91,69 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement forKeywordElement = descriptor.getPsiElement();
-      final PsiForStatement forStatement =
-        (PsiForStatement)forKeywordElement.getParent();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiForStatement forStatement = (PsiForStatement)element.getParent();
       assert forStatement != null;
       CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression condition = forStatement.getCondition();
-      final PsiStatement body = forStatement.getBody();
-      final String bodyText;
-      if (body == null) {
-        bodyText = "";
+      PsiStatement initialization = forStatement.getInitialization();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+      final PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
+      final PsiExpression forCondition = forStatement.getCondition();
+      final PsiExpression whileCondition = whileStatement.getCondition();
+      if (forCondition != null) {
+        assert whileCondition != null;
+        commentTracker.replace(whileCondition, commentTracker.markUnchanged(forCondition));
+      }
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)whileStatement.getBody();
+      if (blockStatement == null) {
+        return;
+      }
+      final PsiStatement forStatementBody = forStatement.getBody();
+      final PsiElement loopBody;
+      if (forStatementBody instanceof PsiBlockStatement) {
+        final PsiBlockStatement newWhileBody = (PsiBlockStatement)blockStatement.replace(commentTracker.markUnchanged(forStatementBody));
+        loopBody = newWhileBody.getCodeBlock();
       }
       else {
-        bodyText = commentTracker.markUnchanged(body).getText();
+        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+        if (forStatementBody != null && !(forStatementBody instanceof PsiEmptyStatement)) {
+          codeBlock.add(commentTracker.markUnchanged(forStatementBody));
+        }
+        loopBody = codeBlock;
       }
-      @NonNls final String whileStatement;
-      if (condition == null) {
-        whileStatement = "while(true)" + bodyText;
+      final PsiStatement update = forStatement.getUpdate();
+      if (update != null) {
+        final PsiStatement[] updateStatements;
+        if (update instanceof PsiExpressionListStatement) {
+          final PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)update;
+          final PsiExpressionList expressionList = expressionListStatement.getExpressionList();
+          final PsiExpression[] expressions = expressionList.getExpressions();
+          updateStatements = new PsiStatement[expressions.length];
+          for (int i = 0; i < expressions.length; i++) {
+            updateStatements[i] = factory.createStatementFromText(commentTracker.markUnchanged(expressions[i]).getText() + ';', element);
+          }
+        }
+        else {
+          final PsiStatement updateStatement = factory.createStatementFromText(commentTracker.markUnchanged(update).getText() + ';', element);
+          updateStatements = new PsiStatement[]{updateStatement};
+        }
+        final Collection<PsiContinueStatement> continueStatements = PsiTreeUtil.findChildrenOfType(loopBody, PsiContinueStatement.class);
+        for (PsiContinueStatement continueStatement : continueStatements) {
+          BlockUtils.addBefore(continueStatement, updateStatements);
+        }
+        for (PsiStatement updateStatement : updateStatements) {
+          loopBody.addBefore(updateStatement, loopBody.getLastChild());
+        }
+      }
+      if (initialization == null || initialization instanceof PsiEmptyStatement) {
+        commentTracker.replaceAndRestoreComments(forStatement, whileStatement);
       }
       else {
-        whileStatement = "while(" + commentTracker.markUnchanged(condition).getText() + ')' +
-                         bodyText;
+        initialization = (PsiStatement)commentTracker.markUnchanged(initialization).copy();
+        final PsiStatement newStatement = (PsiStatement)commentTracker.replaceAndRestoreComments(forStatement, whileStatement);
+        BlockUtils.addBefore(newStatement, initialization);
       }
-
-      PsiReplacementUtil.replaceStatement(forStatement, whileStatement, commentTracker);
     }
   }
 
@@ -114,16 +162,18 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     return new ForLoopReplaceableByWhileVisitor();
   }
 
-  private class ForLoopReplaceableByWhileVisitor
-    extends BaseInspectionVisitor {
+  private class ForLoopReplaceableByWhileVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForStatement(
-      @NotNull PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
+      if (!m_ignoreLoopsWithBody && !PsiUtilCore.hasErrorElementChild(statement)) {
+        registerStatementError(statement);
+        return;
+      }
+
       final PsiStatement initialization = statement.getInitialization();
-      if (initialization != null &&
-          !(initialization instanceof PsiEmptyStatement)) {
+      if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {
         return;
       }
       final PsiStatement update = statement.getUpdate();

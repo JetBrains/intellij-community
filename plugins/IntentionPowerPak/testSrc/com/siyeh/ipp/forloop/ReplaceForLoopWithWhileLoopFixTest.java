@@ -15,13 +15,14 @@
  */
 package com.siyeh.ipp.forloop;
 
-import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.controlflow.ForLoopReplaceableByWhileInspection;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceForLoopWithWhileLoopIntentionTest extends IPPTestCase {
+public class ReplaceForLoopWithWhileLoopFixTest extends IPPTestCase {
 
   public void testLabeledForLoop() { doTest(); }
   public void testNotInBlock() { doTest(); }
@@ -32,7 +33,13 @@ public class ReplaceForLoopWithWhileLoopIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.for.loop.with.while.loop.intention.name");
+    return InspectionGadgetsBundle.message("for.loop.replaceable.by.while.replace.quickfix");
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new ForLoopReplaceableByWhileInspection());
   }
 
   @Override
