@@ -274,7 +274,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     if (myMaxLineWithExtensionWidth > 0) {
       AtomicBoolean hasExtensions = new AtomicBoolean();
       myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> hasExtensions.set(true));
-      if (hasExtensions.get()) {
+      if (!hasExtensions.get()) {
         myMaxLineWithExtensionWidth = 0;
       }
     }
