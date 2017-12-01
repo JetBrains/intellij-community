@@ -20,15 +20,18 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /*
  * @author max
  */
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
+  private static volatile int templateStubVersion = -1;
   public IStubFileElementType(final Language language) {
     super(language);
   }
@@ -38,6 +41,10 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   }
 
   public int getStubVersion() {
+    if (getLanguage() instanceof TemplateLanguage) {
+      if (templateStubVersion == -1) templateStubVersion = calcStubVersion();
+      return templateStubVersion;
+    }
     return 0;
   }
 
@@ -67,5 +74,14 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   public boolean shouldBuildStubFor(final VirtualFile file) {
     return true;
+  }
+
+  private static int calcStubVersion() {
+    IElementType[] dataElementTypes = IElementType.enumerate(
+      (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
+    return Arrays.stream(dataElementTypes).mapToInt((e) -> {
+      System.err.println(e.getLanguage());
+      return ((IStubFileElementType)e).getStubVersion();
+    }).sum();
   }
 }

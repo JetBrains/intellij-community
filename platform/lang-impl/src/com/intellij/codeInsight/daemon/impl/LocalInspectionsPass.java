@@ -198,7 +198,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                        @NotNull final ProgressIndicator progress) {
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
     if (toolWrappers.isEmpty()) return;
-
+    long start = System.currentTimeMillis();
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
@@ -215,7 +215,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers);
     visitRestElementsAndCleanup(progress, outside, session, init, elementDialectIds);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers);
-
+    System.err.println(System.currentTimeMillis() - start);
     ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();

@@ -1544,6 +1544,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       int inputId = Math.abs(getFileId(file));
       Set<ID<?, ?>> currentIndexedStates = new THashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
 
+      long start = System.currentTimeMillis();
       final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
@@ -1585,6 +1586,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
             throw e;
           }
         }
+      }
+      long time = System.currentTimeMillis() - start;
+      if (time > 1000) {
+        System.err.println(file.getName() + ": " + time);
       }
 
       if (psiFile != null) {
