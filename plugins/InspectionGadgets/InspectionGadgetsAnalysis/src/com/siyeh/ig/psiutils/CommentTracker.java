@@ -246,8 +246,8 @@ public class CommentTracker {
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
         if (prevSibling instanceof PsiWhiteSpace) {
-          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling);
           PsiElement prev = anchor.getPrevSibling();
+          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling, prev);
           parent.getNode().addChild(whiteSpaceBefore, anchor.getNode());
           if (prev instanceof PsiWhiteSpace) {
             prev.delete();
@@ -259,12 +259,15 @@ public class CommentTracker {
   }
 
   @NotNull
-  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace) {
+  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace, PsiElement nextElement) {
     String text = whiteSpace.getText();
     int endLPos = text.lastIndexOf('\n');
     if(text.lastIndexOf('\n', endLPos-1) >= 0) {
       // has at least two line breaks
       return ASTFactory.whitespace(text.substring(endLPos));
+    }
+    if(nextElement instanceof PsiWhiteSpace && nextElement.getText().contains("\n") && !text.contains("\n")) {
+      text = '\n' + text;
     }
     return ASTFactory.whitespace(text);
   }
