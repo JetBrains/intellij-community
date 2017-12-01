@@ -7,16 +7,21 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.LineExtensionInfo
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
+import java.awt.Color
+import java.awt.Font
 import javax.swing.Action
 import javax.swing.JPanel
 
@@ -39,6 +44,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       additionalColumnsCount = 0
       isAdditionalPageAtBottom = false
     }
+    (editor as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
     init()
   }
 
@@ -48,6 +54,19 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   }
 
   override fun getPreferredFocusedComponent() = editor.contentComponent
+
+  private fun generateLineExtension(line: Int): Collection<LineExtensionInfo> {
+    val lineText = document.charsSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString()
+    if (line !in modules.indices || modules[line].name == lineText) return emptyList()
+
+    val name = LineExtensionInfo(" <- ${modules[line].name}", JBColor.GRAY, null, null, Font.PLAIN)
+    val groupPath = ModuleManager.getInstance(project).getModuleGroupPath(modules[line])
+    if (groupPath == null) {
+      return listOf(name)
+    }
+    val group = LineExtensionInfo(groupPath.joinToString(separator = "/", prefix = " (", postfix = ")"), Color.GRAY, null, null, Font.PLAIN)
+    return listOf(name, group)
+  }
 
   private fun generateInitialText(): String {
     val moduleManager = ModuleManager.getInstance(project)
