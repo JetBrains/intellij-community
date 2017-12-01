@@ -150,14 +150,14 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     }
     context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.kotlinHome")
+      fileset(dir: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin")
     }
 
-      // Gradle plugin
-      def currentGradleVersion = "kotlin-m2repository.zip"
-      context.ant.unzip(
-        src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-gradle-plugin/$currentGradleVersion",
-        dest: "$targetDirectory/gradle/m2repository")
+    // Gradle plugin
+    def currentGradleVersion = "kotlin-m2repository.zip"
+    context.ant.unzip(
+      src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-gradle-plugin/$currentGradleVersion",
+      dest: "$targetDirectory/gradle/m2repository")
 
     /* Disabled in Android Studio:
     context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")

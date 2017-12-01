@@ -79,7 +79,7 @@ class CompilationContextImpl implements CompilationContext {
 
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
-    def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+    def kotlinHome = toCanonicalPath("$communityHome/../../prebuilts/tools/common/kotlin-plugin-ij/Kotlin")
     gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
