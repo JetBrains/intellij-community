@@ -68,6 +68,11 @@
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
+    <action id="ConvertModuleGroupsToQualifiedNames" class="com.intellij.ide.actions.project.ConvertModuleGroupsToQualifiedNamesAction">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="last"/>
+    </action>
+
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
