@@ -1,12 +1,20 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
+import groovy.lang.MetaMethod;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactCollection;
+import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.component.*;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.UnresolvedDependencyResult;
 import org.gradle.api.component.Artifact;
+import org.gradle.api.internal.file.copy.CopySpecInternal;
+import org.gradle.api.tasks.SourceSetOutput;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.gradle.internal.component.local.model.LocalComponentArtifactMetadata;
+import org.gradle.internal.component.local.model.PublishArtifactLocalArtifactMetadata;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 
 class ScopedExternalDependenciesFactory {
@@ -75,7 +84,55 @@ class ScopedExternalDependenciesFactory {
     projectDependency.setProjectDependencyArtifacts(Collections.singleton(artifact.getFile()));
     projectDependency.setScope(myScope);
 
+    projectDependency.setConfigurationName(artifact.getFile().getName());
+
+    if (artifact.getId() instanceof PublishArtifactLocalArtifactMetadata) {
+
+      LocalComponentArtifactMetadata artifactMetadata = (LocalComponentArtifactMetadata)artifact.getId();
+
+      try {
+        Field publishArtifactField = artifactMetadata.getClass().getField("publishArtifact");
+        publishArtifactField.setAccessible(true);
+        PublishArtifact publishArtifact = (PublishArtifact)publishArtifactField.get(artifactMetadata);
+        Field archiveTaskField = publishArtifact.getClass().getField("archiveTask");
+        archiveTaskField.setAccessible(true);
+        AbstractArchiveTask archiveTask = (AbstractArchiveTask)archiveTaskField.get(publishArtifact);
+
+        Set<File> sourceRootOutputs = collectSourceRootOutputs(archiveTask.getRootSpec());
+
+        return new DefaultFileCollectionDependency(sourceRootOutputs);
+      }
+      catch (NoSuchFieldException e) {
+        // ignore and continue
+      }
+      catch (IllegalAccessException e) {
+        // ignore and continue
+      }
+    }
+
     return projectDependency;
+  }
+
+  private Set<File> collectSourceRootOutputs(CopySpecInternal spec) {
+    Set<File> result = new LinkedHashSet<File>();
+    final List<MetaMethod> sourcePathGetters =
+      DefaultGroovyMethods.respondsTo(spec, "getSourcePaths", new Object[]{});
+    if (!sourcePathGetters.isEmpty()) {
+      Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(spec, new Object[]{});
+      if (sourcePaths != null) {
+        for (Object path : sourcePaths) {
+          if (path instanceof SourceSetOutput) {
+            result.addAll(((SourceSetOutput)path).getFiles());
+          }
+        }
+      }
+    }
+
+    for (CopySpecInternal internal : spec.getChildren()) {
+      result.addAll(collectSourceRootOutputs(internal));
+    }
+
+    return result;
   }
 
   @NotNull
