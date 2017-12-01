@@ -21,8 +21,8 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       return cmds.generateValue(data);
     });
     List<InsertChar> minCmds = checkGeneratesExample(gen,
-                                                   cmds -> InsertChar.performOperations(cmds).contains("ab"),
-                                                     80);
+                                                     cmds -> InsertChar.performOperations(cmds).contains("ab"),
+                                                     79);
     assertEquals(minCmds.toString(), 2, minCmds.size());
   }
   

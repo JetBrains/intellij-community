@@ -69,7 +69,8 @@ class CombinatorialIntCustomizer implements IntCustomizer {
     return false;
   }
 
-  private void addValueToTry(IntData data, IntDistribution current, int value) {
+  private void addValueToTry(IntData data, BoundedIntDistribution current, int value) {
+    value = Math.min(Math.max(value, current.getMin()), current.getMax());
     if (current.isValidValue(value)) {
       valuesToTry.computeIfAbsent(data.id, __1 -> new LinkedHashSet<>()).add(value);
     }
