@@ -11,12 +11,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -33,8 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Renders editor contents.
@@ -546,24 +546,17 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintLineExtensions(Graphics2D g, int line, float x, int y) {
-    Project project = myEditor.getProject();
-    VirtualFile virtualFile = myEditor.getVirtualFile();
-    if (project == null || virtualFile == null) return;
-    for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
-      Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, line);
-      if (extensions != null) {
-        for (LineExtensionInfo info : extensions) {
-          LineLayout layout = LineLayout.create(myView, info.getText(), info.getFontType());
-          g.setColor(info.getColor());
-          x = paintLineLayoutWithEffect(g, layout, x, y, info.getEffectColor(), info.getEffectType());
-          int currentLineWidth = myCorrector.lineWidth(line, x);
-          EditorSizeManager sizeManager = myView.getSizeManager();
-          if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
-            sizeManager.setMaxLineWithExtensionWidth(line, currentLineWidth);
-          }
-        }
+    float[] curX = {x};
+    myEditor.processLineExtensions(line, (info) -> {
+      LineLayout layout = LineLayout.create(myView, info.getText(), info.getFontType());
+      g.setColor(info.getColor());
+      curX[0] = paintLineLayoutWithEffect(g, layout, curX[0], y, info.getEffectColor(), info.getEffectType());
+      int currentLineWidth = myCorrector.lineWidth(line, curX[0]);
+      EditorSizeManager sizeManager = myView.getSizeManager();
+      if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
+        sizeManager.setMaxLineWithExtensionWidth(line, currentLineWidth);
       }
-    }
+    });
   }
 
   private void paintHighlightersAfterEndOfLine(final Graphics2D g,
