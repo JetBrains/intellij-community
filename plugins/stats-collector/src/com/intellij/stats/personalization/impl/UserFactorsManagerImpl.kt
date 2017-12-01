@@ -1,5 +1,6 @@
 package com.intellij.stats.personalization.impl
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.completion.FeatureManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -22,6 +23,9 @@ class UserFactorsManagerImpl(project: Project) : UserFactorsManager, ProjectComp
 
         // user factors
         register(ExplicitCompletionRatio())
+        register(CompletionTypeRatio(CompletionType.BASIC))
+        register(CompletionTypeRatio(CompletionType.SMART))
+        register(CompletionTypeRatio(CompletionType.CLASS_NAME))
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()

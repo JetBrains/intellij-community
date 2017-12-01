@@ -57,6 +57,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
             lookup.addLookupListener(tracker)
             lookup.addLookupListener(LookupCompletedTracker())
             lookup.setPrefixChangeListener(tracker)
+
+            lookup.addLookupListener(LookupStartedTracker())
         }
     }
 
