@@ -17,3 +17,5 @@ Members Signatures:
 
 Implicit toString():
 java.lang.Long in Foo
+java.lang.Number in Foo
+java.lang.Object in Foo
