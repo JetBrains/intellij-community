@@ -27,6 +27,8 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.stats.sender.isSendAllowed
 import com.intellij.stats.sender.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.personalization.UserFactorDescriptions
+import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 import java.beans.PropertyChangeListener
 
@@ -46,11 +48,21 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
         else if (lookup is LookupImpl) {
             if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
 
+            val globalStorage = UserFactorStorage.getInstance()
+            val projectStorage = UserFactorStorage.getInstance(lookup.project)
+
             val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
-                    .associate { it.id to it.compute(lookup.project) }
-            lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactors)
+            val userFactorValues = mutableMapOf<String, String?>()
+            userFactors.asSequence().map { "${it.id}Global" to it.compute(globalStorage) }.toMap(userFactorValues)
+            userFactors.asSequence().map { "${it.id}Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+
+            lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
             val shownTimesTracker = PositionTrackingListener(lookup)
             lookup.setPrefixChangeListener(shownTimesTracker)
+
+            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
+                it.fireCompletionUsed()
+            }
 
             val tracker = actionsTracker(lookup, experimentHelper)
             actionListener.listener = tracker

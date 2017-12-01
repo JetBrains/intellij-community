@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 interface UserFactor {
     val id: String
 
-    fun compute(project: Project): String?
+    fun compute(storage: UserFactorStorage): String?
 
     interface FeatureFactor : UserFactor {
         fun update(value: Any?)
