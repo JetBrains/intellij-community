@@ -567,13 +567,6 @@
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
       <separator/>
-      <reference ref="$Undo"/>
-      <reference ref="$Redo"/>
-      <separator/>
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
-      <separator/>
       <reference ref="Back"/>
       <reference ref="Forward"/>
       <separator/>
@@ -581,7 +574,6 @@
         <reference ref="ShowSettings"/>
       </group>
       <separator/>
-      <reference ref="HelpTopics"/>
       <reference ref="SearchEverywhere"/>
     </group>
 
