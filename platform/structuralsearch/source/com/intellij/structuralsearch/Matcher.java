@@ -4,6 +4,7 @@ package com.intellij.structuralsearch;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -17,7 +18,6 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -519,7 +519,7 @@ public class Matcher {
       match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
+      InjectedLanguageManager.getInstance(project).enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
     }
   }
 
