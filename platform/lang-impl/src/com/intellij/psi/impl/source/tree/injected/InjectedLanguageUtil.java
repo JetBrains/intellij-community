@@ -101,7 +101,7 @@ public class InjectedLanguageUtil {
   }
 
   @NotNull
-  public static Place getShreds(@NotNull DocumentWindow document) {
+  private static Place getShreds(@NotNull DocumentWindow document) {
     return ((DocumentWindowImpl)document).getShreds();
   }
 
