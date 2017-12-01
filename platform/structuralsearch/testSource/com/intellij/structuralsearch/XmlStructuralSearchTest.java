@@ -59,15 +59,6 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     options.setCaseSensitiveMatch(true);
     assertEquals("case sensitive search", 0, findMatchesCount(html, pattern, StdFileTypes.HTML));
   }
-  
-  public void testJspSearch() throws Exception {
-    String content = loadFile("in1.html");
-    String pattern = loadFile("pattern1.html");
-    String pattern2 = loadFile("pattern1_2.html");
-    
-    assertEquals("Simple html find", 1, findMatches(content, pattern, StdFileTypes.HTML, null, StdFileTypes.JSP, null, false).size());
-    assertEquals("Simple html find", 9, findMatches(content, pattern2, StdFileTypes.HTML, null, StdFileTypes.JSP, null ,false).size());
-  }
 
   public void testXmlSearch() {
     String s1 = "<aaa><bbb class=\"11\"></bbb></aaa><bbb class=\"22\"></bbb>";
@@ -91,23 +82,6 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     String s4 = "<'_tag>'Content*</'_tag>";
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.HTML));
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.XML));
-  }
-
-  public void testXhtmlJspxSearch() {
-    String source = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
-               "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n" +
-               "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
-               "<head><title>Title of document</title></head>\n" +
-               "<body>\n" +
-               "<b><i>This text is bold and italic</i></b>\n" +
-               "<p>This is a paragraph</p>\n" +
-               "<p>This is another paragraph</p>\n" +
-               "<img src=\"happy.gif\" alt=\"Happy face\"/>\n" +
-               "</body>\n" +
-               "</html>";
-    String pattern = "<p>$A$</p>";
-    assertEquals("xhtml", 2, findMatchesCount(source, pattern, StdFileTypes.XHTML));
-    assertEquals("jspx", 2, findMatchesCount(source, pattern, StdFileTypes.JSPX));
   }
 
   public void testNoUnexpectedException() {
