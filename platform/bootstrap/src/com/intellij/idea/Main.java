@@ -67,10 +67,7 @@ public class Main {
 
     setFlags(args);
 
-    if (isHeadless()) {
-      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
-    }
-    else if (!checkGraphics()) {
+    if (!isHeadless() && !checkGraphics()) {
       System.exit(NO_GRAPHICS);
     }
 
@@ -94,6 +91,9 @@ public class Main {
   public static void setFlags(String[] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
+    if (isHeadless()) {
+      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
+    }
   }
 
   private static boolean isHeadless(String[] args) {
