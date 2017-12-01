@@ -30,7 +30,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
             if (type.equals(typeAfterReplacement)) {
               holder.registerProblem(typeElement,
                                      "'var' can be replaced with explicit type",
-                                     ProblemHighlightType.INFORMATION,
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      new ReplaceVarWithExplicitTypeFix());
             }
           }

@@ -73,9 +73,14 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
-      final ProblemHighlightType highlightType = ClassUtils.isFinalClassWithDefaultEquals(aClass)
-                                                 ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                 : ProblemHighlightType.INFORMATION;
+      final ProblemHighlightType highlightType;
+      if (ClassUtils.isFinalClassWithDefaultEquals(aClass)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      }
+      else {
+        if (!isOnTheFly()) return;
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       final boolean negated = parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
       final PsiElement nameToken = methodExpression.getReferenceNameElement();

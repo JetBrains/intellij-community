@@ -259,6 +259,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
             parent instanceof PsiLambdaExpression) {
           return;
         }
+        if (!isOnTheFly()) return;
         registerError(expression, ProblemHighlightType.INFORMATION, Boolean.TRUE);
       }
       else {
