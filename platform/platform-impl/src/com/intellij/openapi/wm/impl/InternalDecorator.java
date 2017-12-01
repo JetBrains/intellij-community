@@ -628,14 +628,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         fireTypeChanged(ToolWindowType.WINDOWED);
       }
     }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (SystemInfo.isMac) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
-    }
   }
 
   private final class ToggleSideModeAction extends ToggleAction implements DumbAware {
