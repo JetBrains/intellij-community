@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -100,8 +99,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           }
         }
         if (resource != null) {
-          URI uri = resource.toURI();
-          return uri.getPath();
+          return resource.getPath();
         }
       }
       catch (Exception e) {
