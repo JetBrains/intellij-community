@@ -19,7 +19,6 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,8 +28,6 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<InjectionResult, PsiElement> {
   @Override
@@ -77,8 +74,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
         hostRegistrar = new InjectionRegistrarImpl(myProject, myHostPsiFile, element);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
-      List<Pair<Place,PsiFile>> result = hostRegistrar.getResult();
-      return result == null;
+      return hostRegistrar.getInjectedResult() == null;
     }
   }
 }

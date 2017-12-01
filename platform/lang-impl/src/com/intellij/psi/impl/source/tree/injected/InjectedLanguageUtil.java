@@ -686,9 +686,10 @@ public class InjectedLanguageUtil {
    */
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
     LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");
-    final List<Pair<Place,PsiFile>> result = ((InjectionRegistrarImpl)registrar).getResult();
-    if (result != null && !result.isEmpty()) {
-      PsiFile file = result.get(result.size() - 1).getSecond();
+    InjectionResult result = ((InjectionRegistrarImpl)registrar).getInjectedResult();
+    if (result != null && result.files != null) {
+      List<PsiFile> files = result.files;
+      PsiFile file = files.get(files.size() - 1);
       file.putUserData(key, value);
     }
   }
