@@ -1,7 +1,7 @@
 package com.intellij.stats.personalization
 
-import com.intellij.stats.personalization.impl.CompletionTypeReader
-import com.intellij.stats.personalization.impl.CompletionTypeUpdater
+import com.intellij.stats.personalization.impl.CompletionFinishTypeReader
+import com.intellij.stats.personalization.impl.CompletionFinishTypeUpdater
 import com.intellij.stats.personalization.impl.DailyAggregatedDoubleFactor
 import com.intellij.stats.personalization.impl.MutableDoubleFactor
 
@@ -9,7 +9,7 @@ import com.intellij.stats.personalization.impl.MutableDoubleFactor
  * @author Vitaliy.Bibaev
  */
 object UserFactorDescriptions {
-    val COMPLETION_FINISH_TYPE = Descriptor("completionFinishedType", ::CompletionTypeUpdater, ::CompletionTypeReader)
+    val COMPLETION_FINISH_TYPE = Descriptor("completionFinishedType", ::CompletionFinishTypeUpdater, ::CompletionFinishTypeReader)
 
 
     class Descriptor<out U : FactorUpdater, out R : FactorReader>(
