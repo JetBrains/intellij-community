@@ -20,9 +20,11 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,18 +37,15 @@ import java.util.List;
 
 public abstract class InjectedLanguageManager {
 
-  /** @see MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
-  @Deprecated
-  public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
-
-  protected static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
-  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
-
-  public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider);
-
   public static InjectedLanguageManager getInstance(Project project) {
     return INSTANCE_CACHE.getValue(project);
   }
+
+  protected static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
+
+  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
+
+  public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider);
 
   @Nullable
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);
@@ -64,13 +63,6 @@ public abstract class InjectedLanguageManager {
 
   @TestOnly
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated use {@link MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
-   * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
-   */
-  @Deprecated
-  public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
 

@@ -51,8 +51,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author cdr
+ * @deprecated Use {@link InjectedLanguageManager} instead
  */
+@Deprecated
 public class InjectedLanguageUtil {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageUtil.class);
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
@@ -115,6 +116,10 @@ public class InjectedLanguageUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link InjectedLanguageManager#enumerate(PsiElement, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
+   */
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     PsiUtilCore.ensureValid(containingFile);
@@ -122,8 +127,9 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * @return true if enumerated successfully
+   * @deprecated use {@link InjectedLanguageManager#enumerateEx(PsiElement, PsiFile, boolean, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host,
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,
@@ -175,8 +181,8 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * This is a quick check, that can be performed before committing document and invoking 
-   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work 
+   * This is a quick check, that can be performed before committing document and invoking
+   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
    * for uncommitted documents.
    */
   public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
@@ -379,7 +385,7 @@ public class InjectedLanguageUtil {
   /**
    * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
    */
-  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
+  static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
     if (hostFile instanceof PsiCompiledElement) return null;
     Project project = hostFile.getProject();
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(hostFile)) return null;
@@ -519,6 +525,10 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
+  /**
+   * @deprecated use {@link InjectedLanguageManager#getTopLevelFile(PsiElement)} instead
+   */
+  @Deprecated
   public static PsiFile getTopLevelFile(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
@@ -657,7 +667,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * @deprecated use {@link #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead
+   * @deprecated use {@link #putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
     LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");

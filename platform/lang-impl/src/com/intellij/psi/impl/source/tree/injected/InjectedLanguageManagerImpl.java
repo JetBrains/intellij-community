@@ -63,6 +63,7 @@ import java.util.*;
 /**
  * @author cdr
  */
+@SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   @SuppressWarnings("RedundantStringConstructorCall")
@@ -157,7 +158,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         int offset = documentWindow.injectedToHost(0);
         PsiElement element = ObjectUtils.notNull(hostPsiFile.findElementAt(offset), hostPsiFile);
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, (injectedPsi, places) -> {
+        enumerateEx(element, hostPsiFile, true, (injectedPsi, places) -> {
           DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
           if (newDocument != null) {
             PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
@@ -271,8 +272,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
-  @Override
-  public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
+  private boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     try {
       return myManualInjectors.remove(injector);
     }
@@ -501,7 +501,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
     final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<>();
-    InjectedLanguageUtil.enumerate(inTree, (injectedPsi, places) -> {
+    enumerate(inTree, (injectedPsi, places) -> {
       for (PsiLanguageInjectionHost.Shred place : places) {
         if (place.getHost() == inTree) {
           result.add(new Pair<>(injectedPsi, place.getRangeInsideHost()));
