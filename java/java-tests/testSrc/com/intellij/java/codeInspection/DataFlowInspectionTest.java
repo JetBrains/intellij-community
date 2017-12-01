@@ -498,6 +498,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
   }
 
+  public void testSimplifyConcatWithParentheses() {
+    doTest();
+    checkIntentionResult("Simplify 'f' to false");
+  }
+
   public void testSideEffectWhile() {
     doTest();
     checkIntentionResult("Remove 'while' statement extracting side effects");
