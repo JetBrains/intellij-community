@@ -29,6 +29,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -240,7 +241,7 @@ public class CodeCompletionHandlerBase {
     int offset = editor.getCaretModel().getOffset();
     int psiOffset = Math.max(0, offset - 1);
 
-    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
+    PsiElement elementAt = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, psiOffset);
     if (elementAt == null) {
       elementAt = psiFile.findElementAt(psiOffset);
     }

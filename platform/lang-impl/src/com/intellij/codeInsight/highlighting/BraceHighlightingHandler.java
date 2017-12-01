@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -190,7 +191,7 @@ public class BraceHighlightingHandler {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (PsiDocumentManager.getInstance(project).isCommitted(document)) {
-      final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      final PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
       if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
         final PsiFile injected = injectedElement.getContainingFile();
         if (injected != null) {
