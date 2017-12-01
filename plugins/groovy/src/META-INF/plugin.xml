@@ -886,6 +886,9 @@
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary semicolon" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     displayName="Unnecessary import alias" cleanupTool="true" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryAliasInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
                      groupKey="inspection.style" enabledByDefault="true" level="WEAK WARNING"
