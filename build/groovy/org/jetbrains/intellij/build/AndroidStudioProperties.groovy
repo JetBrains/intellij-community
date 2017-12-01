@@ -81,6 +81,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES +
                                          [
                                            // Android Studio bundles these:
+                                           "android-apk",
+                                           "android-ndk",
                                            "firebase",
                                            "firebase-testing",
                                            "games",
