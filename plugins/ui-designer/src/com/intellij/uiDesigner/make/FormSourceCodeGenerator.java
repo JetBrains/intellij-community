@@ -311,6 +311,7 @@ public final class FormSourceCodeGenerator {
         "return new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());}";
 
       generateMethodIfRequired(newClass, method, myGetFontMethod, getFontMethod, true);
+      myGetFontMethod = null;
     }
 
     newClass = (PsiClass) styler.shortenClassReferences(newClass);
