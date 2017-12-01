@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -39,7 +40,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreLoopsWithoutConditions = false;
-  public boolean m_ignoreLoopsWithBody = false;
+  public boolean m_ignoreLoopsWithBody = true;
 
   @Override
   @NotNull
@@ -73,7 +74,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element node) {
     defaultWriteSettings(node,"m_ignoreLoopsWithBody");
-    writeBooleanOption(node, "m_ignoreLoopsWithBody", false);
+    writeBooleanOption(node, "m_ignoreLoopsWithBody", true);
   }
 
   @Override
@@ -167,30 +168,47 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
-      if (!m_ignoreLoopsWithBody && !PsiUtilCore.hasErrorElementChild(statement)) {
+      if (PsiUtilCore.hasErrorElementChild(statement)){
+        return;
+      }
+      if (!m_ignoreLoopsWithBody) {
         registerStatementError(statement);
         return;
       }
 
+      ProblemHighlightType highlightType;
+      if (highlightLoop(statement)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      }
+      else if (!isOnTheFly()) {
+        return;
+      }
+      else {
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
+      registerError(statement.getFirstChild(), highlightType);
+    }
+
+    private boolean highlightLoop(@NotNull PsiForStatement statement) {
       final PsiStatement initialization = statement.getInitialization();
       if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {
-        return;
+        return false;
       }
       final PsiStatement update = statement.getUpdate();
       if (update != null && !(update instanceof PsiEmptyStatement)) {
-        return;
+        return false;
       }
       if (m_ignoreLoopsWithoutConditions) {
         final PsiExpression condition = statement.getCondition();
         if (condition == null) {
-          return;
+          return false;
         }
         final String conditionText = condition.getText();
         if (PsiKeyword.TRUE.equals(conditionText)) {
-          return;
+          return false;
         }
       }
-      registerStatementError(statement);
+      return true;
     }
   }
 }
